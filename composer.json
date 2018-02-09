@@ -1,5 +1,6 @@
 {
     "name": "railroad/ecommerce",
+    "type": "library",
     "description": "Ecommerce system",
     "minimum-stability": "dev",
  "require": {
@@ -18,12 +19,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Railroad\\ecommerce\\": "src"
+      "Railroad\\Ecommerce\\": "src"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Railroad\\ecommerce\\Tests\\": "tests/"
+      "Railroad\\Ecommerce\\Tests\\": "tests/"
     }
   }
 }
