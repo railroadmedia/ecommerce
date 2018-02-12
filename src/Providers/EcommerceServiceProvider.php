@@ -45,6 +45,9 @@ class EcommerceServiceProvider extends ServiceProvider
         if (ConfigService::$dataMode == 'host') {
             $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
         }
+
+        //load package routes file
+        $this->loadRoutesFrom(__DIR__ . '/../../routes/routes.php');
     }
 
     private function setupConfig()

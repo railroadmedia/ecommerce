@@ -1,0 +1,42 @@
+<?php
+
+namespace Railroad\Ecommerce\Tests\Functional\Services;
+
+
+use Carbon\Carbon;
+use Railroad\Ecommerce\Services\CartService;
+use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Tests\EcommerceTestCase;
+
+class CartServiceTest extends EcommerceTestCase
+{
+    /**
+     * @var CartService
+     */
+    protected $classBeingTested;
+
+    protected function setUp()
+    {
+        parent::setUp();
+        $this->classBeingTested = $this->app->make(CartService::class);
+    }
+
+    public function test_add_product_to_cart()
+    {
+       $this->classBeingTested->addItem('product 1','description', 2, 10, true,
+            true,
+             null,
+            null,
+             ['product-id' => 1]);
+        $cart = $this->classBeingTested->addItem('product 1','description', 10, 10, true,
+            true,
+            null,
+            null,
+            ['product-id' => 1]);
+
+        $this->assertEquals($cart[0]->quantity, 12);
+        $this->assertEquals($cart[0]->totalPrice, 120);
+    }
+
+
+}

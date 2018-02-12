@@ -25,13 +25,14 @@ class CreateProductTable extends Migration
                 $table->string('sku')->index();
                 $table->decimal('price');
                 $table->string('type')->index();
-                $table->boolean('active');
+                $table->boolean('active')->index();
                 $table->text('description')->nullable();
                 $table->text('thumbnail_url')->nullable();
                 $table->boolean('is_physical');
                 $table->decimal('weight')->nullable();
                 $table->string('subscription_interval_type')->index()->nullable();
                 $table->integer('subscription_interval_count')->index()->nullable();
+                $table->integer('stock')->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }
