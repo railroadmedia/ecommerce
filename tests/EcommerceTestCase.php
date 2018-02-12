@@ -42,13 +42,13 @@ class EcommerceTestCase extends BaseTestCase
         // setup package config for testing
         $defaultConfig = require(__DIR__ . '/../config/ecommerce.php');
 
-        $app['config']->set('ecommerce.database_connection_name', 'mysql');
+        $app['config']->set('ecommerce.database_connection_name', 'testbench');
         $app['config']->set('ecommerce.cache_duration', 60);
         $app['config']->set('ecommerce.table_prefix', $defaultConfig['table_prefix']);
         $app['config']->set('ecommerce.data_mode', $defaultConfig['data_mode']);
 
         // setup default database to use sqlite :memory:
-        $app['config']->set('database.default', 'mysql');
+        $app['config']->set('database.default', 'testbench');
         $app['config']->set(
             'database.connections.mysql',
             [
