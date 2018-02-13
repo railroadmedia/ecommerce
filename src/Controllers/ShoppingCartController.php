@@ -24,10 +24,15 @@ class ShoppingCartController extends Controller
         $this->productService = $productService;
     }
 
-
+    /** Add products to cart; if the products are active and available(the product stock > requested quantity)
+     * @param Request $request
+     * @return array
+     */
     public function addToCart(Request $request)
     {
         $input = $request->all();
+        $errors = [];
+        $addedProducts = [];
 
         if (!empty($input['locked']) && $input['locked'] == "true") {
             $this->cartService->lock();
@@ -49,23 +54,32 @@ class ShoppingCartController extends Controller
 
                 $product = $this->productService->getActiveProductFromSku($productSku);
 
-                throw_if(empty($product), new NotFoundException('The product could not be added to cart.'));
-                throw_if(($product['stock'] == 0), new NotFoundException('The product stock is empty and can not be added to cart.'));
-
-                $this->cartService->addItem($product['name'],
-                    $product['description'],
-                    $quantityToAdd,
-                    $product['price'],
-                    $product['is_physical'],
-                    $product['is_physical'],
-                    $product['subscription_interval_type'],
-                    $product['subscription_interval_count'],
-                    [
-                        'product-id' => $product['id']
-                    ]);
+                if (($product) && ($product['stock'] >= $quantityToAdd)) {
+                    $addedProducts[] = $product;
+                    $this->cartService->addItem($product['name'],
+                        $product['description'],
+                        $quantityToAdd,
+                        $product['price'],
+                        $product['is_physical'],
+                        $product['is_physical'],
+                        $product['subscription_interval_type'],
+                        $product['subscription_interval_count'],
+                        [
+                            'product-id' => $product['id']
+                        ]);
+                } else {
+                    $message = 'Product with SKU:' . $productSku . ' could not be added to cart.';
+                    $message .= (is_array($product)) ? ' The product stock(' . $product['stock'] . ') is smaller than the quantity you\'ve selected(' . $quantityToAdd . ')' : '';
+                    $errors[] = $message;
+                }
             }
         }
+        $response = [
+            'addedProducts' => $addedProducts,
+            'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
+            'notAvailableProducts' => $errors
+        ];
 
-        return ($this->cartService->getAllCartItems());
+        return $response;
     }
 }
