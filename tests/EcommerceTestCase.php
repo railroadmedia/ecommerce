@@ -8,6 +8,7 @@ use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
+use Railroad\Ecommerce\Repositories\RepositoryBase;
 
 
 class EcommerceTestCase extends BaseTestCase
@@ -18,15 +19,22 @@ class EcommerceTestCase extends BaseTestCase
      */
     protected $faker;
 
+    /**
+     * @var DatabaseManager
+     */
+    protected $databaseManager;
+
     protected function setUp()
     {
         parent::setUp();
 
-        $this->artisan('migrate:fresh', []);
+        $this->artisan('migrate:fresh');
         $this->artisan('cache:clear', []);
 
         $this->faker = $this->app->make(Generator::class);
         $this->databaseManager = $this->app->make(DatabaseManager::class);
+
+        RepositoryBase::$connectionMask = null;
 
         Carbon::setTestNow(Carbon::now());
     }
