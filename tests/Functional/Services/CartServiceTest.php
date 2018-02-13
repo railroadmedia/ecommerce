@@ -23,12 +23,12 @@ class CartServiceTest extends EcommerceTestCase
 
     public function test_add_product_to_cart()
     {
-       $this->classBeingTested->addItem('product 1','description', 2, 10, true,
+       $this->classBeingTested->addCartItem('product 1','description', 2, 10, true,
             true,
              null,
             null,
              ['product-id' => 1]);
-        $cart = $this->classBeingTested->addItem('product 1','description', 10, 10, true,
+        $cart = $this->classBeingTested->addCartItem('product 1','description', 10, 10, true,
             true,
             null,
             null,
