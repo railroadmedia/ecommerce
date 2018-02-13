@@ -64,6 +64,9 @@ class CartService
         return $this->getAllCartItems();
     }
 
+    /** Return an array with the cart items
+     * @return array
+     */
     public function getAllCartItems()
     {
         $cartItems = [];
@@ -81,6 +84,8 @@ class CartService
         return $cartItems;
     }
 
+    /** Clear the cart items
+     */
     public function removeAllCartItems()
     {
         foreach ($this->session->all() as $sessionKey => $sessionValue) {
@@ -90,10 +95,30 @@ class CartService
         }
     }
 
+    /** Clear and lock the cart
+     */
     public function lock()
     {
         $this->removeAllCartItems();
 
         $this->session->put(self::LOCKED_SESSION_KEY, true);
+    }
+
+    /** Check if the cart it's in locked state
+     * @return bool
+     */
+    public function isLocked()
+    {
+        return $this->session->get(self::LOCKED_SESSION_KEY) == true;
+    }
+
+    /**
+     * Clear and unlock the cart
+     */
+    public function unlock()
+    {
+        $this->removeAllItems();
+
+        $this->session->put(self::LOCKED_SESSION_KEY, false);
     }
 }

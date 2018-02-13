@@ -36,6 +36,8 @@ class ShoppingCartController extends Controller
 
         if (!empty($input['locked']) && $input['locked'] == "true") {
             $this->cartService->lock();
+        } elseif ($this->cartService->isLocked()) {
+            $this->cartService->unlock();
         }
 
         if (!empty($input['products'])) {
