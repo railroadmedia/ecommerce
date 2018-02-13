@@ -59,7 +59,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         ]);
 
         $cart = $response->decodeResponseJson();
-        $this->assertEquals([0 => $product], $cart['addedProducts']);
+        $this->assertEquals([0 => $product], $cart['results']['addedProducts']);
     }
 
     public function test_add_product_with_stock_empty_to_cart()
@@ -85,9 +85,9 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $cart = $response->decodeResponseJson();
 
-        $this->assertEquals([], $cart['addedProducts']);
-        $this->assertEquals(0, $cart['cartNumberOfItems']);
-        $this->assertEquals('Product with SKU:' . $product['sku'] . ' could not be added to cart. The product stock(' . $product['stock'] . ') is smaller than the quantity you\'ve selected(' . $quantity . ')', $cart['notAvailableProducts'][0]);
+        $this->assertEquals([], $cart['results']['addedProducts']);
+        $this->assertEquals(0, $cart['results']['cartNumberOfItems']);
+        $this->assertEquals('Product with SKU:' . $product['sku'] . ' could not be added to cart. The product stock(' . $product['stock'] . ') is smaller than the quantity you\'ve selected(' . $quantity . ')', $cart['results']['notAvailableProducts'][0]);
     }
 
     public function test_add_inexistent_product_to_cart()
@@ -98,9 +98,9 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         ]);
 
         $cart = $response->decodeResponseJson();
-        $this->assertEquals([], $cart['addedProducts']);
-        $this->assertEquals(0, $cart['cartNumberOfItems']);
-        $this->assertEquals('Product with SKU:' . $randomSku . ' could not be added to cart.', $cart['notAvailableProducts'][0]);
+        $this->assertEquals([], $cart['results']['addedProducts']);
+        $this->assertEquals(0, $cart['results']['cartNumberOfItems']);
+        $this->assertEquals('Product with SKU:' . $randomSku . ' could not be added to cart.', $cart['results']['notAvailableProducts'][0]);
     }
 
     public function test_add_many_products_to_cart()
@@ -141,7 +141,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         ]);
 
         $cart = $response->decodeResponseJson();
-        $this->assertEquals(2, $cart['cartNumberOfItems']);
+        $this->assertEquals(2, $cart['results']['cartNumberOfItems']);
     }
 
     public function test_add_to_cart_higher_amount_than_product_stock()
@@ -167,8 +167,8 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $cart = $response->decodeResponseJson();
 
-        $this->assertEquals([], $cart['addedProducts']);
-        $this->assertEquals(0, $cart['cartNumberOfItems']);
+        $this->assertEquals([], $cart['results']['addedProducts']);
+        $this->assertEquals(0, $cart['results']['cartNumberOfItems']);
     }
 
     public function test_add_products_available_and_not_available_to_cart()
@@ -211,8 +211,8 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         ]);
         $cart = $response->decodeResponseJson();
 
-        $this->assertEquals(2, $cart['cartNumberOfItems']);
-        $this->assertEquals(2, count($cart['notAvailableProducts']));
+        $this->assertEquals(2, $cart['results']['cartNumberOfItems']);
+        $this->assertEquals(2, count($cart['results']['notAvailableProducts']));
     }
 
     public function test_remove_product_from_cart()

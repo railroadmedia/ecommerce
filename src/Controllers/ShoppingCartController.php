@@ -84,7 +84,7 @@ class ShoppingCartController extends Controller
             'notAvailableProducts' => $errors
         ];
 
-        return $response;
+        return new JsonResponse($response, 200);
     }
 
     /** Remove product from cart
