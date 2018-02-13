@@ -23,7 +23,18 @@ class CartService
         $this->session = $session;
     }
 
-
+    /** Add item to cart. If the item already exists, just increase the quantity
+     * @param string $name
+     * @param string $description
+     * @param int $quantity
+     * @param int$price
+     * @param boolean $requiresShippingAddress
+     * @param boolean $requiresBillingAddress
+     * @param null $subscriptionIntervalType
+     * @param null $subscriptionIntervalCount
+     * @param array $options
+     * @return array
+     */
     public function addCartItem($name, $description, $quantity, $price, $requiresShippingAddress,
                             $requiresBillingAddress,
                             $subscriptionIntervalType = null,
