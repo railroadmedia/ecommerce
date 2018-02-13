@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ProductService;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -35,9 +36,9 @@ class ShoppingCartController extends Controller
         $addedProducts = [];
 
         if (!empty($input['locked']) && $input['locked'] == "true") {
-            $this->cartService->lock();
+            $this->cartService->lockCart();
         } elseif ($this->cartService->isLocked()) {
-            $this->cartService->unlock();
+            $this->cartService->unlockCart();
         }
 
         if (!empty($input['products'])) {
@@ -58,7 +59,7 @@ class ShoppingCartController extends Controller
 
                 if (($product) && ($product['stock'] >= $quantityToAdd)) {
                     $addedProducts[] = $product;
-                    $this->cartService->addItem($product['name'],
+                    $this->cartService->addCartItem($product['name'],
                         $product['description'],
                         $quantityToAdd,
                         $product['price'],
@@ -76,6 +77,7 @@ class ShoppingCartController extends Controller
                 }
             }
         }
+
         $response = [
             'addedProducts' => $addedProducts,
             'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
@@ -83,5 +85,22 @@ class ShoppingCartController extends Controller
         ];
 
         return $response;
+    }
+
+    /** Remove product from cart
+     * @param int $productId
+     * @return JsonResponse
+     */
+    public function removeCartItem($productId)
+    {
+        $cartItems = $this->cartService->getAllCartItems();
+
+        foreach ($cartItems as $cartItem) {
+            if ($cartItem->options['product-id'] == $productId) {
+                $this->cartService->removeCartItem($cartItem->id);
+            }
+        }
+
+        return new JsonResponse(null, 204);
     }
 }

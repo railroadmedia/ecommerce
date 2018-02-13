@@ -24,7 +24,7 @@ class CartService
     }
 
 
-    public function addItem($name, $description, $quantity, $price, $requiresShippingAddress,
+    public function addCartItem($name, $description, $quantity, $price, $requiresShippingAddress,
                             $requiresBillingAddress,
                             $subscriptionIntervalType = null,
                             $subscriptionIntervalCount = null,
@@ -97,7 +97,7 @@ class CartService
 
     /** Clear and lock the cart
      */
-    public function lock()
+    public function lockCart()
     {
         $this->removeAllCartItems();
 
@@ -115,10 +115,20 @@ class CartService
     /**
      * Clear and unlock the cart
      */
-    public function unlock()
+    public function unlockCart()
     {
         $this->removeAllItems();
 
         $this->session->put(self::LOCKED_SESSION_KEY, false);
+    }
+
+    /** Remove the cart item
+     * @param $id
+     */
+    public function removeCartItem($id)
+    {
+        if ($this->session->has(self::SESSION_KEY . $id)) {
+            $this->session->remove(self::SESSION_KEY . $id);
+        }
     }
 }
