@@ -31,7 +31,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     public function test_add_to_cart()
     {
         $product = [
-            'brand' => $this->faker->word,
+            'brand' => ConfigService::$brand,
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
             'price' => $this->faker->numberBetween(1, 10),
@@ -65,7 +65,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     public function test_add_product_with_stock_empty_to_cart()
     {
         $product = [
-            'brand' => $this->faker->word,
+            'brand' => ConfigService::$brand,
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
             'price' => $this->faker->numberBetween(1, 10),
@@ -106,7 +106,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     public function test_add_many_products_to_cart()
     {
         $product1 = [
-            'brand' => $this->faker->word,
+            'brand' => ConfigService::$brand,
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
             'price' => $this->faker->numberBetween(1, 10),
@@ -121,7 +121,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $this->query()->table(ConfigService::$tableProduct)->insertGetId($product1);
 
         $product2 = [
-            'brand' => $this->faker->word,
+            'brand' => ConfigService::$brand,
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
             'price' => $this->faker->numberBetween(1, 10),
@@ -147,7 +147,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     public function test_add_to_cart_higher_amount_than_product_stock()
     {
         $product = [
-            'brand' => $this->faker->word,
+            'brand' => ConfigService::$brand,
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
             'price' => $this->faker->numberBetween(1, 10),
@@ -174,7 +174,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     public function test_add_products_available_and_not_available_to_cart()
     {
         $product1 = [
-            'brand' => $this->faker->word,
+            'brand' => ConfigService::$brand,
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
             'price' => $this->faker->numberBetween(1, 10),
@@ -189,7 +189,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $productId1 = $this->query()->table(ConfigService::$tableProduct)->insertGetId($product1);
 
         $product2 = [
-            'brand' => $this->faker->word,
+            'brand' => ConfigService::$brand,
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
             'price' => $this->faker->numberBetween(1, 10),
@@ -205,9 +205,9 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $response = $this->call('PUT', '/add-to-cart/', [
             'products' => [$product1['sku'] => $this->faker->numberBetween(1, 5),
-                $this->faker->word => 2,
+                $this->faker->word.'sku1' => 2,
                 $product2['sku'] => $this->faker->numberBetween(1, 5),
-                $this->faker->word => 2]
+                $this->faker->word.'sku2' => 2]
         ]);
         $cart = $response->decodeResponseJson();
 
@@ -218,7 +218,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     public function test_remove_product_from_cart()
     {
         $product = [
-            'brand' => $this->faker->word,
+            'brand' => ConfigService::$brand,
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
             'price' => $this->faker->numberBetween(1, 10),
@@ -246,6 +246,82 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response = $this->call('PUT', '/remove-from-cart/'.$productId);
 
         $this->assertEquals(204, $response->getStatusCode());
+    }
+
+    public function test_update_cart_item_quantity()
+    {
+        $product = [
+            'brand' => ConfigService::$brand,
+            'name' => $this->faker->word,
+            'sku' => $this->faker->word,
+            'price' => $this->faker->numberBetween(1, 10),
+            'type' => ProductService::TYPE_PRODUCT,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'stock' => $this->faker->numberBetween(6, 3000),
+            'created_on' => Carbon::now()->toDateTimeString()
+        ];
+        $productId = $this->query()->table(ConfigService::$tableProduct)->insertGetId($product);
+
+        $firstQuantity = $this->faker->numberBetween(1, 5);
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            $firstQuantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $this->faker->word,
+            rand(),
+            [
+                'product-id' => $productId
+            ]);
+        $newQuantity = $this->faker->numberBetween(6, 10);
+        $response = $this->call('PUT', '/update-product-quantity/'.$productId.'/'.$newQuantity);
+        $decodedResponse = $response->decodeResponseJson();
+
+        $this->assertEquals(201, $decodedResponse['code']);
+        $this->assertTrue($decodedResponse['results']['success']);
+        $this->assertEquals($newQuantity, $decodedResponse['results']['addedProducts'][0]['quantity']);
+    }
+
+    public function test_update_cart_item_quantity_insufficient_stock()
+    {
+        $product = [
+            'brand' => ConfigService::$brand,
+            'name' => $this->faker->word,
+            'sku' => $this->faker->word,
+            'price' => $this->faker->numberBetween(1, 10),
+            'type' => ProductService::TYPE_PRODUCT,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'stock' => $this->faker->numberBetween(2, 5),
+            'created_on' => Carbon::now()->toDateTimeString()
+        ];
+        $productId = $this->query()->table(ConfigService::$tableProduct)->insertGetId($product);
+
+        $firstQuantity = $this->faker->numberBetween(1, 2);
+
+        $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            $firstQuantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $this->faker->word,
+            rand(),
+            [
+                'product-id' => $productId
+            ]);
+
+        $newQuantity = $this->faker->numberBetween(6, 10);
+        $response = $this->call('PUT', '/update-product-quantity/'.$productId.'/'.$newQuantity);
+        $decodedResponse = $response->decodeResponseJson();
+
+        $this->assertEquals(201, $decodedResponse['code']);
+        $this->assertFalse($decodedResponse['results']['success']);
+        $this->assertEquals($firstQuantity, $decodedResponse['results']['addedProducts'][0]['quantity']);
     }
 
 

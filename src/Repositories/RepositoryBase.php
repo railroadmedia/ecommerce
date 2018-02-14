@@ -24,7 +24,7 @@ abstract class RepositoryBase
     public static $connectionMask;
 
     /**
-     * CategoryRepository constructor.
+     * RepositoryBase constructor.
      */
     public function __construct()
     {

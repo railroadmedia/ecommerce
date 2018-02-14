@@ -8,8 +8,6 @@ use Illuminate\Session\Store;
 class CartService
 {
     private $session;
-    private $items = null;
-    private $totalPrice = 0;
 
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
@@ -23,7 +21,7 @@ class CartService
         $this->session = $session;
     }
 
-    /** Add item to cart. If the item already exists, just increase the quantity
+    /** Add item to cart. If the item already exists, just increase the quantity.
      * @param string $name
      * @param string $description
      * @param int $quantity
@@ -51,7 +49,7 @@ class CartService
                 $cartItem->quantity = ($cartItem->quantity + $quantity);
                 $cartItem->totalPrice = $cartItem->quantity * $cartItem->price;
 
-                $this->session->put(self::SESSION_KEY . $cartItem->id, $cartItem);
+                $this->session->put(ConfigService::$brand.'-'.self::SESSION_KEY . $cartItem->id, $cartItem);
 
                 return $this->getAllCartItems();
             }
@@ -70,12 +68,12 @@ class CartService
         $cartItem->subscriptionIntervalCount = $subscriptionIntervalCount;
         $cartItem->options = $options;
 
-        $this->session->put(self::SESSION_KEY . $cartItem->id, $cartItem);
+        $this->session->put(ConfigService::$brand.'-'.self::SESSION_KEY . $cartItem->id, $cartItem);
 
         return $this->getAllCartItems();
     }
 
-    /** Return an array with the cart items
+    /** Return an array with the cart items.
      * @return array
      */
     public function getAllCartItems()
@@ -83,7 +81,7 @@ class CartService
         $cartItems = [];
 
         foreach ($this->session->all() as $sessionKey => $sessionValue) {
-            if (substr($sessionKey, 0, strlen(self::SESSION_KEY)) == self::SESSION_KEY) {
+            if (substr($sessionKey, 0, strlen(ConfigService::$brand.'-'.self::SESSION_KEY)) == ConfigService::$brand.'-'.self::SESSION_KEY) {
                 $cartItem = $sessionValue;
 
                 if (!empty($cartItem->id)) {
@@ -100,7 +98,7 @@ class CartService
     public function removeAllCartItems()
     {
         foreach ($this->session->all() as $sessionKey => $sessionValue) {
-            if (substr($sessionKey, 0, strlen(self::SESSION_KEY)) == self::SESSION_KEY) {
+            if (substr($sessionKey, 0, strlen(ConfigService::$brand.'-'.self::SESSION_KEY)) == ConfigService::$brand.'-'.self::SESSION_KEY) {
                 $this->session->remove($sessionKey);
             }
         }
@@ -112,7 +110,7 @@ class CartService
     {
         $this->removeAllCartItems();
 
-        $this->session->put(self::LOCKED_SESSION_KEY, true);
+        $this->session->put(ConfigService::$brand.'-'.self::LOCKED_SESSION_KEY, true);
     }
 
     /** Check if the cart it's in locked state
@@ -120,7 +118,7 @@ class CartService
      */
     public function isLocked()
     {
-        return $this->session->get(self::LOCKED_SESSION_KEY) == true;
+        return $this->session->get(ConfigService::$brand.'-'.self::LOCKED_SESSION_KEY) == true;
     }
 
     /**
@@ -130,7 +128,7 @@ class CartService
     {
         $this->removeAllItems();
 
-        $this->session->put(self::LOCKED_SESSION_KEY, false);
+        $this->session->put(ConfigService::$brand.'-'.self::LOCKED_SESSION_KEY, false);
     }
 
     /** Remove the cart item
@@ -138,8 +136,37 @@ class CartService
      */
     public function removeCartItem($id)
     {
-        if ($this->session->has(self::SESSION_KEY . $id)) {
-            $this->session->remove(self::SESSION_KEY . $id);
+        if ($this->session->has(ConfigService::$brand.'-'.self::SESSION_KEY . $id)) {
+            $this->session->remove(ConfigService::$brand.'-'.self::SESSION_KEY . $id);
         }
+    }
+
+    /** Update cart item quantity and total price.
+     * @param $cartItemId
+     * @param $quantity
+     */
+    public function updateCartItemQuantity($cartItemId, $quantity)
+    {
+        $cartItem = $this->getCartItem($cartItemId);
+        $cartItem->quantity = $quantity;
+        $cartItem->totalPrice = $quantity * $cartItem->price;
+
+        $this->session->put(ConfigService::$brand.'-'.self::SESSION_KEY . $cartItemId, $cartItem);
+    }
+
+    /** Get a cart item from the session based on cart item id
+     * @param $id
+     * @return mixed|null
+     */
+    public function getCartItem($id)
+    {
+        if ($this->session->has(ConfigService::$brand.'-'.self::SESSION_KEY . $id)) {
+            $cartItem = $this->session->get(ConfigService::$brand.'-'.self::SESSION_KEY . $id);
+
+            if (!empty($cartItem)) {
+                return $cartItem;
+            }
+        }
+        return null;
     }
 }

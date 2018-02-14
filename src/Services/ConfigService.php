@@ -119,5 +119,10 @@ class ConfigService
      */
     public static $tableShippingCostsWeightRange;
 
+    /**
+     * @var string
+     */
+    public static $brand;
+
 
 }

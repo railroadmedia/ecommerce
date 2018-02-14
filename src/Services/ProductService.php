@@ -23,8 +23,12 @@ class ProductService
         $this->productRepository = $productRepository;
     }
 
-    public function getActiveProductFromSku($productSku)
+    /** Get all the active products that meet the conditions
+     * @param array $conditions
+     * @return mixed
+     */
+    public function getActiveProductByConditions(array $conditions)
     {
-        return $this->productRepository->getActiveProductFromSku($productSku);
+        return $this->productRepository->getActiveProductsByConditions($conditions)[0] ?? null;
     }
 }

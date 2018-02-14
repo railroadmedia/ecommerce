@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Railroad\Ecommerce\Repositories\QueryBuilders\ProductQueryBuilder;
 use Railroad\Ecommerce\Services\ConfigService;
 
 class ProductRepository extends RepositoryBase
@@ -11,14 +12,25 @@ class ProductRepository extends RepositoryBase
      */
     public function query()
     {
-        return parent::connection()->table(ConfigService::$tableProduct);
+        return (new ProductQueryBuilder(
+            $this->connection(),
+            $this->connection()->getQueryGrammar(),
+            $this->connection()->getPostProcessor()
+        ))
+            ->from(ConfigService::$tableProduct);
     }
 
-    public function getActiveProductFromSku($productSku)
+    /** Get the active products that meet the conditions
+     * @param $conditions
+     * @return mixed
+     */
+    public function getActiveProductsByConditions($conditions)
     {
-        return $this->query()->where([
-            'sku' => $productSku,
-            'active' => 1
-        ])->get()->first();
+        return $this->query()
+            ->restrictBrand()
+            ->restrictActive()
+            ->where($conditions)
+            ->get()
+            ->toArray();
     }
 }

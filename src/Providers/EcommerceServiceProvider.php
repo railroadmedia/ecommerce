@@ -81,6 +81,9 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$tableOrderItemFulfillment = ConfigService::$tablePrefix . 'order_item_fulfillment';
         ConfigService::$tableShippingOption= ConfigService::$tablePrefix . 'shipping_option';
         ConfigService::$tableShippingCostsWeightRange = ConfigService::$tablePrefix . 'shipping_costs_weight_range';
+
+        // brand
+        ConfigService::$brand = config('ecommerce.brand');
     }
 
     /**

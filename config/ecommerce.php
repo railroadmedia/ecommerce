@@ -6,5 +6,6 @@ return [
     'connection_mask_prefix' => 'ecommerce_',
     'data_mode' => 'host',
 
-    'table_prefix' => 'ecommerce_'
+    'table_prefix' => 'ecommerce_',
+    'brand' => 'drumeo'
 ];

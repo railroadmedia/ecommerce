@@ -25,7 +25,8 @@ class ShoppingCartController extends Controller
         $this->productService = $productService;
     }
 
-    /** Add products to cart; if the products are active and available(the product stock > requested quantity)
+    /** Add products to cart; if the products are active and available(the product stock > requested quantity).
+     *  The success field from response it's set to false if at least one product it's not active or available.
      * @param Request $request
      * @return array
      */
@@ -34,6 +35,7 @@ class ShoppingCartController extends Controller
         $input = $request->all();
         $errors = [];
         $addedProducts = [];
+        $success = false;
 
         if (!empty($input['locked']) && $input['locked'] == "true") {
             $this->cartService->lockCart();
@@ -55,9 +57,9 @@ class ShoppingCartController extends Controller
                     $productSku .= '-' . $subscriptionFrequency . '-' . $subscriptionType;
                 }
 
-                $product = $this->productService->getActiveProductFromSku($productSku);
-
+                $product = $this->productService->getActiveProductByConditions(['sku' => $productSku]);
                 if (($product) && ($product['stock'] >= $quantityToAdd)) {
+                    $success = true;
                     $addedProducts[] = $product;
                     $this->cartService->addCartItem($product['name'],
                         $product['description'],
@@ -79,6 +81,7 @@ class ShoppingCartController extends Controller
         }
 
         $response = [
+            'success' => $success,
             'addedProducts' => $addedProducts,
             'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
             'notAvailableProducts' => $errors
@@ -87,7 +90,7 @@ class ShoppingCartController extends Controller
         return new JsonResponse($response, 200);
     }
 
-    /** Remove product from cart
+    /** Remove product from cart.
      * @param int $productId
      * @return JsonResponse
      */
@@ -102,5 +105,43 @@ class ShoppingCartController extends Controller
         }
 
         return new JsonResponse(null, 204);
+    }
+
+    /** Update the cart item quantity.
+     * If the product it's not active or it's not available(the product stock it's smaller that the quantity)
+     * an error message it's returned in notAvailableProducts, success = false and the cart item quantity it's not modified.
+     * @param int $productId
+     * @param int $quantity
+     * @return JsonResponse
+     */
+    public function updateCartItemQuantity($productId, $quantity)
+    {
+        $product = $this->productService->getActiveProductByConditions(['id' => $productId]);
+        $errors = [];
+        $success = false;
+
+        if (($product) && ($product['stock'] >= $quantity)) {
+            $success = true;
+            $cartItems = $this->cartService->getAllCartItems();
+
+            foreach ($cartItems as $cartItem) {
+                if ($cartItem->options['product-id'] == $productId) {
+                    $this->cartService->updateCartItemQuantity($cartItem->id, $quantity);
+                }
+            }
+        } else {
+            $message = 'The quantity can not be updated.';
+            $message .= (is_array($product)) ? ' The product stock(' . $product['stock'] . ') is smaller than the quantity you\'ve selected(' . $quantity . ')' : '';
+            $errors[] = $message;
+        }
+
+        $response = [
+            'success' => $success,
+            'addedProducts' => $this->cartService->getAllCartItems(),
+            'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
+            'notAvailableProducts' => $errors
+        ];
+
+        return new JsonResponse($response, 201);
     }
 }
