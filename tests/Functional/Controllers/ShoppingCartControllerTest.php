@@ -205,9 +205,9 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $response = $this->call('PUT', '/add-to-cart/', [
             'products' => [$product1['sku'] => $this->faker->numberBetween(1, 5),
-                $this->faker->word.'sku1' => 2,
+                $this->faker->word . 'sku1' => 2,
                 $product2['sku'] => $this->faker->numberBetween(1, 5),
-                $this->faker->word.'sku2' => 2]
+                $this->faker->word . 'sku2' => 2]
         ]);
         $cart = $response->decodeResponseJson();
 
@@ -243,7 +243,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
                 'product-id' => $productId
             ]);
 
-        $response = $this->call('PUT', '/remove-from-cart/'.$productId);
+        $response = $this->call('PUT', '/remove-from-cart/' . $productId);
 
         $this->assertEquals(204, $response->getStatusCode());
     }
@@ -277,7 +277,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
                 'product-id' => $productId
             ]);
         $newQuantity = $this->faker->numberBetween(6, 10);
-        $response = $this->call('PUT', '/update-product-quantity/'.$productId.'/'.$newQuantity);
+        $response = $this->call('PUT', '/update-product-quantity/' . $productId . '/' . $newQuantity);
         $decodedResponse = $response->decodeResponseJson();
 
         $this->assertEquals(201, $decodedResponse['code']);
@@ -316,12 +316,71 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             ]);
 
         $newQuantity = $this->faker->numberBetween(6, 10);
-        $response = $this->call('PUT', '/update-product-quantity/'.$productId.'/'.$newQuantity);
+        $response = $this->call('PUT', '/update-product-quantity/' . $productId . '/' . $newQuantity);
         $decodedResponse = $response->decodeResponseJson();
 
         $this->assertEquals(201, $decodedResponse['code']);
         $this->assertFalse($decodedResponse['results']['success']);
         $this->assertEquals($firstQuantity, $decodedResponse['results']['addedProducts'][0]['quantity']);
+    }
+
+    public function test_redirect_to_shop()
+    {
+        $product = [
+            'brand' => ConfigService::$brand,
+            'name' => $this->faker->word,
+            'sku' => $this->faker->word,
+            'price' => $this->faker->numberBetween(1, 10),
+            'type' => $this->faker->word,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'thumbnail_url' => null,
+            'is_physical' => 0,
+            'stock' => $this->faker->numberBetween(15, 100),
+            'weight' => null,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+            'created_on' => Carbon::now()->toDateTimeString(),
+            'updated_on' => null
+        ];
+
+        $product['id'] = $this->query()->table(ConfigService::$tableProduct)->insertGetId($product);
+
+        $response = $this->call('PUT', '/add-to-cart/', [
+            'products' => [$product['sku'] => 2],
+            'redirect' => '/shop'
+        ]);
+
+        $this->assertEquals('/shop', $response->decodeResponseJson()['results']['redirect']);
+    }
+
+    public function test_redirect_checkout()
+    {
+        $product = [
+            'brand' => ConfigService::$brand,
+            'name' => $this->faker->word,
+            'sku' => $this->faker->word,
+            'price' => $this->faker->numberBetween(1, 10),
+            'type' => $this->faker->word,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'thumbnail_url' => null,
+            'is_physical' => 0,
+            'stock' => $this->faker->numberBetween(15, 100),
+            'weight' => null,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+            'created_on' => Carbon::now()->toDateTimeString(),
+            'updated_on' => null
+        ];
+
+        $product['id'] = $this->query()->table(ConfigService::$tableProduct)->insertGetId($product);
+
+        $response = $this->call('PUT', '/add-to-cart/', [
+            'products' => [$product['sku'] => 2]
+        ]);
+
+        $this->assertArrayNotHasKey('redirect', $response->decodeResponseJson()['results']);
     }
 
 

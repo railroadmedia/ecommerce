@@ -36,11 +36,16 @@ class ShoppingCartController extends Controller
         $errors = [];
         $addedProducts = [];
         $success = false;
+        $redirect = false;
 
         if (!empty($input['locked']) && $input['locked'] == "true") {
             $this->cartService->lockCart();
         } elseif ($this->cartService->isLocked()) {
             $this->cartService->unlockCart();
+        }
+
+        if (array_key_exists('redirect', $input) && $input['redirect'] == "/shop") {
+            $redirect = $input['redirect'];
         }
 
         if (!empty($input['products'])) {
@@ -86,6 +91,10 @@ class ShoppingCartController extends Controller
             'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
             'notAvailableProducts' => $errors
         ];
+
+        if ($redirect) {
+            $response['redirect'] = $redirect;
+        }
 
         return new JsonResponse($response, 200);
     }
