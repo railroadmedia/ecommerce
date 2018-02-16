@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories\QueryBuilders;
 
+use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 
 class ProductQueryBuilder extends QueryBuilder
@@ -12,7 +13,9 @@ class ProductQueryBuilder extends QueryBuilder
      */
     public function restrictActive()
     {
-        $this->where(ConfigService::$tableProduct . '.active', 1);
+        if (!ProductRepository::$pullInactiveProducts) {
+            $this->where(ConfigService::$tableProduct . '.active', 1);
+        }
 
         return $this;
     }

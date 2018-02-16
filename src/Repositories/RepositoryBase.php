@@ -61,6 +61,38 @@ abstract class RepositoryBase
         $this->connection = self::$connectionMask;
     }
 
+    /** Update record based on record id
+     * @param integer $id
+     * @param array $data
+     * @return integer
+     */
+    public function update($id, array $data)
+    {
+        $existing = $this->query()->where(['id' => $id])->first();
+
+        if (!empty($existing)) {
+            $this->query()->where(['id' => $id])->update($data);
+        }
+
+        return $id;
+    }
+
+    /**
+     * Returns new record id.
+     *
+     * @param array $data
+     * @return int
+     */
+    public function create(array $data)
+    {
+        $existing = $this->query()->where($data)->first();
+
+        if (empty($existing)) {
+            return $this->query()->insertGetId($data);
+        }
+
+        return $existing['id'];
+    }
     /**
      * @return Builder
      */

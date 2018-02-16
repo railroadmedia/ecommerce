@@ -16,3 +16,13 @@ Route::put(
     '/update-product-quantity/{productId}/{quantity}',
     Railroad\Ecommerce\Controllers\ShoppingCartController::class . '@updateCartItemQuantity'
 )->name('shopping-cart.update-cart-item-quantity');
+
+Route::put(
+    '/product',
+    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@store'
+)->name('product.store');
+
+Route::patch(
+    '/product/{productId}',
+    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@update'
+)->name('product.update');

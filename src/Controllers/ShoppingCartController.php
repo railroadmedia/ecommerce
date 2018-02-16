@@ -62,7 +62,7 @@ class ShoppingCartController extends Controller
                     $productSku .= '-' . $subscriptionFrequency . '-' . $subscriptionType;
                 }
 
-                $product = $this->productService->getActiveProductByConditions(['sku' => $productSku]);
+                $product = $this->productService->getProductByConditions(['sku' => $productSku]);
                 if (($product) && ($product['stock'] >= $quantityToAdd)) {
                     $success = true;
                     $addedProducts[] = $product;
@@ -125,7 +125,7 @@ class ShoppingCartController extends Controller
      */
     public function updateCartItemQuantity($productId, $quantity)
     {
-        $product = $this->productService->getActiveProductByConditions(['id' => $productId]);
+        $product = $this->productService->getProductByConditions(['id' => $productId]);
         $errors = [];
         $success = false;
 

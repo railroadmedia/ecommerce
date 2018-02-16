@@ -7,6 +7,13 @@ use Railroad\Ecommerce\Services\ConfigService;
 
 class ProductRepository extends RepositoryBase
 {
+
+    /**
+     * Determines whether inactive products will be pulled or not.
+     *
+     * @var array|bool
+     */
+    public static $pullInactiveProducts = true;
     /**
      * @return Builder
      */
@@ -20,11 +27,11 @@ class ProductRepository extends RepositoryBase
             ->from(ConfigService::$tableProduct);
     }
 
-    /** Get the active products that meet the conditions
+    /** Get the products that meet the conditions
      * @param $conditions
      * @return mixed
      */
-    public function getActiveProductsByConditions($conditions)
+    public function getProductsByConditions($conditions)
     {
         return $this->query()
             ->restrictBrand()

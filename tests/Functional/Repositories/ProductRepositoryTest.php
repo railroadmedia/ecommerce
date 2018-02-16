@@ -47,7 +47,7 @@ class ProductRepositoryTest extends EcommerceTestCase
 
         $productId = $this->query()->table(ConfigService::$tableProduct)->insertGetId($product);
 
-        $results = $this->classBeingTested->getActiveProductsByConditions(['sku' => $product['sku']]);
+        $results = $this->classBeingTested->getProductsByConditions(['sku' => $product['sku']]);
 
         $this->assertEquals(['0' => array_merge(['id' => $productId], $product)], $results);
     }

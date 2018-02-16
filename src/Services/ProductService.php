@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Carbon\Carbon;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 
 
@@ -27,8 +28,88 @@ class ProductService
      * @param array $conditions
      * @return mixed
      */
-    public function getActiveProductByConditions(array $conditions)
+    public function getProductByConditions(array $conditions)
     {
-        return $this->productRepository->getActiveProductsByConditions($conditions)[0] ?? null;
+        return $this->productRepository->getProductsByConditions($conditions)[0] ?? null;
+    }
+
+    /** Create a new product and return it as array
+     * @param string|null $brand
+     * @param string $name
+     * @param string $sku
+     * @param numeric $price
+     * @param string $type
+     * @param boolean $active
+     * @param string $description
+     * @param string $thumbnail_url
+     * @param boolean $is_physical
+     * @param integer|null $weight
+     * @param string|null $subscription_interval_type
+     * @param integer|null $subscription_interval_count
+     * @param integer $stock
+     * @return array|null
+     */
+    public function store(
+        $brand,
+        $name,
+        $sku,
+        $price,
+        $type,
+        $active,
+        $description,
+        $thumbnail_url,
+        $is_physical,
+        $weight,
+        $subscription_interval_type,
+        $subscription_interval_count,
+        $stock)
+    {
+
+        $productId = $this->productRepository->create([
+            'brand' => $brand ?? ConfigService::$brand,
+            'name' => $name,
+            'sku' => $sku,
+            'price' => $price,
+            'type' => $type,
+            'active' => $active,
+            'description' => $description,
+            'thumbnail_url' => $thumbnail_url,
+            'is_physical' => $is_physical,
+            'weight' => $weight,
+            'subscription_interval_type' => ($type == self::TYPE_SUBSCRIPTION) ? $subscription_interval_type : null,
+            'subscription_interval_count' => ($type == self::TYPE_SUBSCRIPTION) ? $subscription_interval_count : null,
+            'stock' => $stock,
+            'created_on' => Carbon::now()->toDateTimeString()
+        ]);
+
+        return $this->getById($productId);
+    }
+
+    /** Get an array with product details based on product id
+     * @param integer $productId
+     * @return array|null
+     */
+    public function getById($productId)
+    {
+        return $this->productRepository->getProductsByConditions(['id' => $productId])[0] ?? null;
+    }
+
+    /** Update and return the modified product. If the product not exist return null.
+     * @param integer $id
+     * @param array $data
+     * @return array|null
+     */
+    public function update($id, array $data)
+    {
+        $product = $this->getById($id);
+
+        if (empty($product)) {
+            return null;
+        }
+
+        $data['updated_on'] = Carbon::now()->toDateTimeString();
+        $this->productRepository->update($id, $data);
+
+        return $this->getById($id);
     }
 }
