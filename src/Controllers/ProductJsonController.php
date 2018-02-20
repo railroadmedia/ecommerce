@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\ProductCreateRequest;
@@ -79,13 +80,42 @@ class ProductJsonController extends Controller
             )
         );
 
-        //if the update method response it's null the content not exist; we throw the proper exception
+        //if the update method response it's null the product not exist; we throw the proper exception
         throw_if(
             is_null($product),
             new NotFoundException('Update failed, product not found with id: ' . $productId)
         );
 
         return new JsonResponse($product, 201);
+    }
+
+    /** Delete a product that it's not connected to orders or discounts and return a JsonResponse.
+     *  Throw  - NotFoundException if the product not exist
+     *         - NotAllowedException if the product it's connected to orders or discounts
+     * @param integer $productId
+     * @return JsonResponse
+     */
+    public function delete($productId)
+    {
+        $results = $this->productService->delete($productId);
+
+        //if the delete method response it's null the product not exist; we throw the proper exception
+        throw_if(
+            is_null($results),
+            new NotFoundException('Delete failed, product not found with id: ' . $productId)
+        );
+
+        throw_if(
+            ($results === -1),
+            new NotAllowedException('Delete failed, exists discounts defined for the selected product.')
+        );
+
+        throw_if(
+            ($results === 0),
+            new NotAllowedException('Delete failed, exists orders that contain the selected product.')
+        );
+
+        return new JsonResponse(null, 204);
     }
 
 }

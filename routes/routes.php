@@ -26,3 +26,8 @@ Route::patch(
     '/product/{productId}',
     Railroad\Ecommerce\Controllers\ProductJsonController::class . '@update'
 )->name('product.update');
+
+Route::delete(
+    '/product/{productId}',
+    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@delete'
+)->name('product.delete');

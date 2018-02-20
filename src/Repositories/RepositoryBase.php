@@ -93,6 +93,18 @@ abstract class RepositoryBase
 
         return $existing['id'];
     }
+
+    /**
+     * Delete a record.
+     *
+     * @param integer $id
+     * @return bool
+     */
+    public function delete($id)
+    {
+        return $this->query()->where(['id' => $id])->delete() > 0;
+    }
+
     /**
      * @return Builder
      */

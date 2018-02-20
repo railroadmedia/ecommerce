@@ -266,4 +266,85 @@ class ProductControllerTest extends EcommerceTestCase
 
         $this->assertEquals($errors, json_decode($results->content(), true)['errors']);
     }
+
+    public function test_delete_missing_product()
+    {
+        $randomId = rand();
+        $results = $this->call('DELETE', '/product/' . $randomId);
+
+        $this->assertEquals(404, $results->status());
+        $this->assertEquals('Product not found.', json_decode($results->getContent())->error->title, true);
+        $this->assertEquals('Delete failed, product not found with id: ' . $randomId, json_decode($results->getContent())->error->detail, true);
+    }
+
+    public function test_delete_product_when_exists_product_order()
+    {
+        $product = $this->productFactory->store();
+
+        $orderItem1 = [
+            'order_id' => 1,
+            'product_id' => $product['id'],
+            'quantity' => 2,
+            'initial_price' => 5,
+            'discount' => 0,
+            'tax' => 0,
+            'shipping_costs' => 0,
+            'total_price' => 10,
+            'created_on' => Carbon::now()->toDateTimeString(),
+            'updated_on' => null
+        ];
+
+        $orderItemId = $this->query()->table(ConfigService::$tableOrderItem)->insertGetId($orderItem1);
+
+        $results = $this->call('DELETE', '/product/' . $product['id']);
+
+        $this->assertEquals(403, $results->status());
+        $this->assertEquals('Not allowed.', json_decode($results->getContent())->error->title, true);
+        $this->assertEquals('Delete failed, exists orders that contain the selected product.', json_decode($results->getContent())->error->detail, true);
+    }
+
+    public function test_delete_product_when_exists_product_discounts()
+    {
+        $product = $this->productFactory->store();
+
+        $discount = [
+            'name' => $this->faker->word,
+            'type' => $this->faker->word,
+            'product_id' => $product['id'],
+            'min' => 2,
+            'max' => 10,
+            'discount_id' => rand(),
+            'created_on' => Carbon::now()->toDateTimeString(),
+            'updated_on' => null
+        ];
+
+        $this->query()->table(ConfigService::$tableDiscountCriteria)->insertGetId($discount);
+        $results = $this->call('DELETE', '/product/' . $product['id']);
+
+        $this->assertEquals(403, $results->status());
+        $this->assertEquals('Not allowed.', json_decode($results->getContent())->error->title, true);
+        $this->assertEquals('Delete failed, exists discounts defined for the selected product.', json_decode($results->getContent())->error->detail, true);
+    }
+
+    public function test_delete_product()
+    {
+        $product = $this->productFactory->store();
+
+        $results = $this->call('DELETE', '/product/' . $product['id']);
+
+        $this->assertEquals(204, $results->status());
+        $this->assertDatabaseMissing(ConfigService::$tableProduct,
+            [
+                'id' => $product['id'],
+            ]);
+
+    }
+
+    /**
+     * @return \Illuminate\Database\Connection
+     */
+    public function query()
+    {
+        return $this->databaseManager->connection();
+    }
 }

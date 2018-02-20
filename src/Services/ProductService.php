@@ -3,13 +3,28 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
+use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 
 
 class ProductService
 {
 
+    /**
+     * @var ProductRepository
+     */
     private $productRepository;
+
+    /**
+     * @var OrderItemRepository
+     */
+    private $orderItemRepository;
+
+    /**
+     * @var DiscountCriteriaRepository
+     */
+    private $discountCriteriaRepository;
 
     // all possible product types
     const TYPE_PRODUCT = 'product';
@@ -19,9 +34,13 @@ class ProductService
      * ProductService constructor.
      * @param $productRepository
      */
-    public function __construct(ProductRepository $productRepository)
+    public function __construct(ProductRepository $productRepository,
+                                OrderItemRepository $orderItemRepository,
+                                DiscountCriteriaRepository $discountCriteriaRepository)
     {
         $this->productRepository = $productRepository;
+        $this->orderItemRepository = $orderItemRepository;
+        $this->discountCriteriaRepository = $discountCriteriaRepository;
     }
 
     /** Get all the active products that meet the conditions
@@ -111,5 +130,35 @@ class ProductService
         $this->productRepository->update($id, $data);
 
         return $this->getById($id);
+    }
+
+    /** Delete a product if it's not connected to orders or discounts.
+     *  Return - null if the product not exists
+     *         - 0 if the product it's connected with orders
+     *         - -1 if the product it's connected with discounts
+     *          - true if the product was deleted
+     * @param integer $productId
+     * @return bool|int|null
+     */
+    public function delete($productId)
+    {
+        $product = $this->getById($productId);
+
+        if (empty($product)) {
+            return null;
+        }
+
+        $orderItems = $this->orderItemRepository->getByProductId($productId);
+
+        if (count($orderItems) > 0) {
+            return 0;
+        }
+
+        $discounts = $this->discountCriteriaRepository->getByProductId($productId);
+        if (count($discounts) > 0) {
+            return -1;
+        }
+
+        return $this->productRepository->delete($productId);
     }
 }
