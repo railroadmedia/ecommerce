@@ -21,6 +21,7 @@ class CreateShippingOptionTable extends Migration
                 $table->increments('id');
                 $table->string('country')->index();
                 $table->boolean('active')->index();
+                $table->integer('priority')->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }

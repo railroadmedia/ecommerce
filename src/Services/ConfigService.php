@@ -124,5 +124,10 @@ class ConfigService
      */
     public static $brand;
 
+    /**
+     * @var array
+     */
+    public static $taxRate;
+
 
 }

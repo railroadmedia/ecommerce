@@ -37,6 +37,7 @@ class CartService
                             $requiresBillingAddress,
                             $subscriptionIntervalType = null,
                             $subscriptionIntervalCount = null,
+                            $weight,
                             $options = [])
     {
         $cartItems = $this->getAllCartItems();
@@ -48,6 +49,7 @@ class CartService
             ) {
                 $cartItem->quantity = ($cartItem->quantity + $quantity);
                 $cartItem->totalPrice = $cartItem->quantity * $cartItem->price;
+                $cartItem->weight = $cartItem->quantity * $weight;
 
                 $this->session->put(ConfigService::$brand.'-'.self::SESSION_KEY . $cartItem->id, $cartItem);
 
@@ -66,6 +68,7 @@ class CartService
         $cartItem->requiresBillinggAddress = $requiresBillingAddress;
         $cartItem->subscriptionIntervalType = $subscriptionIntervalType;
         $cartItem->subscriptionIntervalCount = $subscriptionIntervalCount;
+        $cartItem->weight = $cartItem->quantity * $weight;
         $cartItem->options = $options;
 
         $this->session->put(ConfigService::$brand.'-'.self::SESSION_KEY . $cartItem->id, $cartItem);

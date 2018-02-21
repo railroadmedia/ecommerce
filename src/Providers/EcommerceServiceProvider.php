@@ -84,6 +84,9 @@ class EcommerceServiceProvider extends ServiceProvider
 
         // brand
         ConfigService::$brand = config('ecommerce.brand');
+
+        //tax rated
+        ConfigService::$taxRate = config('ecommerce.tax_rate');
     }
 
     /**

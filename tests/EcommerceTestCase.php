@@ -55,6 +55,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.table_prefix', $defaultConfig['table_prefix']);
         $app['config']->set('ecommerce.data_mode', $defaultConfig['data_mode']);
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
+        $app['config']->set('ecommerce.tax_rate', $defaultConfig['tax_rate']);
 
         // setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');

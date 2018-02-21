@@ -6,7 +6,6 @@ namespace Railroad\Ecommerce\Controllers;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
-use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\ProductCreateRequest;
 use Railroad\Ecommerce\Requests\ProductUpdateRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;

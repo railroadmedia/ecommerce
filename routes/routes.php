@@ -31,3 +31,8 @@ Route::delete(
     '/product/{productId}',
     Railroad\Ecommerce\Controllers\ProductJsonController::class . '@delete'
 )->name('product.delete');
+
+Route::get(
+    '/order',
+    Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@index'
+)->name('order.form');

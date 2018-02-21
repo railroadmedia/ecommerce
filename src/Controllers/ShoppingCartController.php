@@ -74,6 +74,7 @@ class ShoppingCartController extends Controller
                         $product['is_physical'],
                         $product['subscription_interval_type'],
                         $product['subscription_interval_count'],
+                        $product['weight'],
                         [
                             'product-id' => $product['id']
                         ]);
