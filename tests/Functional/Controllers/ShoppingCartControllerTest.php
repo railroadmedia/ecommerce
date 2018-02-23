@@ -49,13 +49,14 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         ];
 
         $product['id'] = $this->query()->table(ConfigService::$tableProduct)->insertGetId($product);
-
+        $initialQuantity = 2;
         $this->call('PUT', '/add-to-cart/', [
-            'products' => [$product['sku'] => 2]
+            'products' => [$product['sku'] => $initialQuantity]
         ]);
 
+        $newQuantity = 10;
         $response = $this->call('PUT', '/add-to-cart/', [
-            'products' => [$product['sku'] => 10]
+            'products' => [$product['sku'] => $newQuantity]
         ]);
 
         $cart = $response->decodeResponseJson();
@@ -239,6 +240,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $this->faker->word,
             rand(),
+            0,
             [
                 'product-id' => $productId
             ]);
@@ -273,6 +275,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $this->faker->word,
             rand(),
+            0,
             [
                 'product-id' => $productId
             ]);
@@ -310,6 +313,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['is_physical'],
             $this->faker->word,
+            0,
             rand(),
             [
                 'product-id' => $productId

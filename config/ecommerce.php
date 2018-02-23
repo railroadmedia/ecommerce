@@ -8,8 +8,9 @@ return [
 
     'table_prefix' => 'ecommerce_',
     'brand' => 'drumeo',
+    //the countries and the region names should be lowercase
     'tax_rate' => [
-        'Canada' => [
+        'canada' => [
             'alberta' => 0.05,
             'ab' => 0.05,
             'british columbia' => 0.12,

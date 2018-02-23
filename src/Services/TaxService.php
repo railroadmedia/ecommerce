@@ -5,11 +5,16 @@ namespace Railroad\Ecommerce\Services;
 
 class TaxService
 {
+    /** Calculate the tax rate based on country and region
+     * @param string $country
+     * @param string $region
+     * @return float|int
+     */
     public function getTaxRate($country, $region)
     {
-        if (array_key_exists($country, ConfigService::$taxRate)) {
-            if (array_key_exists($region, ConfigService::$taxRate[$country])) {
-                return ConfigService::$taxRate[$country][$region];
+        if (array_key_exists(strtolower($country), ConfigService::$taxRate)) {
+            if (array_key_exists(strtolower($region), ConfigService::$taxRate[strtolower($country)])) {
+                return ConfigService::$taxRate[strtolower($country)][strtolower($region)];
             } else {
                 return 0.05;
             }
@@ -18,7 +23,19 @@ class TaxService
         }
     }
 
-    public function getCartItemsWithTax($cartItems, $country, $region, $shippingCosts)
+    /** Calculate the taxes on product and shipping costs for each cart item, the total due, the total taxes, the shipping costs and return an array with the following structure:
+     *      'cartItems' => array
+     *      'totalDue' => float
+     *      'totalTax' => float
+     *      'shippingCosts' => float
+     *
+     * @param array $cartItems
+     * @param string $country
+     * @param string $region
+     * @param int $shippingCosts
+     * @return array
+     */
+    public function calculateTaxesForCartItems($cartItems, $country, $region, $shippingCosts = 0)
     {
         $taxRate = $this->getTaxRate($country, $region);
 
@@ -45,10 +62,11 @@ class TaxService
                 $cartItems[$key]->itemTax = $item->totalPrice / ($totalDue - $taxAmount) * $taxAmount;
             }
         }
-        $cartItems['totalDue'] = $totalDue;
-        $cartItems['totalTax'] = $taxAmount;
-        $cartItems['shippingCosts'] = (float)$shippingCosts;
+        $results['cartItems'] = $cartItems;
+        $results['totalDue'] = $totalDue;
+        $results['totalTax'] = $taxAmount;
+        $results['shippingCosts'] = (float)$shippingCosts;
 
-        return $cartItems;
+        return $results;
     }
 }

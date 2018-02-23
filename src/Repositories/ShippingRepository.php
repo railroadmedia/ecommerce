@@ -17,11 +17,18 @@ class ShippingRepository extends RepositoryBase
         return $this->connection()->table(ConfigService::$tableShippingOption);
     }
 
+    /** Get the first active shipping cost based on country and total weight
+     * @param string $country
+     * @param integer $totalWeight
+     * @return mixed
+     */
     public function getShippingCosts($country, $totalWeight)
     {
-
-        $results = $this->query()
-            ->join(ConfigService::$tableShippingCostsWeightRange, ConfigService::$tableShippingOption . '.id', '=', ConfigService::$tableShippingCostsWeightRange . '.shipping_option_id')
+        return $this->query()
+            ->join(ConfigService::$tableShippingCostsWeightRange,
+                ConfigService::$tableShippingOption . '.id',
+                '=',
+                ConfigService::$tableShippingCostsWeightRange . '.shipping_option_id')
             ->where(function ($query) use ($country) {
                 $query->where('country', $country)
                     ->orWhere('country', '*');
@@ -31,6 +38,5 @@ class ShippingRepository extends RepositoryBase
             ->where('max', '>=', $totalWeight)
             ->orderBy('priority', 'desc')
             ->get()->first();
-        return $results;
     }
 }

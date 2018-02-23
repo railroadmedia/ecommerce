@@ -118,8 +118,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]);
 
         $results = $this->call('GET', '/order');
+        $decodedResults = $results->decodeResponseJson();
 
-        dd($results);
+        $this->assertEquals(200, $results->getStatusCode());
     }
 
     /**

@@ -5,24 +5,47 @@ namespace Railroad\Ecommerce\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Responses\JsonResponse;
+use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ProductService;
-use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Services\TaxService;
 
 class ShoppingCartController extends Controller
 {
+    /**
+     * @var CartService
+     */
     private $cartService;
+
+    /**
+     * @var ProductService
+     */
     private $productService;
+
+    /**
+     * @var CartAddressService
+     */
+    private $cartAddressService;
+
+    /**
+     * @var TaxService
+     */
+    private $taxService;
 
     /**
      * ShoppingCartController constructor.
      * @param $cartService
      * @param $productService
      */
-    public function __construct(CartService $cartService, ProductService $productService)
+    public function __construct(CartService $cartService,
+                                ProductService $productService,
+                                CartAddressService $cartAddressService,
+                                TaxService $taxService)
     {
         $this->cartService = $cartService;
         $this->productService = $productService;
+        $this->cartAddressService = $cartAddressService;
+        $this->taxService = $taxService;
     }
 
     /** Add products to cart; if the products are active and available(the product stock > requested quantity).
@@ -76,7 +99,8 @@ class ShoppingCartController extends Controller
                         $product['subscription_interval_count'],
                         $product['weight'],
                         [
-                            'product-id' => $product['id']
+                            'product-id' => $product['id'],
+                            'requires-shipping-address' => $product['is_physical']
                         ]);
                 } else {
                     $message = 'Product with SKU:' . $productSku . ' could not be added to cart.';
@@ -86,9 +110,13 @@ class ShoppingCartController extends Controller
             }
         }
 
+        $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+        $cartItemsPriceWithTax = $this->taxService->calculateTaxesForCartItems($this->cartService->getAllCartItems(), $billingAddress['country'], $billingAddress['region']);
+
         $response = [
             'success' => $success,
             'addedProducts' => $addedProducts,
+            'cartSubTotal' => $cartItemsPriceWithTax['totalDue'],
             'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
             'notAvailableProducts' => $errors
         ];

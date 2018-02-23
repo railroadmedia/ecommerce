@@ -5,47 +5,43 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\ShippingService;
-use Railroad\Ecommerce\Services\TaxService;
+use Railroad\Ecommerce\Services\OrderFormService;
 
 class OrderFormJsonController extends Controller
 {
+    /**
+     * @var CartService
+     */
     private $cartService;
-    private $taxService;
-    private $shippingService;
+
+    /**
+     * @var OrderFormService
+     */
+    private $orderFormService;
 
     /**
      * OrderFormJsonController constructor.
      * @param $cartService
      */
-    public function __construct(CartService $cartService, TaxService $taxService, ShippingService $shippingService)
+    public function __construct(CartService $cartService, OrderFormService $orderFormService)
     {
         $this->cartService = $cartService;
-        $this->taxService = $taxService;
-        $this->shippingService = $shippingService;
+        $this->orderFormService = $orderFormService;
     }
 
-    public function index(Request $request)
+    public function index()
     {
-        $input = $request->all();
+        $orderForm = $this->orderFormService->prepareOrderForm();
 
-        //TODO: should be implemented
-        $guessedCountry = "United states";
-        $guessedRegion = "bc";
+        //if the cart it's empty; we throw an exception
+        throw_if(
+            is_null($orderForm),
+            new NotFoundException('The cart it\'s empty')
+        );
 
-        $cartItems = $this->cartService->getAllCartItems();
-
-        if (empty($cartItems)) {
-            //TODO
-            return 'Empty cart';
-        }
-
-
-        $shippingCosts = $this->shippingService->getShippingCosts($cartItems, $guessedCountry);
-
-        $cartItemsWithTax = $this->taxService->getCartItemsWithTax($cartItems, $guessedCountry, $guessedRegion, $shippingCosts);
-
-        dd($cartItemsWithTax);
+        return new JsonResponse($orderForm, 200);
     }
 }

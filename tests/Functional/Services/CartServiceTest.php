@@ -27,11 +27,13 @@ class CartServiceTest extends EcommerceTestCase
             true,
              null,
             null,
+             0,
              ['product-id' => 1]);
         $cart = $this->classBeingTested->addCartItem('product 1','description', 10, 10, true,
             true,
             null,
             null,
+            0,
             ['product-id' => 1]);
 
         $this->assertEquals($cart[0]->quantity, 12);

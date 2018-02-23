@@ -9,6 +9,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Repositories\RepositoryBase;
+use Railroad\Location\Providers\LocationServiceProvider;
 
 
 class EcommerceTestCase extends BaseTestCase
@@ -49,6 +50,7 @@ class EcommerceTestCase extends BaseTestCase
     {
         // setup package config for testing
         $defaultConfig = require(__DIR__ . '/../config/ecommerce.php');
+        $locationConfig = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
 
         $app['config']->set('ecommerce.database_connection_name', 'testbench');
         $app['config']->set('ecommerce.cache_duration', 60);
@@ -56,6 +58,10 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.data_mode', $defaultConfig['data_mode']);
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
         $app['config']->set('ecommerce.tax_rate', $defaultConfig['tax_rate']);
+        $app['config']->set('location.environment', $locationConfig['environment']);
+        $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
+        $app['config']->set('location.api', $locationConfig['api']);
+        $app['config']->set('location.active_api', $locationConfig['active_api']);
 
         // setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
@@ -99,6 +105,7 @@ class EcommerceTestCase extends BaseTestCase
 
         // register provider
         $app->register(EcommerceServiceProvider::class);
+        $app->register(LocationServiceProvider::class);
     }
 
     protected function tearDown()
