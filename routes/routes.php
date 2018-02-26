@@ -36,3 +36,35 @@ Route::get(
     '/order',
     Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@index'
 )->name('order.form');
+
+Route::put(
+    '/shipping-option',
+    Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@store'
+)->name('shipping-option.store');
+
+Route::patch(
+    '/shipping-option/{shippingOptionId}',
+    Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@update'
+)->name('shipping-option.update');
+
+Route::delete(
+    '/shipping-option/{shippingOptionId}',
+    Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@delete'
+)->name('shipping-option.delete');
+
+Route::put(
+    '/shipping-cost',
+    Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@store'
+)->name('shipping-cost-weight-range.store');
+
+Route::patch(
+    '/shipping-cost/{shippingCostId}',
+    Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@update'
+)->name('shipping-cost-weight-range.update');
+
+Route::delete(
+    '/shipping-cost/{shippingCostId}',
+    Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@delete'
+)->name('shipping-cost-weight-range.delete');
+
+

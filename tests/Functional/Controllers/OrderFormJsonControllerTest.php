@@ -5,6 +5,8 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Controllers\OrderFormJsonController;
 use Railroad\Ecommerce\Factories\ProductFactory;
+use Railroad\Ecommerce\Factories\ShippingCostsFactory;
+use Railroad\Ecommerce\Factories\ShippingOptionFactory;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ProductService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -16,10 +18,22 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
      */
     protected $productFactory;
 
+    /**
+     * @var ShippingOptionFactory
+     */
+    protected $shippingOptionFactory;
+
+    /**
+     * @var ShippingCostsFactory
+     */
+    protected $shippingCostsFactory;
+
     protected function setUp()
     {
         parent::setUp();
         $this->productFactory = $this->app->make(ProductFactory::class);
+        $this->shippingOptionFactory = $this->app->make(ShippingOptionFactory::class);
+        $this->shippingCostsFactory = $this->app->make(ShippingCostsFactory::class);
     }
 
     public function testIndex()
@@ -56,61 +70,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->query()->table(ConfigService::$tableProduct)->insertGetId($product2);
 
-        $shippingOption = [
-            'country' =>'Canada',
-            'active' => 1,
-            'priority' => 1,
-            'created_on' => Carbon::now()->toDateTimeString()
-        ];
+        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
+        $shippingOption2 = $this->shippingOptionFactory->store('*', 0,1);
 
-        $shippingOption2 = [
-            'country' =>'*',
-            'active' => 1,
-            'priority' => 0,
-            'created_on' => Carbon::now()->toDateTimeString()
-        ];
+        $this->shippingCostsFactory->store($shippingOption['id'], 0, 1000, 520);
 
-        $shippingOptionId = $this->query()->table(ConfigService::$tableShippingOption)->insertGetId($shippingOption);
-        $shippingOptionId2 = $this->query()->table(ConfigService::$tableShippingOption)->insertGetId($shippingOption2);
-
-        $shippingOptionWeightRanges = [
-            'shipping_option_id' => $shippingOptionId,
-            'min' => 0,
-            'max' => 1000,
-        'price' => 520,
-            'created_on' => Carbon::now()->toDateTimeString()
-        ];
-
-        $this->query()->table(ConfigService::$tableShippingCostsWeightRange)->insertGetId($shippingOptionWeightRanges);
-
-        $shippingOptionWeightRangesUni1 = [
-            'shipping_option_id' => $shippingOptionId2,
-            'min' => 0,
-            'max' => 1,
-            'price' => 13.50,
-            'created_on' => Carbon::now()->toDateTimeString()
-        ];
-
-        $this->query()->table(ConfigService::$tableShippingCostsWeightRange)->insertGetId($shippingOptionWeightRangesUni1);
-
-        $shippingOptionWeightRangesUni2 = [
-            'shipping_option_id' => $shippingOptionId2,
-            'min' => 1,
-            'max' => 2,
-            'price' => 19,
-            'created_on' => Carbon::now()->toDateTimeString()
-        ];
-
-        $this->query()->table(ConfigService::$tableShippingCostsWeightRange)->insertGetId($shippingOptionWeightRangesUni2);
-        $shippingOptionWeightRangesUni3 = [
-            'shipping_option_id' => $shippingOptionId2,
-            'min' => 2,
-            'max' => 50,
-            'price' => 24,
-            'created_on' => Carbon::now()->toDateTimeString()
-        ];
-
-        $this->query()->table(ConfigService::$tableShippingCostsWeightRange)->insertGetId($shippingOptionWeightRangesUni3);
+        $this->shippingCostsFactory->store($shippingOption2['id'], 0,1,13.50);
+        $this->shippingCostsFactory->store($shippingOption2['id'], 1,2,19);
+        $this->shippingCostsFactory->store($shippingOption2['id'], 2,50,24);
 
         $response = $this->call('PUT', '/add-to-cart/', [
             'products' => [$product1['sku'] => 2,
@@ -121,6 +88,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $decodedResults = $results->decodeResponseJson();
 
         $this->assertEquals(200, $results->getStatusCode());
+        $this->assertNull($decodedResults['results']['shippingAddress']);
+        $this->assertEquals(0, $decodedResults['results']['shippingCosts']);
     }
 
     /**

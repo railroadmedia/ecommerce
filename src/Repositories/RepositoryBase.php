@@ -105,6 +105,16 @@ abstract class RepositoryBase
         return $this->query()->where(['id' => $id])->delete() > 0;
     }
 
+
+    /**
+     * @param integer $id
+     * @return array
+     */
+    public function getById($id)
+    {
+        return $this->query()->where(['id' => $id])->first();
+    }
+
     /**
      * @return Builder
      */
