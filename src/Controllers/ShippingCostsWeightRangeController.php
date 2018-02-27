@@ -4,8 +4,10 @@ namespace Railroad\Ecommerce\Controllers;
 
 
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\ShippingCostCreateRequest;
 use Railroad\Ecommerce\Requests\ShippingCostUpdateRequest;
+use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ShippingCostsService;
 
 class ShippingCostsWeightRangeController extends Controller

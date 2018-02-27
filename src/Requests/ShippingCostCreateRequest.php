@@ -27,7 +27,7 @@ class ShippingCostCreateRequest extends FormRequest
         return [
             'shipping_option_id' => 'required|numeric|exists:'.ConfigService::$tableShippingOption.',id',
             'min' => 'required|numeric|min:0',
-            'max' =>'required|numeric|min:0',
+            'max' =>'required|numeric|min:'.request('min'),
             'price' => 'required|numeric|min:0'
         ];
     }

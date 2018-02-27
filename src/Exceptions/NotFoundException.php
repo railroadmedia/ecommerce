@@ -23,7 +23,7 @@ class NotFoundException extends \Exception
                 'total_results' => 0,
                 'results' => [],
                 'error' => [
-                    'title' => 'Product not found.',
+                    'title' => 'Not found.',
                     'detail' => $this->message,
                 ]
             ],
