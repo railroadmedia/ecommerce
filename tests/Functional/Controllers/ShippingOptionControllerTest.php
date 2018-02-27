@@ -67,4 +67,77 @@ class ShippingOptionControllerTest extends EcommerceTestCase
             ]
         ], $results->decodeResponseJson()['errors']);
     }
+
+    public function test_update_negative_priority()
+    {
+        $shippingOption = $this->shippingOptionFactory->store();
+        $results = $this->call('PATCH', '/shipping-option/' . $shippingOption['id'],
+            [
+                'priority' => -1
+            ]);
+        $this->assertEquals(422, $results->getStatusCode());
+
+        $this->assertEquals([
+            [
+                "source" => "priority",
+                "detail" => "The priority must be at least 0.",
+            ]
+        ], $results->decodeResponseJson()['errors']);
+    }
+
+    public function test_update_not_existing_shipping_option()
+    {
+        $randomId = rand();
+        $results = $this->call('PATCH', '/shipping-option/' . $randomId);
+
+        $this->assertEquals(404, $results->getStatusCode());
+
+        $this->assertEquals(
+            [
+                "title" => "Not found.",
+                "detail" => "Update failed, shipping option not found with id: " . $randomId,
+            ]
+            , $results->decodeResponseJson()['error']);
+    }
+
+    public function test_update()
+    {
+        $shippingOption = $this->shippingOptionFactory->store($this->faker->country, $this->faker->randomNumber(), 0);
+        $results = $this->call('PATCH', '/shipping-option/' . $shippingOption['id'],
+            [
+                'active' => 1
+            ]);
+
+        $this->assertEquals(201, $results->getStatusCode());
+        $this->assertEquals([
+            'id' => $shippingOption['id'],
+            'country' => $shippingOption['country'],
+            'active' => 1,
+            'priority' => $shippingOption['priority'],
+            'created_on' => $shippingOption['created_on'],
+            'updated_on' => Carbon::now()->toDateTimeString()
+        ], $results->decodeResponseJson()['results']);
+    }
+
+    public function test_delete_not_existing_shipping_option()
+    {
+        $randomId = rand();
+        $results = $this->call('DELETE', 'shipping-option/' . $randomId);
+        $this->assertEquals(404, $results->getStatusCode());
+
+        $this->assertEquals(
+            [
+                "title" => "Not found.",
+                "detail" => "Delete failed, shipping option not found with id: " . $randomId,
+            ]
+            , $results->decodeResponseJson()['error']);
+    }
+
+    public function test_delete()
+    {
+        $shippingOption = $this->shippingOptionFactory->store($this->faker->country, $this->faker->randomNumber(), 0);
+        $results = $this->call('DELETE', '/shipping-option/' . $shippingOption['id']);
+
+        $this->assertEquals(204, $results->getStatusCode());
+    }
 }
