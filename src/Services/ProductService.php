@@ -161,4 +161,30 @@ class ProductService
 
         return $this->productRepository->delete($productId);
     }
+
+    /** Return an array with paginated products and total number of results
+     * @param int $page
+     * @param int $limit
+     * @param string $orderByAndDirection
+     * @return array
+     */
+    public function getAllProducts($page = 1, $limit = 10, $orderByAndDirection = '-created_on')
+    {
+        if ($limit == 'null') {
+            $limit = -1;
+        }
+
+        $orderByDirection = substr($orderByAndDirection, 0, 1) !== '-' ? 'asc' : 'desc';
+
+        $orderByColumn = trim($orderByAndDirection, '-');
+
+        $this->productRepository->setData($page, $limit, $orderByDirection, $orderByColumn);
+
+        ProductRepository::$pullInactiveProducts = true;
+
+        return [
+            'results' => $this->productRepository->getProductsByConditions([]),
+            'total_results' => $this->productRepository->countProducts()
+        ];
+    }
 }

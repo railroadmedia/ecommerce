@@ -17,6 +17,11 @@ Route::put(
     Railroad\Ecommerce\Controllers\ShoppingCartController::class . '@updateCartItemQuantity'
 )->name('shopping-cart.update-cart-item-quantity');
 
+Route::get(
+    '/product',
+    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@index'
+)->name('product.index');
+
 Route::put(
     '/product',
     Railroad\Ecommerce\Controllers\ProductJsonController::class . '@store'

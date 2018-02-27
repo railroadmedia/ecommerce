@@ -3,11 +3,13 @@
 namespace Railroad\Ecommerce\Controllers;
 
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\ProductCreateRequest;
 use Railroad\Ecommerce\Requests\ProductUpdateRequest;
+use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ProductService;
 
@@ -22,6 +24,24 @@ class ProductJsonController extends Controller
     public function __construct(ProductService $productService)
     {
         $this->productService = $productService;
+    }
+
+    /** Pull paginated products
+     * @param Request $request
+     * @return JsonPaginatedResponse
+     */
+    public function index(Request $request)
+    {
+        $products = $this->productService->getAllProducts(
+            $request->get('page', 1),
+            $request->get('limit', 10),
+            $request->get('sort', '-created_on')
+        );
+
+        return new JsonPaginatedResponse(
+            $products['results'],
+            $products['total_results'],
+            200);
     }
 
     /** Create a new product and return it in JSON format

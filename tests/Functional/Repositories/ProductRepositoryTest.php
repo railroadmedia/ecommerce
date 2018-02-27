@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Services;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Factories\ProductFactory;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ProductService;
@@ -16,6 +17,11 @@ class ProductRepositoryTest extends EcommerceTestCase
     protected $classBeingTested;
 
     /**
+     * @var ProductFactory
+     */
+    protected $productFactory;
+
+    /**
      * ProductRepositoryTest constructor.
      * @param $classBeingTested
      */
@@ -23,35 +29,16 @@ class ProductRepositoryTest extends EcommerceTestCase
     {
         parent::setUp();
         $this->classBeingTested = $this->app->make(ProductRepository::class);
+        $this->productFactory = $this->app->make(ProductFactory::class);
     }
 
     public function test_get_active_product_with_sku()
     {
-        $product = [
-            'brand' => ConfigService::$brand,
-            'name' => $this->faker->word,
-            'sku' => $this->faker->word,
-            'price' => $this->faker->numberBetween(1, 10),
-            'type' => ProductService::TYPE_PRODUCT,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'thumbnail_url' => null,
-            'is_physical' => 0,
-            'weight' => null,
-            'subscription_interval_type' => null,
-            'subscription_interval_count' => null,
-            'stock' => $this->faker->numberBetween(1, 100),
-            'created_on' => Carbon::now()->toDateTimeString(),
-            'updated_on' => null
-        ];
-
-        $productId = $this->query()->table(ConfigService::$tableProduct)->insertGetId($product);
-
+        $product = $this->productFactory->store();
         $results = $this->classBeingTested->getProductsByConditions(['sku' => $product['sku']]);
 
-        $this->assertEquals(['0' => array_merge(['id' => $productId], $product)], $results);
+        $this->assertEquals(['0' => array_merge(['id' => $product['id']], $product)], $results);
     }
-
 
     /**
      * @return \Illuminate\Database\Connection

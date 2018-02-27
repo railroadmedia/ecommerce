@@ -217,7 +217,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         //check that the error message is received
         $errors = [
-            'title' => "Product not found.",
+            'title' => "Not found.",
             "detail" => "Update failed, product not found with id: " . $randomProductId
         ];
         $this->assertEquals($errors, json_decode($results->content(), true)['error']);
@@ -273,7 +273,7 @@ class ProductControllerTest extends EcommerceTestCase
         $results = $this->call('DELETE', '/product/' . $randomId);
 
         $this->assertEquals(404, $results->status());
-        $this->assertEquals('Product not found.', json_decode($results->getContent())->error->title, true);
+        $this->assertEquals('Not found.', json_decode($results->getContent())->error->title, true);
         $this->assertEquals('Delete failed, product not found with id: ' . $randomId, json_decode($results->getContent())->error->detail, true);
     }
 
@@ -337,7 +337,50 @@ class ProductControllerTest extends EcommerceTestCase
             [
                 'id' => $product['id'],
             ]);
+    }
 
+    public function test_get_all_products_paginated_when_empty()
+    {
+        $results = $this->call('GET', '/product');
+        $expectedResults = [
+            'results' => [],
+            'total_results' => 0
+        ];
+
+        $this->assertEquals(200, $results->status());
+        $results->assertJson($expectedResults);
+    }
+
+    public function test_get_all_paginated_products()
+    {
+        $page = 2;
+        $limit = 3;
+        $sort = 'id';
+        $nrProducts = 10;
+
+        for($i=0; $i<$nrProducts; $i++)
+        {
+            $products[] = $this->productFactory->store();
+        }
+        $expectedContent =
+            [
+                'status' => 'ok',
+                'code' => 200,
+                'page' => $page,
+                'limit' => $limit,
+                'results' => array_slice($products, 3, $limit),
+                'total_results' => $nrProducts
+            ];
+
+        $results = $this->call('GET', '/product',
+            [
+                'page' => $page,
+                'limit' => $limit,
+                'sort' => $sort
+            ]);
+
+        $responseContent = $results->decodeResponseJson();
+        $this->assertEquals($expectedContent, $responseContent);
     }
 
     /**

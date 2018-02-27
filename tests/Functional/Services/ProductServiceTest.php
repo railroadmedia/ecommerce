@@ -187,6 +187,31 @@ class ProductServiceTest extends EcommerceTestCase
         $this->assertTrue($results);
     }
 
+    public function test_get_all_products_paginated()
+    {
+        for ($i = 0; $i<100; $i++){
+            if($i < 10) {
+                $product[] = $this->productFactory->store();
+            } else{
+                $this->productFactory->store();
+            }
+        }
+        $results = $this->classBeingTested->getAllProducts();
+
+        $this->assertEquals($product, $results['results']);
+
+        $this->assertEquals(100, $results['total_results']);
+    }
+
+    public function test_get_all_products_empty()
+    {
+        $results = $this->classBeingTested->getAllProducts();
+
+        $this->assertEquals([], $results['results']);
+
+        $this->assertEquals(0, $results['total_results']);
+    }
+
     /**
      * @return \Illuminate\Database\Connection
      */
