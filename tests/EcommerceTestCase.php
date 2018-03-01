@@ -10,6 +10,7 @@ use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Repositories\RepositoryBase;
 use Railroad\Location\Providers\LocationServiceProvider;
+use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
 
 
 class EcommerceTestCase extends BaseTestCase
@@ -51,6 +52,7 @@ class EcommerceTestCase extends BaseTestCase
         // setup package config for testing
         $defaultConfig = require(__DIR__ . '/../config/ecommerce.php');
         $locationConfig = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
+        $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
 
         $app['config']->set('ecommerce.database_connection_name', 'testbench');
         $app['config']->set('ecommerce.cache_duration', 60);
@@ -62,6 +64,8 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
         $app['config']->set('location.api', $locationConfig['api']);
         $app['config']->set('location.active_api', $locationConfig['active_api']);
+        $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
+        $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
 
         // setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
@@ -106,6 +110,18 @@ class EcommerceTestCase extends BaseTestCase
         // register provider
         $app->register(EcommerceServiceProvider::class);
         $app->register(LocationServiceProvider::class);
+        $app->register(RemoteStorageServiceProvider::class);
+    }
+
+    /**
+     * @param string $filenameAbsolute
+     * @return string
+     */
+    protected function getFilenameRelativeFromAbsolute($filenameAbsolute)
+    {
+        $tempDirPath = sys_get_temp_dir() . '/';
+
+        return str_replace($tempDirPath, '', $filenameAbsolute);
     }
 
     protected function tearDown()
