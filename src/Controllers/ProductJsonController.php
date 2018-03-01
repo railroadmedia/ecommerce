@@ -12,6 +12,7 @@ use Railroad\Ecommerce\Requests\ProductUpdateRequest;
 use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ProductService;
+use Railroad\RemoteStorage\Services\ConfigService;
 
 class ProductJsonController extends Controller
 {
@@ -137,4 +138,22 @@ class ProductJsonController extends Controller
         return new JsonResponse(null, 204);
     }
 
+    /** Upload product thumbnail on remote storage using remotestorage package.
+     * Throw an error JSON response if the upload failed or return the uploaded thumbnail url.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function uploadThumbnail(Request $request)
+    {
+        $target = $request->get('target');
+        $upload = $this->productService->uploadThumbnailToRemoteStorage($target, $request->file('file'));
+        throw_if(
+            (!$upload),
+            new JsonResponse('Upload product thumbnail failed', 400)
+        );
+
+        return new JsonResponse(
+            $this->productService->url($target), 201
+        );
+    }
 }

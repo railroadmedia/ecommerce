@@ -37,6 +37,11 @@ Route::delete(
     Railroad\Ecommerce\Controllers\ProductJsonController::class . '@delete'
 )->name('product.delete');
 
+Route::put(
+    '/product/upload/',
+    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@uploadThumbnail'
+)->name('product.upload');
+
 Route::get(
     '/order',
     Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@index'

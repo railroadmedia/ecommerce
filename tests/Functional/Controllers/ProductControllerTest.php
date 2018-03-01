@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Http\UploadedFile;
 use Railroad\Ecommerce\Factories\ProductFactory;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ProductService;
@@ -383,6 +384,23 @@ class ProductControllerTest extends EcommerceTestCase
         $this->assertEquals($expectedContent, $responseContent);
     }
 
+    public function test_upload_thumb()
+    {
+        $filenameAbsolute = $this->faker->image(sys_get_temp_dir());
+        $filenameRelative = $this->getFilenameRelativeFromAbsolute($filenameAbsolute);
+
+        $response = $this->call( 'PUT', '/product/upload/', [
+            'target' => $filenameRelative,
+            'file' => new UploadedFile($filenameAbsolute, $filenameRelative)
+        ] );
+
+        $this->assertEquals(201, $response->status());
+
+        $this->assertEquals(
+            storage_path('app').'/' . $filenameRelative,
+            json_decode($response->getContent())->results
+        );
+    }
     /**
      * @return \Illuminate\Database\Connection
      */

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
 use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\RemoteStorage\Services\RemoteStorageService;
 
 
 class ProductService
@@ -26,6 +27,11 @@ class ProductService
      */
     private $discountCriteriaRepository;
 
+    /**
+     * @var RemoteStorageService
+     */
+    private $remoteStorageService;
+
     // all possible product types
     const TYPE_PRODUCT = 'product';
     const TYPE_SUBSCRIPTION = 'subscription';
@@ -36,11 +42,13 @@ class ProductService
      */
     public function __construct(ProductRepository $productRepository,
                                 OrderItemRepository $orderItemRepository,
-                                DiscountCriteriaRepository $discountCriteriaRepository)
+                                DiscountCriteriaRepository $discountCriteriaRepository,
+                                RemoteStorageService $remoteStorageService)
     {
         $this->productRepository = $productRepository;
         $this->orderItemRepository = $orderItemRepository;
         $this->discountCriteriaRepository = $discountCriteriaRepository;
+        $this->remoteStorageService = $remoteStorageService;
     }
 
     /** Get all the active products that meet the conditions
@@ -186,5 +194,24 @@ class ProductService
             'results' => $this->productRepository->getProductsByConditions([]),
             'total_results' => $this->productRepository->countProducts()
         ];
+    }
+
+    /** Call the method that upload a file, from remotestorage package
+     * @param string $target
+     * @param file $file
+     * @return bool
+     */
+    public function uploadThumbnailToRemoteStorage($target, $file)
+    {
+        return $this->remoteStorageService->put($target, $file);
+    }
+
+    /** Call the method that return the file url
+     * @param string $target
+     * @return mixed
+     */
+    public function url($target)
+    {
+        return $this->remoteStorageService->url($target);
     }
 }
