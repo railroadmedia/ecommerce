@@ -122,6 +122,11 @@ class ConfigService
     /**
      * @var string
      */
+    public static $tablePaypalBillingAgreement;
+
+    /**
+     * @var string
+     */
     public static $brand;
 
     /**

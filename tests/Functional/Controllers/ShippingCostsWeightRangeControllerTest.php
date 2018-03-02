@@ -136,7 +136,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
         $shippingOption = $this->shippingOptionFactory->store();
         $shippingCost = $this->shippingCostFactory->store($shippingOption['id']);
 
-        $newPrice = rand();
+        $newPrice = rand(0,9000);
 
         $results = $this->call('PATCH', '/shipping-cost/' . $shippingCost['id'],
             [

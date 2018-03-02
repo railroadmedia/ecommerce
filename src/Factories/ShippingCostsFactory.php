@@ -24,10 +24,9 @@ class ShippingCostsFactory extends ShippingCostsService
         $parameters =
             func_get_args() + [
                 rand(),
-                rand(),
-                rand(),
-                rand()
-
+                rand(0,100),
+                rand(100,500),
+                rand(0,5000)
             ];
         return parent::store(...$parameters);
     }

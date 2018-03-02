@@ -20,7 +20,8 @@ class CreatePaymentMethodTable extends Migration
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->string('type')->index();
-                $table->integer('credit_card_id')->nullable();
+                $table->integer('method_id')->nullable();
+                $table->string('method_type')->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }

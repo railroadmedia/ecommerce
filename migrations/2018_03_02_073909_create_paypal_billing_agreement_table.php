@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Railroad\Ecommerce\Services\ConfigService;
 
 
-class CreateCreditCardTable extends Migration
+class CreatePaypalBillingAgreementTable extends Migration
 {
     /**
      * Run the migrations.
@@ -16,17 +16,14 @@ class CreateCreditCardTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableCreditCard,
+            ConfigService::$tablePaypalBillingAgreement,
             function(Blueprint $table) {
                 $table->increments('id');
-                $table->string('type')->index();
-                $table->string('fingerprint');
-                $table->integer('last_four_digits');
-                $table->string('cardholder_name')->nullable();
-                $table->string('company_name')->index();
-                $table->string('external_id',64)->index();
-                $table->string('external_provider',64)->index();
-                $table->dateTime('expiration_date');
+                $table->string('agreement_id',64)->index();
+
+                $table->string('express_checkout_token', 64)->index();
+                $table->integer('address_id');
+                $table->dateTime('expiration_date')->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }
@@ -40,6 +37,6 @@ class CreateCreditCardTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableCreditCard);
+        Schema::dropIfExists(ConfigService::$tableShippingCostsWeightRange);
     }
 }
