@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Railroad\Ecommerce\Services\ConfigService;
 
 
-class CreatePaymentMethodTable extends Migration
+class CreateCustomerPaymentMethodsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -16,11 +16,12 @@ class CreatePaymentMethodTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tablePaymentMethod,
+            ConfigService::$tableCustomerPaymentMethods,
             function(Blueprint $table) {
                 $table->increments('id');
-                $table->integer('method_id')->nullable();
-                $table->string('method_type')->index();
+                $table->integer('customer_id')->index();
+                $table->integer('payment_method_id')->index();
+                $table->boolean('is_primary')->default(false);
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }
@@ -34,6 +35,6 @@ class CreatePaymentMethodTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tablePaymentMethod);
+        Schema::dropIfExists(ConfigService::$tableCustomerPaymentMethods);
     }
 }

@@ -127,12 +127,27 @@ class ConfigService
     /**
      * @var string
      */
+    public static $tableCustomerPaymentMethods;
+
+    /**
+     * @var string
+     */
+    public static $tableUserPaymentMethods;
+
+    /**
+     * @var string
+     */
     public static $brand;
 
     /**
      * @var array
      */
     public static $taxRate;
+
+    /**
+     * @var array
+     */
+    public static $creditCard;
 
 
 }

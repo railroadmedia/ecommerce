@@ -60,12 +60,16 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.data_mode', $defaultConfig['data_mode']);
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
         $app['config']->set('ecommerce.tax_rate', $defaultConfig['tax_rate']);
+        $app['config']->set('ecommerce.credit_card', $defaultConfig['credit_card']);
+
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
         $app['config']->set('location.api', $locationConfig['api']);
         $app['config']->set('location.active_api', $locationConfig['active_api']);
+
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
+
 
         // setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');

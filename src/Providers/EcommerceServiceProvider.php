@@ -82,12 +82,17 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$tableShippingOption= ConfigService::$tablePrefix . 'shipping_option';
         ConfigService::$tableShippingCostsWeightRange = ConfigService::$tablePrefix . 'shipping_costs_weight_range';
         ConfigService::$tablePaypalBillingAgreement = ConfigService::$tablePrefix . 'paypal_billing_agreement';
+        ConfigService::$tableCustomerPaymentMethods = ConfigService::$tablePrefix . 'customer_payment_methods';
+        ConfigService::$tableUserPaymentMethods = ConfigService::$tablePrefix . 'user_payment_methods';
 
         // brand
         ConfigService::$brand = config('ecommerce.brand');
 
         //tax rated
         ConfigService::$taxRate = config('ecommerce.tax_rate');
+
+        //credit card
+        ConfigService::$creditCard = config('ecommerce.credit_card');
     }
 
     /**

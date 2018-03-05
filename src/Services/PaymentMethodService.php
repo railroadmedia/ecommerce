@@ -5,8 +5,10 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
+use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
+use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 
 class PaymentMethodService
 {
@@ -20,6 +22,10 @@ class PaymentMethodService
      * @var CreditCardRepository
      */
     private $creditCardRepository;
+
+    Private $customerPaymentMethodsRepository;
+
+    private $userPaymentMethodsRepository;
 
     /**
      * @var PaypalBillingAgreementRepository
@@ -35,27 +41,31 @@ class PaymentMethodService
      */
     public function __construct(PaymentMethodRepository $paymentMethodRepository,
                                 CreditCardRepository $creditCardRepository,
-                                PaypalBillingAgreementRepository $paypalBillingAgreementRepository)
+                                PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
+                                CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
+                                UserPaymentMethodsRepository $userPaymentMethodsRepository)
     {
         $this->paymentMethodRepository = $paymentMethodRepository;
         $this->creditCardRepository = $creditCardRepository;
         $this->paypalBillingRepository = $paypalBillingAgreementRepository;
+        $this->customerPaymentMethodsRepository = $customerPaymentMethodsRepository;
+        $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
     }
 
     public function store(
-        $type,
         $methodType,
-        $creditCardYearSelector,
-        $creditCardMonthSelector,
-        $fingerprint,
-        $last4,
-        $cardHolderName,
-        $companyName,
-        $externalId,
-        $externalProvider,
-        $agreementId,
-        $expressCheckoutToken,
-        $addressId
+        $creditCardYearSelector = null,
+        $creditCardMonthSelector = null,
+        $fingerprint = '',
+        $last4 = '',
+        $cardHolderName = '',
+        $companyName = '',
+        $externalId = null,
+        $agreementId = null,
+        $expressCheckoutToken = '',
+        $addressId = null,
+        $userId = null,
+        $customerId = null
 
     ) {
         if ($methodType == self::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
@@ -66,7 +76,7 @@ class PaymentMethodService
                 'cardholder_name' => $cardHolderName,
                 'company_name' => $companyName,
                 'external_id' => $externalId,
-                'external_provider' => $externalProvider,
+                'external_provider' => ConfigService::$creditCard['external_provider'],
                 'expiration_date' => Carbon::create(
                     $creditCardYearSelector,
                     $creditCardMonthSelector,
@@ -90,14 +100,33 @@ class PaymentMethodService
         } else {
             return null;
         }
+
         $paymentMethodId = $this->paymentMethodRepository->create([
-            'type' => $type,
             'method_id' => $methodId,
             'method_type' => $methodType,
             'created_on' => Carbon::now()->toDateTimeString()
         ]);
 
+        if ($userId) {
+            $this->userPaymentMethodsRepository->create([
+                'payment_method_id' => $paymentMethodId,
+                'user_id' => $userId,
+                'created_on' => Carbon::now()->toDateTimeString()
+            ]);
+        } else if ($customerId) {
+            $this->customerPaymentMethodsRepository->create([
+                'payment_method_id' => $paymentMethodId,
+                'customer_id' => $customerId,
+                'created_on' => Carbon::now()->toDateTimeString()
+            ]);
+        }
+
         return $this->paymentMethodRepository->getById($paymentMethodId);
+    }
+
+    public function delete($paymentMethodId)
+    {
+
     }
 
 

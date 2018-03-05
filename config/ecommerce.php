@@ -40,5 +40,9 @@ return [
             'yukon' => 0.05,
             'yt' => 0.05
         ]
+    ],
+    'credit_card' =>
+    [
+        'external_provider' => 'stripe'
     ]
 ];
