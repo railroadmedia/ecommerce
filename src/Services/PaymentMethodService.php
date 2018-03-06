@@ -12,7 +12,6 @@ use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 
 class PaymentMethodService
 {
-
     /**
      * @var PaymentMethodRepository
      */
@@ -23,8 +22,14 @@ class PaymentMethodService
      */
     private $creditCardRepository;
 
+    /**
+     * @var CustomerPaymentMethodsRepository
+     */
     Private $customerPaymentMethodsRepository;
 
+    /**
+     * @var UserPaymentMethodsRepository
+     */
     private $userPaymentMethodsRepository;
 
     /**
@@ -32,12 +37,17 @@ class PaymentMethodService
      */
     private $paypalBillingRepository;
 
+    //constants that represent payment method types
     CONST PAYPAL_PAYMENT_METHOD_TYPE = 'paypal';
     CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit card';
 
     /**
      * PaymentMethodService constructor.
-     * @param PaymentMethodRepository $paymentRepository
+     * @param PaymentMethodRepository $paymentMethodRepository
+     * @param CreditCardRepository $creditCardRepository
+     * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
+     * @param CustomerPaymentMethodsRepository $customerPaymentMethodsRepository
+     * @param UserPaymentMethodsRepository $userPaymentMethodsRepository
      */
     public function __construct(PaymentMethodRepository $paymentMethodRepository,
                                 CreditCardRepository $creditCardRepository,
@@ -52,6 +62,26 @@ class PaymentMethodService
         $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
     }
 
+    /** Save a new payment method, a new credit card/paypal billing record based on payment method type and
+     * assign the new created payment method to the proper user/customer.
+     * Return null if the payment method type it's not credit card or paypal
+     *        the new created payment method
+     *
+     * @param string $methodType
+     * @param null $creditCardYearSelector
+     * @param null $creditCardMonthSelector
+     * @param string $fingerprint
+     * @param string $last4
+     * @param string $cardHolderName
+     * @param string $companyName
+     * @param null $externalId
+     * @param null $agreementId
+     * @param string $expressCheckoutToken
+     * @param null $addressId
+     * @param null $userId
+     * @param null $customerId
+     * @return array|mixed|null
+     */
     public function store(
         $methodType,
         $creditCardYearSelector = null,
@@ -69,65 +99,220 @@ class PaymentMethodService
 
     ) {
         if ($methodType == self::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-            $methodId = $this->creditCardRepository->create([
-                'type' => self::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'fingerprint' => $fingerprint,
-                'last_four_digits' => $last4,
-                'cardholder_name' => $cardHolderName,
-                'company_name' => $companyName,
-                'external_id' => $externalId,
-                'external_provider' => ConfigService::$creditCard['external_provider'],
-                'expiration_date' => Carbon::create(
-                    $creditCardYearSelector,
-                    $creditCardMonthSelector,
-                    12,
-                    0,
-                    0,
-                    0
-                ),
-                'created_on' => Carbon::now()->toDateTimeString()
-            ]);
+            $methodId = $this->createCreditCard($creditCardYearSelector, $creditCardMonthSelector, $fingerprint, $last4, $cardHolderName, $companyName, $externalId);
         } else if ($methodType == self::PAYPAL_PAYMENT_METHOD_TYPE) {
-            $methodId = $this->paypalBillingRepository->create(
-                [
-                    'agreement_id' => $agreementId,
-                    'express_checkout_token' => $expressCheckoutToken,
-                    'address_id' => $addressId,
-                    'expiration_date' => Carbon::now()->addYears(10),
-                    'created_on' => Carbon::now()->toDateTimeString()
-                ]
-            );
+            $methodId = $this->createPaypalBilling($agreementId, $expressCheckoutToken, $addressId);
         } else {
+            //unknown payment method type
             return null;
         }
 
-        $paymentMethodId = $this->paymentMethodRepository->create([
-            'method_id' => $methodId,
-            'method_type' => $methodType,
-            'created_on' => Carbon::now()->toDateTimeString()
-        ]);
+        $paymentMethodId = $this->createPaymentMethod($methodType, $methodId);
 
         if ($userId) {
-            $this->userPaymentMethodsRepository->create([
-                'payment_method_id' => $paymentMethodId,
-                'user_id' => $userId,
-                'created_on' => Carbon::now()->toDateTimeString()
-            ]);
-        } else if ($customerId) {
-            $this->customerPaymentMethodsRepository->create([
-                'payment_method_id' => $paymentMethodId,
-                'customer_id' => $customerId,
-                'created_on' => Carbon::now()->toDateTimeString()
-            ]);
+            $this->assignPaymentMethodToUser($userId, $paymentMethodId);
+        }
+
+        if ($customerId) {
+            $this->assignPaymentMethodToCustomer($customerId, $paymentMethodId);
         }
 
         return $this->paymentMethodRepository->getById($paymentMethodId);
     }
 
+    /** Delete a payment method and the corresponding credit card/paypal billing
+     * Return boolean or null if the payment method not exist
+     *
+     * @param integer $paymentMethodId
+     * @return bool|null
+     */
     public function delete($paymentMethodId)
     {
+        $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
+        if (!$paymentMethod) {
+            return null;
+        }
 
+        if ($paymentMethod['method_type'] == self::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+            $this->creditCardRepository->delete($paymentMethod['method']['id']);
+        }
+
+        if ($paymentMethod['method_type'] == self::PAYPAL_PAYMENT_METHOD_TYPE) {
+            $this->paypalBillingRepository->delete($paymentMethod['method']['id']);
+        }
+        $this->customerPaymentMethodsRepository->deleteByPaymentMethodId($paymentMethod['id']);
+        $this->userPaymentMethodsRepository->deleteByPaymentMethodId($paymentMethod['id']);
+
+        return $this->paymentMethodRepository->delete($paymentMethodId);
     }
 
+    /** Update payment method
+     * @param $paymentMethodId
+     * @param $updateMethod
+     * @param $methodType
+     * @param null $creditCardYearSelector
+     * @param null $creditCardMonthSelector
+     * @param string $fingerprint
+     * @param string $last4
+     * @param string $cardHolderName
+     * @param string $companyName
+     * @param null $externalId
+     * @param null $agreementId
+     * @param string $expressCheckoutToken
+     * @param null $addressId
+     * @return array|int|mixed|null
+     */
+    public function update($paymentMethodId,
+                           $updateMethod,
+                           $methodType,
+                           $creditCardYearSelector = null,
+                           $creditCardMonthSelector = null,
+                           $fingerprint = '',
+                           $last4 = '',
+                           $cardHolderName = '',
+                           $companyName = '',
+                           $externalId = null,
+                           $agreementId = null,
+                           $expressCheckoutToken = '',
+                           $addressId = null
+    ) {
 
+        $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
+        if (!$paymentMethod) {
+            return null;
+        }
+
+        $methodId = null;
+        if ($updateMethod == 'create-credit-card') {
+            $methodId = $this->createCreditCard($creditCardYearSelector, $creditCardMonthSelector, $fingerprint, $last4, $cardHolderName, $companyName, $externalId);
+        } else if ($updateMethod == 'update-current-credit-card') {
+            $this->creditCardRepository->update($paymentMethod['method']['id'],
+                [
+                    'expiration_date' => Carbon::create(
+                        $creditCardYearSelector,
+                        $creditCardMonthSelector,
+                        12,
+                        0,
+                        0,
+                        0
+                    ),
+                    'updated_on' => Carbon::now()->toDateTimeString()
+                ]);
+        } elseif ($updateMethod == 'use-paypal') {
+            if (empty($expressCheckoutToken)) {
+                return -1;
+            }
+
+            $this->paypalBillingRepository->updateOrCreate(['id' => $paymentMethod['method']['id']], [
+                'agreement_id' => $agreementId,
+                'express_checkout_token' => $expressCheckoutToken,
+                'address_id' => $addressId,
+                'expiration_date' => Carbon::now()->addYears(10),
+                'created_on' => Carbon::now()->toDateTimeString(),
+                'updated_on' => Carbon::now()->toDateTimeString()
+            ]);
+        }
+
+        $this->paymentMethodRepository->update($paymentMethodId, [
+            'method_id' => $methodId ?? $paymentMethod['method']['id'],
+            'method_type' => $methodType,
+            'updated_on' => Carbon::now()->toDateTimeString()
+        ]);
+
+        return $this->paymentMethodRepository->getById($paymentMethodId);
+    }
+
+    /** Create credit card
+     * @param $creditCardYearSelector
+     * @param $creditCardMonthSelector
+     * @param $fingerprint
+     * @param $last4
+     * @param $cardHolderName
+     * @param $companyName
+     * @param $externalId
+     * @return int
+     */
+    private function createCreditCard($creditCardYearSelector, $creditCardMonthSelector, $fingerprint, $last4, $cardHolderName, $companyName, $externalId)
+    {
+        $methodId = $this->creditCardRepository->create([
+            'type' => self::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'fingerprint' => $fingerprint,
+            'last_four_digits' => $last4,
+            'cardholder_name' => $cardHolderName,
+            'company_name' => $companyName,
+            'external_id' => $externalId,
+            'external_provider' => ConfigService::$creditCard['external_provider'],
+            'expiration_date' => Carbon::create(
+                $creditCardYearSelector,
+                $creditCardMonthSelector,
+                12,
+                0,
+                0,
+                0
+            ),
+            'created_on' => Carbon::now()->toDateTimeString()
+        ]);
+        return $methodId;
+    }
+
+    /** Create paypal billing
+     * @param $agreementId
+     * @param $expressCheckoutToken
+     * @param $addressId
+     * @return int
+     */
+    private function createPaypalBilling($agreementId, $expressCheckoutToken, $addressId)
+    {
+        $methodId = $this->paypalBillingRepository->create(
+            [
+                'agreement_id' => $agreementId,
+                'express_checkout_token' => $expressCheckoutToken,
+                'address_id' => $addressId,
+                'expiration_date' => Carbon::now()->addYears(10),
+                'created_on' => Carbon::now()->toDateTimeString()
+            ]
+        );
+        return $methodId;
+    }
+
+    /** Create payment method
+     * @param $methodType
+     * @param $methodId
+     * @return int
+     */
+    private function createPaymentMethod($methodType, $methodId)
+    {
+        $paymentMethodId = $this->paymentMethodRepository->create([
+            'method_id' => $methodId,
+            'method_type' => $methodType,
+            'created_on' => Carbon::now()->toDateTimeString()
+        ]);
+        return $paymentMethodId;
+    }
+
+    /** Assign payment method to user
+     * @param $userId
+     * @param $paymentMethodId
+     */
+    private function assignPaymentMethodToUser($userId, $paymentMethodId)
+    {
+        $this->userPaymentMethodsRepository->create([
+            'payment_method_id' => $paymentMethodId,
+            'user_id' => $userId,
+            'created_on' => Carbon::now()->toDateTimeString()
+        ]);
+    }
+
+    /** Assign payment method to the customer
+     * @param $customerId
+     * @param $paymentMethodId
+     */
+    private function assignPaymentMethodToCustomer($customerId, $paymentMethodId)
+    {
+        $this->customerPaymentMethodsRepository->create([
+            'payment_method_id' => $paymentMethodId,
+            'customer_id' => $customerId,
+            'created_on' => Carbon::now()->toDateTimeString()
+        ]);
+    }
 }

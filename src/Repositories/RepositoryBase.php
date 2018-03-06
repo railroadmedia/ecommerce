@@ -95,6 +95,18 @@ abstract class RepositoryBase
     }
 
     /**
+     * @param array $attributes
+     * @param array $values
+     * @return integer|null
+     */
+    public function updateOrCreate(array $attributes, array $values = [])
+    {
+        $this->query()->updateOrInsert($attributes, $values);
+
+        return $this->query()->where($attributes)->get(['id'])->first()['id'] ?? null;
+    }
+
+    /**
      * Delete a record.
      *
      * @param integer $id

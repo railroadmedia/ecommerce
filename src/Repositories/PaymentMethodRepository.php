@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Repositories;
 
 
 use Illuminate\Database\Query\Builder;
+use Railroad\Ecommerce\Repositories\QueryBuilders\PaymentMethodQueryBuilder;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 
@@ -20,11 +21,24 @@ class PaymentMethodRepository extends RepositoryBase
      */
     private $paypalBillingAgreementRepository;
 
-    public static $pullAllPaymentMethods = false;
+    /**
+     * If this is false any payment method will be pulled. If its defined, only user payment method will be pulled.
+     *
+     * @var integer|bool
+     */
+    public static $availableUserId = false;
+
+    /**
+     * If this is false any payment method will be pulled. If its defined, only customer payment method will be pulled.
+     *
+     * @var integer|bool
+     */
+    public static $availableCustomerId = false;
 
     /**
      * PaymentMethodRepository constructor.
-     * @param $creditCardRepository
+     * @param CreditCardRepository $creditCardRepository
+     * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      */
     public function __construct(CreditCardRepository $creditCardRepository, PaypalBillingAgreementRepository $paypalBillingAgreementRepository)
     {
@@ -39,15 +53,26 @@ class PaymentMethodRepository extends RepositoryBase
      */
     protected function query()
     {
-        return $this->connection()->table(ConfigService::$tablePaymentMethod);
+        return (new PaymentMethodQueryBuilder(
+            $this->connection(),
+            $this->connection()->getQueryGrammar(),
+            $this->connection()->getPostProcessor()
+        ))
+            ->from(ConfigService::$tablePaymentMethod);
     }
 
+    /** Get payment method by id
+     * @param int $id
+     * @return array|mixed|null
+     */
     public function getById($id)
     {
-        $query = $this->query()
-            ->where([ConfigService::$tablePaymentMethod . '.id' => $id]);
-
-        $paymentMethod = $query->get()
+        $paymentMethod = $this->query()
+            ->selectColumns()
+            ->restrictCustomerIdAccess()
+            ->restrictUserIdAccess()
+            ->where([ConfigService::$tablePaymentMethod . '.id' => $id])
+            ->get()
             ->first();
 
         if (empty($paymentMethod)) {
@@ -55,13 +80,11 @@ class PaymentMethodRepository extends RepositoryBase
         }
 
         if ($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-            $creditCard = $this->creditCardRepository->getById($paymentMethod['method_id']);
-            $paymentMethod['method'] = $creditCard;
-
+            $paymentMethod['method'] = $this->creditCardRepository->getById($paymentMethod['method_id']);
         } else if ($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
-            $paypalBillingAgreement = $this->paypalBillingAgreementRepository->getById($paymentMethod['method_id']);
-            $paymentMethod['method'] = $paypalBillingAgreement;
+            $paymentMethod['method'] = $this->paypalBillingAgreementRepository->getById($paymentMethod['method_id']);
         }
+
         unset($paymentMethod['method_id']);
         return $paymentMethod;
     }
