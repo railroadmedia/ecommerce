@@ -294,10 +294,12 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $newExpirationMonth = rand(10, 12);
         $updated = $this->classBeingTested->update(
             $paymentMethod['id'],
-            'update-current-credit-card',
-            $paymentMethod['method_type'],
-            $newExpirationYear,
-            $newExpirationMonth);
+            [
+                'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_UPDATE_CREDIT_CARD,
+                'method_type' => $paymentMethod['method_type'],
+                'card_year' => $newExpirationYear,
+                'card_month' => $newExpirationMonth
+            ]);
 
         $this->assertEquals(
             Carbon::create(
@@ -332,20 +334,19 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
         $updated = $this->classBeingTested->update(
             $paymentMethod['id'],
-            'create-credit-card',
-            $paymentMethod['method_type'],
-            rand(2018, 2022),
-            rand(01, 12),
-            $this->faker->word,
-            $this->faker->randomNumber(4),
-            $this->faker->name,
-            $this->faker->creditCardType,
-            rand(),
-            rand(),
-            $this->faker->word,
-            rand(),
-            $userId,
-            null);
+            [
+                'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_CREATE_NEW_CREDIT_CARD,
+                'method_type' => $paymentMethod['method_type'],
+                'card_year' => $this->faker->creditCardExpirationDate->format('Y'),
+                'card_month' => $this->faker->month,
+                'card_fingerprint' => $this->faker->word,
+                'card_number_last_four_digits' => $this->faker->randomNumber(4),
+                'cardholder_name' => $this->faker->name,
+                'company_name' => $this->faker->creditCardType,
+                'external_id' => rand(),
+                'user_id' => $userId,
+                'customer_id' => null
+            ]);
 
         $this->assertEquals($paymentMethod['id'] + 1, $updated['method']['id']);
     }
@@ -370,19 +371,15 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             null);
 
         $updated = $this->classBeingTested->update(
-            $paymentMethod['id'],
-            'use-paypal',
-            PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            null,
-            null,
-            '',
-            '',
-            '',
-            '',
-            null,
-            rand(),
-            $this->faker->word,
-            rand());
+            $paymentMethod['id'], [
+                'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'agreement_id' => rand(),
+                'express_checkout_token' => $this->faker->word,
+                'address_id' => rand(),
+                'user_id' => $userId
+            ]
+        );
 
         $this->assertEquals(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE, $updated['method_type']);
     }
@@ -410,10 +407,12 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $newExpirationMonth = rand(10, 12);
         $updated = $this->classBeingTested->update(
             $paymentMethod['id'],
-            'update-current-credit-card',
-            $paymentMethod['method_type'],
-            $newExpirationYear,
-            $newExpirationMonth);
+            [
+                'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_UPDATE_CREDIT_CARD,
+                'method_type' => $paymentMethod['method_type'],
+                'card_year' => $newExpirationYear,
+                'card_month' => $newExpirationMonth
+            ]);
 
         $this->assertEquals(
             Carbon::create(

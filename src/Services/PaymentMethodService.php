@@ -41,6 +41,11 @@ class PaymentMethodService
     CONST PAYPAL_PAYMENT_METHOD_TYPE = 'paypal';
     CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit card';
 
+    //constants for update action
+    CONST UPDATE_PAYMENT_METHOD_AND_CREATE_NEW_CREDIT_CARD = 'create-credit-card';
+    CONST UPDATE_PAYMENT_METHOD_AND_UPDATE_CREDIT_CARD = 'update-current-credit-card';
+    CONST UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL = 'use-paypal';
+
     /**
      * PaymentMethodService constructor.
      * @param PaymentMethodRepository $paymentMethodRepository
@@ -162,35 +167,23 @@ class PaymentMethodService
      * @param null $addressId
      * @return array|int|mixed|null
      */
-    public function update($paymentMethodId,
-                           $updateMethod,
-                           $methodType,
-                           $creditCardYearSelector = null,
-                           $creditCardMonthSelector = null,
-                           $fingerprint = '',
-                           $last4 = '',
-                           $cardHolderName = '',
-                           $companyName = '',
-                           $externalId = null,
-                           $agreementId = null,
-                           $expressCheckoutToken = '',
-                           $addressId = null
-    ) {
-
+    public function update($paymentMethodId, array $data)
+    {
         $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
         if (!$paymentMethod) {
             return null;
         }
 
         $methodId = null;
-        if ($updateMethod == 'create-credit-card') {
-            $methodId = $this->createCreditCard($creditCardYearSelector, $creditCardMonthSelector, $fingerprint, $last4, $cardHolderName, $companyName, $externalId);
-        } else if ($updateMethod == 'update-current-credit-card') {
+        if ($data['update_method'] == self::UPDATE_PAYMENT_METHOD_AND_CREATE_NEW_CREDIT_CARD) {
+            $methodId = $this->createCreditCard($data['card_year'], $data['card_month'], $data['card_fingerprint'], $data['card_number_last_four_digits'],
+                $data['cardholder_name'], $data['company_name'], $data['external_id']);
+        } else if ($data['update_method'] == self::UPDATE_PAYMENT_METHOD_AND_UPDATE_CREDIT_CARD) {
             $this->creditCardRepository->update($paymentMethod['method']['id'],
                 [
                     'expiration_date' => Carbon::create(
-                        $creditCardYearSelector,
-                        $creditCardMonthSelector,
+                        $data['card_year'],
+                        $data['card_month'],
                         12,
                         0,
                         0,
@@ -198,15 +191,15 @@ class PaymentMethodService
                     ),
                     'updated_on' => Carbon::now()->toDateTimeString()
                 ]);
-        } elseif ($updateMethod == 'use-paypal') {
-            if (empty($expressCheckoutToken)) {
+        } elseif ($data['update_method'] == self::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL) {
+            if (empty($data['express_checkout_token'])) {
                 return -1;
             }
 
             $this->paypalBillingRepository->updateOrCreate(['id' => $paymentMethod['method']['id']], [
-                'agreement_id' => $agreementId,
-                'express_checkout_token' => $expressCheckoutToken,
-                'address_id' => $addressId,
+                'agreement_id' => $data['agreement_id'],
+                'express_checkout_token' => $data['express_checkout_token'],
+                'address_id' => $data['address_id'],
                 'expiration_date' => Carbon::now()->addYears(10),
                 'created_on' => Carbon::now()->toDateTimeString(),
                 'updated_on' => Carbon::now()->toDateTimeString()
@@ -215,7 +208,7 @@ class PaymentMethodService
 
         $this->paymentMethodRepository->update($paymentMethodId, [
             'method_id' => $methodId ?? $paymentMethod['method']['id'],
-            'method_type' => $methodType,
+            'method_type' => $data['method_type'],
             'updated_on' => Carbon::now()->toDateTimeString()
         ]);
 

@@ -34,8 +34,8 @@ class PaymentMethodFactory extends PaymentMethodService
             func_get_args() + [
                 $this->faker->randomElement([PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                     PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE]),
-                rand(2018,2022),
-                rand(01,12),
+                $this->faker->creditCardExpirationDate->format('Y'),
+                $this->faker->month,
                 $this->faker->word,
                 $this->faker->randomNumber(4),
                 $this->faker->name,

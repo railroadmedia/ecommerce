@@ -77,4 +77,19 @@ Route::delete(
     Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@delete'
 )->name('shipping-cost-weight-range.delete');
 
+Route::put(
+    '/payment-method',
+    Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@store'
+)->name('payment-method.store');
+
+Route::patch(
+    '/payment-method/{paymentMethodId}',
+    Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@update'
+)->name('payment-method.update');
+
+Route::delete(
+    '/payment-method/{paymentMethodId}',
+    Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@delete'
+)->name('payment-method.delete');
+
 
