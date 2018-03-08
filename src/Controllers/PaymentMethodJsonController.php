@@ -3,13 +3,14 @@
 namespace Railroad\Ecommerce\Controllers;
 
 
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\PaymentMethodCreateRequest;
+use Railroad\Ecommerce\Requests\PaymentMethodDeleteRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodUpdateRequest;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Ecommerce\Responses\JsonResponse;
+
 
 class PaymentMethodJsonController extends Controller
 {
@@ -27,9 +28,11 @@ class PaymentMethodJsonController extends Controller
         $this->paymentMethodService = $paymentMethodService;
     }
 
-    /**
+    /** Call the service method to create a new payment method based on request parameters.
+     * Return - NotFoundException if the request method type parameter it's not defined (paypal or credit card)
+     *        - JsonResponse with the new created payment method
      * @param PaymentMethodCreateRequest $request
-     * @return JsonResponse
+     * @return JsonResponse|NotFoundException
      */
     public function store(PaymentMethodCreateRequest $request)
     {
@@ -59,10 +62,12 @@ class PaymentMethodJsonController extends Controller
     }
 
 
-    /** Update a payment method based on payment method id and return it in JSON format
+    /** Update a payment method based on request data and payment method id.
+     * Return - NotFoundException if the payment method doesn't exist or the user have not rights to access it
+     *        - JsonResponse with the updated payment method
      * @param PaymentMethodUpdateRequest $request
      * @param integer $paymentMethodId
-     * @return JsonResponse
+     * @return JsonResponse|NotFoundException
      */
     public function update(PaymentMethodUpdateRequest $request, $paymentMethodId)
     {
@@ -101,12 +106,13 @@ class PaymentMethodJsonController extends Controller
 
     /** Delete a payment method and return a JsonResponse.
      *  Throw  - NotFoundException if the payment method not exist
+     * @param PaymentMethodDeleteRequest $request
      * @param integer $paymentMethodId
      * @return JsonResponse
      */
-    public function delete($paymentMethodId)
+    public function delete($paymentMethodId, PaymentMethodDeleteRequest $request)
     {
-        $results = $this->paymentMethodService->delete($paymentMethodId);
+        $results = $this->paymentMethodService->delete($paymentMethodId, $request->get('user_id'), $request->get('customer_id'));
 
         //if the delete method response it's null the payment method not exist; we throw the proper exception
         throw_if(

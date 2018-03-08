@@ -69,8 +69,8 @@ class PaymentMethodService
 
     /** Save a new payment method, a new credit card/paypal billing record based on payment method type and
      * assign the new created payment method to the proper user/customer.
-     * Return null if the payment method type it's not credit card or paypal
-     *        the new created payment method
+     * Return - null if the payment method type it's not credit card or paypal
+     *        - the new created payment method
      *
      * @param string $methodType
      * @param null $creditCardYearSelector
@@ -103,6 +103,9 @@ class PaymentMethodService
         $customerId = null
 
     ) {
+        PaymentMethodRepository::$availableUserId = $userId;
+        PaymentMethodRepository::$availableCustomerId = $customerId;
+
         if ($methodType == self::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
             $methodId = $this->createCreditCard($creditCardYearSelector, $creditCardMonthSelector, $fingerprint, $last4, $cardHolderName, $companyName, $externalId);
         } else if ($methodType == self::PAYPAL_PAYMENT_METHOD_TYPE) {
@@ -131,9 +134,13 @@ class PaymentMethodService
      * @param integer $paymentMethodId
      * @return bool|null
      */
-    public function delete($paymentMethodId)
+    public function delete($paymentMethodId, $userId = null, $customerId = null)
     {
+        PaymentMethodRepository::$availableUserId = $userId;
+        PaymentMethodRepository::$availableCustomerId = $customerId;
+
         $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
+
         if (!$paymentMethod) {
             return null;
         }
@@ -151,20 +158,11 @@ class PaymentMethodService
         return $this->paymentMethodRepository->delete($paymentMethodId);
     }
 
-    /** Update payment method
-     * @param $paymentMethodId
-     * @param $updateMethod
-     * @param $methodType
-     * @param null $creditCardYearSelector
-     * @param null $creditCardMonthSelector
-     * @param string $fingerprint
-     * @param string $last4
-     * @param string $cardHolderName
-     * @param string $companyName
-     * @param null $externalId
-     * @param null $agreementId
-     * @param string $expressCheckoutToken
-     * @param null $addressId
+    /** Update payment method data.
+     * Return - null if the payment method not exist or the user have not rights to access it
+     *        - array with the updated payment method
+     * @param integer $paymentMethodId
+     * @param array $data
      * @return array|int|mixed|null
      */
     public function update($paymentMethodId, array $data)
@@ -215,7 +213,7 @@ class PaymentMethodService
         return $this->paymentMethodRepository->getById($paymentMethodId);
     }
 
-    /** Create credit card
+    /** Create credit card and return the id
      * @param $creditCardYearSelector
      * @param $creditCardMonthSelector
      * @param $fingerprint
@@ -248,7 +246,7 @@ class PaymentMethodService
         return $methodId;
     }
 
-    /** Create paypal billing
+    /** Create paypal billing record and return the id
      * @param $agreementId
      * @param $expressCheckoutToken
      * @param $addressId
@@ -268,9 +266,9 @@ class PaymentMethodService
         return $methodId;
     }
 
-    /** Create payment method
-     * @param $methodType
-     * @param $methodId
+    /** Create payment method and return the id
+     * @param string $methodType
+     * @param int $methodId
      * @return int
      */
     private function createPaymentMethod($methodType, $methodId)

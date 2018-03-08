@@ -22,6 +22,17 @@ class PaymentMethodRepository extends RepositoryBase
     private $paypalBillingAgreementRepository;
 
     /**
+     * @var UserPaymentMethodsRepository
+     */
+    private $userPaymentMethodsRepository;
+
+    /**
+     * @var CustomerPaymentMethodsRepository
+     */
+    private $customerPaymentMethodsRepository;
+
+    public static $pullAllPaymentMethods = false;
+    /**
      * If this is false any payment method will be pulled. If its defined, only user payment method will be pulled.
      *
      * @var integer|bool
@@ -40,12 +51,17 @@ class PaymentMethodRepository extends RepositoryBase
      * @param CreditCardRepository $creditCardRepository
      * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      */
-    public function __construct(CreditCardRepository $creditCardRepository, PaypalBillingAgreementRepository $paypalBillingAgreementRepository)
+    public function __construct(CreditCardRepository $creditCardRepository,
+                                PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
+                                CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
+                                UserPaymentMethodsRepository $userPaymentMethodsRepository)
     {
         parent::__construct();
 
         $this->creditCardRepository = $creditCardRepository;
         $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
+        $this->customerPaymentMethodsRepository = $customerPaymentMethodsRepository;
+        $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
     }
 
     /**
@@ -68,6 +84,7 @@ class PaymentMethodRepository extends RepositoryBase
     public function getById($id)
     {
         $paymentMethod = $this->query()
+            ->joinUserAndCustomerTables()
             ->selectColumns()
             ->restrictCustomerIdAccess()
             ->restrictUserIdAccess()

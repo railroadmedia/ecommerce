@@ -79,7 +79,7 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$tableDiscountCriteria = ConfigService::$tablePrefix . 'discount_criteria';
         ConfigService::$tableOrderDiscount = ConfigService::$tablePrefix . 'order_discount';
         ConfigService::$tableOrderItemFulfillment = ConfigService::$tablePrefix . 'order_item_fulfillment';
-        ConfigService::$tableShippingOption= ConfigService::$tablePrefix . 'shipping_option';
+        ConfigService::$tableShippingOption = ConfigService::$tablePrefix . 'shipping_option';
         ConfigService::$tableShippingCostsWeightRange = ConfigService::$tablePrefix . 'shipping_costs_weight_range';
         ConfigService::$tablePaypalBillingAgreement = ConfigService::$tablePrefix . 'paypal_billing_agreement';
         ConfigService::$tableCustomerPaymentMethods = ConfigService::$tablePrefix . 'customer_payment_methods';

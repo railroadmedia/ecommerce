@@ -28,7 +28,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
     }
 
-    public function test_store_credit_card_payment_method()
+    public function test_user_store_credit_card_payment_method()
     {
         $fingerprint = $this->faker->randomNumber();
         $last4Digits = $this->faker->randomNumber(4);
@@ -78,7 +78,9 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
             ],
             'created_on' => Carbon::now()->toDateTimeString(),
-            'updated_on' => null
+            'updated_on' => null,
+            'user_id' => $userId,
+            'customer_id' => null
 
         ], $paymentMethod);
 
@@ -125,7 +127,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         );
     }
 
-    public function test_store_paypal_payment_method()
+    public function test_customer_store_paypal_payment_method()
     {
         $agreementId = $this->faker->randomNumber();
         $expressCheckoutToken = $this->faker->word;
@@ -162,7 +164,9 @@ class PaymentMethodServiceTest extends EcommerceTestCase
                 'updated_on' => null
             ],
             'created_on' => Carbon::now()->toDateTimeString(),
-            'updated_on' => null
+            'updated_on' => null,
+            'user_id' => null,
+            'customer_id' => $customerId
 
         ], $paymentMethod);
 
@@ -200,8 +204,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
     public function test_admin_create_user_payment_method()
     {
-        PaymentMethodRepository::$availableUserId = null;
-        PaymentMethodRepository::$availableCustomerId = null;
+        PaymentMethodRepository::$pullAllPaymentMethods = true;
         $userId = rand();
         $agreementId = $this->faker->randomNumber();
         $expressCheckoutToken = $this->faker->word;
@@ -235,19 +238,19 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
     public function test_admin_delete_payment_method()
     {
-        PaymentMethodRepository::$availableUserId = null;
-        PaymentMethodRepository::$availableCustomerId = null;
+        PaymentMethodRepository::$pullAllPaymentMethods = true;
         $paymentMethod = $this->paymentMethodFactory->store();
 
-        $this->assertTrue($this->classBeingTested->delete($paymentMethod['id']));
+        $this->assertTrue($this->classBeingTested->delete($paymentMethod['id'], rand(), null));
     }
 
     public function test_user_can_not_delete_other_payment_method()
     {
-        PaymentMethodRepository::$availableUserId = rand();
-        $paymentMethod = $this->paymentMethodFactory->store();
 
-        $this->assertNull($this->classBeingTested->delete($paymentMethod['id']));
+        $paymentMethod = $this->paymentMethodFactory->store();
+        PaymentMethodRepository::$availableUserId = rand();
+
+        $this->assertNull($this->classBeingTested->delete($paymentMethod['id'],rand()));
     }
 
     public function test_user_can_delete_its_payment_method()
@@ -269,7 +272,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             $userId,
             null);
 
-        $this->assertTrue($this->classBeingTested->delete($paymentMethod['id']));
+        $this->assertTrue($this->classBeingTested->delete($paymentMethod['id'],$userId));
     }
 
     public function test_user_update_credit_card_expiration_date()

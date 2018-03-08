@@ -8,6 +8,7 @@ use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\RepositoryBase;
 use Railroad\Location\Providers\LocationServiceProvider;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
@@ -131,5 +132,7 @@ class EcommerceTestCase extends BaseTestCase
     protected function tearDown()
     {
         parent::tearDown();
+
+        PaymentMethodRepository::$pullAllPaymentMethods = false;
     }
 }
