@@ -21,7 +21,8 @@
     "doctrine/dbal": "^2.5",
     "ramsey/uuid": "^3.6",
     "railroad/location" : "@dev",
-    "railroad/remotestorage" : "@dev"
+    "railroad/remotestorage" : "@dev",
+    "webpatser/laravel-countries": "dev-master"
   },
   "require-dev": {
     "phpunit/phpunit": "~7.0",

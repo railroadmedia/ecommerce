@@ -97,6 +97,21 @@ Route::group(
             '/payment-method/{paymentMethodId}',
             Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@delete'
         )->name('payment-method.delete');
+
+        Route::put(
+            '/address',
+            Railroad\Ecommerce\Controllers\AddressJsonController::class . '@store'
+        )->name('address.store');
+
+        Route::patch(
+            '/address/{addressId}',
+            Railroad\Ecommerce\Controllers\AddressJsonController::class . '@update'
+        )->name('address.update');
+
+        Route::delete(
+            '/address/{addressId}',
+            Railroad\Ecommerce\Controllers\AddressJsonController::class . '@delete'
+        )->name('address.delete');
     });
 
 
