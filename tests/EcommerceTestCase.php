@@ -8,10 +8,12 @@ use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
+use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\RepositoryBase;
 use Railroad\Location\Providers\LocationServiceProvider;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
+use Webpatser\Countries\CountriesServiceProvider;
 
 
 class EcommerceTestCase extends BaseTestCase
@@ -31,7 +33,8 @@ class EcommerceTestCase extends BaseTestCase
     {
         parent::setUp();
 
-        $this->artisan('migrate:fresh');
+        $this->artisan('countries:migration');
+        $this->artisan('migrate');
         $this->artisan('cache:clear', []);
 
         $this->faker = $this->app->make(Generator::class);
@@ -116,6 +119,7 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(EcommerceServiceProvider::class);
         $app->register(LocationServiceProvider::class);
         $app->register(RemoteStorageServiceProvider::class);
+        $app->register(CountriesServiceProvider::class);
     }
 
     /**
@@ -134,5 +138,7 @@ class EcommerceTestCase extends BaseTestCase
         parent::tearDown();
 
         PaymentMethodRepository::$pullAllPaymentMethods = false;
+
+        AddressRepository::$pullAllAddresses = false;
     }
 }

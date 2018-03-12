@@ -40,7 +40,7 @@ class AddressUpdateRequest extends FormRequest
             'city' => 'max:255',
             'zip' => 'max:255',
             'state' => 'max:255',
-            'country' => 'max:255',
+            'country' => 'max:255|country',
             'user_id' => 'required_without:customer_id',
             'customer_id' => 'required_without:user_id'
         ];

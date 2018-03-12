@@ -5,7 +5,7 @@ namespace Railroad\Ecommerce\Factories;
 
 use Faker\Generator;
 use Railroad\Ecommerce\Services\AddressService;
-use Railroad\Ecommerce\Services\ConfigService;
+use Webpatser\Countries\Countries;
 
 class AddressFactory extends AddressService
 {
@@ -35,7 +35,7 @@ class AddressFactory extends AddressService
                 $this->faker->city,
                 $this->faker->postcode,
                 $this->faker->word,
-                $this->faker->country
+                $this->faker->randomElement( array_column( Countries::getCountries(), 'full_name'))
             ];
         return parent::store(...$parameters);
     }

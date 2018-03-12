@@ -6,6 +6,7 @@ use Illuminate\Database\Events\StatementPrepared;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use PDO;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\CustomValidationRules;
 
 
 class EcommerceServiceProvider extends ServiceProvider
@@ -48,6 +49,10 @@ class EcommerceServiceProvider extends ServiceProvider
 
         //load package routes file
         $this->loadRoutesFrom(__DIR__ . '/../../routes/routes.php');
+
+        $this->app->validator->resolver(function($translator, $data, $rules, $messages) {
+            return new CustomValidationRules($translator, $data, $rules, $messages);
+        });
     }
 
     private function setupConfig()

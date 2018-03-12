@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Services\AddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use Webpatser\Countries\Countries;
 
 
 class AddressJsonControllerTest extends EcommerceTestCase
@@ -85,7 +86,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'city' => $this->faker->city,
             'zip' => $this->faker->postcode,
             'state' => $this->faker->word,
-            'country' => $this->faker->country
+            'country' => $this->faker->randomElement(array_column(Countries::getCountries(), 'full_name'))
         ]);
 
         $this->assertEquals(422, $results->getStatusCode());
@@ -111,7 +112,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $city = $this->faker->city;
         $zip = $this->faker->postcode;
         $state = $this->faker->word;
-        $country = $this->faker->country;
+        $country = $this->faker->randomElement(array_column(Countries::getCountries(), 'full_name'));
 
         $results = $this->call('PUT', '/address', [
             'type' => $type,
@@ -270,7 +271,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $city = $this->faker->city;
         $zip = $this->faker->postcode;
         $state = $this->faker->word;
-        $country = $this->faker->country;
+        $country = $this->faker->randomElement(array_column(Countries::getCountries(), 'full_name'));
 
         $results = $this->call('PUT', '/address', [
             'type' => $type,
@@ -334,6 +335,62 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'created_on' => $address['created_on'],
             'updated_on' => Carbon::now()->toDateTimeString()
         ], $results->decodeResponseJson()['results']);
+    }
+
+    public function test_create_address_with_invalid_country()
+    {
+        $country = $this->faker->word;
+        $type = $this->faker->randomElement([
+            AddressService::SHIPPING_ADDRESS,
+            AddressService::BILLING_ADDRESS
+        ]);
+        $userId = rand();
+        $firstName = $this->faker->firstName;
+        $lastName = $this->faker->lastName;
+        $streetLine1 = $this->faker->streetAddress;
+        $city = $this->faker->city;
+        $zip = $this->faker->postcode;
+        $state = $this->faker->word;
+
+        $results = $this->call('PUT', '/address', [
+            'type' => $type,
+            'user_id' => $userId,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'street_line_1' => $streetLine1,
+            'city' => $city,
+            'zip' => $zip,
+            'state' => $state,
+            'country' => $country
+        ]);
+
+        $this->assertEquals(422, $results->getStatusCode());
+
+        $this->assertEquals([
+            [
+                "source" => "country",
+                "detail" => "The country field it's invalid."
+            ]
+        ], $results->decodeResponseJson()['errors']);
+    }
+
+    public function test_update_address_with_invalid_country()
+    {
+        $country = $this->faker->word;
+        $address = $this->addressFactory->store();
+        $results = $this->call('PATCH', '/address/' . $address['id'], [
+            'country' => $country,
+            'user_id' => rand()
+        ]);
+
+        $this->assertEquals(422, $results->getStatusCode());
+
+        $this->assertEquals([
+            [
+                "source" => "country",
+                "detail" => "The country field it's invalid."
+            ]
+        ], $results->decodeResponseJson()['errors']);
     }
 
 

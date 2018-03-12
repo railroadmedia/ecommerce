@@ -19,32 +19,37 @@ class AddressService
      */
     private $orderRepository;
 
+    //Constants for address types
     CONST BILLING_ADDRESS = 'billing';
     CONST SHIPPING_ADDRESS = 'shipping';
 
     /**
      * AddressService constructor.
-     * @param $addressRepository
+     * @param AddressRepository $addressRepository
+     * @param OrderRepository $orderRepository
      */
-    public function __construct(AddressRepository $addressRepository, OrderRepository $orderRepository)
-    {
+    public function __construct(
+        AddressRepository $addressRepository,
+        OrderRepository $orderRepository
+    ) {
         $this->addressRepository = $addressRepository;
         $this->orderRepository = $orderRepository;
     }
 
-    /**
-     * @param $type
-     * @param $brand
-     * @param $userId
-     * @param $customerId
-     * @param $firstName
-     * @param $lastName
-     * @param $streetLine1
-     * @param $streetLine2
-     * @param $city
-     * @param $zip
-     * @param $state
-     * @param $country
+    /** Call the method that save a new address record in the database.
+     * Return an array with the new created address.
+     * @param string $type
+     * @param string|null $brand
+     * @param int|null $userId
+     * @param int|null $customerId
+     * @param string $firstName
+     * @param string $lastName
+     * @param string $streetLine1
+     * @param string|null $streetLine2
+     * @param string $city
+     * @param string $zip
+     * @param string $state
+     * @param string $country
      * @return array|null
      */
     public function store($type, $brand, $userId, $customerId, $firstName, $lastName, $streetLine1, $streetLine2, $city, $zip, $state, $country)
@@ -74,8 +79,8 @@ class AddressService
         return $this->getById($addressId);
     }
 
-    /**
-     * @param $addressId
+    /** Return an array with the address data based on the id
+     * @param int $addressId
      * @return array|null
      */
     public function getById($addressId)
@@ -83,8 +88,10 @@ class AddressService
         return $this->addressRepository->getById($addressId);
     }
 
-    /**
-     * @param $id
+    /** Call the method that update address record if the address exist in the database
+     * Return: - null if the address doesn't exist in the database
+     *         - an array with the updated address
+     * @param int $id
      * @param array $data
      * @return array|null
      */
@@ -102,10 +109,13 @@ class AddressService
         return $this->getById($id);
     }
 
-    /**
-     * @param $id
-     * @param $userId
-     * @param $customerId
+    /** Call the method that delete the address record from the database, if the address exists and it's not assigned to any orders.
+     * Return  - null if the address not exists or the user have not rights to access it
+     *         - -1 if the adress it's associated to orders
+     *          - boolean otherwise
+     * @param int $id
+     * @param int|null $userId
+     * @param int|null $customerId
      * @return bool|int|null
      */
     public function delete($id, $userId, $customerId)

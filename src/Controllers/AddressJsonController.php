@@ -25,7 +25,8 @@ class AddressJsonController extends Controller
         $this->addressService = $addressService;
     }
 
-    /**
+    /** Call the method to store a new address based on request parameters.
+     * Return a JsonResponse with the new created address.
      * @param AddressCreateRequest $request
      * @return JsonResponse
      */
@@ -49,9 +50,11 @@ class AddressJsonController extends Controller
         return new JsonResponse($address, 200);
     }
 
-    /**
+    /** Update an address based on address id and requests parameters.
+     * Return - NotFoundException if the address not exists or the user have not rights to access it
+     *        - JsonResponse with the updated address
      * @param AddressUpdateRequest $request
-     * @param $addressId
+     * @param int $addressId
      * @return JsonResponse
      */
     public function update(AddressUpdateRequest $request, $addressId)
@@ -87,8 +90,11 @@ class AddressJsonController extends Controller
         return new JsonResponse($address, 201);
     }
 
-    /**
-     * @param $addressId
+    /** Delete an address based on the id.
+     * Return - NotFoundException if the address not exists or the user have not rights to access it
+     *        - NotAllowedException if the address it's in used (exists orders defined for the selected address)
+     *        - JsonResponse with code 204 otherwise
+     * @param integer $addressId
      * @param AddressDeleteRequest $request
      * @return JsonResponse
      */
