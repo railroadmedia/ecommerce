@@ -25,7 +25,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     /**
      * @var UserAccessFactory
      */
-    private $adminFactory;
+    private $userAccessFactory;
 
     /**
      * @var AccessFactory
@@ -36,7 +36,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         parent::setUp();
         $this->addressFactory = $this->app->make(AddressFactory::class);
-        $this->adminFactory = $this->app->make(UserAccessFactory::class);
+        $this->userAccessFactory = $this->app->make(UserAccessFactory::class);
         $this->accessFactory = $this->app->make(AccessFactory::class);
     }
 
@@ -349,7 +349,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $adminRole = $this->accessFactory->store(
             'admin','admin', ''
         );
-        $admin = $this->adminFactory->assignAccessToUser($adminRole['id'], $userId);
+        $admin = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
 
         $type = $this->faker->randomElement([
             AddressService::SHIPPING_ADDRESS,
@@ -404,7 +404,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $adminRole = $this->accessFactory->store(
             'admin','admin', ''
         );
-        $admin = $this->adminFactory->assignAccessToUser($adminRole['id'], $userId);
+        $admin = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
 
         $address = $this->addressFactory->store(AddressService::SHIPPING_ADDRESS, ConfigService::$brand, rand());
         $newStreetLine1 = $this->faker->streetAddress;
@@ -441,7 +441,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $adminRole = $this->accessFactory->store(
             'admin','admin', ''
         );
-        $admin = $this->adminFactory->assignAccessToUser($adminRole['id'], $userId);
+        $admin = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
         $randomId = rand();
 
         $address = $this->addressFactory->store(AddressService::SHIPPING_ADDRESS, ConfigService::$brand, $randomId);
