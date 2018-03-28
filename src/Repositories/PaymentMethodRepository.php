@@ -86,8 +86,6 @@ class PaymentMethodRepository extends RepositoryBase
         $paymentMethod = $this->query()
             ->joinUserAndCustomerTables()
             ->selectColumns()
-            ->restrictCustomerIdAccess()
-            ->restrictUserIdAccess()
             ->where([ConfigService::$tablePaymentMethod . '.id' => $id])
             ->get()
             ->first();

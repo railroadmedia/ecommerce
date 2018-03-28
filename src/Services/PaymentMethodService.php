@@ -134,11 +134,8 @@ class PaymentMethodService
      * @param integer $paymentMethodId
      * @return bool|null
      */
-    public function delete($paymentMethodId, $userId = null, $customerId = null)
+    public function delete($paymentMethodId)
     {
-        PaymentMethodRepository::$availableUserId = $userId;
-        PaymentMethodRepository::$availableCustomerId = $customerId;
-
         $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
 
         if (!$paymentMethod) {

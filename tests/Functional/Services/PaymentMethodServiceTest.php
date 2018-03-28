@@ -244,14 +244,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $this->assertTrue($this->classBeingTested->delete($paymentMethod['id'], rand(), null));
     }
 
-    public function test_user_can_not_delete_other_payment_method()
-    {
-
-        $paymentMethod = $this->paymentMethodFactory->store();
-        PaymentMethodRepository::$availableUserId = rand();
-
-        $this->assertNull($this->classBeingTested->delete($paymentMethod['id'],rand()));
-    }
 
     public function test_user_can_delete_its_payment_method()
     {

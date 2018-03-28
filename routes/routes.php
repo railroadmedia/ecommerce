@@ -95,7 +95,11 @@ Route::group(
 
         Route::delete(
             '/payment-method/{paymentMethodId}',
-            Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@delete'
+            [
+            'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@delete',
+                'middleware' => ['permission'],
+                'permissions' => ['admin','isOwner'],
+            ]
         )->name('payment-method.delete');
 
         Route::put(
