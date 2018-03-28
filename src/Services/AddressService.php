@@ -54,14 +54,11 @@ class AddressService
      */
     public function store($type, $brand, $userId, $customerId, $firstName, $lastName, $streetLine1, $streetLine2, $city, $zip, $state, $country)
     {
-        AddressRepository::$availableUserId = $userId;
-        AddressRepository::$availableCustomerId = $customerId;
-
         $addressId = $this->addressRepository->create(
             [
                 'type' => $type,
                 'brand' => $brand ?? ConfigService::$brand,
-                'user_id' => $userId,
+                'user_id' => $userId ?? request()->user()->id,
                 'customer_id' => $customerId,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
@@ -114,15 +111,10 @@ class AddressService
      *         - -1 if the adress it's associated to orders
      *          - boolean otherwise
      * @param int $id
-     * @param int|null $userId
-     * @param int|null $customerId
      * @return bool|int|null
      */
-    public function delete($id, $userId, $customerId)
+    public function delete($id)
     {
-        AddressRepository::$availableUserId = $userId;
-        AddressRepository::$availableCustomerId = $customerId;
-
         $address = $this->getById($id);
 
         if (empty($address)) {

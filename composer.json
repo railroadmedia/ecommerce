@@ -11,6 +11,10 @@
     },
     {
       "type": "path",
+      "url": "../permissions"
+    },
+    {
+      "type": "path",
       "url": "../remotestorage"
     }
   ],
@@ -21,6 +25,7 @@
     "doctrine/dbal": "^2.5",
     "ramsey/uuid": "^3.6",
     "railroad/location" : "@dev",
+    "railroad/permissions" : "@dev",
     "railroad/remotestorage" : "@dev",
     "webpatser/laravel-countries": "dev-master"
   },

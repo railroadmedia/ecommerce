@@ -51,7 +51,8 @@ class AddressJsonController extends Controller
     }
 
     /** Update an address based on address id and requests parameters.
-     * Return - NotFoundException if the address not exists or the user have not rights to access it
+     * Return - NotFoundException if the address not exists
+     *        - NotAllowedException if the user have not rights to access it
      *        - JsonResponse with the updated address
      * @param AddressUpdateRequest $request
      * @param int $addressId
@@ -67,8 +68,6 @@ class AddressJsonController extends Controller
                 [
                     'type' => '',
                     'brand' => '',
-                    'user_id' => '',
-                    'customer_id' => '',
                     'first_name' => '',
                     'last_name' => '',
                     'street_line_1' => '',
@@ -91,16 +90,16 @@ class AddressJsonController extends Controller
     }
 
     /** Delete an address based on the id.
-     * Return - NotFoundException if the address not exists or the user have not rights to access it
-     *        - NotAllowedException if the address it's in used (exists orders defined for the selected address)
+     * Return - NotFoundException if the address not exists
+     *        - NotAllowedException if the address it's in used (exists orders defined for the selected address)  or the user have not rights to access it
      *        - JsonResponse with code 204 otherwise
      * @param integer $addressId
      * @param AddressDeleteRequest $request
      * @return JsonResponse
      */
-    public function delete($addressId, AddressDeleteRequest $request)
+    public function delete($addressId)
     {
-        $results = $this->addressService->delete($addressId, $request->get('user_id'), $request->get('customer_id'));
+        $results = $this->addressService->delete($addressId);
 
         //if the delete method response it's null the product not exist; we throw the proper exception
         throw_if(

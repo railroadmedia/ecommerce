@@ -39,17 +39,9 @@ class AddressRepository extends RepositoryBase
 
     public function getById($id)
     {
-        $address = $this->query()
-            ->restrictCustomerIdAccess()
-            ->restrictUserIdAccess()
+        return $this->query()
             ->where([ConfigService::$tableAddress . '.id' => $id])
             ->get()
             ->first();
-
-        if (empty($address)) {
-            return null;
-        }
-
-        return $address;
     }
 }

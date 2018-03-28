@@ -80,7 +80,7 @@ Route::delete(
 
 Route::group(
     [
-        'middleware' => AdministratorMiddleware::class
+       // 'middleware' => AdministratorMiddleware::class
     ],
     function () {
         Route::put(
@@ -105,12 +105,20 @@ Route::group(
 
         Route::patch(
             '/address/{addressId}',
-            Railroad\Ecommerce\Controllers\AddressJsonController::class . '@update'
+            [
+                'uses' => Railroad\Ecommerce\Controllers\AddressJsonController::class . '@update',
+                'middleware' => ['permission'],
+                'permissions' => ['admin','isOwner'],
+            ]
         )->name('address.update');
 
         Route::delete(
             '/address/{addressId}',
-            Railroad\Ecommerce\Controllers\AddressJsonController::class . '@delete'
+            [
+                'uses' => Railroad\Ecommerce\Controllers\AddressJsonController::class . '@delete',
+                'middleware' => ['permission'],
+                'permissions' => ['admin','isOwner'],
+            ]
         )->name('address.delete');
     });
 

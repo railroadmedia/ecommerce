@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Tests;
 
 use Carbon\Carbon;
 use Faker\Generator;
+use Illuminate\Auth\AuthManager;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
 use Orchestra\Testbench\TestCase as BaseTestCase;
@@ -11,7 +12,9 @@ use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\RepositoryBase;
+use Railroad\Ecommerce\Tests\Resources\Models\User;
 use Railroad\Location\Providers\LocationServiceProvider;
+use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
 use Webpatser\Countries\CountriesServiceProvider;
 
@@ -29,16 +32,22 @@ class EcommerceTestCase extends BaseTestCase
      */
     protected $databaseManager;
 
+    /**
+     * @var AuthManager
+     */
+    protected $authManager;
+
     protected function setUp()
     {
         parent::setUp();
 
         $this->artisan('countries:migration');
         $this->artisan('migrate');
-        $this->artisan('cache:clear', []);
+        $this->artisan('cache:clear');
 
         $this->faker = $this->app->make(Generator::class);
         $this->databaseManager = $this->app->make(DatabaseManager::class);
+        $this->authManager = $this->app->make(AuthManager::class);
 
         RepositoryBase::$connectionMask = null;
 
@@ -55,8 +64,10 @@ class EcommerceTestCase extends BaseTestCase
     {
         // setup package config for testing
         $defaultConfig = require(__DIR__ . '/../config/ecommerce.php');
+        $permissionTableConfig = require(__DIR__ . '/../config/permissions.php');
         $locationConfig = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
         $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
+        $permissionConfig = require(__DIR__ . '/../vendor/railroad/permissions/config/permissions.php');
 
         $app['config']->set('ecommerce.database_connection_name', 'testbench');
         $app['config']->set('ecommerce.cache_duration', 60);
@@ -65,6 +76,8 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
         $app['config']->set('ecommerce.tax_rate', $defaultConfig['tax_rate']);
         $app['config']->set('ecommerce.credit_card', $defaultConfig['credit_card']);
+        $app['config']->set('table_names', $permissionTableConfig['table_names']);
+        $app['config']->set('column_names', $permissionTableConfig['column_names']);
 
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
@@ -74,6 +87,8 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
 
+        $app['config']->set('permission.database_connection_name', $permissionConfig['database_connection_name']);
+        $app['config']->set('permission.connection_mask_prefix', $permissionConfig['connection_mask_prefix']);
 
         // setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
@@ -104,6 +119,13 @@ class EcommerceTestCase extends BaseTestCase
             ]
         );
 
+        // allows access to built in user auth
+        $app['config']->set('auth.providers.users.model', User::class);
+
+        // allows access to built in user auth
+        $app['config']->set('auth.providers.users.model', User::class);
+
+
         if (!$app['db']->connection()->getSchemaBuilder()->hasTable('users')) {
 
             $app['db']->connection()->getSchemaBuilder()->create(
@@ -120,6 +142,7 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(LocationServiceProvider::class);
         $app->register(RemoteStorageServiceProvider::class);
         $app->register(CountriesServiceProvider::class);
+        $app->register(PermissionsServiceProvider::class);
     }
 
     /**
@@ -133,12 +156,30 @@ class EcommerceTestCase extends BaseTestCase
         return str_replace($tempDirPath, '', $filenameAbsolute);
     }
 
+    /**
+     * @return int
+     */
+    public function createAndLogInNewUser()
+    {
+        $userId = $this->databaseManager->connection()->query()->from('users')->insertGetId(
+            ['email' => $this->faker->email]
+        );
+
+        $this->authManager->guard()->onceUsingId($userId);
+
+        request()->setUserResolver(
+            function () use ($userId) {
+                return User::query()->find($userId);
+            }
+        );
+
+        return $userId;
+    }
+
     protected function tearDown()
     {
         parent::tearDown();
 
         PaymentMethodRepository::$pullAllPaymentMethods = false;
-
-        AddressRepository::$pullAllAddresses = false;
     }
 }

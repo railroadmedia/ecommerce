@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Requests;
 
 
 use Railroad\Ecommerce\Services\AddressService;
+use Railroad\Ecommerce\Services\ConfigService;
 
 class AddressCreateRequest extends FormRequest
 {
@@ -41,8 +42,8 @@ class AddressCreateRequest extends FormRequest
             'zip' => 'required|max:255',
             'state' => 'required|max:255',
             'country' => 'required|max:255|country',
-            'user_id' => 'required_without:customer_id',
-            'customer_id' => 'required_without:user_id'
+            'user_id' => 'numeric',
+            'customer_id' => 'numeric|exists:'.ConfigService::$tableCustomer.',id'
         ];
     }
 }
