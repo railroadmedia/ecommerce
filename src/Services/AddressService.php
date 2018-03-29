@@ -54,11 +54,12 @@ class AddressService
      */
     public function store($type, $brand, $userId, $customerId, $firstName, $lastName, $streetLine1, $streetLine2, $city, $zip, $state, $country)
     {
+
         $addressId = $this->addressRepository->create(
             [
                 'type' => $type,
                 'brand' => $brand ?? ConfigService::$brand,
-                'user_id' => $userId ?? request()->user()->id,
+                'user_id' => $userId ,
                 'customer_id' => $customerId,
                 'first_name' => $firstName,
                 'last_name' => $lastName,

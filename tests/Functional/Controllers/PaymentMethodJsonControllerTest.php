@@ -3,13 +3,15 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Controllers\PaymentMethodJsonController;
-use PHPUnit\Framework\TestCase;
+use Railroad\Ecommerce\Factories\AccessFactory;
+use Railroad\Ecommerce\Factories\CustomerFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
+use Railroad\Ecommerce\Factories\UserAccessFactory;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+
 
 class PaymentMethodJsonControllerTest extends EcommerceTestCase
 {
@@ -18,10 +20,28 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
      */
     private $paymentMethodFactory;
 
+    /**
+     * @var AccessFactory
+     */
+    private $accessFactory;
+
+    /**
+     * @var UserAccessFactory
+     */
+    private $userAccessFactory;
+
+    /**
+     * @var CustomerFactory
+     */
+    private $customerFactory;
+
     protected function setUp()
     {
         parent::setUp();
         $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
+        $this->accessFactory = $this->app->make(AccessFactory::class);
+        $this->userAccessFactory = $this->app->make(UserAccessFactory::class);
+        $this->customerFactory = $this->app->make(CustomerFactory::class);
     }
 
     public function test_store_payment_method_credit_card_without_required_fields()
@@ -258,14 +278,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             [
                 "source" => "external_id",
                 "detail" => "The external ID field is required when create a new credit card.",
-            ],
-            [
-                "source" => "user_id",
-                "detail" => "The user id field is required when customer id is not present."
-            ],
-            [
-                "source" => "customer_id",
-                "detail" => "The customer id field is required when user id is not present."
             ]
         ], $results->decodeResponseJson()['errors']);
     }
@@ -328,8 +340,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $results = $this->call('PATCH', '/payment-method/' .$paymentMethod['id'],
             [
                 'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'customer_id' => rand()
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE
+               // 'customer_id' => rand()
             ]
         );
 
@@ -423,10 +435,23 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_customer_update_payment_method_update_credit_card_response()
     {
+        $customer = $this->customerFactory->store();
         $cardYear = $this->faker->creditCardExpirationDate->format('Y');
         $cardMonth = $this->faker->month;
 
-        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE);
+        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $this->faker->creditCardExpirationDate->format('Y'),
+            $this->faker->month,
+            $this->faker->word,
+            $this->faker->randomNumber(4),
+            $this->faker->name,
+            $this->faker->creditCardType,
+            rand(),
+            rand(),
+            $this->faker->word,
+            rand(),
+            null,
+            $customer['id']);
 
         $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
             [
@@ -434,7 +459,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'card_year' => $cardYear,
                 'card_month' => $cardMonth,
-                'customer_id' => $paymentMethod['customer_id']
+                'customer_id' => $customer['id']
             ]
         );
 
@@ -445,7 +470,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'created_on' => $paymentMethod['created_on'],
             'updated_on' => Carbon::now()->toDateTimeString(),
             'user_id' => $paymentMethod['user_id'],
-            'customer_id' => $paymentMethod['customer_id'],
+            'customer_id' => $customer['id'],
             'method' => [
                 'id' => $paymentMethod['method']['id'],
                 'type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -471,7 +496,20 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_customer_update_payment_method_use_paypal()
     {
-        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE);
+        $customer = $this->customerFactory->store();
+        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $this->faker->creditCardExpirationDate->format('Y'),
+            $this->faker->month,
+            $this->faker->word,
+            $this->faker->randomNumber(4),
+            $this->faker->name,
+            $this->faker->creditCardType,
+            rand(),
+            rand(),
+            $this->faker->word,
+            rand(),
+            null,
+            $customer['id']);
         $agreementId = rand();
         $expressCheckoutToken = $this->faker->word;
         $addressId = rand();
@@ -556,9 +594,25 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function _test_admin_delete_payment_method_paypal()
+    public function test_admin_delete_payment_method_paypal()
     {
-        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE);
+        $userId = $this->createAndLogInNewUser();
+        $adminRole = $this->accessFactory->store(
+            'admin','admin', ''
+        );
+        $admin = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
+        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $this->faker->creditCardExpirationDate->format('Y'),
+            $this->faker->month,
+            $this->faker->word,
+            $this->faker->randomNumber(4),
+            $this->faker->name,
+            $this->faker->creditCardType,
+            rand(),
+            rand(),
+            $this->faker->word,
+            rand(),
+            $userId);
 
         $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
 

@@ -80,7 +80,7 @@ Route::delete(
 
 Route::group(
     [
-       // 'middleware' => AdministratorMiddleware::class
+        // 'middleware' => AdministratorMiddleware::class
     ],
     function () {
         Route::put(
@@ -90,15 +90,19 @@ Route::group(
 
         Route::patch(
             '/payment-method/{paymentMethodId}',
-            Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@update'
+            [
+                'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@update',
+                'middleware' => ['permission'],
+                'permissions' => ['admin', 'isOwner'],
+            ]
         )->name('payment-method.update');
 
         Route::delete(
             '/payment-method/{paymentMethodId}',
             [
-            'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@delete',
+                'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@delete',
                 'middleware' => ['permission'],
-                'permissions' => ['admin','isOwner'],
+                'permissions' => ['admin', 'isOwner'],
             ]
         )->name('payment-method.delete');
 
@@ -112,7 +116,7 @@ Route::group(
             [
                 'uses' => Railroad\Ecommerce\Controllers\AddressJsonController::class . '@update',
                 'middleware' => ['permission'],
-                'permissions' => ['admin','isOwner'],
+                'permissions' => ['admin', 'isOwner'],
             ]
         )->name('address.update');
 
@@ -121,7 +125,7 @@ Route::group(
             [
                 'uses' => Railroad\Ecommerce\Controllers\AddressJsonController::class . '@delete',
                 'middleware' => ['permission'],
-                'permissions' => ['admin','isOwner'],
+                'permissions' => ['admin', 'isOwner'],
             ]
         )->name('address.delete');
     });

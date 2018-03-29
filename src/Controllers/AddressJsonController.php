@@ -97,7 +97,7 @@ class AddressJsonController extends Controller
      * @param AddressDeleteRequest $request
      * @return JsonResponse
      */
-    public function delete($addressId)
+    public function delete($addressId, AddressDeleteRequest $request)
     {
         $results = $this->addressService->delete($addressId);
 

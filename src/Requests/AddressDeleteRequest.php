@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Requests;
 
 
+use Railroad\Ecommerce\Services\ConfigService;
+
 class AddressDeleteRequest extends FormRequest
 {
     /**
@@ -23,8 +25,7 @@ class AddressDeleteRequest extends FormRequest
     public function rules()
     {
         return [
-            'user_id' => 'required_without:customer_id',
-            'customer_id' => 'required_without:user_id'
+            'customer_id' => 'numeric|exists:'.ConfigService::$tableCustomer.',id'
         ];
     }
 }

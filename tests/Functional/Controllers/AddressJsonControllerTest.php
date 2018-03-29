@@ -6,6 +6,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Factories\AccessFactory;
 use Railroad\Ecommerce\Factories\AddressFactory;
+use Railroad\Ecommerce\Factories\CustomerFactory;
 use Railroad\Ecommerce\Factories\UserAccessFactory;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Services\AddressService;
@@ -32,12 +33,18 @@ class AddressJsonControllerTest extends EcommerceTestCase
      */
     private $accessFactory;
 
+    /**
+     * @var CustomerFactory
+     */
+    private $customerFactory;
+
     protected function setUp()
     {
         parent::setUp();
         $this->addressFactory = $this->app->make(AddressFactory::class);
         $this->userAccessFactory = $this->app->make(UserAccessFactory::class);
         $this->accessFactory = $this->app->make(AccessFactory::class);
+        $this->customerFactory = $this->app->make(CustomerFactory::class);
     }
 
     public function test_store_validation()
@@ -171,7 +178,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             , $results->decodeResponseJson()['error']);
     }
 
-    public function test_update_response()
+    public function test_user_update_his_address_response()
     {
         $userId = $this->createAndLogInNewUser();
 
@@ -227,30 +234,26 @@ class AddressJsonControllerTest extends EcommerceTestCase
     public function test_delete_unauthorized_user()
     {
         $randomId = rand();
-        $results = $this->call('DELETE', '/address/' . $randomId,
-            [
-                'user_id' => $this->createAndLogInNewUser()
-            ]);
+        $results = $this->call('DELETE', '/address/' . $randomId);
 
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals(
             [
                 "title" => "Not allowed.",
-                "detail" => "This action is unauthorized.",
+                "detail" => "This action is unauthorized. Please login",
             ]
             , $results->decodeResponseJson()['error']);
     }
 
-    public function test_delete_address()
+    public function test_user_delete_his_address()
     {
         $userId = $this->createAndLogInNewUser();
         $address = $this->addressFactory->store(AddressService::SHIPPING_ADDRESS, ConfigService::$brand, $userId);
-        $results = $this->call('DELETE', '/address/' . $address['id'], [
-            'user_id' => $userId,
-            'customer_id' => $address['customer_id']
-        ]);
+
+        $results = $this->call('DELETE', '/address/' . $address['id']);
 
         $this->assertEquals(204, $results->getStatusCode());
+
     }
 
     public function test_delete_address_with_orders()
@@ -449,6 +452,132 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $results = $this->call('DELETE', '/address/' . $address['id']);
 
         $this->assertEquals(204, $results->getStatusCode());
+    }
+
+    public function test_customer_create_address()
+    {
+        $customer = $this->customerFactory->store();
+        $type = $this->faker->randomElement([
+            AddressService::SHIPPING_ADDRESS,
+            AddressService::BILLING_ADDRESS
+        ]);
+        $firstName = $this->faker->firstName;
+        $lastName = $this->faker->lastName;
+        $streetLine1 = $this->faker->streetAddress;
+        $city = $this->faker->city;
+        $zip = $this->faker->postcode;
+        $state = $this->faker->word;
+        $country = $this->faker->randomElement(array_column(Countries::getCountries(), 'full_name'));
+
+        $results = $this->call('PUT', '/address', [
+            'type' => $type,
+            'customer_id' => $customer['id'],
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'street_line_1' => $streetLine1,
+            'city' => $city,
+            'zip' => $zip,
+            'state' => $state,
+            'country' => $country
+        ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals([
+            'id' => 1,
+            'type' => $type,
+            'brand' => ConfigService::$brand,
+            'user_id' => null,
+            'customer_id' => $customer['id'],
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'street_line_1' => $streetLine1,
+            'street_line_2' => null,
+            'city' => $city,
+            'zip' => $zip,
+            'state' => $state,
+            'country' => $country,
+            'created_on' => Carbon::now()->toDateTimeString(),
+            'updated_on' => null
+        ], $results->decodeResponseJson()['results']);
+    }
+
+    public function test_customer_update_his_address()
+    {
+        $customer = $this->customerFactory->store();
+        $address = $this->addressFactory->store(AddressService::SHIPPING_ADDRESS, ConfigService::$brand, null, $customer['id']);
+        $newStreetLine1 = $this->faker->streetAddress;
+
+        $results = $this->call('PATCH', '/address/' . $address['id'], [
+            'customer_id' => $customer['id'],
+            'street_line_1' => $newStreetLine1
+        ]);
+
+        $this->assertEquals(201, $results->getStatusCode());
+        $this->assertEquals([
+            'id' => $address['id'],
+            'type' => $address['type'],
+            'brand' => $address['brand'],
+            'user_id' => $address['user_id'],
+            'customer_id' => $address['customer_id'],
+            'first_name' => $address['first_name'],
+            'last_name' => $address['last_name'],
+            'street_line_1' => $newStreetLine1,
+            'street_line_2' => $address['street_line_2'],
+            'city' => $address['city'],
+            'zip' => $address['zip'],
+            'state' => $address['state'],
+            'country' => $address['country'],
+            'created_on' => $address['created_on'],
+            'updated_on' => Carbon::now()->toDateTimeString()
+        ], $results->decodeResponseJson()['results']);
+    }
+
+    public function test_customer_restriction_on_update_other_address()
+    {
+        $customer = $this->customerFactory->store();
+        $address = $this->addressFactory->store(AddressService::SHIPPING_ADDRESS, ConfigService::$brand, rand(), null);
+        $newStreetLine1 = $this->faker->streetAddress;
+
+        $results = $this->call('PATCH', '/address/' . $address['id'], [
+            'customer_id' => $customer['id'],
+            'street_line_1' => $newStreetLine1
+        ]);
+
+        $this->assertEquals(403, $results->getStatusCode());
+        $this->assertEquals(
+            [
+                "title" => "Not allowed.",
+                "detail" => "This action is unauthorized.",
+            ]
+            , $results->decodeResponseJson()['error']);
+    }
+
+    public function test_customer_delete_his_address()
+    {
+        $customer = $this->customerFactory->store();
+        $address = $this->addressFactory->store(AddressService::SHIPPING_ADDRESS, ConfigService::$brand, null, $customer['id']);
+        $results = $this->call('DELETE', '/address/' . $address['id'], [
+            'customer_id' => $customer['id']
+        ]);
+
+        $this->assertEquals(204, $results->getStatusCode());
+    }
+
+    public function test_customer_can_not_delete_others_address()
+    {
+        $customer = $this->customerFactory->store();
+        $address = $this->addressFactory->store(AddressService::SHIPPING_ADDRESS, ConfigService::$brand, rand(), null);
+        $results = $this->call('DELETE', '/address/' . $address['id'], [
+            'customer_id' => $customer['id']
+        ]);
+
+        $this->assertEquals(403, $results->getStatusCode());
+        $this->assertEquals(
+            [
+                "title" => "Not allowed.",
+                "detail" => "This action is unauthorized.",
+            ]
+            , $results->decodeResponseJson()['error']);
     }
     /**
      * @return \Illuminate\Database\Connection

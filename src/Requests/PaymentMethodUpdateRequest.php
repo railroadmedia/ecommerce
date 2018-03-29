@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Requests;
 
 
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 
 class PaymentMethodUpdateRequest extends FormRequest
@@ -42,8 +43,8 @@ class PaymentMethodUpdateRequest extends FormRequest
             'agreement_id' => 'required_if:update_method,' . PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
             'express_checkout_token' => 'required_if:update_method,' . PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
             'address_id' => 'required_if:update_method,' . PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
-            'user_id' => 'required_without:customer_id',
-            'customer_id' => 'required_without:user_id'
+            'user_id' => 'numeric',
+            'customer_id' => 'numeric|exists:'.ConfigService::$tableCustomer.',id'
         ];
     }
 
