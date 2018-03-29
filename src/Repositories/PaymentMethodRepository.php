@@ -31,21 +31,6 @@ class PaymentMethodRepository extends RepositoryBase
      */
     private $customerPaymentMethodsRepository;
 
-    public static $pullAllPaymentMethods = false;
-    /**
-     * If this is false any payment method will be pulled. If its defined, only user payment method will be pulled.
-     *
-     * @var integer|bool
-     */
-    public static $availableUserId = false;
-
-    /**
-     * If this is false any payment method will be pulled. If its defined, only customer payment method will be pulled.
-     *
-     * @var integer|bool
-     */
-    public static $availableCustomerId = false;
-
     /**
      * PaymentMethodRepository constructor.
      * @param CreditCardRepository $creditCardRepository

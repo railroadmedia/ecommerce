@@ -103,9 +103,6 @@ class PaymentMethodService
         $customerId = null
 
     ) {
-        PaymentMethodRepository::$availableUserId = $userId;
-        PaymentMethodRepository::$availableCustomerId = $customerId;
-
         if ($methodType == self::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
             $methodId = $this->createCreditCard($creditCardYearSelector, $creditCardMonthSelector, $fingerprint, $last4, $cardHolderName, $companyName, $externalId);
         } else if ($methodType == self::PAYPAL_PAYMENT_METHOD_TYPE) {

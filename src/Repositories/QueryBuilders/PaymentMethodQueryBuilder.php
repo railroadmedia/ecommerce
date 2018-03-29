@@ -3,31 +3,10 @@
 namespace Railroad\Ecommerce\Repositories\QueryBuilders;
 
 
-use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 
 class PaymentMethodQueryBuilder extends QueryBuilder
 {
-    /**
-     * @return $this
-     */
-    public function restrictCustomerIdAccess()
-    {
-        if (!PaymentMethodRepository::$pullAllPaymentMethods) {
-            $this
-                ->where('customer_id', PaymentMethodRepository::$availableCustomerId);
-        }
-        return $this;
-    }
-
-    public function restrictUserIdAccess()
-    {
-        if (!PaymentMethodRepository::$pullAllPaymentMethods) {
-            $this
-                ->where('user_id', PaymentMethodRepository::$availableUserId);
-        }
-        return $this;
-    }
 
     public function selectColumns()
     {

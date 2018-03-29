@@ -139,7 +139,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_user_store_credit_card_payment_method()
     {
         $userId = rand();
-        PaymentMethodRepository::$availableUserId = $userId;
         $cardYear = $this->faker->creditCardExpirationDate->format('Y');
         $cardMonth = $this->faker->month;
         $cardFingerprint = $this->faker->word;

@@ -38,7 +38,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $expirationYear = 2020;
         $expirationMonth = $this->faker->randomNumber(1);
         $userId = rand();
-        PaymentMethodRepository::$availableUserId = $userId;
 
         $paymentMethod = $this->classBeingTested->store(
             PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -133,8 +132,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $expressCheckoutToken = $this->faker->word;
         $addressId = $this->faker->randomNumber();
         $customerId = rand();
-        PaymentMethodRepository::$availableUserId = null;
-        PaymentMethodRepository::$availableCustomerId = $customerId;
 
         $paymentMethod = $this->classBeingTested->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             null,
@@ -202,53 +199,10 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         );
     }
 
-    public function test_admin_create_user_payment_method()
-    {
-        PaymentMethodRepository::$pullAllPaymentMethods = true;
-        $userId = rand();
-        $agreementId = $this->faker->randomNumber();
-        $expressCheckoutToken = $this->faker->word;
-        $addressId = $this->faker->randomNumber();
-
-        $paymentMethod = $this->classBeingTested->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            null,
-            null,
-            '',
-            '',
-            '',
-            '',
-            null,
-            $agreementId,
-            $expressCheckoutToken,
-            $addressId,
-            $userId,
-            null
-        );
-
-        $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
-            [
-                'id' => 1,
-                'payment_method_id' => 1,
-                'user_id' => $userId
-            ]
-        );
-
-    }
-
-    public function test_admin_delete_payment_method()
-    {
-        PaymentMethodRepository::$pullAllPaymentMethods = true;
-        $paymentMethod = $this->paymentMethodFactory->store();
-
-        $this->assertTrue($this->classBeingTested->delete($paymentMethod['id'], rand(), null));
-    }
-
-
     public function test_user_can_delete_its_payment_method()
     {
         $userId = rand();
-        PaymentMethodRepository::$availableUserId = $userId;
+
         $paymentMethod = $this->paymentMethodFactory->store($this->faker->randomElement([PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE]),
             rand(2018, 2022),
@@ -270,7 +224,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     public function test_user_update_credit_card_expiration_date()
     {
         $userId = rand();
-        PaymentMethodRepository::$availableUserId = $userId;
+
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             rand(2018, 2022),
             rand(01, 12),
@@ -311,7 +265,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     public function test_user_define_new_credit_card_payment_method()
     {
         $userId = rand();
-        PaymentMethodRepository::$availableUserId = $userId;
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             rand(2018, 2022),
@@ -349,7 +302,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     public function test_user_update_to_paypal_payment_method()
     {
         $userId = rand();
-        PaymentMethodRepository::$availableUserId = $userId;
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             rand(2018, 2022),
@@ -381,9 +333,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
     public function test_admin_update_other_credit_card_expiration_date()
     {
-        PaymentMethodRepository::$availableUserId = null;
-        PaymentMethodRepository::$availableCustomerId = null;
-
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             rand(2018, 2022),
             rand(01, 12),

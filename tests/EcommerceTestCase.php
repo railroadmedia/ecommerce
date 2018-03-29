@@ -179,7 +179,5 @@ class EcommerceTestCase extends BaseTestCase
     protected function tearDown()
     {
         parent::tearDown();
-
-        PaymentMethodRepository::$pullAllPaymentMethods = false;
     }
 }

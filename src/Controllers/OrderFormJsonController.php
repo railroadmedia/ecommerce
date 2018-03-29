@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Controllers;
 
 
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Responses\JsonResponse;
