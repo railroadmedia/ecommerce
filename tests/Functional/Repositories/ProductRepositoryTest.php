@@ -34,7 +34,18 @@ class ProductRepositoryTest extends EcommerceTestCase
 
     public function test_get_active_product_with_sku()
     {
-        $product = $this->productFactory->store();
+        $product = $this->productFactory->store(ConfigService::$brand,
+            $this->faker->word,
+            $this->faker->word,
+            $this->faker->numberBetween(1, 2000),
+            $this->faker->randomElement(
+                [
+                    ProductService::TYPE_PRODUCT,
+                    ProductService::TYPE_SUBSCRIPTION
+                ]
+            ),
+            true);
+
         $results = $this->classBeingTested->getProductsByConditions(['sku' => $product['sku']]);
 
         $this->assertEquals(['0' => array_merge(['id' => $product['id']], $product)], $results);
