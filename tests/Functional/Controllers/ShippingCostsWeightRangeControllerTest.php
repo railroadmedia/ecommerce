@@ -30,6 +30,8 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 
     public function test_store_shipping_option_invalid()
     {
+        $this->createAndLoginAdminUser();
+
         $randomShoppingOption = rand();
         $results = $this->call('PUT', '/shipping-cost/',
             [
@@ -51,6 +53,8 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 
     public function test_store_incorrect_max_value()
     {
+        $this->createAndLoginAdminUser();
+
         $shippingOption = $this->shippingOptionFactory->store();
         $minValue = 10;
         $results = $this->call('PUT', '/shipping-cost/',
@@ -73,6 +77,8 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 
     public function test_store_missing_required_fields()
     {
+        $this->createAndLoginAdminUser();
+
         $results = $this->call('PUT', '/shipping-cost/');
 
         $this->assertEquals(422, $results->getStatusCode());
@@ -98,6 +104,8 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 
     public function test_update_incorrect_shipping_cost_id()
     {
+        $this->createAndLoginAdminUser();
+
         $randomId = rand();
         $results = $this->call('PATCH', '/shipping-cost/' . $randomId);
         $this->assertEquals(404, $results->getStatusCode());
@@ -112,6 +120,8 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 
     public function test_update_incorrect_max_value()
     {
+        $this->createAndLoginAdminUser();
+
         $shippingOption = $this->shippingOptionFactory->store();
         $shippingCost = $this->shippingCostFactory->store($shippingOption['id']);
         $minValue = 10;
@@ -133,6 +143,8 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 
     public function test_update_shipping_cost()
     {
+        $this->createAndLoginAdminUser();
+
         $shippingOption = $this->shippingOptionFactory->store();
         $shippingCost = $this->shippingCostFactory->store($shippingOption['id']);
 
@@ -158,6 +170,8 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 
     public function test_delete_incorrect_shipping_id()
     {
+        $this->createAndLoginAdminUser();
+
         $randomId = rand();
         $results = $this->call('DELETE', '/shipping-cost/' . $randomId);
 
@@ -173,6 +187,8 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 
     public function test_delete_shipping_cost()
     {
+        $this->createAndLoginAdminUser();
+
         $shippingOption = $this->shippingOptionFactory->store();
         $shippingCost = $this->shippingCostFactory->store($shippingOption['id']);
 

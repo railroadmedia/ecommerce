@@ -24,6 +24,8 @@ class ShippingOptionControllerTest extends EcommerceTestCase
 
     public function test_store()
     {
+        $this->createAndLoginAdminUser();
+
         $shippingOption = [
             'country' => $this->faker->country,
             'priority' => 1,
@@ -43,6 +45,8 @@ class ShippingOptionControllerTest extends EcommerceTestCase
 
     public function test_store_validation_errors()
     {
+        $this->createAndLoginAdminUser();
+
         $shippingOption = [
             'country' => $this->faker->country,
             'priority' => 1,
@@ -70,6 +74,8 @@ class ShippingOptionControllerTest extends EcommerceTestCase
 
     public function test_update_negative_priority()
     {
+        $this->createAndLoginAdminUser();
+
         $shippingOption = $this->shippingOptionFactory->store();
         $results = $this->call('PATCH', '/shipping-option/' . $shippingOption['id'],
             [
@@ -87,6 +93,8 @@ class ShippingOptionControllerTest extends EcommerceTestCase
 
     public function test_update_not_existing_shipping_option()
     {
+        $this->createAndLoginAdminUser();
+
         $randomId = rand();
         $results = $this->call('PATCH', '/shipping-option/' . $randomId);
 
@@ -102,6 +110,8 @@ class ShippingOptionControllerTest extends EcommerceTestCase
 
     public function test_update()
     {
+        $this->createAndLoginAdminUser();
+
         $shippingOption = $this->shippingOptionFactory->store($this->faker->country, $this->faker->randomNumber(), 0);
         $results = $this->call('PATCH', '/shipping-option/' . $shippingOption['id'],
             [
@@ -121,6 +131,8 @@ class ShippingOptionControllerTest extends EcommerceTestCase
 
     public function test_delete_not_existing_shipping_option()
     {
+        $this->createAndLoginAdminUser();
+
         $randomId = rand();
         $results = $this->call('DELETE', 'shipping-option/' . $randomId);
         $this->assertEquals(404, $results->getStatusCode());
@@ -135,6 +147,8 @@ class ShippingOptionControllerTest extends EcommerceTestCase
 
     public function test_delete()
     {
+        $this->createAndLoginAdminUser();
+
         $shippingOption = $this->shippingOptionFactory->store($this->faker->country, $this->faker->randomNumber(), 0);
         $results = $this->call('DELETE', '/shipping-option/' . $shippingOption['id']);
 

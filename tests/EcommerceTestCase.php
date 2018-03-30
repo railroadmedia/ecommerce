@@ -8,6 +8,8 @@ use Illuminate\Auth\AuthManager;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
 use Orchestra\Testbench\TestCase as BaseTestCase;
+use Railroad\Ecommerce\Factories\AccessFactory;
+use Railroad\Ecommerce\Factories\UserAccessFactory;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
@@ -37,6 +39,16 @@ class EcommerceTestCase extends BaseTestCase
      */
     protected $authManager;
 
+    /**
+     * @var AccessFactory
+     */
+    protected $accessFactory;
+
+    /**
+     * @var UserAccessFactory
+     */
+    protected $userAccessFactory;
+
     protected function setUp()
     {
         parent::setUp();
@@ -48,6 +60,8 @@ class EcommerceTestCase extends BaseTestCase
         $this->faker = $this->app->make(Generator::class);
         $this->databaseManager = $this->app->make(DatabaseManager::class);
         $this->authManager = $this->app->make(AuthManager::class);
+        $this->accessFactory = $this->app->make(AccessFactory::class);
+        $this->userAccessFactory = $this->app->make(UserAccessFactory::class);
 
         RepositoryBase::$connectionMask = null;
 
@@ -174,6 +188,19 @@ class EcommerceTestCase extends BaseTestCase
         );
 
         return $userId;
+    }
+
+    public function createAndLoginAdminUser()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $adminRole = $this->accessFactory->store(
+            'admin','admin', ''
+        );
+        $admin = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
+
+        return $userId;
+
     }
 
     protected function tearDown()

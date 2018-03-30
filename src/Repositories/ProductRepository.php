@@ -9,13 +9,6 @@ class ProductRepository extends RepositoryBase
 {
 
     /**
-     * Determines whether inactive products will be pulled or not.
-     *
-     * @var array|bool
-     */
-    public static $pullInactiveProducts = true;
-
-    /**
      * @var integer
      */
     protected $page;

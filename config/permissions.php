@@ -8,7 +8,10 @@ return [
             'user_id' => 'ecommerce_user_payment_methods',
             'customer_id' => 'ecommerce_customer_payment_methods'
         ],
-        'payment-method.delete' => 'ecommerce_user_payment_methods',
+        'payment-method.delete' => [
+            'user_id' => 'ecommerce_user_payment_methods',
+            'customer_id' => 'ecommerce_customer_payment_methods'
+        ],
     ],
     'column_names' => [
         'payment-method.update' => 'payment_method_id',

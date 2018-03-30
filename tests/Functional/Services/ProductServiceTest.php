@@ -189,6 +189,9 @@ class ProductServiceTest extends EcommerceTestCase
 
     public function test_get_all_products_paginated()
     {
+        $userId = $this->createAndLoginAdminUser();
+
+
         for ($i = 0; $i<100; $i++){
             if($i < 10) {
                 $product[] = $this->productFactory->store();

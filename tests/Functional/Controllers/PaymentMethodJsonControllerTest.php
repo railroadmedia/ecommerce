@@ -3,11 +3,8 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Factories\AccessFactory;
 use Railroad\Ecommerce\Factories\CustomerFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
-use Railroad\Ecommerce\Factories\UserAccessFactory;
-use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -21,16 +18,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     private $paymentMethodFactory;
 
     /**
-     * @var AccessFactory
-     */
-    private $accessFactory;
-
-    /**
-     * @var UserAccessFactory
-     */
-    private $userAccessFactory;
-
-    /**
      * @var CustomerFactory
      */
     private $customerFactory;
@@ -39,8 +26,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         parent::setUp();
         $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
-        $this->accessFactory = $this->app->make(AccessFactory::class);
-        $this->userAccessFactory = $this->app->make(UserAccessFactory::class);
         $this->customerFactory = $this->app->make(CustomerFactory::class);
     }
 
@@ -544,6 +529,46 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         ], $results->decodeResponseJson()['results']);
     }
 
+    public function test_customer_delete_own_payment_method()
+    {
+        $customer = $this->customerFactory->store();
+        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $this->faker->creditCardExpirationDate->format('Y'),
+            $this->faker->month,
+            $this->faker->word,
+            $this->faker->randomNumber(4),
+            $this->faker->name,
+            $this->faker->creditCardType,
+            rand(),
+            rand(),
+            $this->faker->word,
+            rand(),
+            null,
+            $customer['id']);
+
+        $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id'],[
+            'customer_id' => $customer['id']
+        ]);
+
+        $this->assertEquals(204, $results->getStatusCode());
+        $this->assertDatabaseMissing(
+            ConfigService::$tablePaymentMethod,
+            [
+                'id' => $paymentMethod['id'],
+                'method_type' => $paymentMethod['method_type'],
+                'method_id' => 1
+            ]
+        );
+        $this->assertDatabaseMissing(
+            ConfigService::$tableCreditCard,
+            [
+                'id' => $paymentMethod['method']['id'],
+                'method_type' => $paymentMethod['method_type'],
+            ]
+        );
+
+    }
+
     public function test_delete_payment_method_not_authenticated_user()
     {
         $randomId = rand();
@@ -595,11 +620,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_delete_payment_method_paypal()
     {
-        $userId = $this->createAndLogInNewUser();
-        $adminRole = $this->accessFactory->store(
-            'admin','admin', ''
-        );
-        $admin = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
+        $this->createAndLoginAdminUser();
+
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $this->faker->creditCardExpirationDate->format('Y'),
             $this->faker->month,
@@ -611,7 +633,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
-            $userId);
+            null,
+            rand());
 
         $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
 

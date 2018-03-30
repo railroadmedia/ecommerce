@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Requests;
 
 
+use Railroad\Ecommerce\Services\ConfigService;
+
 class PaymentMethodDeleteRequest extends FormRequest
 {
     /**
@@ -23,8 +25,8 @@ class PaymentMethodDeleteRequest extends FormRequest
     public function rules()
     {
         return [
-            'user_id' => 'required_without:customer_id',
-            'customer_id' => 'required_without:user_id'
+            'user_id' => 'numeric',
+            'customer_id' => 'numeric|exists:'.ConfigService::$tableCustomer.',id'
         ];
     }
 }

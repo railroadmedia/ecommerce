@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Controllers\OrderFormJsonController;
 use Railroad\Ecommerce\Factories\ProductFactory;
 use Railroad\Ecommerce\Factories\ShippingCostsFactory;
 use Railroad\Ecommerce\Factories\ShippingOptionFactory;

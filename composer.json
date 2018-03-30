@@ -1,8 +1,8 @@
 {
-    "name": "railroad/ecommerce",
-    "type": "library",
-    "description": "Ecommerce system",
-    "minimum-stability": "dev",
+  "name": "railroad/ecommerce",
+  "type": "library",
+  "description": "Ecommerce system",
+  "minimum-stability": "dev",
   "prefer-stable": true,
   "repositories": [
     {
@@ -18,15 +18,15 @@
       "url": "../remotestorage"
     }
   ],
- "require": {
+  "require": {
     "php": "~7",
     "laravel/framework": "5.6.*",
     "guzzlehttp/guzzle": "~6.0",
     "doctrine/dbal": "^2.5",
     "ramsey/uuid": "^3.6",
-    "railroad/location" : "@dev",
-    "railroad/permissions" : "@dev",
-    "railroad/remotestorage" : "@dev",
+    "railroad/location": "@dev",
+    "railroad/permissions": "@dev",
+    "railroad/remotestorage": "@dev",
     "webpatser/laravel-countries": "dev-master"
   },
   "require-dev": {
@@ -34,7 +34,7 @@
     "phpunit/php-code-coverage": "6.0.1",
     "orchestra/database": "3.6.x@dev",
     "orchestra/testbench": "~3.6",
-    "filp/whoops":"~2.1"
+    "filp/whoops": "~2.1"
   },
   "autoload": {
     "psr-4": {

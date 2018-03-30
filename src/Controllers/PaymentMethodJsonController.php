@@ -109,7 +109,7 @@ class PaymentMethodJsonController extends Controller
      * @param integer $paymentMethodId
      * @return JsonResponse
      */
-    public function delete($paymentMethodId)
+    public function delete($paymentMethodId, PaymentMethodDeleteRequest $request)
     {
         $results = $this->paymentMethodService->delete($paymentMethodId);
 

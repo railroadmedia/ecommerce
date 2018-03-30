@@ -6,12 +6,12 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
 use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Permissions\Services\UserAccessService;
 use Railroad\RemoteStorage\Services\RemoteStorageService;
 
 
 class ProductService
 {
-
     /**
      * @var ProductRepository
      */
@@ -32,6 +32,18 @@ class ProductService
      */
     private $remoteStorageService;
 
+    /**
+     * @var UserAccessService
+     */
+    private $userAccessService;
+
+    /**
+     * Determines whether inactive products will be pulled or not.
+     *
+     * @var array|bool
+     */
+    public static $pullInactiveProducts = true;
+
     // all possible product types
     const TYPE_PRODUCT = 'product';
     const TYPE_SUBSCRIPTION = 'subscription';
@@ -43,12 +55,14 @@ class ProductService
     public function __construct(ProductRepository $productRepository,
                                 OrderItemRepository $orderItemRepository,
                                 DiscountCriteriaRepository $discountCriteriaRepository,
-                                RemoteStorageService $remoteStorageService)
+                                RemoteStorageService $remoteStorageService,
+                                UserAccessService $userAccessService)
     {
         $this->productRepository = $productRepository;
         $this->orderItemRepository = $orderItemRepository;
         $this->discountCriteriaRepository = $discountCriteriaRepository;
         $this->remoteStorageService = $remoteStorageService;
+        $this->userAccessService = $userAccessService;
     }
 
     /** Get all the active products that meet the conditions
@@ -118,7 +132,7 @@ class ProductService
      */
     public function getById($productId)
     {
-        return $this->productRepository->getProductsByConditions(['id' => $productId])[0] ?? null;
+        return $this->productRepository->getById($productId);
     }
 
     /** Update and return the modified product. If the product not exist return null.
@@ -178,6 +192,9 @@ class ProductService
      */
     public function getAllProducts($page = 1, $limit = 10, $orderByAndDirection = '-created_on')
     {
+        $userId = (request()->user()) ? request()->user()->id : null;
+        self::$pullInactiveProducts = $this->userAccessService->userHasAccess($userId, 'admin');
+
         if ($limit == 'null') {
             $limit = -1;
         }
@@ -187,8 +204,6 @@ class ProductService
         $orderByColumn = trim($orderByAndDirection, '-');
 
         $this->productRepository->setData($page, $limit, $orderByDirection, $orderByColumn);
-
-        ProductRepository::$pullInactiveProducts = true;
 
         return [
             'results' => $this->productRepository->getProductsByConditions([]),

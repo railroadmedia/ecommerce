@@ -24,6 +24,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_store_product()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $product = ['name' => $this->faker->word,
             'sku' => $this->faker->word,
             'price' => $this->faker->numberBetween(15.97, 15.99),
@@ -55,6 +57,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_store_subscription()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $subscription = [
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
@@ -88,6 +92,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_on_store_product()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $results = $this->call('PUT', '/product/');
 
         $this->assertEquals(422, $results->status());
@@ -129,6 +135,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_for_new_subscription()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $results = $this->call('PUT', '/product/', [
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
@@ -158,6 +166,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_sku_unique()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $product = $this->productFactory->store();
 
         $results = $this->call('PUT', '/product/', [
@@ -185,6 +195,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_weight_for_physical_products()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $results = $this->call('PUT', '/product/', [
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
@@ -210,6 +222,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_update_product_inexistent()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $randomProductId = rand();
         $results = $this->call('PATCH', '/product/' . $randomProductId);
 
@@ -226,6 +240,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_update_product()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $product = $this->productFactory->store();
         $newDescription = $this->faker->text;
 
@@ -244,6 +260,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_on_update_product()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $product = $this->productFactory->store();
         $newDescription = $this->faker->text;
 
@@ -270,6 +288,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_missing_product()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $randomId = rand();
         $results = $this->call('DELETE', '/product/' . $randomId);
 
@@ -280,6 +300,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product_when_exists_product_order()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $product = $this->productFactory->store();
 
         $orderItem1 = [
@@ -306,6 +328,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product_when_exists_product_discounts()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $product = $this->productFactory->store();
 
         $discount = [
@@ -329,6 +353,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $product = $this->productFactory->store();
 
         $results = $this->call('DELETE', '/product/' . $product['id']);
@@ -342,6 +368,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_get_all_products_paginated_when_empty()
     {
+
         $results = $this->call('GET', '/product');
         $expectedResults = [
             'results' => [],
@@ -352,8 +379,10 @@ class ProductControllerTest extends EcommerceTestCase
         $results->assertJson($expectedResults);
     }
 
-    public function test_get_all_paginated_products()
+    public function test_admin_get_all_paginated_products()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $page = 2;
         $limit = 3;
         $sort = 'id';
@@ -363,6 +392,7 @@ class ProductControllerTest extends EcommerceTestCase
         {
             $products[] = $this->productFactory->store();
         }
+
         $expectedContent =
             [
                 'status' => 'ok',
@@ -386,6 +416,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_upload_thumb()
     {
+        $userId = $this->createAndLoginAdminUser();
+
         $filenameAbsolute = $this->faker->image(sys_get_temp_dir());
         $filenameRelative = $this->getFilenameRelativeFromAbsolute($filenameAbsolute);
 
@@ -400,6 +432,67 @@ class ProductControllerTest extends EcommerceTestCase
             storage_path('app').'/' . $filenameRelative,
             json_decode($response->getContent())->results
         );
+    }
+
+    public function test_user_pull_only_active_products()
+    {
+        $user = $this->createAndLogInNewUser();
+
+        $page = 2;
+        $limit = 3;
+        $sort = 'id';
+        $nrProducts = 10;
+
+        for($i=0; $i<$nrProducts; $i++)
+        {
+            if($i%2==0) {
+                $products[] = $this->productFactory->store(ConfigService::$brand,
+                    $this->faker->word,
+                    $this->faker->word,
+                    $this->faker->numberBetween(1, 2000),
+                    $this->faker->randomElement(
+                        [
+                            ProductService::TYPE_PRODUCT,
+                            ProductService::TYPE_SUBSCRIPTION
+                        ]
+                    ),
+                    true);
+            }else {
+                $this->productFactory->store(ConfigService::$brand,
+                    $this->faker->word,
+                    $this->faker->word,
+                    $this->faker->numberBetween(1, 2000),
+                    $this->faker->randomElement(
+                        [
+                            ProductService::TYPE_PRODUCT,
+                            ProductService::TYPE_SUBSCRIPTION
+                        ]
+                    ),
+                    false);
+            }
+        }
+
+        $expectedContent =
+            [
+                'status' => 'ok',
+                'code' => 200,
+                'page' => $page,
+                'limit' => $limit,
+                'results' => array_slice($products, 3, $limit),
+                'total_results' => $nrProducts/2
+            ];
+
+        $results = $this->call('GET', '/product',
+            [
+                'page' => $page,
+                'limit' => $limit,
+                'sort' => $sort
+            ]);
+
+        $responseContent = $results->decodeResponseJson();
+        $this->assertEquals($expectedContent, $responseContent);
+
+
     }
     /**
      * @return \Illuminate\Database\Connection

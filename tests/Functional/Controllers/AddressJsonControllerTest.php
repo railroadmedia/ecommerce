@@ -4,11 +4,8 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Factories\AccessFactory;
 use Railroad\Ecommerce\Factories\AddressFactory;
 use Railroad\Ecommerce\Factories\CustomerFactory;
-use Railroad\Ecommerce\Factories\UserAccessFactory;
-use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Services\AddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -24,16 +21,6 @@ class AddressJsonControllerTest extends EcommerceTestCase
     private $addressFactory;
 
     /**
-     * @var UserAccessFactory
-     */
-    private $userAccessFactory;
-
-    /**
-     * @var AccessFactory
-     */
-    private $accessFactory;
-
-    /**
      * @var CustomerFactory
      */
     private $customerFactory;
@@ -42,8 +29,6 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         parent::setUp();
         $this->addressFactory = $this->app->make(AddressFactory::class);
-        $this->userAccessFactory = $this->app->make(UserAccessFactory::class);
-        $this->accessFactory = $this->app->make(AccessFactory::class);
         $this->customerFactory = $this->app->make(CustomerFactory::class);
     }
 
@@ -347,12 +332,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_store_user_address()
     {
-        $userId = $this->createAndLogInNewUser();
-
-        $adminRole = $this->accessFactory->store(
-            'admin','admin', ''
-        );
-        $admin = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
+        $this->createAndLoginAdminUser();
 
         $type = $this->faker->randomElement([
             AddressService::SHIPPING_ADDRESS,
@@ -402,18 +382,13 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_update_user_address()
     {
-        $userId = $this->createAndLogInNewUser();
-
-        $adminRole = $this->accessFactory->store(
-            'admin','admin', ''
-        );
-        $admin = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
+        $this->createAndLoginAdminUser();
 
         $address = $this->addressFactory->store(AddressService::SHIPPING_ADDRESS, ConfigService::$brand, rand());
         $newStreetLine1 = $this->faker->streetAddress;
 
         $results = $this->call('PATCH', '/address/' . $address['id'], [
-            'user_id' => $userId,
+            'user_id' => rand(),
             'street_line_1' => $newStreetLine1
         ]);
 
@@ -439,12 +414,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_delete_user_address()
     {
-        $userId = $this->createAndLogInNewUser();
-
-        $adminRole = $this->accessFactory->store(
-            'admin','admin', ''
-        );
-        $admin = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
+        $this->createAndLoginAdminUser();
         $randomId = rand();
 
         $address = $this->addressFactory->store(AddressService::SHIPPING_ADDRESS, ConfigService::$brand, $randomId);

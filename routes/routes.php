@@ -25,22 +25,38 @@ Route::get(
 
 Route::put(
     '/product',
-    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@store'
+    [
+        'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@store',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
 )->name('product.store');
 
 Route::patch(
     '/product/{productId}',
-    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@update'
+    [
+        'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@update',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
 )->name('product.update');
 
 Route::delete(
     '/product/{productId}',
-    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@delete'
+    [
+        'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@delete',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
 )->name('product.delete');
 
 Route::put(
     '/product/upload/',
-    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@uploadThumbnail'
+    [
+        'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@uploadThumbnail',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
 )->name('product.upload');
 
 Route::get(
@@ -50,32 +66,57 @@ Route::get(
 
 Route::put(
     '/shipping-option',
-    Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@store'
+    [
+        'uses' => Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@store',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
 )->name('shipping-option.store');
 
 Route::patch(
     '/shipping-option/{shippingOptionId}',
-    Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@update'
+    [
+        'uses' => Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@update',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
 )->name('shipping-option.update');
 
 Route::delete(
     '/shipping-option/{shippingOptionId}',
-    Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@delete'
+    [
+        'uses' => Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@delete',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
 )->name('shipping-option.delete');
 
 Route::put(
     '/shipping-cost',
-    Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@store'
+    [
+        'uses' => Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@store',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
 )->name('shipping-cost-weight-range.store');
 
 Route::patch(
     '/shipping-cost/{shippingCostId}',
-    Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@update'
+    [
+        'uses' => Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@update',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
+
 )->name('shipping-cost-weight-range.update');
 
 Route::delete(
     '/shipping-cost/{shippingCostId}',
-    Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@delete'
+    [
+        'uses' => Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@delete',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
 )->name('shipping-cost-weight-range.delete');
 
 Route::group(
