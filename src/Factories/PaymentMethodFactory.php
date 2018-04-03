@@ -14,7 +14,7 @@ class PaymentMethodFactory extends PaymentMethodService
     protected $faker;
 
     public function store(
-        $methodType='',
+        $methodType = '',
         $creditCardYearSelector = null,
         $creditCardMonthSelector = null,
         $fingerprint = '',
@@ -44,8 +44,8 @@ class PaymentMethodFactory extends PaymentMethodService
                 rand(),
                 $this->faker->word,
                 rand(),
-                rand(),
-                rand()
+                request()->user() ? request()->user()->id : null,
+                request()->user() ? null : rand(),
             ];
         return parent::store(...$parameters);
     }

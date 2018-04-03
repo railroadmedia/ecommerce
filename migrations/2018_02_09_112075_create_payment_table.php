@@ -21,8 +21,8 @@ class CreatePaymentTable extends Migration
                 $table->increments('id');
 
                 $table->decimal('due');
-                $table->decimal('paid');
-                $table->decimal('refunded');
+                $table->decimal('paid')->nullable();
+                $table->decimal('refunded')->nullable();
                 $table->string('type')->index();
                 $table->string('external_provider')->index()->nullable();
                 $table->string('external_id')->index()->nullable();
