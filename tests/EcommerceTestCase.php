@@ -92,6 +92,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.credit_card', $defaultConfig['credit_card']);
         $app['config']->set('table_names', $permissionTableConfig['table_names']);
         $app['config']->set('column_names', $permissionTableConfig['column_names']);
+        $app['config']->set('additional_join_for_owner', $permissionTableConfig['additional_join_for_owner']);
 
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);

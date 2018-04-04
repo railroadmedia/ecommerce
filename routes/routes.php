@@ -128,6 +128,15 @@ Route::put(
     ]
 )->name('payment.store');
 
+Route::put(
+    '/refund',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\RefundJsonController::class . '@store',
+        'middleware' => ['permission'],
+        'permissions' => ['admin', 'isOwner'],
+    ]
+)->name('refund.store');
+
 Route::group(
     [
         // 'middleware' => AdministratorMiddleware::class
