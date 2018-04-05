@@ -63,6 +63,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
+            $this->faker->currencyCode,
             null,
             rand());
 
@@ -148,6 +149,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
+            $this->faker->currencyCode,
             null,
             rand());
 

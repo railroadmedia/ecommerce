@@ -48,6 +48,7 @@ class PaymentMethodJsonController extends Controller
             $request->get('agreement_id'),
             $request->get('express_checkout_token'),
             $request->get('address_id'),
+            $request->get('currency'),
             $request->get('user_id'),
             $request->get('customer_id')
         );

@@ -23,6 +23,7 @@ class PaymentFactory extends PaymentService
         $status = false,
         $message = '',
         $paymentMethodId = null,
+        $currency = '',
         $orderId = null,
         $subscriptionId = null
     ) {
@@ -39,6 +40,7 @@ class PaymentFactory extends PaymentService
                 false,
                 '',
                 rand(),
+                $this->faker->currencyCode,
                 rand(),
                 rand()
             ];

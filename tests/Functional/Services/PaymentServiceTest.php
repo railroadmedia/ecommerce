@@ -41,7 +41,7 @@ class PaymentServiceTest extends EcommerceTestCase
         $message = '';
         $paymentMethod = $this->paymentMethodFactory->store();
 
-        $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod['id']);
+        $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod['id'], $paymentMethod['currency']);
 
         $this->assertEquals([
             'id' => 1,
@@ -54,6 +54,7 @@ class PaymentServiceTest extends EcommerceTestCase
             'status' => $status,
             'message' => $message,
             'payment_method_id' => $paymentMethod['id'],
+            'currency' => $paymentMethod['currency'],
             'created_on' => Carbon::now()->toDateTimeString(),
             'updated_on' => null
         ], $payment);
@@ -86,9 +87,10 @@ class PaymentServiceTest extends EcommerceTestCase
             'type' => $type,
             'external_provider' => PaymentService::MANUAL_PAYMENT_TYPE,
             'external_id' => '',
-            'status' => true,
+            'status' => 1,
             'message' => $message,
             'payment_method_id' => null,
+            'currency' => 'CAD',
             'created_on' => Carbon::now()->toDateTimeString(),
             'updated_on' => null
         ], $payment);
@@ -111,8 +113,9 @@ class PaymentServiceTest extends EcommerceTestCase
         $message = '';
         $paymentMethod = null;
         $orderId = rand();
+        $currency = $this->faker->currencyCode;
 
-        $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod, $orderId);
+        $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod, $currency, $orderId);
 
         $this->assertEquals([
             'id' => 1,
@@ -124,6 +127,7 @@ class PaymentServiceTest extends EcommerceTestCase
             'external_id' => '',
             'status' => true,
             'message' => $message,
+            'currency' => $currency,
             'payment_method_id' => null,
             'created_on' => Carbon::now()->toDateTimeString(),
             'updated_on' => null
@@ -158,8 +162,9 @@ class PaymentServiceTest extends EcommerceTestCase
         $paymentMethod = null;
         $orderId = null;
         $subscriptionId = rand();
+        $currency = $this->faker->currencyCode;
 
-        $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod, $orderId, $subscriptionId);
+        $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod, $currency, $orderId, $subscriptionId);
 
         $this->assertEquals([
             'id' => 1,
@@ -172,6 +177,7 @@ class PaymentServiceTest extends EcommerceTestCase
             'status' => true,
             'message' => $message,
             'payment_method_id' => null,
+            'currency' => $currency,
             'created_on' => Carbon::now()->toDateTimeString(),
             'updated_on' => null
         ], $payment);

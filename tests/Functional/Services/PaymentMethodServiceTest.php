@@ -38,6 +38,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $expirationYear = 2020;
         $expirationMonth = $this->faker->randomNumber(1);
         $userId = rand();
+        $currency = $this->faker->currencyCode;
 
         $paymentMethod = $this->classBeingTested->store(
             PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -50,8 +51,11 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             $externalId,
             null,
             '',
-            '',
-            $userId);
+            null,
+            $currency,
+            $userId,
+            null);
+
         $this->assertEquals([
             'id' => 1,
             'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -78,6 +82,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             ],
             'created_on' => Carbon::now()->toDateTimeString(),
             'updated_on' => null,
+            'currency' => $currency,
             'user_id' => $userId,
             'customer_id' => null
 
@@ -132,6 +137,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $expressCheckoutToken = $this->faker->word;
         $addressId = $this->faker->randomNumber();
         $customerId = rand();
+        $currency = $this->faker->currencyCode;
 
         $paymentMethod = $this->classBeingTested->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             null,
@@ -144,6 +150,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             $agreementId,
             $expressCheckoutToken,
             $addressId,
+            $currency,
             null,
             $customerId
         );
@@ -161,6 +168,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
                 'updated_on' => null
             ],
             'created_on' => Carbon::now()->toDateTimeString(),
+            'currency' => $currency,
             'updated_on' => null,
             'user_id' => null,
             'customer_id' => $customerId

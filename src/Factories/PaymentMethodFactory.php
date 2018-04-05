@@ -25,6 +25,7 @@ class PaymentMethodFactory extends PaymentMethodService
         $agreementId = null,
         $expressCheckoutToken = '',
         $addressId = null,
+        $currency = '',
         $userId = null,
         $customerId = null
     ) {
@@ -44,6 +45,7 @@ class PaymentMethodFactory extends PaymentMethodService
                 rand(),
                 $this->faker->word,
                 rand(),
+                $this->faker->currencyCode,
                 request()->user() ? request()->user()->id : null,
                 request()->user() ? null : rand(),
             ];

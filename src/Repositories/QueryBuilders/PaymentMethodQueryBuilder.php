@@ -14,6 +14,7 @@ class PaymentMethodQueryBuilder extends QueryBuilder
             ConfigService::$tablePaymentMethod . '.id',
             'method_type',
             'method_id',
+            'currency',
             ConfigService::$tablePaymentMethod . '.created_on',
             ConfigService::$tablePaymentMethod . '.updated_on',
             ConfigService::$tableUserPaymentMethods . '.user_id',

@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
+use Railroad\Location\Services\LocationService;
 
 
 class PaymentService
@@ -26,6 +27,11 @@ class PaymentService
      */
     private $subscriptionPaymentRepository;
 
+    /**
+     * @var LocationService
+     */
+    private $locationService;
+
     const MANUAL_PAYMENT_TYPE = 'manual';
     const ORDER_PAYMENT_TYPE = 'order';
     const RENEWAL_PAYMENT_TYPE = 'renewal';
@@ -39,11 +45,13 @@ class PaymentService
     public function __construct(
         PaymentRepository $paymentRepository,
         OrderPaymentRepository $orderPaymentRepository,
-        SubscriptionPaymentRepository $subscriptionPaymentRepository)
+        SubscriptionPaymentRepository $subscriptionPaymentRepository,
+        LocationService $locationService)
     {
         $this->paymentRepository = $paymentRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
+        $this->locationService = $locationService;
     }
 
     /** Create a new payment; link the order/subscription; if the payment method id not exist set the payment type as 'manual' and the status true.
@@ -61,12 +69,17 @@ class PaymentService
      * @param numeric|null $subscriptionId
      * @return array
      */
-    public function store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status = false, $message = '', $paymentMethodId = null, $orderId = null, $subscriptionId = null)
+    public function store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status = false, $message = '', $paymentMethodId = null, $currency = null, $orderId = null, $subscriptionId = null)
     {
         //check if it's manual
         if (!$paymentMethodId) {
             $externalProvider = self::MANUAL_PAYMENT_TYPE;
             $status = true;
+        }
+
+        // if the currency not exist on the request, get the currency with Location package, based on ip address
+        if (!$currency) {
+            $currency = $this->locationService->getCurrency();
         }
 
         $paymentId = $this->paymentRepository->create([
@@ -79,6 +92,7 @@ class PaymentService
             'status' => $status ?? false,
             'message' => $message,
             'payment_method_id' => $paymentMethodId,
+            'currency' => $currency,
             'created_on' => Carbon::now()->toDateTimeString()
         ]);
 

@@ -41,6 +41,7 @@ class PaymentJsonController extends Controller
             $request->get('status'),
             $request->get('message'),
             $request->get('payment_method_id'),
+            $request->get('currency'),
             $request->get('order_id'),
             $request->get('subscription_id')
         );

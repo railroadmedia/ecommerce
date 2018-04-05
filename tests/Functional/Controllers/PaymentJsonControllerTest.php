@@ -31,13 +31,14 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $results = $this->call('PUT', '/payment', [
             'payment_method_id' => $paymentMethod['id'],
+            'currency' => $this->faker->currencyCode,
             'due' => $due,
             'type' => $type
         ]);
+
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset([
-            'id' => 1,
             'due' => $due,
             'type' => $type,
             'payment_method_id' => $paymentMethod['id'],
@@ -61,19 +62,20 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
+            $this->faker->currencyCode,
             null,
             rand());
         $due = $this->faker->numberBetween(0,1000);
         $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $results = $this->call('PUT', '/payment', [
             'payment_method_id' => $paymentMethod['id'],
+            'currency' => $this->faker->currencyCode,
             'due' => $due,
             'type' => $type
         ]);
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset([
-            'id' => 1,
             'due' => $due,
             'type' => $type,
             'payment_method_id' => $paymentMethod['id'],
@@ -114,12 +116,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $results = $this->call('PUT', '/payment', [
             'payment_method_id' => $paymentMethod,
             'due' => $due,
+            'currency' => $this->faker->currencyCode,
             'type' => $type
         ]);
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset([
-            'id' => 1,
             'due' => $due,
             'type' => $type,
             'payment_method_id' => $paymentMethod,

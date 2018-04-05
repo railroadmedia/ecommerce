@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
+use Railroad\Location\Services\LocationService;
 
 class PaymentMethodService
 {
@@ -37,6 +38,11 @@ class PaymentMethodService
      */
     private $paypalBillingRepository;
 
+    /**
+     * @var LocationService
+     */
+    private $locationService;
+
     //constants that represent payment method types
     CONST PAYPAL_PAYMENT_METHOD_TYPE = 'paypal';
     CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit card';
@@ -58,13 +64,15 @@ class PaymentMethodService
                                 CreditCardRepository $creditCardRepository,
                                 PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
                                 CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
-                                UserPaymentMethodsRepository $userPaymentMethodsRepository)
+                                UserPaymentMethodsRepository $userPaymentMethodsRepository,
+                                LocationService $locationService)
     {
         $this->paymentMethodRepository = $paymentMethodRepository;
         $this->creditCardRepository = $creditCardRepository;
         $this->paypalBillingRepository = $paypalBillingAgreementRepository;
         $this->customerPaymentMethodsRepository = $customerPaymentMethodsRepository;
         $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
+        $this->locationService = $locationService;
     }
 
     /** Save a new payment method, a new credit card/paypal billing record based on payment method type and
@@ -99,6 +107,7 @@ class PaymentMethodService
         $agreementId = null,
         $expressCheckoutToken = '',
         $addressId = null,
+        $currency = null,
         $userId = null,
         $customerId = null
 
@@ -112,7 +121,11 @@ class PaymentMethodService
             return null;
         }
 
-        $paymentMethodId = $this->createPaymentMethod($methodType, $methodId);
+        // if the currency not exist on the request, get the currency with Location package, based on ip address
+        if (!$currency) {
+            $currency = $this->locationService->getCurrency();
+        }
+        $paymentMethodId = $this->createPaymentMethod($methodType, $methodId, $currency);
 
         if ($userId) {
             $this->assignPaymentMethodToUser($userId, $paymentMethodId);
@@ -265,11 +278,12 @@ class PaymentMethodService
      * @param int $methodId
      * @return int
      */
-    private function createPaymentMethod($methodType, $methodId)
+    private function createPaymentMethod($methodType, $methodId, $currency)
     {
         $paymentMethodId = $this->paymentMethodRepository->create([
             'method_id' => $methodId,
             'method_type' => $methodType,
+            'currency' => $currency,
             'created_on' => Carbon::now()->toDateTimeString()
         ]);
         return $paymentMethodId;

@@ -130,6 +130,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $cardLast4 = $this->faker->randomNumber(4);
         $cardType = $this->faker->creditCardType;
         $externalId = $this->faker->numberBetween();
+        $currency = $this->faker->currencyCode;
 
         $results = $this->call('PUT', '/payment-method', [
             'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -138,6 +139,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'card_fingerprint' => $cardFingerprint,
             'card_number_last_four_digits' => $cardLast4,
             'company_name' => $cardType,
+            'currency' => $currency,
             'external_id' => $externalId,
             'user_id' => $userId
         ]);
@@ -151,6 +153,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'updated_on' => null,
             'user_id' => $userId,
             'customer_id' => null,
+            'currency' => $currency,
             'method' => [
                 'id' => 1,
                 'type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -181,6 +184,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $addressId = $this->faker->numberBetween();
         $userId = rand();
         $customerId = null;
+        $currency = $this->faker->currencyCode;
 
         $results = $this->call('PUT', '/payment-method', [
             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
@@ -188,7 +192,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'express_checkout_token' => $expressCheckoutToken,
             'address_id' => $addressId,
             'user_id' => $userId,
-            'customer_id' => $customerId
+            'customer_id' => $customerId,
+            'currency' => $currency
         ]);
 
         $this->assertEquals(200, $results->getStatusCode());
@@ -200,6 +205,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'updated_on' => null,
             'user_id' => $userId,
             'customer_id' => $customerId,
+            'currency' => $currency,
             'method' => [
                 'id' => 1,
                 'agreement_id' => $agreement_id,
@@ -215,6 +221,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_update_payment_method_create_credit_card_validation()
     {
         $userId = $this->createAndLogInNewUser();
+        $currency = $this->faker->currencyCode;
+
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $this->faker->creditCardExpirationDate->format('Y'),
             $this->faker->month,
@@ -226,6 +234,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
+            $currency,
             $userId,
             null);
 
@@ -280,6 +289,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
+            $this->faker->currencyCode,
             $userId,
             null);
 
@@ -318,6 +328,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
+            $this->faker->currencyCode,
             $userId,
             null);
 
@@ -368,6 +379,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
+            $this->faker->currencyCode,
             $userId,
             null);
 
@@ -394,6 +406,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'updated_on' => Carbon::now()->toDateTimeString(),
             'user_id' => $paymentMethod['user_id'],
             'customer_id' => $paymentMethod['customer_id'],
+            'currency' => $paymentMethod['currency'],
             'method' => [
                 'id' => $paymentMethod['method']['id'] + 1,
                 'type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -434,6 +447,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
+            $this->faker->currencyCode,
             null,
             $customer['id']);
 
@@ -455,6 +469,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'updated_on' => Carbon::now()->toDateTimeString(),
             'user_id' => $paymentMethod['user_id'],
             'customer_id' => $customer['id'],
+            'currency' => $paymentMethod['currency'],
             'method' => [
                 'id' => $paymentMethod['method']['id'],
                 'type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -492,6 +507,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
+            $this->faker->currencyCode,
             null,
             $customer['id']);
         $agreementId = rand();
@@ -517,6 +533,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'updated_on' => Carbon::now()->toDateTimeString(),
             'user_id' => $paymentMethod['user_id'],
             'customer_id' => $paymentMethod['customer_id'],
+            'currency' => $paymentMethod['currency'],
             'method' => [
                 'id' => $paymentMethod['method']['id'],
                 'agreement_id' => $agreementId,
@@ -543,6 +560,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
+            $this->faker->currencyCode,
             null,
             $customer['id']);
 
@@ -633,6 +651,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             rand(),
             $this->faker->word,
             rand(),
+            $this->faker->currencyCode,
             null,
             rand());
 
@@ -686,6 +705,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             null,
             '',
             null,
+            $this->faker->currencyCode,
             $currentUserId,
             null);
 

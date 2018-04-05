@@ -247,7 +247,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $address = $this->addressFactory->store(AddressService::SHIPPING_ADDRESS, ConfigService::$brand, $userId);
         $order = [
             'uuid' => $this->faker->uuid,
-            'due' => rand(),
+            'due' => $this->faker->numberBetween(0,1000),
             'tax' => rand(),
             'shipping_costs' => rand(),
             'paid' => rand(),

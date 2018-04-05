@@ -29,6 +29,7 @@ class CreatePaymentTable extends Migration
                 $table->string('status')->index();
                 $table->text('message')->nullable();
                 $table->integer('payment_method_id')->index()->nullable();
+                $table->string('currency')->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }
