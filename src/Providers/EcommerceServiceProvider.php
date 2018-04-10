@@ -98,6 +98,12 @@ class EcommerceServiceProvider extends ServiceProvider
 
         //credit card
         ConfigService::$creditCard = config('ecommerce.credit_card');
+
+        //paypal API
+        ConfigService::$paypalAPI = config('ecommerce.paypal');
+
+        //stripe API
+        ConfigService::$stripeAPI = config('ecommerce.stripe');
     }
 
     /**

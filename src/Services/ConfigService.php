@@ -149,5 +149,15 @@ class ConfigService
      */
     public static $creditCard;
 
+    /**
+     * @var array
+     */
+    public static $paypalAPI;
+
+    /**
+     * @var array
+     */
+    public static $stripeAPI;
+
 
 }

@@ -27,7 +27,8 @@
     "railroad/location": "@dev",
     "railroad/permissions": "@dev",
     "railroad/remotestorage": "@dev",
-    "webpatser/laravel-countries": "dev-master"
+    "webpatser/laravel-countries": "dev-master",
+    "stripe/stripe-php": "^4.4"
   },
   "require-dev": {
     "phpunit/phpunit": "~7.0",

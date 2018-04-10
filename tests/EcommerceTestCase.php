@@ -90,6 +90,9 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
         $app['config']->set('ecommerce.tax_rate', $defaultConfig['tax_rate']);
         $app['config']->set('ecommerce.credit_card', $defaultConfig['credit_card']);
+        $app['config']->set('ecommerce.paypal', $defaultConfig['paypal']);
+        $app['config']->set('ecommerce.stripe', $defaultConfig['stripe']);
+
         $app['config']->set('table_names', $permissionTableConfig['table_names']);
         $app['config']->set('column_names', $permissionTableConfig['column_names']);
         $app['config']->set('additional_join_for_owner', $permissionTableConfig['additional_join_for_owner']);

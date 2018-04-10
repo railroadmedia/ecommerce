@@ -44,5 +44,19 @@ return [
     'credit_card' =>
     [
         'external_provider' => 'stripe'
+    ],
+    'paypal' => [
+        'paypal_api_username' => env('PAYPAL_API_USERNAME',''),
+        'paypal_api_password' => env('PAYPAL_API_PASSWORD',''),
+        'paypal_api_signature' => env('PAYPAL_API_SIGNATURE',''),
+        'paypal_api_currency_code' => env('PAYPAL_API_CURRENCY_CODE', ''),
+        'paypal_api_version' => env('PAYPAL_API_VERSION',''),
+        'paypal_api_nvp_curl_url' => env('PAYPAL_API_NVP_CURL_URL', ''),
+        'paypal_api_checkout_redirect_url' => env('PAYPAL_API_CHECKOUT_REDIRECT_URL', ''),
+        'paypal_api_test_billing_agreement_id' => env('PAYPAL_API_TEST_BILLING_AGREEMENT_ID','')
+    ],
+    'stripe' => [
+        'stripe_api_secret' => env('STRIPE_API_SECRET',''),
+        'stripe_publishable_key' => env('STRIPE_PUBLISHABLE_KEY','')
     ]
 ];
