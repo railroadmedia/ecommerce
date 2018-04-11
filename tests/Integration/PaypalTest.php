@@ -39,8 +39,7 @@ class PaypalTest extends EcommerceTestCase
         $transactionId = $this->classBeingTested->createReferenceTransaction(
             $amount,
             $description,
-          'B-13L920916G5273053'
-          //  \Railroad\Ecommerce\Services\ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
+            \Railroad\Ecommerce\Services\ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
         );
 
         $this->assertNotEmpty($transactionId);

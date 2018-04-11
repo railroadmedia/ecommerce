@@ -16,6 +16,9 @@ class PaymentMethodServiceTest extends EcommerceTestCase
      */
     protected $classBeingTested;
 
+
+    CONST VALID_VISA_CARD_NUM = '4242424242424242';
+
     /**
      * @var PaymentMethodFactory
      */
@@ -30,13 +33,13 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
     public function test_user_store_credit_card_payment_method()
     {
-        $fingerprint = $this->faker->randomNumber();
+        $fingerprint = self::VALID_VISA_CARD_NUM;
         $last4Digits = $this->faker->randomNumber(4);
         $cardHolderName = $this->faker->word;
         $companyName = $this->faker->creditCardType;
         $externalId = $this->faker->randomNumber();
         $expirationYear = 2020;
-        $expirationMonth = $this->faker->randomNumber(1);
+        $expirationMonth = $this->faker->creditCardExpirationDate()->format('m');
         $userId = rand();
         $currency = $this->faker->currencyCode;
 
@@ -56,7 +59,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             $userId,
             null);
 
-        $this->assertEquals([
+        $this->assertArraySubset([
             'id' => 1,
             'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'method' => [
@@ -66,7 +69,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
                 'last_four_digits' => $last4Digits,
                 'cardholder_name' => $cardHolderName,
                 'company_name' => $companyName,
-                'external_id' => $externalId,
                 'external_provider' => ConfigService::$creditCard['external_provider'],
                 'expiration_date' => Carbon::create(
                     $expirationYear,
@@ -102,11 +104,9 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             [
                 'id' => 1,
                 'type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'fingerprint' => $fingerprint,
                 'last_four_digits' => $last4Digits,
                 'cardholder_name' => $cardHolderName,
                 'company_name' => $companyName,
-                'external_id' => $externalId,
                 'external_provider' => ConfigService::$creditCard['external_provider'],
                 'expiration_date' => Carbon::create(
                     $expirationYear,
@@ -215,7 +215,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE]),
             rand(2018, 2022),
             rand(01, 12),
-            $this->faker->word,
+            self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
@@ -236,7 +236,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             rand(2018, 2022),
             rand(01, 12),
-            $this->faker->word,
+            self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
@@ -277,7 +277,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             rand(2018, 2022),
             rand(01, 12),
-            $this->faker->word,
+            self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
@@ -295,7 +295,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
                 'method_type' => $paymentMethod['method_type'],
                 'card_year' => $this->faker->creditCardExpirationDate->format('Y'),
                 'card_month' => $this->faker->month,
-                'card_fingerprint' => $this->faker->word,
+                'card_fingerprint' => self::VALID_VISA_CARD_NUM,
                 'card_number_last_four_digits' => $this->faker->randomNumber(4),
                 'cardholder_name' => $this->faker->name,
                 'company_name' => $this->faker->creditCardType,
@@ -314,7 +314,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             rand(2018, 2022),
             rand(01, 12),
-            $this->faker->word,
+            self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
@@ -342,9 +342,9 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     public function test_admin_update_other_credit_card_expiration_date()
     {
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            rand(2018, 2022),
-            rand(01, 12),
-            $this->faker->word,
+            $this->faker->creditCardExpirationDate->format('Y'),
+            $this->faker->creditCardExpirationDate->format('m'),
+            self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
@@ -355,8 +355,8 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             rand(),
             null);
 
-        $newExpirationYear = rand(2019, 2032);
-        $newExpirationMonth = rand(10, 12);
+        $newExpirationYear = $this->faker->creditCardExpirationDate->format('Y');
+        $newExpirationMonth = $this->faker->creditCardExpirationDate->format('m');
         $updated = $this->classBeingTested->update(
             $paymentMethod['id'],
             [

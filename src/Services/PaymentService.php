@@ -4,10 +4,16 @@ namespace Railroad\Ecommerce\Services;
 
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Exceptions\PayPal\CreateReferenceTransactionException;
+use Railroad\Ecommerce\ExternalHelpers\PayPal;
+use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Location\Services\LocationService;
+use Stripe\Error\Card;
 
 
 class PaymentService
@@ -28,9 +34,25 @@ class PaymentService
     private $subscriptionPaymentRepository;
 
     /**
+     * @var PaymentMethodRepository
+     */
+    private $paymentMethodRepository;
+
+    /**
      * @var LocationService
      */
     private $locationService;
+
+    /**
+     * @var Stripe
+     */
+    private $stripeService;
+
+    /**
+     * @var PayPal
+     */
+    private $payPalService;
+
 
     const MANUAL_PAYMENT_TYPE = 'manual';
     const ORDER_PAYMENT_TYPE = 'order';
@@ -46,12 +68,18 @@ class PaymentService
         PaymentRepository $paymentRepository,
         OrderPaymentRepository $orderPaymentRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
-        LocationService $locationService)
+        LocationService $locationService,
+        PaymentMethodRepository $paymentMethodRepository,
+        Stripe $stripe,
+        PayPal $payPal)
     {
         $this->paymentRepository = $paymentRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->locationService = $locationService;
+        $this->paymentMethodRepository = $paymentMethodRepository;
+        $this->stripeService = $stripe;
+        $this->payPalService = $payPal;
     }
 
     /** Create a new payment; link the order/subscription; if the payment method id not exist set the payment type as 'manual' and the status true.
@@ -82,6 +110,41 @@ class PaymentService
             $currency = $this->locationService->getCurrency();
         }
 
+        if (!$subscriptionId) {
+            //initial payment
+            $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
+
+            if ($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+                try {
+                    $externalId = $this->chargeStripeCreditCardPayment($due, $paymentMethod);
+                    $paid = $due;
+                    $externalProvider = ConfigService::$creditCard['external_provider'];
+                    $status = true;
+                    $currency = $paymentMethod['currency'];
+
+                } catch (Exception $e) {
+                    $paid = 0;
+                    $status = false;
+                    $externalProvider = ConfigService::$creditCard['external_provider'];
+                    $message = $e->getMessage();
+                }
+
+            } else if ($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+                try {
+                    $externalId = $this->chargePayPalReferenceAgreementPayment($due, $paymentMethod);
+                    $paid = $due;
+                    $externalProvider = 'paypal';
+                    $status = true;
+                    $currency = $paymentMethod['currency'];
+
+                } catch (Exception $e) {
+                    $paid = 0;
+                    $status = false;
+                    $externalProvider = 'paypal';
+                    $message = $e->getMessage();
+                }
+            }
+        }
         $paymentId = $this->paymentRepository->create([
             'due' => $due,
             'paid' => $paid,
@@ -140,6 +203,72 @@ class PaymentService
             'payment_id' => $paymentId,
             'created_on' => Carbon::now()->toDateTimeString()
         ]);
+    }
+
+    /**
+     * @param $due
+     * @param $paymentMethod
+     * @throws \Railroad\Ecommerce\ExternalHelpers\CardException
+     */
+    private function chargeStripeCreditCardPayment($due, $paymentMethod)
+    {
+        $stripeCustomer = $this->stripeService->retrieveCustomer($paymentMethod['method']['external_customer_id']);
+        try {
+            $stripeCard = $this->stripeService->retrieveCard(
+                $stripeCustomer,
+                $paymentMethod['method']['external_id']
+            );
+        } catch (Exception $e) {
+            throw new PaymentErrorException(
+                'Payment failed due to an internal error. Please contact support.', 4001
+            );
+        }
+
+        try {
+            $chargeResponse = $this->stripeService->createCharge(
+                $due * 100,
+                $stripeCustomer,
+                $stripeCard,
+                $paymentMethod['currency']
+            );
+
+        } catch (Card $cardException) {
+            throw new PaymentFailedException('Payment failed. ' . $cardException->getMessage());
+        }
+
+        return $chargeResponse->id;
+    }
+
+    /**
+     * @param $amount
+     * @param PaymentMethod $paymentMethod
+     * @return string
+     * @throws PaymentErrorException
+     * @throws PaymentFailedException
+     */
+    private function chargePayPalReferenceAgreementPayment(
+        $due,
+        $paymentMethod
+    ) {
+        if (empty($paymentMethod['method']['agreement_id'])) {
+            throw new PaymentErrorException(
+                'Payment failed due to an internal error. Please contact support.', 4000
+            );
+        }
+
+        try {
+            $payPalTransactionId = $this->payPalService->createReferenceTransaction(
+                $due,
+                '',
+                $paymentMethod['method']['agreement_id']
+            );
+        } catch (CreateReferenceTransactionException $cardException) {
+            throw new NotFoundException(
+                'Payment failed. Please make sure your PayPal account is properly funded.'
+            );
+        }
+
+        return $payPalTransactionId;
     }
 
 

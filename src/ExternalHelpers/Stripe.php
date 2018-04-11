@@ -63,6 +63,16 @@ class Stripe
     }
 
     /**
+     * @param string $tokenString
+     * @return Token
+     */
+    public function retrieveToken($tokenString)
+    {
+        return $this->stripe->token->retrieve($tokenString);
+    }
+
+
+    /**
      * @param array $attributes
      * @return Customer
      *

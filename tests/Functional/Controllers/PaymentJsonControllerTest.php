@@ -53,8 +53,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->month,
-            $this->faker->word,
+            $this->faker->creditCardExpirationDate->format('m'),
+            '4242424242424242',
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,

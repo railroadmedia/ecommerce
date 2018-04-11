@@ -25,6 +25,7 @@ class CreateCreditCardTable extends Migration
                 $table->string('cardholder_name')->nullable();
                 $table->string('company_name')->index();
                 $table->string('external_id',64)->index();
+                $table->string('external_customer_id',64)->index()->nullable();
                 $table->string('external_provider',64)->index();
                 $table->dateTime('expiration_date');
                 $table->dateTime('created_on')->index();

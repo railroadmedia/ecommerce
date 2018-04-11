@@ -16,6 +16,9 @@ class RefundJsonControllerTest extends EcommerceTestCase
      */
     protected $paymentFactory;
 
+
+    CONST VALID_VISA_CARD_NUM = '4242424242424242';
+
     /**
      * @var PaymentMethodFactory
      */
@@ -55,7 +58,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $this->faker->creditCardExpirationDate->format('Y'),
             $this->faker->month,
-            $this->faker->word,
+            self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
@@ -141,7 +144,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $this->faker->creditCardExpirationDate->format('Y'),
             $this->faker->month,
-            $this->faker->word,
+            self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,

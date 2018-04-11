@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
@@ -43,6 +44,8 @@ class PaymentMethodService
      */
     private $locationService;
 
+    private $stripe;
+
     //constants that represent payment method types
     CONST PAYPAL_PAYMENT_METHOD_TYPE = 'paypal';
     CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit card';
@@ -65,7 +68,8 @@ class PaymentMethodService
                                 PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
                                 CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
                                 UserPaymentMethodsRepository $userPaymentMethodsRepository,
-                                LocationService $locationService)
+                                LocationService $locationService,
+                                Stripe $stripe)
     {
         $this->paymentMethodRepository = $paymentMethodRepository;
         $this->creditCardRepository = $creditCardRepository;
@@ -73,6 +77,7 @@ class PaymentMethodService
         $this->customerPaymentMethodsRepository = $customerPaymentMethodsRepository;
         $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
         $this->locationService = $locationService;
+        $this->stripe = $stripe;
     }
 
     /** Save a new payment method, a new credit card/paypal billing record based on payment method type and
@@ -113,9 +118,20 @@ class PaymentMethodService
 
     ) {
         if ($methodType == self::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-            $methodId = $this->createCreditCard($creditCardYearSelector, $creditCardMonthSelector, $fingerprint, $last4, $cardHolderName, $companyName, $externalId);
+            $methodId = $this->createCreditCard(
+                $creditCardYearSelector,
+                $creditCardMonthSelector,
+                $fingerprint,
+                $last4,
+                $cardHolderName,
+                $companyName
+            );
         } else if ($methodType == self::PAYPAL_PAYMENT_METHOD_TYPE) {
-            $methodId = $this->createPaypalBilling($agreementId, $expressCheckoutToken, $addressId);
+            $methodId = $this->createPaypalBilling(
+                $agreementId,
+                $expressCheckoutToken,
+                $addressId
+            );
         } else {
             //unknown payment method type
             return null;
@@ -230,15 +246,44 @@ class PaymentMethodService
      * @param $externalId
      * @return int
      */
-    private function createCreditCard($creditCardYearSelector, $creditCardMonthSelector, $fingerprint, $last4, $cardHolderName, $companyName, $externalId)
+    private function createCreditCard($creditCardYearSelector, $creditCardMonthSelector, $fingerprint, $last4, $cardHolderName, $companyName)
     {
+        //TODO
+        $stripeCustomer = $this->stripe->createCustomer(['email' => 'roxana@test.ro']);
+
+        /*try {
+            $stripeCustomer = $this->stripe->retrieveCustomer(request()->get('stripe-customer-id')?? null);
+        } catch (Exception $exception) {
+            $stripeCustomer = $this->stripe->createCustomer(['email' => 'roxana@test.ro']);
+        } */
+
+        $token = $this->stripe->createCardToken(
+            $fingerprint,
+            $creditCardMonthSelector,
+            $creditCardYearSelector,
+            $last4,
+            $cardHolderName,
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
+        );
+
+        $stripeCard = $this->stripe->createCard(
+            $stripeCustomer,
+            $token
+        );
+
         $methodId = $this->creditCardRepository->create([
             'type' => self::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'fingerprint' => $fingerprint,
             'last_four_digits' => $last4,
             'cardholder_name' => $cardHolderName,
             'company_name' => $companyName,
-            'external_id' => $externalId,
+            'external_id' => $stripeCard->id,
+            'external_customer_id' => $stripeCustomer->id,
             'external_provider' => ConfigService::$creditCard['external_provider'],
             'expiration_date' => Carbon::create(
                 $creditCardYearSelector,
@@ -250,6 +295,7 @@ class PaymentMethodService
             ),
             'created_on' => Carbon::now()->toDateTimeString()
         ]);
+
         return $methodId;
     }
 
