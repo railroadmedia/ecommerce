@@ -180,12 +180,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_user_store_paypal_payment_method()
     {
-        $agreement_id = $this->faker->word;
-        $expressCheckoutToken = $this->faker->word;
+        $agreement_id = ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id'];
+        $expressCheckoutToken = 'EC-3KS86857HR0681132';
         $addressId = $this->faker->numberBetween();
         $userId = rand();
         $customerId = null;
-        $currency = $this->faker->currencyCode;
+        $currency = 'cad';
 
         $results = $this->call('PUT', '/payment-method', [
             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
@@ -199,7 +199,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $results->getStatusCode());
 
-        $this->assertEquals([
+        $this->assertArraySubset([
             'id' => 1,
             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             'created_on' => Carbon::now()->toDateTimeString(),
@@ -209,7 +209,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'currency' => $currency,
             'method' => [
                 'id' => 1,
-                'agreement_id' => $agreement_id,
                 'express_checkout_token' => $expressCheckoutToken,
                 'address_id' => $addressId,
                 'expiration_date' => Carbon::now()->addYears(10)->toDateTimeString(),

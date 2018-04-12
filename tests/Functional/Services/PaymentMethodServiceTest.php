@@ -133,8 +133,8 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
     public function test_customer_store_paypal_payment_method()
     {
-        $agreementId = $this->faker->randomNumber();
-        $expressCheckoutToken = $this->faker->word;
+        $agreementId = ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id'];
+        $expressCheckoutToken = 'EC-1EF17178U5304720E';
         $addressId = $this->faker->randomNumber();
         $customerId = rand();
         $currency = $this->faker->currencyCode;
@@ -213,15 +213,15 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
         $paymentMethod = $this->paymentMethodFactory->store($this->faker->randomElement([PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE]),
-            rand(2018, 2022),
-            rand(01, 12),
+            $this->faker->creditCardExpirationDate->format('Y'),
+            $this->faker->creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
             rand(),
             rand(),
-            $this->faker->word,
+            'EC-1EF17178U5304720E',
             rand(),
             $userId,
             null);

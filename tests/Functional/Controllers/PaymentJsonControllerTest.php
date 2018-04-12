@@ -31,7 +31,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $results = $this->call('PUT', '/payment', [
             'payment_method_id' => $paymentMethod['id'],
-            'currency' => $this->faker->currencyCode,
+            'currency' => 'cad',
             'due' => $due,
             'type' => $type
         ]);
@@ -73,6 +73,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'due' => $due,
             'type' => $type
         ]);
+
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset([

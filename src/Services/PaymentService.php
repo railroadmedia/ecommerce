@@ -260,7 +260,8 @@ class PaymentService
             $payPalTransactionId = $this->payPalService->createReferenceTransaction(
                 $due,
                 '',
-                $paymentMethod['method']['agreement_id']
+                $paymentMethod['method']['agreement_id'],
+                $paymentMethod['currency']
             );
         } catch (CreateReferenceTransactionException $cardException) {
             throw new NotFoundException(

@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\ExternalHelpers\PayPal;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
@@ -46,6 +47,11 @@ class PaymentMethodService
 
     private $stripe;
 
+    /**
+     * @var PayPal
+     */
+    private $payPalService;
+
     //constants that represent payment method types
     CONST PAYPAL_PAYMENT_METHOD_TYPE = 'paypal';
     CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit card';
@@ -69,7 +75,8 @@ class PaymentMethodService
                                 CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
                                 UserPaymentMethodsRepository $userPaymentMethodsRepository,
                                 LocationService $locationService,
-                                Stripe $stripe)
+                                Stripe $stripe,
+                                PayPal $payPal)
     {
         $this->paymentMethodRepository = $paymentMethodRepository;
         $this->creditCardRepository = $creditCardRepository;
@@ -78,6 +85,7 @@ class PaymentMethodService
         $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
         $this->locationService = $locationService;
         $this->stripe = $stripe;
+        $this->payPalService = $payPal;
     }
 
     /** Save a new payment method, a new credit card/paypal billing record based on payment method type and
@@ -128,7 +136,6 @@ class PaymentMethodService
             );
         } else if ($methodType == self::PAYPAL_PAYMENT_METHOD_TYPE) {
             $methodId = $this->createPaypalBilling(
-                $agreementId,
                 $expressCheckoutToken,
                 $addressId
             );
@@ -305,8 +312,10 @@ class PaymentMethodService
      * @param $addressId
      * @return int
      */
-    private function createPaypalBilling($agreementId, $expressCheckoutToken, $addressId)
+    private function createPaypalBilling($expressCheckoutToken, $addressId)
     {
+        $agreementId = $this->payPalService->confirmAndCreateBillingAgreement($expressCheckoutToken);
+
         $methodId = $this->paypalBillingRepository->create(
             [
                 'agreement_id' => $agreementId,

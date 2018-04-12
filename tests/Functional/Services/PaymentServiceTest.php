@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Services;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
@@ -31,7 +32,7 @@ class PaymentServiceTest extends EcommerceTestCase
     public function test_store_payment()
     {
         $this->createAndLogInNewUser();
-        $due = $this->faker->numberBetween();
+        $due = $this->faker->numberBetween(1,2000);
         $paid = null;
         $refunded = null;
         $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
@@ -39,19 +40,17 @@ class PaymentServiceTest extends EcommerceTestCase
         $externalId = '';
         $status = '';
         $message = '';
-        $paymentMethod = $this->paymentMethodFactory->store();
+        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE);
 
         $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod['id'], $paymentMethod['currency']);
 
-        $this->assertEquals([
+        $this->assertArraySubset([
             'id' => 1,
             'due' => $due,
-            'paid' => $paid,
+            'paid' => $due,
             'refunded' => $refunded,
             'type' => $type,
-            'external_provider' => $externalProvider,
-            'external_id' => $externalId,
-            'status' => $status,
+            'status' => 1,
             'message' => $message,
             'payment_method_id' => $paymentMethod['id'],
             'currency' => $paymentMethod['currency'],
@@ -67,7 +66,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
     public function test_store_manual_payment()
     {
-        $due = $this->faker->numberBetween();
+        $due = $this->faker->numberBetween(1, 2000);
         $paid = null;
         $refunded = null;
         $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
@@ -103,7 +102,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
     public function test_order_link_created_when_create_payment()
     {
-        $due = $this->faker->numberBetween();
+        $due = $this->faker->numberBetween(1, 2000);
         $paid = null;
         $refunded = null;
         $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
@@ -151,7 +150,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
     public function test_subscription_link_created_when_create_payment()
     {
-        $due = $this->faker->numberBetween();
+        $due = $this->faker->numberBetween(1, 2000);
         $paid = null;
         $refunded = null;
         $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);

@@ -91,7 +91,8 @@ class PayPal
     public function createReferenceTransaction(
         $totalAmount,
         $paymentDescription,
-        $billingAgreementId
+        $billingAgreementId,
+        $currency = 'USD'
     ) {
         $nvp = '&AMT=' .
             $totalAmount .
@@ -102,7 +103,8 @@ class PayPal
             '&RECURRING=true' .
             '&PAYMENTTYPE=InstantOnly' .
             '&PAYMENTACTION=Sale' .
-            '&CURRENCYCODE=USD';
+            '&CURRENCYCODE=' .
+            $currency;
 
         $response = $this->sendRequest('DoReferenceTransaction', $nvp);
 
