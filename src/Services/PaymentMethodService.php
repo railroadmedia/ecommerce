@@ -231,8 +231,8 @@ class PaymentMethodService
                 $data['card_number_last_four_digits'],
                 $data['cardholder_name'],
                 $data['company_name'],
-                $data['user_id'],
-                $data['customer_id']
+                $data['user_id'] ?? null ,
+                $data['customer_id'] ?? null
             );
         } else if ($data['update_method'] == self::UPDATE_PAYMENT_METHOD_AND_UPDATE_CREDIT_CARD) {
             $this->creditCardRepository->update($paymentMethod['method']['id'],

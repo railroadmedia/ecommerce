@@ -39,8 +39,7 @@ class PaypalTest extends EcommerceTestCase
         $transactionId = $this->classBeingTested->createReferenceTransaction(
             $amount,
             $description,
-            'B-6JD49251BA637280M'
-            //ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
+            ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
         );
 
         $this->assertNotEmpty($transactionId);
@@ -48,11 +47,12 @@ class PaypalTest extends EcommerceTestCase
 
     public function test_create_reference_transaction_amount_to_high()
     {
-        $amount = $this->faker->numberBetween(100000, 200000);
+        $amount = $this->faker->numberBetween(10000001, 99999999);
+
         $description = $this->faker->sentence;
 
         $this->expectException(
-            'Railroad\Ecommerce\Exceptions\PayPal\CreateReferenceTransactionException'
+           'Railroad\Ecommerce\Exceptions\PayPal\CreateReferenceTransactionException'
         );
 
         $transactionId = $this->classBeingTested->createReferenceTransaction(
@@ -145,8 +145,7 @@ class PaypalTest extends EcommerceTestCase
         $transactionId = $this->classBeingTested->createReferenceTransaction(
             $amount,
             $description,
-            'B-3UY75255FC877710X'
-            //ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
+            ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
         );
 
         $this->expectException(

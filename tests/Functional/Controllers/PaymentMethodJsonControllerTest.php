@@ -225,10 +225,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
         $currency = $this->faker->currencyCode;
+        $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->creditCardExpirationDate->format('m'),
+            $creditCardExpirationDate->format('Y'),
+            $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
@@ -369,7 +370,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             $this->faker->creditCardType,
             'EC-1EF17178U5304720E',
             rand(),
-            $this->faker->currencyCode,
+            'usd',
             $userId,
             null);
 
