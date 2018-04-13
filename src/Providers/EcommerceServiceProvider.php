@@ -89,6 +89,8 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$tablePaypalBillingAgreement = ConfigService::$tablePrefix . 'paypal_billing_agreement';
         ConfigService::$tableCustomerPaymentMethods = ConfigService::$tablePrefix . 'customer_payment_methods';
         ConfigService::$tableUserPaymentMethods = ConfigService::$tablePrefix . 'user_payment_methods';
+        ConfigService::$tableCustomerStripeCustomer = ConfigService::$tablePrefix . 'customer_stripe_customer';
+        ConfigService::$tableUserStripeCustomer = ConfigService::$tablePrefix . 'user_stripe_customer';
 
         // brand
         ConfigService::$brand = config('ecommerce.brand');

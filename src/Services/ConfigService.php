@@ -137,6 +137,16 @@ class ConfigService
     /**
      * @var string
      */
+    public static $tableUserStripeCustomer;
+
+    /**
+     * @var  string
+     */
+    public static $tableCustomerStripeCustomer;
+
+    /**
+     * @var string
+     */
     public static $brand;
 
     /**
