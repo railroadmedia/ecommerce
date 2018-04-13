@@ -42,7 +42,14 @@ class PaymentServiceTest extends EcommerceTestCase
         $message = '';
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE);
 
-        $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod['id'], $paymentMethod['currency']);
+        $payment = $this->classBeingTested->store(
+            $due,
+            $paid,
+            $refunded,
+            $type,
+            $externalProvider,
+            $paymentMethod['method']['agreement_id'],
+            $status, $message, $paymentMethod['id'], $paymentMethod['currency']);
 
         $this->assertArraySubset([
             'id' => 1,

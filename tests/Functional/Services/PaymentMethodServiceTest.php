@@ -37,7 +37,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $last4Digits = $this->faker->randomNumber(4);
         $cardHolderName = $this->faker->word;
         $companyName = $this->faker->creditCardType;
-        $externalId = $this->faker->randomNumber();
         $expirationYear = 2020;
         $expirationMonth = $this->faker->creditCardExpirationDate()->format('m');
         $userId = rand();
@@ -51,8 +50,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             $last4Digits,
             $cardHolderName,
             $companyName,
-            $externalId,
-            null,
             '',
             null,
             $currency,
@@ -133,7 +130,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
     public function test_customer_store_paypal_payment_method()
     {
-        $agreementId = ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id'];
+        //$agreementId = ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id'];
         $expressCheckoutToken = 'EC-1EF17178U5304720E';
         $addressId = $this->faker->randomNumber();
         $customerId = rand();
@@ -146,8 +143,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             '',
             '',
             '',
-            null,
-            $agreementId,
             $expressCheckoutToken,
             $addressId,
             $currency,
@@ -155,12 +150,11 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             $customerId
         );
 
-        $this->assertEquals([
+        $this->assertArraySubset([
             'id' => 1,
             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             'method' => [
                 'id' => 1,
-                'agreement_id' => $agreementId,
                 'express_checkout_token' => $expressCheckoutToken,
                 'address_id' => $addressId,
                 'expiration_date' => Carbon::now()->addYears(10),
@@ -188,7 +182,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             ConfigService::$tablePaypalBillingAgreement,
             [
                 'id' => 1,
-                'agreement_id' => $agreementId,
                 'express_checkout_token' => $expressCheckoutToken,
                 'address_id' => $addressId,
                 'expiration_date' => Carbon::now()->addYears(10),
@@ -219,8 +212,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             'EC-1EF17178U5304720E',
             rand(),
             $userId,
@@ -232,16 +223,15 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     public function test_user_update_credit_card_expiration_date()
     {
         $userId = rand();
+        $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            rand(2018, 2022),
-            rand(01, 12),
+            $creditCardExpirationDate->format('Y'),
+            $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $userId,
@@ -273,16 +263,15 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     public function test_user_define_new_credit_card_payment_method()
     {
         $userId = rand();
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            rand(2018, 2022),
-            rand(01, 12),
+            $cardExpirationDate->format('Y'),
+            $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $userId,
@@ -318,8 +307,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $userId,
@@ -330,7 +317,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
                 'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
                 'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
                 'agreement_id' => rand(),
-                'express_checkout_token' => $this->faker->word,
+                'express_checkout_token' => 'EC-1EF17178U5304720E',
                 'address_id' => rand(),
                 'user_id' => $userId
             ]
@@ -348,8 +335,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             rand(),

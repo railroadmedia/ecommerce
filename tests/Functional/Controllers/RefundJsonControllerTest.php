@@ -54,10 +54,11 @@ class RefundJsonControllerTest extends EcommerceTestCase
     public function test_admin_create_refund_for_other_user()
     {
         $this->createAndLoginAdminUser();
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->month,
+            $cardExpirationDate->format('Y'),
+            $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
@@ -141,9 +142,11 @@ class RefundJsonControllerTest extends EcommerceTestCase
     public function test_user_can_not_create_other_refund()
     {
         $this->createAndLogInNewUser();
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->month,
+            $cardExpirationDate->format('Y'),
+            $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,

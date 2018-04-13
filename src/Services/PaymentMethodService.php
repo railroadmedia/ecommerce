@@ -8,10 +8,13 @@ use Railroad\Ecommerce\ExternalHelpers\PayPal;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
+use Railroad\Ecommerce\Repositories\CustomerStripeCustomerRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
+use Railroad\Ecommerce\Repositories\UserStripeCustomerRepository;
 use Railroad\Location\Services\LocationService;
+use Stripe\Error\InvalidRequest;
 
 class PaymentMethodService
 {
@@ -45,12 +48,25 @@ class PaymentMethodService
      */
     private $locationService;
 
+    /**
+     * @var Stripe
+     */
     private $stripe;
 
     /**
      * @var PayPal
      */
     private $payPalService;
+
+    /**
+     * @var UserStripeCustomerRepository
+     */
+    private $userStripeCustomerRepository;
+
+    /**
+     * @var CustomerStripeCustomerRepository
+     */
+    private $customerStripeCustomerRepository;
 
     //constants that represent payment method types
     CONST PAYPAL_PAYMENT_METHOD_TYPE = 'paypal';
@@ -76,7 +92,9 @@ class PaymentMethodService
                                 UserPaymentMethodsRepository $userPaymentMethodsRepository,
                                 LocationService $locationService,
                                 Stripe $stripe,
-                                PayPal $payPal)
+                                PayPal $payPal,
+                                UserStripeCustomerRepository $userStripeCustomerRepository,
+                                CustomerStripeCustomerRepository $customerStripeCustomerRepository)
     {
         $this->paymentMethodRepository = $paymentMethodRepository;
         $this->creditCardRepository = $creditCardRepository;
@@ -86,6 +104,8 @@ class PaymentMethodService
         $this->locationService = $locationService;
         $this->stripe = $stripe;
         $this->payPalService = $payPal;
+        $this->userStripeCustomerRepository = $userStripeCustomerRepository;
+        $this->customerStripeCustomerRepository = $customerStripeCustomerRepository;
     }
 
     /** Save a new payment method, a new credit card/paypal billing record based on payment method type and
@@ -116,8 +136,6 @@ class PaymentMethodService
         $last4 = '',
         $cardHolderName = '',
         $companyName = '',
-        $externalId = null,
-        $agreementId = null,
         $expressCheckoutToken = '',
         $addressId = null,
         $currency = null,
@@ -132,7 +150,9 @@ class PaymentMethodService
                 $fingerprint,
                 $last4,
                 $cardHolderName,
-                $companyName
+                $companyName,
+                $userId,
+                $customerId
             );
         } else if ($methodType == self::PAYPAL_PAYMENT_METHOD_TYPE) {
             $methodId = $this->createPaypalBilling(
@@ -204,8 +224,16 @@ class PaymentMethodService
 
         $methodId = null;
         if ($data['update_method'] == self::UPDATE_PAYMENT_METHOD_AND_CREATE_NEW_CREDIT_CARD) {
-            $methodId = $this->createCreditCard($data['card_year'], $data['card_month'], $data['card_fingerprint'], $data['card_number_last_four_digits'],
-                $data['cardholder_name'], $data['company_name'], $data['external_id']);
+            $methodId = $this->createCreditCard(
+                $data['card_year'],
+                $data['card_month'],
+                $data['card_fingerprint'],
+                $data['card_number_last_four_digits'],
+                $data['cardholder_name'],
+                $data['company_name'],
+                $data['user_id'],
+                $data['customer_id']
+            );
         } else if ($data['update_method'] == self::UPDATE_PAYMENT_METHOD_AND_UPDATE_CREDIT_CARD) {
             $this->creditCardRepository->update($paymentMethod['method']['id'],
                 [
@@ -224,8 +252,10 @@ class PaymentMethodService
                 return -1;
             }
 
+            $billingAgreementId = $this->payPalService->confirmAndCreateBillingAgreement($data['express_checkout_token']);
+
             $this->paypalBillingRepository->updateOrCreate(['id' => $paymentMethod['method']['id']], [
-                'agreement_id' => $data['agreement_id'],
+                'agreement_id' => $billingAgreementId,
                 'express_checkout_token' => $data['express_checkout_token'],
                 'address_id' => $data['address_id'],
                 'expiration_date' => Carbon::now()->addYears(10),
@@ -253,16 +283,14 @@ class PaymentMethodService
      * @param $externalId
      * @return int
      */
-    private function createCreditCard($creditCardYearSelector, $creditCardMonthSelector, $fingerprint, $last4, $cardHolderName, $companyName)
+    private function createCreditCard($creditCardYearSelector, $creditCardMonthSelector, $fingerprint, $last4, $cardHolderName, $companyName, $userId, $customerId)
     {
-        //TODO
-        $stripeCustomer = $this->stripe->createCustomer(['email' => 'roxana@test.ro']);
-
-        /*try {
-            $stripeCustomer = $this->stripe->retrieveCustomer(request()->get('stripe-customer-id')?? null);
-        } catch (Exception $exception) {
-            $stripeCustomer = $this->stripe->createCustomer(['email' => 'roxana@test.ro']);
-        } */
+        if ($userId) {
+            $stripeCustomer = $this->getStripeCustomer($this->userStripeCustomerRepository->getByUserId($userId), ['user_id' => $userId]);
+        }
+        if ($customerId) {
+            $stripeCustomer = $this->getStripeCustomer($this->customerStripeCustomerRepository->getByCustomerId($customerId), ['customer_id' => $customerId]);
+        }
 
         $token = $this->stripe->createCardToken(
             $fingerprint,
@@ -368,5 +396,33 @@ class PaymentMethodService
             'customer_id' => $customerId,
             'created_on' => Carbon::now()->toDateTimeString()
         ]);
+    }
+
+    /**
+     * @param $stripeCustomerMapping
+     * @return \Stripe\Customer
+     */
+    private function getStripeCustomer($stripeCustomerMapping, $ids)
+    {
+        //TODO - we need the user/customer email address
+        try {
+            $stripeCustomer = $this->stripe->retrieveCustomer($stripeCustomerMapping['stripe_customer_id'] ?? 0);
+        } catch (InvalidRequest $exception) {
+            $stripeCustomer = $this->stripe->createCustomer(['email' => 'roxana@test.ro']);
+            if(array_key_exists('user_id', $ids)){
+                $this->userStripeCustomerRepository->create([
+                    'user_id' => $ids['user_id'],
+                    'stripe_customer_id' => $stripeCustomer->id,
+                    'created_on' => Carbon::now()->toDateTimeString()
+                ]);
+            } else {
+                $this->customerStripeCustomerRepository->create([
+                    'customer_id' => $ids['customer_id'],
+                    'stripe_customer_id' => $stripeCustomer->id,
+                    'created_on' => Carbon::now()->toDateTimeString()
+                ]);
+            }
+        }
+        return $stripeCustomer;
     }
 }

@@ -31,19 +31,17 @@ class PaymentMethodFactory extends PaymentMethodService
         $customerId = null
     ) {
         $this->faker = app(Generator::class);
-
+        $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
         $parameters =
             func_get_args() + [
                 $this->faker->randomElement([PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                     PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE]),
-                $this->faker->creditCardExpirationDate->format('Y'),
-                $this->faker->creditCardExpirationDate->format('m'),
+                $creditCardExpirationDate->format('Y'),
+                $creditCardExpirationDate->format('m'),
                 '4242424242424242',
                 $this->faker->randomNumber(4),
                 $this->faker->name,
                 $this->faker->creditCardType,
-                rand(),
-                ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id'],
                 'EC-1EF17178U5304720E',
                 rand(),
                 'EUR',

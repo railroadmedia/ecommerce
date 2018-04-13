@@ -50,16 +50,15 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     public function test_admin_store_any_payment()
     {
         $this->createAndLoginAdminUser();
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->creditCardExpirationDate->format('m'),
+            $cardExpirationDate->format('Y'),
+            $cardExpirationDate->format('m'),
             '4242424242424242',
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $this->faker->currencyCode,

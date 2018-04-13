@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\ExternalHelpers\PayPal;
+use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Factories\CustomerFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -22,6 +24,16 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
      */
     private $customerFactory;
 
+    /**
+     * @var Stripe
+     */
+    private $stripe;
+
+    /**
+     * @var PayPal
+     */
+    private $paypal;
+
     CONST VALID_VISA_CARD_NUM = '4242424242424242';
 
     protected function setUp()
@@ -29,6 +41,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         parent::setUp();
         $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
         $this->customerFactory = $this->app->make(CustomerFactory::class);
+        $this->stripe = $this->app->make(Stripe::class);
+        $this->paypal = $this->app->make(PayPal::class);
     }
 
     public function test_store_payment_method_credit_card_without_required_fields()
@@ -61,10 +75,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 "detail" => "The company name field is required when method type is credit card.",
             ],
             [
-                "source" => "external_id",
-                "detail" => "The external id field is required when method type is credit card.",
-            ],
-            [
                 "source" => "user_id",
                 "detail" => "The user id field is required when customer id is not present."
             ],
@@ -84,10 +94,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(422, $results->getStatusCode());
 
         $this->assertEquals([
-            [
-                "source" => "agreement_id",
-                "detail" => "The agreement id field is required when method type is paypal.",
-            ],
             [
                 "source" => "express_checkout_token",
                 "detail" => "The express checkout token field is required when method type is paypal.",
@@ -126,12 +132,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_user_store_credit_card_payment_method()
     {
         $userId = rand();
-        $cardYear = $this->faker->creditCardExpirationDate->format('Y');
-        $cardMonth = $this->faker->month;
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $cardYear = $cardExpirationDate->format('Y');
+        $cardMonth = $cardExpirationDate->format('m');
         $cardFingerprint = self::VALID_VISA_CARD_NUM;
         $cardLast4 = $this->faker->randomNumber(4);
         $cardType = $this->faker->creditCardType;
-        $externalId = $this->faker->numberBetween();
         $currency = $this->faker->currencyCode;
 
         $results = $this->call('PUT', '/payment-method', [
@@ -142,7 +148,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'card_number_last_four_digits' => $cardLast4,
             'company_name' => $cardType,
             'currency' => $currency,
-            'external_id' => $externalId,
             'user_id' => $userId
         ]);
 
@@ -180,7 +185,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_user_store_paypal_payment_method()
     {
-        $agreement_id = ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id'];
         $expressCheckoutToken = 'EC-3KS86857HR0681132';
         $addressId = $this->faker->numberBetween();
         $userId = rand();
@@ -189,7 +193,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call('PUT', '/payment-method', [
             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'agreement_id' => $agreement_id,
             'express_checkout_token' => $expressCheckoutToken,
             'address_id' => $addressId,
             'user_id' => $userId,
@@ -230,8 +233,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $currency,
@@ -267,10 +268,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             [
                 "source" => "company_name",
                 "detail" => "The company name field is required when create a new credit card.",
-            ],
-            [
-                "source" => "external_id",
-                "detail" => "The external ID field is required when create a new credit card.",
             ]
         ], $results->decodeResponseJson()['errors']);
     }
@@ -278,15 +275,14 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_update_payment_method_update_credit_card_validation()
     {
         $userId = $this->createAndLogInNewUser();
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->creditCardExpirationDate->format('m'),
+            $cardExpirationDate->format('Y'),
+            $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $this->faker->currencyCode,
@@ -317,35 +313,31 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_update_payment_method_use_paypal_validation()
     {
         $userId = $this->createAndLogInNewUser();
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->creditCardExpirationDate->format('m'),
+            $cardExpirationDate->format('Y'),
+            $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $this->faker->currencyCode,
             $userId,
             null);
 
-        $results = $this->call('PATCH', '/payment-method/' .$paymentMethod['id'],
+        $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
             [
                 'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
                 'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE
-               // 'customer_id' => rand()
+                // 'customer_id' => rand()
             ]
         );
 
         $this->assertEquals(422, $results->getStatusCode());
         $this->assertEquals([
-            [
-                "source" => "agreement_id",
-                "detail" => "The agreement id field is required when update payment method and use paypal.",
-            ],
             [
                 "source" => "express_checkout_token",
                 "detail" => "The express checkout token field is required when update payment method and use paypal.",
@@ -364,20 +356,18 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $cardFingerprint = self::VALID_VISA_CARD_NUM;
         $cardLast4 = $this->faker->randomNumber(4);
         $cardType = $this->faker->creditCardType;
-        $externalId = $this->faker->numberBetween();
         $cardHolderName = $this->faker->name;
+        $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
 
         $userId = $this->createAndLogInNewUser();
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->creditCardExpirationDate->format('m'),
+            $creditCardExpirationDate->format('Y'),
+            $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
-            $this->faker->word,
+            'EC-1EF17178U5304720E',
             rand(),
             $this->faker->currencyCode,
             $userId,
@@ -393,7 +383,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'card_number_last_four_digits' => $cardLast4,
                 'cardholder_name' => $cardHolderName,
                 'company_name' => $cardType,
-                'external_id' => $externalId,
                 'user_id' => $paymentMethod['user_id']
             ]
         );
@@ -442,8 +431,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $this->faker->currencyCode,
@@ -494,29 +481,29 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_customer_update_payment_method_use_paypal()
     {
         $customer = $this->customerFactory->store();
+        $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
+
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->creditCardExpirationDate->format('m'),
+            $creditCardExpirationDate->format('Y'),
+            $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
-            $this->faker->word,
+            $this->stripe->createCardToken(self::VALID_VISA_CARD_NUM, $creditCardExpirationDate->format('m'), $creditCardExpirationDate->format('Y')),
             rand(),
             $this->faker->currencyCode,
             null,
             $customer['id']);
-        $agreementId = rand();
-        $expressCheckoutToken = $this->faker->word;
+
+        $expressCheckoutToken = 'EC-2FN32742BT349830D';
+
         $addressId = rand();
 
         $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
             [
                 'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
                 'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'agreement_id' => $agreementId,
                 'express_checkout_token' => $expressCheckoutToken,
                 'address_id' => $addressId,
                 'customer_id' => $paymentMethod['customer_id']
@@ -524,7 +511,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertEquals(201, $results->getStatusCode());
-        $this->assertEquals([
+        $this->assertArraySubset([
             'id' => $paymentMethod['id'],
             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             'created_on' => $paymentMethod['created_on'],
@@ -534,7 +521,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'currency' => $paymentMethod['currency'],
             'method' => [
                 'id' => $paymentMethod['method']['id'],
-                'agreement_id' => $agreementId,
                 'express_checkout_token' => $expressCheckoutToken,
                 'address_id' => $addressId,
                 'expiration_date' => Carbon::now()->addYears(10),
@@ -547,22 +533,22 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_customer_delete_own_payment_method()
     {
         $customer = $this->customerFactory->store();
+        $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
+
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->creditCardExpirationDate->format('m'),
+            $creditCardExpirationDate->format('Y'),
+            $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $this->faker->currencyCode,
             null,
             $customer['id']);
 
-        $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id'],[
+        $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id'], [
             'customer_id' => $customer['id']
         ]);
 
@@ -602,15 +588,15 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_user_delete_payment_method_credit_card()
     {
         $userId = $this->createAndLogInNewUser();
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->month,
+            $cardExpirationDate->format('Y'),
+            $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $userId);
@@ -637,16 +623,15 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_admin_delete_payment_method_paypal()
     {
         $this->createAndLoginAdminUser();
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->month,
+            $cardExpirationDate->format('Y'),
+            $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $this->faker->currencyCode,
@@ -691,16 +676,15 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_user_delete_own_payment_method_response()
     {
         $currentUserId = $this->createAndLogInNewUser();
+        $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->month,
+            $creditCardExpirationDate->format('Y'),
+            $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            null,
             '',
             null,
             $this->faker->currencyCode,

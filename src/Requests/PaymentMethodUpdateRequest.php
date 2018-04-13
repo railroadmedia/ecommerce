@@ -37,10 +37,6 @@ class PaymentMethodUpdateRequest extends FormRequest
             'card_fingerprint' => 'required_if:update_method,' . PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_CREATE_NEW_CREDIT_CARD,
             'card_number_last_four_digits' => 'required_if:update_method,' . PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_CREATE_NEW_CREDIT_CARD,
             'company_name' => 'required_if:update_method,' . PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_CREATE_NEW_CREDIT_CARD,
-            'external_id' => 'required_if:update_method,' . PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_CREATE_NEW_CREDIT_CARD,
-
-
-            'agreement_id' => 'required_if:update_method,' . PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
             'express_checkout_token' => 'required_if:update_method,' . PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
             'address_id' => 'required_if:update_method,' . PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
             'user_id' => 'numeric',
