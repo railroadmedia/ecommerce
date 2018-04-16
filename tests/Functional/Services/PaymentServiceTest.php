@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Services;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
@@ -15,18 +16,24 @@ class PaymentServiceTest extends EcommerceTestCase
     /**
      * @var PaymentService
      */
-    protected $classBeingTested;
+    private $classBeingTested;
 
     /**
      * @var PaymentMethodFactory
      */
-    protected $paymentMethodFactory;
+    private $paymentMethodFactory;
+
+    /**
+     * @var PaymentGatewayFactory
+     */
+    private $paymentGatewayFactory;
 
     public function setUp()
     {
         parent::setUp();
         $this->classBeingTested = $this->app->make(PaymentService::class);
         $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
+        $this->paymentGatewayFactory = $this->app->make(PaymentGatewayFactory::class);
     }
 
     public function test_store_payment()
@@ -40,7 +47,8 @@ class PaymentServiceTest extends EcommerceTestCase
         $externalId = '';
         $status = '';
         $message = '';
-        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE);
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', $this->faker->word,'paypal_1');
+        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE, $paymentGateway['id']);
 
         $payment = $this->classBeingTested->store(
             $due,
@@ -52,7 +60,6 @@ class PaymentServiceTest extends EcommerceTestCase
             $status, $message, $paymentMethod['id'], $paymentMethod['currency']);
 
         $this->assertArraySubset([
-            'id' => 1,
             'due' => $due,
             'paid' => $due,
             'refunded' => $refunded,
@@ -85,8 +92,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod);
 
-        $this->assertEquals([
-            'id' => 1,
+        $this->assertArraySubset([
             'due' => $due,
             'paid' => $paid,
             'refunded' => $refunded,
@@ -123,8 +129,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod, $currency, $orderId);
 
-        $this->assertEquals([
-            'id' => 1,
+        $this->assertArraySubset([
             'due' => $due,
             'paid' => $paid,
             'refunded' => $refunded,
@@ -172,8 +177,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod, $currency, $orderId, $subscriptionId);
 
-        $this->assertEquals([
-            'id' => 1,
+        $this->assertArraySubset([
             'due' => $due,
             'paid' => $paid,
             'refunded' => $refunded,

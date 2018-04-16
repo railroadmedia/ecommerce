@@ -13,7 +13,6 @@ class Stripe
     public function __construct(StripeDependencies $stripe)
     {
         $this->stripe = $stripe;
-        $this->stripe->stripe->setApiKey(ConfigService::$stripeAPI['stripe_api_secret']);
     }
 
     /**
@@ -186,5 +185,10 @@ class Stripe
                 'reason' => $reason
             ]
         );
+    }
+
+    public function setApiKey($apiKey)
+    {
+        $this->stripe->stripe->setApiKey($apiKey);
     }
 }

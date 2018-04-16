@@ -36,8 +36,9 @@ class PaymentMethodJsonController extends Controller
      */
     public function store(PaymentMethodCreateRequest $request)
     {
-        $paymentMethod = $this->paymentMethodService->store(
+       $paymentMethod = $this->paymentMethodService->store(
             $request->get('method_type'),
+            $request->get('payment_gateway'),
             $request->get('card_year'),
             $request->get('card_month'),
             $request->get('card_fingerprint'),
@@ -86,6 +87,7 @@ class PaymentMethodJsonController extends Controller
                     'company_name' => '',
                     'express_checkout_token' => '',
                     'address_id' => '',
+                    'payment_gateway' => '',
                     'user_id' => '',
                     'customer_id' => ''
                 ]

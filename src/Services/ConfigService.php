@@ -147,6 +147,11 @@ class ConfigService
     /**
      * @var string
      */
+    public static $tablePaymentGateway;
+
+    /**
+     * @var string
+     */
     public static $brand;
 
     /**

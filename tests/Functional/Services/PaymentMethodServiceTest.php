@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Services;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -22,13 +23,19 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     /**
      * @var PaymentMethodFactory
      */
-    protected $paymentMethodFactory;
+    private $paymentMethodFactory;
+
+    /**
+     * @var PaymentGatewayFactory
+     */
+    private $paymentGatewayFactory;
 
     protected function setUp()
     {
         parent::setUp();
         $this->classBeingTested = $this->app->make(PaymentMethodService::class);
         $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
+        $this->paymentGatewayFactory = $this->app->make(PaymentGatewayFactory::class);
     }
 
     public function test_user_store_credit_card_payment_method()
@@ -41,9 +48,11 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $expirationMonth = $this->faker->creditCardExpirationDate()->format('m');
         $userId = rand();
         $currency = $this->faker->currencyCode;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->classBeingTested->store(
             PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $expirationYear,
             $expirationMonth,
             $fingerprint,
@@ -57,10 +66,8 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             null);
 
         $this->assertArraySubset([
-            'id' => 1,
             'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'method' => [
-                'id' => 1,
                 'type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'fingerprint' => $fingerprint,
                 'last_four_digits' => $last4Digits,
@@ -130,13 +137,14 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
     public function test_customer_store_paypal_payment_method()
     {
-        //$agreementId = ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id'];
-        $expressCheckoutToken = 'EC-1EF17178U5304720E';
+        $expressCheckoutToken = 'EC-3WA8428214111473X';
         $addressId = $this->faker->randomNumber();
         $customerId = rand();
         $currency = $this->faker->currencyCode;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', $this->faker->word, 'paypal_1');
 
         $paymentMethod = $this->classBeingTested->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             null,
             null,
             '',
@@ -203,16 +211,17 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     public function test_user_can_delete_its_payment_method()
     {
         $userId = rand();
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
-        $paymentMethod = $this->paymentMethodFactory->store($this->faker->randomElement([PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE]),
+        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $this->faker->creditCardExpirationDate->format('Y'),
             $this->faker->creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            'EC-1EF17178U5304720E',
+            'EC-3WA8428214111473X',
             rand(),
             $userId,
             null);
@@ -224,8 +233,10 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     {
         $userId = rand();
         $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $creditCardExpirationDate->format('Y'),
             $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -244,6 +255,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             [
                 'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_UPDATE_CREDIT_CARD,
                 'method_type' => $paymentMethod['method_type'],
+                'payment_gateway' =>$paymentGateway['id'],
                 'card_year' => $newExpirationYear,
                 'card_month' => $newExpirationMonth
             ]);
@@ -264,8 +276,10 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     {
         $userId = rand();
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $cardExpirationDate->format('Y'),
             $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -289,6 +303,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
                 'cardholder_name' => $this->faker->name,
                 'company_name' => $this->faker->creditCardType,
                 'external_id' => rand(),
+                'payment_gateway' => $paymentGateway['id'],
                 'user_id' => $userId,
                 'customer_id' => null
             ]);
@@ -299,8 +314,10 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     public function test_user_update_to_paypal_payment_method()
     {
         $userId = rand();
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             rand(2018, 2022),
             rand(01, 12),
             self::VALID_VISA_CARD_NUM,
@@ -311,15 +328,17 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             rand(),
             $userId,
             null);
+        $paymentGatewayPaypal = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', $this->faker->word, 'paypal_1');
 
         $updated = $this->classBeingTested->update(
             $paymentMethod['id'], [
                 'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
                 'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
                 'agreement_id' => rand(),
-                'express_checkout_token' => 'EC-1EF17178U5304720E',
+                'express_checkout_token' => 'EC-3WA8428214111473X',
                 'address_id' => rand(),
-                'user_id' => $userId
+                'user_id' => $userId,
+                'payment_gateway' => $paymentGatewayPaypal['id']
             ]
         );
 
@@ -328,7 +347,9 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
     public function test_admin_update_other_credit_card_expiration_date()
     {
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $this->faker->creditCardExpirationDate->format('Y'),
             $this->faker->creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,

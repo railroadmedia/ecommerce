@@ -4,7 +4,9 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -14,19 +16,26 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     /**
      * @var PaymentMethodFactory
      */
-    protected $paymentMethodFactory;
+    private $paymentMethodFactory;
+
+    /**
+     * @var PaymentGatewayFactory
+     */
+    private $paymentGatewayFactory;
 
     protected function setUp()
     {
         parent::setUp();
         $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
+        $this->paymentGatewayFactory = $this->app->make(PaymentGatewayFactory::class);
     }
 
     public function test_user_store_payment()
     {
         $this->createAndLogInNewUser();
 
-        $paymentMethod = $this->paymentMethodFactory->store();
+        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE, $paymentGateway['id']);
         $due = $this->faker->numberBetween(0,1000);
         $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $results = $this->call('PUT', '/payment', [
@@ -51,8 +60,10 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     {
         $this->createAndLoginAdminUser();
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $cardExpirationDate->format('Y'),
             $cardExpirationDate->format('m'),
             '4242424242424242',
@@ -136,7 +147,10 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     {
         $this->createAndLogInNewUser();
 
-        $paymentMethod = $this->paymentMethodFactory->store();
+        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+
+        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id']);
         $due = $this->faker->numberBetween(0,1000);
         $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $results = $this->call('PUT', '/payment', [
@@ -160,7 +174,10 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     {
         $this->createAndLogInNewUser();
 
-        $paymentMethod = $this->paymentMethodFactory->store();
+        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+
+        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id']);
         $due = $this->faker->numberBetween(0,1000);
         $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $results = $this->call('PUT', '/payment', [

@@ -6,12 +6,16 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class PaypalTest extends EcommerceTestCase
 {
+    /**
+     * @var PayPal
+     */
     protected $classBeingTested;
 
     public function setUp()
     {
         parent::setUp();
         $this->classBeingTested = $this->app->make(PayPal::class);
+        $this->classBeingTested->setApiKey('paypal_1');
     }
 
     public function test_create_billing_agreement_express_checkout_token()

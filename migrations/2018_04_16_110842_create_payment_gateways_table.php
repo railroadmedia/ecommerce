@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Railroad\Ecommerce\Services\ConfigService;
 
 
-class CreatePaypalBillingAgreementTable extends Migration
+class CreatePaymentGatewaysTable extends Migration
 {
     /**
      * Run the migrations.
@@ -16,15 +16,13 @@ class CreatePaypalBillingAgreementTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tablePaypalBillingAgreement,
+            ConfigService::$tablePaymentGateway,
             function(Blueprint $table) {
                 $table->increments('id');
-                $table->string('agreement_id',64)->index();
-
-                $table->string('express_checkout_token', 64)->index();
-                $table->integer('address_id');
-                $table->integer('payment_gateway_id')->index();
-                $table->dateTime('expiration_date')->index();
+                $table->string('brand')->index();
+                $table->string('type')->index();
+                $table->string('name')->index();
+                $table->string('config')->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }
@@ -38,6 +36,6 @@ class CreatePaypalBillingAgreementTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableShippingCostsWeightRange);
+        Schema::dropIfExists(ConfigService::$tablePaymentGateway);
     }
 }

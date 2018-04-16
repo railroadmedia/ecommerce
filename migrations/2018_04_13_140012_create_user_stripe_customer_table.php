@@ -20,7 +20,7 @@ class CreateUserStripeCustomerTable extends Migration
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->integer('user_id')->index();
-                $table->integer('stripe_customer_id')->index();
+                $table->string('stripe_customer_id')->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }

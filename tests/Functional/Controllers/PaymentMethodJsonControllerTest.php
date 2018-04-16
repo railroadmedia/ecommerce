@@ -6,9 +6,11 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\ExternalHelpers\PayPal;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Factories\CustomerFactory;
+use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 
@@ -25,6 +27,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     private $customerFactory;
 
     /**
+     * @var PaymentGatewayFactory
+     */
+    private $paymentGatewayFactory;
+
+    /**
      * @var Stripe
      */
     private $stripe;
@@ -35,12 +42,14 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     private $paypal;
 
     CONST VALID_VISA_CARD_NUM = '4242424242424242';
+    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-68Y40166KS210493B';
 
     protected function setUp()
     {
         parent::setUp();
         $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
         $this->customerFactory = $this->app->make(CustomerFactory::class);
+        $this->paymentGatewayFactory = $this->app->make(PaymentGatewayFactory::class);
         $this->stripe = $this->app->make(Stripe::class);
         $this->paypal = $this->app->make(PayPal::class);
     }
@@ -139,6 +148,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $cardLast4 = $this->faker->randomNumber(4);
         $cardType = $this->faker->creditCardType;
         $currency = $this->faker->currencyCode;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $results = $this->call('PUT', '/payment-method', [
             'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -148,13 +158,13 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'card_number_last_four_digits' => $cardLast4,
             'company_name' => $cardType,
             'currency' => $currency,
-            'user_id' => $userId
+            'user_id' => $userId,
+            'payment_gateway' => $paymentGateway['id']
         ]);
 
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset([
-            'id' => 1,
             'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'created_on' => Carbon::now()->toDateTimeString(),
             'updated_on' => null,
@@ -162,7 +172,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'customer_id' => null,
             'currency' => $currency,
             'method' => [
-                'id' => 1,
                 'type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'fingerprint' => $cardFingerprint,
                 'last_four_digits' => $cardLast4,
@@ -185,11 +194,13 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_user_store_paypal_payment_method()
     {
-        $expressCheckoutToken = 'EC-3KS86857HR0681132';
+        $expressCheckoutToken = self::VALID_EXPRESS_CHECKOUT_TOKEN;
         $addressId = $this->faker->numberBetween();
         $userId = rand();
         $customerId = null;
         $currency = 'cad';
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', $this->faker->word, 'paypal_1');
+
 
         $results = $this->call('PUT', '/payment-method', [
             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
@@ -197,13 +208,13 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'address_id' => $addressId,
             'user_id' => $userId,
             'customer_id' => $customerId,
-            'currency' => $currency
+            'currency' => $currency,
+            'payment_gateway' => $paymentGateway['id']
         ]);
 
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset([
-            'id' => 1,
             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             'created_on' => Carbon::now()->toDateTimeString(),
             'updated_on' => null,
@@ -211,7 +222,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'customer_id' => $customerId,
             'currency' => $currency,
             'method' => [
-                'id' => 1,
                 'express_checkout_token' => $expressCheckoutToken,
                 'address_id' => $addressId,
                 'expiration_date' => Carbon::now()->addYears(10)->toDateTimeString(),
@@ -226,8 +236,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
         $currency = $this->faker->currencyCode;
         $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $creditCardExpirationDate->format('Y'),
             $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -243,7 +256,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
             [
                 'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_CREATE_NEW_CREDIT_CARD,
-                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'payment_gateway' => $paymentGateway['id']
             ]
         );
 
@@ -277,7 +291,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $cardExpirationDate->format('Y'),
             $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -315,8 +332,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $cardExpirationDate->format('Y'),
             $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -329,11 +348,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             $userId,
             null);
 
+        $paymentGatewayPayPal = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', $this->faker->word, 'paypal_1');
         $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
             [
                 'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE
-                // 'customer_id' => rand()
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_gateway' => $paymentGatewayPayPal['id']
             ]
         );
 
@@ -359,9 +379,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $cardType = $this->faker->creditCardType;
         $cardHolderName = $this->faker->name;
         $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $userId = $this->createAndLogInNewUser();
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $creditCardExpirationDate->format('Y'),
             $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -384,7 +406,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'card_number_last_four_digits' => $cardLast4,
                 'cardholder_name' => $cardHolderName,
                 'company_name' => $cardType,
-                'user_id' => $paymentMethod['user_id']
+                'user_id' => $paymentMethod['user_id'],
+                'payment_gateway' => $paymentGateway['id']
             ]
         );
 
@@ -424,8 +447,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $customer = $this->customerFactory->store();
         $cardYear = $this->faker->creditCardExpirationDate->format('Y');
         $cardMonth = $this->faker->month;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $this->faker->creditCardExpirationDate->format('Y'),
             $this->faker->creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -483,8 +508,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $customer = $this->customerFactory->store();
         $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $creditCardExpirationDate->format('Y'),
             $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -497,9 +524,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             null,
             $customer['id']);
 
-        $expressCheckoutToken = 'EC-2FN32742BT349830D';
+        $expressCheckoutToken = self::VALID_EXPRESS_CHECKOUT_TOKEN;
 
         $addressId = rand();
+        $paymentGatewayPaypal = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', $this->faker->word, 'paypal_1');
 
         $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
             [
@@ -507,7 +535,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
                 'express_checkout_token' => $expressCheckoutToken,
                 'address_id' => $addressId,
-                'customer_id' => $paymentMethod['customer_id']
+                'customer_id' => $paymentMethod['customer_id'],
+                'payment_gateway' => $paymentGatewayPaypal['id']
             ]
         );
 
@@ -535,8 +564,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $customer = $this->customerFactory->store();
         $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $creditCardExpirationDate->format('Y'),
             $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -566,10 +597,9 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ConfigService::$tableCreditCard,
             [
                 'id' => $paymentMethod['method']['id'],
-                'method_type' => $paymentMethod['method_type'],
+                'type' => $paymentMethod['method_type'],
             ]
         );
-
     }
 
     public function test_delete_payment_method_not_authenticated_user()
@@ -590,8 +620,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $cardExpirationDate->format('Y'),
             $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -616,7 +648,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ConfigService::$tableCreditCard,
             [
                 'id' => $paymentMethod['method']['id'],
-                'method_type' => $paymentMethod['method_type'],
+                'type' => $paymentMethod['method_type'],
             ]
         );
     }
@@ -625,8 +657,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $this->createAndLoginAdminUser();
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $cardExpirationDate->format('Y'),
             $cardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -660,7 +694,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_user_delete_other_payment_method_response()
     {
-        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE);
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', $this->faker->word, 'paypal_1');
+        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE, $paymentGateway['id']);
         $currentUserId = $this->createAndLogInNewUser();
 
         $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
@@ -678,8 +713,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $currentUserId = $this->createAndLogInNewUser();
         $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $paymentGateway['id'],
             $creditCardExpirationDate->format('Y'),
             $creditCardExpirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
@@ -701,6 +738,154 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'id' => $paymentMethod['id'],
                 'method_type' => $paymentMethod['method_type'],
                 'method_id' => 1
+            ]
+        );
+    }
+
+    public function test_user_create_credit_card_payment_method_and_pay_using_it()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $cardYear = $cardExpirationDate->format('Y');
+        $cardMonth = $cardExpirationDate->format('m');
+        $cardFingerprint = self::VALID_VISA_CARD_NUM;
+        $cardLast4 = $this->faker->randomNumber(4);
+        $cardType = $this->faker->creditCardType;
+        $currency = $this->faker->currencyCode;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+
+        $paymentMethod = $this->call('PUT', '/payment-method', [
+            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'payment_gateway' => $paymentGateway['id'],
+            'card_year' => $cardYear,
+            'card_month' => $cardMonth,
+            'card_fingerprint' => $cardFingerprint,
+            'card_number_last_four_digits' => $cardLast4,
+            'company_name' => $cardType,
+            'currency' => $currency,
+            'user_id' => $userId
+        ]);
+
+        $results = $this->call('PUT','/payment',
+            [
+                'payment_method_id' => $paymentMethod->decodeResponseJson()['results']['id'],
+                'due' => 210000,
+                'type' => PaymentService::ORDER_PAYMENT_TYPE
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertDatabaseHas(
+            ConfigService::$tablePaymentMethod,
+            [
+                'id' => $paymentMethod->decodeResponseJson()['results']['id'],
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'currency' => $currency
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableCreditCard,
+            [
+                'type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'fingerprint' => $cardFingerprint,
+                'last_four_digits' => $cardLast4,
+                'company_name' => $cardType
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserStripeCustomer,
+            [
+                'user_id' => $userId
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tablePayment,
+            [
+                'due' => 210000,
+                'paid' =>210000,
+                'type' =>PaymentService::ORDER_PAYMENT_TYPE,
+                'external_id' => $results->decodeResponseJson()['results']['external_id'],
+                'status' => 1,
+                'payment_method_id' =>  $paymentMethod->decodeResponseJson()['results']['id'],
+                'currency' => $currency
+            ]
+        );
+    }
+
+    public function test_customer_create_credit_card_payment_method_and_pay_with_it()
+    {
+        $customer = $this->customerFactory->store();
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $cardYear = $cardExpirationDate->format('Y');
+        $cardMonth = $cardExpirationDate->format('m');
+        $cardFingerprint = self::VALID_VISA_CARD_NUM;
+        $cardLast4 = $this->faker->randomNumber(4);
+        $cardType = $this->faker->creditCardType;
+        $currency = $this->faker->currencyCode;
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+
+        $paymentMethod = $this->call('PUT', '/payment-method', [
+            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'card_year' => $cardYear,
+            'card_month' => $cardMonth,
+            'card_fingerprint' => $cardFingerprint,
+            'card_number_last_four_digits' => $cardLast4,
+            'company_name' => $cardType,
+            'currency' => $currency,
+            'customer_id' => $customer['id'],
+            'payment_gateway' => $paymentGateway['id']
+        ]);
+
+        $results = $this->call('PUT','/payment',
+            [
+                'payment_method_id' => $paymentMethod->decodeResponseJson()['results']['id'],
+                'due' => 210000,
+                'type' => PaymentService::ORDER_PAYMENT_TYPE,
+                'customer_id' => $customer['id']
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertDatabaseHas(
+            ConfigService::$tablePaymentMethod,
+            [
+                'id' => $paymentMethod->decodeResponseJson()['results']['id'],
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'currency' => $currency
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableCreditCard,
+            [
+                'type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'fingerprint' => $cardFingerprint,
+                'last_four_digits' => $cardLast4,
+                'company_name' => $cardType
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableCustomerStripeCustomer,
+            [
+                'customer_id' => $customer['id']
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tablePayment,
+            [
+                'due' => 210000,
+                'paid' =>210000,
+                'type' =>PaymentService::ORDER_PAYMENT_TYPE,
+                'external_id' => $results->decodeResponseJson()['results']['external_id'],
+                'status' => 1,
+                'payment_method_id' =>  $paymentMethod->decodeResponseJson()['results']['id'],
+                'currency' => $currency
             ]
         );
     }

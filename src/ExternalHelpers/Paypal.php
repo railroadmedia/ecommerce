@@ -21,17 +21,6 @@ class PayPal
 
     const EXTERNAL_PROVIDER_KEY = 'paypal';
 
-    public function __construct()
-    {
-        $this->apiUsername = ConfigService::$paypalAPI['paypal_api_username'];
-        $this->apiPassword = ConfigService::$paypalAPI['paypal_api_password'];
-        $this->apiSignature = ConfigService::$paypalAPI['paypal_api_signature'];
-        $this->apiCurrencyCode = ConfigService::$paypalAPI['paypal_api_currency_code'];
-        $this->apiVersion = ConfigService::$paypalAPI['paypal_api_version'];
-        $this->apiNVPCurlUrl = ConfigService::$paypalAPI['paypal_api_nvp_curl_url'];
-        $this->expressCheckoutUrlPrefix = ConfigService::$paypalAPI['paypal_api_checkout_redirect_url'];
-    }
-
     /**
      * @param string $returnUrl
      * @param string $cancelUrl
@@ -284,5 +273,18 @@ class PayPal
                 'PayPal Response: ' . var_export($payPalResponse, true) . ', NVPSTR: ' . $nvpstr
             );
         }
+    }
+
+    public function setApiKey($activeGateway)
+    {
+        $this->apiUsername = ConfigService::$paypalAPI[$activeGateway]['paypal_api_username'];
+        $this->apiPassword = ConfigService::$paypalAPI[$activeGateway]['paypal_api_password'];
+        $this->apiSignature = ConfigService::$paypalAPI[$activeGateway]['paypal_api_signature'];
+        $this->apiCurrencyCode = ConfigService::$paypalAPI[$activeGateway]['paypal_api_currency_code'];
+        $this->apiVersion = ConfigService::$paypalAPI[$activeGateway]['paypal_api_version'];
+        $this->apiNVPCurlUrl = ConfigService::$paypalAPI[$activeGateway]['paypal_api_nvp_curl_url'];
+        $this->expressCheckoutUrlPrefix = ConfigService::$paypalAPI[$activeGateway]['paypal_api_checkout_redirect_url'];
+
+        return $this;
     }
 }

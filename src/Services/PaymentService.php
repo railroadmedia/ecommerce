@@ -8,7 +8,9 @@ use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PayPal\CreateReferenceTransactionException;
 use Railroad\Ecommerce\ExternalHelpers\PayPal;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
+use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
+use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
@@ -37,6 +39,11 @@ class PaymentService
      * @var PaymentMethodRepository
      */
     private $paymentMethodRepository;
+
+    /**
+     * @var PaymentGatewayRepository
+     */
+    private $paymentGatewayRepository;
 
     /**
      * @var LocationService
@@ -70,6 +77,7 @@ class PaymentService
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         LocationService $locationService,
         PaymentMethodRepository $paymentMethodRepository,
+        PaymentGatewayRepository $paymentGatewayRepository,
         Stripe $stripe,
         PayPal $payPal)
     {
@@ -78,6 +86,7 @@ class PaymentService
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->locationService = $locationService;
         $this->paymentMethodRepository = $paymentMethodRepository;
+        $this->paymentGatewayRepository = $paymentGatewayRepository;
         $this->stripeService = $stripe;
         $this->payPalService = $payPal;
     }
@@ -110,41 +119,40 @@ class PaymentService
             $currency = $this->locationService->getCurrency();
         }
 
-        if (!$subscriptionId) {
-            //initial payment
-            $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
+        $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
+        $paymentGateway = $this->paymentGatewayRepository->getById($paymentMethod['method']['payment_gateway_id']);
 
-            if ($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-                try {
-                    $externalId = $this->chargeStripeCreditCardPayment($due, $paymentMethod);
-                    $paid = $due;
-                    $externalProvider = ConfigService::$creditCard['external_provider'];
-                    $status = true;
-                    $currency = $paymentMethod['currency'];
+        if ($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+            try {
+                $externalId = $this->chargeStripeCreditCardPayment($due, $paymentMethod, $paymentGateway);
+                $paid = $due;
+                $externalProvider = ConfigService::$creditCard['external_provider'];
+                $status = true;
+                $currency = $paymentMethod['currency'];
 
-                } catch (Exception $e) {
-                    $paid = 0;
-                    $status = false;
-                    $externalProvider = ConfigService::$creditCard['external_provider'];
-                    $message = $e->getMessage();
-                }
+            } catch (Exception $e) {
+                $paid = 0;
+                $status = false;
+                $externalProvider = ConfigService::$creditCard['external_provider'];
+                $message = $e->getMessage();
+            }
 
-            } else if ($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
-                try {
-                    $externalId = $this->chargePayPalReferenceAgreementPayment($due, $paymentMethod);
-                    $paid = $due;
-                    $externalProvider = 'paypal';
-                    $status = true;
-                    $currency = $paymentMethod['currency'];
+        } else if ($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+            try {
+                $externalId = $this->chargePayPalReferenceAgreementPayment($due, $paymentMethod, $paymentGateway);
+                $paid = $due;
+                $externalProvider = 'paypal';
+                $status = true;
+                $currency = $paymentMethod['currency'];
 
-                } catch (Exception $e) {
-                    $paid = 0;
-                    $status = false;
-                    $externalProvider = 'paypal';
-                    $message = $e->getMessage();
-                }
+            } catch (Exception $e) {
+                $paid = 0;
+                $status = false;
+                $externalProvider = 'paypal';
+                $message = $e->getMessage();
             }
         }
+
         $paymentId = $this->paymentRepository->create([
             'due' => $due,
             'paid' => $paid,
@@ -210,8 +218,10 @@ class PaymentService
      * @param $paymentMethod
      * @throws \Railroad\Ecommerce\ExternalHelpers\CardException
      */
-    private function chargeStripeCreditCardPayment($due, $paymentMethod)
+    private function chargeStripeCreditCardPayment($due, $paymentMethod, $paymentGateway)
     {
+        $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentGateway['config']]['stripe_api_secret']);
+
         $stripeCustomer = $this->stripeService->retrieveCustomer($paymentMethod['method']['external_customer_id']);
         try {
             $stripeCard = $this->stripeService->retrieveCard(
@@ -248,7 +258,8 @@ class PaymentService
      */
     private function chargePayPalReferenceAgreementPayment(
         $due,
-        $paymentMethod
+        $paymentMethod,
+        $paymentGateway
     ) {
         if (empty($paymentMethod['method']['agreement_id'])) {
             throw new PaymentErrorException(
@@ -257,6 +268,9 @@ class PaymentService
         }
 
         try {
+
+            $this->payPalService->setApiKey($paymentGateway['config']);
+
             $payPalTransactionId = $this->payPalService->createReferenceTransaction(
                 $due,
                 '',
