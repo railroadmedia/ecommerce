@@ -47,7 +47,7 @@ class PaymentServiceTest extends EcommerceTestCase
         $externalId = '';
         $status = '';
         $message = '';
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', $this->faker->word,'paypal_1');
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', 'paypal_1');
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE, $paymentGateway['id']);
 
         $payment = $this->classBeingTested->store(

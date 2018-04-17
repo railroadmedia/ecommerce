@@ -179,7 +179,7 @@ Route::delete(
     [
         'uses' => Railroad\Ecommerce\Controllers\AddressJsonController::class . '@delete',
         'middleware' => ['permission'],
-        'permissions' => ['admin'],
+        'permissions' => ['admin', 'isOwner'],
     ]
 )->name('address.delete');
 

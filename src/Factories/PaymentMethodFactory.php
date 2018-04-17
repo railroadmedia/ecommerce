@@ -23,8 +23,6 @@ class PaymentMethodFactory extends PaymentMethodService
         $last4 = '',
         $cardHolderName = '',
         $companyName = '',
-        $externalId = null,
-        $agreementId = null,
         $expressCheckoutToken = '',
         $addressId = null,
         $currency = '',
@@ -50,6 +48,7 @@ class PaymentMethodFactory extends PaymentMethodService
                 request()->user() ? request()->user()->id : null,
                 request()->user() ? null : rand(),
             ];
+
         return parent::store(...$parameters);
     }
 }

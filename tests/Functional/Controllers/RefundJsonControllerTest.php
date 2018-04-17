@@ -63,7 +63,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
     {
         $this->createAndLoginAdminUser();
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],
@@ -73,15 +73,13 @@ class RefundJsonControllerTest extends EcommerceTestCase
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
-            $this->faker->currencyCode,
+            'usd',
             null,
             rand());
 
-        $payment = $this->paymentFactory->store( rand(),
+        $payment = $this->paymentFactory->store( $this->faker->numberBetween(0,9000),
             0,
             0,
             PaymentService::ORDER_PAYMENT_TYPE,
@@ -116,9 +114,9 @@ class RefundJsonControllerTest extends EcommerceTestCase
     public function test_user_create_refund()
     {
         $this->createAndLogInNewUser();
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE, $paymentGateway['id']);
-        $payment = $this->paymentFactory->store( rand(),
+        $payment = $this->paymentFactory->store( $this->faker->numberBetween(0,1000),
             0,
             0,
             PaymentService::ORDER_PAYMENT_TYPE,
@@ -154,7 +152,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
     {
         $this->createAndLogInNewUser();
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],
@@ -164,15 +162,13 @@ class RefundJsonControllerTest extends EcommerceTestCase
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            rand(),
-            rand(),
             $this->faker->word,
             rand(),
             $this->faker->currencyCode,
             null,
             rand());
 
-        $payment = $this->paymentFactory->store( rand(),
+        $payment = $this->paymentFactory->store( $this->faker->numberBetween(0,9000),
             0,
             0,
             PaymentService::ORDER_PAYMENT_TYPE,

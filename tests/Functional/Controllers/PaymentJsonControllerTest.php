@@ -34,8 +34,10 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     {
         $this->createAndLogInNewUser();
 
-        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
+
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE, $paymentGateway['id']);
+
         $due = $this->faker->numberBetween(0,1000);
         $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $results = $this->call('PUT', '/payment', [
@@ -60,7 +62,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     {
         $this->createAndLoginAdminUser();
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
-        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],
@@ -147,7 +149,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     {
         $this->createAndLogInNewUser();
 
-        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id']);
@@ -174,7 +176,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     {
         $this->createAndLogInNewUser();
 
-        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id']);

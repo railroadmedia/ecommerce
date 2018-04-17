@@ -48,7 +48,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $expirationMonth = $this->faker->creditCardExpirationDate()->format('m');
         $userId = rand();
         $currency = $this->faker->currencyCode;
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $paymentMethod = $this->classBeingTested->store(
             PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -141,7 +141,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
         $addressId = $this->faker->randomNumber();
         $customerId = rand();
         $currency = $this->faker->currencyCode;
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', $this->faker->word, 'paypal_1');
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', 'paypal_1');
 
         $paymentMethod = $this->classBeingTested->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],
@@ -211,7 +211,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     public function test_user_can_delete_its_payment_method()
     {
         $userId = rand();
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],
@@ -233,7 +233,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     {
         $userId = rand();
         $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],
@@ -276,7 +276,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     {
         $userId = rand();
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],
@@ -314,7 +314,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     public function test_user_update_to_paypal_payment_method()
     {
         $userId = rand();
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe','stripe_1');
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],
@@ -328,7 +328,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
             rand(),
             $userId,
             null);
-        $paymentGatewayPaypal = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', $this->faker->word, 'paypal_1');
+        $paymentGatewayPaypal = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal','paypal_1');
 
         $updated = $this->classBeingTested->update(
             $paymentMethod['id'], [
@@ -347,7 +347,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
     public function test_admin_update_other_credit_card_expiration_date()
     {
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', $this->faker->word, 'stripe_1');
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe','stripe_1');
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],
             $this->faker->creditCardExpirationDate->format('Y'),

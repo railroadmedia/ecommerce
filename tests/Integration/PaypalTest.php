@@ -43,7 +43,7 @@ class PaypalTest extends EcommerceTestCase
         $transactionId = $this->classBeingTested->createReferenceTransaction(
             $amount,
             $description,
-            ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
+            ConfigService::$paypalAPI['paypal_1']['paypal_api_test_billing_agreement_id']
         );
 
         $this->assertNotEmpty($transactionId);
@@ -62,7 +62,7 @@ class PaypalTest extends EcommerceTestCase
         $transactionId = $this->classBeingTested->createReferenceTransaction(
             $amount,
             $description,
-            ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
+            ConfigService::$paypalAPI['paypal_1']['paypal_api_test_billing_agreement_id']
         );
     }
 
@@ -90,7 +90,7 @@ class PaypalTest extends EcommerceTestCase
         $transactionId = $this->classBeingTested->createReferenceTransaction(
             $amount,
             $description,
-            ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
+            ConfigService::$paypalAPI['paypal_1']['paypal_api_test_billing_agreement_id']
         );
 
         $refundId = $this->classBeingTested->createTransactionRefund(
@@ -111,7 +111,7 @@ class PaypalTest extends EcommerceTestCase
         $transactionId = $this->classBeingTested->createReferenceTransaction(
             $amount,
             $description,
-            ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
+            ConfigService::$paypalAPI['paypal_1']['paypal_api_test_billing_agreement_id']
         );
 
         $refundId = $this->classBeingTested->createTransactionRefund(250, true, $transactionId, 'duplicate');
@@ -131,7 +131,7 @@ class PaypalTest extends EcommerceTestCase
         $transactionId = $this->classBeingTested->createReferenceTransaction(
             $amount,
             $description,
-            ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
+            ConfigService::$paypalAPI['paypal_1']['paypal_api_test_billing_agreement_id']
         );
 
         $this->expectException(
@@ -149,7 +149,7 @@ class PaypalTest extends EcommerceTestCase
         $transactionId = $this->classBeingTested->createReferenceTransaction(
             $amount,
             $description,
-            ConfigService::$paypalAPI['paypal_api_test_billing_agreement_id']
+            ConfigService::$paypalAPI['paypal_1']['paypal_api_test_billing_agreement_id']
         );
 
         $this->expectException(
