@@ -105,7 +105,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
             'refunded_amount' => $refundAmount,
             'note' => '',
             'external_provider' => $payment['external_provider'],
-            'external_id' => $payment['external_id'],
             'created_on' => Carbon::now()->toDateTimeString(),
             'updated_on' => null
         ], $results->decodeResponseJson()['results']);
@@ -142,7 +141,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
             'refunded_amount' => $refundAmount,
             'note' => '',
             'external_provider' => $payment['external_provider'],
-            'external_id' => $payment['external_id'],
             'created_on' => Carbon::now()->toDateTimeString(),
             'updated_on' => null
         ], $results->decodeResponseJson()['results']);

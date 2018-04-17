@@ -17,4 +17,13 @@ class PaypalBillingAgreementRepository extends RepositoryBase
     {
         return $this->connection()->table(ConfigService::$tablePaypalBillingAgreement);
     }
+
+    public function getById($id)
+    {
+        return $this->query()
+            ->select(ConfigService::$tablePaypalBillingAgreement.'.*', ConfigService::$tablePaymentGateway.'.config')
+            ->join(ConfigService::$tablePaymentGateway , 'payment_gateway_id','=',ConfigService::$tablePaymentGateway.'.id')
+            ->where(ConfigService::$tablePaypalBillingAgreement. '.id', $id)
+            ->first();
+    }
 }

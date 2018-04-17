@@ -181,7 +181,7 @@ class Stripe
         return $this->stripe->refund->create(
             [
                 'charge' => $chargeId,
-                'amount' => $amount ,
+                'amount' => $amount * 100,
                 'reason' => $reason
             ]
         );

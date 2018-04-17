@@ -115,7 +115,7 @@ class PayPal
      * @return string
      * @throws CreateRefundException
      */
-    public function createTransactionRefund($amountToRefund, $isPartialRefund, $transactionId, $reason)
+    public function createTransactionRefund($amountToRefund, $isPartialRefund, $transactionId, $reason, $currency = 'USD')
     {
         $nvp = '&AMT=' .
             $amountToRefund .
@@ -126,7 +126,7 @@ class PayPal
             '&NOTE=' .
             $reason .
             '&PAYMENTTYPE=InstantOnly' .
-            '&CURRENCYCODE=USD';
+            '&CURRENCYCODE='.$currency;
 
         $response = $this->sendRequest('RefundTransaction', $nvp);
 

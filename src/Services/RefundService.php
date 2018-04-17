@@ -4,6 +4,10 @@ namespace Railroad\Ecommerce\Services;
 
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Exceptions\PayPal\CreateRefundException;
+use Railroad\Ecommerce\ExternalHelpers\PayPal;
+use Railroad\Ecommerce\ExternalHelpers\Stripe;
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\RefundRepository;
 
@@ -20,16 +24,38 @@ class RefundService
     private $paymentRepository;
 
     /**
+     * @var PaymentMethodRepository
+     */
+    private $paymentMethodRepository;
+
+    /**
+     * @var Stripe
+     */
+    private $stripeService;
+
+    /**
+     * @var PayPal
+     */
+    private $payPalService;
+
+
+    /**
      * RefundService constructor.
      * @param RefundRepository $refundRepository
      * @param PaymentRepository $paymentRepository
      */
     public function __construct(
         RefundRepository $refundRepository,
-        PaymentRepository $paymentRepository
+        PaymentRepository $paymentRepository,
+        PaymentMethodRepository $paymentMethodRepository,
+        PayPal $payPal,
+        Stripe $stripe
     ) {
         $this->refundRepository = $refundRepository;
         $this->paymentRepository = $paymentRepository;
+        $this->paymentMethodRepository = $paymentMethodRepository;
+        $this->payPalService = $payPal;
+        $this->stripeService = $stripe;
     }
 
 
@@ -42,10 +68,30 @@ class RefundService
     public function store($paymentId, $refundedAmount, $note)
     {
         $payment = $this->paymentRepository->getById($paymentId);
+        $paymentMethod = $this->paymentMethodRepository->getById($payment['payment_method_id']);
 
         $paymentAmount = $payment['due'];
         $externalProvider = $payment['external_provider'];
-        $externalId = $payment['external_id'];
+
+        if ($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+            $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentMethod['method']['config']]['stripe_api_secret']);
+            $stripeRefund = $this->stripeService->createRefund($refundedAmount, $payment['external_id'], $note);
+            $externalId = $stripeRefund->id;
+        } else if ($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+            $this->payPalService->setApiKey($paymentMethod['method']['config']);
+            try {
+                $paypalRefundId = $this->payPalService->createTransactionRefund(
+                    $refundedAmount,
+                    $refundedAmount != $paymentAmount,
+                    $payment['external_id'],
+                    $note,
+                    $payment['currency']
+                );
+                $externalId = $paypalRefundId;
+            } catch (\Exception $e) {
+                throw new CreateRefundException('Paypal refund failed. Message: ' . $e->getMessage());
+            }
+        }
 
         $refundId = $this->refundRepository->create([
             'payment_id' => $paymentId,
