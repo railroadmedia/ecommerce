@@ -15,22 +15,22 @@ class PaymentGatewayFactory extends PaymentGatewayService
     protected $faker;
 
     public function store(
-        $brand = '',
         $type = '',
         $name = '',
-        $configName = ''
+        $configName = '',
+        $brand = ''
     ) {
         $this->faker = app(Generator::class);
 
         $parameters =
             func_get_args() + [
-                ConfigService::$brand,
                 $this->faker->randomElement([
                     'stripe',
                     'paypal'
                 ]),
                 $this->faker->text,
-                'stripe-1',
+                'stripe_1',
+                ConfigService::$brand,
 
             ];
         return parent::store(...$parameters);

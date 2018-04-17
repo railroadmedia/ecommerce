@@ -16,6 +16,7 @@ class PaymentMethodFactory extends PaymentMethodService
 
     public function store(
         $methodType = '',
+        $paymentGatewayId = null,
         $creditCardYearSelector = null,
         $creditCardMonthSelector = null,
         $fingerprint = '',

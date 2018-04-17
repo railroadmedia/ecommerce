@@ -46,7 +46,7 @@ class PaymentGatewayService
      * @param string $configName
      * @return array
      */
-    public function store($brand, $type, $name, $configName)
+    public function store($type, $name, $configName, $brand = null)
     {
         $paymentGatewayId = $this->paymentGatewayRepository->create([
             'brand' => $brand ?? ConfigService::$brand,

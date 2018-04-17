@@ -137,57 +137,80 @@ Route::put(
     ]
 )->name('refund.store');
 
-Route::group(
+Route::put(
+    '/payment-method',
+    Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@store'
+)->name('payment-method.store');
+
+Route::patch(
+    '/payment-method/{paymentMethodId}',
     [
-        // 'middleware' => AdministratorMiddleware::class
-    ],
-    function () {
-        Route::put(
-            '/payment-method',
-            Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@store'
-        )->name('payment-method.store');
+        'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@update',
+        'middleware' => ['permission'],
+        'permissions' => ['admin', 'isOwner'],
+    ]
+)->name('payment-method.update');
 
-        Route::patch(
-            '/payment-method/{paymentMethodId}',
-            [
-                'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@update',
-                'middleware' => ['permission'],
-                'permissions' => ['admin', 'isOwner'],
-            ]
-        )->name('payment-method.update');
+Route::delete(
+    '/payment-method/{paymentMethodId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@delete',
+        'middleware' => ['permission'],
+        'permissions' => ['admin', 'isOwner'],
+    ]
+)->name('payment-method.delete');
 
-        Route::delete(
-            '/payment-method/{paymentMethodId}',
-            [
-                'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@delete',
-                'middleware' => ['permission'],
-                'permissions' => ['admin', 'isOwner'],
-            ]
-        )->name('payment-method.delete');
+Route::put(
+    '/address',
+    Railroad\Ecommerce\Controllers\AddressJsonController::class . '@store'
+)->name('address.store');
 
-        Route::put(
-            '/address',
-            Railroad\Ecommerce\Controllers\AddressJsonController::class . '@store'
-        )->name('address.store');
+Route::patch(
+    '/address/{addressId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\AddressJsonController::class . '@update',
+        'middleware' => ['permission'],
+        'permissions' => ['admin', 'isOwner'],
+    ]
+)->name('address.update');
 
-        Route::patch(
-            '/address/{addressId}',
-            [
-                'uses' => Railroad\Ecommerce\Controllers\AddressJsonController::class . '@update',
-                'middleware' => ['permission'],
-                'permissions' => ['admin', 'isOwner'],
-            ]
-        )->name('address.update');
+Route::delete(
+    '/address/{addressId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\AddressJsonController::class . '@delete',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
+)->name('address.delete');
 
-        Route::delete(
-            '/address/{addressId}',
-            [
-                'uses' => Railroad\Ecommerce\Controllers\AddressJsonController::class . '@delete',
-                'middleware' => ['permission'],
-                'permissions' => ['admin', 'isOwner'],
-            ]
-        )->name('address.delete');
-    });
+Route::put(
+    '/payment-gateway',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\PaymentGatewayJsonController::class . '@store',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
+)->name('paymentGateway.store');
+
+Route::patch(
+    '/payment-gateway/{paymentGatewayId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\PaymentGatewayJsonController::class . '@update',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
+)->name('paymentGateway.update');
+
+Route::delete(
+    '/payment-gateway/{paymentGatewayId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\PaymentGatewayJsonController::class . '@delete',
+        'middleware' => ['permission'],
+        'permissions' => ['admin'],
+    ]
+)->name('paymentGateway.delete');
+
+
 
 
 

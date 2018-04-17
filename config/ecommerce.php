@@ -42,21 +42,31 @@ return [
         ]
     ],
     'credit_card' =>
-    [
-        'external_provider' => 'stripe'
-    ],
+        [
+            'external_provider' => 'stripe'
+        ],
     'paypal' => [
-        'paypal_api_username' => env('PAYPAL_API_USERNAME',''),
-        'paypal_api_password' => env('PAYPAL_API_PASSWORD',''),
-        'paypal_api_signature' => env('PAYPAL_API_SIGNATURE',''),
-        'paypal_api_currency_code' => env('PAYPAL_API_CURRENCY_CODE', ''),
-        'paypal_api_version' => env('PAYPAL_API_VERSION',''),
-        'paypal_api_nvp_curl_url' => env('PAYPAL_API_NVP_CURL_URL', ''),
-        'paypal_api_checkout_redirect_url' => env('PAYPAL_API_CHECKOUT_REDIRECT_URL', ''),
-        'paypal_api_test_billing_agreement_id' => env('PAYPAL_API_TEST_BILLING_AGREEMENT_ID','')
+        'paypal_1' => [
+            'paypal_api_username' => env('PAYPAL_API_USERNAME'),
+            'paypal_api_password' => env('PAYPAL_API_PASSWORD'),
+            'paypal_api_signature' => env('PAYPAL_API_SIGNATURE'),
+            'paypal_api_currency_code' => env('PAYPAL_API_CURRENCY_CODE'),
+            'paypal_api_version' => env('PAYPAL_API_VERSION'),
+            'paypal_api_nvp_curl_url' => env('PAYPAL_API_NVP_CURL_URL'),
+            'paypal_api_checkout_redirect_url' => env('PAYPAL_API_CHECKOUT_REDIRECT_URL'),
+            'paypal_api_checkout_return_url' => env('PAYPAL_API_CHECKOUT_RETURN_URL'),
+            'paypal_api_checkout_cancel_url' => env('PAYPAL_API_CHECKOUT_CANCEL_URL'),
+            'paypal_api_test_billing_agreement_id' => env('PAYPAL_API_TEST_BILLING_AGREEMENT_ID', 'B-1P494577AX649533Y')
+        ]
     ],
     'stripe' => [
-        'stripe_api_secret' => env('STRIPE_API_SECRET',''),
-        'stripe_publishable_key' => env('STRIPE_PUBLISHABLE_KEY','')
+        'stripe_1' => [
+            'stripe_api_secret' => env('STRIPE_API_SECRET'),
+            'stripe_publishable_key' => env('STRIPE_PUBLISHABLE_KEY')
+        ],
+        'stripe_2' => [
+            'stripe_api_secret' => env('STRIPE_API_SECRET'),
+            'stripe_publishable_key' => env('STRIPE_PUBLISHABLE_KEY')
+        ]
     ]
 ];
