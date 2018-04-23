@@ -23,4 +23,18 @@ class OrderRepository extends RepositoryBase
             ->get()
             ->toArray();
     }
+
+    /** Get the order with the corresponding order items.
+     * @param $id
+     * @return array
+     */
+    public function getOrderWithItemsById($id)
+    {
+        return $this->query()
+            ->select(ConfigService::$tableOrder. '.*',ConfigService::$tableOrderItem.'.id as order_item_id', ConfigService::$tableProduct.'.is_physical' )
+            ->join(ConfigService::$tableOrderItem , ConfigService::$tableOrder.'.id','=',ConfigService::$tableOrderItem.'.order_id')
+            ->join(ConfigService::$tableProduct , ConfigService::$tableOrderItem.'.product_id','=',ConfigService::$tableProduct.'.id')
+            ->where(ConfigService::$tableOrder. '.id', $id)
+            ->get()->toArray();
+    }
 }

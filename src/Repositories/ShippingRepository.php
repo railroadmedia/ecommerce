@@ -45,7 +45,7 @@ class ShippingRepository extends RepositoryBase
             ->restrictByCountry($country)
             ->restrictByWeight($totalWeight)
             ->restrictActive()
-            ->orderBy('priority', 'desc')
+            ->orderBy('priority', 'desc', ConfigService::$tableShippingOption)
             ->get()->first();
     }
 

@@ -60,6 +60,11 @@ class PaymentService
      */
     private $payPalService;
 
+    /**
+     * @var OrderService
+     */
+    private $orderService;
+
 
     const MANUAL_PAYMENT_TYPE = 'manual';
     const ORDER_PAYMENT_TYPE = 'order';
@@ -79,7 +84,8 @@ class PaymentService
         PaymentMethodRepository $paymentMethodRepository,
         PaymentGatewayRepository $paymentGatewayRepository,
         Stripe $stripe,
-        PayPal $payPal)
+        PayPal $payPal,
+        OrderService $orderService)
     {
         $this->paymentRepository = $paymentRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
@@ -89,6 +95,7 @@ class PaymentService
         $this->paymentGatewayRepository = $paymentGatewayRepository;
         $this->stripeService = $stripe;
         $this->payPalService = $payPal;
+        $this->orderService = $orderService;
     }
 
     /** Create a new payment; link the order/subscription; if the payment method id not exist set the payment type as 'manual' and the status true.
@@ -106,8 +113,20 @@ class PaymentService
      * @param numeric|null $subscriptionId
      * @return array
      */
-    public function store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status = false, $message = '', $paymentMethodId = null, $currency = null, $orderId = null, $subscriptionId = null)
-    {
+    public function store(
+        $due,
+        $paid,
+        $refunded,
+        $type,
+        $externalProvider,
+        $externalId,
+        $status = false,
+        $message = '',
+        $paymentMethodId = null,
+        $currency = null,
+        $orderId = null,
+        $subscriptionId = null
+    ) {
         //check if it's manual
         if (!$paymentMethodId) {
             $externalProvider = self::MANUAL_PAYMENT_TYPE;
@@ -167,8 +186,12 @@ class PaymentService
             'created_on' => Carbon::now()->toDateTimeString()
         ]);
 
+        // Save the link between order and payment and save the paid amount on order row
         if ($orderId) {
             $this->createOrderPayment($orderId, $paymentId);
+            $this->orderService->update($orderId, [
+                'paid' => $paid
+            ]);
         }
 
         if ($subscriptionId) {

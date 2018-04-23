@@ -56,11 +56,13 @@ class TaxService
             $taxAmount +
             (float)$shippingCosts +
             $financeCharge, 2);
+        $cartItemsWeight = array_sum(array_column($cartItems, 'weight'));
 
         foreach ($cartItems as $key => $item) {
-            if ($item->totalPrice > 0) {
-                $cartItems[$key]->itemTax = $item->totalPrice / ($totalDue - $taxAmount) * $taxAmount;
+            if ($item['totalPrice'] > 0) {
+                $cartItems[$key]['itemTax'] = $item['totalPrice'] / ($totalDue - $taxAmount) * $taxAmount;
             }
+            $cartItems[$key]['itemShippingCosts'] = $shippingCosts * ($cartItems[$key]['weight']/$cartItemsWeight);
         }
         $results['cartItems'] = $cartItems;
         $results['totalDue'] = $totalDue;

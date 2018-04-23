@@ -31,6 +31,9 @@ class OrderFormJsonController extends Controller
         $this->orderFormService = $orderFormService;
     }
 
+    /** Prepare the order form based on request data
+     * @return JsonResponse
+     */
     public function index()
     {
         $orderForm = $this->orderFormService->prepareOrderForm();
@@ -42,5 +45,38 @@ class OrderFormJsonController extends Controller
         );
 
         return new JsonResponse($orderForm, 200);
+    }
+
+    /** Submit an order
+     * @param $request
+     * @return JsonResponse
+     */
+    public function submitOrder($request)
+    {
+        $order = $this->orderFormService->submitOrder(
+            $request->get('payment-type-selector'),
+            $request->get('billing-country'),
+            $request->get('billing-email'),
+            $request->get('billing-zip-or-postal-code'),
+            $request->get('billing-region'),
+            $request->get('shipping-first-name'),
+            $request->get('shipping-last-name'),
+            $request->get('shipping-address-line-1'),
+            $request->get('shipping-address-line-2'),
+            $request->get('shipping-city'),
+            $request->get('shipping-region'),
+            $request->get('shipping-country'),
+            $request->get('shipping-zip-or-postal-code'),
+            $request->get('payment-plan-selector'),
+            $request->get('paypal-express-checkout-token'),
+            $request->get('stripe-credit-card-token'),
+            $request->get('credit-card-month-selector'),
+            $request->get('credit-card-year-selector'),
+            $request->get('credit-card-number'),
+            $request->get('credit-card-cvv'),
+            $request->get('gateway') ?? 1
+        );
+
+        return new JsonResponse($order, 200);
     }
 }

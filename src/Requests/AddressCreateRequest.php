@@ -34,9 +34,9 @@ class AddressCreateRequest extends FormRequest
                         AddressService::SHIPPING_ADDRESS
                     ]
                 ),
-            'first_name' => 'required|max:255',
-            'last_name' => 'required|max:255',
-            'street_line_1' => 'required|max:255',
+            'first_name' => 'nullable|max:255',
+            'last_name' => 'nullable|max:255',
+            'street_line_1' => 'nullable|max:255',
             'street_line_2' => 'nullable|max:255',
             'city' => 'required|max:255',
             'zip' => 'required|max:255',

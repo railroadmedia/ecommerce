@@ -24,8 +24,8 @@ class CreateAddressTable extends Migration
                 $table->string('brand')->index();
                 $table->integer('user_id')->index()->nullable();
                 $table->integer('customer_id')->index()->nullable();
-                $table->string('first_name')->index();
-                $table->string('last_name')->index();
+                $table->string('first_name')->index()->nullable();
+                $table->string('last_name')->index()->nullable();
                 $table->string('street_line_1')->nullable();
                 $table->string('street_line_2')->nullable();
                 $table->string('city')->nullable();
