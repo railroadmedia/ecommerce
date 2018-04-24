@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Services;
 
 
+use Railroad\Ecommerce\Events\GiveContentAccess;
+
 class OrderFormService
 {
     /**
@@ -195,6 +197,8 @@ class OrderFormService
 
         //sent physical items to fulfilment
         $this->orderItemFulfillmentService->store($order['id']);
+
+        event(new GiveContentAccess($order));
 
         return $payment;
     }

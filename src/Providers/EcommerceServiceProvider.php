@@ -5,6 +5,8 @@ namespace Railroad\Ecommerce\Providers;
 use Illuminate\Database\Events\StatementPrepared;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use PDO;
+use Railroad\Ecommerce\Events\GiveContentAccess;
+use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CustomValidationRules;
 
@@ -31,6 +33,7 @@ class EcommerceServiceProvider extends ServiceProvider
                     }
                 }
             ],
+            GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
         ];
 
         parent::boot();
