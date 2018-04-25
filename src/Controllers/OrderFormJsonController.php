@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\OrderFormService;
@@ -51,7 +52,7 @@ class OrderFormJsonController extends Controller
      * @param $request
      * @return JsonResponse
      */
-    public function submitOrder($request)
+    public function submitOrder(OrderFormSubmitRequest $request)
     {
         $order = $this->orderFormService->submitOrder(
             $request->get('payment-type-selector'),

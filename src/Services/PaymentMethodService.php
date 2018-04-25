@@ -4,7 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\ExternalHelpers\PayPal;
+use Railroad\Ecommerce\ExternalHelpers\Paypal;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
@@ -98,7 +98,7 @@ class PaymentMethodService
                                 UserPaymentMethodsRepository $userPaymentMethodsRepository,
                                 LocationService $locationService,
                                 Stripe $stripe,
-                                PayPal $payPal,
+                                Paypal $payPal,
                                 UserStripeCustomerRepository $userStripeCustomerRepository,
                                 CustomerStripeCustomerRepository $customerStripeCustomerRepository,
                                 PaymentGatewayRepository $paymentGatewayRepository)

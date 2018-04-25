@@ -6,7 +6,7 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PayPal\CreateReferenceTransactionException;
-use Railroad\Ecommerce\ExternalHelpers\PayPal;
+use Railroad\Ecommerce\ExternalHelpers\Paypal;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
@@ -84,7 +84,7 @@ class PaymentService
         PaymentMethodRepository $paymentMethodRepository,
         PaymentGatewayRepository $paymentGatewayRepository,
         Stripe $stripe,
-        PayPal $payPal,
+        Paypal $payPal,
         OrderService $orderService)
     {
         $this->paymentRepository = $paymentRepository;

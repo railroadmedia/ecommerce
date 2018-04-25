@@ -5,7 +5,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Exceptions\PayPal\CreateRefundException;
-use Railroad\Ecommerce\ExternalHelpers\PayPal;
+use Railroad\Ecommerce\ExternalHelpers\Paypal;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
@@ -48,7 +48,7 @@ class RefundService
         RefundRepository $refundRepository,
         PaymentRepository $paymentRepository,
         PaymentMethodRepository $paymentMethodRepository,
-        PayPal $payPal,
+        Paypal $payPal,
         Stripe $stripe
     ) {
         $this->refundRepository = $refundRepository;

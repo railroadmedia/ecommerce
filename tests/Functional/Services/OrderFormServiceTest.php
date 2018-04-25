@@ -135,6 +135,7 @@ class OrderFormServiceTest extends EcommerceTestCase
             '1234',
             $paymentGateway['id']
             );
-        dd($order);
+
+        $this->assertTrue(true);
     }
 }

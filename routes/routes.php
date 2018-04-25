@@ -65,6 +65,11 @@ Route::get(
 )->name('order.form');
 
 Route::put(
+    '/order',
+    Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@submitOrder'
+)->name('order.submit');
+
+Route::put(
     '/shipping-option',
     [
         'uses' => Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@store',
