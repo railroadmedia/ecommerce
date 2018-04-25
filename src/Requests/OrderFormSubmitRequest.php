@@ -2,10 +2,21 @@
 
 namespace Railroad\Ecommerce\Requests;
 
+use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 
 class OrderFormSubmitRequest extends FormRequest
 {
+    /**
+     * @var \Railroad\Ecommerce\Services\CartService
+     */
+    protected $cartService;
+
+    public function __construct(CartService $cartService)
+    {
+        $this->cartService = $cartService;
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -23,15 +34,14 @@ class OrderFormSubmitRequest extends FormRequest
      */
     public function rules()
     {
-        $minMonth = (request()->get('credit-card-year-selector') == date('Y')) ? '|min:'.intval(date('n')) : '';
 
-        return [
-            'payment-type-selector' => 'required',
+        $minMonth = (request()->get('credit-card-year-selector') == date('Y')) ? '|min:' . intval(date('n')) : '';
 
+        $rules = [
+            'payment-type-selector'      => 'required',
             'billing-region'             => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
             'billing-zip-or-postal-code' => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
             'billing-country'            => 'required|regex:/^(?!Country$)/',
-
             'credit-card-month-selector' => 'required_if:payment-type-selector,' .
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE . '|numeric' . $minMonth,
             'credit-card-year-selector'  => 'required_if:payment-type-selector,' .
@@ -41,5 +51,30 @@ class OrderFormSubmitRequest extends FormRequest
             'credit-card-cvv'            => 'numeric|digits_between:3,4|required_if:payment-type-selector,' .
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
         ];
+
+        $cartItems              = $this->cartService->getAllCartItems();
+        $requiresShippingAddess = in_array(1, array_pluck($cartItems, 'requiresShippingAddress'));
+
+        if($requiresShippingAddess)
+        {
+            $rules += [
+                'shipping-first-name'     => 'required|regex:/^[a-zA-Z-_\' ]+$/',
+                'shipping-last-name'      => 'required|regex:/^[a-zA-Z-_\' ]+$/',
+                'shipping-address-line-1' => 'required',
+                'shipping-city'           => 'required|regex:/^[a-zA-Z-_ ]+$/',
+                'shipping-region'         => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'shipping-zip'            => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'shipping-country'        => 'required|regex:/^(?!Country$)/'
+            ];
+
+            if(!request()->user())
+            {
+                $rules += [
+                    'billing-email' => 'required|email'
+                ];
+            }
+        }
+
+        return $rules;
     }
 }
