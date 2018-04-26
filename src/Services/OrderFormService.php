@@ -197,10 +197,12 @@ class OrderFormService
             $orderId = $order['id'],
             $subscriptionId = null);
 
-        //sent physical items to fulfilment
-        $this->orderItemFulfillmentService->store($order['id']);
-
-        event(new GiveContentAccess($order));
+        //if successful payment => sent physical items to fulfillment and get user access to content
+        if($payment['status'])
+        {
+            $this->orderItemFulfillmentService->store($order['id']);
+            event(new GiveContentAccess($order));
+        }
 
         return $payment;
     }
