@@ -38,9 +38,8 @@ class OrderFormSubmitRequest extends FormRequest
         $minMonth = (request()->get('credit-card-year-selector') == date('Y')) ? '|min:' . intval(date('n')) : '';
 
         $rules = [
-            'payment-type-selector'      => 'required',
-            'billing-region'             => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
-            'billing-zip-or-postal-code' => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
+            'payment-type-selector' => 'required',
+
             'billing-country'            => 'required|regex:/^(?!Country$)/',
             'credit-card-month-selector' => 'required_if:payment-type-selector,' .
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE . '|numeric' . $minMonth,
@@ -51,6 +50,14 @@ class OrderFormSubmitRequest extends FormRequest
             'credit-card-cvv'            => 'numeric|digits_between:3,4|required_if:payment-type-selector,' .
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
         ];
+
+        if(request()->get('billing-country') == 'Canada')
+        {
+            $rules += [
+                'billing-region'             => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'billing-zip-or-postal-code' => 'required|regex:/^[0-9a-zA-Z-_ ]+$/'
+            ];
+        }
 
         $cartItems              = $this->cartService->getAllCartItems();
         $requiresShippingAddess = in_array(1, array_pluck($cartItems, 'requiresShippingAddress'));

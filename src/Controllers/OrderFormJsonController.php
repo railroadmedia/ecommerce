@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
@@ -24,15 +23,17 @@ class OrderFormJsonController extends Controller
 
     /**
      * OrderFormJsonController constructor.
+     *
      * @param $cartService
      */
     public function __construct(CartService $cartService, OrderFormService $orderFormService)
     {
-        $this->cartService = $cartService;
+        $this->cartService      = $cartService;
         $this->orderFormService = $orderFormService;
     }
 
     /** Prepare the order form based on request data
+     *
      * @return JsonResponse
      */
     public function index()
@@ -49,6 +50,7 @@ class OrderFormJsonController extends Controller
     }
 
     /** Submit an order
+     *
      * @param $request
      * @return JsonResponse
      */

@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Services;
 
-
 use Railroad\Ecommerce\Events\GiveContentAccess;
 
 class OrderFormService
@@ -62,9 +61,9 @@ class OrderFormService
      */
     private $orderItemFulfillmentService;
 
-
     /**
      * OrderFormService constructor.
+     *
      * @param $cartAddressService
      */
     public function __construct(
@@ -80,16 +79,16 @@ class OrderFormService
         PaymentMethodService $paymentMethodService,
         OrderItemFulfillmentService $orderItemFulfillmentService
     ) {
-        $this->cartService = $cartService;
-        $this->cartAddressService = $cartAddressService;
-        $this->taxService = $taxService;
-        $this->shippingService = $shippingService;
-        $this->customerService = $customerService;
-        $this->addressService = $addressService;
-        $this->orderService = $orderService;
-        $this->orderItemService = $orderItemService;
-        $this->paymentService = $paymentService;
-        $this->paymentMethodService = $paymentMethodService;
+        $this->cartService                 = $cartService;
+        $this->cartAddressService          = $cartAddressService;
+        $this->taxService                  = $taxService;
+        $this->shippingService             = $shippingService;
+        $this->customerService             = $customerService;
+        $this->addressService              = $addressService;
+        $this->orderService                = $orderService;
+        $this->orderItemService            = $orderItemService;
+        $this->paymentService              = $paymentService;
+        $this->paymentMethodService        = $paymentMethodService;
         $this->orderItemFulfillmentService = $orderItemFulfillmentService;
     }
 
@@ -102,16 +101,18 @@ class OrderFormService
      *      'totalDue' => float
      *      'totalTax' => float
      *      'shippingCosts' => float
+     *
      * @return array|null
      */
     public function prepareOrderForm()
     {
         $cartItems = $this->cartService->getAllCartItems();
-        if (empty($cartItems)) {
+        if(empty($cartItems))
+        {
             return null;
         }
 
-        $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+        $billingAddress  = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
         $shippingAddress = $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
 
         $shippingCosts = $this->shippingService->getShippingCosts($cartItems, $shippingAddress);
@@ -121,7 +122,7 @@ class OrderFormService
         return array_merge(
             [
                 'shippingAddress' => $shippingAddress,
-                'billingAddress' => $billingAddress
+                'billingAddress'  => $billingAddress
             ],
             $taxes
         );
@@ -152,11 +153,12 @@ class OrderFormService
     ) {
         $cartItems = $this->cartService->getAllCartItems();
 
-        if (empty($cartItems)) {
+        if(empty($cartItems))
+        {
             return null;
         }
 
-        $userId = request()->user()->id ?? null;
+        $userId     = request()->user()->id ?? null;
         $customerId = $this->setCustomer($billingEmail);
 
         list($billingAddress, $billingAddressDB) = $this->setBillingAddress($billingCountry, $billingZip, $billingRegion, $userId, $customerId);
@@ -223,7 +225,8 @@ class OrderFormService
             $shippingAddressDB['id'], $billingAddressDB['id']);
 
         //save order items
-        foreach ($cartItemsWithTaxesAndCosts['cartItems'] as $item) {
+        foreach($cartItemsWithTaxesAndCosts['cartItems'] as $item)
+        {
             $order['items'][] = $this->orderItemService->store(
                 $order['id'],
                 $item['options']['product-id'],
@@ -247,10 +250,12 @@ class OrderFormService
         $customerId = null;
 
         //if the billing email exists on request => we have a new customer
-        if (!empty($billingEmail)) {
-            $customer = $this->customerService->store('', $billingEmail, ConfigService::$brand);
+        if(!empty($billingEmail))
+        {
+            $customer   = $this->customerService->store('', $billingEmail, ConfigService::$brand);
             $customerId = $customer['id'];
         }
+
         return $customerId;
     }
 
@@ -267,8 +272,8 @@ class OrderFormService
 //set the billing address on session
         $billingAddress = $this->cartAddressService->setAddress([
             'country' => $billingCountry,
-            'region' => $billingRegion,
-            'zip' => $billingZip
+            'region'  => $billingRegion,
+            'zip'     => $billingZip
         ], CartAddressService::BILLING_ADDRESS_TYPE);
 
         //save billing address in database
@@ -285,6 +290,7 @@ class OrderFormService
             $billingZip,
             $billingRegion,
             $billingCountry);
+
         return array($billingAddress, $billingAddressDB);
     }
 
@@ -305,14 +311,14 @@ class OrderFormService
     {
 //set the shipping address on session
         $shippingAddress = $this->cartAddressService->setAddress([
-            'firstName' => $shippingFirstName,
-            'lastName' => $shippingLastName,
-            'streetLineOne' => $shippingAddressLine1,
-            'streetLineTwo' => $shippingAddressLine2,
+            'firstName'       => $shippingFirstName,
+            'lastName'        => $shippingLastName,
+            'streetLineOne'   => $shippingAddressLine1,
+            'streetLineTwo'   => $shippingAddressLine2,
             'zipOrPostalCode' => $shippingZip,
-            'city' => $shippingCity,
-            'region' => $shippingRegion,
-            'country' => $shippingCountry,
+            'city'            => $shippingCity,
+            'region'          => $shippingRegion,
+            'country'         => $shippingCountry,
         ], CartAddressService::SHIPPING_ADDRESS_TYPE);
 
         //save the shipping address
@@ -329,6 +335,7 @@ class OrderFormService
             $shippingZip,
             $shippingRegion,
             $shippingCountry);
+
         return array($shippingAddress, $shippingAddressDB);
     }
 }
