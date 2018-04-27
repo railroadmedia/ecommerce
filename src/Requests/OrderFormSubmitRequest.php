@@ -48,7 +48,8 @@ class OrderFormSubmitRequest extends FormRequest
             'credit-card-number'         => 'required_if:payment-type-selector,' .
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'credit-card-cvv'            => 'numeric|digits_between:3,4|required_if:payment-type-selector,' .
-                PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
+                PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'gateway'                    => 'required|numeric'
         ];
 
         if(request()->get('billing-country') == 'Canada')

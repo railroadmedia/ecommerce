@@ -173,6 +173,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 "source" => "billing-country",
                 "detail" => "The billing-country field is required.",
+            ],
+            [
+                "source" => "gateway",
+                "detail" => "The gateway field is required.",
             ]
         ], $results->decodeResponseJson()['errors']);
     }
@@ -242,6 +246,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 "source" => "billing-country",
                 "detail" => "The billing-country field is required.",
+            ],
+            [
+                "source" => "gateway",
+                "detail" => "The gateway field is required.",
             ],
             [
                 "source" => "shipping-first-name",
@@ -347,6 +355,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 "detail" => "The billing-country field is required.",
             ],
             [
+                "source" => "gateway",
+                "detail" => "The gateway field is required.",
+            ],
+            [
                 "source" => "shipping-first-name",
                 "detail" => "The shipping-first-name field is required.",
             ],
@@ -435,7 +447,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'payment-type-selector'      => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'billing-region'             => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country'            => $this->faker->country
+                'billing-country'            => $this->faker->country,
+                'gateway'                    => $paymentGateway['id']
             ]);
 
         $this->assertEquals(422, $results->getStatusCode());
@@ -519,7 +532,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'billing-region'             => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country'            => $this->faker->country,
-                'credit-card-year-selector'  => 1990
+                'credit-card-year-selector'  => 1990,
+                'gateway'                    => 1
             ]);
 
         $this->assertEquals(422, $results->getStatusCode());
@@ -600,7 +614,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $results = $this->call('PUT', '/order',
             [
                 'payment-type-selector' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'billing-country'       => 'Canada'
+                'billing-country'       => 'Canada',
+                'gateway'               => 1
             ]);
 
         $this->assertEquals(422, $results->getStatusCode());
@@ -682,7 +697,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'credit-card-year-selector'  => $expirationDate->format('Y'),
                 'credit-card-month-selector' => $expirationDate->format('m'),
                 'credit-card-number'         => '4242424242424242',
-                'credit-card-cvv'            => $this->faker->randomNumber(4)
+                'credit-card-cvv'            => $this->faker->randomNumber(4),
+                'gateway'                    => $paymentGateway['id']
             ]);
 
         $this->assertEquals(200, $results->getStatusCode());

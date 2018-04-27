@@ -77,7 +77,7 @@ class OrderFormJsonController extends Controller
             $request->get('credit-card-year-selector'),
             $request->get('credit-card-number'),
             $request->get('credit-card-cvv'),
-            $request->get('gateway') ?? 1
+            $request->get('gateway')
         );
 
         return new JsonResponse($order, 200);
