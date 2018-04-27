@@ -36,8 +36,8 @@ class CartServiceTest extends EcommerceTestCase
             0,
             ['product-id' => 1]);
 
-        $this->assertEquals($cart[0]->quantity, 12);
-        $this->assertEquals($cart[0]->totalPrice, 120);
+        $this->assertEquals($cart[0]['quantity'], 12);
+        $this->assertEquals($cart[0]['totalPrice'], 120);
     }
 
 

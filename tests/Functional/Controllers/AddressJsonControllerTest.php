@@ -43,18 +43,6 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "detail" => "The type field is required.",
             ],
             [
-                "source" => "first_name",
-                "detail" => "The first name field is required.",
-            ],
-            [
-                "source" => "last_name",
-                "detail" => "The last name field is required.",
-            ],
-            [
-                "source" => "street_line_1",
-                "detail" => "The street line 1 field is required.",
-            ],
-            [
                 "source" => "city",
                 "detail" => "The city field is required.",
             ],
