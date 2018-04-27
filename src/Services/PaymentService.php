@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Services;
 
-
 use Carbon\Carbon;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PayPal\CreateReferenceTransactionException;
@@ -16,7 +15,6 @@ use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Location\Services\LocationService;
 use Stripe\Error\Card;
-
 
 class PaymentService
 {
@@ -65,15 +63,15 @@ class PaymentService
      */
     private $orderService;
 
-
-    const MANUAL_PAYMENT_TYPE = 'manual';
-    const ORDER_PAYMENT_TYPE = 'order';
+    const MANUAL_PAYMENT_TYPE  = 'manual';
+    const ORDER_PAYMENT_TYPE   = 'order';
     const RENEWAL_PAYMENT_TYPE = 'renewal';
 
     /**
      * PaymentService constructor.
-     * @param PaymentRepository $paymentRepository
-     * @param OrderPaymentRepository $orderPaymentRepository
+     *
+     * @param PaymentRepository             $paymentRepository
+     * @param OrderPaymentRepository        $orderPaymentRepository
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
      */
     public function __construct(
@@ -85,32 +83,33 @@ class PaymentService
         PaymentGatewayRepository $paymentGatewayRepository,
         Stripe $stripe,
         Paypal $payPal,
-        OrderService $orderService)
-    {
-        $this->paymentRepository = $paymentRepository;
-        $this->orderPaymentRepository = $orderPaymentRepository;
+        OrderService $orderService
+    ) {
+        $this->paymentRepository             = $paymentRepository;
+        $this->orderPaymentRepository        = $orderPaymentRepository;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
-        $this->locationService = $locationService;
-        $this->paymentMethodRepository = $paymentMethodRepository;
-        $this->paymentGatewayRepository = $paymentGatewayRepository;
-        $this->stripeService = $stripe;
-        $this->payPalService = $payPal;
-        $this->orderService = $orderService;
+        $this->locationService               = $locationService;
+        $this->paymentMethodRepository       = $paymentMethodRepository;
+        $this->paymentGatewayRepository      = $paymentGatewayRepository;
+        $this->stripeService                 = $stripe;
+        $this->payPalService                 = $payPal;
+        $this->orderService                  = $orderService;
     }
 
     /** Create a new payment; link the order/subscription; if the payment method id not exist set the payment type as 'manual' and the status true.
      * Return an array with the new created payment.
-     * @param numeric $due
+     *
+     * @param numeric      $due
      * @param numeric|null $paid
      * @param numeric|null $refunded
-     * @param string|null $type
-     * @param string|null $externalProvider
+     * @param string|null  $type
+     * @param string|null  $externalProvider
      * @param numeric|null $externalId
-     * @param bool $status
-     * @param string $message
+     * @param bool         $status
+     * @param string       $message
      * @param numeric|null $paymentMethodId
      * @param numeric|null $orderId
-     * @param numeric|null $subscriptionId
+     * @param array        $subscriptionIds
      * @return array
      */
     public function store(
@@ -125,83 +124,97 @@ class PaymentService
         $paymentMethodId = null,
         $currency = null,
         $orderId = null,
-        $subscriptionId = null
+        $subscriptionIds = []
     ) {
         //check if it's manual
-        if (!$paymentMethodId) {
+        if(!$paymentMethodId)
+        {
             $externalProvider = self::MANUAL_PAYMENT_TYPE;
-            $status = true;
+            $status           = true;
         }
 
         // if the currency not exist on the request, get the currency with Location package, based on ip address
-        if (!$currency) {
+        if(!$currency)
+        {
             $currency = $this->locationService->getCurrency();
         }
 
-        $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
+        $paymentMethod  = $this->paymentMethodRepository->getById($paymentMethodId);
         $paymentGateway = $this->paymentGatewayRepository->getById($paymentMethod['method']['payment_gateway_id']);
 
-        if ($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-            try {
-                $externalId = $this->chargeStripeCreditCardPayment($due, $paymentMethod, $paymentGateway);
-                $paid = $due;
+        if($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
+        {
+            try
+            {
+                $externalId       = $this->chargeStripeCreditCardPayment($due, $paymentMethod, $paymentGateway);
+                $paid             = $due;
                 $externalProvider = ConfigService::$creditCard['external_provider'];
-                $status = true;
-                $currency = $paymentMethod['currency'];
-
-            } catch (Exception $e) {
-                $paid = 0;
-                $status = false;
-                $externalProvider = ConfigService::$creditCard['external_provider'];
-                $message = $e->getMessage();
+                $status           = true;
+                $currency         = $paymentMethod['currency'];
             }
-
-        } else if ($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
-            try {
-                $externalId = $this->chargePayPalReferenceAgreementPayment($due, $paymentMethod, $paymentGateway);
-                $paid = $due;
+            catch(Exception $e)
+            {
+                $paid             = 0;
+                $status           = false;
+                $externalProvider = ConfigService::$creditCard['external_provider'];
+                $message          = $e->getMessage();
+            }
+        }
+        else if($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE)
+        {
+            try
+            {
+                $externalId       = $this->chargePayPalReferenceAgreementPayment($due, $paymentMethod, $paymentGateway);
+                $paid             = $due;
                 $externalProvider = 'paypal';
-                $status = true;
-                $currency = $paymentMethod['currency'];
-
-            } catch (Exception $e) {
-                $paid = 0;
-                $status = false;
+                $status           = true;
+                $currency         = $paymentMethod['currency'];
+            }
+            catch(Exception $e)
+            {
+                $paid             = 0;
+                $status           = false;
                 $externalProvider = 'paypal';
-                $message = $e->getMessage();
+                $message          = $e->getMessage();
             }
         }
 
         $paymentId = $this->paymentRepository->create([
-            'due' => $due,
-            'paid' => $paid,
-            'refunded' => $refunded,
-            'type' => $type,
+            'due'               => $due,
+            'paid'              => $paid,
+            'refunded'          => $refunded,
+            'type'              => $type,
             'external_provider' => $externalProvider,
-            'external_id' => $externalId,
-            'status' => $status ?? false,
-            'message' => $message,
+            'external_id'       => $externalId,
+            'status'            => $status ?? false,
+            'message'           => $message,
             'payment_method_id' => $paymentMethodId,
-            'currency' => $currency,
-            'created_on' => Carbon::now()->toDateTimeString()
+            'currency'          => $currency,
+            'created_on'        => Carbon::now()->toDateTimeString()
         ]);
 
         // Save the link between order and payment and save the paid amount on order row
-        if ($orderId) {
+        if($orderId)
+        {
             $this->createOrderPayment($orderId, $paymentId);
             $this->orderService->update($orderId, [
                 'paid' => $paid
             ]);
         }
 
-        if ($subscriptionId) {
-            $this->createSubscriptionPayment($subscriptionId, $paymentId);
+        if(!empty($subscriptionIds))
+        {
+            foreach($subscriptionIds as $subscription)
+            {
+                $this->createSubscriptionPayment($subscription['id'], $paymentId);
+            }
         }
 
         return $this->getById($paymentId);
     }
 
     /** Get the payment based on id.
+     *
      * @param integer $id
      * @return array
      */
@@ -211,19 +224,21 @@ class PaymentService
     }
 
     /** Create a link between payment and order.
+     *
      * @param integer $orderId
      * @param integer $paymentId
      */
     private function createOrderPayment($orderId, $paymentId)
     {
         $this->orderPaymentRepository->create([
-            'order_id' => $orderId,
+            'order_id'   => $orderId,
             'payment_id' => $paymentId,
             'created_on' => Carbon::now()->toDateTimeString()
         ]);
     }
 
     /** Create a link between payment and subscription.
+     *
      * @param integer $subscriptionId
      * @param integer $paymentId
      */
@@ -231,8 +246,8 @@ class PaymentService
     {
         $this->subscriptionPaymentRepository->create([
             'subscription_id' => $subscriptionId,
-            'payment_id' => $paymentId,
-            'created_on' => Carbon::now()->toDateTimeString()
+            'payment_id'      => $paymentId,
+            'created_on'      => Carbon::now()->toDateTimeString()
         ]);
     }
 
@@ -246,26 +261,31 @@ class PaymentService
         $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentGateway['config']]['stripe_api_secret']);
 
         $stripeCustomer = $this->stripeService->retrieveCustomer($paymentMethod['method']['external_customer_id']);
-        try {
+        try
+        {
             $stripeCard = $this->stripeService->retrieveCard(
                 $stripeCustomer,
                 $paymentMethod['method']['external_id']
             );
-        } catch (Exception $e) {
+        }
+        catch(Exception $e)
+        {
             throw new PaymentErrorException(
                 'Payment failed due to an internal error. Please contact support.', 4001
             );
         }
 
-        try {
+        try
+        {
             $chargeResponse = $this->stripeService->createCharge(
                 $due * 100,
                 $stripeCustomer,
                 $stripeCard,
                 $paymentMethod['currency']
             );
-
-        } catch (Card $cardException) {
+        }
+        catch(Card $cardException)
+        {
             throw new PaymentFailedException('Payment failed. ' . $cardException->getMessage());
         }
 
@@ -273,7 +293,7 @@ class PaymentService
     }
 
     /**
-     * @param $amount
+     * @param               $amount
      * @param PaymentMethod $paymentMethod
      * @return string
      * @throws PaymentErrorException
@@ -284,13 +304,15 @@ class PaymentService
         $paymentMethod,
         $paymentGateway
     ) {
-        if (empty($paymentMethod['method']['agreement_id'])) {
+        if(empty($paymentMethod['method']['agreement_id']))
+        {
             throw new PaymentErrorException(
                 'Payment failed due to an internal error. Please contact support.', 4000
             );
         }
 
-        try {
+        try
+        {
 
             $this->payPalService->setApiKey($paymentGateway['config']);
 
@@ -300,7 +322,9 @@ class PaymentService
                 $paymentMethod['method']['agreement_id'],
                 $paymentMethod['currency']
             );
-        } catch (CreateReferenceTransactionException $cardException) {
+        }
+        catch(CreateReferenceTransactionException $cardException)
+        {
             throw new NotFoundException(
                 'Payment failed. Please make sure your PayPal account is properly funded.'
             );
@@ -308,6 +332,4 @@ class PaymentService
 
         return $payPalTransactionId;
     }
-
-
 }

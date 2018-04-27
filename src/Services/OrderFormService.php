@@ -62,6 +62,11 @@ class OrderFormService
     private $orderItemFulfillmentService;
 
     /**
+     * @var \Railroad\Ecommerce\Services\SubscriptionService
+     */
+    private $subscriptionService;
+
+    /**
      * OrderFormService constructor.
      *
      * @param $cartAddressService
@@ -77,7 +82,8 @@ class OrderFormService
         OrderItemService $orderItemService,
         PaymentService $paymentService,
         PaymentMethodService $paymentMethodService,
-        OrderItemFulfillmentService $orderItemFulfillmentService
+        OrderItemFulfillmentService $orderItemFulfillmentService,
+        SubscriptionService $subscriptionService
     ) {
         $this->cartService                 = $cartService;
         $this->cartAddressService          = $cartAddressService;
@@ -90,6 +96,7 @@ class OrderFormService
         $this->paymentService              = $paymentService;
         $this->paymentMethodService        = $paymentMethodService;
         $this->orderItemFulfillmentService = $orderItemFulfillmentService;
+        $this->subscriptionService         = $subscriptionService;
     }
 
     /** Get the taxes and shipping costs for all the cart items.
@@ -184,6 +191,9 @@ class OrderFormService
             $userId,
             $customerId);
 
+
+        $subscriptionIds = $this->subscriptionService->createOrderSubscription($order['id']);
+
         $payment = $this->paymentService->store($order['due'],
             $order['paid'],
             0,
@@ -195,7 +205,7 @@ class OrderFormService
             $paymentMethod['id'],
             $currency = null,
             $orderId = $order['id'],
-            $subscriptionId = null);
+            $subscriptionIds);
 
         //if successful payment => sent physical items to fulfillment and get user access to content
         if($payment['status'])

@@ -14,6 +14,7 @@ use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Ecommerce\Services\ProductService;
+use Railroad\Ecommerce\Services\SubscriptionService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class OrderFormServiceTest extends EcommerceTestCase
@@ -269,6 +270,75 @@ class OrderFormServiceTest extends EcommerceTestCase
                 'order_item_id' => 1,
                 'status'        => 'pending',
                 'created_on'    => Carbon::now()->toDateTimeString()
+            ]);
+    }
+
+    public function test_submit_order_subscription()
+    {
+        $userId         = $this->createAndLogInNewUser();
+        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
+        $shippingCost   = $this->shippingCostFactory->store($shippingOption['id'], 0, 10, 5.50);
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
+
+        $product = $this->productFactory->store(ConfigService::$brand,
+            $this->faker->word,
+            $this->faker->word,
+            12.95,
+            ProductService::TYPE_SUBSCRIPTION,
+            1,
+            $this->faker->text,
+            $this->faker->url,
+            0,
+            0,
+            SubscriptionService::INTERVAL_TYPE_YEARLY,
+            1);
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            1,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $billingCountry = 'Canada';
+        $billingRegion  = 'ab';
+        $billingZip     = $this->faker->postcode;
+        $fingerprint    = '4242424242424242';
+
+        $order = $this->classBeingTested->submitOrder(
+            PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $billingCountry,
+            '',
+            $billingZip,
+            $billingRegion,
+            $this->faker->name,
+            $this->faker->name,
+            $this->faker->address,
+            '',
+            $this->faker->city,
+            'ab',
+            'Canada',
+            $this->faker->postcode,
+            '',
+            null,
+            null,
+            11,
+            2019,
+            $fingerprint,
+            '1234',
+            $paymentGateway['id']
+        );
+
+        $this->assertDatabaseHas(ConfigService::$tableSubscription,
+            [
+                'order_id' => $order['id'],
+                'type'     => SubscriptionService::SUBSCRIPTION_TYPE
             ]);
     }
 }
