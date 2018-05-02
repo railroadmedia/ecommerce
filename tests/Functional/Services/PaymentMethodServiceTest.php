@@ -137,7 +137,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
     public function test_customer_store_paypal_payment_method()
     {
-        $expressCheckoutToken = 'EC-3WA8428214111473X';
+        $expressCheckoutToken = 'EC-72P52550GY904530C';
         $addressId = $this->faker->randomNumber();
         $customerId = rand();
         $currency = $this->faker->currencyCode;
@@ -335,7 +335,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
                 'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
                 'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
                 'agreement_id' => rand(),
-                'express_checkout_token' => 'EC-3WA8428214111473X',
+                'express_checkout_token' => 'EC-72P52550GY904530C',
                 'address_id' => rand(),
                 'user_id' => $userId,
                 'payment_gateway' => $paymentGatewayPaypal['id']
