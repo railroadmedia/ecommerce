@@ -8,7 +8,7 @@ use Railroad\Ecommerce\Exceptions\PayPal\CreateBillingAgreementException;
 use Railroad\Ecommerce\Exceptions\PayPal\CreateReferenceTransactionException;
 use Railroad\Ecommerce\ExternalHelpers\PayPal;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
-use Railroad\Ecommerce\Repositories\PaymentRepository;
+
 
 class PaypalPaymentGateway
 {
@@ -16,11 +16,6 @@ class PaypalPaymentGateway
      * @var PayPal
      */
     private $payPalService;
-
-    /**
-     * @var PaymentRepository
-     */
-    private $paymentRepository;
 
     /**
      * @var \Railroad\Ecommerce\Repositories\PaymentGatewayRepository
@@ -34,11 +29,9 @@ class PaypalPaymentGateway
      */
     public function __construct(
         PayPal $payPalService,
-        PaymentRepository $paymentRepository,
         PaymentGatewayRepository $paymentGatewayRepository
     ) {
         $this->payPalService            = $payPalService;
-        $this->paymentRepository        = $paymentRepository;
         $this->paymentGatewayRepository = $paymentGatewayRepository;
     }
 

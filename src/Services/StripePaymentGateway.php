@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
-use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Stripe\Error\InvalidRequest;
 
 class StripePaymentGateway
@@ -14,11 +13,6 @@ class StripePaymentGateway
      * @var Stripe
      */
     private $stripeService;
-
-    /**
-     * @var \aymentRepository
-     */
-    private $paymentRepository;
 
     /**
      * @var \Railroad\Ecommerce\Repositories\PaymentGatewayRepository
@@ -32,11 +26,9 @@ class StripePaymentGateway
      */
     public function __construct(
         Stripe $stripeService,
-        PaymentRepository $paymentRepository,
         PaymentGatewayRepository $paymentGatewayRepository
     ) {
         $this->stripeService            = $stripeService;
-        $this->paymentRepository        = $paymentRepository;
         $this->paymentGatewayRepository = $paymentGatewayRepository;
     }
 
