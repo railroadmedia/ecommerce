@@ -137,8 +137,8 @@ class ShoppingCartController extends Controller
         $cartItems = $this->cartService->getAllCartItems();
 
         foreach ($cartItems as $cartItem) {
-            if ($cartItem->options['product-id'] == $productId) {
-                $this->cartService->removeCartItem($cartItem->id);
+            if ($cartItem['options']['product-id'] == $productId) {
+                $this->cartService->removeCartItem($cartItem['id']);
             }
         }
 
@@ -163,8 +163,8 @@ class ShoppingCartController extends Controller
             $cartItems = $this->cartService->getAllCartItems();
 
             foreach ($cartItems as $cartItem) {
-                if ($cartItem->options['product-id'] == $productId) {
-                    $this->cartService->updateCartItemQuantity($cartItem->id, $quantity);
+                if ($cartItem['options']['product-id'] == $productId) {
+                    $this->cartService->updateCartItemQuantity($cartItem['id'], $quantity);
                 }
             }
         } else {

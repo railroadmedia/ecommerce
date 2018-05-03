@@ -55,7 +55,7 @@ class PaymentMethodJsonController extends Controller
         //if the store method response it's null the method_type not exist; we throw the proper exception
         throw_if(
             is_null($paymentMethod),
-            new NotFoundException('Creation failed, method type(' . $request->get('method_type') . ') not allowed. ')
+            new NotFoundException('Creation failed, method type(' . $request->get('method_type') . ') not allowed or incorrect data. ')
         );
 
         return new JsonResponse($paymentMethod, 200);

@@ -42,7 +42,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     private $paypal;
 
     CONST VALID_VISA_CARD_NUM = '4242424242424242';
-    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-68Y40166KS210493B';
+    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-72P52550GY904530C';
 
     protected function setUp()
     {
@@ -390,7 +390,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             $this->faker->randomNumber(4),
             $this->faker->name,
             $this->faker->creditCardType,
-            'EC-1EF17178U5304720E',
+            self::VALID_EXPRESS_CHECKOUT_TOKEN,
             rand(),
             'usd',
             $userId,
@@ -751,7 +751,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $cardFingerprint = self::VALID_VISA_CARD_NUM;
         $cardLast4 = $this->faker->randomNumber(4);
         $cardType = $this->faker->creditCardType;
-        $currency = $this->faker->currencyCode;
+        $currency = 'USD';
         $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $paymentMethod = $this->call('PUT', '/payment-method', [
@@ -825,7 +825,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $cardFingerprint = self::VALID_VISA_CARD_NUM;
         $cardLast4 = $this->faker->randomNumber(4);
         $cardType = $this->faker->creditCardType;
-        $currency = $this->faker->currencyCode;
+        $currency = 'USD';
         $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $paymentMethod = $this->call('PUT', '/payment-method', [

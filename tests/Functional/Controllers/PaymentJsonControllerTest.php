@@ -74,7 +74,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             $this->faker->creditCardType,
             $this->faker->word,
             rand(),
-            'cad',
+            'CAD',
             null,
             rand());
         $due = $this->faker->numberBetween(0,1000);
@@ -90,7 +90,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertArraySubset([
             'due' => $due,
             'type' => $type,
-            'currency' => 'cad',
+            'currency' => 'CAD',
             'payment_method_id' => $paymentMethod['id'],
             'created_on' => Carbon::now()->toDateTimeString(),
             'updated_on' => null

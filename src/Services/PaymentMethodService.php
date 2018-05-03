@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Exceptions\PayPal\CreateBillingAgreementException;
 use Railroad\Ecommerce\ExternalHelpers\Paypal;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
+use Railroad\Ecommerce\Factories\GatewayFactory;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\CustomerStripeCustomerRepository;
@@ -84,6 +85,11 @@ class PaymentMethodService
      */
     private $paypalPaymentGateway;
 
+    /**
+     * @var \Railroad\Ecommerce\Factories\GatewayFactory
+     */
+    private $gatewayFactory;
+
     //constants that represent payment method types
     CONST PAYPAL_PAYMENT_METHOD_TYPE      = 'paypal';
     CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit card';
@@ -114,7 +120,8 @@ class PaymentMethodService
         CustomerStripeCustomerRepository $customerStripeCustomerRepository,
         PaymentGatewayRepository $paymentGatewayRepository,
         StripePaymentGateway $stripePaymentGateway,
-        PaypalPaymentGateway $paypalPaymentGateway
+        PaypalPaymentGateway $paypalPaymentGateway,
+        GatewayFactory $gatewayFactory
     ) {
         $this->paymentMethodRepository          = $paymentMethodRepository;
         $this->creditCardRepository             = $creditCardRepository;
@@ -129,6 +136,7 @@ class PaymentMethodService
         $this->paymentGatewayRepository         = $paymentGatewayRepository;
         $this->stripePaymentGateway             = $stripePaymentGateway;
         $this->paypalPaymentGateway             = $paypalPaymentGateway;
+        $this->gatewayFactory                   = $gatewayFactory;
     }
 
     /** Save a new payment method, a new credit card/paypal billing record based on payment method type and
@@ -169,39 +177,39 @@ class PaymentMethodService
         $customerId = null
 
     ) {
-        $paymentGateway = $this->paymentGatewayRepository->getById($paymentGatewayId);
+        $methodId = null;
+
+        $paymentGateway        = $this->paymentGatewayRepository->getById($paymentGatewayId);
+        $stripeUserMapping     = $this->userStripeCustomerRepository->getByUserId($userId);
+        $stripeCustomerMapping = $this->customerStripeCustomerRepository->getByCustomerId($customerId);
+
+        $gateway = $this->gatewayFactory->create($methodType);
+
+        $data = $gateway->handlingData(
+            [
+                'paymentGateway'        => $paymentGateway,
+                'creditCardYear'        => $creditCardYearSelector,
+                'creditCardMonth'       => $creditCardMonthSelector,
+                'fingerprint'           => $fingerprint,
+                'last4'                 => $last4,
+                'cardholder'            => $cardHolderName,
+                'expressCheckoutToken'  => $expressCheckoutToken,
+                'userId'                => $userId,
+                'customerId'            => $customerId,
+                'stripeUserMapping'     => $stripeUserMapping,
+                'stripeCustomerMapping' => $stripeCustomerMapping
+            ]);
 
         if($methodType == self::CREDIT_CARD_PAYMENT_METHOD_TYPE)
         {
-            $stripeUserMapping     = $this->userStripeCustomerRepository->getByUserId($userId);
-            $stripeCustomerMapping = $this->customerStripeCustomerRepository->getByCustomerId($customerId);
-
-            if($userId)
-            {
-                $stripeCustomer = $this->getStripeCustomer($stripeUserMapping, ['user_id' => $userId]);
-            }
-            if($customerId)
-            {
-                $stripeCustomer = $this->getStripeCustomer($stripeCustomerMapping, ['customer_id' => $customerId]);
-            }
-
-            $stripeData = $this->stripePaymentGateway->createCreditCard(
-                $creditCardYearSelector,
-                $creditCardMonthSelector,
-                $fingerprint,
-                $last4,
-                $cardHolderName,
-                $paymentGateway,
-                $stripeCustomer);
-
             $methodId = $this->creditCardRepository->create([
                 'type'                 => self::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'fingerprint'          => $fingerprint,
                 'last_four_digits'     => $last4,
                 'cardholder_name'      => $cardHolderName,
                 'company_name'         => $companyName,
-                'external_id'          => $stripeData['stripe_card_id'],
-                'external_customer_id' => $stripeData['stripe_customer_id'],
+                'external_id'          => $data['stripe_card_id'],
+                'external_customer_id' => $data['stripe_customer_id'],
                 'external_provider'    => ConfigService::$creditCard['external_provider'],
                 'expiration_date'      => Carbon::create(
                     $creditCardYearSelector,
@@ -214,21 +222,24 @@ class PaymentMethodService
                 'payment_gateway_id'   => $paymentGateway['id'],
                 'created_on'           => Carbon::now()->toDateTimeString()
             ]);
+
+            $this->syncStripeCustomer($userId, $customerId, $data);
         }
         else if($methodType == self::PAYPAL_PAYMENT_METHOD_TYPE)
         {
-            $billingAgreementId = $this->paypalPaymentGateway->createPaypalBilling($expressCheckoutToken, $paymentGateway);
-
-            $methodId = $this->paypalBillingRepository->create(
-                [
-                    'agreement_id'           => $billingAgreementId,
-                    'express_checkout_token' => $expressCheckoutToken,
-                    'address_id'             => $addressId,
-                    'payment_gateway_id'     => $paymentGateway['id'],
-                    'expiration_date'        => Carbon::now()->addYears(10),
-                    'created_on'             => Carbon::now()->toDateTimeString()
-                ]
-            );
+            if($data['billingAgreementId'])
+            {
+                $methodId = $this->paypalBillingRepository->create(
+                    [
+                        'agreement_id'           => $data['billingAgreementId'],
+                        'express_checkout_token' => $expressCheckoutToken,
+                        'address_id'             => $addressId,
+                        'payment_gateway_id'     => $paymentGateway['id'],
+                        'expiration_date'        => Carbon::now()->addYears(10),
+                        'created_on'             => Carbon::now()->toDateTimeString()
+                    ]
+                );
+            }
         }
         else
         {
@@ -313,26 +324,24 @@ class PaymentMethodService
 
         if($data['update_method'] == self::UPDATE_PAYMENT_METHOD_AND_CREATE_NEW_CREDIT_CARD)
         {
-            if($data['user_id'])
-            {
-                $stripeUserMapping = $this->userStripeCustomerRepository->getByUserId($data['user_id']);
-                $stripeCustomer    = $this->getStripeCustomer($stripeUserMapping, ['user_id' => $data['user_id']]);
-            }
-            if($data['customer_id'])
-            {
-                $stripeCustomerMapping = $this->customerStripeCustomerRepository->getByCustomerId($data['customer_id']);
-                $stripeCustomer        = $this->getStripeCustomer($stripeCustomerMapping, ['customer_id' => $data['customer_id']]);
-            }
+            $gateway               = $this->gatewayFactory->create(self::CREDIT_CARD_PAYMENT_METHOD_TYPE);
+            $stripeUserMapping     = $this->userStripeCustomerRepository->getByUserId($data['user_id'] ?? null);
+            $stripeCustomerMapping = $this->customerStripeCustomerRepository->getByCustomerId($data['customer_id'] ?? null);
 
-            $stripeData = $this->stripePaymentGateway->createCreditCard(
-                $data['card_year'],
-                $data['card_month'],
-                $data['card_fingerprint'],
-                $data['card_number_last_four_digits'],
-                $data['cardholder_name'],
-                $paymentGateway,
-                $stripeCustomer
-            );
+            $paymentData = $gateway->handlingData(
+                [
+                    'paymentGateway'        => $paymentGateway,
+                    'creditCardYear'        => $data['card_year'],
+                    'creditCardMonth'       => $data['card_month'],
+                    'fingerprint'           => $data['card_fingerprint'],
+                    'last4'                 => $data['card_number_last_four_digits'],
+                    'cardholder'            => $data['cardholder_name'],
+                    'expressCheckoutToken'  => '',
+                    'userId'                => $data['user_id'] ?? null,
+                    'customerId'            => $data['customer_id'] ?? null,
+                    'stripeUserMapping'     => $stripeUserMapping,
+                    'stripeCustomerMapping' => $stripeCustomerMapping
+                ]);
 
             $methodId = $this->creditCardRepository->create([
                 'type'                 => self::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -340,8 +349,8 @@ class PaymentMethodService
                 'last_four_digits'     => $data['card_number_last_four_digits'],
                 'cardholder_name'      => $data['cardholder_name'],
                 'company_name'         => $data['company_name'],
-                'external_id'          => $stripeData['stripe_card_id'],
-                'external_customer_id' => $stripeData['stripe_customer_id'],
+                'external_id'          => $paymentData['stripe_card_id'],
+                'external_customer_id' => $paymentData['stripe_customer_id'],
                 'external_provider'    => ConfigService::$creditCard['external_provider'],
                 'expiration_date'      => Carbon::create(
                     $data['card_year'],
@@ -354,6 +363,8 @@ class PaymentMethodService
                 'payment_gateway_id'   => $paymentGateway['id'],
                 'created_on'           => Carbon::now()->toDateTimeString()
             ]);
+
+            $this->syncStripeCustomer($data['user_id'] ?? null, $data['customer_id'] ?? null, $paymentData);
         }
         else if($data['update_method'] == self::UPDATE_PAYMENT_METHOD_AND_UPDATE_CREDIT_CARD)
         {
@@ -377,10 +388,18 @@ class PaymentMethodService
                 return -1;
             }
 
-            $billingAgreementId = $this->paypalPaymentGateway->createPaypalBilling($data['express_checkout_token'], $paymentGateway);
+            $gateway = $this->gatewayFactory->create(self::PAYPAL_PAYMENT_METHOD_TYPE);
+
+            $paymentData = $gateway->handlingData(
+                [
+                    'paymentGateway'       => $paymentGateway,
+                    'expressCheckoutToken' => $data['express_checkout_token'],
+                    'userId'               => $data['user_id'] ?? null,
+                    'customerId'           => $data['customer_id'] ?? null
+                ]);
 
             $this->paypalBillingRepository->updateOrCreate(['id' => $paymentMethod['method']['id']], [
-                'agreement_id'           => $billingAgreementId,
+                'agreement_id'           => $paymentData['billingAgreementId'],
                 'express_checkout_token' => $data['express_checkout_token'],
                 'address_id'             => $data['address_id'],
                 'payment_gateway_id'     => $paymentGateway['id'],
@@ -446,31 +465,27 @@ class PaymentMethodService
     }
 
     /**
-     * @param $stripeCustomerMapping
-     * @return \Stripe\Customer
+     * @param $userId
+     * @param $customerId
+     * @param $data
      */
-    private function getStripeCustomer($stripeCustomerMapping, $ids)
+    private function syncStripeCustomer($userId, $customerId, $data)
     {
-        //TODO - we need the user/customer email address
-        $stripeCustomer = $this->stripePaymentGateway->getStripeCustomer($stripeCustomerMapping['stripe_customer_id'] ?? 0);
-
-        if(array_key_exists('user_id', $ids))
+        if($userId)
         {
             $this->userStripeCustomerRepository->create([
-                'user_id'            => $ids['user_id'],
-                'stripe_customer_id' => $stripeCustomer->id,
+                'user_id'            => $userId,
+                'stripe_customer_id' => $data['stripe_customer_id'],
                 'created_on'         => Carbon::now()->toDateTimeString()
             ]);
         }
         else
         {
             $this->customerStripeCustomerRepository->create([
-                'customer_id'        => $ids['customer_id'],
-                'stripe_customer_id' => $stripeCustomer->id,
+                'customer_id'        => $customerId,
+                'stripe_customer_id' => $data['stripe_customer_id'],
                 'created_on'         => Carbon::now()->toDateTimeString()
             ]);
         }
-
-        return $stripeCustomer;
     }
 }

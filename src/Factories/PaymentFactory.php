@@ -14,14 +14,10 @@ class PaymentFactory extends PaymentService
     protected $faker;
 
     public function store(
-        $due ='',
-        $paid ='',
+        $due = '',
+        $paid = '',
         $refunded = '',
-        $type ='',
-        $externalProvider='',
-        $externalId = null,
-        $status = false,
-        $message = '',
+        $type = '',
         $paymentMethodId = null,
         $currency = '',
         $orderId = null,
@@ -35,15 +31,12 @@ class PaymentFactory extends PaymentService
                 0,
                 0,
                 $this->faker->randomElement([PaymentService::RENEWAL_PAYMENT_TYPE, PaymentService::ORDER_PAYMENT_TYPE]),
-                '',
-                null,
-                false,
-                '',
                 rand(),
-                $this->faker->currencyCode,
+                'CAD',
                 rand(),
-                rand()
+                [['id' => rand()]]
             ];
+
         return parent::store(...$parameters);
     }
 }

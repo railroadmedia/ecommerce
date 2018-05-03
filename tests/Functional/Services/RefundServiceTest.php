@@ -107,10 +107,6 @@ class RefundServiceTest extends EcommerceTestCase
             0,
             0,
             $this->faker->randomElement([PaymentService::RENEWAL_PAYMENT_TYPE, PaymentService::ORDER_PAYMENT_TYPE]),
-            '',
-            null,
-            false,
-            '',
             $paymentMethod['id']);
 
         $refundedAmount = $this->faker->numberBetween(1, $payment['due']);

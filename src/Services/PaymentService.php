@@ -3,10 +3,8 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Exceptions\NotFoundException;
-use Railroad\Ecommerce\Exceptions\PayPal\CreateReferenceTransactionException;
 use Railroad\Ecommerce\ExternalHelpers\Paypal;
-use Railroad\Ecommerce\ExternalHelpers\Stripe;
+use Railroad\Ecommerce\Factories\GatewayFactory;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
@@ -37,29 +35,14 @@ class PaymentService
     private $paymentMethodRepository;
 
     /**
-     * @var PaymentGatewayRepository
-     */
-    private $paymentGatewayRepository;
-
-    /**
      * @var LocationService
      */
     private $locationService;
 
     /**
-     * @var \Railroad\Ecommerce\Services\PaypalPaymentGateway
+     * @var \Railroad\Ecommerce\Factories\GatewayFactory
      */
-    private $paypalPaymentGateway;
-
-    /**
-     * @var \Railroad\Ecommerce\Services\StripePaymentGateway
-     */
-    private $stripePaymentGateway;
-
-    /**
-     * @var \Railroad\Ecommerce\Services\ManualPaymentGateway
-     */
-    private $manualPaymentGateway;
+    private $gatewayFactory;
 
     /**
      * @var OrderService
@@ -83,23 +66,16 @@ class PaymentService
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         LocationService $locationService,
         PaymentMethodRepository $paymentMethodRepository,
-        PaymentGatewayRepository $paymentGatewayRepository,
-        Paypal $payPal,
-        PaypalPaymentGateway $paypalPaymentGateway,
-        StripePaymentGateway $stripePaymentGateway,
-        ManualPaymentGateway $manualPaymentGateway,
-        OrderService $orderService
+        OrderService $orderService,
+        GatewayFactory $gatewayFactory
     ) {
         $this->paymentRepository             = $paymentRepository;
         $this->orderPaymentRepository        = $orderPaymentRepository;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->locationService               = $locationService;
         $this->paymentMethodRepository       = $paymentMethodRepository;
-        $this->paymentGatewayRepository      = $paymentGatewayRepository;
-        $this->paypalPaymentGateway          = $paypalPaymentGateway;
-        $this->stripePaymentGateway          = $stripePaymentGateway;
-        $this->manualPaymentGateway          = $manualPaymentGateway;
         $this->orderService                  = $orderService;
+        $this->gatewayFactory                = $gatewayFactory;
     }
 
     /** Create a new payment; link the order/subscription; if the payment method id not exist set the payment type as 'manual' and the status true.
@@ -124,31 +100,17 @@ class PaymentService
         $orderId = null,
         $subscriptionIds = []
     ) {
-
         // if the currency not exist on the request, get the currency with Location package, based on ip address
         if(!$currency)
         {
             $currency = $this->locationService->getCurrency();
         }
 
-        //check if it's manual
-        if(!$paymentMethodId)
-        {
-            $paymentData = $this->manualPaymentGateway->chargePayment($due, $paid, $refunded, $type, $currency);
-        }
-
         $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
 
-        if($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
-        {
-            $paymentData = $this->stripePaymentGateway->chargePayment($due, $paymentMethod, $type);
-        }
-        else if($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE)
-        {
-            $paymentData = $this->paypalPaymentGateway->chargePayment($due, $paymentMethod, $type);
-        }
-
-        $paymentId = $this->paymentRepository->create($paymentData);
+        $gateway = $this->gatewayFactory->create($paymentMethod['method_type']);
+        $paymentData = $gateway->chargePayment($due, $paid, $paymentMethod, $type, $currency);
+        $paymentId   = $this->paymentRepository->create($paymentData);
 
         // Save the link between order and payment and save the paid amount on order row
         if($orderId)

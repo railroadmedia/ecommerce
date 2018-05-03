@@ -42,7 +42,7 @@ class PaymentMethodFactory extends PaymentMethodService
                 $this->faker->randomNumber(4),
                 $this->faker->name,
                 $this->faker->creditCardType,
-                'EC-68Y40166KS210493B',
+                'EC-72P52550GY904530C',
                 rand(),
                 'EUR',
                 request()->user() ? request()->user()->id : null,
