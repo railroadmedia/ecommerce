@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
@@ -20,6 +19,7 @@ class ProductJsonController extends Controller
 
     /**
      * ProductJsonController constructor.
+     *
      * @param $productService
      */
     public function __construct(ProductService $productService)
@@ -28,6 +28,7 @@ class ProductJsonController extends Controller
     }
 
     /** Pull paginated products
+     *
      * @param Request $request
      * @return JsonPaginatedResponse
      */
@@ -46,6 +47,7 @@ class ProductJsonController extends Controller
     }
 
     /** Create a new product and return it in JSON format
+     *
      * @param ProductCreateRequest $request
      * @return JsonResponse
      */
@@ -71,8 +73,9 @@ class ProductJsonController extends Controller
     }
 
     /** Update a product based on product id and return it in JSON format
+     *
      * @param ProductUpdateRequest $request
-     * @param integer $productId
+     * @param integer              $productId
      * @return JsonResponse
      */
     public function update(ProductUpdateRequest $request, $productId)
@@ -80,22 +83,21 @@ class ProductJsonController extends Controller
         //update product with the data sent on the request
         $product = $this->productService->update(
             $productId,
-            array_intersect_key(
-                $request->all(),
+            $request->only(
                 [
-                    'brand' => '',
-                    'name' => '',
-                    'sku' => '',
-                    'price' => '',
-                    'type' => '',
-                    'active' => '',
-                    'description' => '',
-                    'thumbnail_url' => '',
-                    'is_physical' => '',
-                    'weight' => '',
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                    'stock' => 'stock'
+                    'brand',
+                    'name',
+                    'sku',
+                    'price',
+                    'type',
+                    'active',
+                    'description',
+                    'thumbnail_url',
+                    'is_physical',
+                    'weight',
+                    'subscription_interval_type',
+                    'subscription_interval_count',
+                    'stock'
                 ]
             )
         );
@@ -112,6 +114,7 @@ class ProductJsonController extends Controller
     /** Delete a product that it's not connected to orders or discounts and return a JsonResponse.
      *  Throw  - NotFoundException if the product not exist
      *         - NotAllowedException if the product it's connected to orders or discounts
+     *
      * @param integer $productId
      * @return JsonResponse
      */
@@ -140,6 +143,7 @@ class ProductJsonController extends Controller
 
     /** Upload product thumbnail on remote storage using remotestorage package.
      * Throw an error JSON response if the upload failed or return the uploaded thumbnail url.
+     *
      * @param Request $request
      * @return JsonResponse
      */

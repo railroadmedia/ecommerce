@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -10,7 +9,6 @@ use Railroad\Ecommerce\Requests\PaymentGatewayCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentGatewayUpdateRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\PaymentGatewayService;
-
 
 class PaymentGatewayJsonController extends Controller
 {
@@ -21,6 +19,7 @@ class PaymentGatewayJsonController extends Controller
 
     /**
      * PaymentGatewayJsonController constructor.
+     *
      * @param PaymentGatewayService $paymentGatewayService
      */
     public function __construct(PaymentGatewayService $paymentGatewayService)
@@ -28,9 +27,9 @@ class PaymentGatewayJsonController extends Controller
         $this->paymentGatewayService = $paymentGatewayService;
     }
 
-
     /** Call the service method to create a new payment gateway based on request parameters.
      * Return a JsonResponse with the new created payment gateway
+     *
      * @param  PaymentGatewayCreateRequest $request
      * @return JsonResponse
      */
@@ -46,12 +45,12 @@ class PaymentGatewayJsonController extends Controller
         return new JsonResponse($paymentGateway, 200);
     }
 
-
     /** Update a payment gateway based on request data and payment gateway id.
      * Return - NotFoundException if the payment gateway doesn't exist or the user have not rights to access it
      *        - JsonResponse with the updated payment gateway
+     *
      * @param  PaymentGatewayUpdateRequest $request
-     * @param integer $paymentGatewayId
+     * @param integer                      $paymentGatewayId
      * @return JsonResponse|NotFoundException
      */
     public function update($paymentGatewayId, PaymentGatewayUpdateRequest $request)
@@ -59,15 +58,7 @@ class PaymentGatewayJsonController extends Controller
         //update payment gateway with the data sent on the request
         $paymentGateway = $this->paymentGatewayService->update(
             $paymentGatewayId,
-            array_intersect_key(
-                $request->all(),
-                [
-                    'brand' => '',
-                    'type' => '',
-                    'name' => '',
-                    'config' => ''
-                ]
-            )
+            $request->only(['brand', 'type', 'name', 'config'])
         );
 
         //if the update method response it's null the payment gateway not exist; we throw the proper exception
@@ -82,6 +73,7 @@ class PaymentGatewayJsonController extends Controller
     /** Delete a payment gateway and return a JsonResponse.
      *  Throw  - NotFoundException if the payment gateway not exist
      *         - NotAllowedException if the payment gateway it's in used
+     *
      * @param integer $paymentGatewayId
      * @return JsonResponse
      */

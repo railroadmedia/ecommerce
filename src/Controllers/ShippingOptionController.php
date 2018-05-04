@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\ShippingOptionCreateRequest;
@@ -16,6 +15,7 @@ class ShippingOptionController extends Controller
 
     /**
      * ShippingOptionController constructor.
+     *
      * @param $shippingOptionService
      */
     public function __construct(ShippingOptionService $shippingOptionService)
@@ -24,6 +24,7 @@ class ShippingOptionController extends Controller
     }
 
     /** Create a new shipping option and return it in JSON format
+     *
      * @param ShippingOptionCreateRequest $request
      * @return JsonResponse
      */
@@ -39,8 +40,9 @@ class ShippingOptionController extends Controller
     }
 
     /** Update a shipping option based on id and return it in JSON format or proper exception if the shipping option not exist
+     *
      * @param ShippingOptionUpdateRequest $request
-     * @param integer $shippingOptionId
+     * @param integer                     $shippingOptionId
      * @return JsonResponse
      */
     public function update(ShippingOptionUpdateRequest $request, $shippingOptionId)
@@ -48,12 +50,11 @@ class ShippingOptionController extends Controller
         //update shipping option with the data sent on the request
         $shippingOption = $this->shippingOptionService->update(
             $shippingOptionId,
-            array_intersect_key(
-                $request->all(),
+            $request->only(
                 [
-                    'country' => '',
-                    'priority' => '',
-                    'active' => ''
+                    'country',
+                    'priority',
+                    'active'
                 ]
             )
         );
@@ -69,6 +70,7 @@ class ShippingOptionController extends Controller
 
     /** Delete a shipping option if exist in the database.
      *  Throw proper exception if the shipping option not exist in the database or a json response with status 204.
+     *
      * @param integer $shippingOptionId
      * @return JsonResponse
      */

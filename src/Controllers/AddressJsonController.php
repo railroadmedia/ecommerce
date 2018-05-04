@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -18,6 +17,7 @@ class AddressJsonController extends Controller
 
     /**
      * AddressJsonController constructor.
+     *
      * @param $addressService
      */
     public function __construct(AddressService $addressService)
@@ -27,6 +27,7 @@ class AddressJsonController extends Controller
 
     /** Call the method to store a new address based on request parameters.
      * Return a JsonResponse with the new created address.
+     *
      * @param AddressCreateRequest $request
      * @return JsonResponse
      */
@@ -54,8 +55,9 @@ class AddressJsonController extends Controller
      * Return - NotFoundException if the address not exists
      *        - NotAllowedException if the user have not rights to access it
      *        - JsonResponse with the updated address
+     *
      * @param AddressUpdateRequest $request
-     * @param int $addressId
+     * @param int                  $addressId
      * @return JsonResponse
      */
     public function update(AddressUpdateRequest $request, $addressId)
@@ -63,21 +65,18 @@ class AddressJsonController extends Controller
         //update address with the data sent on the request
         $address = $this->addressService->update(
             $addressId,
-            array_intersect_key(
-                $request->all(),
-                [
-                    'type' => '',
-                    'brand' => '',
-                    'first_name' => '',
-                    'last_name' => '',
-                    'street_line_1' => '',
-                    'street_line_2' => '',
-                    'city' => '',
-                    'zip' => '',
-                    'state' => '',
-                    'country' => ''
-                ]
-            )
+            $request->only([
+                'type',
+                'brand',
+                'first_name',
+                'last_name',
+                'street_line_1',
+                'street_line_2',
+                'city',
+                'zip',
+                'state',
+                'country'
+            ])
         );
 
         //if the update method response it's null the address not exist; we throw the proper exception
@@ -93,7 +92,8 @@ class AddressJsonController extends Controller
      * Return - NotFoundException if the address not exists
      *        - NotAllowedException if the address it's in used (exists orders defined for the selected address)  or the user have not rights to access it
      *        - JsonResponse with code 204 otherwise
-     * @param integer $addressId
+     *
+     * @param integer              $addressId
      * @param AddressDeleteRequest $request
      * @return JsonResponse
      */

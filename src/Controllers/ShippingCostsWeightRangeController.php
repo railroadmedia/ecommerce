@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\ShippingCostCreateRequest;
@@ -16,6 +15,7 @@ class ShippingCostsWeightRangeController extends Controller
 
     /**
      * ShippingCostsWeightRangeController constructor.
+     *
      * @param $shippingCostsService
      */
     public function __construct(ShippingCostsService $shippingCostsService)
@@ -25,6 +25,7 @@ class ShippingCostsWeightRangeController extends Controller
 
     /** Store a shipping cost weight range in the database and return it in JSON format if the shipping option exist.
      * Return a JSON response with the shopping cost weight range or throw the proper exception.
+     *
      * @param ShippingCostCreateRequest $request
      * @return JsonResponse
      */
@@ -47,8 +48,9 @@ class ShippingCostsWeightRangeController extends Controller
     }
 
     /**Update a shipping cost weight range based on id and return it in JSON format or proper exception if the shipping cost weight range not exist
+     *
      * @param ShippingCostUpdateRequest $request
-     * @param integer $shippingCostId
+     * @param integer                   $shippingCostId
      * @return JsonResponse
      */
     public function update(ShippingCostUpdateRequest $request, $shippingCostId)
@@ -56,13 +58,12 @@ class ShippingCostsWeightRangeController extends Controller
         //update shipping costs weight range with the data sent on the request
         $shippingCost = $this->shippingCostsService->update(
             $shippingCostId,
-            array_intersect_key(
-                $request->all(),
+            $request->only(
                 [
-                    'shipping_option_id' => '',
-                    'min' => '',
-                    'max' => '',
-                    'price' => ''
+                    'shipping_option_id',
+                    'min',
+                    'max',
+                    'price'
                 ]
             )
         );
@@ -78,6 +79,7 @@ class ShippingCostsWeightRangeController extends Controller
 
     /**Delete a shipping cost weight range if exist in the database.
      *  Throw proper exception if the shipping cost weight range not exist in the database or a json response with status 204.
+     *
      * @param integer $shippingCostId
      * @return JsonResponse
      */
@@ -93,5 +95,4 @@ class ShippingCostsWeightRangeController extends Controller
 
         return new JsonResponse(null, 204);
     }
-
 }
