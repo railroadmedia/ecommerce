@@ -3,10 +3,8 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\ExternalHelpers\Paypal;
 use Railroad\Ecommerce\Factories\GatewayFactory;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
-use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
@@ -100,16 +98,16 @@ class PaymentService
         $orderId = null,
         $subscriptionIds = []
     ) {
-        // if the currency not exist on the request, get the currency with Location package, based on ip address
-        if(!$currency)
+        // if the currency not exist on the request and the payment it's manual, get the currency with Location package, based on ip address
+        if((!$currency) && (is_null($paymentMethodId)))
         {
             $currency = $this->locationService->getCurrency();
         }
 
         $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
 
-        $gateway = $this->gatewayFactory->create($paymentMethod['method_type']);
-        $paymentData = $gateway->chargePayment($due, $paid, $paymentMethod, $type, $currency);
+        $gateway     = $this->gatewayFactory->create($paymentMethod['method_type']);
+        $paymentData = $gateway->chargePayment($due, $paid, $paymentMethod, $type, ($currency ?? $paymentMethod['currency']));
         $paymentId   = $this->paymentRepository->create($paymentData);
 
         // Save the link between order and payment and save the paid amount on order row

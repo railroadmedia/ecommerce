@@ -848,10 +848,10 @@ class StripeTest extends EcommerceTestCase
         $this->assertEquals($amount, $refund->amount);
         $this->assertEquals('succeeded', $refund->status);
 
-        $refund = $this->classBeingTested->createRefund(500, $charge->id, $reason);
+        $refund = $this->classBeingTested->createRefund(5, $charge->id, $reason);
 
         $this->assertEquals($charge->id, $refund->charge);
-        $this->assertEquals(500, $refund->amount);
+        $this->assertEquals(5, $refund->amount);
         $this->assertEquals('succeeded', $refund->status);
 
         $chargeAfterRefunds = $this->classBeingTested->retrieveCharge($charge->id);

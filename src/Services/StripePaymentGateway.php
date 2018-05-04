@@ -44,7 +44,7 @@ class StripePaymentGateway
 
         try
         {
-            $paymentData['external_id'] = $this->chargeStripeCreditCardPayment($due, $paymentMethod);
+            $paymentData['external_id'] = $this->chargeStripeCreditCardPayment($due, $paymentMethod, $currency);
             $paymentData['paid']        = $due;
             $paymentData['status']      = true;
             $paymentData['currency']    = $currency;
@@ -64,7 +64,7 @@ class StripePaymentGateway
      * @param $paymentMethod
      * @throws \Railroad\Ecommerce\ExternalHelpers\CardException
      */
-    private function chargeStripeCreditCardPayment($due, $paymentMethod)
+    private function chargeStripeCreditCardPayment($due, $paymentMethod, $currency)
     {
         $paymentGateway = $this->paymentGatewayRepository->getById($paymentMethod['method']['payment_gateway_id']);
 
@@ -91,7 +91,7 @@ class StripePaymentGateway
                 $due * 100,
                 $stripeCustomer,
                 $stripeCard,
-                $paymentMethod['currency']
+                $currency ?? $paymentMethod['currency']
             );
         }
         catch(Card $cardException)
@@ -170,6 +170,7 @@ class StripePaymentGateway
     }
 
     /** Get/create a Stripe customer and create a credit card
+     *
      * @param array $data
      * @return array
      */
@@ -194,5 +195,31 @@ class StripePaymentGateway
             $stripeCustomer);
 
         return $stripeData;
+    }
+
+    /** Create a new Stripe refund transaction.
+     *Return the external ID for the refund action or NULL there are exception
+     * @param string $paymentConfig
+     * @param integer $refundedAmount
+     * @param integer $paymentAmount
+     * @param string $currency
+     * @param integer $paymentExternalId
+     * @param string $note
+     * @return null|integer
+     */
+    public function refund($paymentConfig, $refundedAmount, $paymentAmount, $currency, $paymentExternalId, $note)
+    {
+        $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentConfig]['stripe_api_secret']);
+
+        try
+        {
+            $stripeRefund = $this->stripeService->createRefund($refundedAmount, $paymentExternalId, $note);
+            return $stripeRefund->id;
+        }
+        catch(InvalidRequest $exception)
+        {
+            return null;
+        }
+
     }
 }

@@ -83,10 +83,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
             0,
             0,
             PaymentService::ORDER_PAYMENT_TYPE,
-            null,
-             null,
-             true,
-            '',
             $paymentMethod['id']);
 
         $refundAmount = $this->faker->numberBetween(0, $payment['due']);
@@ -119,10 +115,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
             0,
             0,
             PaymentService::ORDER_PAYMENT_TYPE,
-            null,
-            null,
-            true,
-            '',
             $paymentMethod['id']);
 
         $refundAmount = $this->faker->numberBetween(0, $payment['due']);

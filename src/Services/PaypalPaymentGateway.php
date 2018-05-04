@@ -9,7 +9,6 @@ use Railroad\Ecommerce\Exceptions\PayPal\CreateReferenceTransactionException;
 use Railroad\Ecommerce\ExternalHelpers\PayPal;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 
-
 class PaypalPaymentGateway
 {
     /**
@@ -46,7 +45,7 @@ class PaypalPaymentGateway
 
         try
         {
-            $paymentData['external_id']       = $this->chargePayPalReferenceAgreementPayment($due, $paymentMethod);
+            $paymentData['external_id']       = $this->chargePayPalReferenceAgreementPayment($due, $paymentMethod, $currency);
             $paymentData['paid']              = $due;
             $paymentData['external_provider'] = 'paypal';
             $paymentData['status']            = true;
@@ -72,7 +71,8 @@ class PaypalPaymentGateway
      */
     public function chargePayPalReferenceAgreementPayment(
         $due,
-        $paymentMethod
+        $paymentMethod,
+        $currency
     ) {
         if(empty($paymentMethod['method']['agreement_id']))
         {
@@ -90,7 +90,7 @@ class PaypalPaymentGateway
                 $due,
                 '',
                 $paymentMethod['method']['agreement_id'],
-                $paymentMethod['currency']
+                $currency
             );
         }
         catch(CreateReferenceTransactionException $cardException)
@@ -135,5 +135,37 @@ class PaypalPaymentGateway
         return [
             'billingAgreementId' => $this->createPaypalBilling($data['expressCheckoutToken'], $data['paymentGateway'])
         ];
+    }
+
+    /** Create a new Paypal refund transaction.
+     *Return the external ID for the refund action or NULL there are exception
+     *
+     * @param string  $paymentConfig
+     * @param integer $refundedAmount
+     * @param integer $paymentAmount
+     * @param string  $currency
+     * @param integer $paymentExternalId
+     * @param string  $note
+     * @return null|integer
+     */
+    public function refund($paymentConfig, $refundedAmount, $paymentAmount, $currency, $paymentExternalId, $note)
+    {
+        $this->payPalService->setApiKey($paymentConfig);
+        try
+        {
+            $paypalRefundId = $this->payPalService->createTransactionRefund(
+                $refundedAmount,
+                $refundedAmount != $paymentAmount,
+                $paymentExternalId,
+                $note,
+                $currency
+            );
+
+            return $paypalRefundId;
+        }
+        catch(\Exception $e)
+        {
+            return null;
+        }
     }
 }

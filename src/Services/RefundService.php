@@ -2,11 +2,8 @@
 
 namespace Railroad\Ecommerce\Services;
 
-
 use Carbon\Carbon;
-use Railroad\Ecommerce\Exceptions\PayPal\CreateRefundException;
-use Railroad\Ecommerce\ExternalHelpers\Paypal;
-use Railroad\Ecommerce\ExternalHelpers\Stripe;
+use Railroad\Ecommerce\Factories\GatewayFactory;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\RefundRepository;
@@ -29,83 +26,70 @@ class RefundService
     private $paymentMethodRepository;
 
     /**
-     * @var Stripe
+     * @var \Railroad\Ecommerce\Factories\GatewayFactory
      */
-    private $stripeService;
-
-    /**
-     * @var PayPal
-     */
-    private $payPalService;
-
+    private $gatewayFactory;
 
     /**
      * RefundService constructor.
-     * @param RefundRepository $refundRepository
+     *
+     * @param RefundRepository  $refundRepository
      * @param PaymentRepository $paymentRepository
      */
     public function __construct(
         RefundRepository $refundRepository,
         PaymentRepository $paymentRepository,
         PaymentMethodRepository $paymentMethodRepository,
-        Paypal $payPal,
-        Stripe $stripe
+        GatewayFactory $gatewayFactory
     ) {
-        $this->refundRepository = $refundRepository;
-        $this->paymentRepository = $paymentRepository;
+        $this->refundRepository        = $refundRepository;
+        $this->paymentRepository       = $paymentRepository;
         $this->paymentMethodRepository = $paymentMethodRepository;
-        $this->payPalService = $payPal;
-        $this->stripeService = $stripe;
+        $this->gatewayFactory          = $gatewayFactory;
     }
 
-
     /** Call the method that save the refund in the database, update the refund value for the payment and return an array with the new created refund
+     *
      * @param integer $paymentId
      * @param integer $refundedAmount
-     * @param string $note
+     * @param string  $note
      * @return array
      */
     public function store($paymentId, $refundedAmount, $note)
     {
-        $payment = $this->paymentRepository->getById($paymentId);
+        $payment       = $this->paymentRepository->getById($paymentId);
         $paymentMethod = $this->paymentMethodRepository->getById($payment['payment_method_id']);
-
-        $paymentAmount = $payment['due'];
+        $paymentAmount    = $payment['due'];
         $externalProvider = $payment['external_provider'];
 
-        if ($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-            $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentMethod['method']['config']]['stripe_api_secret']);
-            $stripeRefund = $this->stripeService->createRefund($refundedAmount, $payment['external_id'], $note);
-            $externalId = $stripeRefund->id;
-        } else if ($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
-            $this->payPalService->setApiKey($paymentMethod['method']['config']);
-            try {
-                $paypalRefundId = $this->payPalService->createTransactionRefund(
-                    $refundedAmount,
-                    $refundedAmount != $paymentAmount,
-                    $payment['external_id'],
-                    $note,
-                    $payment['currency']
-                );
-                $externalId = $paypalRefundId;
-            } catch (\Exception $e) {
-                throw new CreateRefundException('Paypal refund failed. Message: ' . $e->getMessage());
-            }
+        $gateway          = $this->gatewayFactory->create($paymentMethod['method_type']);
+
+        $refundExternalId = $gateway->refund(
+            $paymentMethod['method']['config'],
+            $refundedAmount,
+            $paymentAmount,
+            $payment['currency'],
+            $payment['external_id'],
+            $note
+        );
+
+        if(!$refundExternalId){
+            return null;
         }
 
         $refundId = $this->refundRepository->create([
-            'payment_id' => $paymentId,
-            'payment_amount' => $paymentAmount,
-            'refunded_amount' => $refundedAmount,
-            'note' => $note,
+            'payment_id'        => $paymentId,
+            'payment_amount'    => $paymentAmount,
+            'refunded_amount'   => $refundedAmount,
+            'note'              => $note,
             'external_provider' => $externalProvider,
-            'external_id' => $externalId,
-            'created_on' => Carbon::now()->toDateTimeString()
+            'external_id'       => $refundExternalId,
+            'created_on'        => Carbon::now()->toDateTimeString()
         ]);
 
         //update payment refund value
         $this->paymentRepository->update($paymentId, [
-            'refunded' => $payment['refunded'] + $refundedAmount,
+            'refunded'   => $payment['refunded'] + $refundedAmount,
             'updated_on' => Carbon::now()->toDateTimeString()
         ]);
 
@@ -113,6 +97,7 @@ class RefundService
     }
 
     /** Get the refund based on the id
+     *
      * @param integer $id
      * @return array
      */
@@ -120,6 +105,4 @@ class RefundService
     {
         return $this->refundRepository->getById($id);
     }
-
-
 }

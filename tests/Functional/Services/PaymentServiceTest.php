@@ -38,7 +38,7 @@ class PaymentServiceTest extends EcommerceTestCase
     public function test_store_payment()
     {
         $this->createAndLogInNewUser();
-        $due              = $this->faker->numberBetween(1, 2000);
+        $due              = 10;
         $paid             = null;
         $refunded         = null;
         $type             = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
@@ -79,13 +79,9 @@ class PaymentServiceTest extends EcommerceTestCase
         $paid             = null;
         $refunded         = null;
         $type             = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
-        $externalProvider = '';
-        $externalId       = '';
-        $status           = '';
-        $message          = '';
         $paymentMethod    = null;
 
-        $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $externalProvider, $externalId, $status, $message, $paymentMethod);
+        $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $paymentMethod, 'CAD');
 
         $this->assertArraySubset([
             'due'               => $due,
@@ -95,7 +91,7 @@ class PaymentServiceTest extends EcommerceTestCase
             'external_provider' => PaymentService::MANUAL_PAYMENT_TYPE,
             'external_id'       => '',
             'status'            => 1,
-            'message'           => $message,
+            'message'           => '',
             'payment_method_id' => null,
             'currency'          => 'CAD',
             'created_on'        => Carbon::now()->toDateTimeString(),

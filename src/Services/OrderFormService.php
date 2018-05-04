@@ -199,7 +199,7 @@ class OrderFormService
             0,
             $paymentType,
             '',
-            null,
+            $paymentMethod['currency'],
             $status = false,
             $message = '',
             $paymentMethod['id'],
