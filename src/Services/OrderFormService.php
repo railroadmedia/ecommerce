@@ -175,8 +175,6 @@ class OrderFormService
 
         $cartItemsWithTaxesAndCosts = $this->taxService->calculateTaxesForCartItems($cartItems, $billingAddress['country'], $billingAddress['region'], $shippingCosts);
 
-        $order = $this->saveOrderAndOrderItems($cartItemsWithTaxesAndCosts, $userId, $customerId, $shippingAddressDB, $billingAddressDB);
-
         $paymentMethod = $this->paymentMethodService->store($paymentType,
             $paymentGatewayId,
             $creditCardExpirationYear,
@@ -191,26 +189,29 @@ class OrderFormService
             $userId,
             $customerId);
 
-
-        $subscriptionIds = $this->subscriptionService->createOrderSubscription($order['id']);
-
-        $payment = $this->paymentService->store($order['due'],
-            $order['paid'],
+        $payment = $this->paymentService->store(
+            $cartItemsWithTaxesAndCosts['totalDue'],
+            $cartItemsWithTaxesAndCosts['totalDue'],
             0,
             $paymentType,
-            '',
-            $paymentMethod['currency'],
-            $status = false,
-            $message = '',
             $paymentMethod['id'],
-            $currency = null,
-            $orderId = $order['id'],
-            $subscriptionIds);
+            $paymentMethod['currency'],
+            null,
+            []);
 
-        //if successful payment => sent physical items to fulfillment and get user access to content
+        //if successful payment => create order, order items, sent physical items to fulfillment and trigger event that set user access to content
         if($payment['status'])
         {
+            $order = $this->saveOrderAndOrderItems(
+                $cartItemsWithTaxesAndCosts,
+                $userId,
+                $customerId,
+                $shippingAddressDB,
+                $billingAddressDB
+            );
+
             $this->orderItemFulfillmentService->store($order['id']);
+            $this->subscriptionService->createOrderSubscription($order['id']);
             event(new GiveContentAccess($order));
         }
 
@@ -231,7 +232,7 @@ class OrderFormService
             $cartItemsWithTaxesAndCosts['totalDue'],
             $cartItemsWithTaxesAndCosts['totalTax'],
             $cartItemsWithTaxesAndCosts['shippingCosts'],
-            0,
+            $cartItemsWithTaxesAndCosts['totalDue'],
             $userId,
             $customerId,
             $shippingAddressDB['id'], $billingAddressDB['id']);
