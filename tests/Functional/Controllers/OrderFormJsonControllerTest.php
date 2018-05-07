@@ -706,6 +706,110 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE, $results->decodeResponseJson()['results']['type']);
     }
 
+    public function test_submit_order_invalid_credit_card_number()
+    {
+        $userId         = $this->createAndLogInNewUser();
+        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
+        $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
+
+        $product = $this->productFactory->store(ConfigService::$brand,
+            $this->faker->word,
+            $this->faker->word,
+            12.95,
+            ProductService::TYPE_PRODUCT,
+            1,
+            $this->faker->text,
+            $this->faker->url,
+            0,
+            0.20);
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+           1,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $expirationDate = $this->faker->creditCardExpirationDate;
+        $results        = $this->call('PUT', '/order',
+            [
+                'payment-type-selector'      => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'billing-region'             => $this->faker->word,
+                'billing-zip-or-postal-code' => $this->faker->postcode,
+                'billing-country'            => 'Canada',
+                'credit-card-year-selector'  => $expirationDate->format('Y'),
+                'credit-card-month-selector' => $expirationDate->format('m'),
+                'credit-card-number'         => rand(),
+                'credit-card-cvv'            => $this->faker->randomNumber(4),
+                'gateway'                    => $paymentGateway['id']
+            ]);
+
+        $this->assertEquals(422, $results->getStatusCode());
+        $this->assertEquals(
+            [
+                "title" => "Unprocessable Entity.",
+                "detail" => "Order failed. Error message: Can not create token:: Your card number is incorrect.",
+            ]
+            , $results->decodeResponseJson()['error']);
+    }
+
+    public function test_submit_order_invalid_paypal()
+    {
+        $userId         = $this->createAndLogInNewUser();
+        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
+        $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
+        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', 'paypal_1');
+
+        $product = $this->productFactory->store(ConfigService::$brand,
+            $this->faker->word,
+            $this->faker->word,
+            12.95,
+            ProductService::TYPE_PRODUCT,
+            1,
+            $this->faker->text,
+            $this->faker->url,
+            0,
+            0.20);
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            1,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $expirationDate = $this->faker->creditCardExpirationDate;
+        $results        = $this->call('PUT', '/order',
+            [
+                'payment-type-selector'      => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'             => $this->faker->word,
+                'billing-zip-or-postal-code' => $this->faker->postcode,
+                'billing-country'            => 'Canada',
+                'paypal-express-checkout-token'  => rand(),
+                'gateway'                    => $paymentGateway['id']
+            ]);
+
+        $this->assertEquals(422, $results->getStatusCode());
+        $this->assertArraySubset(
+            [
+                "title" => "Unprocessable Entity."
+            ]
+            , $results->decodeResponseJson()['error']);
+    }
+
     /**
      * @return \Illuminate\Database\Connection
      */

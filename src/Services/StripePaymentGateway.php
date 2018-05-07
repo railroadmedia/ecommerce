@@ -3,8 +3,10 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Doctrine\DBAL\Driver\PDOException;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
+use Stripe\Error\Card;
 use Stripe\Error\InvalidRequest;
 
 class StripePaymentGateway
@@ -44,16 +46,18 @@ class StripePaymentGateway
 
         try
         {
-            $paymentData['external_id'] = $this->chargeStripeCreditCardPayment($due, $paymentMethod, $currency);
+            $charge = $this->chargeStripeCreditCardPayment($due, $paymentMethod, $currency);
+            $paymentData['external_id'] = $charge['results'];
             $paymentData['paid']        = $due;
             $paymentData['status']      = true;
             $paymentData['currency']    = $currency;
         }
-        catch(Exception $e)
+        catch(InvalidRequest $e)
         {
             $paymentData['paid']    = 0;
             $paymentData['status']  = false;
             $paymentData['message'] = $e->getMessage();
+            $paymentData['external_id'] = null;
         }
 
         return $paymentData;
@@ -71,35 +75,29 @@ class StripePaymentGateway
         $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentGateway['config']]['stripe_api_secret']);
 
         $stripeCustomer = $this->stripeService->retrieveCustomer($paymentMethod['method']['external_customer_id']);
-        try
-        {
-            $stripeCard = $this->stripeService->retrieveCard(
-                $stripeCustomer,
-                $paymentMethod['method']['external_id']
-            );
-        }
-        catch(Exception $e)
-        {
-            throw new Payment(
-                'Payment failed due to an internal error. Please contact support.', 4001
-            );
+
+        $stripeCard = $this->stripeService->retrieveCard(
+            $stripeCustomer,
+            $paymentMethod['method']['external_id']
+        );
+
+        $chargeResponse = $this->stripeService->createCharge(
+            $due * 100,
+            $stripeCustomer,
+            $stripeCard,
+            $currency ?? $paymentMethod['currency']
+        );
+
+
+        if(!$chargeResponse['status']){
+            return $chargeResponse;
         }
 
-        try
-        {
-            $chargeResponse = $this->stripeService->createCharge(
-                $due * 100,
-                $stripeCustomer,
-                $stripeCard,
-                $currency ?? $paymentMethod['currency']
-            );
-        }
-        catch(Card $cardException)
-        {
-            throw new PaymentFailedException('Payment failed. ' . $cardException->getMessage());
-        }
-
-        return $chargeResponse->id;
+        return
+            [
+                'status'  => true,
+                'results' => $chargeResponse->id
+            ];
     }
 
     /** Create credit card and return the id
@@ -124,19 +122,30 @@ class StripePaymentGateway
     ) {
         $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentGateway['config']]['stripe_api_secret']);
 
-        $token = $this->stripeService->createCardToken(
-            $fingerprint,
-            $creditCardMonthSelector,
-            $creditCardYearSelector,
-            $last4,
-            $cardHolderName,
-            '',
-            '',
-            '',
-            '',
-            '',
-            ''
-        );
+        try
+        {
+            $token = $this->stripeService->createCardToken(
+                $fingerprint,
+                $creditCardMonthSelector,
+                $creditCardYearSelector,
+                $last4,
+                $cardHolderName,
+                '',
+                '',
+                '',
+                '',
+                '',
+                ''
+            );
+        }
+        catch(Card $e)
+        {
+            return
+                [
+                    'status'  => false,
+                    'message' => 'Can not create token:: ' . $e->getMessage()
+                ];
+        }
 
         $stripeCard = $this->stripeService->createCard(
             $stripeCustomer,
@@ -144,6 +153,7 @@ class StripePaymentGateway
         );
 
         return [
+            'status'             => true,
             'stripe_customer_id' => $stripeCustomer->id,
             'stripe_card_id'     => $stripeCard->id
         ];
@@ -199,12 +209,13 @@ class StripePaymentGateway
 
     /** Create a new Stripe refund transaction.
      *Return the external ID for the refund action or NULL there are exception
-     * @param string $paymentConfig
+     *
+     * @param string  $paymentConfig
      * @param integer $refundedAmount
      * @param integer $paymentAmount
-     * @param string $currency
+     * @param string  $currency
      * @param integer $paymentExternalId
-     * @param string $note
+     * @param string  $note
      * @return null|integer
      */
     public function refund($paymentConfig, $refundedAmount, $paymentAmount, $currency, $paymentExternalId, $note)
@@ -214,12 +225,12 @@ class StripePaymentGateway
         try
         {
             $stripeRefund = $this->stripeService->createRefund($refundedAmount, $paymentExternalId, $note);
+
             return $stripeRefund->id;
         }
         catch(InvalidRequest $exception)
         {
             return null;
         }
-
     }
 }

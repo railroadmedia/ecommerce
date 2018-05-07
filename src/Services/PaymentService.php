@@ -108,6 +108,10 @@ class PaymentService
 
         $gateway     = $this->gatewayFactory->create($paymentMethod['method_type']);
         $paymentData = $gateway->chargePayment($due, $paid, $paymentMethod, $type, ($currency ?? $paymentMethod['currency']));
+      if(!$paymentData['status'])
+      {
+          return $paymentData;
+      }
         $paymentId   = $this->paymentRepository->create($paymentData);
 
         // Save the link between order and payment and save the paid amount on order row

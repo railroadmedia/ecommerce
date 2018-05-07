@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\CartService;
@@ -78,6 +79,11 @@ class OrderFormJsonController extends Controller
             $request->get('credit-card-number'),
             $request->get('credit-card-cvv'),
             $request->get('gateway')
+        );
+        //if the order failed; we throw the proper exception
+        throw_if(
+            !($order['status']),
+            new UnprocessableEntityException('Order failed. Error message: ' . $order['message'])
         );
 
         return new JsonResponse($order, 200);

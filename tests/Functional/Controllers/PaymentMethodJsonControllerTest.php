@@ -507,6 +507,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $customer                 = $this->customerFactory->store();
         $creditCardExpirationDate = $this->faker->creditCardExpirationDate;
         $paymentGateway           = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
+        $this->stripe->setApiKey(ConfigService::$stripeAPI['stripe_1']['stripe_api_secret']);
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],

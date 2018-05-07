@@ -65,9 +65,7 @@ class PaypalPaymentGateway
     /**
      * @param               $amount
      * @param array         $paymentMethod
-     * @return string
-     * @throws PaymentErrorException
-     * @throws PaymentFailedException
+     * @return arry
      */
     public function chargePayPalReferenceAgreementPayment(
         $due,
@@ -76,9 +74,11 @@ class PaypalPaymentGateway
     ) {
         if(empty($paymentMethod['method']['agreement_id']))
         {
-            throw new NotFoundException(
-                'Payment failed due to an internal error. Please contact support.', 4000
-            );
+            return
+                [
+                    'status'  => false,
+                    'message' => 'Payment failed due to an internal error:: empty agreement id.'
+                ];
         }
 
         try
@@ -95,12 +95,17 @@ class PaypalPaymentGateway
         }
         catch(CreateReferenceTransactionException $cardException)
         {
-            throw new NotFoundException(
-                'Payment failed. Please make sure your PayPal account is properly funded.'
-            );
+            return
+                [
+                    'status'  => false,
+                    'message' => 'Payment failed. Please make sure your PayPal account is properly funded::' . $cardException->getMessage()
+                ];
         }
 
-        return $payPalTransactionId;
+        return [
+            'status'  => true,
+            'results' => $payPalTransactionId
+        ];
     }
 
     /** Create paypal billing record and return the id
@@ -119,10 +124,18 @@ class PaypalPaymentGateway
         }
         catch(CreateBillingAgreementException $e)
         {
-            return null;
+            return
+                [
+                    'status'  => false,
+                    'message' => 'Paypal billing agreement creation failed. ::' . $e->getMessage()
+                ];
         }
 
-        return $agreementId;
+        return
+            [
+                'status'  => true,
+                'results' => $agreementId
+            ];
     }
 
     /** Create a paypal billing agreement id based on express checkout token
@@ -132,9 +145,7 @@ class PaypalPaymentGateway
      */
     public function handlingData(array $data)
     {
-        return [
-            'billingAgreementId' => $this->createPaypalBilling($data['expressCheckoutToken'], $data['paymentGateway'])
-        ];
+        return  $this->createPaypalBilling($data['expressCheckoutToken'], $data['paymentGateway']);
     }
 
     /** Create a new Paypal refund transaction.

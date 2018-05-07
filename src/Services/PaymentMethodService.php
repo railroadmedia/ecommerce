@@ -200,6 +200,11 @@ class PaymentMethodService
                 'stripeCustomerMapping' => $stripeCustomerMapping
             ]);
 
+        if(!$data['status'])
+        {
+            return $data;
+        }
+
         if($methodType == self::CREDIT_CARD_PAYMENT_METHOD_TYPE)
         {
             $methodId = $this->creditCardRepository->create([
@@ -227,11 +232,11 @@ class PaymentMethodService
         }
         else if($methodType == self::PAYPAL_PAYMENT_METHOD_TYPE)
         {
-            if($data['billingAgreementId'])
+            if($data['results'])
             {
                 $methodId = $this->paypalBillingRepository->create(
                     [
-                        'agreement_id'           => $data['billingAgreementId'],
+                        'agreement_id'           => $data['results'],
                         'express_checkout_token' => $expressCheckoutToken,
                         'address_id'             => $addressId,
                         'payment_gateway_id'     => $paymentGateway['id'],
@@ -270,7 +275,10 @@ class PaymentMethodService
             $this->assignPaymentMethodToCustomer($customerId, $paymentMethodId);
         }
 
-        return $this->paymentMethodRepository->getById($paymentMethodId);
+        $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
+        $paymentMethod['status'] = true;
+
+        return $paymentMethod;
     }
 
     /** Delete a payment method and the corresponding credit card/paypal billing
@@ -399,7 +407,7 @@ class PaymentMethodService
                 ]);
 
             $this->paypalBillingRepository->updateOrCreate(['id' => $paymentMethod['method']['id']], [
-                'agreement_id'           => $paymentData['billingAgreementId'],
+                'agreement_id'           => $paymentData['results'],
                 'express_checkout_token' => $data['express_checkout_token'],
                 'address_id'             => $data['address_id'],
                 'payment_gateway_id'     => $paymentGateway['id'],

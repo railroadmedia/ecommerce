@@ -33,7 +33,7 @@ class JsonResponse implements Responsable
     public function transformResult()
     {
         return [
-            'status' => 'ok',
+            'status' => ($this->results['status'])??'ok',
             'code' => $this->code,
             'results' => $this->results,
         ];

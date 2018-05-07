@@ -1,9 +1,11 @@
 <?php
+
 namespace Railroad\Ecommerce\ExternalHelpers;
 
 use Railroad\Ecommerce\Services\ConfigService;
 use Stripe\Card;
 use Stripe\Customer;
+use Stripe\Error\InvalidRequest;
 use Stripe\Token;
 
 class Stripe
@@ -16,9 +18,9 @@ class Stripe
     }
 
     /**
-     * @param string $number
-     * @param integer $expirationMonth
-     * @param integer $expirationYear
+     * @param string      $number
+     * @param integer     $expirationMonth
+     * @param integer     $expirationYear
      * @param string|null $cvc
      * @param string|null $cardholderName
      * @param string|null $city
@@ -45,17 +47,17 @@ class Stripe
         return $this->stripe->token->create(
             [
                 "card" => [
-                    "number" => $number,
-                    "exp_month" => $expirationMonth,
-                    "exp_year" => $expirationYear,
-                    "cvc" => $cvc,
-                    "name" => $cardholderName,
-                    "address_city" => $city,
+                    "number"          => $number,
+                    "exp_month"       => $expirationMonth,
+                    "exp_year"        => $expirationYear,
+                    "cvc"             => $cvc,
+                    "name"            => $cardholderName,
+                    "address_city"    => $city,
                     "address_country" => $country,
-                    "address_line1" => $addressLineOne,
-                    "address_line2" => $addressLineTwo,
-                    "address_state" => $state,
-                    "address_zip" => $zip,
+                    "address_line1"   => $addressLineOne,
+                    "address_line2"   => $addressLineTwo,
+                    "address_state"   => $state,
+                    "address_zip"     => $zip,
                 ]
             ]
         );
@@ -69,7 +71,6 @@ class Stripe
     {
         return $this->stripe->token->retrieve($tokenString);
     }
-
 
     /**
      * @param array $attributes
@@ -93,7 +94,7 @@ class Stripe
 
     /**
      * @param Customer $customer
-     * @param Token $token
+     * @param Token    $token
      * @throws CardException
      * @return Card|StdClass
      */
@@ -104,7 +105,7 @@ class Stripe
 
     /**
      * @param Customer $customer
-     * @param string $cardId
+     * @param string   $cardId
      * @return stdClass|Card
      */
     public function retrieveCard(Customer $customer, $cardId)
@@ -112,12 +113,11 @@ class Stripe
         return $customer->sources->retrieve($cardId);
     }
 
-
     /**
      * @param Customer $customer
-     * @param string $cardId
-     * @param $expirationMonth
-     * @param $expirationYear
+     * @param string   $cardId
+     * @param          $expirationMonth
+     * @param          $expirationYear
      * @return \Stripe\ExternalAccount
      */
     public function updateCard(
@@ -132,16 +132,16 @@ class Stripe
         );
 
         $card->exp_month = $expirationMonth;
-        $card->exp_year = $expirationYear;
+        $card->exp_year  = $expirationYear;
 
         return $card->save();
     }
 
     /**
-     * @param integer $amount (in minimum possible currency) (cents)
+     * @param integer  $amount (in minimum possible currency) (cents)
      * @param Customer $customer
-     * @param Card $card
-     * @param string $currency
+     * @param Card     $card
+     * @param string   $currency
      * @throws CardException
      * @return Charge
      */
@@ -153,12 +153,36 @@ class Stripe
     ) {
         return $this->stripe->charge->create(
             [
-                'amount' => $amount,
+                'amount'   => $amount,
                 'currency' => $currency,
                 'customer' => $customer,
-                'source' => $card
+                'source'   => $card
             ]
         );
+
+        try
+        {
+            $charge = $this->stripe->charge->create(
+                [
+                    'amount'   => $amount,
+                    'currency' => $currency,
+                    'customer' => $customer,
+                    'source'   => $card
+                ]
+            );
+
+            return [
+                'status'  => true,
+                'results' => $charge
+            ];
+        }
+        catch(InvalidRequest $e)
+        {
+            return [
+                'status'  => false,
+                'message' => $e->getMessage()
+            ];
+        }
     }
 
     /**
@@ -172,8 +196,8 @@ class Stripe
 
     /**
      * @param integer $amount (cents)
-     * @param string $chargeId
-     * @param string $reason (must be one of: duplicate, fraudulent, requested_by_customer
+     * @param string  $chargeId
+     * @param string  $reason (must be one of: duplicate, fraudulent, requested_by_customer
      * @return Refund
      */
     public function createRefund($amount, $chargeId, $reason = '')

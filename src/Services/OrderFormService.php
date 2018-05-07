@@ -189,6 +189,10 @@ class OrderFormService
             $userId,
             $customerId);
 
+        if(!$paymentMethod['status']){
+            return $paymentMethod;
+        }
+
         $payment = $this->paymentService->store(
             $cartItemsWithTaxesAndCosts['totalDue'],
             $cartItemsWithTaxesAndCosts['totalDue'],
