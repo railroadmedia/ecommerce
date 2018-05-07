@@ -41,7 +41,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     private $paypal;
 
     CONST VALID_VISA_CARD_NUM          = '4242424242424242';
-    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-72P52550GY904530C';
+    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-3SD08272ET778933R';
 
     protected function setUp()
     {
