@@ -277,7 +277,7 @@ class OrderFormServiceTest extends EcommerceTestCase
     {
         $userId         = $this->createAndLogInNewUser();
         $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
-        $shippingCost   = $this->shippingCostFactory->store($shippingOption['id'], 0, 10, 5.50);
+        $shippingCost   = $this->shippingCostFactory->store($shippingOption['id'], 0.1, 100, 5.50);
         $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $product = $this->productFactory->store(ConfigService::$brand,
@@ -293,7 +293,7 @@ class OrderFormServiceTest extends EcommerceTestCase
             SubscriptionService::INTERVAL_TYPE_YEARLY,
             1);
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $this->cartFactory->addCartItem($product['name'],
             $product['description'],
             1,
             $product['price'],
@@ -304,6 +304,32 @@ class OrderFormServiceTest extends EcommerceTestCase
             $product['weight'],
             [
                 'product-id' => $product['id']
+            ]);
+
+        $product2 = $this->productFactory->store(ConfigService::$brand,
+            $this->faker->word,
+            $this->faker->word,
+            5,
+            ProductService::TYPE_PRODUCT,
+            1,
+            $this->faker->text,
+            $this->faker->url,
+            1,
+            10,
+            null,
+            null);
+
+        $this->cartFactory->addCartItem($product2['name'],
+            $product2['description'],
+            2,
+            $product2['price'],
+            $product2['is_physical'],
+            $product2['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product2['weight'],
+            [
+                'product-id' => $product2['id']
             ]);
 
         $billingCountry = 'Canada';
@@ -337,8 +363,22 @@ class OrderFormServiceTest extends EcommerceTestCase
 
         $this->assertDatabaseHas(ConfigService::$tableSubscription,
             [
+                'order_id'       => $order['id'],
+                'type'           => SubscriptionService::SUBSCRIPTION_TYPE,
+                'brand'          => ConfigService::$brand,
+                'user_id'        => $userId,
+                'product_id'     => $product['id'],
+                'start_date'     => Carbon::now()->toDateTimeString(),
+                'paid_until'     => Carbon::now()->addYear($product['subscription_interval_count'])->toDateTimeString(),
+                'interval_type'  => $product['subscription_interval_type'],
+                'interval_count' => $product['subscription_interval_count'],
+                'created_on'     => Carbon::now()->toDateTimeString(),
+            ]);
+
+        $this->assertDatabaseMissing(ConfigService::$tableSubscription,
+            [
                 'order_id' => $order['id'],
-                'type'     => SubscriptionService::SUBSCRIPTION_TYPE
+                'product_id' => $product2['id']
             ]);
     }
 }

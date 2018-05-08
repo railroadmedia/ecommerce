@@ -39,7 +39,8 @@ class OrderRepository extends RepositoryBase
                 ConfigService::$tableProduct . '.is_physical',
                 ConfigService::$tableProduct . '.type as product_type',
                 ConfigService::$tableProduct . '.subscription_interval_type',
-                ConfigService::$tableProduct . '.subscription_interval_count'
+                ConfigService::$tableProduct . '.subscription_interval_count',
+                ConfigService::$tableProduct . '.price as initial_price'
             )
             ->join(ConfigService::$tableOrderItem, ConfigService::$tableOrder . '.id', '=', ConfigService::$tableOrderItem . '.order_id')
             ->join(ConfigService::$tableProduct, ConfigService::$tableOrderItem . '.product_id', '=', ConfigService::$tableProduct . '.id')

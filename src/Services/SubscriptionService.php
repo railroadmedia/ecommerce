@@ -17,6 +17,16 @@ class SubscriptionService
      */
     private $orderService;
 
+    /**
+     * @var \Railroad\Ecommerce\Services\TaxService
+     */
+    private $taxService;
+
+    /**
+     * @var \Railroad\Ecommerce\Services\CartAddressService
+     */
+    private $cartAddressService;
+
     //subscription types
     CONST SUBSCRIPTION_TYPE = 'subscription';
     CONST PAYMENT_PLAN_TYPE = 'payment plan';
@@ -30,10 +40,16 @@ class SubscriptionService
      *
      * @param \Railroad\Ecommerce\Repositories\SubscriptionRepository $subscriptionRepository
      */
-    public function __construct(SubscriptionRepository $subscriptionRepository, OrderService $orderService)
-    {
+    public function __construct(
+        SubscriptionRepository $subscriptionRepository,
+        OrderService $orderService,
+        TaxService $taxService,
+        CartAddressService $cartAddressService
+    ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->orderService           = $orderService;
+        $this->taxService             = $taxService;
+        $this->cartAddressService     = $cartAddressService;
     }
 
     /**
@@ -109,6 +125,7 @@ class SubscriptionService
     {
         $subscription = [];
         $order        = $this->orderService->getOrderWithItems($orderId);
+        $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
 
         foreach($order as $orderItem)
         {
@@ -130,8 +147,8 @@ class SubscriptionService
                 {
                     $paidUntil->addYears($orderItem['subscription_interval_count']);
                 }
-                //TODO: calculate subscription tax
-                $subscriptionTax = 0;
+
+                $subscriptionTax = $this->taxService->getTaxTotal($orderItem['initial_price'], $billingAddress['country'], $billingAddress['region']);
 
                 $subscription[] = $this->store(self::SUBSCRIPTION_TYPE,
                     $orderItem['user_id'],
@@ -141,7 +158,7 @@ class SubscriptionService
                     true,
                     Carbon::now(),
                     $paidUntil,
-                    $orderItem['due'] + $subscriptionTax,
+                    $orderItem['initial_price'] + $subscriptionTax,
                     $subscriptionTax,
                     0,
                     $orderItem['subscription_interval_type'],
@@ -150,7 +167,6 @@ class SubscriptionService
                     1);
             }
         }
-
         return $subscription;
     }
 }
