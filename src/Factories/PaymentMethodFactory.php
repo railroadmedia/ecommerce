@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Factories;
 
 
 use Faker\Generator;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 
 class PaymentMethodFactory extends PaymentMethodService
@@ -42,7 +41,7 @@ class PaymentMethodFactory extends PaymentMethodService
                 $this->faker->randomNumber(4),
                 $this->faker->name,
                 $this->faker->creditCardType,
-                'EC-3SD08272ET778933R',
+                'EC-07Y51763KD5814604',
                 rand(),
                 'EUR',
                 request()->user() ? request()->user()->id : null,

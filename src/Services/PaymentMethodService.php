@@ -350,6 +350,9 @@ class PaymentMethodService
                     'stripeUserMapping'     => $stripeUserMapping,
                     'stripeCustomerMapping' => $stripeCustomerMapping
                 ]);
+            if (!$paymentData['status']){
+                return $paymentData;
+            }
 
             $methodId = $this->creditCardRepository->create([
                 'type'                 => self::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -405,6 +408,9 @@ class PaymentMethodService
                     'userId'               => $data['user_id'] ?? null,
                     'customerId'           => $data['customer_id'] ?? null
                 ]);
+            if (!$paymentData['status']){
+                return $paymentData;
+            }
 
             $this->paypalBillingRepository->updateOrCreate(['id' => $paymentMethod['method']['id']], [
                 'agreement_id'           => $paymentData['results'],

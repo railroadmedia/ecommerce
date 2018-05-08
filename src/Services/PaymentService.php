@@ -108,11 +108,12 @@ class PaymentService
 
         $gateway     = $this->gatewayFactory->create($paymentMethod['method_type']);
         $paymentData = $gateway->chargePayment($due, $paid, $paymentMethod, $type, ($currency ?? $paymentMethod['currency']));
-      if(!$paymentData['status'])
-      {
-          return $paymentData;
-      }
-        $paymentId   = $this->paymentRepository->create($paymentData);
+        if(!$paymentData['status'])
+        {
+            return $paymentData;
+        }
+
+        $paymentId = $this->paymentRepository->create($paymentData);
 
         // Save the link between order and payment and save the paid amount on order row
         if($orderId)
@@ -149,7 +150,7 @@ class PaymentService
      * @param integer $orderId
      * @param integer $paymentId
      */
-    private function createOrderPayment($orderId, $paymentId)
+    public function createOrderPayment($orderId, $paymentId)
     {
         $this->orderPaymentRepository->create([
             'order_id'   => $orderId,
@@ -163,7 +164,7 @@ class PaymentService
      * @param integer $subscriptionId
      * @param integer $paymentId
      */
-    private function createSubscriptionPayment($subscriptionId, $paymentId)
+    public function createSubscriptionPayment($subscriptionId, $paymentId)
     {
         $this->subscriptionPaymentRepository->create([
             'subscription_id' => $subscriptionId,

@@ -45,7 +45,8 @@ class PaypalPaymentGateway
 
         try
         {
-            $paymentData['external_id']       = $this->chargePayPalReferenceAgreementPayment($due, $paymentMethod, $currency);
+            $charge = $this->chargePayPalReferenceAgreementPayment($due, $paymentMethod, $currency);
+            $paymentData['external_id']       = $charge['results'];
             $paymentData['paid']              = $due;
             $paymentData['external_provider'] = 'paypal';
             $paymentData['status']            = true;

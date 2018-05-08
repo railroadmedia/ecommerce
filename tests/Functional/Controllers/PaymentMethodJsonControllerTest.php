@@ -41,7 +41,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     private $paypal;
 
     CONST VALID_VISA_CARD_NUM          = '4242424242424242';
-    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-3SD08272ET778933R';
+    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-07Y51763KD5814604';
 
     protected function setUp()
     {
@@ -446,11 +446,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $cardYear       = $this->faker->creditCardExpirationDate->format('Y');
         $cardMonth      = $this->faker->month;
         $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
+        $expirationDate = $this->faker->creditCardExpirationDate;
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],
-            $this->faker->creditCardExpirationDate->format('Y'),
-            $this->faker->creditCardExpirationDate->format('m'),
+            $expirationDate->format('Y'),
+            $expirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,

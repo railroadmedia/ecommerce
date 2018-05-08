@@ -189,7 +189,8 @@ class OrderFormService
             $userId,
             $customerId);
 
-        if(!$paymentMethod['status']){
+        if(!$paymentMethod['status'])
+        {
             return $paymentMethod;
         }
 
@@ -211,7 +212,8 @@ class OrderFormService
                 $userId,
                 $customerId,
                 $shippingAddressDB,
-                $billingAddressDB
+                $billingAddressDB,
+                $payment['id']
             );
 
             $this->orderItemFulfillmentService->store($order['id']);
@@ -222,14 +224,15 @@ class OrderFormService
         return $payment;
     }
 
-    /**
-     * @param $cartItemsWithTaxesAndCosts
-     * @param $userId
-     * @param $customerId
-     * @param $shippingAddressDB
-     * @param $billingAddressDB
+    /** Save the order with the order items and the link between order and payment.
+     * @param array $cartItemsWithTaxesAndCosts
+     * @param null|integer $userId
+     * @param null|integer $customerId
+     * @param integer $shippingAddressDB
+     * @param integer $billingAddressDB
+     * @param integer $paymentId
      */
-    private function saveOrderAndOrderItems($cartItemsWithTaxesAndCosts, $userId, $customerId, $shippingAddressDB, $billingAddressDB)
+    private function saveOrderAndOrderItems($cartItemsWithTaxesAndCosts, $userId, $customerId, $shippingAddressDB, $billingAddressDB, $paymentId)
     {
         //save a new order
         $order = $this->orderService->store(
@@ -254,6 +257,9 @@ class OrderFormService
                 $item['itemShippingCosts'],
                 $item['totalPrice']);
         }
+
+        //save the link between payment and order
+        $this->paymentService->createOrderPayment($order['id'], $paymentId);
 
         return $order;
     }
@@ -286,7 +292,7 @@ class OrderFormService
      */
     private function setBillingAddress($billingCountry, $billingZip, $billingRegion, $userId, $customerId)
     {
-//set the billing address on session
+        //set the billing address on session
         $billingAddress = $this->cartAddressService->setAddress([
             'country' => $billingCountry,
             'region'  => $billingRegion,
@@ -326,7 +332,7 @@ class OrderFormService
      */
     private function setShippingAddress($shippingFirstName, $shippingLastName, $shippingAddressLine1, $shippingAddressLine2, $shippingCity, $shippingRegion, $shippingCountry, $shippingZip, $userId, $customerId)
     {
-//set the shipping address on session
+        //set the shipping address on session
         $shippingAddress = $this->cartAddressService->setAddress([
             'firstName'       => $shippingFirstName,
             'lastName'        => $shippingLastName,

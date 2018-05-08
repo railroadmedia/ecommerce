@@ -19,6 +19,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
 
     CONST VALID_VISA_CARD_NUM = '4242424242424242';
+    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-07Y51763KD5814604';
 
     /**
      * @var PaymentMethodFactory
@@ -137,7 +138,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
 
     public function test_customer_store_paypal_payment_method()
     {
-        $expressCheckoutToken = 'EC-72P52550GY904530C';
+        $expressCheckoutToken = self::VALID_EXPRESS_CHECKOUT_TOKEN;
         $addressId = $this->faker->randomNumber();
         $customerId = rand();
         $currency = $this->faker->currencyCode;
@@ -307,7 +308,6 @@ class PaymentMethodServiceTest extends EcommerceTestCase
                 'user_id' => $userId,
                 'customer_id' => null
             ]);
-
         $this->assertEquals($paymentMethod['id'] + 1, $updated['method']['id']);
     }
 
@@ -315,11 +315,12 @@ class PaymentMethodServiceTest extends EcommerceTestCase
     {
         $userId = rand();
         $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe','stripe_1');
+        $expirationDate = $this->faker->creditCardExpirationDate;
 
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id'],
-            rand(2018, 2022),
-            rand(01, 12),
+            $expirationDate->format('Y'),
+            $expirationDate->format('m'),
             self::VALID_VISA_CARD_NUM,
             $this->faker->randomNumber(4),
             $this->faker->name,
@@ -335,7 +336,7 @@ class PaymentMethodServiceTest extends EcommerceTestCase
                 'update_method' => PaymentMethodService::UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL,
                 'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
                 'agreement_id' => rand(),
-                'express_checkout_token' => 'EC-72P52550GY904530C',
+                'express_checkout_token' => self::VALID_EXPRESS_CHECKOUT_TOKEN,
                 'address_id' => rand(),
                 'user_id' => $userId,
                 'payment_gateway' => $paymentGatewayPaypal['id']
