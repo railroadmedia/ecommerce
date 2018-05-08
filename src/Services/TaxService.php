@@ -4,21 +4,6 @@ namespace Railroad\Ecommerce\Services;
 
 class TaxService
 {
-    /**
-     * @var \Railroad\Ecommerce\Services\CartAddressService
-     */
-    private $cartAddressService;
-
-    /**
-     * TaxService constructor.
-     *
-     * @param \Railroad\Ecommerce\Services\CartAddressService $cartAddressService
-     */
-    public function __construct(\Railroad\Ecommerce\Services\CartAddressService $cartAddressService)
-    {
-        $this->cartAddressService = $cartAddressService;
-    }
-
     /** Calculate the tax rate based on country and region
      *
      * @param string $country
