@@ -217,7 +217,7 @@ class OrderFormService
             );
 
             $this->orderItemFulfillmentService->store($order['id']);
-            $subscriptions = $this->subscriptionService->createOrderSubscription($order['id']);
+            $subscriptions = $this->subscriptionService->createOrderSubscription($order['id'], $paymentMethod['currency']);
 
             //save the link between payment and subscription
             foreach($subscriptions as $subscription){

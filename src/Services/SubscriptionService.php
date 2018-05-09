@@ -70,6 +70,7 @@ class SubscriptionService
      * @param $intervalCount
      * @param $totalCyclesDue
      * @param $totalCyclesPaid
+     * @param $currency
      * @return array
      */
     public function store(
@@ -84,6 +85,7 @@ class SubscriptionService
         $totalPricePerPayment,
         $taxPerPayment,
         $shippingPerPayment,
+        $currency,
         $intervalType,
         $intervalCount,
         $totalCyclesDue,
@@ -105,6 +107,7 @@ class SubscriptionService
                 'total_price_per_payment' => $totalPricePerPayment,
                 'tax_per_payment'         => $taxPerPayment,
                 'shipping_per_payment'    => $shippingPerPayment,
+                'currency'                => $currency,
                 'interval_type'           => $intervalType,
                 'interval_count'          => $intervalCount,
                 'total_cycles_due'        => $totalCyclesDue,
@@ -121,7 +124,7 @@ class SubscriptionService
         return $this->subscriptionRepository->getById($id);
     }
 
-    public function createOrderSubscription($orderId)
+    public function createOrderSubscription($orderId, $currency)
     {
         $subscription   = [];
         $order          = $this->orderService->getOrderWithItems($orderId);
@@ -147,6 +150,7 @@ class SubscriptionService
                     $orderItem['initial_price'] + $subscriptionTax,
                     $subscriptionTax,
                     0,
+                    $currency,
                     $orderItem['subscription_interval_type'],
                     $orderItem['subscription_interval_count'],
                     null,

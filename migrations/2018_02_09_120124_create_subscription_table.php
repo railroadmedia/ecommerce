@@ -35,6 +35,7 @@ class CreateSubscriptionTable extends Migration
                 $table->decimal('total_price_per_payment');
                 $table->decimal('tax_per_payment')->nullable();
                 $table->decimal('shipping_per_payment')->nullable();
+                $table->string('currency')->index();
                 $table->string('interval_type')->index();
                 $table->integer('interval_count');
                 $table->integer('total_cycles_due')->nullable();
