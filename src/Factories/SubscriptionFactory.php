@@ -42,16 +42,16 @@ class SubscriptionFactory extends SubscriptionService
                 request()->user() ? null : rand(),
                 rand(),
                 rand(),
-                $this->faker->boolean(),
+                true,
                 Carbon::now()->toDateTimeString(),
                 Carbon::now()->toDateTimeString(),
-                rand(),
-                rand(),
-                rand(),
-                $this->faker->word,
-                rand(),
-                rand(),
-                rand()
+                rand(1,100),
+                rand(0,10),
+                rand(0,10),
+                SubscriptionService::INTERVAL_TYPE_YEARLY,
+                rand(1,2),
+                null,
+                1
             ];
 
         return parent::store(...$parameters);

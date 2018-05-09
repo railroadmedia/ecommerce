@@ -35,7 +35,6 @@ class PaymentJsonController extends Controller
             $request->get('due'),
             $request->get('paid'),
             $request->get('refunded'),
-            $request->get('type'),
             $request->get('payment_method_id'),
             $request->get('currency'),
             $request->get('order_id'),

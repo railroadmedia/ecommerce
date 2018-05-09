@@ -123,8 +123,8 @@ class SubscriptionService
 
     public function createOrderSubscription($orderId)
     {
-        $subscription = [];
-        $order        = $this->orderService->getOrderWithItems($orderId);
+        $subscription   = [];
+        $order          = $this->orderService->getOrderWithItems($orderId);
         $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
 
         foreach($order as $orderItem)
@@ -132,21 +132,7 @@ class SubscriptionService
             //check if order items it's a subscription or product
             if($orderItem['product_type'] == ProductService::TYPE_SUBSCRIPTION)
             {
-
-                //calculate paid until
-                $paidUntil = Carbon::now();
-                if($orderItem['subscription_interval_type'] == self::INTERVAL_TYPE_DAILY)
-                {
-                    $paidUntil->addDays($orderItem['subscription_interval_count']);
-                }
-                elseif($orderItem['subscription_interval_type'] == self::INTERVAL_TYPE_MONTHLY)
-                {
-                    $paidUntil->addMonths($orderItem['subscription_interval_count']);
-                }
-                elseif($orderItem['subscription_interval_type'] == self::INTERVAL_TYPE_YEARLY)
-                {
-                    $paidUntil->addYears($orderItem['subscription_interval_count']);
-                }
+                $paidUntil = $this->calculateNextBillDate($orderItem['subscription_interval_type'], $orderItem['subscription_interval_count']);
 
                 $subscriptionTax = $this->taxService->getTaxTotal($orderItem['initial_price'], $billingAddress['country'], $billingAddress['region']);
 
@@ -167,6 +153,46 @@ class SubscriptionService
                     1);
             }
         }
+
         return $subscription;
+    }
+
+    public function update($id, $data)
+    {
+        $subscription = $this->getById($id);
+
+        if(empty($subscription))
+        {
+            return null;
+        }
+
+        $data['updated_on'] = Carbon::now()->toDateTimeString();
+        $this->subscriptionRepository->update($id, $data);
+
+        return $this->getById($id);
+    }
+
+    /**
+     * @param $orderItem
+     * @return \Carbon\Carbon
+     */
+    public function calculateNextBillDate($intervalType, $intervalCount)
+    {
+        $paidUntil = Carbon::now();
+
+        switch($intervalType)
+        {
+            case self::INTERVAL_TYPE_DAILY:
+                $paidUntil->addDays($intervalCount);
+                break;
+            case self::INTERVAL_TYPE_MONTHLY:
+                $paidUntil->addMonths($intervalCount);
+                break;
+            case self::INTERVAL_TYPE_YEARLY:
+                $paidUntil->addYears($intervalCount);
+                break;
+        }
+
+        return $paidUntil;
     }
 }

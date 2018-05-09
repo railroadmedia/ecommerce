@@ -703,7 +703,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertEquals(1, $results->decodeResponseJson()['results']['id']);
-        $this->assertEquals(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE, $results->decodeResponseJson()['results']['type']);
     }
 
     public function test_submit_order_invalid_credit_card_number()

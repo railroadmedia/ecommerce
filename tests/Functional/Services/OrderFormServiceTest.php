@@ -178,7 +178,7 @@ class OrderFormServiceTest extends EcommerceTestCase
             [
                 'due'    => $product1['price'] + $product2['price'],
                 'paid'   => $product1['price'] + $product2['price'],
-                'type'   => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'type'   => PaymentService::ORDER_PAYMENT_TYPE,
                 'status' => 1
             ]);
 

@@ -82,8 +82,9 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $payment = $this->paymentFactory->store( $this->faker->numberBetween(0,9000),
             0,
             0,
-            PaymentService::ORDER_PAYMENT_TYPE,
-            $paymentMethod['id']);
+            $paymentMethod['id'],
+            'usd',
+            null);
 
         $refundAmount = $this->faker->numberBetween(0, $payment['due']);
 
@@ -114,7 +115,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $payment = $this->paymentFactory->store( $this->faker->numberBetween(0,1000),
             0,
             0,
-            PaymentService::ORDER_PAYMENT_TYPE,
             $paymentMethod['id']);
 
         $refundAmount = $this->faker->numberBetween(0, $payment['due']);
@@ -161,7 +161,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $payment = $this->paymentFactory->store( $this->faker->numberBetween(0,9000),
             0,
             0,
-            PaymentService::ORDER_PAYMENT_TYPE,
             null,
             null,
             true,

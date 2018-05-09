@@ -52,7 +52,6 @@ class RefundServiceTest extends EcommerceTestCase
         $payment = $this->paymentFactory->store($this->faker->randomNumber(2),
             0,
             0,
-            $this->faker->randomElement([PaymentService::RENEWAL_PAYMENT_TYPE, PaymentService::ORDER_PAYMENT_TYPE]),
             $paymentMethod['id']);
 
         $refundedAmount = $this->faker->numberBetween(1, $payment['due']);
@@ -100,7 +99,6 @@ class RefundServiceTest extends EcommerceTestCase
         $payment = $this->paymentFactory->store($due,
             $due,
             0,
-            $this->faker->randomElement([PaymentService::RENEWAL_PAYMENT_TYPE, PaymentService::ORDER_PAYMENT_TYPE]),
             $paymentMethod['id']);
 
         $refundedAmount = rand(1, $due - 1);
@@ -147,7 +145,6 @@ class RefundServiceTest extends EcommerceTestCase
         $payment = $this->paymentFactory->store($this->faker->randomNumber(2),
             0,
             0,
-            $this->faker->randomElement([PaymentService::RENEWAL_PAYMENT_TYPE, PaymentService::ORDER_PAYMENT_TYPE]),
             $paymentMethod['id']);
 
         $refundedAmount = $this->faker->randomElement([0, $this->faker->numberBetween($payment['due'] + 1, 999)]);
@@ -166,7 +163,6 @@ class RefundServiceTest extends EcommerceTestCase
         $payment = $this->paymentFactory->store($this->faker->randomNumber(2),
             0,
             0,
-            $this->faker->randomElement([PaymentService::RENEWAL_PAYMENT_TYPE, PaymentService::ORDER_PAYMENT_TYPE]),
             $paymentMethod['id']);
 
         $refundedAmount = $this->faker->randomElement([0, $this->faker->numberBetween($payment['due'] + 1, 999)]);

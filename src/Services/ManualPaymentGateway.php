@@ -8,12 +8,11 @@ use Carbon\Carbon;
 class ManualPaymentGateway
 {
 
-    public function chargePayment($due, $paid, $method, $type, $currency)
+    public function chargePayment($due, $paid, $method, $currency)
     {
         $paymentData = [
             'due'               => $due,
             'paid'              => $paid,
-            'type'              => $type,
             'external_provider' => PaymentService::MANUAL_PAYMENT_TYPE,
             'status'            => true,
             'payment_method_id' => null,

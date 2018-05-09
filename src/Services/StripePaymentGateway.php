@@ -34,11 +34,10 @@ class StripePaymentGateway
         $this->paymentGatewayRepository = $paymentGatewayRepository;
     }
 
-    public function chargePayment($due, $paid, $paymentMethod, $type, $currency)
+    public function chargePayment($due, $paid, $paymentMethod, $currency)
     {
         $paymentData = [
             'due'               => $due,
-            'type'              => $type,
             'payment_method_id' => $paymentMethod['id'],
             'external_provider' => ConfigService::$creditCard['external_provider'],
             'created_on'        => Carbon::now()->toDateTimeString()

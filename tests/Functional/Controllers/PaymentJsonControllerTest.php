@@ -39,19 +39,18 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE, $paymentGateway['id']);
 
         $due = $this->faker->numberBetween(0,1000);
-        $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
+
         $results = $this->call('PUT', '/payment', [
             'payment_method_id' => $paymentMethod['id'],
             'currency' => 'cad',
-            'due' => $due,
-            'type' => $type
+            'due' => $due
         ]);
 
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset([
             'due' => $due,
-            'type' => $type,
+            'type' => PaymentService::ORDER_PAYMENT_TYPE,
             'payment_method_id' => $paymentMethod['id'],
             'created_on' => Carbon::now()->toDateTimeString(),
             'updated_on' => null
@@ -78,18 +77,16 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             null,
             rand());
         $due = $this->faker->numberBetween(0,1000);
-        $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $results = $this->call('PUT', '/payment', [
             'payment_method_id' => $paymentMethod['id'],
-            'due' => $due,
-            'type' => $type
+            'due' => $due
         ]);
 
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset([
             'due' => $due,
-            'type' => $type,
+            'type' => PaymentService::ORDER_PAYMENT_TYPE,
             'currency' => 'CAD',
             'payment_method_id' => $paymentMethod['id'],
             'created_on' => Carbon::now()->toDateTimeString(),
@@ -103,11 +100,10 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = rand();
         $due = $this->faker->numberBetween(0,1000);
-        $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
+
         $results = $this->call('PUT', '/payment', [
             'payment_method_id' => $paymentMethod,
-            'due' => $due,
-            'type' => $type
+            'due' => $due
         ]);
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals(
@@ -125,18 +121,16 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = null;
         $due = $this->faker->numberBetween(0,1000);
-        $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $results = $this->call('PUT', '/payment', [
             'payment_method_id' => $paymentMethod,
             'due' => $due,
-            'currency' => $this->faker->currencyCode,
-            'type' => $type
+            'currency' => $this->faker->currencyCode
         ]);
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset([
             'due' => $due,
-            'type' => $type,
+            'type' => PaymentService::ORDER_PAYMENT_TYPE,
             'payment_method_id' => $paymentMethod,
             'status' => true,
             'external_provider' => PaymentService::MANUAL_PAYMENT_TYPE,
@@ -154,11 +148,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id']);
         $due = $this->faker->numberBetween(0,1000);
-        $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $results = $this->call('PUT', '/payment', [
             'payment_method_id' => $paymentMethod['id'],
             'due' => $due,
-            'type' => $type,
             'order_id' => rand()
         ]);
 
@@ -177,15 +169,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->createAndLogInNewUser();
 
         $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
-
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             $paymentGateway['id']);
         $due = $this->faker->numberBetween(0,1000);
-        $type = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $results = $this->call('PUT', '/payment', [
             'payment_method_id' => $paymentMethod['id'],
             'due' => $due,
-            'type' => $type,
             'subscription_id' => rand()
         ]);
 

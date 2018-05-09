@@ -43,6 +43,11 @@ class PaymentService
     private $gatewayFactory;
 
     /**
+     * @var \Railroad\Ecommerce\Services\SubscriptionService
+     */
+    private $subscriptionService;
+
+    /**
      * @var OrderService
      */
     private $orderService;
@@ -65,7 +70,8 @@ class PaymentService
         LocationService $locationService,
         PaymentMethodRepository $paymentMethodRepository,
         OrderService $orderService,
-        GatewayFactory $gatewayFactory
+        GatewayFactory $gatewayFactory,
+        SubscriptionService $subscriptionService
     ) {
         $this->paymentRepository             = $paymentRepository;
         $this->orderPaymentRepository        = $orderPaymentRepository;
@@ -74,6 +80,7 @@ class PaymentService
         $this->paymentMethodRepository       = $paymentMethodRepository;
         $this->orderService                  = $orderService;
         $this->gatewayFactory                = $gatewayFactory;
+        $this->subscriptionService           = $subscriptionService;
     }
 
     /** Create a new payment; link the order/subscription; if the payment method id not exist set the payment type as 'manual' and the status true.
@@ -82,21 +89,19 @@ class PaymentService
      * @param numeric      $due
      * @param numeric|null $paid
      * @param numeric|null $refunded
-     * @param string|null  $type
      * @param numeric|null $paymentMethodId
      * @param numeric|null $orderId
-     * @param array        $subscriptionIds
+     * @param numeric|null $subscriptionId
      * @return array
      */
     public function store(
         $due,
         $paid,
         $refunded,
-        $type,
         $paymentMethodId = null,
         $currency = null,
         $orderId = null,
-        $subscriptionIds = []
+        $subscriptionId = null
     ) {
         // if the currency not exist on the request and the payment it's manual, get the currency with Location package, based on ip address
         if((!$currency) && (is_null($paymentMethodId)))
@@ -106,15 +111,30 @@ class PaymentService
 
         $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
 
-        $gateway     = $this->gatewayFactory->create($paymentMethod['method_type']);
-        $paymentData = $gateway->chargePayment($due, $paid, $paymentMethod, $type, ($currency ?? $paymentMethod['currency']));
+        $gateway = $this->gatewayFactory->create($paymentMethod['method_type']);
+
+        $paymentData = $gateway->chargePayment($due, $paid, $paymentMethod, ($currency ?? $paymentMethod['currency']));
         if(!$paymentData['status'])
         {
             return $paymentData;
         }
 
+        $paymentData['type'] = (!empty($subscriptionId)) ? (self::RENEWAL_PAYMENT_TYPE) : (self::ORDER_PAYMENT_TYPE);
+
         $paymentId = $this->paymentRepository->create($paymentData);
 
+        if(!empty($subscriptionId))
+        {
+            $subscription = $this->subscriptionService->getById($subscriptionId);
+
+            //update subscription total cycles paid and next bill date
+            $this->subscriptionService->update($subscriptionId, [
+                'total_cycles_paid' => $subscription['total_cycles_paid'] + 1,
+                'paid_until' => $this->subscriptionService->calculateNextBillDate($subscription['interval_type'], $subscription['interval_count'])
+            ]);
+
+            $this->createSubscriptionPayment($subscriptionId, $paymentId);
+        }
         // Save the link between order and payment and save the paid amount on order row
         if($orderId)
         {
@@ -122,14 +142,6 @@ class PaymentService
             $this->orderService->update($orderId, [
                 'paid' => $paid
             ]);
-        }
-
-        if(!empty($subscriptionIds))
-        {
-            foreach($subscriptionIds as $subscription)
-            {
-                $this->createSubscriptionPayment($subscription['id'], $paymentId);
-            }
         }
 
         return $this->getById($paymentId);

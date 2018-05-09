@@ -28,7 +28,6 @@ class PaymentCreateRequest extends FormRequest
             'due' => 'required|numeric',
             'paid' => 'numeric|nullable',
             'refunded' => 'numeric|nullable',
-            'type' => 'required',
             'payment_method_id' => 'numeric|nullable|exists:'.ConfigService::$tablePaymentMethod.',id',
             'order_id' => 'numeric|exists:'.ConfigService::$tableOrder.',id',
             'subscription_id'  => 'numeric|exists:'.ConfigService::$tableSubscription.',id',

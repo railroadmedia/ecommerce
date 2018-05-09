@@ -41,7 +41,6 @@ class PaymentServiceTest extends EcommerceTestCase
         $due              = 10;
         $paid             = null;
         $refunded         = null;
-        $type             = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $message          = '';
         $paymentGateway   = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', 'paypal_1');
         $paymentMethod    = $this->paymentMethodFactory->store(PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE, $paymentGateway['id']);
@@ -50,7 +49,6 @@ class PaymentServiceTest extends EcommerceTestCase
             $due,
             $paid,
             $refunded,
-            $type,
             $paymentMethod['id'],
             $paymentMethod['currency']);
 
@@ -58,7 +56,7 @@ class PaymentServiceTest extends EcommerceTestCase
             'due'               => $due,
             'paid'              => $due,
             'refunded'          => $refunded,
-            'type'              => $type,
+            'type'              => PaymentService::ORDER_PAYMENT_TYPE,
             'status'            => 1,
             'message'           => $message,
             'payment_method_id' => $paymentMethod['id'],
@@ -78,16 +76,15 @@ class PaymentServiceTest extends EcommerceTestCase
         $due              = $this->faker->numberBetween(1, 2000);
         $paid             = null;
         $refunded         = null;
-        $type             = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $paymentMethod    = null;
 
-        $payment = $this->classBeingTested->store($due, $paid, $refunded, $type, $paymentMethod, 'CAD');
+        $payment = $this->classBeingTested->store($due, $paid, $refunded, $paymentMethod, 'CAD');
 
         $this->assertArraySubset([
             'due'               => $due,
             'paid'              => $paid,
             'refunded'          => $refunded,
-            'type'              => $type,
+            'type'              => PaymentService::ORDER_PAYMENT_TYPE,
             'external_provider' => PaymentService::MANUAL_PAYMENT_TYPE,
             'external_id'       => '',
             'status'            => 1,
@@ -109,11 +106,6 @@ class PaymentServiceTest extends EcommerceTestCase
         $due              = $this->faker->numberBetween(1, 2000);
         $paid             = null;
         $refunded         = null;
-        $type             = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
-        $externalProvider = '';
-        $externalId       = '';
-        $status           = '';
-        $message          = '';
         $paymentMethod    = null;
         $orderId          = rand();
         $currency         = $this->faker->currencyCode;
@@ -122,7 +114,6 @@ class PaymentServiceTest extends EcommerceTestCase
             $due,
             $paid,
             $refunded,
-            $type,
             $paymentMethod,
             $currency,
             $orderId);
@@ -131,11 +122,11 @@ class PaymentServiceTest extends EcommerceTestCase
             'due'               => $due,
             'paid'              => $paid,
             'refunded'          => $refunded,
-            'type'              => $type,
+            'type'              => PaymentService::ORDER_PAYMENT_TYPE,
             'external_provider' => PaymentService::MANUAL_PAYMENT_TYPE,
             'external_id'       => '',
             'status'            => true,
-            'message'           => $message,
+            'message'           => '',
             'currency'          => $currency,
             'payment_method_id' => null,
             'created_on'        => Carbon::now()->toDateTimeString(),
@@ -163,28 +154,26 @@ class PaymentServiceTest extends EcommerceTestCase
         $due              = $this->faker->numberBetween(1, 2000);
         $paid             = null;
         $refunded         = null;
-        $type             = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
         $paymentMethod    = null;
         $orderId          = null;
-        $subscriptionId   = ['id' => rand()];
+        $subscriptionId   = rand();
         $currency         = $this->faker->currencyCode;
 
         $payment = $this->classBeingTested->store(
             $due,
             $paid,
             $refunded,
-            $type,
             $paymentMethod,
             $currency,
             $orderId,
-            [$subscriptionId]
+            $subscriptionId
         );
 
         $this->assertArraySubset([
             'due'               => $due,
             'paid'              => $paid,
             'refunded'          => $refunded,
-            'type'              => $type,
+            'type'              => PaymentService::RENEWAL_PAYMENT_TYPE,
             'external_provider' => PaymentService::MANUAL_PAYMENT_TYPE,
             'external_id'       => '',
             'status'            => true,
@@ -217,8 +206,6 @@ class PaymentServiceTest extends EcommerceTestCase
         $due              = $this->faker->numberBetween(1, 2000);
         $paid             = null;
         $refunded         = null;
-        $type             = $this->faker->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]);
-
         $paymentGateway   = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
         $paymentMethod    = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE, $paymentGateway['id']);
 
@@ -226,7 +213,6 @@ class PaymentServiceTest extends EcommerceTestCase
             $due,
             $paid,
             $refunded,
-            $type,
             $paymentMethod['id'],
             $paymentMethod['currency']);
 
@@ -234,7 +220,7 @@ class PaymentServiceTest extends EcommerceTestCase
             'due'               => $due,
             'paid'              => $due,
             'refunded'          => $refunded,
-            'type'              => $type,
+            'type'              => PaymentService::ORDER_PAYMENT_TYPE,
             'status'            => 1,
             'message'           => '',
             'payment_method_id' => $paymentMethod['id'],
