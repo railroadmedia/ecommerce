@@ -199,4 +199,14 @@ class SubscriptionService
 
         return $paidUntil;
     }
+
+    /** Get an array with all the active due subscriptions.
+     * @return array
+     */
+    public function renewalDueSubscriptions()
+    {
+        $dueSubcriptions = $this->subscriptionRepository->getDueSubscriptions();
+
+        return $dueSubcriptions;
+    }
 }

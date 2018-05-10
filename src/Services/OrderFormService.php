@@ -198,7 +198,6 @@ class OrderFormService
             $cartItemsWithTaxesAndCosts['totalDue'],
             $cartItemsWithTaxesAndCosts['totalDue'],
             0,
-            $paymentType,
             $paymentMethod['id'],
             $paymentMethod['currency'],
             null,
