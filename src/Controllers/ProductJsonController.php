@@ -2,29 +2,43 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\ProductCreateRequest;
 use Railroad\Ecommerce\Requests\ProductUpdateRequest;
 use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
 use Railroad\Ecommerce\Responses\JsonResponse;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ProductService;
-use Railroad\RemoteStorage\Services\ConfigService;
+use Railroad\Permissions\Services\PermissionService;
 
 class ProductJsonController extends Controller
 {
     private $productService;
 
     /**
+     * @var \Railroad\Ecommerce\Repositories\ProductRepository
+     */
+    private $productRepository;
+
+    /**
+     * @var \Railroad\Permissions\Services\PermissionService
+     */
+    private $permissionService;
+
+    /**
      * ProductJsonController constructor.
      *
      * @param $productService
      */
-    public function __construct(ProductService $productService)
+    public function __construct( ProductRepository $productRepository, PermissionService $permissionService)
     {
-        $this->productService = $productService;
+        $this->productRepository = $productRepository;
+        $this->permissionService = $permissionService;
     }
 
     /** Pull paginated products
@@ -53,39 +67,13 @@ class ProductJsonController extends Controller
      */
     public function store(ProductCreateRequest $request)
     {
-        $product = $this->productService->store(
-            $request->get('brand'),
-            $request->get('name'),
-            $request->get('sku'),
-            $request->get('price'),
-            $request->get('type'),
-            $request->get('active'),
-            $request->get('description'),
-            $request->get('thumbnail_url'),
-            $request->get('is_physical'),
-            $request->get('weight'),
-            $request->get('subscription_interval_type'),
-            $request->get('subscription_interval_count'),
-            $request->get('stock')
-        );
+        if (!$this->permissionService->is(auth()->id(), 'admin')) {
+            throw new NotAllowedException('This action is unauthorized.');
+        }
 
-        return new JsonResponse($product, 200);
-    }
-
-    /** Update a product based on product id and return it in JSON format
-     *
-     * @param ProductUpdateRequest $request
-     * @param integer              $productId
-     * @return JsonResponse
-     */
-    public function update(ProductUpdateRequest $request, $productId)
-    {
-        //update product with the data sent on the request
-        $product = $this->productService->update(
-            $productId,
-            $request->only(
-                [
-                    'brand',
+        $product = $this->productRepository->create(
+            array_merge(
+                $request->only([
                     'name',
                     'sku',
                     'price',
@@ -98,14 +86,53 @@ class ProductJsonController extends Controller
                     'subscription_interval_type',
                     'subscription_interval_count',
                     'stock'
+                ]),
+                [
+                    'brand'      => $request->input('brand', ConfigService::$brand),
+                    'created_on' => Carbon::now()->toDateTimeString()
                 ]
-            )
-        );
+            ));
 
-        //if the update method response it's null the product not exist; we throw the proper exception
-        throw_if(
-            is_null($product),
-            new NotFoundException('Update failed, product not found with id: ' . $productId)
+        return new JsonResponse($product, 200);
+    }
+
+    /** Update a product based on product id and return it in JSON format
+     *
+     * @param ProductUpdateRequest $request
+     * @param integer              $productId
+     * @return JsonResponse
+     */
+    public function update(ProductUpdateRequest $request, $productId)
+    {
+        $product = $this->productRepository->read($productId);
+
+        if (!$this->permissionService->is(auth()->id(), 'admin') || (is_null($product))) {
+            throw new NotFoundException('Update failed, product not found with id: ' . $productId);
+        }
+
+        //update product with the data sent on the request
+        $product = $this->productRepository->update(
+            $productId,
+            array_merge(
+                $request->only(
+                    [
+                        'brand',
+                        'name',
+                        'sku',
+                        'price',
+                        'type',
+                        'active',
+                        'description',
+                        'thumbnail_url',
+                        'is_physical',
+                        'weight',
+                        'subscription_interval_type',
+                        'subscription_interval_count',
+                        'stock'
+                    ]
+                ), [
+                'updated_on' => Carbon::now()->toDateTimeString()
+            ])
         );
 
         return new JsonResponse($product, 201);
@@ -120,13 +147,14 @@ class ProductJsonController extends Controller
      */
     public function delete($productId)
     {
-        $results = $this->productService->delete($productId);
+        $product = $this->productRepository->read($productId);
 
-        //if the delete method response it's null the product not exist; we throw the proper exception
-        throw_if(
-            is_null($results),
-            new NotFoundException('Delete failed, product not found with id: ' . $productId)
-        );
+        if (!$this->permissionService->is(auth()->id(), 'admin') || (is_null($product))) {
+            throw new NotFoundException('Delete failed, product not found with id: ' . $productId);
+        }
+
+        $results = $this->productRepository->destroy($productId);
+
 
         throw_if(
             ($results === -1),

@@ -5,28 +5,25 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Railroad\Ecommerce\Factories\ProductFactory;
+use Railroad\Ecommerce\Faker\Factory;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ProductService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ProductControllerTest extends EcommerceTestCase
 {
-    /**
-     * @var ProductFactory
-     */
-    protected $productFactory;
-
     protected function setUp()
     {
         parent::setUp();
-        $this->productFactory = $this->app->make(ProductFactory::class);
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
     }
 
     public function test_store_product()
     {
-        $userId = $this->createAndLoginAdminUser();
-
-        $product = ['name' => $this->faker->word,
+        $product = [
+            'brand' => ConfigService::$brand,
+            'name' => $this->faker->word,
             'sku' => $this->faker->word,
             'price' => $this->faker->numberBetween(15.97, 15.99),
             'type' => ProductService::TYPE_PRODUCT,
@@ -57,9 +54,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_store_subscription()
     {
-        $userId = $this->createAndLoginAdminUser();
-
         $subscription = [
+            'brand' => ConfigService::$brand,
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
             'price' => $this->faker->numberBetween(15.97, 15.99),
@@ -92,8 +88,6 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_on_store_product()
     {
-        $userId = $this->createAndLoginAdminUser();
-
         $results = $this->call('PUT', '/product/');
 
         $this->assertEquals(422, $results->status());
@@ -135,8 +129,6 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_for_new_subscription()
     {
-        $userId = $this->createAndLoginAdminUser();
-
         $results = $this->call('PUT', '/product/', [
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
@@ -166,9 +158,9 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_sku_unique()
     {
-        $userId = $this->createAndLoginAdminUser();
-
-        $product = $this->productFactory->store();
+        $product = $this->faker->product();
+        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
+            ->insertGetId($product);
 
         $results = $this->call('PUT', '/product/', [
             'name' => $this->faker->word,
@@ -195,8 +187,6 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_weight_for_physical_products()
     {
-        $userId = $this->createAndLoginAdminUser();
-
         $results = $this->call('PUT', '/product/', [
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
@@ -222,7 +212,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_update_product_inexistent()
     {
-        $userId = $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('is')->willReturn(true);
 
         $randomProductId = rand();
         $results = $this->call('PATCH', '/product/' . $randomProductId);
@@ -240,18 +230,20 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_update_product()
     {
-        $userId = $this->createAndLoginAdminUser();
+        $product = $this->faker->product();
+        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
+            ->insertGetId($product);
 
-        $product = $this->productFactory->store();
         $newDescription = $this->faker->text;
 
-        $results = $this->call('PATCH', '/product/' . $product['id'], [
+        $results = $this->call('PATCH', '/product/' . $productId, [
             'description' => $newDescription
         ]);
 
         $jsonResponse = $results->decodeResponseJson();
 
         $this->assertEquals(201, $results->getStatusCode());
+        $product['id'] = $productId;
         $product['description'] = $newDescription;
         $product['updated_on'] = Carbon::now()->toDateTimeString();
 
@@ -260,12 +252,13 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_on_update_product()
     {
-        $userId = $this->createAndLoginAdminUser();
+        $product = $this->faker->product();
+        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
+            ->insertGetId($product);
 
-        $product = $this->productFactory->store();
         $newDescription = $this->faker->text;
 
-        $results = $this->call('PATCH', '/product/' . $product['id'], [
+        $results = $this->call('PATCH', '/product/' . $productId, [
             'type' => ProductService::TYPE_SUBSCRIPTION
         ]);
 
@@ -288,8 +281,6 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_missing_product()
     {
-        $userId = $this->createAndLoginAdminUser();
-
         $randomId = rand();
         $results = $this->call('DELETE', '/product/' . $randomId);
 
@@ -300,13 +291,15 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product_when_exists_product_order()
     {
-        $userId = $this->createAndLoginAdminUser();
+        $userId = $this->createAndLogInNewUser();
 
-        $product = $this->productFactory->store();
+        $product = $this->faker->product();
+        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
+            ->insertGetId($product);
 
         $orderItem1 = [
             'order_id' => 1,
-            'product_id' => $product['id'],
+            'product_id' => $productId,
             'quantity' => 2,
             'initial_price' => 5,
             'discount' => 0,
@@ -319,7 +312,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         $orderItemId = $this->query()->table(ConfigService::$tableOrderItem)->insertGetId($orderItem1);
 
-        $results = $this->call('DELETE', '/product/' . $product['id']);
+        $results = $this->call('DELETE', '/product/' . $productId);
 
         $this->assertEquals(403, $results->status());
         $this->assertEquals('Not allowed.', json_decode($results->getContent())->error->title, true);
@@ -328,14 +321,16 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product_when_exists_product_discounts()
     {
-        $userId = $this->createAndLoginAdminUser();
+        $userId = $this->createAndLogInNewUser();
 
-        $product = $this->productFactory->store();
+        $product = $this->faker->product();
+        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
+            ->insertGetId($product);
 
         $discount = [
             'name' => $this->faker->word,
             'type' => $this->faker->word,
-            'product_id' => $product['id'],
+            'product_id' => $productId,
             'min' => 2,
             'max' => 10,
             'discount_id' => rand(),
@@ -344,7 +339,7 @@ class ProductControllerTest extends EcommerceTestCase
         ];
 
         $this->query()->table(ConfigService::$tableDiscountCriteria)->insertGetId($discount);
-        $results = $this->call('DELETE', '/product/' . $product['id']);
+        $results = $this->call('DELETE', '/product/' . $productId);
 
         $this->assertEquals(403, $results->status());
         $this->assertEquals('Not allowed.', json_decode($results->getContent())->error->title, true);
@@ -353,16 +348,16 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product()
     {
-        $userId = $this->createAndLoginAdminUser();
+        $product = $this->faker->product();
+        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
+            ->insertGetId($product);
 
-        $product = $this->productFactory->store();
-
-        $results = $this->call('DELETE', '/product/' . $product['id']);
+        $results = $this->call('DELETE', '/product/' . $productId);
 
         $this->assertEquals(204, $results->status());
         $this->assertDatabaseMissing(ConfigService::$tableProduct,
             [
-                'id' => $product['id'],
+                'id' => $productId,
             ]);
     }
 
@@ -381,7 +376,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_admin_get_all_paginated_products()
     {
-        $userId = $this->createAndLoginAdminUser();
+        $userId = $this->createAndLogInNewUser();
 
         $page = 2;
         $limit = 3;
@@ -390,7 +385,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         for($i=0; $i<$nrProducts; $i++)
         {
-            $products[] = $this->productFactory->store();
+            $products[] = $this->faker->product();
         }
 
         $expectedContent =
@@ -416,7 +411,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_upload_thumb()
     {
-        $userId = $this->createAndLoginAdminUser();
+        $userId = $this->createAndLogInNewUser();
 
         $filenameAbsolute = $this->faker->image(sys_get_temp_dir());
         $filenameRelative = $this->getFilenameRelativeFromAbsolute($filenameAbsolute);
@@ -446,7 +441,7 @@ class ProductControllerTest extends EcommerceTestCase
         for($i=0; $i<$nrProducts; $i++)
         {
             if($i%2==0) {
-                $products[] = $this->productFactory->store(ConfigService::$brand,
+                $products[] = $this->faker->product(ConfigService::$brand,
                     $this->faker->word,
                     $this->faker->word,
                     $this->faker->numberBetween(1, 2000),
@@ -458,7 +453,7 @@ class ProductControllerTest extends EcommerceTestCase
                     ),
                     true);
             }else {
-                $this->productFactory->store(ConfigService::$brand,
+                $this->faker->product(ConfigService::$brand,
                     $this->faker->word,
                     $this->faker->word,
                     $this->faker->numberBetween(1, 2000),

@@ -6,6 +6,7 @@ use Illuminate\Database\Events\StatementPrepared;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use PDO;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
+use Railroad\Ecommerce\Decorators\ProductDecorator;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -62,6 +63,11 @@ class EcommerceServiceProvider extends ServiceProvider
         $this->app->validator->resolver(function ($translator, $data, $rules, $messages) {
             return new CustomValidationRules($translator, $data, $rules, $messages);
         });
+
+        config()->set(
+            'resora.decorators.product',
+            [ProductDecorator::class]
+        );
     }
 
     private function setupConfig()

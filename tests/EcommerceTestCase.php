@@ -10,6 +10,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Ecommerce\Factories\AccessFactory;
 use Railroad\Ecommerce\Factories\UserAccessFactory;
+use Railroad\Ecommerce\Faker\Factory;
+use Railroad\Ecommerce\Faker\Faker;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
@@ -17,6 +19,7 @@ use Railroad\Ecommerce\Repositories\RepositoryBase;
 use Railroad\Ecommerce\Tests\Resources\Models\User;
 use Railroad\Location\Providers\LocationServiceProvider;
 use Railroad\Permissions\Providers\PermissionsServiceProvider;
+use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
 use Webpatser\Countries\CountriesServiceProvider;
 
@@ -25,7 +28,7 @@ class EcommerceTestCase extends BaseTestCase
 {
 
     /**
-     * @var Generator
+     * @var \Railroad\Ecommerce\Faker\Faker
      */
     protected $faker;
 
@@ -49,6 +52,11 @@ class EcommerceTestCase extends BaseTestCase
      */
     protected $userAccessFactory;
 
+    /**
+     * @var \PHPUnit\Framework\MockObject\MockObject
+     */
+    protected $permissionServiceMock;
+
     protected function setUp()
     {
         parent::setUp();
@@ -57,11 +65,16 @@ class EcommerceTestCase extends BaseTestCase
         $this->artisan('migrate');
         $this->artisan('cache:clear');
 
-        $this->faker = $this->app->make(Generator::class);
+        $this->faker = Factory::create();
         $this->databaseManager = $this->app->make(DatabaseManager::class);
         $this->authManager = $this->app->make(AuthManager::class);
-        $this->accessFactory = $this->app->make(AccessFactory::class);
-        $this->userAccessFactory = $this->app->make(UserAccessFactory::class);
+      //  $this->accessFactory = $this->app->make(AccessFactory::class);
+      //  $this->userAccessFactory = $this->app->make(UserAccessFactory::class);
+
+        $this->permissionServiceMock = $this->getMockBuilder(PermissionService::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->app->instance(PermissionService::class, $this->permissionServiceMock);
 
         RepositoryBase::$connectionMask = null;
 
@@ -106,7 +119,6 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
 
         $app['config']->set('permission.database_connection_name', $permissionConfig['database_connection_name']);
-        $app['config']->set('permission.connection_mask_prefix', $permissionConfig['connection_mask_prefix']);
 
         // setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
