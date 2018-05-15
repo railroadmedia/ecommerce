@@ -5,9 +5,10 @@ namespace Railroad\Ecommerce\Repositories;
 use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Repositories\QueryBuilders\ShippingQueryBuilder;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Queries\CachedQuery;
 use Railroad\Resora\Repositories\RepositoryBase;
 
-class ShippingRepository extends RepositoryBase
+class ShippingOptionRepository extends RepositoryBase
 {
     /**
      * Determines whether inactive shipping options will be pulled or not.
@@ -17,16 +18,11 @@ class ShippingRepository extends RepositoryBase
     public static $pullInactiveShippingOptions = true;
 
     /**
-     * @return Builder
+     * @return CachedQuery|$this
      */
-    public function query()
+    protected function newQuery()
     {
-        return (new ShippingQueryBuilder(
-            $this->connection(),
-            $this->connection()->getQueryGrammar(),
-            $this->connection()->getPostProcessor()
-        ))
-            ->from(ConfigService::$tableShippingOption);
+        return (new CachedQuery($this->connection()))->from(ConfigService::$tableShippingOption);
     }
 
     /** Get the first active shipping cost based on country and total weight

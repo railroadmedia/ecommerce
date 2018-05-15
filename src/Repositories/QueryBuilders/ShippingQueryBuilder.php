@@ -2,7 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories\QueryBuilders;
 
-use Railroad\Ecommerce\Repositories\ShippingRepository;
+use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 
 class ShippingQueryBuilder extends QueryBuilder
@@ -30,7 +30,7 @@ class ShippingQueryBuilder extends QueryBuilder
      */
     public function restrictActive()
     {
-        if (!ShippingRepository::$pullInactiveShippingOptions) {
+        if (!ShippingOptionRepository::$pullInactiveShippingOptions) {
             $this->where(ConfigService::$tableShippingOption . '.active', 1);
         }
 

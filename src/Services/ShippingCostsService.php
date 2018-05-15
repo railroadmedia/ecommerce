@@ -5,7 +5,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Repositories\ShippingCostsRepository;
-use Railroad\Ecommerce\Repositories\ShippingRepository;
+use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 
 class ShippingCostsService
 {
@@ -15,7 +15,7 @@ class ShippingCostsService
     private $shippingCostsRepository;
 
     /**
-     * @var ShippingRepository
+     * @var ShippingOptionRepository
      */
     private $shippingRepository;
 
@@ -25,7 +25,7 @@ class ShippingCostsService
      */
     public function __construct(
         ShippingCostsRepository $shippingCostsRepository,
-        ShippingRepository $shippingRepository)
+        ShippingOptionRepository $shippingRepository)
     {
         $this->shippingCostsRepository = $shippingCostsRepository;
         $this->shippingRepository = $shippingRepository;

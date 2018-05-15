@@ -3,13 +3,13 @@
 namespace Railroad\Ecommerce\Services;
 
 
-use Railroad\Ecommerce\Repositories\ShippingRepository;
+use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 
 class ShippingService
 {
 
     /**
-     * @var ShippingRepository
+     * @var ShippingOptionRepository
      */
     private $shippingRepository;
 
@@ -17,7 +17,7 @@ class ShippingService
      * ShippingService constructor.
      * @param $shippingRepository
      */
-    public function __construct(ShippingRepository $shippingRepository)
+    public function __construct(ShippingOptionRepository $shippingRepository)
     {
         $this->shippingRepository = $shippingRepository;
     }

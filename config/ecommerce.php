@@ -97,4 +97,16 @@ return [
         \Illuminate\Session\Middleware\StartSession::class,
         \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
     ],
+
+    'role_abilities' => [
+        'administrator' => [
+            'create.payment_gateway',
+            'edit.payment_gateway',
+            'delete.payment_gateway',
+
+            'create.shipping_option',
+            'edit.shipping_option',
+            'delete.shipping_option',
+        ],
+    ]
 ];

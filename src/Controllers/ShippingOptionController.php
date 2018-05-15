@@ -2,25 +2,39 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Requests\ShippingOptionCreateRequest;
 use Railroad\Ecommerce\Requests\ShippingOptionUpdateRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;
-use Railroad\Ecommerce\Services\ShippingOptionService;
+use Railroad\Permissions\Services\PermissionService;
 
 class ShippingOptionController extends Controller
 {
-    private $shippingOptionService;
+    /**
+     * @var ShippingOptionRepository
+     */
+    private $shippingOptionRepository;
+
+    /**
+     * @var PermissionService
+     */
+    private $permissionService;
 
     /**
      * ShippingOptionController constructor.
      *
-     * @param $shippingOptionService
+     * @param ShippingOptionRepository $shippingOptionRepository
+     * @param PermissionService $permissionService
      */
-    public function __construct(ShippingOptionService $shippingOptionService)
-    {
-        $this->shippingOptionService = $shippingOptionService;
+    public function __construct(
+        ShippingOptionRepository $shippingOptionRepository,
+        PermissionService $permissionService
+    ) {
+        $this->shippingOptionRepository = $shippingOptionRepository;
+        $this->permissionService = $permissionService;
     }
 
     /** Create a new shipping option and return it in JSON format
@@ -30,33 +44,40 @@ class ShippingOptionController extends Controller
      */
     public function store(ShippingOptionCreateRequest $request)
     {
-        $shippingOption = $this->shippingOptionService->store(
-            $request->get('country'),
-            $request->get('priority'),
-            $request->get('active')
+        $this->permissionService->canOrThrow(auth()->id(), 'create.shipping_option');
+
+        $shippingOption = $this->shippingOptionRepository->create(
+            array_merge(
+                $request->only(
+                    [
+                        'country',
+                        'priority',
+                        'active',
+                    ]
+                )
+                ,
+                ['created_on' => Carbon::now()->toDateTimeString()]
+            )
         );
 
         return new JsonResponse($shippingOption, 200);
     }
 
-    /** Update a shipping option based on id and return it in JSON format or proper exception if the shipping option not exist
+    /**
+     * Update a shipping option based on id and return it in JSON format
+     * or proper exception if the shipping option not exist
      *
      * @param ShippingOptionUpdateRequest $request
-     * @param integer                     $shippingOptionId
+     * @param integer $shippingOptionId
      * @return JsonResponse
      */
     public function update(ShippingOptionUpdateRequest $request, $shippingOptionId)
     {
-        //update shipping option with the data sent on the request
-        $shippingOption = $this->shippingOptionService->update(
+        $this->permissionService->canOrThrow(auth()->id(), 'edit.shipping_option');
+
+        $shippingOption = $this->shippingOptionRepository->update(
             $shippingOptionId,
-            $request->only(
-                [
-                    'country',
-                    'priority',
-                    'active'
-                ]
-            )
+            $request->only(['country', 'priority', 'active',])
         );
 
         //if the update method response it's null the shipping option not exist; we throw the proper exception
@@ -76,11 +97,13 @@ class ShippingOptionController extends Controller
      */
     public function delete($shippingOptionId)
     {
-        $results = $this->shippingOptionService->delete($shippingOptionId);
+        $this->permissionService->canOrThrow(auth()->id(), 'delete.shipping_option');
+
+        $results = $this->shippingOptionRepository->destroy($shippingOptionId);
 
         //if the delete method response it's null the shipping option not exist; we throw the proper exception
         throw_if(
-            is_null($results),
+            !$results,
             new NotFoundException('Delete failed, shipping option not found with id: ' . $shippingOptionId)
         );
 

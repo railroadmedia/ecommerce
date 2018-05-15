@@ -3,97 +3,105 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Controllers\ShippingOptionController;
-use PHPUnit\Framework\TestCase;
-use Railroad\Ecommerce\Factories\ShippingOptionFactory;
+use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShippingOptionControllerTest extends EcommerceTestCase
 {
-
     /**
-     * @var ShippingOptionFactory
+     * @var ShippingOptionRepository
      */
-    protected $shippingOptionFactory;
+    protected $shippingOptionRepository;
 
     protected function setUp()
     {
         parent::setUp();
-        $this->shippingOptionFactory = $this->app->make(ShippingOptionFactory::class);
+
+        $this->shippingOptionRepository = $this->app->make(ShippingOptionRepository::class);
     }
 
     public function test_store()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
         $shippingOption = [
             'country' => $this->faker->country,
             'priority' => 1,
-            'active' => 1
+            'active' => 1,
         ];
+
         $results = $this->call('PUT', '/shipping-option/', $shippingOption);
 
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertEquals(array_merge(
-            [
-                'id' => 1,
-                'created_on' => Carbon::now()->toDateTimeString(),
-                'updated_on' => null
-            ]
-            , $shippingOption), $results->decodeResponseJson()['results']);
+        $this->assertEquals(
+            array_merge(
+                [
+                    'id' => 1,
+                    'created_on' => Carbon::now()->toDateTimeString(),
+                    'updated_on' => null,
+                ],
+                $shippingOption
+            ),
+            $results->decodeResponseJson()['results']
+        );
     }
 
     public function test_store_validation_errors()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = [
-            'country' => $this->faker->country,
-            'priority' => 1,
-            'active' => 1
-        ];
         $results = $this->call('PUT', '/shipping-option/');
 
         $this->assertEquals(422, $results->getStatusCode());
 
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "country",
-                "detail" => "The country field is required.",
+                [
+                    "source" => "country",
+                    "detail" => "The country field is required.",
+                ],
+                [
+                    "source" => "priority",
+                    "detail" => "The priority field is required.",
+                ],
+                [
+                    "source" => "active",
+                    "detail" => "The active field is required.",
+                ],
             ],
-            [
-                "source" => "priority",
-                "detail" => "The priority field is required.",
-            ],
-            [
-                "source" => "active",
-                "detail" => "The active field is required."
-            ]
-        ], $results->decodeResponseJson()['errors']);
+            $results->decodeResponseJson()['errors']
+        );
     }
 
     public function test_update_negative_priority()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionFactory->store();
-        $results = $this->call('PATCH', '/shipping-option/' . $shippingOption['id'],
-            [
-                'priority' => -1
-            ]);
-        $this->assertEquals(422, $results->getStatusCode());
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
 
-        $this->assertEquals([
+        $results = $this->call(
+            'PATCH',
+            '/shipping-option/' . $shippingOption['id'],
             [
-                "source" => "priority",
-                "detail" => "The priority must be at least 0.",
+                'priority' => -1,
             ]
-        ], $results->decodeResponseJson()['errors']);
+        );
+
+        $this->assertEquals(422, $results->getStatusCode());
+        $this->assertEquals(
+            [
+                [
+                    "source" => "priority",
+                    "detail" => "The priority must be at least 0.",
+                ],
+            ],
+            $results->decodeResponseJson()['errors']
+        );
     }
 
     public function test_update_not_existing_shipping_option()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
         $randomId = rand();
         $results = $this->call('PATCH', '/shipping-option/' . $randomId);
@@ -105,33 +113,42 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                 "title" => "Not found.",
                 "detail" => "Update failed, shipping option not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            ,
+            $results->decodeResponseJson()['error']
+        );
     }
 
     public function test_update()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionFactory->store($this->faker->country, $this->faker->randomNumber(), 0);
-        $results = $this->call('PATCH', '/shipping-option/' . $shippingOption['id'],
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
+
+        $results = $this->call(
+            'PATCH',
+            '/shipping-option/' . $shippingOption['id'],
             [
-                'active' => 1
-            ]);
+                'active' => 1,
+            ]
+        );
 
         $this->assertEquals(201, $results->getStatusCode());
-        $this->assertEquals([
-            'id' => $shippingOption['id'],
-            'country' => $shippingOption['country'],
-            'active' => 1,
-            'priority' => $shippingOption['priority'],
-            'created_on' => $shippingOption['created_on'],
-            'updated_on' => Carbon::now()->toDateTimeString()
-        ], $results->decodeResponseJson()['results']);
+        $this->assertEquals(
+            [
+                'id' => $shippingOption['id'],
+                'country' => $shippingOption['country'],
+                'active' => 1,
+                'priority' => $shippingOption['priority'],
+                'created_on' => $shippingOption['created_on'],
+                'updated_on' => null,
+            ],
+            $results->decodeResponseJson()['results']
+        );
     }
 
     public function test_delete_not_existing_shipping_option()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
         $randomId = rand();
         $results = $this->call('DELETE', 'shipping-option/' . $randomId);
@@ -142,14 +159,16 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                 "title" => "Not found.",
                 "detail" => "Delete failed, shipping option not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            ,
+            $results->decodeResponseJson()['error']
+        );
     }
 
     public function test_delete()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionFactory->store($this->faker->country, $this->faker->randomNumber(), 0);
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
         $results = $this->call('DELETE', '/shipping-option/' . $shippingOption['id']);
 
         $this->assertEquals(204, $results->getStatusCode());
