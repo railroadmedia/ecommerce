@@ -215,8 +215,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
             [
                 "title" => "Not found.",
                 "detail" => "Delete failed, shipping cost weight range not found with id: " . $randomId,
-            ]
-            ,
+            ],
             $results->decodeResponseJson()['error']
         );
     }
