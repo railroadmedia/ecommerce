@@ -5,6 +5,8 @@ namespace Railroad\Ecommerce\Factories;
 use Illuminate\Container\Container;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Ecommerce\Services\PaypalPaymentGateway;
+use Railroad\Ecommerce\Services\StripePaymentGateway;
 
 class GatewayFactory
 {
@@ -13,7 +15,7 @@ class GatewayFactory
      *
      * @param string $class Gateway name
      * @throws \Railroad\Ecommerce\Exceptions\NotFoundException    If no such gateway is found
-     * @return  An object of class $class is created and returned
+     * @return  PaypalPaymentGateway|StripePaymentGateway
      */
     public function create($class)
     {

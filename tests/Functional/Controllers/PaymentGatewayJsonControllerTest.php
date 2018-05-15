@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
-use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 

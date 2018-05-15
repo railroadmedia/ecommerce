@@ -23,9 +23,15 @@ class PaymentJsonControllerTest extends EcommerceTestCase
      */
     private $paymentGatewayFactory;
 
+    /**
+     * @var PaymentGatewayFactory
+     */
+    private $creditCardRepository;
+
     protected function setUp()
     {
         parent::setUp();
+
         $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
         $this->paymentGatewayFactory = $this->app->make(PaymentGatewayFactory::class);
     }
@@ -35,7 +41,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->createAndLogInNewUser();
 
         $paymentGateway =  $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
-
         $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE, $paymentGateway['id']);
 
         $due = $this->faker->numberBetween(0,1000);
