@@ -76,7 +76,7 @@ class EcommerceTestCase extends BaseTestCase
             ->getMock();
         $this->app->instance(PermissionService::class, $this->permissionServiceMock);
 
-        RepositoryBase::$connectionMask = null;
+//        RepositoryBase::$connectionMask = null;
 
         Carbon::setTestNow(Carbon::now());
     }

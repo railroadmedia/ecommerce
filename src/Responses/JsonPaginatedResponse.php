@@ -31,6 +31,7 @@ class JsonPaginatedResponse implements Responsable
      */
     public function toResponse($request)
     {
+
         return response()->json(
             $this->transformResult($request),
             $this->code

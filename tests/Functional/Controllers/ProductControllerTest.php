@@ -15,12 +15,12 @@ class ProductControllerTest extends EcommerceTestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->permissionServiceMock->method('is')->willReturn(true);
-
     }
 
     public function test_store_product()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
         $product = [
             'brand' => ConfigService::$brand,
             'name' => $this->faker->word,
@@ -37,9 +37,8 @@ class ProductControllerTest extends EcommerceTestCase
         $product['is_physical'] = 0;
 
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertEquals(array_merge(
+        $this->assertArraySubset(array_merge(
             [
-                'id' => 1,
                 'brand' => ConfigService::$brand,
                 'description' => null,
                 'thumbnail_url' => null,
@@ -54,6 +53,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_store_subscription()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
         $subscription = [
             'brand' => ConfigService::$brand,
             'name' => $this->faker->word,
@@ -73,9 +74,8 @@ class ProductControllerTest extends EcommerceTestCase
         $subscription['is_physical'] = 0;
 
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertEquals(array_merge(
+        $this->assertArraySubset(array_merge(
             [
-                'id' => 1,
                 'brand' => ConfigService::$brand,
                 'description' => null,
                 'thumbnail_url' => null,
@@ -88,6 +88,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_on_store_product()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
         $results = $this->call('PUT', '/product/');
 
         $this->assertEquals(422, $results->status());
@@ -129,6 +131,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_for_new_subscription()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
         $results = $this->call('PUT', '/product/', [
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
@@ -158,6 +162,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_sku_unique()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
         $product = $this->faker->product();
         $productId = $this->databaseManager->table(ConfigService::$tableProduct)
             ->insertGetId($product);
@@ -187,6 +193,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_weight_for_physical_products()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
         $results = $this->call('PUT', '/product/', [
             'name' => $this->faker->word,
             'sku' => $this->faker->word,
@@ -230,6 +238,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_update_product()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
         $product = $this->faker->product();
         $productId = $this->databaseManager->table(ConfigService::$tableProduct)
             ->insertGetId($product);
@@ -252,6 +262,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_on_update_product()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
         $product = $this->faker->product();
         $productId = $this->databaseManager->table(ConfigService::$tableProduct)
             ->insertGetId($product);
@@ -281,6 +293,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_missing_product()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
         $randomId = rand();
         $results = $this->call('DELETE', '/product/' . $randomId);
 
@@ -291,6 +305,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product_when_exists_product_order()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->faker->product();
@@ -310,7 +325,7 @@ class ProductControllerTest extends EcommerceTestCase
             'updated_on' => null
         ];
 
-        $orderItemId = $this->query()->table(ConfigService::$tableOrderItem)->insertGetId($orderItem1);
+        $orderItemId = $this->databaseManager->table(ConfigService::$tableOrderItem)->insertGetId($orderItem1);
 
         $results = $this->call('DELETE', '/product/' . $productId);
 
@@ -321,6 +336,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product_when_exists_product_discounts()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->faker->product();
@@ -338,7 +354,7 @@ class ProductControllerTest extends EcommerceTestCase
             'updated_on' => null
         ];
 
-        $this->query()->table(ConfigService::$tableDiscountCriteria)->insertGetId($discount);
+        $this->databaseManager->table(ConfigService::$tableDiscountCriteria)->insertGetId($discount);
         $results = $this->call('DELETE', '/product/' . $productId);
 
         $this->assertEquals(403, $results->status());
@@ -348,6 +364,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product()
     {
+        $this->permissionServiceMock->method('is')->willReturn(true);
         $product = $this->faker->product();
         $productId = $this->databaseManager->table(ConfigService::$tableProduct)
             ->insertGetId($product);
@@ -363,7 +380,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_get_all_products_paginated_when_empty()
     {
-
+        $this->permissionServiceMock->method('is')->willReturn(true);
         $results = $this->call('GET', '/product');
         $expectedResults = [
             'results' => [],
@@ -376,16 +393,23 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_admin_get_all_paginated_products()
     {
-        $userId = $this->createAndLogInNewUser();
+        $this->permissionServiceMock->method('is')->willReturn(true);
 
-        $page = 2;
-        $limit = 3;
+        $page = 1;
+        $limit = 30;
         $sort = 'id';
         $nrProducts = 10;
 
         for($i=0; $i<$nrProducts; $i++)
         {
-            $products[] = $this->faker->product();
+            $product = $this->faker->product();
+            $productId = $this->databaseManager->table(ConfigService::$tableProduct)
+                ->insertGetId($product);
+            $product['id'] = $productId;
+            $product['updated_on'] = null;
+            $product['order'] = [];
+            $product['discounts'] = [];
+            $products[$i] = $product;
         }
 
         $expectedContent =
@@ -394,7 +418,7 @@ class ProductControllerTest extends EcommerceTestCase
                 'code' => 200,
                 'page' => $page,
                 'limit' => $limit,
-                'results' => array_slice($products, 3, $limit),
+                'results' => $products,
                 'total_results' => $nrProducts
             ];
 
@@ -402,16 +426,17 @@ class ProductControllerTest extends EcommerceTestCase
             [
                 'page' => $page,
                 'limit' => $limit,
-                'sort' => $sort
+                'order_by_column' => $sort,
+                'order_by_direction' => 'asc'
             ]);
 
-        $responseContent = $results->decodeResponseJson();
-        $this->assertEquals($expectedContent, $responseContent);
+        $this->assertEquals($products, $results->decodeResponseJson('results'));
     }
 
     public function test_upload_thumb()
     {
         $userId = $this->createAndLogInNewUser();
+        $this->permissionServiceMock->method('is')->willReturn(true);
 
         $filenameAbsolute = $this->faker->image(sys_get_temp_dir());
         $filenameRelative = $this->getFilenameRelativeFromAbsolute($filenameAbsolute);
@@ -441,29 +466,21 @@ class ProductControllerTest extends EcommerceTestCase
         for($i=0; $i<$nrProducts; $i++)
         {
             if($i%2==0) {
-                $products[] = $this->faker->product(ConfigService::$brand,
-                    $this->faker->word,
-                    $this->faker->word,
-                    $this->faker->numberBetween(1, 2000),
-                    $this->faker->randomElement(
-                        [
-                            ProductService::TYPE_PRODUCT,
-                            ProductService::TYPE_SUBSCRIPTION
-                        ]
-                    ),
-                    true);
+                $product = $this->faker->product(['active' => true]);
+                $productId = $this->databaseManager->table(ConfigService::$tableProduct)
+                    ->insertGetId($product);
+                $product['id'] = $productId;
+                $product['updated_on'] = null;
+                $product['order'] = [];
+                $product['discounts'] = [];
+                $products[] = $product;
+
             }else {
-                $this->faker->product(ConfigService::$brand,
-                    $this->faker->word,
-                    $this->faker->word,
-                    $this->faker->numberBetween(1, 2000),
-                    $this->faker->randomElement(
-                        [
-                            ProductService::TYPE_PRODUCT,
-                            ProductService::TYPE_SUBSCRIPTION
-                        ]
-                    ),
-                    false);
+                $product = $this->faker->product(
+                   ['active' => false]);
+                $productId = $this->databaseManager->table(ConfigService::$tableProduct)
+                    ->insertGetId($product);
+                $inactiveProducts[] = $product;
             }
         }
 
@@ -481,19 +498,11 @@ class ProductControllerTest extends EcommerceTestCase
             [
                 'page' => $page,
                 'limit' => $limit,
-                'sort' => $sort
+                'order_by_column' => $sort,
+                'order_by_direction' => 'asc'
             ]);
 
         $responseContent = $results->decodeResponseJson();
         $this->assertEquals($expectedContent, $responseContent);
-
-
-    }
-    /**
-     * @return \Illuminate\Database\Connection
-     */
-    public function query()
-    {
-        return $this->databaseManager->connection();
     }
 }

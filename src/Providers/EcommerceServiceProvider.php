@@ -7,6 +7,7 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use PDO;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Decorators\ProductDecorator;
+use Railroad\Ecommerce\Decorators\ProductDiscountDecorator;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -66,7 +67,7 @@ class EcommerceServiceProvider extends ServiceProvider
 
         config()->set(
             'resora.decorators.product',
-            [ProductDecorator::class]
+            [ProductDecorator::class, ProductDiscountDecorator::class]
         );
     }
 

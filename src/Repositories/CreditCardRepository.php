@@ -6,16 +6,18 @@ namespace Railroad\Ecommerce\Repositories;
 use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Repositories\Traits\PaymentMethodTrait;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Queries\CachedQuery;
+use Railroad\Resora\Repositories\RepositoryBase;
 
 class CreditCardRepository extends RepositoryBase
 {
     use PaymentMethodTrait;
     /**
-     * @return Builder
+     * @return CachedQuery|$this
      */
-    protected function query()
+    protected function newQuery()
     {
-        return $this->connection()->table(ConfigService::$tableCreditCard);
+        return (new CachedQuery($this->connection()))->from(ConfigService::$tableCreditCard);
     }
 
     public function getById($id)

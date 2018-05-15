@@ -7,6 +7,8 @@ use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Repositories\QueryBuilders\PaymentMethodQueryBuilder;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Resora\Queries\CachedQuery;
+use Railroad\Resora\Repositories\RepositoryBase;
 
 class PaymentMethodRepository extends RepositoryBase
 {
@@ -41,7 +43,7 @@ class PaymentMethodRepository extends RepositoryBase
                                 CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
                                 UserPaymentMethodsRepository $userPaymentMethodsRepository)
     {
-        parent::__construct();
+      //  parent::__construct();
 
         $this->creditCardRepository = $creditCardRepository;
         $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
@@ -50,16 +52,11 @@ class PaymentMethodRepository extends RepositoryBase
     }
 
     /**
-     * @return Builder
+     * @return CachedQuery|$this
      */
-    protected function query()
+    protected function newQuery()
     {
-        return (new PaymentMethodQueryBuilder(
-            $this->connection(),
-            $this->connection()->getQueryGrammar(),
-            $this->connection()->getPostProcessor()
-        ))
-            ->from(ConfigService::$tablePaymentMethod);
+        return (new CachedQuery($this->connection()))->from(ConfigService::$tablePaymentMethod);
     }
 
     /** Get payment method by id

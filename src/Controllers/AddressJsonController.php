@@ -2,27 +2,40 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Requests\AddressCreateRequest;
 use Railroad\Ecommerce\Requests\AddressDeleteRequest;
 use Railroad\Ecommerce\Requests\AddressUpdateRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\AddressService;
+use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Permissions\Services\PermissionService;
 
 class AddressJsonController extends Controller
 {
-    private $addressService;
+    /**
+     * @var \Railroad\Ecommerce\Repositories\AddressRepository
+     */
+    private $addressRepository;
+
+    /**
+     * @var \Railroad\Permissions\Services\PermissionService
+     */
+    private $permissionService;
 
     /**
      * AddressJsonController constructor.
      *
      * @param $addressService
      */
-    public function __construct(AddressService $addressService)
+    public function __construct(AddressRepository $addressRepository, PermissionService $permissionService)
     {
-        $this->addressService = $addressService;
+        $this->addressRepository = $addressRepository;
+        $this->permissionService = $permissionService;
     }
 
     /** Call the method to store a new address based on request parameters.
@@ -33,19 +46,27 @@ class AddressJsonController extends Controller
      */
     public function store(AddressCreateRequest $request)
     {
-        $address = $this->addressService->store(
-            $request->get('type'),
-            $request->get('brand'),
-            $request->get('user_id'),
-            $request->get('customer_id'),
-            $request->get('first_name'),
-            $request->get('last_name'),
-            $request->get('street_line_1'),
-            $request->get('street_line_2'),
-            $request->get('city'),
-            $request->get('zip'),
-            $request->get('state'),
-            $request->get('country')
+        $address = $this->addressRepository->create(
+            array_merge(
+                $request->only([
+                    'type',
+                    'user_id',
+                    'customer_id',
+                    'first_name',
+                    'last_name',
+                    'street_line_1',
+                    'street_line_2',
+                    'city',
+                    'zip',
+                    'state',
+                    'country'
+                ]),
+                [
+                    'brand'      => $request->input('brand', ConfigService::$brand),
+                    'created_on' => Carbon::now()->toDateTimeString()
+                ]
+            )
+
         );
 
         return new JsonResponse($address, 200);
@@ -62,27 +83,41 @@ class AddressJsonController extends Controller
      */
     public function update(AddressUpdateRequest $request, $addressId)
     {
-        //update address with the data sent on the request
-        $address = $this->addressService->update(
-            $addressId,
-            $request->only([
-                'type',
-                'brand',
-                'first_name',
-                'last_name',
-                'street_line_1',
-                'street_line_2',
-                'city',
-                'zip',
-                'state',
-                'country'
-            ])
-        );
-
-        //if the update method response it's null the address not exist; we throw the proper exception
+        $address = $this->addressRepository->read($addressId);
         throw_if(
             is_null($address),
             new NotFoundException('Update failed, address not found with id: ' . $addressId)
+        );
+
+        throw_if(
+            (
+                (!$this->permissionService->is(auth()->id(), 'admin'))
+                && (auth()->id() !== intval($address['user_id']))
+                && ($request->get('customer_id') !== intval($address['customer_id']))
+            ),
+            new NotAllowedException('This action is unauthorized.')
+        );
+
+        //update address with the data sent on the request
+        $address = $this->addressRepository->update(
+            $addressId,
+            array_merge(
+                $request->only(
+                    [
+                        'type',
+                        'brand',
+                        'first_name',
+                        'last_name',
+                        'street_line_1',
+                        'street_line_2',
+                        'city',
+                        'zip',
+                        'state',
+                        'country'
+                    ]
+                ), [
+                'updated_on' => Carbon::now()->toDateTimeString()
+            ])
         );
 
         return new JsonResponse($address, 201);
@@ -99,13 +134,24 @@ class AddressJsonController extends Controller
      */
     public function delete($addressId, AddressDeleteRequest $request)
     {
-        $results = $this->addressService->delete($addressId);
-
-        //if the delete method response it's null the product not exist; we throw the proper exception
+        $address = $this->addressRepository->read($addressId);
         throw_if(
-            is_null($results),
+            is_null($address),
             new NotFoundException('Delete failed, address not found with id: ' . $addressId)
         );
+
+        throw_if(
+            (
+                (!$this->permissionService->is(auth()->id(), 'admin'))
+                && (auth()->id() !== intval($address['user_id']))
+                && ($request->get('customer_id') !== intval($address['customer_id']))
+            ),
+            new NotAllowedException('This action is unauthorized.')
+        );
+
+        $results = $this->addressRepository->destroy($addressId);
+
+        //if the delete method response it's null the product not exist; we throw the proper exception
 
         throw_if(
             ($results === -1),

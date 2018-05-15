@@ -6,7 +6,7 @@ use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Services\ConfigService;
 
-abstract class RepositoryBase
+abstract class RepositoryBase_old
 {
     /**
      * @var DatabaseManager

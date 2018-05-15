@@ -6,16 +6,17 @@ namespace Railroad\Ecommerce\Repositories;
 use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Repositories\Traits\PaymentMethodTrait;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Queries\CachedQuery;
+use Railroad\Resora\Repositories\RepositoryBase;
 
 class UserPaymentMethodsRepository extends RepositoryBase
 {
     use PaymentMethodTrait;
-
     /**
-     * @return Builder
+     * @return CachedQuery|$this
      */
-    protected function query()
+    protected function newQuery()
     {
-        return $this->connection()->table(ConfigService::$tableUserPaymentMethods);
+        return (new CachedQuery($this->connection()))->from(ConfigService::$tableUserPaymentMethods);
     }
 }

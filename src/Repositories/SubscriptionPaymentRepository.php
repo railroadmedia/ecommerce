@@ -5,15 +5,16 @@ namespace Railroad\Ecommerce\Repositories;
 
 use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Queries\CachedQuery;
+use Railroad\Resora\Repositories\RepositoryBase;
 
 class SubscriptionPaymentRepository extends RepositoryBase
 {
-
     /**
-     * @return Builder
+     * @return CachedQuery|$this
      */
-    protected function query()
+    protected function newQuery()
     {
-        return $this->connection()->table(ConfigService::$tableSubscriptionPayment);
+        return (new CachedQuery($this->connection()))->from(ConfigService::$tableSubscriptionPayment);
     }
 }
