@@ -91,10 +91,8 @@ class EcommerceTestCase extends BaseTestCase
     {
         // setup package config for testing
         $defaultConfig = require(__DIR__ . '/../config/ecommerce.php');
-        $permissionTableConfig = require(__DIR__ . '/../config/permissions.php');
         $locationConfig = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
         $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
-        $permissionConfig = require(__DIR__ . '/../vendor/railroad/permissions/config/permissions.php');
 
         $app['config']->set('ecommerce.database_connection_name', 'testbench');
         $app['config']->set('ecommerce.cache_duration', 60);
@@ -106,10 +104,6 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.paypal', $defaultConfig['paypal']);
         $app['config']->set('ecommerce.stripe', $defaultConfig['stripe']);
 
-        $app['config']->set('table_names', $permissionTableConfig['table_names']);
-        $app['config']->set('column_names', $permissionTableConfig['column_names']);
-        $app['config']->set('additional_join_for_owner', $permissionTableConfig['additional_join_for_owner']);
-
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
         $app['config']->set('location.api', $locationConfig['api']);
@@ -117,8 +111,6 @@ class EcommerceTestCase extends BaseTestCase
 
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
-
-        $app['config']->set('permission.database_connection_name', $permissionConfig['database_connection_name']);
 
         // setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
