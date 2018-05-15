@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-
-use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Decorators\Decorator;
 use Railroad\Resora\Queries\CachedQuery;

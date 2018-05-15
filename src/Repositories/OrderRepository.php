@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Decorators\Decorator;
 use Railroad\Resora\Queries\CachedQuery;
@@ -55,8 +54,18 @@ class OrderRepository extends RepositoryBase
                 ConfigService::$tableProduct . '.subscription_interval_count',
                 ConfigService::$tableProduct . '.price as initial_price'
             )
-            ->join(ConfigService::$tableOrderItem, ConfigService::$tableOrder . '.id', '=', ConfigService::$tableOrderItem . '.order_id')
-            ->join(ConfigService::$tableProduct, ConfigService::$tableOrderItem . '.product_id', '=', ConfigService::$tableProduct . '.id')
+            ->join(
+                ConfigService::$tableOrderItem,
+                ConfigService::$tableOrder . '.id',
+                '=',
+                ConfigService::$tableOrderItem . '.order_id'
+            )
+            ->join(
+                ConfigService::$tableProduct,
+                ConfigService::$tableOrderItem . '.product_id',
+                '=',
+                ConfigService::$tableProduct . '.id'
+            )
             ->where(ConfigService::$tableOrder . '.id', $id)
             ->get()->toArray();
     }

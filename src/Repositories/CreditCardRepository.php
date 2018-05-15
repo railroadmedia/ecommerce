@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-
-use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Repositories\Traits\PaymentMethodTrait;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Queries\CachedQuery;
@@ -12,6 +10,7 @@ use Railroad\Resora\Repositories\RepositoryBase;
 class CreditCardRepository extends RepositoryBase
 {
     use PaymentMethodTrait;
+
     /**
      * @return CachedQuery|$this
      */
@@ -23,9 +22,14 @@ class CreditCardRepository extends RepositoryBase
     public function getById($id)
     {
         return $this->query()
-            ->select(ConfigService::$tableCreditCard.'.*', ConfigService::$tablePaymentGateway.'.config')
-            ->join(ConfigService::$tablePaymentGateway , 'payment_gateway_id','=',ConfigService::$tablePaymentGateway.'.id')
-            ->where(ConfigService::$tableCreditCard. '.id', $id)
+            ->select(ConfigService::$tableCreditCard . '.*', ConfigService::$tablePaymentGateway . '.config')
+            ->join(
+                ConfigService::$tablePaymentGateway,
+                'payment_gateway_id',
+                '=',
+                ConfigService::$tablePaymentGateway . '.id'
+            )
+            ->where(ConfigService::$tableCreditCard . '.id', $id)
             ->first();
     }
 }

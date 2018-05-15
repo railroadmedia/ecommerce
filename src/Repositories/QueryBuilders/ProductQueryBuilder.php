@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Repositories\QueryBuilders;
 
-use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ProductService;
 

@@ -2,9 +2,6 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-
-use Illuminate\Database\Query\Builder;
-use Railroad\Ecommerce\Repositories\QueryBuilders\PaymentMethodQueryBuilder;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Resora\Queries\CachedQuery;
@@ -35,15 +32,17 @@ class PaymentMethodRepository extends RepositoryBase
 
     /**
      * PaymentMethodRepository constructor.
+     *
      * @param CreditCardRepository $creditCardRepository
      * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      */
-    public function __construct(CreditCardRepository $creditCardRepository,
-                                PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
-                                CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
-                                UserPaymentMethodsRepository $userPaymentMethodsRepository)
-    {
-      //  parent::__construct();
+    public function __construct(
+        CreditCardRepository $creditCardRepository,
+        PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
+        CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
+        UserPaymentMethodsRepository $userPaymentMethodsRepository
+    ) {
+        //  parent::__construct();
 
         $this->creditCardRepository = $creditCardRepository;
         $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
@@ -60,6 +59,7 @@ class PaymentMethodRepository extends RepositoryBase
     }
 
     /** Get payment method by id
+     *
      * @param int $id
      * @return array|mixed|null
      */
@@ -78,11 +78,15 @@ class PaymentMethodRepository extends RepositoryBase
 
         if ($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
             $paymentMethod['method'] = $this->creditCardRepository->getById($paymentMethod['method_id']);
-        } else if ($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
-            $paymentMethod['method'] = $this->paypalBillingAgreementRepository->getById($paymentMethod['method_id']);
+        } else {
+            if ($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+                $paymentMethod['method'] =
+                    $this->paypalBillingAgreementRepository->getById($paymentMethod['method_id']);
+            }
         }
 
         unset($paymentMethod['method_id']);
+
         return $paymentMethod;
     }
 }

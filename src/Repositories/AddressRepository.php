@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Queries\CachedQuery;
 use Railroad\Resora\Repositories\RepositoryBase;

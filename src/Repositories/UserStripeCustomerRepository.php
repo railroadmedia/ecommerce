@@ -2,9 +2,9 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-
 use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Repositories\RepositoryBase;
 
 class UserStripeCustomerRepository extends RepositoryBase
 {

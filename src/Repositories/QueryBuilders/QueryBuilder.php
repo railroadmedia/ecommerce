@@ -2,9 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories\QueryBuilders;
 
-
 use Illuminate\Database\Query\Builder;
-use Railroad\Ecommerce\Services\ConfigService;
 
 class QueryBuilder extends Builder
 {

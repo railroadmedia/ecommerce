@@ -1,4 +1,5 @@
 <?php
+
 namespace Railroad\Ecommerce\Repositories;
 
 use Illuminate\Database\Connection;
@@ -62,6 +63,7 @@ abstract class RepositoryBase_old
     }
 
     /** Update record based on record id
+     *
      * @param integer $id
      * @param array $data
      * @return integer
@@ -116,7 +118,6 @@ abstract class RepositoryBase_old
     {
         return $this->query()->where(['id' => $id])->delete() > 0;
     }
-
 
     /**
      * @param integer $id

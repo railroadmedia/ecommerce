@@ -1,12 +1,11 @@
 <?php
 
-
 namespace Railroad\Ecommerce\Repositories;
 
-
-use function foo\func;
+use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Repositories\QueryBuilders\ShippingQueryBuilder;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Repositories\RepositoryBase;
 
 class ShippingRepository extends RepositoryBase
 {
@@ -31,6 +30,7 @@ class ShippingRepository extends RepositoryBase
     }
 
     /** Get the first active shipping cost based on country and total weight
+     *
      * @param string $country
      * @param integer $totalWeight
      * @return mixed
@@ -38,10 +38,12 @@ class ShippingRepository extends RepositoryBase
     public function getShippingCosts($country, $totalWeight)
     {
         return $this->query()
-            ->join(ConfigService::$tableShippingCostsWeightRange,
+            ->join(
+                ConfigService::$tableShippingCostsWeightRange,
                 $this->databaseManager->raw(ConfigService::$tableShippingOption . '.id'),
                 '=',
-                $this->databaseManager->raw(ConfigService::$tableShippingCostsWeightRange . '.shipping_option_id'))
+                $this->databaseManager->raw(ConfigService::$tableShippingCostsWeightRange . '.shipping_option_id')
+            )
             ->restrictByCountry($country)
             ->restrictByWeight($totalWeight)
             ->restrictActive()
@@ -50,16 +52,19 @@ class ShippingRepository extends RepositoryBase
     }
 
     /** Get all the shipping costs weight ranges based on shipping option id
+     *
      * @param int $shippingOptionId
      * @return mixed
      */
     public function getShippingCostsForShippingOption($shippingOptionId)
     {
         return $this->query()
-            ->join(ConfigService::$tableShippingCostsWeightRange,
+            ->join(
+                ConfigService::$tableShippingCostsWeightRange,
                 $this->databaseManager->raw(ConfigService::$tableShippingOption . '.id'),
                 '=',
-                $this->databaseManager->raw(ConfigService::$tableShippingCostsWeightRange . '.shipping_option_id'))
+                $this->databaseManager->raw(ConfigService::$tableShippingCostsWeightRange . '.shipping_option_id')
+            )
             ->restrictByShippingOption($shippingOptionId)
             ->get()->toArray();
     }

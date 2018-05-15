@@ -2,15 +2,15 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Repositories\RepositoryBase;
 
 class ShippingCostsRepository extends RepositoryBase
 {
     /**
      * @return mixed
      */
-    protected function query()
+    public function query()
     {
         return $this->connection()->table(ConfigService::$tableShippingCostsWeightRange);
     }

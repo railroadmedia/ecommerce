@@ -78,8 +78,9 @@ class AddressJsonController extends Controller
      *        - JsonResponse with the updated address
      *
      * @param AddressUpdateRequest $request
-     * @param int                  $addressId
+     * @param int $addressId
      * @return JsonResponse
+     * @throws \Throwable
      */
     public function update(AddressUpdateRequest $request, $addressId)
     {
@@ -125,12 +126,14 @@ class AddressJsonController extends Controller
 
     /** Delete an address based on the id.
      * Return - NotFoundException if the address not exists
-     *        - NotAllowedException if the address it's in used (exists orders defined for the selected address)  or the user have not rights to access it
+     *        - NotAllowedException if the address it's in used (exists orders defined for the selected address)  or
+     * the user have not rights to access it
      *        - JsonResponse with code 204 otherwise
      *
-     * @param integer              $addressId
+     * @param integer $addressId
      * @param AddressDeleteRequest $request
      * @return JsonResponse
+     * @throws \Throwable
      */
     public function delete($addressId, AddressDeleteRequest $request)
     {
