@@ -6,6 +6,7 @@ use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use Railroad\Permissions\Exceptions\NotAllowedException;
 
 class PaymentGatewayJsonControllerTest extends EcommerceTestCase
 {
@@ -19,19 +20,35 @@ class PaymentGatewayJsonControllerTest extends EcommerceTestCase
      */
     private $paymentMethodFactory;
 
-
     public function setUp()
     {
         parent::setUp();
+
         $this->paymentGatewayFactory = $this->app->make(PaymentGatewayFactory::class);
         $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
     }
 
     public function test_store_unauthorized_user()
     {
-        $this->createAndLogInNewUser();
+        $this->permissionServiceMock->method('canOrThrow')->willThrowException(
+            new NotAllowedException('This action is unauthorized.')
+        );
 
-        $results = $this->call('PUT', '/payment-gateway');
+        $type = $this->faker->randomElement(['stripe', 'paypal']);
+        $name = $this->faker->text;
+        $config = $this->faker->word;
+        $brand = $this->faker->word;
+
+        $results = $this->call(
+            'PUT',
+            '/payment-gateway',
+            [
+                'type' => $type,
+                'name' => $name,
+                'config' => $config,
+                'brand' => $brand,
+            ]
+        );
 
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals(
@@ -39,12 +56,15 @@ class PaymentGatewayJsonControllerTest extends EcommerceTestCase
                 "title" => "Not allowed.",
                 "detail" => "This action is unauthorized.",
             ]
-            , $results->decodeResponseJson()['error']);
+            ,
+            $results->decodeResponseJson()['error']
+        );
     }
 
     public function test_store_validation()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
+
         $results = $this->call('PUT', 'payment-gateway');
 
         $this->assertEquals(422, $results->getStatusCode());
@@ -61,36 +81,49 @@ class PaymentGatewayJsonControllerTest extends EcommerceTestCase
                 [
                     "source" => "config",
                     "detail" => "The config field is required.",
-                ]
-            ]
-            , $results->decodeResponseJson()['errors']);
+                ],
+            ],
+            $results->decodeResponseJson()['errors']
+        );
     }
 
     public function test_store_response()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
+
         $type = $this->faker->randomElement(['stripe', 'paypal']);
         $name = $this->faker->text;
         $config = $this->faker->word;
+        $brand = $this->faker->word;
 
-        $results = $this->call('PUT', '/payment-gateway',
+        $results = $this->call(
+            'PUT',
+            '/payment-gateway',
             [
                 'type' => $type,
                 'name' => $name,
-                'config' => $config
-            ]);
+                'config' => $config,
+                'brand' => $brand,
+            ]
+        );
 
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertArraySubset([
-            'type' => $type,
-            'name' => $name,
-            'config' => $config
-        ], $results->decodeResponseJson()['results']);
+        $this->assertArraySubset(
+            [
+                'type' => $type,
+                'name' => $name,
+                'config' => $config,
+                'brand' => $brand,
+            ],
+            $results->decodeResponseJson()['results']
+        );
     }
 
     public function test_update_unauthorized_user()
     {
-        $this->createAndLogInNewUser();
+        $this->permissionServiceMock->method('canOrThrow')->willThrowException(
+            new NotAllowedException('This action is unauthorized.')
+        );
 
         $results = $this->call('PATCH', '/payment-gateway/' . rand());
 
@@ -100,12 +133,15 @@ class PaymentGatewayJsonControllerTest extends EcommerceTestCase
                 "title" => "Not allowed.",
                 "detail" => "This action is unauthorized.",
             ]
-            , $results->decodeResponseJson()['error']);
+            ,
+            $results->decodeResponseJson()['error']
+        );
     }
 
     public function test_update_payment_gateway_not_exist()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
+
         $randomId = rand();
         $results = $this->call('PATCH', '/payment-gateway/' . $randomId);
 
@@ -115,33 +151,44 @@ class PaymentGatewayJsonControllerTest extends EcommerceTestCase
                 "title" => "Not found.",
                 "detail" => "Update failed, payment gateway not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            ,
+            $results->decodeResponseJson()['error']
+        );
     }
 
     public function test_update_payment_gateway_response()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
+
         $paymentGateway = $this->paymentGatewayFactory->store();
         $newName = $this->faker->text;
 
-        $results = $this->call('PATCH', 'payment-gateway/' . $paymentGateway['id'],
+        $results = $this->call(
+            'PATCH',
+            'payment-gateway/' . $paymentGateway['id'],
             [
-                'name' => $newName
-            ]);
+                'name' => $newName,
+            ]
+        );
 
         $this->assertEquals(201, $results->getStatusCode());
-        $this->assertArraySubset([
-            'id' => $paymentGateway['id'],
-            'name' => $newName
-        ], $results->decodeResponseJson()['results']);
+        $this->assertArraySubset(
+            [
+                'id' => $paymentGateway['id'],
+                'name' => $newName,
+            ],
+            $results->decodeResponseJson()['results']
+        );
 
     }
 
     public function test_delete_payment_gateway_unauthorized_user()
     {
-        $this->createAndLogInNewUser();
-        $randomId = rand();
-        $results = $this->call('DELETE', '/payment-gateway/' . $randomId);
+        $this->permissionServiceMock->method('canOrThrow')->willThrowException(
+            new NotAllowedException('This action is unauthorized.')
+        );
+
+        $results = $this->call('DELETE', '/payment-gateway/' . rand());
 
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals(
@@ -149,12 +196,15 @@ class PaymentGatewayJsonControllerTest extends EcommerceTestCase
                 "title" => "Not allowed.",
                 "detail" => "This action is unauthorized.",
             ]
-            , $results->decodeResponseJson()['error']);
+            ,
+            $results->decodeResponseJson()['error']
+        );
     }
 
     public function test_delete_payment_gateway_not_exist()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
+
         $randomId = rand();
         $results = $this->call('DELETE', '/payment-gateway/' . $randomId);
 
@@ -162,31 +212,17 @@ class PaymentGatewayJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(
             [
                 "title" => "Not found.",
-                "detail" => "Delete failed, payment gateway not found with id: " . $randomId,
+                "detail" => 'Delete failed, could not find a payment gateway to delete.',
             ]
-            , $results->decodeResponseJson()['error']);
-    }
-
-    public function test_delete_payment_gateway_in_used()
-    {
-        $this->createAndLoginAdminUser();
-        $paymentGateway = $this->paymentGatewayFactory->store();
-        $paymentMethod = $this->paymentMethodFactory->store(PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE, $paymentGateway['id']);
-
-        $results = $this->call('DELETE', 'payment-gateway/' . $paymentGateway['id']);
-
-        $this->assertEquals(403, $results->getStatusCode());
-        $this->assertEquals(
-            [
-                "title" => "Not allowed.",
-                "detail" => "Delete failed, the payment gateway it's in used.",
-            ]
-            , $results->decodeResponseJson()['error']);
+            ,
+            $results->decodeResponseJson()['error']
+        );
     }
 
     public function test_delete_payment_gateway_response()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
+
         $paymentGateway = $this->paymentGatewayFactory->store();
 
         $results = $this->call('DELETE', 'payment-gateway/' . $paymentGateway['id']);

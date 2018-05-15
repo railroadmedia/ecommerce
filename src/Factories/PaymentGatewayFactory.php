@@ -2,12 +2,12 @@
 
 namespace Railroad\Ecommerce\Factories;
 
+use Carbon\Carbon;
 use Faker\Generator;
+use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\PaymentGatewayService;
 
-
-class PaymentGatewayFactory extends PaymentGatewayService
+class PaymentGatewayFactory extends PaymentGatewayRepository
 {
     /**
      * @var Generator
@@ -15,24 +15,26 @@ class PaymentGatewayFactory extends PaymentGatewayService
     protected $faker;
 
     public function store(
-        $type = '',
-        $name = '',
-        $configName = '',
-        $brand = ''
+        $type = null,
+        $name = null,
+        $configName = null,
+        $brand = null
     ) {
         $this->faker = app(Generator::class);
 
-        $parameters =
-            func_get_args() + [
-                $this->faker->randomElement([
-                    'stripe',
-                    'paypal'
-                ]),
-                $this->faker->text,
-                'stripe_1',
-                ConfigService::$brand,
-
+        $parameters = [
+                'type' => $type ?? $this->faker->randomElement(
+                    [
+                        'stripe',
+                        'paypal',
+                    ]
+                ),
+                'name' => $name ?? $this->faker->text,
+                'config' => $configName ?? 'stripe_1',
+                'brand' => $brand ?? ConfigService::$brand,
+                'created_on' => Carbon::now()->toDateTimeString(),
             ];
-        return parent::store(...$parameters);
+
+        return parent::create($parameters);
     }
 }

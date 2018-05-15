@@ -11,26 +11,27 @@ use Railroad\Ecommerce\Requests\AddressCreateRequest;
 use Railroad\Ecommerce\Requests\AddressDeleteRequest;
 use Railroad\Ecommerce\Requests\AddressUpdateRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;
-use Railroad\Ecommerce\Services\AddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
+use Throwable;
 
 class AddressJsonController extends Controller
 {
     /**
-     * @var \Railroad\Ecommerce\Repositories\AddressRepository
+     * @var AddressRepository
      */
     private $addressRepository;
 
     /**
-     * @var \Railroad\Permissions\Services\PermissionService
+     * @var PermissionService
      */
     private $permissionService;
 
     /**
      * AddressJsonController constructor.
      *
-     * @param $addressService
+     * @param AddressRepository $addressRepository
+     * @param PermissionService $permissionService
      */
     public function __construct(AddressRepository $addressRepository, PermissionService $permissionService)
     {
@@ -38,7 +39,8 @@ class AddressJsonController extends Controller
         $this->permissionService = $permissionService;
     }
 
-    /** Call the method to store a new address based on request parameters.
+    /**
+     * Call the method to store a new address based on request parameters.
      * Return a JsonResponse with the new created address.
      *
      * @param AddressCreateRequest $request
@@ -48,22 +50,24 @@ class AddressJsonController extends Controller
     {
         $address = $this->addressRepository->create(
             array_merge(
-                $request->only([
-                    'type',
-                    'user_id',
-                    'customer_id',
-                    'first_name',
-                    'last_name',
-                    'street_line_1',
-                    'street_line_2',
-                    'city',
-                    'zip',
-                    'state',
-                    'country'
-                ]),
+                $request->only(
+                    [
+                        'type',
+                        'user_id',
+                        'customer_id',
+                        'first_name',
+                        'last_name',
+                        'street_line_1',
+                        'street_line_2',
+                        'city',
+                        'zip',
+                        'state',
+                        'country',
+                    ]
+                ),
                 [
-                    'brand'      => $request->input('brand', ConfigService::$brand),
-                    'created_on' => Carbon::now()->toDateTimeString()
+                    'brand' => $request->input('brand', ConfigService::$brand),
+                    'created_on' => Carbon::now()->toDateTimeString(),
                 ]
             )
 
@@ -72,7 +76,8 @@ class AddressJsonController extends Controller
         return new JsonResponse($address, 200);
     }
 
-    /** Update an address based on address id and requests parameters.
+    /**
+     * Update an address based on address id and requests parameters.
      * Return - NotFoundException if the address not exists
      *        - NotAllowedException if the user have not rights to access it
      *        - JsonResponse with the updated address
@@ -80,7 +85,7 @@ class AddressJsonController extends Controller
      * @param AddressUpdateRequest $request
      * @param int $addressId
      * @return JsonResponse
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function update(AddressUpdateRequest $request, $addressId)
     {
@@ -114,17 +119,20 @@ class AddressJsonController extends Controller
                         'city',
                         'zip',
                         'state',
-                        'country'
+                        'country',
                     ]
-                ), [
-                'updated_on' => Carbon::now()->toDateTimeString()
-            ])
+                ),
+                [
+                    'updated_on' => Carbon::now()->toDateTimeString(),
+                ]
+            )
         );
 
         return new JsonResponse($address, 201);
     }
 
-    /** Delete an address based on the id.
+    /**
+     * Delete an address based on the id.
      * Return - NotFoundException if the address not exists
      *        - NotAllowedException if the address it's in used (exists orders defined for the selected address)  or
      * the user have not rights to access it
@@ -133,7 +141,7 @@ class AddressJsonController extends Controller
      * @param integer $addressId
      * @param AddressDeleteRequest $request
      * @return JsonResponse
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function delete($addressId, AddressDeleteRequest $request)
     {

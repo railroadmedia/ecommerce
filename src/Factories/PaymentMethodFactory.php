@@ -4,9 +4,10 @@ namespace Railroad\Ecommerce\Factories;
 
 
 use Faker\Generator;
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 
-class PaymentMethodFactory extends PaymentMethodService
+class PaymentMethodFactory extends PaymentMethodRepository
 {
     /**
      * @var Generator
@@ -48,6 +49,6 @@ class PaymentMethodFactory extends PaymentMethodService
                 request()->user() ? null : rand(),
             ];
 
-        return parent::store(...$parameters);
+        return parent::create($parameters);
     }
 }

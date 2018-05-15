@@ -7,6 +7,7 @@ use Faker\Generator;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Foundation\Application;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Ecommerce\Factories\AccessFactory;
 use Railroad\Ecommerce\Factories\UserAccessFactory;
@@ -56,6 +57,11 @@ class EcommerceTestCase extends BaseTestCase
      * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $permissionServiceMock;
+
+    /**
+     * @var Application
+     */
+    protected $app;
 
     protected function setUp()
     {
