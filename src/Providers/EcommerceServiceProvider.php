@@ -123,6 +123,9 @@ class EcommerceServiceProvider extends ServiceProvider
 
         //stripe API
         ConfigService::$stripeAPI = config('ecommerce.stripe');
+
+        // middleware
+        ConfigService::$middleware = config('ecommerce.middleware', []);
     }
 
     /**

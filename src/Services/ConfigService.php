@@ -174,5 +174,10 @@ class ConfigService
      */
     public static $stripeAPI;
 
+    /**
+     * @var array
+     */
+    public static $middleware;
+
 
 }

@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Railroad\Ecommerce\Middleware\AdministratorMiddleware;
 
-Route::put(
+Route::get(
     '/add-to-cart',
     Railroad\Ecommerce\Controllers\ShoppingCartController::class . '@addToCart'
 )->name('shopping-cart.add-to-cart');

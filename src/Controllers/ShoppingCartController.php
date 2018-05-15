@@ -2,8 +2,12 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Session\Middleware\StartSession;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
@@ -46,6 +50,15 @@ class ShoppingCartController extends Controller
         $this->productService = $productService;
         $this->cartAddressService = $cartAddressService;
         $this->taxService = $taxService;
+
+        $this->middleware([
+            EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            VerifyCsrfToken::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
     }
 
     /** Add products to cart; if the products are active and available(the product stock > requested quantity).
@@ -82,10 +95,10 @@ class ShoppingCartController extends Controller
                 if (!empty($productInfo[1])) {
                     $subscriptionType = !empty($productInfo[1]) ? $productInfo[1] : null;
                     $subscriptionFrequency = !empty($productInfo[2]) ? $productInfo[2] : null;
-                    $productSku .= '-' . $subscriptionFrequency . '-' . $subscriptionType;
                 }
 
                 $product = $this->productService->getProductByConditions(['sku' => $productSku]);
+
                 if (($product) && ($product['stock'] >= $quantityToAdd)) {
                     $success = true;
                     $addedProducts[] = $product;
@@ -121,11 +134,11 @@ class ShoppingCartController extends Controller
             'notAvailableProducts' => $errors
         ];
 
-        if ($redirect) {
-            $response['redirect'] = $redirect;
+        if (!empty($input['redirect'])) {
+            return redirect()->to($input['redirect']);
         }
 
-        return new JsonResponse($response, 200);
+        return redirect()->back()->with(['success' => true]);
     }
 
     /** Remove product from cart.

@@ -32,7 +32,7 @@ class CreateProductTable extends Migration
                 $table->decimal('weight')->nullable();
                 $table->string('subscription_interval_type')->index()->nullable();
                 $table->integer('subscription_interval_count')->index()->nullable();
-                $table->integer('stock')->index();
+                $table->integer('stock')->nullable()->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }
