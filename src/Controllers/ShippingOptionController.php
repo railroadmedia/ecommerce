@@ -37,7 +37,8 @@ class ShippingOptionController extends Controller
         $this->permissionService = $permissionService;
     }
 
-    /** Create a new shipping option and return it in JSON format
+    /**
+     * Create a new shipping option and return it in JSON format
      *
      * @param ShippingOptionCreateRequest $request
      * @return JsonResponse
@@ -54,8 +55,7 @@ class ShippingOptionController extends Controller
                         'priority',
                         'active',
                     ]
-                )
-                ,
+                ),
                 ['created_on' => Carbon::now()->toDateTimeString()]
             )
         );
@@ -89,8 +89,9 @@ class ShippingOptionController extends Controller
         return new JsonResponse($shippingOption, 201);
     }
 
-    /** Delete a shipping option if exist in the database.
-     *  Throw proper exception if the shipping option not exist in the database or a json response with status 204.
+    /**
+     * Delete a shipping option if exist in the database.
+     * Throw proper exception if the shipping option not exist in the database or a json response with status 204.
      *
      * @param integer $shippingOptionId
      * @return JsonResponse
