@@ -77,7 +77,7 @@ class EcommerceServiceProvider extends ServiceProvider
             'permissions.role_abilities',
             array_merge(
                 config()->get('permissions.role_abilities', []),
-                config('ecommerce.role_abilities', [])
+                config()->get('ecommerce.role_abilities', [])
             )
         );
     }
