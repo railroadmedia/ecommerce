@@ -3,196 +3,235 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController;
-use PHPUnit\Framework\TestCase;
-use Railroad\Ecommerce\Factories\ShippingCostsFactory;
-use Railroad\Ecommerce\Factories\ShippingOptionFactory;
+use Railroad\Ecommerce\Repositories\ShippingCostsRepository;
+use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 {
     /**
-     * @var ShippingOptionFactory
+     * @var ShippingOptionRepository
      */
-    protected $shippingOptionFactory;
+    protected $shippingOptionRepository;
 
     /**
-     * @var ShippingCostsFactory
+     * @var ShippingCostsRepository
      */
-    protected $shippingCostFactory;
+    protected $shippingCostRepository;
 
     protected function setUp()
     {
         parent::setUp();
-        $this->shippingOptionFactory = $this->app->make(ShippingOptionFactory::class);
-        $this->shippingCostFactory = $this->app->make(ShippingCostsFactory::class);
+        $this->shippingOptionRepository = $this->app->make(ShippingOptionRepository::class);
+        $this->shippingCostRepository = $this->app->make(ShippingCostsRepository::class);
     }
 
     public function test_store_shipping_option_invalid()
     {
-        $this->createAndLoginAdminUser();
-
+        $this->permissionServiceMock->method('canOrThrow');
         $randomShoppingOption = rand();
-        $results = $this->call('PUT', '/shipping-cost/',
+
+        $results = $this->call(
+            'PUT',
+            '/shipping-cost/',
             [
                 'shipping_option_id' => $randomShoppingOption,
                 'min' => 0,
                 'max' => 1,
-                'price' => rand()
-            ]);
+                'price' => rand(),
+            ]
+        );
 
         $this->assertEquals(422, $results->getStatusCode());
 
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "shipping_option_id",
-                "detail" => "The selected shipping option id is invalid.",
-            ]
-        ], $results->decodeResponseJson()['errors']);
+                [
+                    "source" => "shipping_option_id",
+                    "detail" => "The selected shipping option id is invalid.",
+                ],
+            ],
+            $results->decodeResponseJson()['errors']
+        );
     }
 
     public function test_store_incorrect_max_value()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionFactory->store();
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
         $minValue = 10;
-        $results = $this->call('PUT', '/shipping-cost/',
+
+        $results = $this->call(
+            'PUT',
+            '/shipping-cost/',
             [
                 'shipping_option_id' => $shippingOption['id'],
                 'min' => $minValue,
                 'max' => rand(0, 9),
-                'price' => rand()
-            ]);
+                'price' => rand(),
+            ]
+        );
 
         $this->assertEquals(422, $results->getStatusCode());
 
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "max",
-                "detail" => "The max must be at least " . $minValue . ".",
-            ]
-        ], $results->decodeResponseJson()['errors']);
+                [
+                    "source" => "max",
+                    "detail" => "The max must be at least " . $minValue . ".",
+                ],
+            ],
+            $results->decodeResponseJson()['errors']
+        );
     }
 
     public function test_store_missing_required_fields()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
         $results = $this->call('PUT', '/shipping-cost/');
 
         $this->assertEquals(422, $results->getStatusCode());
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "shipping_option_id",
-                "detail" => "The shipping option id field is required.",
+                [
+                    "source" => "shipping_option_id",
+                    "detail" => "The shipping option id field is required.",
+                ],
+                [
+                    "source" => "min",
+                    "detail" => "The min field is required.",
+                ],
+                [
+                    "source" => "max",
+                    "detail" => "The max field is required.",
+                ],
+                [
+                    "source" => "price",
+                    "detail" => "The price field is required.",
+                ],
             ],
-            [
-                "source" => "min",
-                "detail" => "The min field is required.",
-            ],
-            [
-                "source" => "max",
-                "detail" => "The max field is required.",
-            ],
-            [
-                "source" => "price",
-                "detail" => "The price field is required."
-            ]
-        ], $results->decodeResponseJson()['errors']);
+            $results->decodeResponseJson()['errors']
+        );
     }
 
     public function test_update_incorrect_shipping_cost_id()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
         $randomId = rand();
-        $results = $this->call('PATCH', '/shipping-cost/' . $randomId);
-        $this->assertEquals(404, $results->getStatusCode());
 
+        $results = $this->call('PATCH', '/shipping-cost/' . $randomId);
+
+        $this->assertEquals(404, $results->getStatusCode());
         $this->assertEquals(
             [
                 "title" => "Not found.",
                 "detail" => "Update failed, shipping cost weight range not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            ,
+            $results->decodeResponseJson()['error']
+        );
     }
 
     public function test_update_incorrect_max_value()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionFactory->store();
-        $shippingCost = $this->shippingCostFactory->store($shippingOption['id']);
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
+        $shippingCost =
+            $this->shippingCostRepository->create(
+                $this->faker->shippingCost(['shipping_option_id' => $shippingOption['id']])
+            );
         $minValue = 10;
-        $results = $this->call('PATCH', '/shipping-cost/' . $shippingCost['id'],
+
+        $results = $this->call(
+            'PATCH',
+            '/shipping-cost/' . $shippingCost['id'],
             [
                 'min' => $minValue,
-                'max' => rand(0, 9)
-            ]);
+                'max' => rand(0, 9),
+            ]
+        );
 
         $this->assertEquals(422, $results->getStatusCode());
-
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "max",
-                "detail" => "The max must be at least " . $minValue . ".",
-            ]
-        ], $results->decodeResponseJson()['errors']);
+                [
+                    "source" => "max",
+                    "detail" => "The max must be at least " . $minValue . ".",
+                ],
+            ],
+            $results->decodeResponseJson()['errors']
+        );
     }
 
     public function test_update_shipping_cost()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionFactory->store();
-        $shippingCost = $this->shippingCostFactory->store($shippingOption['id']);
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
+        $shippingCost =
+            $this->shippingCostRepository->create(
+                $this->faker->shippingCost(['shipping_option_id' => $shippingOption['id']])
+            );
 
-        $newPrice = rand(0,9000);
+        $newPrice = rand(0, 9000);
 
-        $results = $this->call('PATCH', '/shipping-cost/' . $shippingCost['id'],
+        $results = $this->call(
+            'PATCH',
+            '/shipping-cost/' . $shippingCost['id'],
             [
-                'price' => $newPrice
-            ]);
+                'price' => $newPrice,
+            ]
+        );
 
         $this->assertEquals(201, $results->getStatusCode());
 
-        $this->assertEquals([
-            'id' => $shippingCost['id'],
-            'shipping_option_id' => $shippingOption['id'],
-            'min' => $shippingCost['min'],
-            'max' => $shippingCost['max'],
-            'price' => $newPrice,
-            'created_on' => $shippingCost['created_on'],
-            'updated_on' => Carbon::now()->toDateTimeString()
-        ], $results->decodeResponseJson()['results']);
+        $this->assertEquals(
+            [
+                'id' => $shippingCost['id'],
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => $shippingCost['min'],
+                'max' => $shippingCost['max'],
+                'price' => $newPrice,
+                'created_on' => $shippingCost['created_on'],
+                'updated_on' => Carbon::now()->toDateTimeString(),
+            ],
+            $results->decodeResponseJson()['results']
+        );
     }
 
     public function test_delete_incorrect_shipping_id()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
         $randomId = rand();
         $results = $this->call('DELETE', '/shipping-cost/' . $randomId);
 
         $this->assertEquals(404, $results->getStatusCode());
-
         $this->assertEquals(
             [
                 "title" => "Not found.",
                 "detail" => "Delete failed, shipping cost weight range not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            ,
+            $results->decodeResponseJson()['error']
+        );
     }
 
     public function test_delete_shipping_cost()
     {
-        $this->createAndLoginAdminUser();
+        $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionFactory->store();
-        $shippingCost = $this->shippingCostFactory->store($shippingOption['id']);
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
+        $shippingCost =
+            $this->shippingCostRepository->create(
+                $this->faker->shippingCost(['shipping_option_id' => $shippingOption['id']])
+            );
 
-        $results = $this->call('DELETE', 'shipping-cost/'.$shippingCost['id']);
+        $results = $this->call('DELETE', 'shipping-cost/' . $shippingCost['id']);
 
         $this->assertEquals(204, $results->getStatusCode());
     }

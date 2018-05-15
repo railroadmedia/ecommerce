@@ -98,4 +98,18 @@ class Faker extends Generator
             $override
         );
     }
+
+    public function shippingCost(array $override = [])
+    {
+        return array_merge(
+            [
+                'shipping_option_id' => $this->randomNumber(),
+                'min' => $this->randomNumber(),
+                'max' => $this->randomNumber(),
+                'price' => $this->randomNumber(),
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ],
+            $override
+        );
+    }
 }

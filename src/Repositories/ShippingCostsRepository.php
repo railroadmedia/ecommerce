@@ -3,15 +3,16 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Queries\CachedQuery;
 use Railroad\Resora\Repositories\RepositoryBase;
 
 class ShippingCostsRepository extends RepositoryBase
 {
     /**
-     * @return mixed
+     * @return CachedQuery|$this
      */
-    public function query()
+    protected function newQuery()
     {
-        return $this->connection()->table(ConfigService::$tableShippingCostsWeightRange);
+        return (new CachedQuery($this->connection()))->from(ConfigService::$tableShippingCostsWeightRange);
     }
 }
