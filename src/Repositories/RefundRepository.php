@@ -4,16 +4,19 @@ namespace Railroad\Ecommerce\Repositories;
 
 use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Decorators\Decorator;
+use Railroad\Resora\Queries\CachedQuery;
 use Railroad\Resora\Repositories\RepositoryBase;
 
 class RefundRepository extends RepositoryBase
 {
-
     /**
-     * @return Builder
+     * @return CachedQuery|$this
      */
-    protected function query()
+    protected function newQuery()
     {
-        return $this->connection()->table(ConfigService::$tableRefund);
+        return (new CachedQuery($this->connection()))->from(ConfigService::$tableRefund);
     }
+
+
 }

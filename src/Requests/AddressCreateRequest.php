@@ -42,8 +42,8 @@ class AddressCreateRequest extends FormRequest
             'zip' => 'required|max:255',
             'state' => 'required|max:255',
             'country' => 'required|max:255|country',
-            'user_id' => 'numeric',
-            'customer_id' => 'numeric|exists:'.ConfigService::$tableCustomer.',id'
+            'user_id' => 'integer|nullable',
+            'customer_id' => 'integer|nullable|exists:'.ConfigService::$tableCustomer.',id'
         ];
     }
 }

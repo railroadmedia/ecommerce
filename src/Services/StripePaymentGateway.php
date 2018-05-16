@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Doctrine\DBAL\Driver\PDOException;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
+use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Stripe\Error\Card;
 use Stripe\Error\InvalidRequest;
@@ -22,16 +23,23 @@ class StripePaymentGateway
     private $paymentGatewayRepository;
 
     /**
+     * @var \Railroad\Ecommerce\Repositories\CreditCardRepository
+     */
+    private $creditCardRepository;
+
+    /**
      * StripePaymentGateway constructor.
      *
      * @param Stripe $stripeService
      */
     public function __construct(
         Stripe $stripeService,
-        PaymentGatewayRepository $paymentGatewayRepository
+        PaymentGatewayRepository $paymentGatewayRepository,
+        CreditCardRepository $creditCardRepository
     ) {
         $this->stripeService            = $stripeService;
         $this->paymentGatewayRepository = $paymentGatewayRepository;
+        $this->creditCardRepository     = $creditCardRepository;
     }
 
     public function chargePayment($due, $paid, $paymentMethod, $currency)
@@ -45,7 +53,7 @@ class StripePaymentGateway
 
         try
         {
-            $charge = $this->chargeStripeCreditCardPayment($due, $paymentMethod, $currency);
+            $charge                     = $this->chargeStripeCreditCardPayment($due, $paymentMethod, $currency);
             $paymentData['external_id'] = $charge['results'];
             $paymentData['paid']        = $due;
             $paymentData['status']      = true;
@@ -53,9 +61,9 @@ class StripePaymentGateway
         }
         catch(InvalidRequest $e)
         {
-            $paymentData['paid']    = 0;
-            $paymentData['status']  = false;
-            $paymentData['message'] = $e->getMessage();
+            $paymentData['paid']        = 0;
+            $paymentData['status']      = false;
+            $paymentData['message']     = $e->getMessage();
             $paymentData['external_id'] = null;
         }
 
@@ -87,8 +95,8 @@ class StripePaymentGateway
             $currency ?? $paymentMethod['currency']
         );
 
-
-        if(!$chargeResponse['status']){
+        if(!$chargeResponse['status'])
+        {
             return $chargeResponse;
         }
 
@@ -209,7 +217,7 @@ class StripePaymentGateway
     /** Create a new Stripe refund transaction.
      *Return the external ID for the refund action or NULL there are exception
      *
-     * @param string  $paymentConfig
+     * @param integer $paymentMethddId
      * @param integer $refundedAmount
      * @param integer $paymentAmount
      * @param string  $currency
@@ -217,9 +225,11 @@ class StripePaymentGateway
      * @param string  $note
      * @return null|integer
      */
-    public function refund($paymentConfig, $refundedAmount, $paymentAmount, $currency, $paymentExternalId, $note)
+    public function refund($paymentMethodId, $refundedAmount, $paymentAmount, $currency, $paymentExternalId, $note)
     {
-        $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentConfig]['stripe_api_secret']);
+        $creditCard = $this->creditCardRepository->read($paymentMethodId);
+        $paymentGateway = $this->paymentGatewayRepository->read($creditCard['payment_gateway_id']);
+        $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentGateway['config']]['stripe_api_secret']);
 
         try
         {

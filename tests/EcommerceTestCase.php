@@ -191,6 +191,8 @@ class EcommerceTestCase extends BaseTestCase
             ['email' => $this->faker->email]
         );
 
+
+return $userId;
         $this->authManager->guard()->onceUsingId($userId);
 
         request()->setUserResolver(

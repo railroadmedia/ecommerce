@@ -99,7 +99,7 @@ class AddressJsonController extends Controller
             (
                 (!$this->permissionService->is(auth()->id(), 'admin'))
                 && (auth()->id() !== intval($address['user_id']))
-                && ($request->get('customer_id') !== intval($address['customer_id']))
+                && ($request->get('customer_id', 0) !== $address['customer_id'])
             ),
             new NotAllowedException('This action is unauthorized.')
         );
@@ -155,7 +155,7 @@ class AddressJsonController extends Controller
             (
                 (!$this->permissionService->is(auth()->id(), 'admin'))
                 && (auth()->id() !== intval($address['user_id']))
-                && ($request->get('customer_id') !== intval($address['customer_id']))
+                && ($request->get('customer_id', 0) !== $address['customer_id'])
             ),
             new NotAllowedException('This action is unauthorized.')
         );

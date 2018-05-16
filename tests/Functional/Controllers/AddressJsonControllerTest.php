@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Repositories\AddressRepository;
+use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Services\AddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -10,19 +12,32 @@ use Webpatser\Countries\Countries;
 
 class AddressJsonControllerTest extends EcommerceTestCase
 {
+    /**
+     * @var AddressRepository
+     */
+    protected $addressRepository;
+
+    /**
+     * @var CustomerRepository
+     */
+    protected $customerRepository;
+
     protected function setUp()
     {
         parent::setUp();
+
+        $this->addressRepository  = $this->app->make(AddressRepository::class);
+        $this->customerRepository = $this->app->make(CustomerRepository::class);
     }
 
     public function test_store_validation()
     {
         $results = $this->call('PUT', '/address', []);
 
-        //check the response status code
+        //assert the response status code
         $this->assertEquals(422, $results->getStatusCode());
 
-        //check that all the validation errors are returned
+        //assert that all the validation errors are returned
         $this->assertEquals([
             [
                 "source" => "type",
@@ -62,10 +77,10 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'country'       => $this->faker->randomElement(array_column(Countries::getCountries(), 'full_name'))
         ]);
 
-        //check results status code
+        //assert results status code
         $this->assertEquals(422, $results->getStatusCode());
 
-        //check returned error message
+        //assert returned error message
         $this->assertEquals([
             [
                 "source" => "type",
@@ -76,87 +91,32 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_store_response()
     {
-        $type        = $this->faker->randomElement([
-            AddressService::SHIPPING_ADDRESS,
-            AddressService::BILLING_ADDRESS
-        ]);
-        $userId      = rand();
-        $firstName   = $this->faker->firstName;
-        $lastName    = $this->faker->lastName;
-        $streetLine1 = $this->faker->streetAddress;
-        $city        = $this->faker->city;
-        $zip         = $this->faker->postcode;
-        $state       = $this->faker->word;
-        $country     = $this->faker->randomElement(array_column(Countries::getCountries(), 'full_name'));
+        $address = $this->faker->address();
+        $results = $this->call('PUT', '/address', $address);
 
-        $results = $this->call('PUT', '/address', [
-            'type'          => $type,
-            'user_id'       => $userId,
-            'first_name'    => $firstName,
-            'last_name'     => $lastName,
-            'street_line_1' => $streetLine1,
-            'city'          => $city,
-            'zip'           => $zip,
-            'state'         => $state,
-            'country'       => $country
-        ]);
-
-        //check the response status code
+        //assert the response status code
         $this->assertEquals(200, $results->getStatusCode());
 
-        //check that the new created address it's returned in response in JSON format
-        $this->assertEquals([
-            'id'            => 1,
-            'type'          => $type,
-            'brand'         => ConfigService::$brand,
-            'user_id'       => $userId,
-            'customer_id'   => null,
-            'first_name'    => $firstName,
-            'last_name'     => $lastName,
-            'street_line_1' => $streetLine1,
-            'street_line_2' => null,
-            'city'          => $city,
-            'zip'           => $zip,
-            'state'         => $state,
-            'country'       => $country,
-            'created_on'    => Carbon::now()->toDateTimeString(),
-            'updated_on'    => null
-        ], $results->decodeResponseJson()['results']);
+        //assert that the new created address it's returned in response in JSON format
+        $this->assertArraySubset($address, $results->decodeResponseJson()['results']);
 
-        //check that the address exists in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress,
-            [
-                'type'          => $type,
-                'brand'         => ConfigService::$brand,
-                'user_id'       => $userId,
-                'customer_id'   => null,
-                'first_name'    => $firstName,
-                'last_name'     => $lastName,
-                'street_line_1' => $streetLine1,
-                'street_line_2' => null,
-                'city'          => $city,
-                'zip'           => $zip,
-                'state'         => $state,
-                'country'       => $country,
-                'created_on'    => Carbon::now()->toDateTimeString(),
-                'updated_on'    => null
-            ]);
+        //assert that the address exists in the database
+        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
     }
 
     public function test_update_missing_address()
     {
         //take a fake address id
         $randomId = rand();
-        $userId   = $this->createAndLogInNewUser();
         $results  = $this->call('PATCH', '/address/' . $randomId,
             [
-                'user_id' => $userId
+                'user_id' => $this->createAndLogInNewUser()
             ]);
 
-        //check response status code
+        //assert response status code
         $this->assertEquals(404, $results->getStatusCode());
 
-        //check the error message that it's returned in JSON format
+        //assert the error message that it's returned in JSON format
         $this->assertEquals(
             [
                 "title"  => "Not found.",
@@ -168,9 +128,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
     public function test_user_update_his_address_response()
     {
         //create user address
-        $userId        = $this->createAndLogInNewUser();
-        $address       = $this->faker->address(['type' => AddressService::SHIPPING_ADDRESS, 'user_id' => $userId]);
-        $address['id'] = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
+        $userId  = $this->createAndLogInNewUser();
+        $address = $this->addressRepository->create($this->faker->address(['type' => AddressService::SHIPPING_ADDRESS, 'user_id' => $userId]));
 
         $newStreetLine1 = $this->faker->streetAddress;
 
@@ -179,10 +138,10 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'street_line_1' => $newStreetLine1,
         ]);
 
-        //check the response status code
+        //assert the response status code
         $this->assertEquals(201, $results->getStatusCode());
 
-        //check that the updated address  it's returned in JSON format
+        //assert that the updated address  it's returned in JSON format
         $this->assertEquals([
             'id'            => $address['id'],
             'type'          => $address['type'],
@@ -201,7 +160,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'updated_on'    => Carbon::now()->toDateTimeString()
         ], $results->decodeResponseJson()['results']);
 
-        //check that the address was updated in the database
+        //assert that the address was updated in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, [
             'id'            => $address['id'],
             'type'          => $address['type'],
@@ -219,7 +178,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'created_on'    => $address['created_on'],
         ]);
 
-        //check that the old address street line 1 data not exist anymore in the database
+        //assert that the old address street line 1 data not exist anymore in the database
         $this->assertDatabaseMissing(ConfigService::$tableAddress, [
             'id'            => $address['id'],
             'type'          => $address['type'],
@@ -240,45 +199,35 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_update_response_unauthorized_user()
     {
-        $userId = $this->createAndLogInNewUser();
-
         //create an address for a random user
-        $address       = $this->faker->address([
-            'type'    => AddressService::SHIPPING_ADDRESS,
-            'user_id' => rand()
-        ]);
-        $address['id'] = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
+        $address = $this->addressRepository->create($this->faker->address());
 
         $newStreetLine1 = $this->faker->streetAddress;
 
         $results = $this->call('PATCH', '/address/' . $address['id'], [
-            'user_id'       => $userId,
+            'user_id'       => $this->createAndLogInNewUser(),
             'street_line_1' => $newStreetLine1,
         ]);
 
-        //check that the logged in user can not update other user's address if it's not admin
+        //assert that the logged in user can not update other user's address if it's not admin
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals([
             'title'  => 'Not allowed.',
             'detail' => 'This action is unauthorized.'
         ], $results->decodeResponseJson()['error']);
 
-        //check that the address was not modified in the database
+        //assert that the address was not modified in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
     }
 
     public function test_delete_unauthorized_user()
     {
         //create an address for a random user
-        $address       = $this->faker->address([
-            'type'    => AddressService::SHIPPING_ADDRESS,
-            'user_id' => rand()
-        ]);
-        $address['id'] = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
+        $address = $this->addressRepository->create($this->faker->address());
 
         $results = $this->call('DELETE', '/address/' . $address['id']);
 
-        //check that the logged in user have not access if it's unauthorized
+        //assert that the logged in user have not access if it's unauthorized
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals(
             [
@@ -287,38 +236,31 @@ class AddressJsonControllerTest extends EcommerceTestCase
             ]
             , $results->decodeResponseJson()['error']);
 
-        //check that the address was not deleted from the database
+        //assert that the address was not deleted from the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
     }
 
     public function test_user_delete_his_address()
     {
         //create an address for logged in user
-        $userId        = $this->createAndLogInNewUser();
-        $address       = $this->faker->address([
-            'type'    => AddressService::SHIPPING_ADDRESS,
-            'user_id' => $userId
-        ]);
-        $address['id'] = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
+        $userId = $this->createAndLogInNewUser();
+
+        $address = $this->addressRepository->create($this->faker->address(['user_id' => $userId]));
 
         $results = $this->call('DELETE', '/address/' . $address['id']);
 
-        //check the response status code
+        //assert the response status code
         $this->assertEquals(204, $results->getStatusCode());
 
-        //check that the address was deleted
+        //assert that the address was deleted
         $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
     }
 
     public function _test_delete_address_with_orders()
     {
-        $userId        = $this->createAndLogInNewUser();
-        $address       = $this->faker->address([
-            'type'    => AddressService::SHIPPING_ADDRESS,
-            'user_id' => $userId
-        ]);
-        $address['id'] = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
-        $order         = [
+        $userId  = $this->createAndLogInNewUser();
+        $address = $this->addressRepository->create($this->faker->address(['user_id' => $userId]));
+        $order   = [
             'uuid'                => $this->faker->uuid,
             'due'                 => $this->faker->numberBetween(0, 1000),
             'tax'                 => rand(),
@@ -372,10 +314,10 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'country'       => $country
         ]);
 
-        //check the response status code
+        //assert the response status code
         $this->assertEquals(422, $results->getStatusCode());
 
-        //check the error message
+        //assert the error message
         $this->assertEquals([
             [
                 "source" => "country",
@@ -383,7 +325,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             ]
         ], $results->decodeResponseJson()['errors']);
 
-        //check that the address with invalid country was not created
+        //assert that the address with invalid country was not created
         $this->assertDatabaseMissing(ConfigService::$tableAddress,
             [
                 'type'          => $type,
@@ -400,23 +342,19 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_update_address_with_invalid_country()
     {
-        $country       = $this->faker->word;
-        $userId        = $this->createAndLogInNewUser();
-        $address       = $this->faker->address([
-            'type'    => AddressService::SHIPPING_ADDRESS,
-            'user_id' => $userId
-        ]);
-        $address['id'] = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
+        $country = $this->faker->word;
+        $userId  = $this->createAndLogInNewUser();
+        $address = $this->addressRepository->create($this->faker->address(['user_id' => $userId]));
 
         $results = $this->call('PATCH', '/address/' . $address['id'], [
             'country' => $country,
             'user_id' => $userId
         ]);
 
-        //check response status code
+        //assert response status code
         $this->assertEquals(422, $results->getStatusCode());
 
-        //check response error message
+        //assert response error message
         $this->assertEquals([
             [
                 "source" => "country",
@@ -424,7 +362,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             ]
         ], $results->decodeResponseJson()['errors']);
 
-        //check that the address was not modified in the database
+        //assert that the address was not modified in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
         $this->assertDatabaseMissing(ConfigService::$tableAddress,
             [
@@ -465,7 +403,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'country'       => $country
         ]);
 
-        // check response status code
+        // assert response status code
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertEquals([
             'id'            => 1,
@@ -485,8 +423,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'updated_on'    => null
         ], $results->decodeResponseJson()['results']);
 
-        //check address was saved in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress,[
+        //assert address was saved in the database
+        $this->assertDatabaseHas(ConfigService::$tableAddress, [
             'id'            => 1,
             'type'          => $type,
             'brand'         => ConfigService::$brand,
@@ -509,11 +447,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
 
-        $address       = $this->faker->address([
-            'type'    => AddressService::SHIPPING_ADDRESS,
-            'user_id' => rand()
-        ]);
-        $address['id'] = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
+        $address = $this->addressRepository->create($this->faker->address());
 
         $newStreetLine1 = $this->faker->streetAddress;
 
@@ -522,10 +456,10 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'street_line_1' => $newStreetLine1
         ]);
 
-        //check the response status code
+        //assert the response status code
         $this->assertEquals(201, $results->getStatusCode());
 
-        //check that the updated addess it's returned in JSON format
+        //assert that the updated addess it's returned in JSON format
         $this->assertEquals([
             'id'            => $address['id'],
             'type'          => $address['type'],
@@ -544,8 +478,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'updated_on'    => Carbon::now()->toDateTimeString()
         ], $results->decodeResponseJson()['results']);
 
-        //check that the address was updated in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress,[
+        //assert that the address was updated in the database
+        $this->assertDatabaseHas(ConfigService::$tableAddress, [
             'id'            => $address['id'],
             'type'          => $address['type'],
             'brand'         => $address['brand'],
@@ -568,22 +502,19 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
 
-        $address       = $this->faker->address([
-            'type'    => AddressService::SHIPPING_ADDRESS,
-            'user_id' => rand()
-        ]);
-        $address['id'] = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
+        $address = $this->addressRepository->create($this->faker->address());
 
         $results = $this->call('DELETE', '/address/' . $address['id']);
 
         $this->assertEquals(204, $results->getStatusCode());
+
+        //assert that address was deleted from database
+        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
     }
 
     public function test_customer_create_address()
     {
-        $customer   = $this->faker->customer();
-        $customerId = $this->databaseManager->table(ConfigService::$tableCustomer)->insertGetId($customer);
-
+        $customer    = $this->customerRepository->create($this->faker->customer());
         $type        = $this->faker->randomElement([
             AddressService::SHIPPING_ADDRESS,
             AddressService::BILLING_ADDRESS
@@ -598,7 +529,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call('PUT', '/address', [
             'type'          => $type,
-            'customer_id'   => $customerId,
+            'customer_id'   => $customer['id'],
             'first_name'    => $firstName,
             'last_name'     => $lastName,
             'street_line_1' => $streetLine1,
@@ -608,13 +539,14 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'country'       => $country
         ]);
 
+        //assert response
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertEquals([
             'id'            => 1,
             'type'          => $type,
             'brand'         => ConfigService::$brand,
             'user_id'       => null,
-            'customer_id'   => $customerId,
+            'customer_id'   => $customer['id'],
             'first_name'    => $firstName,
             'last_name'     => $lastName,
             'street_line_1' => $streetLine1,
@@ -626,18 +558,25 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'created_on'    => Carbon::now()->toDateTimeString(),
             'updated_on'    => null
         ], $results->decodeResponseJson()['results']);
+
+        //assert record exists in the database
+        $this->assertDatabaseHas(ConfigService::$tableAddress, [
+            'type'          => $type,
+            'customer_id'   => $customer['id'],
+            'first_name'    => $firstName,
+            'last_name'     => $lastName,
+            'street_line_1' => $streetLine1,
+            'city'          => $city,
+            'zip'           => $zip,
+            'state'         => $state,
+            'country'       => $country
+        ]);
     }
 
     public function test_customer_update_his_address()
     {
-        $customer       = $this->faker->customer();
-        $customer['id'] = $this->databaseManager->table(ConfigService::$tableCustomer)->insertGetId($customer);
-
-        $address       = $this->faker->address([
-            'type'        => AddressService::SHIPPING_ADDRESS,
-            'customer_id' => $customer['id']
-        ]);
-        $address['id'] = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
+        $customer = $this->customerRepository->create($this->faker->customer());
+        $address  = $this->addressRepository->create($this->faker->address(['customer_id' => $customer['id']]));
 
         $newStreetLine1 = $this->faker->streetAddress;
 
@@ -664,15 +603,20 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'created_on'    => $address['created_on'],
             'updated_on'    => Carbon::now()->toDateTimeString()
         ], $results->decodeResponseJson()['results']);
+
+        //assert address raw was updated in the database
+        $this->assertDatabaseHas(ConfigService::$tableAddress, [
+            'id'            => $address['id'],
+            'street_line_1' => $newStreetLine1,
+            'updated_on'    => Carbon::now()->toDateTimeString()
+        ]);
     }
 
     public function test_customer_restriction_on_update_other_address()
     {
-        $customer       = $this->faker->customer();
-        $customer['id'] = $this->databaseManager->table(ConfigService::$tableCustomer)->insertGetId($customer);
+        $customer = $this->customerRepository->create($this->faker->customer());
 
-        $address       = $this->faker->address(['user_id' => rand()]);
-        $address['id'] = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
+        $address = $this->addressRepository->create($this->faker->address());
 
         $newStreetLine1 = $this->faker->streetAddress;
 
@@ -681,6 +625,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'street_line_1' => $newStreetLine1
         ]);
 
+        //assert response
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals(
             [
@@ -688,32 +633,40 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "detail" => "This action is unauthorized.",
             ]
             , $results->decodeResponseJson()['error']);
+
+        //assert database content
+        $this->assertDatabaseMissing(ConfigService::$tableAddress,
+            [
+                'id'            => $address['id'],
+                'street_line_1' => $newStreetLine1
+            ]);
     }
 
     public function test_customer_delete_his_address()
     {
-        $customer       = $this->faker->customer();
-        $customer['id'] = $this->databaseManager->table(ConfigService::$tableCustomer)->insertGetId($customer);
-        $address        = $this->faker->address(['customer_id' => $customer['id']]);
-        $address['id']  = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
+        $customer = $this->customerRepository->create($this->faker->customer());
+        $address  = $this->addressRepository->create($this->faker->address(['customer_id' => $customer['id']]));
 
         $results = $this->call('DELETE', '/address/' . $address['id'], [
             'customer_id' => $customer['id']
         ]);
 
+        //assert response
         $this->assertEquals(204, $results->getStatusCode());
+
+        //assert database content
+        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
     }
 
     public function test_customer_can_not_delete_others_address()
     {
-        $customer       = $this->faker->customer();
-        $customer['id'] = $this->databaseManager->table(ConfigService::$tableCustomer)->insertGetId($customer);
-        $address        = $this->faker->address(['user_id' => rand()]);
-        $address['id']  = $this->databaseManager->table(ConfigService::$tableAddress)->insertGetId($address);
-        $results        = $this->call('DELETE', '/address/' . $address['id'], [
+        $customer = $this->customerRepository->create($this->faker->customer());
+        $address  = $this->addressRepository->create($this->faker->address());
+        $results  = $this->call('DELETE', '/address/' . $address['id'], [
             'customer_id' => $customer['id']
         ]);
 
+        //assert response
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals(
             [
@@ -721,5 +674,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "detail" => "This action is unauthorized.",
             ]
             , $results->decodeResponseJson()['error']);
+
+        //assert database
+        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
     }
 }

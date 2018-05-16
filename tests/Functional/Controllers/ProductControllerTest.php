@@ -6,84 +6,66 @@ use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Railroad\Ecommerce\Factories\ProductFactory;
 use Railroad\Ecommerce\Faker\Factory;
+use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ProductService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ProductControllerTest extends EcommerceTestCase
 {
+    /**
+     * @var ProductRepository
+     */
+    protected $productRepository;
+
     protected function setUp()
     {
         parent::setUp();
+
+        $this->productRepository = $this->app->make(ProductRepository::class);
     }
 
     public function test_store_product()
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
 
-        $product = [
-            'brand' => ConfigService::$brand,
-            'name' => $this->faker->word,
-            'sku' => $this->faker->word,
-            'price' => $this->faker->numberBetween(15.97, 15.99),
-            'type' => ProductService::TYPE_PRODUCT,
-            'active' => true,
-            'is_physical' => false,
-            'stock' => $this->faker->numberBetween(0, 1000)];
+        $product = $this->faker->product();
+
         $results = $this->call('PUT', '/product/', $product);
-        $jsonResponse = $results->decodeResponseJson();
 
-        $product['active'] = 1;
-        $product['is_physical'] = 0;
-
+        //assert response
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertArraySubset(array_merge(
-            [
-                'brand' => ConfigService::$brand,
-                'description' => null,
-                'thumbnail_url' => null,
-                'weight' => null,
-                'subscription_interval_type' => null,
-                'subscription_interval_count' => null,
-                'created_on' => Carbon::now()->toDateTimeString(),
-                'updated_on' => null
-            ]
-            , $product), $jsonResponse['results']);
+
+        //assert product data subset or results
+        $this->assertArraySubset($product, $results->decodeResponseJson('results'));
+
+        //assert the product was saved in the db
+        $this->assertDatabaseHas(
+            ConfigService::$tableProduct,
+            $product
+        );
     }
 
     public function test_store_subscription()
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
 
-        $subscription = [
-            'brand' => ConfigService::$brand,
-            'name' => $this->faker->word,
-            'sku' => $this->faker->word,
-            'price' => $this->faker->numberBetween(15.97, 15.99),
-            'type' => ProductService::TYPE_SUBSCRIPTION,
-            'active' => true,
-            'is_physical' => false,
-            'stock' => $this->faker->numberBetween(0, 1000),
-            'subscription_interval_type' => 'year',
-            'subscription_interval_count' => 1];
-        $results = $this->call('PUT', '/product/', $subscription);
+        $subscription = $this->faker->product(['type' => ProductService::TYPE_SUBSCRIPTION]);
+        $results      = $this->call('PUT', '/product/', $subscription);
 
         $jsonResponse = $results->decodeResponseJson();
 
-        $subscription['active'] = 1;
-        $subscription['is_physical'] = 0;
-
+        //assert results status code
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertArraySubset(array_merge(
-            [
-                'brand' => ConfigService::$brand,
-                'description' => null,
-                'thumbnail_url' => null,
-                'weight' => null,
-                'created_on' => Carbon::now()->toDateTimeString(),
-                'updated_on' => null
-            ]
-            , $subscription), $jsonResponse['results']);
+
+        //assert subscription data subset of response
+        $this->assertArraySubset($subscription, $jsonResponse['results']);
+
+        //assert subscription data exist in db
+        $this->assertDatabaseHas(
+            ConfigService::$tableProduct,
+            $subscription
+        );
     }
 
     public function test_validation_on_store_product()
@@ -94,7 +76,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         $this->assertEquals(422, $results->status());
 
-        //check that all the error messages are received
+        //assert that all the error messages are received
         $errors = [
             [
                 'source' => "name",
@@ -134,13 +116,13 @@ class ProductControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('is')->willReturn(true);
 
         $results = $this->call('PUT', '/product/', [
-            'name' => $this->faker->word,
-            'sku' => $this->faker->word,
-            'price' => $this->faker->numberBetween(15.97, 15.99),
-            'type' => ProductService::TYPE_SUBSCRIPTION,
-            'active' => true,
+            'name'        => $this->faker->word,
+            'sku'         => $this->faker->word,
+            'price'       => $this->faker->numberBetween(15.97, 15.99),
+            'type'        => ProductService::TYPE_SUBSCRIPTION,
+            'active'      => true,
             'is_physical' => false,
-            'stock' => $this->faker->numberBetween(0, 1000)
+            'stock'       => $this->faker->numberBetween(0, 1000)
         ]);
 
         $this->assertEquals(422, $results->status());
@@ -164,31 +146,31 @@ class ProductControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
 
-        $product = $this->faker->product();
-        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
-            ->insertGetId($product);
+        $product = $this->productRepository->create($this->faker->product());
 
-        $results = $this->call('PUT', '/product/', [
-            'name' => $this->faker->word,
-            'sku' => $product['sku'],
-            'price' => $this->faker->numberBetween(1, 15.99),
-            'type' => ProductService::TYPE_PRODUCT,
-            'active' => true,
-            'is_physical' => false,
-            'stock' => $this->faker->numberBetween(0, 1000)
+        $productWithExistingSKU = $this->faker->product([
+            'sku' => $product['sku']
         ]);
 
+        $results = $this->call('PUT', '/product/', $productWithExistingSKU);
+
+        //assert response status
         $this->assertEquals(422, $results->status());
 
-        //check that the proper error messages are received
+        //assert that the proper error messages are received
         $errors = [
             [
                 'source' => "sku",
                 "detail" => "The sku has already been taken."
             ]
         ];
-
         $this->assertEquals($errors, json_decode($results->content(), true)['errors']);
+
+        //assert product with the same sku was not saved in the db
+        $this->assertDatabaseMissing(
+            ConfigService::$tableProduct,
+            $productWithExistingSKU
+        );
     }
 
     public function test_validation_weight_for_physical_products()
@@ -196,13 +178,13 @@ class ProductControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('is')->willReturn(true);
 
         $results = $this->call('PUT', '/product/', [
-            'name' => $this->faker->word,
-            'sku' => $this->faker->word,
-            'price' => $this->faker->numberBetween(15.97, 15.99),
-            'type' => ProductService::TYPE_PRODUCT,
-            'active' => true,
+            'name'        => $this->faker->word,
+            'sku'         => $this->faker->word,
+            'price'       => $this->faker->numberBetween(15.97, 15.99),
+            'type'        => ProductService::TYPE_PRODUCT,
+            'active'      => true,
             'is_physical' => true,
-            'stock' => $this->faker->numberBetween(0, 1000)
+            'stock'       => $this->faker->numberBetween(0, 1000)
         ]);
 
         $this->assertEquals(422, $results->status());
@@ -223,14 +205,14 @@ class ProductControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('is')->willReturn(true);
 
         $randomProductId = rand();
-        $results = $this->call('PATCH', '/product/' . $randomProductId);
+        $results         = $this->call('PATCH', '/product/' . $randomProductId);
 
-        //expecting a response with 404 status
+        //assert a response with 404 status
         $this->assertEquals(404, $results->status());
 
-        //check that the error message is received
+        //assert that the error message is received
         $errors = [
-            'title' => "Not found.",
+            'title'  => "Not found.",
             "detail" => "Update failed, product not found with id: " . $randomProductId
         ];
         $this->assertEquals($errors, json_decode($results->content(), true)['error']);
@@ -240,43 +222,47 @@ class ProductControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
 
-        $product = $this->faker->product();
-        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
-            ->insertGetId($product);
+        $product = $this->productRepository->create($this->faker->product());
 
         $newDescription = $this->faker->text;
 
-        $results = $this->call('PATCH', '/product/' . $productId, [
+        $results = $this->call('PATCH', '/product/' . $product['id'], [
             'description' => $newDescription
         ]);
 
         $jsonResponse = $results->decodeResponseJson();
 
+        //assert response status code
         $this->assertEquals(201, $results->getStatusCode());
-        $product['id'] = $productId;
-        $product['description'] = $newDescription;
-        $product['updated_on'] = Carbon::now()->toDateTimeString();
 
-        $this->assertEquals($product, $jsonResponse['results']);
+        unset($product['order']);
+        unset($product['discounts']);
+
+        //assert product with the new description subset of response
+        $product['description'] = $newDescription;
+        $product['updated_on']  = Carbon::now()->toDateTimeString();
+        $this->assertArraySubset($product, $jsonResponse['results']);
+
+        //assert product updated in the db
+        $this->assertDatabaseHas(
+            ConfigService::$tableProduct,
+            iterator_to_array($product)
+        );
     }
 
     public function test_validation_on_update_product()
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
+        $product = $this->productRepository->create($this->faker->product());
 
-        $product = $this->faker->product();
-        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
-            ->insertGetId($product);
-
-        $newDescription = $this->faker->text;
-
-        $results = $this->call('PATCH', '/product/' . $productId, [
+        $results = $this->call('PATCH', '/product/' . $product['id'], [
             'type' => ProductService::TYPE_SUBSCRIPTION
         ]);
 
+        //assert response code
         $this->assertEquals(422, $results->status());
 
-        //check that the proper error messages are received
+        //assert that the proper error messages are received
         $errors = [
             [
                 'source' => "subscription_interval_type",
@@ -287,8 +273,16 @@ class ProductControllerTest extends EcommerceTestCase
                 "detail" => "The subscription interval count field is required when type is subscription."
             ]
         ];
-
         $this->assertEquals($errors, json_decode($results->content(), true)['errors']);
+
+        unset($product['order']);
+        unset($product['discounts']);
+
+        //assert product raw was not modified in db
+        $this->assertDatabaseHas(
+            ConfigService::$tableProduct,
+            iterator_to_array($product)
+        );
     }
 
     public function test_delete_missing_product()
@@ -296,7 +290,7 @@ class ProductControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('is')->willReturn(true);
 
         $randomId = rand();
-        $results = $this->call('DELETE', '/product/' . $randomId);
+        $results  = $this->call('DELETE', '/product/' . $randomId);
 
         $this->assertEquals(404, $results->status());
         $this->assertEquals('Not found.', json_decode($results->getContent())->error->title, true);
@@ -308,26 +302,24 @@ class ProductControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('is')->willReturn(true);
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->faker->product();
-        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
-            ->insertGetId($product);
+        $product = $this->productRepository->create($this->faker->product());
 
         $orderItem1 = [
-            'order_id' => 1,
-            'product_id' => $productId,
-            'quantity' => 2,
-            'initial_price' => 5,
-            'discount' => 0,
-            'tax' => 0,
+            'order_id'       => 1,
+            'product_id'     => $product['id'],
+            'quantity'       => 2,
+            'initial_price'  => 5,
+            'discount'       => 0,
+            'tax'            => 0,
             'shipping_costs' => 0,
-            'total_price' => 10,
-            'created_on' => Carbon::now()->toDateTimeString(),
-            'updated_on' => null
+            'total_price'    => 10,
+            'created_on'     => Carbon::now()->toDateTimeString(),
+            'updated_on'     => null
         ];
 
         $orderItemId = $this->databaseManager->table(ConfigService::$tableOrderItem)->insertGetId($orderItem1);
 
-        $results = $this->call('DELETE', '/product/' . $productId);
+        $results = $this->call('DELETE', '/product/' . $product['id']);
 
         $this->assertEquals(403, $results->status());
         $this->assertEquals('Not allowed.', json_decode($results->getContent())->error->title, true);
@@ -339,23 +331,21 @@ class ProductControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('is')->willReturn(true);
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->faker->product();
-        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
-            ->insertGetId($product);
+        $product = $this->productRepository->create($this->faker->product());
 
         $discount = [
-            'name' => $this->faker->word,
-            'type' => $this->faker->word,
-            'product_id' => $productId,
-            'min' => 2,
-            'max' => 10,
+            'name'        => $this->faker->word,
+            'type'        => $this->faker->word,
+            'product_id'  => $product['id'],
+            'min'         => 2,
+            'max'         => 10,
             'discount_id' => rand(),
-            'created_on' => Carbon::now()->toDateTimeString(),
-            'updated_on' => null
+            'created_on'  => Carbon::now()->toDateTimeString(),
+            'updated_on'  => null
         ];
 
         $this->databaseManager->table(ConfigService::$tableDiscountCriteria)->insertGetId($discount);
-        $results = $this->call('DELETE', '/product/' . $productId);
+        $results = $this->call('DELETE', '/product/' . $product['id']);
 
         $this->assertEquals(403, $results->status());
         $this->assertEquals('Not allowed.', json_decode($results->getContent())->error->title, true);
@@ -365,25 +355,23 @@ class ProductControllerTest extends EcommerceTestCase
     public function test_delete_product()
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
-        $product = $this->faker->product();
-        $productId = $this->databaseManager->table(ConfigService::$tableProduct)
-            ->insertGetId($product);
+        $product = $this->productRepository->create($this->faker->product());
 
-        $results = $this->call('DELETE', '/product/' . $productId);
+        $results = $this->call('DELETE', '/product/' . $product['id']);
 
         $this->assertEquals(204, $results->status());
         $this->assertDatabaseMissing(ConfigService::$tableProduct,
             [
-                'id' => $productId,
+                'id' => $product['id'],
             ]);
     }
 
     public function test_get_all_products_paginated_when_empty()
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
-        $results = $this->call('GET', '/product');
+        $results         = $this->call('GET', '/product');
         $expectedResults = [
-            'results' => [],
+            'results'       => [],
             'total_results' => 0
         ];
 
@@ -395,38 +383,22 @@ class ProductControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
 
-        $page = 1;
-        $limit = 30;
-        $sort = 'id';
+        $page       = 1;
+        $limit      = 30;
+        $sort       = 'id';
         $nrProducts = 10;
 
-        for($i=0; $i<$nrProducts; $i++)
+        for($i = 0; $i < $nrProducts; $i++)
         {
-            $product = $this->faker->product();
-            $productId = $this->databaseManager->table(ConfigService::$tableProduct)
-                ->insertGetId($product);
-            $product['id'] = $productId;
-            $product['updated_on'] = null;
-            $product['order'] = [];
-            $product['discounts'] = [];
-            $products[$i] = $product;
+            $product    = $this->productRepository->create($this->faker->product());
+            $products[] = iterator_to_array($product);
         }
-
-        $expectedContent =
-            [
-                'status' => 'ok',
-                'code' => 200,
-                'page' => $page,
-                'limit' => $limit,
-                'results' => $products,
-                'total_results' => $nrProducts
-            ];
 
         $results = $this->call('GET', '/product',
             [
-                'page' => $page,
-                'limit' => $limit,
-                'order_by_column' => $sort,
+                'page'               => $page,
+                'limit'              => $limit,
+                'order_by_column'    => $sort,
                 'order_by_direction' => 'asc'
             ]);
 
@@ -441,15 +413,15 @@ class ProductControllerTest extends EcommerceTestCase
         $filenameAbsolute = $this->faker->image(sys_get_temp_dir());
         $filenameRelative = $this->getFilenameRelativeFromAbsolute($filenameAbsolute);
 
-        $response = $this->call( 'PUT', '/product/upload/', [
+        $response = $this->call('PUT', '/product/upload/', [
             'target' => $filenameRelative,
-            'file' => new UploadedFile($filenameAbsolute, $filenameRelative)
-        ] );
+            'file'   => new UploadedFile($filenameAbsolute, $filenameRelative)
+        ]);
 
         $this->assertEquals(201, $response->status());
 
         $this->assertEquals(
-            storage_path('app').'/' . $filenameRelative,
+            storage_path('app') . '/' . $filenameRelative,
             json_decode($response->getContent())->results
         );
     }
@@ -458,47 +430,40 @@ class ProductControllerTest extends EcommerceTestCase
     {
         $user = $this->createAndLogInNewUser();
 
-        $page = 2;
-        $limit = 3;
-        $sort = 'id';
+        $page       = 2;
+        $limit      = 3;
+        $sort       = 'id';
         $nrProducts = 10;
 
-        for($i=0; $i<$nrProducts; $i++)
+        for($i = 0; $i < $nrProducts; $i++)
         {
-            if($i%2==0) {
-                $product = $this->faker->product(['active' => true]);
-                $productId = $this->databaseManager->table(ConfigService::$tableProduct)
-                    ->insertGetId($product);
-                $product['id'] = $productId;
-                $product['updated_on'] = null;
-                $product['order'] = [];
-                $product['discounts'] = [];
-                $products[] = $product;
-
-            }else {
-                $product = $this->faker->product(
-                   ['active' => false]);
-                $productId = $this->databaseManager->table(ConfigService::$tableProduct)
-                    ->insertGetId($product);
+            if($i % 2 == 0)
+            {
+                $product    = $this->productRepository->create($this->faker->product(['active' => true]));
+                $products[] = iterator_to_array($product);
+            }
+            else
+            {
+                $product            = $this->productRepository->create($this->faker->product(['active' => false]));
                 $inactiveProducts[] = $product;
             }
         }
 
         $expectedContent =
             [
-                'status' => 'ok',
-                'code' => 200,
-                'page' => $page,
-                'limit' => $limit,
-                'results' => array_slice($products, 3, $limit),
-                'total_results' => $nrProducts/2
+                'status'        => 'ok',
+                'code'          => 200,
+                'page'          => $page,
+                'limit'         => $limit,
+                'results'       => array_slice($products, 3, $limit),
+                'total_results' => $nrProducts / 2
             ];
 
         $results = $this->call('GET', '/product',
             [
-                'page' => $page,
-                'limit' => $limit,
-                'order_by_column' => $sort,
+                'page'               => $page,
+                'limit'              => $limit,
+                'order_by_column'    => $sort,
                 'order_by_direction' => 'asc'
             ]);
 

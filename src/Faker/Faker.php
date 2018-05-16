@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Faker\Generator;
 use Railroad\Ecommerce\Services\AddressService;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Ecommerce\Services\ProductService;
 use Railroad\Ecommerce\Services\SubscriptionService;
 use Webpatser\Countries\Countries;
@@ -16,21 +17,21 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'name' => $this->word,
-                'sku' => $this->word,
-                'price' => $this->numberBetween(1, 1000),
-                'type' => $this->randomElement(
+                'name'                        => $this->word,
+                'sku'                         => $this->word,
+                'price'                       => $this->numberBetween(1, 1000),
+                'type'                        => $this->randomElement(
                     [
                         ProductService::TYPE_PRODUCT,
                         ProductService::TYPE_SUBSCRIPTION,
                     ]
                 ),
-                'active' => $this->randomElement([0, 1]),
-                'description' => $this->text,
-                'thumbnail_url' => $this->imageUrl(),
-                'is_physical' => $this->randomElement([0, 1]),
-                'weight' => $this->numberBetween(0, 100),
-                'subscription_interval_type' => $this->randomElement(
+                'active'                      => $this->randomElement([0, 1]),
+                'description'                 => $this->text,
+                'thumbnail_url'               => $this->imageUrl(),
+                'is_physical'                 => $this->randomElement([0, 1]),
+                'weight'                      => $this->numberBetween(0, 100),
+                'subscription_interval_type'  => $this->randomElement(
                     [
                         SubscriptionService::INTERVAL_TYPE_YEARLY,
                         SubscriptionService::INTERVAL_TYPE_MONTHLY,
@@ -38,9 +39,9 @@ class Faker extends Generator
                     ]
                 ),
                 'subscription_interval_count' => $this->numberBetween(0, 12),
-                'stock' => $this->numberBetween(1, 1000),
-                'brand' => ConfigService::$brand,
-                'created_on' => Carbon::now()->toDateTimeString(),
+                'stock'                       => $this->numberBetween(1, 1000),
+                'brand'                       => ConfigService::$brand,
+                'created_on'                  => Carbon::now()->toDateTimeString(),
             ],
             $override
         );
@@ -50,9 +51,9 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'phone' => $this->phoneNumber,
-                'email' => $this->email,
-                'brand' => ConfigService::$brand,
+                'phone'      => $this->phoneNumber,
+                'email'      => $this->email,
+                'brand'      => ConfigService::$brand,
                 'created_on' => Carbon::now()->toDateTimeString(),
             ],
             $override
@@ -63,24 +64,24 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'type' => $this->randomElement(
+                'type'          => $this->randomElement(
                     [
                         AddressService::BILLING_ADDRESS,
                         AddressService::SHIPPING_ADDRESS,
                     ]
                 ),
-                'brand' => ConfigService::$brand,
-                'user_id' => rand(),
-                'customer_id' => null,
-                'first_name' => $this->firstName,
-                'last_name' => $this->lastName,
+                'brand'         => ConfigService::$brand,
+                'user_id'       => rand(),
+                'customer_id'   => null,
+                'first_name'    => $this->firstName,
+                'last_name'     => $this->lastName,
                 'street_line_1' => $this->streetAddress,
-                'street_line_2' => '',
-                'city' => $this->city,
-                'zip' => $this->postcode,
-                'state' => $this->word,
-                'country' => $this->randomElement(array_column(Countries::getCountries(), 'full_name')),
-                'created_on' => Carbon::now()->toDateTimeString(),
+                'street_line_2' => null,
+                'city'          => $this->city,
+                'zip'           => $this->postcode,
+                'state'         => $this->word,
+                'country'       => $this->randomElement(array_column(Countries::getCountries(), 'full_name')),
+                'created_on'    => Carbon::now()->toDateTimeString(),
             ],
             $override
         );
@@ -90,9 +91,9 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'country' => $this->country,
-                'active' => $this->randomNumber(),
-                'priority' => $this->boolean,
+                'country'    => $this->country,
+                'active'     => $this->randomNumber(),
+                'priority'   => $this->boolean,
                 'created_on' => Carbon::now()->toDateTimeString(),
             ],
             $override
@@ -104,12 +105,75 @@ class Faker extends Generator
         return array_merge(
             [
                 'shipping_option_id' => $this->randomNumber(),
-                'min' => $this->randomNumber(),
-                'max' => $this->randomNumber(),
-                'price' => $this->randomNumber(),
-                'created_on' => Carbon::now()->toDateTimeString(),
+                'min'                => $this->randomNumber(),
+                'max'                => $this->randomNumber(),
+                'price'              => $this->randomNumber(),
+                'created_on'         => Carbon::now()->toDateTimeString(),
             ],
             $override
+        );
+    }
+
+    public function payment(array $override = [])
+    {
+        return array_merge(
+            [
+                'due'               => $this->randomNumber(),
+                'paid'              => $this->randomNumber(),
+                'refunded'          => $this->randomNumber(),
+                'type'              => $this->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]),
+                'external_provider' => $this->word,
+                'external_id'       => $this->word,
+                'status'            => 1,
+                'message'           => null,
+                'payment_method_id' => $this->randomNumber(),
+                'currency'          => $this->currencyCode,
+                'created_on'        => Carbon::now()->toDateTimeString()
+            ], $override
+        );
+    }
+
+    public function paymentMethod(array $override = [])
+    {
+        return array_merge(
+            [
+                'method_id'   => $this->randomNumber(),
+                'method_type' => $this->word,
+                'currency'    => $this->currencyCode,
+                'created_on'  => Carbon::now()->toDateTimeString()
+            ], $override
+        );
+    }
+
+    public function creditCard(array $override = [])
+    {
+        return array_merge(
+            [
+                'type' => $this->creditCardType,
+                'fingerprint' => $this->creditCardNumber,
+                'last_four_digits' => $this->randomNumber(4),
+                'cardholder_name' => $this->name,
+                'company_name' => $this->creditCardType,
+                'external_id' => $this->word,
+                'external_customer_id' => $this->word,
+                'external_provider' => $this->word,
+                'expiration_date' => $this->creditCardExpirationDateString,
+                'payment_gateway_id' => $this->randomNumber(),
+                'created_on' => Carbon::now()->toDateTimeString()
+            ], $override
+        );
+    }
+
+    public function paymentGateway(array $override = [])
+    {
+        return array_merge(
+            [
+                'brand' => ConfigService::$brand,
+                'type' => $this->word,
+                'name' => $this->word,
+                'config' => $this->word,
+                'created_on' => Carbon::now()->toDateTimeString()
+            ], $override
         );
     }
 }
