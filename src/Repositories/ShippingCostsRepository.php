@@ -15,4 +15,9 @@ class ShippingCostsRepository extends RepositoryBase
     {
         return (new CachedQuery($this->connection()))->from(ConfigService::$tableShippingCostsWeightRange);
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

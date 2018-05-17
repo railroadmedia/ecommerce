@@ -21,4 +21,9 @@ class UserStripeCustomerRepository extends RepositoryBase
     {
         return $this->query()->where('user_id', $userId)->first();
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

@@ -18,4 +18,9 @@ class DiscountCriteriaRepository extends RepositoryBase
     {
         return $this->connection()->table(ConfigService::$tableDiscountCriteria);
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

@@ -18,4 +18,9 @@ class OrderItemRepository extends RepositoryBase
     {
         return $this->connection()->table(ConfigService::$tableOrderItem);
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

@@ -15,4 +15,9 @@ class PaymentGatewayRepository extends RepositoryBase
     {
         return (new CachedQuery($this->connection()))->from(ConfigService::$tablePaymentGateway);
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

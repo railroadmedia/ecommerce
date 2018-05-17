@@ -64,4 +64,9 @@ class ShippingOptionRepository extends RepositoryBase
             ->restrictByShippingOption($shippingOptionId)
             ->get()->toArray();
     }
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
+
 }

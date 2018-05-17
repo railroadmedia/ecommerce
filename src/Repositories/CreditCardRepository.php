@@ -32,4 +32,9 @@ class CreditCardRepository extends RepositoryBase
             ->where(ConfigService::$tableCreditCard . '.id', $id)
             ->first();
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

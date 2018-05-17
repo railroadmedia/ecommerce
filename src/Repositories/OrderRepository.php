@@ -69,4 +69,9 @@ class OrderRepository extends RepositoryBase
             ->where(ConfigService::$tableOrder . '.id', $id)
             ->get()->toArray();
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

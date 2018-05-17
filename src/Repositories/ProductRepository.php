@@ -26,4 +26,9 @@ class ProductRepository extends RepositoryBase
 
         return Decorator::decorate($results, 'product');
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

@@ -52,4 +52,9 @@ class SubscriptionRepository extends RepositoryBase
             ->get()
             ->toArray();
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

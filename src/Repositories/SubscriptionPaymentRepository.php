@@ -15,4 +15,9 @@ class SubscriptionPaymentRepository extends RepositoryBase
     {
         return (new CachedQuery($this->connection()))->from(ConfigService::$tableSubscriptionPayment);
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

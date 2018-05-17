@@ -18,4 +18,9 @@ class CustomerPaymentMethodsRepository extends RepositoryBase
     {
         return (new CachedQuery($this->connection()))->from(ConfigService::$tableCustomerPaymentMethods);
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

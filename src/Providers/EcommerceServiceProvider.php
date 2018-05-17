@@ -32,9 +32,8 @@ class EcommerceServiceProvider extends ServiceProvider
                     // we only want to use assoc fetching for this packages database calls
                     // so we need to use a separate 'mask' connection
 
-                    if($event->connection->getName() ==
-                        ConfigService::$connectionMaskPrefix . ConfigService::$databaseConnectionName)
-                    {
+                    if ($event->connection->getName() ==
+                        ConfigService::$connectionMaskPrefix . ConfigService::$databaseConnectionName) {
                         $event->statement->setFetchMode(PDO::FETCH_ASSOC);
                     }
                 },
@@ -52,8 +51,7 @@ class EcommerceServiceProvider extends ServiceProvider
             ]
         );
 
-        if(ConfigService::$dataMode == 'host')
-        {
+        if (ConfigService::$dataMode == 'host') {
             $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
         }
 
@@ -73,24 +71,34 @@ class EcommerceServiceProvider extends ServiceProvider
         );
 
         config()->set(
-            'resora.decorators',
+            'resora.decorators.product',
             array_merge(
+                config()->get('resora.decorators.product', []),
                 [
-                    'product' => [
-                        ProductDecorator::class,
-                        ProductDiscountDecorator::class,
-                    ],
-
-                    'payment' => [
-                        PaymentPaymentMethodDecorator::class,
-                        PaymentUserDecorator::class,
-                    ],
-                    'paymentMethod' => [
-                        MethodDecorator::class
-                    ]
+                    ProductDecorator::class,
+                    ProductDiscountDecorator::class,
                 ]
             )
+        );
 
+        config()->set(
+            'resora.decorators.paymentMethod',
+            array_merge(
+                config()->get('resora.decorators.paymentMethod', []),
+                [
+                    MethodDecorator::class
+                ]
+            )
+        );
+
+        config()->set(
+            'resora.decorators.payment',
+            array_merge(
+                config()->get('resora.decorators.payment', []),
+                [
+                    PaymentPaymentMethodDecorator::class,
+                ]
+            )
         );
 
         // merge in permissions settings
@@ -110,36 +118,36 @@ class EcommerceServiceProvider extends ServiceProvider
 
         // database
         ConfigService::$databaseConnectionName = config('ecommerce.database_connection_name');
-        ConfigService::$connectionMaskPrefix   = config('ecommerce.connection_mask_prefix');
-        ConfigService::$dataMode               = config('ecommerce.data_mode');
+        ConfigService::$connectionMaskPrefix = config('ecommerce.connection_mask_prefix');
+        ConfigService::$dataMode = config('ecommerce.data_mode');
 
         // tables
         ConfigService::$tablePrefix = config('ecommerce.table_prefix');
 
-        ConfigService::$tableProduct                  = ConfigService::$tablePrefix . 'product';
-        ConfigService::$tableOrder                    = ConfigService::$tablePrefix . 'order';
-        ConfigService::$tableOrderItem                = ConfigService::$tablePrefix . 'order_item';
-        ConfigService::$tableAddress                  = ConfigService::$tablePrefix . 'address';
-        ConfigService::$tableCustomer                 = ConfigService::$tablePrefix . 'customer';
-        ConfigService::$tableOrderPayment             = ConfigService::$tablePrefix . 'order_payment';
-        ConfigService::$tablePayment                  = ConfigService::$tablePrefix . 'payment';
-        ConfigService::$tablePaymentMethod            = ConfigService::$tablePrefix . 'payment_method';
-        ConfigService::$tableCreditCard               = ConfigService::$tablePrefix . 'credit_card';
-        ConfigService::$tableRefund                   = ConfigService::$tablePrefix . 'refund';
-        ConfigService::$tableSubscription             = ConfigService::$tablePrefix . 'subscription';
-        ConfigService::$tableSubscriptionPayment      = ConfigService::$tablePrefix . 'subscription_payment';
-        ConfigService::$tableDiscount                 = ConfigService::$tablePrefix . 'discount';
-        ConfigService::$tableDiscountCriteria         = ConfigService::$tablePrefix . 'discount_criteria';
-        ConfigService::$tableOrderDiscount            = ConfigService::$tablePrefix . 'order_discount';
-        ConfigService::$tableOrderItemFulfillment     = ConfigService::$tablePrefix . 'order_item_fulfillment';
-        ConfigService::$tableShippingOption           = ConfigService::$tablePrefix . 'shipping_option';
+        ConfigService::$tableProduct = ConfigService::$tablePrefix . 'product';
+        ConfigService::$tableOrder = ConfigService::$tablePrefix . 'order';
+        ConfigService::$tableOrderItem = ConfigService::$tablePrefix . 'order_item';
+        ConfigService::$tableAddress = ConfigService::$tablePrefix . 'address';
+        ConfigService::$tableCustomer = ConfigService::$tablePrefix . 'customer';
+        ConfigService::$tableOrderPayment = ConfigService::$tablePrefix . 'order_payment';
+        ConfigService::$tablePayment = ConfigService::$tablePrefix . 'payment';
+        ConfigService::$tablePaymentMethod = ConfigService::$tablePrefix . 'payment_method';
+        ConfigService::$tableCreditCard = ConfigService::$tablePrefix . 'credit_card';
+        ConfigService::$tableRefund = ConfigService::$tablePrefix . 'refund';
+        ConfigService::$tableSubscription = ConfigService::$tablePrefix . 'subscription';
+        ConfigService::$tableSubscriptionPayment = ConfigService::$tablePrefix . 'subscription_payment';
+        ConfigService::$tableDiscount = ConfigService::$tablePrefix . 'discount';
+        ConfigService::$tableDiscountCriteria = ConfigService::$tablePrefix . 'discount_criteria';
+        ConfigService::$tableOrderDiscount = ConfigService::$tablePrefix . 'order_discount';
+        ConfigService::$tableOrderItemFulfillment = ConfigService::$tablePrefix . 'order_item_fulfillment';
+        ConfigService::$tableShippingOption = ConfigService::$tablePrefix . 'shipping_option';
         ConfigService::$tableShippingCostsWeightRange = ConfigService::$tablePrefix . 'shipping_costs_weight_range';
-        ConfigService::$tablePaypalBillingAgreement   = ConfigService::$tablePrefix . 'paypal_billing_agreement';
-        ConfigService::$tableCustomerPaymentMethods   = ConfigService::$tablePrefix . 'customer_payment_methods';
-        ConfigService::$tableUserPaymentMethods       = ConfigService::$tablePrefix . 'user_payment_methods';
-        ConfigService::$tableCustomerStripeCustomer   = ConfigService::$tablePrefix . 'customer_stripe_customer';
-        ConfigService::$tableUserStripeCustomer       = ConfigService::$tablePrefix . 'user_stripe_customer';
-        ConfigService::$tablePaymentGateway           = ConfigService::$tablePrefix . 'payment_gateway';
+        ConfigService::$tablePaypalBillingAgreement = ConfigService::$tablePrefix . 'paypal_billing_agreement';
+        ConfigService::$tableCustomerPaymentMethods = ConfigService::$tablePrefix . 'customer_payment_methods';
+        ConfigService::$tableUserPaymentMethods = ConfigService::$tablePrefix . 'user_payment_methods';
+        ConfigService::$tableCustomerStripeCustomer = ConfigService::$tablePrefix . 'customer_stripe_customer';
+        ConfigService::$tableUserStripeCustomer = ConfigService::$tablePrefix . 'user_stripe_customer';
+        ConfigService::$tablePaymentGateway = ConfigService::$tablePrefix . 'payment_gateway';
 
         // brand
         ConfigService::$brand = config('ecommerce.brand');

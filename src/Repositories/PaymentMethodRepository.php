@@ -27,4 +27,9 @@ class PaymentMethodRepository extends RepositoryBase
 
         return Decorator::decorate($results, 'paymentMethod');
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

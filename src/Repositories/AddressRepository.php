@@ -15,4 +15,9 @@ class AddressRepository extends RepositoryBase
     {
         return (new CachedQuery($this->connection()))->from(ConfigService::$tableAddress);
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

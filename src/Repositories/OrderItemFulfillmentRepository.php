@@ -15,4 +15,9 @@ class OrderItemFulfillmentRepository extends RepositoryBase
     {
         return $this->connection()->table(ConfigService::$tableOrderItemFulfillment);
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }
