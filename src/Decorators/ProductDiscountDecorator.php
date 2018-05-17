@@ -21,7 +21,9 @@ class ProductDiscountDecorator implements DecoratorInterface
     {
         $productIds = $products->pluck('id');
 
-        $productDiscounts = $this->databaseManager->table(ConfigService::$tableDiscountCriteria)
+        $productDiscounts = $this->databaseManager
+            ->connection(ConfigService::$databaseConnectionName)
+            ->table(ConfigService::$tableDiscountCriteria)
             ->whereIn('product_id', $productIds)
             ->get();
 

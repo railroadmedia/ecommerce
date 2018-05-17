@@ -21,7 +21,9 @@ class PaymentPaymentMethodDecorator implements DecoratorInterface
     public function decorate($payment)
     {
         $productMethodId = $payment->pluck('payment_method_id');
-        $paymentMethods = $this->databaseManager->table(ConfigService::$tablePaymentMethod)
+        $paymentMethods = $this->databaseManager
+            ->connection(ConfigService::$databaseConnectionName)
+            ->table(ConfigService::$tablePaymentMethod)
             ->where(ConfigService::$tablePaymentMethod.'.id', $productMethodId)
             ->first();
 

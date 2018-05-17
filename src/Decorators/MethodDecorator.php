@@ -41,14 +41,16 @@ class MethodDecorator implements DecoratorInterface
 
     public function decorateCreditCard($methodId)
     {
-        return $this->databaseManager->table(ConfigService::$tableCreditCard)
+        return $this->databaseManager->connection(ConfigService::$databaseConnectionName)
+            ->table(ConfigService::$tableCreditCard)
             ->where(ConfigService::$tableCreditCard . '.id', $methodId)
             ->first();
     }
 
     public function decoratePaypalBillingAgreement($methodId)
     {
-        return $this->databaseManager->table(ConfigService::$tablePaypalBillingAgreement)
+        return $this->databaseManager->connection(ConfigService::$databaseConnectionName)
+            ->table(ConfigService::$tablePaypalBillingAgreement)
             ->where(ConfigService::$tablePaypalBillingAgreement . '.id', $methodId)
             ->first();
     }
