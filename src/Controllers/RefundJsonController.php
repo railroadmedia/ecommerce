@@ -4,13 +4,12 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Routing\Controller;
-use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Factories\GatewayFactory;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\RefundRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;
-use Railroad\Ecommerce\Services\RefundService;
 use Railroad\Permissions\Services\PermissionService;
 
 class RefundJsonController extends Controller
@@ -66,6 +65,11 @@ class RefundJsonController extends Controller
         $this->permissionService->canOrThrow(auth()->id(), 'store.refund');
 
         $payment = $this->paymentRepository->read($request->get('payment_id'));
+
+        // if the logged in user it's not admin => can refund only own charge
+        throw_if(((!$this->permissionService->is(auth()->id(), 'admin')) && (auth()->id() != $payment['user']['user_id'])),
+            new NotAllowedException('This action is unauthorized.')
+        );
 
         $gateway = $this->gatewayFactory->create($payment['payment_method']['method_type']);
 

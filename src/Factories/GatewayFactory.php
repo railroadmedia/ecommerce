@@ -8,6 +8,7 @@ use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\PaypalPaymentGateway;
 use Railroad\Ecommerce\Services\StripePaymentGateway;
 
+
 class GatewayFactory
 {
     /**
@@ -40,18 +41,18 @@ class GatewayFactory
         switch($class)
         {
             case PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE:
-                $class = 'Stripe';
+                $class = 'StripePaymentGateway';
                 break;
             case PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE:
-                $class = 'Paypal';
+                $class = 'PaypalPaymentGateway';
                 break;
             case null:
-                $class = 'Manual';
+                $class = 'ManualPaymentGateway';
                 break;
             default:
                 $class = '';
         }
 
-        return '\\Railroad\\Ecommerce\\Services\\' . $class . 'PaymentGateway';
+        return '\\Railroad\\Ecommerce\\Services\\' . $class ;
     }
 }

@@ -8,6 +8,7 @@ use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Factories\CustomerFactory;
 use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
+use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\PaymentService;
@@ -28,7 +29,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     /**
      * @var PaymentGatewayFactory
      */
-    private $paymentGatewayFactory;
+    //  private $paymentGatewayFactory;
+
+    /**
+     * @var PaymentGatewayRepository
+     */
+    protected $paymentGatewayRepository;
 
     /**
      * @var Stripe
@@ -41,16 +47,17 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     private $paypal;
 
     CONST VALID_VISA_CARD_NUM          = '4242424242424242';
-    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-07Y51763KD5814604';
+    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-73P77133DA956953G';
 
     protected function setUp()
     {
         parent::setUp();
-        $this->paymentMethodFactory  = $this->app->make(PaymentMethodFactory::class);
-        $this->customerFactory       = $this->app->make(CustomerFactory::class);
-        $this->paymentGatewayFactory = $this->app->make(PaymentGatewayFactory::class);
-        $this->stripe                = $this->app->make(Stripe::class);
-        $this->paypal                = $this->app->make(PayPal::class);
+        $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
+        $this->customerFactory      = $this->app->make(CustomerFactory::class);
+//        $this->paymentGatewayFactory = $this->app->make(PaymentGatewayFactory::class);
+        $this->stripe                   = $this->app->make(Stripe::class);
+        $this->paypal                   = $this->app->make(PayPal::class);
+        $this->paymentGatewayRepository = $this->app->make(PaymentGatewayRepository::class);
     }
 
     public function test_store_payment_method_credit_card_without_required_fields()
@@ -140,7 +147,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_user_store_credit_card_payment_method()
     {
-        $userId             = rand();
+        $userId             = $this->createAndLogInNewUser();
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
         $cardYear           = $cardExpirationDate->format('Y');
         $cardMonth          = $cardExpirationDate->format('m');
@@ -148,7 +155,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $cardLast4          = $this->faker->randomNumber(4);
         $cardType           = $this->faker->creditCardType;
         $currency           = $this->faker->currencyCode;
-        $paymentGateway     = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
+        $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway(['config' => 'stripe_1']));
 
         $results = $this->call('PUT', '/payment-method', [
             'method_type'                  => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -168,8 +175,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'created_on'  => Carbon::now()->toDateTimeString(),
             'updated_on'  => null,
-            'user_id'     => $userId,
-            'customer_id' => null,
             'currency'    => $currency,
             'method'      => [
                 'type'              => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -199,7 +204,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $userId               = rand();
         $customerId           = null;
         $currency             = 'cad';
-        $paymentGateway       = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', 'paypal_1');
+        $paymentGateway       = $this->paymentGatewayRepository->create($this->faker->paymentGateway(['config' => 'paypal_1']));
 
         $results = $this->call('PUT', '/payment-method', [
             'method_type'            => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
@@ -217,8 +222,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             'created_on'  => Carbon::now()->toDateTimeString(),
             'updated_on'  => null,
-            'user_id'     => $userId,
-            'customer_id' => $customerId,
             'currency'    => $currency,
             'method'      => [
                 'express_checkout_token' => $expressCheckoutToken,

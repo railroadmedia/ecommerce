@@ -149,17 +149,17 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'type' => $this->creditCardType,
-                'fingerprint' => $this->creditCardNumber,
-                'last_four_digits' => $this->randomNumber(4),
-                'cardholder_name' => $this->name,
-                'company_name' => $this->creditCardType,
-                'external_id' => $this->word,
+                'type'                 => $this->creditCardType,
+                'fingerprint'          => $this->creditCardNumber,
+                'last_four_digits'     => $this->randomNumber(4),
+                'cardholder_name'      => $this->name,
+                'company_name'         => $this->creditCardType,
+                'external_id'          => $this->word,
                 'external_customer_id' => $this->word,
-                'external_provider' => $this->word,
-                'expiration_date' => $this->creditCardExpirationDateString,
-                'payment_gateway_id' => $this->randomNumber(),
-                'created_on' => Carbon::now()->toDateTimeString()
+                'external_provider'    => $this->word,
+                'expiration_date'      => $this->creditCardExpirationDateString,
+                'payment_gateway_id'   => $this->randomNumber(),
+                'created_on'           => Carbon::now()->toDateTimeString()
             ], $override
         );
     }
@@ -168,12 +168,24 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'brand' => ConfigService::$brand,
-                'type' => $this->word,
-                'name' => $this->word,
-                'config' => $this->word,
+                'brand'      => ConfigService::$brand,
+                'type'       => $this->word,
+                'name'       => $this->word,
+                'config'     => $this->word,
                 'created_on' => Carbon::now()->toDateTimeString()
             ], $override
         );
     }
+
+    public function userPaymentMethod(array $override = [])
+    {
+        return array_merge(
+            [
+                'user_id'           => $this->randomNumber(),
+                'payment_method_id' => $this->randomNumber(),
+                'is_primary'        => $this->boolean,
+                'created_on'        => Carbon::now()->toDateTimeString()
+            ], $override);
+    }
+
 }

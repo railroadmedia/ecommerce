@@ -124,9 +124,11 @@ class StripePaymentGateway
         $fingerprint,
         $last4,
         $cardHolderName,
-        $paymentGateway,
+        $paymentGatewayId,
+        $companyName,
         $stripeCustomer
     ) {
+        $paymentGateway = $this->paymentGatewayRepository->read($paymentGatewayId);
         $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentGateway['config']]['stripe_api_secret']);
 
         try
@@ -159,11 +161,34 @@ class StripePaymentGateway
             $token
         );
 
-        return [
+        $creditCard = $this->creditCardRepository->create(
+            [
+                'type'                 => 'credit card',
+                'fingerprint'          => $fingerprint,
+                'last_four_digits'     => $last4,
+                'cardholder_name'      => $cardHolderName,
+                'company_name'         => $companyName,
+                'external_id'          => $stripeCard->id,
+                'external_customer_id' => $stripeCustomer->id,
+                'external_provider'    => 'stripe',
+                'expiration_date'      => Carbon::create(
+                    $creditCardYearSelector,
+                    $creditCardMonthSelector,
+                    12,
+                    0,
+                    0,
+                    0
+                ),
+                'payment_gateway_id'   => $paymentGatewayId,
+                'created_on'           => Carbon::now()->toDateTimeString()
+            ]
+        );
+
+        return array_merge($creditCard, [
             'status'             => true,
             'stripe_customer_id' => $stripeCustomer->id,
             'stripe_card_id'     => $stripeCard->id
-        ];
+        ]);
     }
 
     /**
@@ -191,7 +216,7 @@ class StripePaymentGateway
      * @param array $data
      * @return array
      */
-    public function handlingData(array $data)
+    public function saveExternalData(array $data)
     {
         if($data['userId'])
         {
@@ -209,6 +234,7 @@ class StripePaymentGateway
             $data['last4'],
             $data['cardholder'],
             $data['paymentGateway'],
+            $data['company_name'],
             $stripeCustomer);
 
         return $stripeData;
@@ -227,7 +253,7 @@ class StripePaymentGateway
      */
     public function refund($paymentMethodId, $refundedAmount, $paymentAmount, $currency, $paymentExternalId, $note)
     {
-        $creditCard = $this->creditCardRepository->read($paymentMethodId);
+        $creditCard     = $this->creditCardRepository->read($paymentMethodId);
         $paymentGateway = $this->paymentGatewayRepository->read($creditCard['payment_gateway_id']);
         $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentGateway['config']]['stripe_api_secret']);
 

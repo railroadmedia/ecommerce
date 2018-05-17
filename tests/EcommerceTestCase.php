@@ -8,6 +8,7 @@ use Illuminate\Auth\AuthManager;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Auth;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Ecommerce\Factories\AccessFactory;
 use Railroad\Ecommerce\Factories\UserAccessFactory;
@@ -22,10 +23,8 @@ use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
 use Webpatser\Countries\CountriesServiceProvider;
 
-
 class EcommerceTestCase extends BaseTestCase
 {
-
     /**
      * @var \Railroad\Ecommerce\Faker\Faker
      */
@@ -69,11 +68,9 @@ class EcommerceTestCase extends BaseTestCase
         $this->artisan('migrate');
         $this->artisan('cache:clear');
 
-        $this->faker = Factory::create();
+        $this->faker           = Factory::create();
         $this->databaseManager = $this->app->make(DatabaseManager::class);
         $this->authManager = $this->app->make(AuthManager::class);
-      //  $this->accessFactory = $this->app->make(AccessFactory::class);
-      //  $this->userAccessFactory = $this->app->make(UserAccessFactory::class);
 
         $this->permissionServiceMock = $this->getMockBuilder(PermissionService::class)
             ->disableOriginalConstructor()
@@ -94,8 +91,8 @@ class EcommerceTestCase extends BaseTestCase
     protected function getEnvironmentSetUp($app)
     {
         // setup package config for testing
-        $defaultConfig = require(__DIR__ . '/../config/ecommerce.php');
-        $locationConfig = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
+        $defaultConfig       = require(__DIR__ . '/../config/ecommerce.php');
+        $locationConfig      = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
         $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
 
         $app['config']->set('ecommerce.database_connection_name', 'testbench');
@@ -121,16 +118,16 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set(
             'database.connections.mysql',
             [
-                'driver' => 'mysql',
-                'host' => 'mysql',
-                'port' => env('MYSQL_PORT', '3306'),
-                'database' => env('MYSQL_DB','ecommerce'),
-                'username' => 'root',
-                'password' => 'root',
-                'charset' => 'utf8',
+                'driver'    => 'mysql',
+                'host'      => 'mysql',
+                'port'      => env('MYSQL_PORT', '3306'),
+                'database'  => env('MYSQL_DB', 'ecommerce'),
+                'username'  => 'root',
+                'password'  => 'root',
+                'charset'   => 'utf8',
                 'collation' => 'utf8_general_ci',
-                'prefix' => '',
-                'options' => [
+                'prefix'    => '',
+                'options'   => [
                     \PDO::ATTR_PERSISTENT => true,
                 ]
             ]
@@ -139,9 +136,9 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set(
             'database.connections.testbench',
             [
-                'driver' => 'sqlite',
+                'driver'   => 'sqlite',
                 'database' => ':memory:',
-                'prefix' => '',
+                'prefix'   => '',
             ]
         );
 
@@ -151,8 +148,8 @@ class EcommerceTestCase extends BaseTestCase
         // allows access to built in user auth
         $app['config']->set('auth.providers.users.model', User::class);
 
-
-        if (!$app['db']->connection()->getSchemaBuilder()->hasTable('users')) {
+        if(!$app['db']->connection()->getSchemaBuilder()->hasTable('users'))
+        {
 
             $app['db']->connection()->getSchemaBuilder()->create(
                 'users',
@@ -191,15 +188,7 @@ class EcommerceTestCase extends BaseTestCase
             ['email' => $this->faker->email]
         );
 
-
-return $userId;
-        $this->authManager->guard()->onceUsingId($userId);
-
-        request()->setUserResolver(
-            function () use ($userId) {
-                return User::query()->find($userId);
-            }
-        );
+        Auth::shouldReceive('id')->andReturn($userId);
 
         return $userId;
     }
@@ -209,12 +198,11 @@ return $userId;
         $userId = $this->createAndLogInNewUser();
 
         $adminRole = $this->accessFactory->store(
-            'admin','admin', ''
+            'admin', 'admin', ''
         );
-        $admin = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
+        $admin     = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
 
         return $userId;
-
     }
 
     protected function tearDown()

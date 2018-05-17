@@ -6,7 +6,9 @@ use Illuminate\Database\Events\StatementPrepared;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use PDO;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
+use Railroad\Ecommerce\Decorators\MethodDecorator;
 use Railroad\Ecommerce\Decorators\PaymentPaymentMethodDecorator;
+use Railroad\Ecommerce\Decorators\PaymentUserDecorator;
 use Railroad\Ecommerce\Decorators\ProductDecorator;
 use Railroad\Ecommerce\Decorators\ProductDiscountDecorator;
 use Railroad\Ecommerce\Events\GiveContentAccess;
@@ -76,12 +78,15 @@ class EcommerceServiceProvider extends ServiceProvider
                 [
                     'product' => [
                         ProductDecorator::class,
-                        ProductDiscountDecorator::class
-                    ]
-                ],
-                [
+                        ProductDiscountDecorator::class,
+                    ],
+
                     'payment' => [
-                        PaymentPaymentMethodDecorator::class
+                        PaymentPaymentMethodDecorator::class,
+                        PaymentUserDecorator::class,
+                    ],
+                    'paymentMethod' => [
+                        MethodDecorator::class
                     ]
                 ]
             )

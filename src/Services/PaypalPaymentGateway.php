@@ -8,6 +8,7 @@ use Railroad\Ecommerce\Exceptions\PayPal\CreateBillingAgreementException;
 use Railroad\Ecommerce\Exceptions\PayPal\CreateReferenceTransactionException;
 use Railroad\Ecommerce\ExternalHelpers\PayPal;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
+use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 
 class PaypalPaymentGateway
 {
@@ -17,9 +18,14 @@ class PaypalPaymentGateway
     private $payPalService;
 
     /**
-     * @var \Railroad\Ecommerce\Repositories\PaymentGatewayRepository
+     * @var PaymentGatewayRepository
      */
     private $paymentGatewayRepository;
+
+    /**
+     * @var PaypalBillingAgreementRepository
+     */
+    private $paypalBillingAgreementRepository;
 
     /**
      * PaypalPaymentGateway constructor.
@@ -28,10 +34,12 @@ class PaypalPaymentGateway
      */
     public function __construct(
         PayPal $payPalService,
-        PaymentGatewayRepository $paymentGatewayRepository
+        PaymentGatewayRepository $paymentGatewayRepository,
+        PaypalBillingAgreementRepository $paypalBillingAgreementRepository
     ) {
-        $this->payPalService            = $payPalService;
-        $this->paymentGatewayRepository = $paymentGatewayRepository;
+        $this->payPalService                    = $payPalService;
+        $this->paymentGatewayRepository         = $paymentGatewayRepository;
+        $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
     }
 
     public function chargePayment($due, $paid, $paymentMethod, $currency)
@@ -44,7 +52,7 @@ class PaypalPaymentGateway
 
         try
         {
-            $charge = $this->chargePayPalReferenceAgreementPayment($due, $paymentMethod, $currency);
+            $charge                           = $this->chargePayPalReferenceAgreementPayment($due, $paymentMethod, $currency);
             $paymentData['external_id']       = $charge['results'];
             $paymentData['paid']              = $due;
             $paymentData['external_provider'] = 'paypal';
@@ -115,8 +123,9 @@ class PaypalPaymentGateway
      * @param $addressId
      * @return int
      */
-    public function createPaypalBilling($expressCheckoutToken, $paymentGateway)
+    public function saveExternalData($expressCheckoutToken, $paymentGatewayId, $addressId)
     {
+        $paymentGateway = $this->paymentGatewayRepository->read($paymentGatewayId);
         $this->payPalService->setApiKey($paymentGateway['config']);
         try
         {
@@ -131,11 +140,20 @@ class PaypalPaymentGateway
                 ];
         }
 
-        return
+        $paypalBillingAgreement = $this->paypalBillingAgreementRepository->create([
+            'agreement_id'           => $agreementId,
+            'express_checkout_token' => $expressCheckoutToken,
+            'address_id'             => $addressId,
+            'payment_gateway_id'     => $paymentGatewayId,
+            'expiration_date'        => Carbon::now()->addYears(10),
+            'created_on'             => Carbon::now()->toDateTimeString()
+        ]);
+
+        return array_merge($paypalBillingAgreement,
             [
                 'status'  => true,
                 'results' => $agreementId
-            ];
+            ]);
     }
 
     /** Create a paypal billing agreement id based on express checkout token
@@ -145,7 +163,7 @@ class PaypalPaymentGateway
      */
     public function handlingData(array $data)
     {
-        return  $this->createPaypalBilling($data['expressCheckoutToken'], $data['paymentGateway']);
+        return $this->createPaypalBilling($data['expressCheckoutToken'], $data['paymentGateway'], $data['address_id']);
     }
 
     /** Create a new Paypal refund transaction.

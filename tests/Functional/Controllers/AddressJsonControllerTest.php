@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Services\AddressService;
@@ -129,6 +130,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         //create user address
         $userId  = $this->createAndLogInNewUser();
+
         $address = $this->addressRepository->create($this->faker->address(['type' => AddressService::SHIPPING_ADDRESS, 'user_id' => $userId]));
 
         $newStreetLine1 = $this->faker->streetAddress;
