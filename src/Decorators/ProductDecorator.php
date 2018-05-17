@@ -21,7 +21,8 @@ class ProductDecorator implements DecoratorInterface
     {
         $productIds = $products->pluck('id');
 
-        $productOrders = $this->databaseManager->table(ConfigService::$tableOrderItem)
+        $productOrders = $this->databaseManager->connection(ConfigService::$databaseConnectionName)
+            ->table(ConfigService::$tableOrderItem)
             ->whereIn('product_id', $productIds)
             ->get();
 
