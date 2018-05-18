@@ -97,6 +97,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 config()->get('resora.decorators.payment', []),
                 [
                     PaymentPaymentMethodDecorator::class,
+                    PaymentUserDecorator::class,
                 ]
             )
         );
