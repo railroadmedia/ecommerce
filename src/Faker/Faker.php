@@ -150,7 +150,7 @@ class Faker extends Generator
         return array_merge(
             [
                 'type'                 => $this->creditCardType,
-                'fingerprint'          => $this->creditCardNumber,
+                'fingerprint'          => '4242424242424242',
                 'last_four_digits'     => $this->randomNumber(4),
                 'cardholder_name'      => $this->name,
                 'company_name'         => $this->creditCardType,
@@ -186,6 +186,20 @@ class Faker extends Generator
                 'is_primary'        => $this->boolean,
                 'created_on'        => Carbon::now()->toDateTimeString()
             ], $override);
+    }
+
+    public function paypalBillingAgreement(array $override = [])
+    {
+        return array_merge(
+            [
+                'agreement_id' => 'B-5Y6562572W918445E',
+                'express_checkout_token' => 'EC-73P77133DA956953G',
+                'address_id' => $this->randomNumber(),
+                'payment_gateway_id' => $this->randomNumber(),
+                'expiration_date' => $this->creditCardExpirationDateString,
+                'created_on' => Carbon::now()->toDateTimeString()
+            ]
+        );
     }
 
 }

@@ -14,7 +14,7 @@ class UserStripeCustomerRepository extends RepositoryBase
      */
     protected function newQuery()
     {
-        return (new CachedQuery($this->connection()))->from(ConfigService::$tablePayment);
+        return (new CachedQuery($this->connection()))->from(ConfigService::$tableUserStripeCustomer);
     }
 
     public function getByUserId($userId)

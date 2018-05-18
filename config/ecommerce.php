@@ -107,6 +107,10 @@ return [
             'create.shipping_option',
             'edit.shipping_option',
             'delete.shipping_option',
+
+            'create.payment.method',
+            'update.payment.method',
+            'delete.payment.method',
         ],
     ]
 ];

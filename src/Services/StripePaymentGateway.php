@@ -6,7 +6,9 @@ use Carbon\Carbon;
 use Doctrine\DBAL\Driver\PDOException;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
+use Railroad\Ecommerce\Repositories\CustomerStripeCustomerRepository;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
+use Railroad\Ecommerce\Repositories\UserStripeCustomerRepository;
 use Stripe\Error\Card;
 use Stripe\Error\InvalidRequest;
 
@@ -28,6 +30,16 @@ class StripePaymentGateway
     private $creditCardRepository;
 
     /**
+     * @var \Railroad\Ecommerce\Repositories\UserStripeCustomerRepository
+     */
+    private $userStripeCustomerRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\CustomerStripeCustomerRepository
+     */
+    private $customerStripeCustomerRepository;
+
+    /**
      * StripePaymentGateway constructor.
      *
      * @param Stripe $stripeService
@@ -35,11 +47,15 @@ class StripePaymentGateway
     public function __construct(
         Stripe $stripeService,
         PaymentGatewayRepository $paymentGatewayRepository,
-        CreditCardRepository $creditCardRepository
+        CreditCardRepository $creditCardRepository,
+        UserStripeCustomerRepository $userStripeCustomerRepository,
+        CustomerStripeCustomerRepository $customerStripeCustomerRepository
     ) {
-        $this->stripeService            = $stripeService;
-        $this->paymentGatewayRepository = $paymentGatewayRepository;
-        $this->creditCardRepository     = $creditCardRepository;
+        $this->stripeService                    = $stripeService;
+        $this->paymentGatewayRepository         = $paymentGatewayRepository;
+        $this->creditCardRepository             = $creditCardRepository;
+        $this->userStripeCustomerRepository     = $userStripeCustomerRepository;
+        $this->customerStripeCustomerRepository = $customerStripeCustomerRepository;
     }
 
     public function chargePayment($due, $paid, $paymentMethod, $currency)
@@ -195,13 +211,27 @@ class StripePaymentGateway
      * @param $stripeCustomerMapping
      * @return \Stripe\Customer
      */
-    public function getStripeCustomer($stripeCustomerMapping)
+    public function getStripeCustomer($data)
     {
+        $stripeCustomerId = 0;
+        if($data['userId'])
+        {
+            $stripeCustomerId = $this->userStripeCustomerRepository->query()
+                ->where('user_id', $data['userId'])
+                ->first();
+        }
+        if($data['customerId'])
+        {
+            $stripeCustomerId = $this->customerStripeCustomerRepository->query()
+                ->where('customer_id', $data['customerId'])
+                ->first();
+        }
+
         $this->stripeService->setApiKey(ConfigService::$stripeAPI['stripe_1']['stripe_api_secret']);
         //TODO - we need the user/customer email address
         try
         {
-            $stripeCustomer = $this->stripeService->retrieveCustomer($stripeCustomerMapping['stripe_customer_id'] ?? 0);
+            $stripeCustomer = $this->stripeService->retrieveCustomer($stripeCustomerId);
         }
         catch(InvalidRequest $exception)
         {
@@ -218,14 +248,7 @@ class StripePaymentGateway
      */
     public function saveExternalData(array $data)
     {
-        if($data['userId'])
-        {
-            $stripeCustomer = $this->getStripeCustomer($data['stripeUserMapping']);
-        }
-        if($data['customerId'])
-        {
-            $stripeCustomer = $this->getStripeCustomer($data['stripeCustomerMapping']);
-        }
+        $stripeCustomer = $this->getStripeCustomer($data);
 
         $stripeData = $this->createCreditCard(
             $data['creditCardYear'],
@@ -267,5 +290,10 @@ class StripePaymentGateway
         {
             return null;
         }
+    }
+
+    public function deleteMethod($creditCardId)
+    {
+       return $this->creditCardRepository->destroy($creditCardId);
     }
 }

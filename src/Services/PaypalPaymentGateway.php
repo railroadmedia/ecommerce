@@ -123,13 +123,13 @@ class PaypalPaymentGateway
      * @param $addressId
      * @return int
      */
-    public function saveExternalData($expressCheckoutToken, $paymentGatewayId, $addressId)
+    public function saveExternalData(array $data)
     {
-        $paymentGateway = $this->paymentGatewayRepository->read($paymentGatewayId);
+        $paymentGateway = $this->paymentGatewayRepository->read($data['paymentGateway']);
         $this->payPalService->setApiKey($paymentGateway['config']);
         try
         {
-            $agreementId = $this->payPalService->confirmAndCreateBillingAgreement($expressCheckoutToken);
+            $agreementId = $this->payPalService->confirmAndCreateBillingAgreement($data['expressCheckoutToken']);
         }
         catch(CreateBillingAgreementException $e)
         {
@@ -142,9 +142,9 @@ class PaypalPaymentGateway
 
         $paypalBillingAgreement = $this->paypalBillingAgreementRepository->create([
             'agreement_id'           => $agreementId,
-            'express_checkout_token' => $expressCheckoutToken,
-            'address_id'             => $addressId,
-            'payment_gateway_id'     => $paymentGatewayId,
+            'express_checkout_token' => $data['expressCheckoutToken'],
+            'address_id'             => $data['address_id'],
+            'payment_gateway_id'     => $data['paymentGateway'],
             'expiration_date'        => Carbon::now()->addYears(10),
             'created_on'             => Carbon::now()->toDateTimeString()
         ]);
@@ -196,5 +196,10 @@ class PaypalPaymentGateway
         {
             return null;
         }
+    }
+
+    public function deleteMethod($agreementId)
+    {
+        return $this->paypalBillingAgreementRepository->destroy($agreementId);
     }
 }
