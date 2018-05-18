@@ -77,7 +77,16 @@ class ShippingOptionController extends Controller
 
         $shippingOption = $this->shippingOptionRepository->update(
             $shippingOptionId,
-            $request->only(['country', 'priority', 'active',])
+            array_merge(
+                $request->only(
+                    [
+                        'country',
+                        'priority',
+                        'active',
+                    ]
+                ),
+                ['updated_on' => Carbon::now()->toDateTimeString()]
+            )
         );
 
         //if the update method response it's null the shipping option not exist; we throw the proper exception

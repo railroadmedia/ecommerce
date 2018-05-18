@@ -140,7 +140,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                 'active' => 1,
                 'priority' => $shippingOption['priority'],
                 'created_on' => $shippingOption['created_on'],
-                'updated_on' => null,
+                'updated_on' => Carbon::now()->toDateTimeString(),
             ],
             $results->decodeResponseJson()['results']
         );
