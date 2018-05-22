@@ -3,10 +3,9 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
+
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
-use Railroad\Ecommerce\Services\AddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Webpatser\Countries\Countries;
@@ -131,7 +130,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         //create user address
         $userId  = $this->createAndLogInNewUser();
 
-        $address = $this->addressRepository->create($this->faker->address(['type' => AddressService::SHIPPING_ADDRESS, 'user_id' => $userId]));
+        $address = $this->addressRepository->create($this->faker->address(['type' => ConfigService::$shippingAddressType, 'user_id' => $userId]));
 
         $newStreetLine1 = $this->faker->streetAddress;
 
@@ -293,8 +292,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         $country     = $this->faker->word;
         $type        = $this->faker->randomElement([
-            AddressService::SHIPPING_ADDRESS,
-            AddressService::BILLING_ADDRESS
+            ConfigService::$shippingAddressType,
+            ConfigService::$billingAddressType
         ]);
         $userId      = rand();
         $firstName   = $this->faker->firstName;
@@ -380,8 +379,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('is')->willReturn(true);
 
         $type = $this->faker->randomElement([
-            AddressService::SHIPPING_ADDRESS,
-            AddressService::BILLING_ADDRESS
+            ConfigService::$billingAddressType,
+            ConfigService::$shippingAddressType
         ]);
 
         $randomUserId = rand();
@@ -518,8 +517,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         $customer    = $this->customerRepository->create($this->faker->customer());
         $type        = $this->faker->randomElement([
-            AddressService::SHIPPING_ADDRESS,
-            AddressService::BILLING_ADDRESS
+            ConfigService::$shippingAddressType,
+            ConfigService::$billingAddressType
         ]);
         $firstName   = $this->faker->firstName;
         $lastName    = $this->faker->lastName;

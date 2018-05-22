@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
 use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Permissions\Services\UserAccessService;
 use Railroad\RemoteStorage\Services\RemoteStorageService;
 
 
@@ -32,10 +31,6 @@ class ProductService
      */
     private $remoteStorageService;
 
-    /**
-     * @var UserAccessService
-     */
-    private $userAccessService;
 
     /**
      * Determines whether inactive products will be pulled or not.
@@ -55,14 +50,12 @@ class ProductService
     public function __construct(ProductRepository $productRepository,
                                 OrderItemRepository $orderItemRepository,
                                 DiscountCriteriaRepository $discountCriteriaRepository,
-                                RemoteStorageService $remoteStorageService,
-                                UserAccessService $userAccessService)
+                                RemoteStorageService $remoteStorageService)
     {
         $this->productRepository = $productRepository;
         $this->orderItemRepository = $orderItemRepository;
         $this->discountCriteriaRepository = $discountCriteriaRepository;
         $this->remoteStorageService = $remoteStorageService;
-        $this->userAccessService = $userAccessService;
     }
 
     /** Get all the active products that meet the conditions

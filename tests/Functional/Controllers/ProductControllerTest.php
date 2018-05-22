@@ -4,11 +4,8 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
-use Railroad\Ecommerce\Factories\ProductFactory;
-use Railroad\Ecommerce\Faker\Factory;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\ProductService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ProductControllerTest extends EcommerceTestCase
@@ -50,7 +47,7 @@ class ProductControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
 
-        $subscription = $this->faker->product(['type' => ProductService::TYPE_SUBSCRIPTION]);
+        $subscription = $this->faker->product(['type' => ConfigService::$typeSubscription]);
         $results      = $this->call('PUT', '/product/', $subscription);
 
         $jsonResponse = $results->decodeResponseJson();
@@ -119,7 +116,7 @@ class ProductControllerTest extends EcommerceTestCase
             'name'        => $this->faker->word,
             'sku'         => $this->faker->word,
             'price'       => $this->faker->numberBetween(15.97, 15.99),
-            'type'        => ProductService::TYPE_SUBSCRIPTION,
+            'type'        => ConfigService::$typeSubscription,
             'active'      => true,
             'is_physical' => false,
             'stock'       => $this->faker->numberBetween(0, 1000)
@@ -181,7 +178,7 @@ class ProductControllerTest extends EcommerceTestCase
             'name'        => $this->faker->word,
             'sku'         => $this->faker->word,
             'price'       => $this->faker->numberBetween(15.97, 15.99),
-            'type'        => ProductService::TYPE_PRODUCT,
+            'type'        => ConfigService::$typeProduct,
             'active'      => true,
             'is_physical' => true,
             'stock'       => $this->faker->numberBetween(0, 1000)
@@ -256,7 +253,7 @@ class ProductControllerTest extends EcommerceTestCase
         $product = $this->productRepository->create($this->faker->product());
 
         $results = $this->call('PATCH', '/product/' . $product['id'], [
-            'type' => ProductService::TYPE_SUBSCRIPTION
+            'type' => ConfigService::$typeSubscription
         ]);
 
         //assert response code

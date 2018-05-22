@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Factories\CartFactory;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\ProductService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShoppingCartControllerTest extends EcommerceTestCase
@@ -94,7 +93,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     public function test_add_inexistent_product_to_cart()
     {
         $randomSku = $this->faker->word;
-        $response = $this->call('PUT', '/add-to-cart', [
+        $response = $this->call('GET', '/add-to-cart', [
             'products' => [$randomSku => 10]
         ]);
 
@@ -136,7 +135,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $this->query()->table(ConfigService::$tableProduct)->insertGetId($product2);
 
-        $response = $this->call('PUT', '/add-to-cart/', [
+        $response = $this->call('GET', '/add-to-cart/', [
             'products' => [$product1['sku'] => 2,
                 $product2['sku'] => 3]
         ]);
@@ -162,7 +161,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $productId = $this->query()->table(ConfigService::$tableProduct)->insertGetId($product);
 
-        $response = $this->call('PUT', '/add-to-cart/', [
+        $response = $this->call('GET', '/add-to-cart/', [
             'products' => [$product['sku'] => $this->faker->numberBetween(5, 100)]
         ]);
 
@@ -204,7 +203,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $productId2 = $this->query()->table(ConfigService::$tableProduct)->insertGetId($product2);
 
-        $response = $this->call('PUT', '/add-to-cart/', [
+        $response = $this->call('GET', '/add-to-cart/', [
             'products' => [$product1['sku'] => $this->faker->numberBetween(1, 5),
                 $this->faker->word . 'sku1' => 2,
                 $product2['sku'] => $this->faker->numberBetween(1, 5),

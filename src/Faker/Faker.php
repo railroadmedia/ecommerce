@@ -154,8 +154,8 @@ class Faker extends Generator
                 'last_four_digits'     => $this->randomNumber(4),
                 'cardholder_name'      => $this->name,
                 'company_name'         => $this->creditCardType,
-                'external_id'          => $this->word,
-                'external_customer_id' => $this->word,
+                'external_id'          => 'card_1CT9rUE2yPYKc9YRHSwdADbH',
+                'external_customer_id' => 'cus_CsviON4xYQxcwC',
                 'external_provider'    => $this->word,
                 'expiration_date'      => $this->creditCardExpirationDateString,
                 'payment_gateway_id'   => $this->randomNumber(),
@@ -192,14 +192,24 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'agreement_id' => 'B-5Y6562572W918445E',
+                'agreement_id'           => 'B-5Y6562572W918445E',
                 'express_checkout_token' => 'EC-73P77133DA956953G',
-                'address_id' => $this->randomNumber(),
-                'payment_gateway_id' => $this->randomNumber(),
-                'expiration_date' => $this->creditCardExpirationDateString,
-                'created_on' => Carbon::now()->toDateTimeString()
-            ]
+                'address_id'             => $this->randomNumber(),
+                'payment_gateway_id'     => $this->randomNumber(),
+                'expiration_date'        => $this->creditCardExpirationDateString,
+                'created_on'             => Carbon::now()->toDateTimeString()
+            ], $override
         );
     }
 
+    public function userStripeCustomer(array $override = [])
+    {
+        return array_merge(
+            [
+                'user_id'            => $this->randomNumber(),
+                'stripe_customer_id' => 'cus_CsviON4xYQxcwC',
+                'created_on'         => Carbon::now()->toDateTimeString()
+            ], $override
+        );
+    }
 }

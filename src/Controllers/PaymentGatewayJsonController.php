@@ -79,7 +79,15 @@ class PaymentGatewayJsonController extends Controller
 
         $paymentGateway = $this->paymentGatewayRepository->update(
             $paymentGatewayId,
-            $request->only(['brand', 'type', 'name', 'config'])
+            array_merge(
+                $request->only(
+                    [
+                        'brand', 'type', 'name', 'config'
+                    ]
+                ),
+                [
+                    'updated_on'  => Carbon::now()->toDateTimeString()
+                ])
         );
 
         throw_if(

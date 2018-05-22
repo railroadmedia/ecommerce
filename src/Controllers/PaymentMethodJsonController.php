@@ -76,12 +76,13 @@ class PaymentMethodJsonController extends Controller
     public function store(PaymentMethodCreateRequest $request)
     {
 
-        $data = $this->saveMethod($request);
+        $data            = $this->saveMethod($request);
+        $externalMessage = $data['message'] ?? '';
 
         //if the store method response it's null the method_type not exist; we throw the proper exception
         throw_if(
             (!$data['status']),
-            new NotFoundException('Creation failed, method type(' . $request->get('method_type') . ') not allowed or incorrect data.')
+            new NotFoundException('Creation failed, method type(' . $request->get('method_type') . ') not allowed or incorrect data.' . print_r($externalMessage, true))
         );
 
         $paymentMethod = $this->paymentMethodRepository->create(

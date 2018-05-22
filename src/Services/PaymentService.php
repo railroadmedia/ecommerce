@@ -61,14 +61,14 @@ class PaymentService
     /**
      * PaymentService constructor.
      *
-     * @param PaymentRepository $paymentRepository
-     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param PaymentRepository             $paymentRepository
+     * @param OrderPaymentRepository        $orderPaymentRepository
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
-     * @param LocationService $locationService
-     * @param PaymentMethodRepository $paymentMethodRepository
-     * @param OrderService $orderService
-     * @param GatewayFactory $gatewayFactory
-     * @param SubscriptionService $subscriptionService
+     * @param LocationService               $locationService
+     * @param PaymentMethodRepository       $paymentMethodRepository
+     * @param OrderService                  $orderService
+     * @param GatewayFactory                $gatewayFactory
+     * @param SubscriptionService           $subscriptionService
      */
     public function __construct(
         PaymentRepository $paymentRepository,

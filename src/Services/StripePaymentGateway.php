@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Doctrine\DBAL\Driver\PDOException;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\CustomerStripeCustomerRepository;
@@ -93,7 +92,7 @@ class StripePaymentGateway
      */
     private function chargeStripeCreditCardPayment($due, $paymentMethod, $currency)
     {
-        $paymentGateway = $this->paymentGatewayRepository->getById($paymentMethod['method']['payment_gateway_id']);
+        $paymentGateway = $this->paymentGatewayRepository->read($paymentMethod['method']['payment_gateway_id']);
 
         $this->stripeService->setApiKey(ConfigService::$stripeAPI[$paymentGateway['config']]['stripe_api_secret']);
 

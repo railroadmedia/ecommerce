@@ -25,7 +25,7 @@
     "doctrine/dbal": "^2.5",
     "ramsey/uuid": "^3.6",
     "railroad/location": "@dev",
-    "railroad/permissions": "5.61.04",
+    "railroad/permissions": "5.61.05",
     "railroad/remotestorage": "@dev",
     "webpatser/laravel-countries": "1.5.4",
     "stripe/stripe-php": "^4.4",

@@ -3,9 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Exceptions\NotFoundException;
-use Railroad\Ecommerce\ExternalHelpers\PayPal;
-use Railroad\Ecommerce\ExternalHelpers\Stripe;
+use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Factories\CustomerFactory;
 use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
@@ -17,7 +15,6 @@ use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
-use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class PaymentMethodJsonControllerTest extends EcommerceTestCase
@@ -31,11 +28,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
      * @var CustomerFactory
      */
     private $customerFactory;
-
-    /**
-     * @var PaymentGatewayFactory
-     */
-    //  private $paymentGatewayFactory;
 
     /**
      * @var PaymentGatewayRepository
@@ -68,7 +60,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     protected $customerRepository;
 
     CONST VALID_VISA_CARD_NUM          = '4242424242424242';
-    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-73P77133DA956953G';
+    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-84G07962U40732257';
 
     protected function setUp()
     {
@@ -358,7 +350,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         //assert error message subset results
         $this->assertArraySubset([
             'title'  => 'Not found.',
-            'detail' => 'Creation failed, method type(' . PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE . ') not allowed or incorrect data.'
+            'detail' => 'Creation failed, method type(' . PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE . ') not allowed or incorrect data.Can not create token:: The card number is not a valid credit card number.'
         ], $results->decodeResponseJson('error'));
 
         //assert payment method data not saved in the db
@@ -406,10 +398,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         //assert error message subset results
         $this->assertArraySubset([
-            'title'  => 'Not found.',
-            'detail' => 'Creation failed, method type(' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE . ') not allowed or incorrect data.'
+            'title' => 'Not found.',
+            // 'detail' => 'Creation failed, method type(' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE . ') not allowed or incorrect data.'
         ], $results->decodeResponseJson('error'));
 
+        $this->assertContains('Creation failed, method type(' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE . ') not allowed or incorrect data.', $results->decodeResponseJson('error')['detail']);
         //assert payment method data not saved in the db
         $this->assertDatabaseMissing(
             ConfigService::$tablePaymentMethod,
@@ -444,7 +437,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_update_payment_method_create_credit_card_validation()
     {
-        $userId         = $this->createAndLogInNewUser();
+        $userId = $this->createAndLogInNewUser();
+
         $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway(['config' => 'stripe_1']));
         $creditCard     = $this->creditCardRepository->create($this->faker->creditCard([
             'payment_gateway_id' => $paymentGateway['id']
@@ -453,6 +447,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
             'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'method_id'   => $creditCard['id']
+        ]));
+
+        $userPaymentMethod = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
+            'user_id'           => $userId,
+            'payment_method_id' => $paymentMethod['id']
         ]));
 
         $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
@@ -488,6 +487,18 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 "detail" => "The company name field is required when create a new credit card.",
             ]
         ], $results->decodeResponseJson()['errors']);
+
+        //assert payment method not updated in the db
+        $this->assertDatabaseHas(ConfigService::$tablePaymentMethod,
+            [
+                'id'        => $paymentMethod['id'],
+                'method_id' => $creditCard['id']
+            ]);
+
+        $this->assertDatabaseMissing(
+            ConfigService::$tableCreditCard,
+            ['id' => $creditCard['id'] + 1]
+        );
     }
 
     public function test_update_payment_method_update_credit_card_validation()
@@ -558,6 +569,14 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 "detail" => "The address id field is required when update payment method and use paypal.",
             ]
         ], $results->decodeResponseJson()['errors']);
+
+        //assert payment method data not updated in the db
+        $this->assertDatabaseHas(ConfigService::$tablePaymentMethod,
+            [
+                'id'          => $paymentMethod['id'],
+                'method_id'   => $creditCard['id'],
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
+            ]);
     }
 
     public function test_user_update_payment_method_create_credit_card_response()
@@ -603,6 +622,22 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'updated_on'  => Carbon::now()->toDateTimeString(),
             'currency'    => $paymentMethod['currency'],
         ], $results->decodeResponseJson()['results']);
+
+        //assert new credit card saved in the db
+        $this->assertDatabaseHas(ConfigService::$tableCreditCard,
+            [
+                'fingerprint'        => $cardFingerprint,
+                'last_four_digits'   => $cardLast4,
+                'cardholder_name'    => $cardHolderName,
+                'company_name'       => $cardType,
+                'payment_gateway_id' => $paymentGateway['id']
+            ]);
+
+        $this->assertDatabaseMissing(ConfigService::$tablePaymentMethod,
+            [
+                'id'        => $paymentMethod['id'],
+                'method_id' => $creditCard['id']
+            ]);
     }
 
     public function test_update_payment_method_use_paypal()
@@ -640,11 +675,27 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'updated_on'  => Carbon::now()->toDateTimeString(),
             'currency'    => $paymentMethod['currency'],
         ], $results->decodeResponseJson()['results']);
-    }
 
+        //assert data updated in db
+        $this->assertDatabaseHas(ConfigService::$tablePaymentMethod,
+            [
+                'id'          => $paymentMethod['id'],
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE
+            ]);
+        $this->assertDatabaseHas(ConfigService::$tablePaypalBillingAgreement,
+            [
+                'express_checkout_token' => $expressCheckoutToken,
+                'address_id'             => $addressId,
+                'payment_gateway_id'     => $paymentGatewayPaypal['id']
+            ]);
+    }
 
     public function test_delete_payment_method_not_authenticated_user()
     {
+        $this->permissionServiceMock->method('canOrThrow')->willThrowException(
+            new NotAllowedException('This action is unauthorized.')
+        );
+
         $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway(['config' => 'stripe_1']));
         $creditCard     = $this->creditCardRepository->create($this->faker->creditCard([
             'payment_gateway_id' => $paymentGateway['id']
@@ -655,15 +706,21 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'method_id'   => $creditCard['id']
         ]));
 
-        $results  = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
+        $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
 
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals(
             [
                 "title"  => "Not allowed.",
-                "detail" => "This action is unauthorized. Please login",
+                "detail" => "This action is unauthorized.",
             ]
             , $results->decodeResponseJson()['error']);
+
+        //assert payment method still exist in db
+        $this->assertDatabaseHas(ConfigService::$tablePaymentMethod,
+            [
+                'id' => $paymentMethod['id']
+            ]);
     }
 
     public function test_user_delete_payment_method_credit_card()
@@ -713,7 +770,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $paypalBilling  = $this->paypalBillingAgreementRepository->create($this->faker->paypalBillingAgreement([
             'payment_gateway_id' => $paymentGateway['id']
         ]));
-
 
         $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,

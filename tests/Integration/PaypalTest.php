@@ -1,6 +1,6 @@
 <?php
 
-use Railroad\Ecommerce\ExternalHelpers\Paypal;
+use Railroad\Ecommerce\ExternalHelpers\PayPal;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
@@ -14,7 +14,7 @@ class PaypalTest extends EcommerceTestCase
     public function setUp()
     {
         parent::setUp();
-        $this->classBeingTested = $this->app->make(Paypal::class);
+        $this->classBeingTested = $this->app->make(PayPal::class);
         $this->classBeingTested->setApiKey('paypal_1');
     }
 

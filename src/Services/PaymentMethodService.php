@@ -4,7 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Exceptions\PayPal\CreateBillingAgreementException;
-use Railroad\Ecommerce\ExternalHelpers\Paypal;
+use Railroad\Ecommerce\ExternalHelpers\PayPal;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Factories\GatewayFactory;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
@@ -275,7 +275,7 @@ class PaymentMethodService
             $this->assignPaymentMethodToCustomer($customerId, $paymentMethodId);
         }
 
-        $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
+        $paymentMethod           = $this->paymentMethodRepository->getById($paymentMethodId);
         $paymentMethod['status'] = true;
 
         return $paymentMethod;
@@ -350,7 +350,8 @@ class PaymentMethodService
                     'stripeUserMapping'     => $stripeUserMapping,
                     'stripeCustomerMapping' => $stripeCustomerMapping
                 ]);
-            if (!$paymentData['status']){
+            if(!$paymentData['status'])
+            {
                 return $paymentData;
             }
 
@@ -408,7 +409,8 @@ class PaymentMethodService
                     'userId'               => $data['user_id'] ?? null,
                     'customerId'           => $data['customer_id'] ?? null
                 ]);
-            if (!$paymentData['status']){
+            if(!$paymentData['status'])
+            {
                 return $paymentData;
             }
 

@@ -8,6 +8,10 @@ use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Factories\ProductFactory;
 use Railroad\Ecommerce\Factories\ShippingCostsFactory;
 use Railroad\Ecommerce\Factories\ShippingOptionFactory;
+use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
+use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Ecommerce\Repositories\ShippingCostsRepository;
+use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ProductService;
@@ -16,24 +20,24 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 class OrderFormJsonControllerTest extends EcommerceTestCase
 {
     /**
-     * @var ProductFactory
+     * @var \Railroad\Ecommerce\Repositories\ProductRepository
      */
-    protected $productFactory;
+    protected $productRepository;
 
     /**
-     * @var ShippingOptionFactory
+     * @var \Railroad\Ecommerce\Repositories\ShippingOptionRepository
      */
-    protected $shippingOptionFactory;
+    protected $shippingOptionRepository;
 
     /**
-     * @var ShippingCostsFactory
+     * @var \Railroad\Ecommerce\Repositories\ShippingCostsRepository
      */
-    protected $shippingCostsFactory;
+    protected $shippingCostsRepository;
 
     /**
-     * @var PaymentGatewayFactory
+     * @var \Railroad\Ecommerce\Repositories\PaymentGatewayRepository
      */
-    protected $paymentGatewayFactory;
+    protected $paymentGatewayRepository;
 
     /**
      * @var \Railroad\Ecommerce\Factories\CartFactory
@@ -43,55 +47,69 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->productFactory        = $this->app->make(ProductFactory::class);
-        $this->shippingOptionFactory = $this->app->make(ShippingOptionFactory::class);
-        $this->shippingCostsFactory  = $this->app->make(ShippingCostsFactory::class);
-        $this->paymentGatewayFactory = $this->app->make(PaymentGatewayFactory::class);
-        $this->cartFactory           = $this->app->make(CartFactory::class);
+        $this->productRepository        = $this->app->make(ProductRepository::class);
+        $this->shippingOptionRepository = $this->app->make(ShippingOptionRepository::class);
+        $this->shippingCostsRepository  = $this->app->make(ShippingCostsRepository::class);
+        $this->paymentGatewayRepository = $this->app->make(PaymentGatewayRepository::class);
+        $this->cartFactory              = $this->app->make(CartFactory::class);
     }
 
     public function testIndex()
     {
-        $product1 = [
-            'brand'       => ConfigService::$brand,
-            'name'        => $this->faker->word,
-            'sku'         => $this->faker->word,
+        $product1 = $this->productRepository->create($this->faker->product([
             'price'       => 10,
             'type'        => ProductService::TYPE_PRODUCT,
             'active'      => 1,
             'description' => $this->faker->word,
             'is_physical' => 1,
             'weight'      => 2,
-            'stock'       => $this->faker->numberBetween(5, 100),
-            'created_on'  => Carbon::now()->toDateTimeString()
-        ];
+        ]));
 
-        $this->query()->table(ConfigService::$tableProduct)->insertGetId($product1);
-
-        $product2 = [
-            'brand'       => ConfigService::$brand,
-            'name'        => $this->faker->word,
-            'sku'         => $this->faker->word,
+        $product2 = $this->productRepository->create($this->faker->product([
             'price'       => 5,
             'type'        => ProductService::TYPE_PRODUCT,
             'active'      => 1,
             'description' => $this->faker->word,
             'is_physical' => 1,
             'weight'      => 1,
-            'stock'       => $this->faker->numberBetween(5, 100),
-            'created_on'  => Carbon::now()->toDateTimeString()
-        ];
+        ]));
 
-        $this->query()->table(ConfigService::$tableProduct)->insertGetId($product2);
+        $shippingOption  = $this->shippingOptionRepository->create($this->faker->shippingOption([
+            'country'  => 'Canada',
+            'active'   => 1,
+            'priority' => 1
+        ]));
+        $shippingOption2 = $this->shippingOptionRepository->create($this->faker->shippingOption([
+            'country'  => '*',
+            'active'   => 1,
+            'priority' => 0
+        ]));
 
-        $shippingOption  = $this->shippingOptionFactory->store('Canada', 1, 1);
-        $shippingOption2 = $this->shippingOptionFactory->store('*', 0, 1);
+        $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min'                => 0,
+            'max'                => 1000,
+            'price'              => 520
+        ]));
 
-        $this->shippingCostsFactory->store($shippingOption['id'], 0, 1000, 520);
-
-        $this->shippingCostsFactory->store($shippingOption2['id'], 0, 1, 13.50);
-        $this->shippingCostsFactory->store($shippingOption2['id'], 1, 2, 19);
-        $this->shippingCostsFactory->store($shippingOption2['id'], 2, 50, 24);
+        $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption2['id'],
+            'min'                => 0,
+            'max'                => 1,
+            'price'              => 13.50
+        ]));
+        $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption2['id'],
+            'min'                => 1,
+            'max'                =>2,
+            'price'              => 19
+        ]));
+        $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption2['id'],
+            'min'                => 2,
+            'max'                => 50,
+            'price'              => 24
+        ]));
 
         $response = $this->call('PUT', '/add-to-cart/', [
             'products' => [
@@ -725,7 +743,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $cart = $this->cartFactory->addCartItem($product['name'],
             $product['description'],
-           1,
+            1,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
@@ -753,7 +771,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(422, $results->getStatusCode());
         $this->assertEquals(
             [
-                "title" => "Unprocessable Entity.",
+                "title"  => "Unprocessable Entity.",
                 "detail" => "Order failed. Error message: Can not create token:: Your card number is incorrect.",
             ]
             , $results->decodeResponseJson()['error']);
@@ -793,12 +811,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expirationDate = $this->faker->creditCardExpirationDate;
         $results        = $this->call('PUT', '/order',
             [
-                'payment-type-selector'      => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'billing-region'             => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country'            => 'Canada',
-                'paypal-express-checkout-token'  => rand(),
-                'gateway'                    => $paymentGateway['id']
+                'payment-type-selector'         => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                => $this->faker->word,
+                'billing-zip-or-postal-code'    => $this->faker->postcode,
+                'billing-country'               => 'Canada',
+                'paypal-express-checkout-token' => rand(),
+                'gateway'                       => $paymentGateway['id']
             ]);
 
         $this->assertEquals(422, $results->getStatusCode());

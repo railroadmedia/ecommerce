@@ -114,13 +114,14 @@ class OrderFormService
     public function prepareOrderForm()
     {
         $cartItems = $this->cartService->getAllCartItems();
+
         if(empty($cartItems))
         {
             return null;
         }
 
-        $billingAddress  = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
-        $shippingAddress = $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
+        $billingAddress  = $this->cartAddressService->getAddress(ConfigService::$billingAddressType);
+        $shippingAddress = $this->cartAddressService->getAddress(ConfigService::$shippingAddressType);
 
         $shippingCosts = $this->shippingService->getShippingCosts($cartItems, $shippingAddress);
 
@@ -219,7 +220,8 @@ class OrderFormService
             $subscriptions = $this->subscriptionService->createOrderSubscription($order['id'], $paymentMethod['currency']);
 
             //save the link between payment and subscription
-            foreach($subscriptions as $subscription){
+            foreach($subscriptions as $subscription)
+            {
                 $this->paymentService->createSubscriptionPayment($subscription['id'], $payment['id']);
             }
 
@@ -230,12 +232,13 @@ class OrderFormService
     }
 
     /** Save the order with the order items and the link between order and payment.
-     * @param array $cartItemsWithTaxesAndCosts
+     *
+     * @param array        $cartItemsWithTaxesAndCosts
      * @param null|integer $userId
      * @param null|integer $customerId
-     * @param integer $shippingAddressDB
-     * @param integer $billingAddressDB
-     * @param integer $paymentId
+     * @param integer      $shippingAddressDB
+     * @param integer      $billingAddressDB
+     * @param integer      $paymentId
      */
     private function saveOrderAndOrderItems($cartItemsWithTaxesAndCosts, $userId, $customerId, $shippingAddressDB, $billingAddressDB, $paymentId)
     {
@@ -347,11 +350,11 @@ class OrderFormService
             'city'            => $shippingCity,
             'region'          => $shippingRegion,
             'country'         => $shippingCountry,
-        ], CartAddressService::SHIPPING_ADDRESS_TYPE);
+        ], ConfigService::$shippingAddressType);
 
         //save the shipping address
         $shippingAddressDB = $this->addressService->store(
-            CartAddressService::SHIPPING_ADDRESS_TYPE,
+            ConfigService::$shippingAddressType,
             ConfigService::$brand,
             $userId,
             $customerId,

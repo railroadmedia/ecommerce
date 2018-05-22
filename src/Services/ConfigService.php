@@ -13,12 +13,12 @@ class ConfigService
      * @var string
      */
     public static $databaseConnectionName;
-    
+
     /**
      * @var string
      */
     public static $connectionMaskPrefix;
-    
+
     /**
      * @var string
      */
@@ -179,5 +179,23 @@ class ConfigService
      */
     public static $middleware;
 
+    /**
+     * @var string
+     */
+    public static $typeProduct;
 
+    /**
+     * @var string
+     */
+    public static $typeSubscription;
+
+    /**
+     * @var string
+     */
+    public static $shippingAddressType;
+
+    /**
+     * @var string
+     */
+    public static $billingAddressType;
 }

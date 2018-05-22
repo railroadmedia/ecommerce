@@ -2,29 +2,23 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
-use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
-use Railroad\Ecommerce\Factories\PaymentMethodFactory;
+
+use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 
 class PaymentGatewayJsonControllerTest extends EcommerceTestCase
 {
     /**
-     * @var PaymentGatewayFactory
+     * @var PaymentGatewayRepository
      */
-    private $paymentGatewayFactory;
-
-    /**
-     * @var PaymentMethodFactory
-     */
-    private $paymentMethodFactory;
+    private $paymentGatewayRepository;
 
     public function setUp()
     {
         parent::setUp();
 
-        $this->paymentGatewayFactory = $this->app->make(PaymentGatewayFactory::class);
-        $this->paymentMethodFactory = $this->app->make(PaymentMethodFactory::class);
+        $this->paymentGatewayRepository = $this->app->make(PaymentGatewayRepository::class);
     }
 
     public function test_store_unauthorized_user()
@@ -159,7 +153,7 @@ class PaymentGatewayJsonControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('canOrThrow');
 
-        $paymentGateway = $this->paymentGatewayFactory->store();
+        $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway());
         $newName = $this->faker->text;
 
         $results = $this->call(
@@ -222,7 +216,7 @@ class PaymentGatewayJsonControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('canOrThrow');
 
-        $paymentGateway = $this->paymentGatewayFactory->store();
+        $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway());
 
         $results = $this->call('DELETE', 'payment-gateway/' . $paymentGateway['id']);
 
