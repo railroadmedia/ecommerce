@@ -43,10 +43,14 @@ return [
         ],
     ],
 
-    'credit_card' =>
-        [
-            'external_provider' => 'stripe',
-        ],
+    'supported_currencies' => [
+        'CAD',
+        'USD',
+        'GBP',
+        'EUR',
+    ],
+
+    'default_currency' => 'USD',
 
     'paypal' =>
         [
@@ -113,5 +117,5 @@ return [
 
             'create.payment',
         ],
-    ]
+    ],
 ];

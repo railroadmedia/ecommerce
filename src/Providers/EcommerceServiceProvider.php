@@ -181,6 +181,10 @@ class EcommerceServiceProvider extends ServiceProvider
 
         //billing address type
         ConfigService::$billingAddressType = 'billing';
+
+        // currencies
+        ConfigService::$supportedCurrencies = config('ecommerce.supported_currencies');
+        ConfigService::$defaultCurrency = config('ecommerce.default_currency');
     }
 
     /**

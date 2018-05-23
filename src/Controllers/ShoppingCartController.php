@@ -2,16 +2,14 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Session\Middleware\StartSession;
+use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\ProductService;
 use Railroad\Ecommerce\Services\TaxService;
 
 class ShoppingCartController extends Controller
@@ -22,9 +20,9 @@ class ShoppingCartController extends Controller
     private $cartService;
 
     /**
-     * @var ProductService
+     * @var ProductRepository
      */
-    private $productService;
+    private $productRepository;
 
     /**
      * @var CartAddressService
@@ -38,31 +36,36 @@ class ShoppingCartController extends Controller
 
     /**
      * ShoppingCartController constructor.
+     *
      * @param $cartService
      * @param $productService
      */
-    public function __construct(CartService $cartService,
-                                ProductService $productService,
-                                CartAddressService $cartAddressService,
-                                TaxService $taxService)
-    {
+    public function __construct(
+        CartService $cartService,
+        ProductRepository $productRepository,
+        CartAddressService $cartAddressService,
+        TaxService $taxService
+    ) {
         $this->cartService = $cartService;
-        $this->productService = $productService;
+        $this->productRepository = $productRepository;
         $this->cartAddressService = $cartAddressService;
         $this->taxService = $taxService;
 
-        $this->middleware([
-            EncryptCookies::class,
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
-            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            VerifyCsrfToken::class,
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        ]);
+        $this->middleware(
+            [
+                EncryptCookies::class,
+                \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+                \Illuminate\Session\Middleware\StartSession::class,
+                \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+                VerifyCsrfToken::class,
+                \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            ]
+        );
     }
 
     /** Add products to cart; if the products are active and available(the product stock > requested quantity).
      *  The success field from response it's set to false if at least one product it's not active or available.
+     *
      * @param Request $request
      * @return array
      */
@@ -97,12 +100,13 @@ class ShoppingCartController extends Controller
                     $subscriptionFrequency = !empty($productInfo[2]) ? $productInfo[2] : null;
                 }
 
-                $product = $this->productService->getProductByConditions(['sku' => $productSku]);
+                $product = $this->productRepository->query()->where(['sku' => $productSku])->first();
 
                 if (($product) && ($product['stock'] >= $quantityToAdd)) {
                     $success = true;
                     $addedProducts[] = $product;
-                    $this->cartService->addCartItem($product['name'],
+                    $this->cartService->addCartItem(
+                        $product['name'],
                         $product['description'],
                         $quantityToAdd,
                         $product['price'],
@@ -113,25 +117,36 @@ class ShoppingCartController extends Controller
                         $product['weight'],
                         [
                             'product-id' => $product['id'],
-                            'requires-shipping-address' => $product['is_physical']
-                        ]);
+                            'requires-shipping-address' => $product['is_physical'],
+                        ]
+                    );
                 } else {
                     $message = 'Product with SKU:' . $productSku . ' could not be added to cart.';
-                    $message .= (is_array($product)) ? ' The product stock(' . $product['stock'] . ') is smaller than the quantity you\'ve selected(' . $quantityToAdd . ')' : '';
+                    $message .= (is_array($product)) ?
+                        ' The product stock(' .
+                        $product['stock'] .
+                        ') is smaller than the quantity you\'ve selected(' .
+                        $quantityToAdd .
+                        ')' : '';
                     $errors[] = $message;
                 }
             }
         }
 
         $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
-        $cartItemsPriceWithTax = $this->taxService->calculateTaxesForCartItems($this->cartService->getAllCartItems(), $billingAddress['country'], $billingAddress['region']);
+        $cartItemsPriceWithTax =
+            $this->taxService->calculateTaxesForCartItems(
+                $this->cartService->getAllCartItems(),
+                $billingAddress['country'],
+                $billingAddress['region']
+            );
 
         $response = [
             'success' => $success,
             'addedProducts' => $addedProducts,
             'cartSubTotal' => $cartItemsPriceWithTax['totalDue'],
             'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
-            'notAvailableProducts' => $errors
+            'notAvailableProducts' => $errors,
         ];
 
         if (!empty($input['redirect'])) {
@@ -142,6 +157,7 @@ class ShoppingCartController extends Controller
     }
 
     /** Remove product from cart.
+     *
      * @param int $productId
      * @return JsonResponse
      */
@@ -160,14 +176,16 @@ class ShoppingCartController extends Controller
 
     /** Update the cart item quantity.
      * If the product it's not active or it's not available(the product stock it's smaller that the quantity)
-     * an error message it's returned in notAvailableProducts, success = false and the cart item quantity it's not modified.
+     * an error message it's returned in notAvailableProducts, success = false and the cart item quantity it's not
+     * modified.
+     *
      * @param int $productId
      * @param int $quantity
      * @return JsonResponse
      */
     public function updateCartItemQuantity($productId, $quantity)
     {
-        $product = $this->productService->getProductByConditions(['id' => $productId]);
+        $product = $this->productRepository->query()->where(['id' => $productId])->first();
         $errors = [];
         $success = false;
 
@@ -182,7 +200,12 @@ class ShoppingCartController extends Controller
             }
         } else {
             $message = 'The quantity can not be updated.';
-            $message .= (is_array($product)) ? ' The product stock(' . $product['stock'] . ') is smaller than the quantity you\'ve selected(' . $quantity . ')' : '';
+            $message .= (is_array($product)) ?
+                ' The product stock(' .
+                $product['stock'] .
+                ') is smaller than the quantity you\'ve selected(' .
+                $quantity .
+                ')' : '';
             $errors[] = $message;
         }
 
@@ -190,7 +213,7 @@ class ShoppingCartController extends Controller
             'success' => $success,
             'addedProducts' => $this->cartService->getAllCartItems(),
             'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
-            'notAvailableProducts' => $errors
+            'notAvailableProducts' => $errors,
         ];
 
         return new JsonResponse($response, 201);

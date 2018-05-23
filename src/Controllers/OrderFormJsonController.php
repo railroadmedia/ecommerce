@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Faker\Provider\Address;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
@@ -17,6 +16,7 @@ use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\TaxService;
@@ -80,6 +80,11 @@ class OrderFormJsonController extends Controller
     private $locationService;
 
     /**
+     * @var CurrencyService
+     */
+    private $currencyService;
+
+    /**
      * OrderFormJsonController constructor.
      *
      * @param $cartService
@@ -95,19 +100,21 @@ class OrderFormJsonController extends Controller
         TaxService $taxService,
         PaymentMethodRepository $paymentMethodRepository,
         PaymentMethodService $paymentMethodService,
-        LocationService $locationService
+        LocationService $locationService,
+        CurrencyService $currencyService
     ) {
-        $this->cartService               = $cartService;
-        $this->orderFormService          = $orderFormService;
-        $this->orderRepository           = $orderRepository;
-        $this->customerRepository        = $customerRepository;
-        $this->cartAddressService        = $cartAddressService;
-        $this->addressRepository         = $addressRepository;
+        $this->cartService = $cartService;
+        $this->orderFormService = $orderFormService;
+        $this->orderRepository = $orderRepository;
+        $this->customerRepository = $customerRepository;
+        $this->cartAddressService = $cartAddressService;
+        $this->addressRepository = $addressRepository;
         $this->shippingOptionsRepository = $shippingOptionRepository;
-        $this->taxService                = $taxService;
-        $this->paymentMethodRepository   = $paymentMethodRepository;
-        $this->paymentMethodService      = $paymentMethodService;
-        $this->locationService           = $locationService;
+        $this->taxService = $taxService;
+        $this->paymentMethodRepository = $paymentMethodRepository;
+        $this->paymentMethodService = $paymentMethodService;
+        $this->locationService = $locationService;
+        $this->currencyService = $currencyService;
     }
 
     /** Prepare the order form based on request data
@@ -145,84 +152,101 @@ class OrderFormJsonController extends Controller
         );
 
         //save customer if billing email exists on request
-        if($request->has('billing-email'))
-        {
+        if ($request->has('billing-email')) {
             $customer = $this->customerRepository->create(
                 [
                     'email' => $request->get('billing-email'),
-                    'brand' => ConfigService::$brand
+                    'brand' => ConfigService::$brand,
                 ]
             );
         }
 
         //set the billing address on session
-        $billingAddress = $this->cartAddressService->setAddress([
-            'country' => $request->get('billing-country'),
-            'region'  => $request->get('billing-region'),
-            'zip'     => $request->get('billing-zip-or-postal-code')
-        ], CartAddressService::BILLING_ADDRESS_TYPE);
+        $billingAddress = $this->cartAddressService->setAddress(
+            [
+                'country' => $request->get('billing-country'),
+                'region' => $request->get('billing-region'),
+                'zip' => $request->get('billing-zip-or-postal-code'),
+            ],
+            CartAddressService::BILLING_ADDRESS_TYPE
+        );
 
         //save billing address in database
         $billingAddressDB = $this->addressRepository->create(
             [
-                'type'        => CartAddressService::BILLING_ADDRESS_TYPE,
-                'brand'       => ConfigService::$brand,
-                'user_id'     => $userId,
+                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+                'brand' => ConfigService::$brand,
+                'user_id' => $userId,
                 'customer_id' => $customer['id'] ?? null,
-                'zip'         => $request->get('billing-zip-or-postal-code'),
-                'state'       => $request->get('billing-region'),
-                'country'     => $request->get('billing-country'),
-                'created_on'  => Carbon::now()->toDateTimeString()
-            ]);
+                'zip' => $request->get('billing-zip-or-postal-code'),
+                'state' => $request->get('billing-region'),
+                'country' => $request->get('billing-country'),
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
 
         //set the shipping address on session
-        $shippingAddress = $this->cartAddressService->setAddress([
-            'firstName'       => $request->get('shipping-first-name'),
-            'lastName'        => $request->get('shipping-last-name'),
-            'streetLineOne'   => $request->get('shipping-address-line-1'),
-            'streetLineTwo'   => $request->get('shipping-address-line-2'),
-            'zipOrPostalCode' => $request->get('shipping-zip-or-postal-code'),
-            'city'            => $request->get('shipping-city'),
-            'region'          => $request->get('shipping-region'),
-            'country'         => $request->get('shipping-country'),
-        ], ConfigService::$shippingAddressType);
+        $shippingAddress = $this->cartAddressService->setAddress(
+            [
+                'firstName' => $request->get('shipping-first-name'),
+                'lastName' => $request->get('shipping-last-name'),
+                'streetLineOne' => $request->get('shipping-address-line-1'),
+                'streetLineTwo' => $request->get('shipping-address-line-2'),
+                'zipOrPostalCode' => $request->get('shipping-zip-or-postal-code'),
+                'city' => $request->get('shipping-city'),
+                'region' => $request->get('shipping-region'),
+                'country' => $request->get('shipping-country'),
+            ],
+            ConfigService::$shippingAddressType
+        );
 
         //save the shipping address
-        $shippingAddressDB = $this->addressRepository->create([
-            'type'          => ConfigService::$shippingAddressType,
-            'brand'         => ConfigService::$brand,
-            'user_id'       => $userId,
-            'customer_id'   => $customer['id'] ?? null,
-            'first_name'    => $request->get('shipping-first-name'),
-            'last_name'     => $request->get('shipping-last-name'),
-            'street_line_1' => $request->get('shipping-address-line-1'),
-            'street_line_2' => $request->get('shipping-address-line-2'),
-            'city'          => $request->get('shipping-city'),
-            'zip'           => $request->get('shipping-zip-or-postal-code'),
-            'state'         => $request->get('shipping-region'),
-            'country'       => $request->get('shipping-country'),
-            'created_on'    => Carbon::now()->toDateTimeString()
-        ]);
+        $shippingAddressDB = $this->addressRepository->create(
+            [
+                'type' => ConfigService::$shippingAddressType,
+                'brand' => ConfigService::$brand,
+                'user_id' => $userId,
+                'customer_id' => $customer['id'] ?? null,
+                'first_name' => $request->get('shipping-first-name'),
+                'last_name' => $request->get('shipping-last-name'),
+                'street_line_1' => $request->get('shipping-address-line-1'),
+                'street_line_2' => $request->get('shipping-address-line-2'),
+                'city' => $request->get('shipping-city'),
+                'zip' => $request->get('shipping-zip-or-postal-code'),
+                'state' => $request->get('shipping-region'),
+                'country' => $request->get('shipping-country'),
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
 
         $cartItemsWeight = array_sum(array_column($cartItems, 'weight'));
 
-        $shippingCosts              = $this->shippingOptionsRepository->getShippingCosts($shippingAddress['country'], $cartItemsWeight)['price'] ?? 0;
-        $cartItemsWithTaxesAndCosts = $this->taxService->calculateTaxesForCartItems($cartItems, $billingAddress['country'], $billingAddress['region'], $shippingCosts);
+        $shippingCosts =
+            $this->shippingOptionsRepository->getShippingCosts($shippingAddress['country'], $cartItemsWeight)['price']
+            ??
+            0;
+        $cartItemsWithTaxesAndCosts =
+            $this->taxService->calculateTaxesForCartItems(
+                $cartItems,
+                $billingAddress['country'],
+                $billingAddress['region'],
+                $shippingCosts
+            );
 
         $method = $this->paymentMethodService->saveMethod(
             [
-                'method_type'          => $request->get('payment-type-selector'),
-                'paymentGateway'       => $request->get('gateway'),
-                'company_name'         => $request->get('company_name'),
-                'creditCardYear'       => $request->get('credit-card-year-selector'),
-                'creditCardMonth'      => $request->get('credit-card-month-selector'),
-                'fingerprint'          => $request->get('credit-card-number'),
-                'last4'                => $request->get('credit-card-cvv'),
-                'cardholder'           => $request->get('cardholder_name'),
+                'method_type' => $request->get('payment-type-selector'),
+                'paymentGateway' => $request->get('gateway'),
+                'company_name' => $request->get('company_name'),
+                'creditCardYear' => $request->get('credit-card-year-selector'),
+                'creditCardMonth' => $request->get('credit-card-month-selector'),
+                'fingerprint' => $request->get('credit-card-number'),
+                'last4' => $request->get('credit-card-cvv'),
+                'cardholder' => $request->get('cardholder_name'),
                 'expressCheckoutToken' => $request->get('express_checkout_token'),
-                'address_id'           => $request->get('address_id'),
-                'userId'               => $request->get('user_id'),
-                'customerId'           => $request->get('customer_id')
+                'address_id' => $request->get('address_id'),
+                'userId' => $request->get('user_id'),
+                'customerId' => $request->get('customer_id'),
             ]
 
         );
@@ -230,25 +254,25 @@ class OrderFormJsonController extends Controller
         $paymentMethod = $this->paymentMethodRepository->create(
             [
                 'method_type' => $request->get('payment-type-selector'),
-                'method_id'   => $method['id'],
-                'currency'    => $request->get('currency') ?? $this->locationService->getCurrency(),
-                'created_on'  => Carbon::now()->toDateTimeString()
+                'method_id' => $method['id'],
+                'currency' => $request->get('currency') ?? $this->currencyService->get(),
+                'created_on' => Carbon::now()->toDateTimeString(),
             ]
         );
 
         $order = $this->orderRepository->create(
             [
-                'uuid'                => bin2hex(openssl_random_pseudo_bytes(16)),
-                'due'                 => $cartItemsWithTaxesAndCosts['totalDue'],
-                'tax'                 => $cartItemsWithTaxesAndCosts['totalTax'],
-                'paid'                => $cartItemsWithTaxesAndCosts['totalDue'],
-                'brand'               => $request->input('brand', ConfigService::$brand),
-                'user_id'             => $userId,
-                'customer_id'         => $customer['id'] ?? null,
-                'shipping_costs'      => $shippingCosts,
+                'uuid' => bin2hex(openssl_random_pseudo_bytes(16)),
+                'due' => $cartItemsWithTaxesAndCosts['totalDue'],
+                'tax' => $cartItemsWithTaxesAndCosts['totalTax'],
+                'paid' => $cartItemsWithTaxesAndCosts['totalDue'],
+                'brand' => $request->input('brand', ConfigService::$brand),
+                'user_id' => $userId,
+                'customer_id' => $customer['id'] ?? null,
+                'shipping_costs' => $shippingCosts,
                 'shipping_address_id' => $shippingAddressDB['id'],
-                'billing_address_id'  => $billingAddressDB['id'],
-                'created_on'          => Carbon::now()->toDateTimeString()
+                'billing_address_id' => $billingAddressDB['id'],
+                'created_on' => Carbon::now()->toDateTimeString(),
             ]
         );
 

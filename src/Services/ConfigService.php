@@ -198,4 +198,14 @@ class ConfigService
      * @var string
      */
     public static $billingAddressType;
+
+    /**
+     * @var array
+     */
+    public static $supportedCurrencies;
+
+    /**
+     * @var string
+     */
+    public static $defaultCurrency;
 }

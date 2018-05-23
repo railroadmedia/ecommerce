@@ -54,6 +54,11 @@ class PaymentService
      */
     private $orderService;
 
+    /**
+     * @var CurrencyService
+     */
+    private $currencyService;
+
     const MANUAL_PAYMENT_TYPE = 'manual';
     const ORDER_PAYMENT_TYPE = 'order';
     const RENEWAL_PAYMENT_TYPE = 'renewal';
@@ -61,14 +66,14 @@ class PaymentService
     /**
      * PaymentService constructor.
      *
-     * @param PaymentRepository             $paymentRepository
-     * @param OrderPaymentRepository        $orderPaymentRepository
+     * @param PaymentRepository $paymentRepository
+     * @param OrderPaymentRepository $orderPaymentRepository
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
-     * @param LocationService               $locationService
-     * @param PaymentMethodRepository       $paymentMethodRepository
-     * @param OrderService                  $orderService
-     * @param GatewayFactory                $gatewayFactory
-     * @param SubscriptionService           $subscriptionService
+     * @param LocationService $locationService
+     * @param PaymentMethodRepository $paymentMethodRepository
+     * @param OrderService $orderService
+     * @param GatewayFactory $gatewayFactory
+     * @param SubscriptionService $subscriptionService
      */
     public function __construct(
         PaymentRepository $paymentRepository,
@@ -78,7 +83,8 @@ class PaymentService
         PaymentMethodRepository $paymentMethodRepository,
         OrderService $orderService,
         GatewayFactory $gatewayFactory,
-        SubscriptionService $subscriptionService
+        SubscriptionService $subscriptionService,
+        CurrencyService $currencyService
     ) {
         $this->paymentRepository = $paymentRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
@@ -88,6 +94,7 @@ class PaymentService
         $this->orderService = $orderService;
         $this->gatewayFactory = $gatewayFactory;
         $this->subscriptionService = $subscriptionService;
+        $this->currencyService = $currencyService;
     }
 
     /**
@@ -116,7 +123,7 @@ class PaymentService
     ) {
         // if the currency not exist on the request and the payment it's manual,
         // get the currency with Location package, based on ip address
-        $currency = $currency ?? $this->locationService->getCurrency();
+        $currency = $currency ?? $this->currencyService->get();
 
         $paymentMethod = $this->paymentMethodRepository->getById($paymentMethodId);
 
