@@ -44,6 +44,11 @@ class PaymentMethodJsonController extends Controller
     private $gatewayFactory;
 
     /**
+     * @var \Railroad\Ecommerce\Services\PaymentMethodService
+     */
+    private $paymentMethodService;
+
+    /**
      * PaymentMethodJsonController constructor.
      *
      * @param \Railroad\Permissions\Services\PermissionService                  $permissionService
@@ -57,13 +62,15 @@ class PaymentMethodJsonController extends Controller
         PaymentMethodRepository $paymentMethodRepository,
         GatewayFactory $gatewayFactory,
         UserPaymentMethodsRepository $userPaymentMethodsRepository,
-        CustomerPaymentMethodsRepository $customerPaymentMethodsRepository
+        CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
+        PaymentMethodService $paymentMethodService
     ) {
         $this->permissionService               = $permissionService;
         $this->paymentMethodRepository         = $paymentMethodRepository;
         $this->gatewayFactory                  = $gatewayFactory;
         $this->userPaymentMethodRepository     = $userPaymentMethodsRepository;
         $this->customerPaymentMethodRepository = $customerPaymentMethodsRepository;
+        $this->paymentMethodService            = $paymentMethodService;
     }
 
     /** Call the service method to create a new payment method based on request parameters.
@@ -76,7 +83,20 @@ class PaymentMethodJsonController extends Controller
     public function store(PaymentMethodCreateRequest $request)
     {
 
-        $data            = $this->saveMethod($request);
+        $data            = $this->paymentMethodService->saveMethod([
+            'method_type'          => $request->get('method_type'),
+            'paymentGateway'       => $request->get('payment_gateway'),
+            'company_name'         => $request->get('company_name'),
+            'creditCardYear'       => $request->get('card_year'),
+            'creditCardMonth'      => $request->get('card_month'),
+            'fingerprint'          => $request->get('card_fingerprint'),
+            'last4'                => $request->get('card_number_last_four_digits'),
+            'cardholder'           => $request->get('cardholder_name'),
+            'expressCheckoutToken' => $request->get('express_checkout_token'),
+            'address_id'           => $request->get('address_id'),
+            'userId'               => $request->get('user_id'),
+            'customerId'           => $request->get('customer_id')
+        ]);
         $externalMessage = $data['message'] ?? '';
 
         //if the store method response it's null the method_type not exist; we throw the proper exception
@@ -140,7 +160,22 @@ class PaymentMethodJsonController extends Controller
 
         if($create)
         {
-            $method = $this->saveMethod($request);
+            $method = $this->paymentMethodService->saveMethod(
+                [
+                    'method_type'          => $request->get('method_type'),
+                    'paymentGateway'       => $request->get('payment_gateway'),
+                    'company_name'         => $request->get('company_name'),
+                    'creditCardYear'       => $request->get('card_year'),
+                    'creditCardMonth'      => $request->get('card_month'),
+                    'fingerprint'          => $request->get('card_fingerprint'),
+                    'last4'                => $request->get('card_number_last_four_digits'),
+                    'cardholder'           => $request->get('cardholder_name'),
+                    'expressCheckoutToken' => $request->get('express_checkout_token'),
+                    'address_id'           => $request->get('address_id'),
+                    'userId'               => $request->get('user_id'),
+                    'customerId'           => $request->get('customer_id')
+                ]
+            );
             $this->assignPaymentMethod($request, $paymentMethod);
         }
         else
@@ -203,33 +238,6 @@ class PaymentMethodJsonController extends Controller
         $results = $this->paymentMethodRepository->destroy($paymentMethodId);
 
         return new JsonResponse(null, 204);
-    }
-
-    /**
-     * @param \Railroad\Ecommerce\Requests\PaymentMethodCreateRequest $request
-     * @return array|int
-     * @throws \Railroad\Ecommerce\Exceptions\NotFoundException
-     */
-    private function saveMethod($request)
-    {
-        $gateway = $this->gatewayFactory->create($request->get('method_type'));
-
-        $data = $gateway->saveExternalData(
-            [
-                'paymentGateway'       => $request->get('payment_gateway'),
-                'company_name'         => $request->get('company_name'),
-                'creditCardYear'       => $request->get('card_year'),
-                'creditCardMonth'      => $request->get('card_month'),
-                'fingerprint'          => $request->get('card_fingerprint'),
-                'last4'                => $request->get('card_number_last_four_digits'),
-                'cardholder'           => $request->get('cardholder_name'),
-                'expressCheckoutToken' => $request->get('express_checkout_token'),
-                'address_id'           => $request->get('address_id'),
-                'userId'               => $request->get('user_id'),
-                'customerId'           => $request->get('customer_id')
-            ]);
-
-        return $data;
     }
 
     /**

@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Factories\CartFactory;
 use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
-use Railroad\Ecommerce\Factories\ProductFactory;
 use Railroad\Ecommerce\Factories\ShippingCostsFactory;
 use Railroad\Ecommerce\Factories\ShippingOptionFactory;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
@@ -128,8 +127,18 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_submit_order_validation_not_physical_products()
     {
-        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
-        $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
+        $shippingOption  = $this->shippingOptionRepository->create($this->faker->shippingOption([
+            'country'  => 'Canada',
+            'active'   => 1,
+            'priority' => 1
+        ]));
+        $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min'                => 0,
+            'max'                => 10,
+            'price'              => 5.50
+        ]));
+      //  $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
         $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
         $product1 = $this->productFactory->store(ConfigService::$brand,
@@ -653,31 +662,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order()
     {
         $userId         = $this->createAndLogInNewUser();
-        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
-        $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
+        $shippingOption  = $this->shippingOptionRepository->create($this->faker->shippingOption([
+            'country'  => 'Canada',
+            'active'   => 1,
+            'priority' => 1
+        ]));
+        $shippingCost = $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min'                => 0,
+            'max'                => 10,
+            'price'              => 5.50
+        ]));
+        $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway([
+            'config' => 'stripe_1'
+        ]));
 
-        $product1 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            12.95,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0.20);
+        $product1 = $this->productRepository->create($this->faker->product([
+            'price'       => 12.95,
+            'type'        => ProductService::TYPE_PRODUCT,
+            'active'      => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight'      => 0.20,
+        ]));
 
-        $product2 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            247,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0);
+        $product2 = $this->productRepository->create($this->faker->product([
+            'price'       => 247,
+            'type'        => ProductService::TYPE_PRODUCT,
+            'active'      => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight'      => 0,
+        ]));
+
 
         $cart = $this->cartFactory->addCartItem($product1['name'],
             $product1['description'],
@@ -712,6 +729,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'billing-region'             => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country'            => 'Canada',
+                'company_name' => $this->faker->creditCardType,
                 'credit-card-year-selector'  => $expirationDate->format('Y'),
                 'credit-card-month-selector' => $expirationDate->format('m'),
                 'credit-card-number'         => '4242424242424242',
@@ -726,20 +744,29 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_invalid_credit_card_number()
     {
         $userId         = $this->createAndLogInNewUser();
-        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
-        $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
+        $shippingOption  = $this->shippingOptionRepository->create($this->faker->shippingOption([
+            'country'  => 'Canada',
+            'active'   => 1,
+            'priority' => 1
+        ]));
+        $shippingCost = $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min'                => 0,
+            'max'                => 10,
+            'price'              => 5.50
+        ]));
+        $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway([
+            'config' => 'stripe_1'
+        ]));
 
-        $product = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            12.95,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0.20);
+        $product = $this->productRepository->create($this->faker->product([
+            'price'       => 12.95,
+            'type'        => ProductService::TYPE_PRODUCT,
+            'active'      => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight'      => 0.20,
+        ]));
 
         $cart = $this->cartFactory->addCartItem($product['name'],
             $product['description'],
