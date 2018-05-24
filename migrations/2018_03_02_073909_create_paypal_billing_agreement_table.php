@@ -23,7 +23,7 @@ class CreatePaypalBillingAgreementTable extends Migration
 
                 $table->string('express_checkout_token', 64)->index();
                 $table->integer('address_id');
-                $table->integer('payment_gateway_id')->index();
+                $table->string('payment_gateway_name', 64)->index();
                 $table->dateTime('expiration_date')->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();

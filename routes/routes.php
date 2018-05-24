@@ -61,12 +61,12 @@ Route::put(
 
 Route::get(
     '/order',
-    Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@index'
+    Railroad\Ecommerce\Controllers\OrderFormController::class . '@index'
 )->name('order.form');
 
 Route::put(
     '/order',
-    Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@submitOrder'
+    Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitOrder'
 )->name('order.submit');
 
 Route::put(

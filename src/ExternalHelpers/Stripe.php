@@ -4,8 +4,11 @@ namespace Railroad\Ecommerce\ExternalHelpers;
 
 use Railroad\Ecommerce\Services\ConfigService;
 use Stripe\Card;
+use Stripe\Charge;
 use Stripe\Customer;
 use Stripe\Error\InvalidRequest;
+use Stripe\Refund;
+use Stripe\Source;
 use Stripe\Token;
 
 class Stripe
@@ -95,8 +98,7 @@ class Stripe
     /**
      * @param Customer $customer
      * @param Token    $token
-     * @throws CardException
-     * @return Card|StdClass
+     * @return Card
      */
     public function createCard(Customer $customer, Token $token)
     {
@@ -106,11 +108,11 @@ class Stripe
     /**
      * @param Customer $customer
      * @param string   $cardId
-     * @return stdClass|Card
+     * @return Card
      */
     public function retrieveCard(Customer $customer, $cardId)
     {
-        return $customer->sources->retrieve($cardId);
+        return $this->stripe->card->retrieve($cardId);
     }
 
     /**
@@ -138,51 +140,26 @@ class Stripe
     }
 
     /**
-     * @param integer  $amount (in minimum possible currency) (cents)
-     * @param Customer $customer
-     * @param Card     $card
-     * @param string   $currency
-     * @throws CardException
-     * @return Charge
+     * @param integer $amount (in minimum possible currency) (cents)
+     * @param $source
+     * @param string $currency
+     * @param string $description
+     * @return \Stripe\Charge
      */
     public function createCharge(
         $amount,
-        Customer $customer,
-        Card $card,
-        $currency = 'usd'
+        $source,
+        $currency,
+        $description = ''
     ) {
         return $this->stripe->charge->create(
             [
                 'amount'   => $amount,
                 'currency' => $currency,
-                'customer' => $customer,
-                'source'   => $card
+                'source'   => $source,
+                'description'   => $description,
             ]
         );
-
-        try
-        {
-            $charge = $this->stripe->charge->create(
-                [
-                    'amount'   => $amount,
-                    'currency' => $currency,
-                    'customer' => $customer,
-                    'source'   => $card
-                ]
-            );
-
-            return [
-                'status'  => true,
-                'results' => $charge
-            ];
-        }
-        catch(InvalidRequest $e)
-        {
-            return [
-                'status'  => false,
-                'message' => $e->getMessage()
-            ];
-        }
     }
 
     /**

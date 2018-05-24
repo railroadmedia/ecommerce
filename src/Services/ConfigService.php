@@ -167,12 +167,8 @@ class ConfigService
     /**
      * @var array
      */
-    public static $paypalAPI;
 
-    /**
-     * @var array
-     */
-    public static $stripeAPI;
+    public static $paymentGateways;
 
     /**
      * @var array

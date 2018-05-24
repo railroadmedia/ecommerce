@@ -275,15 +275,15 @@ class PayPal
         }
     }
 
-    public function setApiKey($activeGateway)
+    public function configure($details)
     {
-        $this->apiUsername = ConfigService::$paypalAPI[$activeGateway]['paypal_api_username'];
-        $this->apiPassword = ConfigService::$paypalAPI[$activeGateway]['paypal_api_password'];
-        $this->apiSignature = ConfigService::$paypalAPI[$activeGateway]['paypal_api_signature'];
-        $this->apiCurrencyCode = ConfigService::$paypalAPI[$activeGateway]['paypal_api_currency_code'];
-        $this->apiVersion = ConfigService::$paypalAPI[$activeGateway]['paypal_api_version'];
-        $this->apiNVPCurlUrl = ConfigService::$paypalAPI[$activeGateway]['paypal_api_nvp_curl_url'];
-        $this->expressCheckoutUrlPrefix = ConfigService::$paypalAPI[$activeGateway]['paypal_api_checkout_redirect_url'];
+        $this->apiUsername = $details['paypal_api_username'];
+        $this->apiPassword = $details['paypal_api_password'];
+        $this->apiSignature = $details['paypal_api_signature'];
+        $this->apiCurrencyCode = $details['paypal_api_currency_code'];
+        $this->apiVersion = $details['paypal_api_version'];
+        $this->apiNVPCurlUrl = $details['paypal_api_nvp_curl_url'];
+        $this->expressCheckoutUrlPrefix = $details['paypal_api_checkout_redirect_url'];
 
         return $this;
     }

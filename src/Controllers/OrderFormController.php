@@ -5,7 +5,10 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
+use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
+use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Repositories\OrderRepository;
@@ -22,7 +25,7 @@ use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Location\Services\LocationService;
 
-class OrderFormJsonController extends Controller
+class OrderFormController extends Controller
 {
     /**
      * @var CartService
@@ -83,6 +86,14 @@ class OrderFormJsonController extends Controller
      * @var CurrencyService
      */
     private $currencyService;
+    /**
+     * @var StripePaymentGateway
+     */
+    private $stripePaymentGateway;
+    /**
+     * @var PayPalPaymentGateway
+     */
+    private $payPalPaymentGateway;
 
     /**
      * OrderFormJsonController constructor.
@@ -101,7 +112,9 @@ class OrderFormJsonController extends Controller
         PaymentMethodRepository $paymentMethodRepository,
         PaymentMethodService $paymentMethodService,
         LocationService $locationService,
-        CurrencyService $currencyService
+        CurrencyService $currencyService,
+        StripePaymentGateway $stripePaymentGateway,
+        PayPalPaymentGateway $payPalPaymentGateway
     ) {
         $this->cartService = $cartService;
         $this->orderFormService = $orderFormService;
@@ -115,23 +128,8 @@ class OrderFormJsonController extends Controller
         $this->paymentMethodService = $paymentMethodService;
         $this->locationService = $locationService;
         $this->currencyService = $currencyService;
-    }
-
-    /** Prepare the order form based on request data
-     *
-     * @return JsonResponse
-     */
-    public function index()
-    {
-        $orderForm = $this->orderFormService->prepareOrderForm();
-
-        //if the cart it's empty; we throw an exception
-        throw_if(
-            is_null($orderForm),
-            new NotFoundException('The cart it\'s empty')
-        );
-
-        return new JsonResponse($orderForm, 200);
+        $this->stripePaymentGateway = $stripePaymentGateway;
+        $this->payPalPaymentGateway = $payPalPaymentGateway;
     }
 
     /** Submit an order
@@ -150,6 +148,49 @@ class OrderFormJsonController extends Controller
             empty($cartItems),
             new NotFoundException('The cart it\'s empty')
         );
+
+        // calculate totals
+        $cartItemsWeight = array_sum(array_column($cartItems, 'weight'));
+
+        $shippingCosts = $this->shippingOptionsRepository->getShippingCosts(
+                $request->get('shipping-country'),
+                $cartItemsWeight
+            )['price'] ?? 0;
+
+        $cartItemsWithTaxesAndCosts =
+            $this->taxService->calculateTaxesForCartItems(
+                $cartItems,
+                $request->get('billing-country'),
+                $request->get('billing-region'),
+                $shippingCosts
+            );
+
+        // try to make the payment
+        try {
+
+            if ($request->get('payment_method_type') == 'Credit Card') {
+                $chargeId =
+                    $this->stripePaymentGateway->chargeToken(
+                        $request->get('gateway-name'),
+                        $cartItemsWithTaxesAndCosts['totalDue'],
+                        $request->get('currency', $this->currencyService->get()),
+                        $request->get('card-token')
+                    );
+            } elseif ($request->get('payment_method_type') == 'PayPal') {
+                $chargeId =
+                    $this->payPalPaymentGateway->chargeToken(
+                        $request->get('gateway-name'),
+                        $cartItemsWithTaxesAndCosts['totalDue'],
+                        $request->get('currency', $this->currencyService->get()),
+                        $request->get('express-checkout-token')
+                    );
+            } else {
+                return redirect()->back()->withErrors(['payment' => 'Payment method not supported.']);
+            }
+
+        } catch (PaymentFailedException $paymentFailedException) {
+            return redirect()->back()->withErrors(['payment' => $paymentFailedException->getMessage()]);
+        }
 
         //save customer if billing email exists on request
         if ($request->has('billing-email')) {
@@ -219,46 +260,34 @@ class OrderFormJsonController extends Controller
             ]
         );
 
-        $cartItemsWeight = array_sum(array_column($cartItems, 'weight'));
+        // todo: create the necessary payment method rows and payment rows
 
-        $shippingCosts =
-            $this->shippingOptionsRepository->getShippingCosts($shippingAddress['country'], $cartItemsWeight)['price']
-            ??
-            0;
-        $cartItemsWithTaxesAndCosts =
-            $this->taxService->calculateTaxesForCartItems(
-                $cartItems,
-                $billingAddress['country'],
-                $billingAddress['region'],
-                $shippingCosts
-            );
-
-        $method = $this->paymentMethodService->saveMethod(
-            [
-                'method_type' => $request->get('payment-type-selector'),
-                'paymentGateway' => $request->get('gateway'),
-                'company_name' => $request->get('company_name'),
-                'creditCardYear' => $request->get('credit-card-year-selector'),
-                'creditCardMonth' => $request->get('credit-card-month-selector'),
-                'fingerprint' => $request->get('credit-card-number'),
-                'last4' => $request->get('credit-card-cvv'),
-                'cardholder' => $request->get('cardholder_name'),
-                'expressCheckoutToken' => $request->get('express_checkout_token'),
-                'address_id' => $request->get('address_id'),
-                'userId' => $request->get('user_id'),
-                'customerId' => $request->get('customer_id'),
-            ]
-
-        );
-
-        $paymentMethod = $this->paymentMethodRepository->create(
-            [
-                'method_type' => $request->get('payment-type-selector'),
-                'method_id' => $method['id'],
-                'currency' => $request->get('currency') ?? $this->currencyService->get(),
-                'created_on' => Carbon::now()->toDateTimeString(),
-            ]
-        );
+//        $method = $this->paymentMethodService->saveMethod(
+//            [
+//                'method_type' => $request->get('payment-type-selector'),
+//                'paymentGateway' => $request->get('gateway'),
+//                'company_name' => $request->get('company_name'),
+//                'creditCardYear' => $request->get('credit-card-year-selector'),
+//                'creditCardMonth' => $request->get('credit-card-month-selector'),
+//                'fingerprint' => $request->get('credit-card-number'),
+//                'last4' => $request->get('credit-card-cvv'),
+//                'cardholder' => $request->get('cardholder_name'),
+//                'expressCheckoutToken' => $request->get('express_checkout_token'),
+//                'address_id' => $request->get('address_id'),
+//                'userId' => $request->get('user_id'),
+//                'customerId' => $request->get('customer_id'),
+//            ]
+//
+//        );
+//
+//        $paymentMethod = $this->paymentMethodRepository->create(
+//            [
+//                'method_type' => $request->get('payment-type-selector'),
+//                'method_id' => $method['id'],
+//                'currency' => $request->get('currency') ?? $this->currencyService->get(),
+//                'created_on' => Carbon::now()->toDateTimeString(),
+//            ]
+//        );
 
         $order = $this->orderRepository->create(
             [

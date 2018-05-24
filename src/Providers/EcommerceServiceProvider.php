@@ -162,10 +162,7 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$creditCard = config('ecommerce.credit_card');
 
         //paypal API
-        ConfigService::$paypalAPI = config('ecommerce.paypal');
-
-        //stripe API
-        ConfigService::$stripeAPI = config('ecommerce.stripe');
+        ConfigService::$paymentGateways = config('ecommerce.payment_gateways');
 
         // middleware
         ConfigService::$middleware = config('ecommerce.middleware', []);
