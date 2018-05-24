@@ -46,6 +46,7 @@ class ShippingCostsWeightRangeController extends Controller
         $this->permissionService->canOrThrow(auth()->id(), 'create.shipping_cost');
 
         $shippingCosts = $this->shippingCostsRepository->create(
+            array_merge(
             $request->only(
                 [
                     'shipping_option_id',
@@ -53,13 +54,10 @@ class ShippingCostsWeightRangeController extends Controller
                     'max',
                     'price',
                 ]
-            )
-        );
-
-        throw_if(
-            is_null($shippingCosts),
-            new NotFoundException(
-                'Creation failed, shipping option not found with id: ' . $request->get('shipping_option_id')
+            ),
+            [
+                'created_on' => Carbon::now()->toDateTimeString()
+            ]
             )
         );
 

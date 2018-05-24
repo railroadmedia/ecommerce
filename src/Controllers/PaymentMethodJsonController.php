@@ -183,8 +183,8 @@ class PaymentMethodJsonController extends Controller
             $this->creditCardRepository->update($paymentMethod['method']['id'],
                 [
                     Carbon::create(
-                        $request->get('creditCardYear'),
-                        $request->get('creditCardMonth'),
+                        $request->get('card_year'),
+                        $request->get('card_month'),
                         12,
                         0,
                         0,

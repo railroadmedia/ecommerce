@@ -158,7 +158,7 @@ class Faker extends Generator
                 'external_customer_id' => 'cus_CsviON4xYQxcwC',
                 'external_provider'    => $this->word,
                 'expiration_date'      => $this->creditCardExpirationDateString,
-                'payment_gateway_id'   => $this->randomNumber(),
+                'payment_gateway_name'   => $this->randomElement(['stripe','paypal']),
                 'created_on'           => Carbon::now()->toDateTimeString()
             ], $override
         );
@@ -195,7 +195,7 @@ class Faker extends Generator
                 'agreement_id'           => 'B-5Y6562572W918445E',
                 'express_checkout_token' => 'EC-73P77133DA956953G',
                 'address_id'             => $this->randomNumber(),
-                'payment_gateway_id'     => $this->randomNumber(),
+                'payment_gateway_name'     => $this->randomElement(['stripe','paypal']),
                 'expiration_date'        => $this->creditCardExpirationDateString,
                 'created_on'             => Carbon::now()->toDateTimeString()
             ], $override

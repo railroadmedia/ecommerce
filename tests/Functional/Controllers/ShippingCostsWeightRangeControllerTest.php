@@ -116,6 +116,43 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_store()
+    {
+        $this->permissionServiceMock->method('canOrThrow');
+
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
+        $minValue = 1;
+        $maxValue = rand(10, 19);
+        $price = rand(1,100);
+
+        $results = $this->call(
+            'PUT',
+            '/shipping-cost/',
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => $minValue,
+                'max' => $maxValue,
+                'price' => $price,
+            ]
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertEquals(
+            [
+                'id' => 1,
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => $minValue,
+                'max' => $maxValue,
+                'price' => $price,
+                'created_on' => Carbon::now()->toDateTimeString(),
+                'updated_on' => null,
+            ],
+            $results->decodeResponseJson()['results']
+        );
+
+    }
+
     public function test_update_incorrect_shipping_cost_id()
     {
         $this->permissionServiceMock->method('canOrThrow');
