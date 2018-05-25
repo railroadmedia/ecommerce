@@ -6,10 +6,13 @@ use Carbon\Carbon;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Factories\GatewayFactory;
+use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
+use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\RefundRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;
+use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Permissions\Services\PermissionService;
 
 class RefundJsonController extends Controller
@@ -35,6 +38,16 @@ class RefundJsonController extends Controller
     private $gatewayFactory;
 
     /**
+     * @var StripePaymentGateway
+     */
+    private $stripePaymentGateway;
+
+    /**
+     * @var PayPalPaymentGateway
+     */
+    private $payPalPaymentGateway;
+
+    /**
      * RefundJsonController constructor.
      *
      * @param \Railroad\Ecommerce\Repositories\RefundRepository  $refundRepository
@@ -46,12 +59,16 @@ class RefundJsonController extends Controller
         RefundRepository $refundRepository,
         PaymentRepository $paymentRepository,
         PermissionService $permissionService,
-        GatewayFactory $gatewayFactory
+        GatewayFactory $gatewayFactory,
+        StripePaymentGateway $stripePaymentGateway,
+        PayPalPaymentGateway $payPalPaymentGateway
     ) {
-        $this->refundRepository  = $refundRepository;
-        $this->paymentRepository = $paymentRepository;
-        $this->permissionService = $permissionService;
-        $this->gatewayFactory    = $gatewayFactory;
+        $this->refundRepository     = $refundRepository;
+        $this->paymentRepository    = $paymentRepository;
+        $this->permissionService    = $permissionService;
+        $this->gatewayFactory       = $gatewayFactory;
+        $this->stripePaymentGateway = $stripePaymentGateway;
+        $this->payPalPaymentGateway = $payPalPaymentGateway;
     }
 
     /** Call the refund method from the external payment helper and the method that save the refund in the database.
@@ -71,16 +88,25 @@ class RefundJsonController extends Controller
             new NotAllowedException('This action is unauthorized.')
         );
 
-        $gateway = $this->gatewayFactory->create($payment['payment_method']['method_type']);
-
-        $refundExternalId = $gateway->refund(
-            $payment['payment_method']['method_id'],
-            $request->get('refund_amount'),
-            $payment['due'],
-            $payment['currency'],
-            $payment['external_id'],
-            $request->get('note')
-        );
+        if($payment['payment_method']['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
+        {
+            $refundExternalId = $this->stripePaymentGateway->refund(
+                $request->get('gateway-name'),
+                $request->get('refund_amount'),
+                $payment['external_id'],
+                $request->get('note')
+            );
+        }
+        else if($payment['payment_method']['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE)
+        {
+            $refundExternalId = $this->payPalPaymentGateway->refund(
+                $request->get('refund_amount'),
+                $payment['currency'],
+                $payment['external_id'],
+                $request->get('gateway-name'),
+                $request->get('note')
+            );
+        }
 
         $refund = $this->refundRepository->create(
             [

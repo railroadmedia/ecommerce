@@ -56,6 +56,11 @@ class EcommerceTestCase extends BaseTestCase
     protected $permissionServiceMock;
 
     /**
+     * @var \PHPUnit\Framework\MockObject\MockObject
+     */
+    protected $stripeExternalHelperMock;
+
+    /**
      * @var Application
      */
     protected $app;
@@ -76,6 +81,11 @@ class EcommerceTestCase extends BaseTestCase
             ->disableOriginalConstructor()
             ->getMock();
         $this->app->instance(PermissionService::class, $this->permissionServiceMock);
+
+        $this->stripeExternalHelperMock = $this->getMockBuilder(\Railroad\Ecommerce\ExternalHelpers\Stripe::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->app->instance(\Railroad\Ecommerce\ExternalHelpers\Stripe::class, $this->stripeExternalHelperMock);
 
         Carbon::setTestNow(Carbon::now());
     }
@@ -102,6 +112,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.credit_card', $defaultConfig['credit_card']);
         $app['config']->set('ecommerce.paypal', $defaultConfig['payment_gateways']['paypal']);
         $app['config']->set('ecommerce.stripe', $defaultConfig['payment_gateways']['stripe']);
+        $app['config']->set('ecommerce.payment_gateways', $defaultConfig['payment_gateways']);
 
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);

@@ -3,7 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
+
 use Railroad\Ecommerce\Factories\PaymentFactory;
 use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Factories\PaymentMethodFactory;
@@ -13,8 +13,6 @@ use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
-use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class RefundJsonControllerTest extends EcommerceTestCase
@@ -24,10 +22,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
      */
     private $paymentFactory;
 
-    /**
-     * @var PaymentGatewayFactory
-     */
-    private $paymentGatewayFactory;
 
     CONST VALID_VISA_CARD_NUM = '4242424242424242';
 
@@ -98,8 +92,9 @@ class RefundJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
         $this->permissionServiceMock->method('canOrThrow');
-        $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway(['config' => 'stripe_1']));
-        $creditCard     = $this->creditCardRepository->create($this->faker->creditCard(['payment_gateway_id' => $paymentGateway['id']]));
+        $this->stripeExternalHelperMock->method('createRefund')->willReturn(1);
+
+        $creditCard     = $this->creditCardRepository->create($this->faker->creditCard());
         $paymentMethod  = $this->paymentMethodRepository->create($this->faker->paymentMethod([
             'method_type' => 'credit card',
             'method_id'   => $creditCard['id']
@@ -116,7 +111,8 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call('PUT', '/refund', [
             'payment_id'    => $payment['id'],
-            'refund_amount' => $refundAmount
+            'refund_amount' => $refundAmount,
+            'gateway-name' => 'drumeo'
         ]);
 
         //assert refund data subset of results
@@ -150,8 +146,8 @@ class RefundJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
         $this->permissionServiceMock->method('canOrThrow');
-        $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway(['config' => 'stripe_1']));
-        $creditCard     = $this->creditCardRepository->create($this->faker->creditCard(['payment_gateway_id' => $paymentGateway['id']]));
+
+        $creditCard     = $this->creditCardRepository->create($this->faker->creditCard());
         $paymentMethod  = $this->paymentMethodRepository->create($this->faker->paymentMethod([
             'method_type' => 'credit card',
             'method_id'   => $creditCard['id']
