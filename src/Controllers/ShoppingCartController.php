@@ -46,11 +46,10 @@ class ShoppingCartController extends Controller
         CartAddressService $cartAddressService,
         TaxService $taxService
     ) {
-        $this->cartService = $cartService;
-        $this->productRepository = $productRepository;
+        $this->cartService        = $cartService;
+        $this->productRepository  = $productRepository;
         $this->cartAddressService = $cartAddressService;
-        $this->taxService = $taxService;
-
+        $this->taxService         = $taxService;
         $this->middleware(
             [
                 EncryptCookies::class,
@@ -71,39 +70,47 @@ class ShoppingCartController extends Controller
      */
     public function addToCart(Request $request)
     {
-        $input = $request->all();
-        $errors = [];
+        $input         = $request->all();
+        $errors        = [];
         $addedProducts = [];
-        $success = false;
-        $redirect = false;
+        $success       = false;
+        $redirect      = false;
 
-        if (!empty($input['locked']) && $input['locked'] == "true") {
+        if(!empty($input['locked']) && $input['locked'] == "true")
+        {
             $this->cartService->lockCart();
-        } elseif ($this->cartService->isLocked()) {
+        }
+        elseif($this->cartService->isLocked())
+        {
             $this->cartService->unlockCart();
         }
 
-        if (array_key_exists('redirect', $input) && $input['redirect'] == "/shop") {
+        if(array_key_exists('redirect', $input) && $input['redirect'] == "/shop")
+        {
             $redirect = $input['redirect'];
         }
 
-        if (!empty($input['products'])) {
+        if(!empty($input['products']))
+        {
             $products = $input['products'];
 
-            foreach ($products as $productSku => $productInfo) {
+            foreach($products as $productSku => $productInfo)
+            {
                 $productInfo = explode(',', $productInfo);
 
                 $quantityToAdd = $productInfo[0];
 
-                if (!empty($productInfo[1])) {
-                    $subscriptionType = !empty($productInfo[1]) ? $productInfo[1] : null;
+                if(!empty($productInfo[1]))
+                {
+                    $subscriptionType      = !empty($productInfo[1]) ? $productInfo[1] : null;
                     $subscriptionFrequency = !empty($productInfo[2]) ? $productInfo[2] : null;
                 }
 
                 $product = $this->productRepository->query()->where(['sku' => $productSku])->first();
 
-                if (($product) && ($product['stock'] >= $quantityToAdd)) {
-                    $success = true;
+                if(($product) && ($product['stock'] >= $quantityToAdd))
+                {
+                    $success         = true;
                     $addedProducts[] = $product;
                     $this->cartService->addCartItem(
                         $product['name'],
@@ -116,13 +123,16 @@ class ShoppingCartController extends Controller
                         $product['subscription_interval_count'],
                         $product['weight'],
                         [
-                            'product-id' => $product['id'],
+                            'product-id'                => $product['id'],
                             'requires-shipping-address' => $product['is_physical'],
                         ]
                     );
-                } else {
-                    $message = 'Product with SKU:' . $productSku . ' could not be added to cart.';
-                    $message .= (is_array($product)) ?
+                }
+                else
+                {
+
+                    $message  = 'Product with SKU:' . $productSku . ' could not be added to cart.';
+                    $message  .= (!is_null($product)) ?
                         ' The product stock(' .
                         $product['stock'] .
                         ') is smaller than the quantity you\'ve selected(' .
@@ -133,7 +143,7 @@ class ShoppingCartController extends Controller
             }
         }
 
-        $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+        $billingAddress        = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
         $cartItemsPriceWithTax =
             $this->taxService->calculateTaxesForCartItems(
                 $this->cartService->getAllCartItems(),
@@ -142,18 +152,19 @@ class ShoppingCartController extends Controller
             );
 
         $response = [
-            'success' => $success,
-            'addedProducts' => $addedProducts,
-            'cartSubTotal' => $cartItemsPriceWithTax['totalDue'],
-            'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
+            'success'              => $success,
+            'addedProducts'        => $addedProducts,
+            'cartSubTotal'         => $cartItemsPriceWithTax['totalDue'],
+            'cartNumberOfItems'    => count($this->cartService->getAllCartItems()),
             'notAvailableProducts' => $errors,
         ];
 
-        if (!empty($input['redirect'])) {
+        if(!empty($input['redirect']))
+        {
             return redirect()->to($input['redirect']);
         }
 
-        return redirect()->back()->with(['success' => true]);
+        return redirect()->back()->with($response);
     }
 
     /** Remove product from cart.
@@ -165,8 +176,10 @@ class ShoppingCartController extends Controller
     {
         $cartItems = $this->cartService->getAllCartItems();
 
-        foreach ($cartItems as $cartItem) {
-            if ($cartItem['options']['product-id'] == $productId) {
+        foreach($cartItems as $cartItem)
+        {
+            if($cartItem['options']['product-id'] == $productId)
+            {
                 $this->cartService->removeCartItem($cartItem['id']);
             }
         }
@@ -186,21 +199,26 @@ class ShoppingCartController extends Controller
     public function updateCartItemQuantity($productId, $quantity)
     {
         $product = $this->productRepository->query()->where(['id' => $productId])->first();
-        $errors = [];
+        $errors  = [];
         $success = false;
 
-        if (($product) && ($product['stock'] >= $quantity)) {
-            $success = true;
+        if(($product) && ($product['stock'] >= $quantity))
+        {
+            $success   = true;
             $cartItems = $this->cartService->getAllCartItems();
 
-            foreach ($cartItems as $cartItem) {
-                if ($cartItem['options']['product-id'] == $productId) {
+            foreach($cartItems as $cartItem)
+            {
+                if($cartItem['options']['product-id'] == $productId)
+                {
                     $this->cartService->updateCartItemQuantity($cartItem['id'], $quantity);
                 }
             }
-        } else {
-            $message = 'The quantity can not be updated.';
-            $message .= (is_array($product)) ?
+        }
+        else
+        {
+            $message  = 'The quantity can not be updated.';
+            $message  .= (is_array($product)) ?
                 ' The product stock(' .
                 $product['stock'] .
                 ') is smaller than the quantity you\'ve selected(' .
@@ -210,9 +228,9 @@ class ShoppingCartController extends Controller
         }
 
         $response = [
-            'success' => $success,
-            'addedProducts' => $this->cartService->getAllCartItems(),
-            'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
+            'success'              => $success,
+            'addedProducts'        => $this->cartService->getAllCartItems(),
+            'cartNumberOfItems'    => count($this->cartService->getAllCartItems()),
             'notAvailableProducts' => $errors,
         ];
 

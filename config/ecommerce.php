@@ -91,7 +91,7 @@ return [
             ],
         ],
     ],
-
+'credit_card' => [],
     'middleware' => [
         \Illuminate\Cookie\Middleware\EncryptCookies::class,
         \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,

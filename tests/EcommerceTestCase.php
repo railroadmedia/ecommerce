@@ -100,8 +100,8 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
         $app['config']->set('ecommerce.tax_rate', $defaultConfig['tax_rate']);
         $app['config']->set('ecommerce.credit_card', $defaultConfig['credit_card']);
-        $app['config']->set('ecommerce.paypal', $defaultConfig['paypal']);
-        $app['config']->set('ecommerce.stripe', $defaultConfig['stripe']);
+        $app['config']->set('ecommerce.paypal', $defaultConfig['payment_gateways']['paypal']);
+        $app['config']->set('ecommerce.stripe', $defaultConfig['payment_gateways']['stripe']);
 
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
