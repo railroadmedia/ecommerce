@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\ExternalHelpers;
 use Railroad\Ecommerce\Services\ConfigService;
 use Stripe\Card;
 use Stripe\Charge;
+use Stripe\Collection;
 use Stripe\Customer;
 use Stripe\Error\InvalidRequest;
 use Stripe\Refund;
@@ -96,6 +97,15 @@ class Stripe
     }
 
     /**
+     * @param $id
+     * @return Collection
+     */
+    public function getCustomersByEmail($email)
+    {
+        return $this->stripe->customer->all(['email' => $email]);
+    }
+
+    /**
      * @param Customer $customer
      * @param Token    $token
      * @return Card
@@ -141,14 +151,16 @@ class Stripe
 
     /**
      * @param integer $amount (in minimum possible currency) (cents)
-     * @param $source
+     * @param $card
+     * @param $customer
      * @param string $currency
      * @param string $description
      * @return \Stripe\Charge
      */
-    public function createCharge(
+    public function chargeCard(
         $amount,
-        $source,
+        Card $card,
+        Customer $customer,
         $currency,
         $description = ''
     ) {
@@ -156,8 +168,9 @@ class Stripe
             [
                 'amount'   => $amount,
                 'currency' => $currency,
-                'source'   => $source,
+                'source'   => $card,
                 'description'   => $description,
+                'customer' => $customer,
             ]
         );
     }

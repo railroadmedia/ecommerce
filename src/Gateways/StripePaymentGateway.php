@@ -6,6 +6,10 @@ use Exception;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Services\ConfigService;
+use Stripe\Card;
+use Stripe\Charge;
+use Stripe\Customer;
+use Stripe\Refund;
 
 class StripePaymentGateway
 {
@@ -26,14 +30,11 @@ class StripePaymentGateway
 
     /**
      * @param $gatewayName
-     * @param $amount
-     * @param $currency
-     * @param $tokenId
-     * @param string $description
-     * @return mixed
+     * @param $customerEmail
+     * @return Customer
      * @throws PaymentFailedException
      */
-    public function chargeToken($gatewayName, $amount, $currency, $tokenId, $description = '')
+    public function getOrCreateCustomer($gatewayName, $customerEmail)
     {
         $config = ConfigService::$paymentGateways['stripe'][$gatewayName];
 
@@ -41,40 +42,57 @@ class StripePaymentGateway
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
-        try {
-            $this->stripe->setApiKey($config['stripe_api_secret']);
+        $this->stripe->setApiKey($config['stripe_api_secret']);
 
-            $source = $this->stripe->retrieveToken($tokenId);
+        $customers = $this->stripe->getCustomersByEmail($customerEmail)['data'];
 
-            $charge = $this->stripe->createCharge(
-                $amount * 100,
-                $source,
-                $currency,
-                $description
-            );
-        } catch (Exception $exception) {
-            throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
+        if (empty($customers)) {
+            $customer = $this->stripe->createCustomer(['email' => $customerEmail]);
+        } else {
+            $customer = reset($customers);
         }
 
-        return $charge['id'];
+        return $customer;
     }
 
     /**
+     * @param $gatewayName
+     * @param Customer $customer
+     * @param $tokenId
+     * @return Card
+     * @throws PaymentFailedException
+     */
+    public function createCustomerCard($gatewayName, Customer $customer, $tokenId)
+    {
+        $config = ConfigService::$paymentGateways['stripe'][$gatewayName];
+
+        if (empty($config)) {
+            throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
+        }
+
+        $this->stripe->setApiKey($config['stripe_api_secret']);
+
+        $card = $customer->sources->create(['source' => $tokenId]);
+
+        return $card;
+    }
+
+    /**
+     * @param $gatewayName
      * @param $amount
      * @param $currency
-     * @param $cardId
-     * @param $customerId
-     * @param $gatewayName
+     * @param Card $card
+     * @param Customer $customer
      * @param string $description
-     * @return string
+     * @return Charge
      * @throws PaymentFailedException
      */
     public function chargeCustomerCard(
+        $gatewayName,
         $amount,
         $currency,
-        $cardId,
-        $customerId,
-        $gatewayName,
+        Card $card,
+        Customer $customer,
         $description = ''
     ) {
         $config = ConfigService::$paymentGateways['stripe'][$gatewayName];
@@ -86,12 +104,10 @@ class StripePaymentGateway
         try {
             $this->stripe->setApiKey($config['stripe_api_secret']);
 
-            $customer = $this->stripe->retrieveCustomer($customerId);
-            $card = $customer->sources->retrieve($cardId);
-
-            $charge = $this->stripe->createCharge(
+            $charge = $this->stripe->chargeCard(
                 $amount * 100,
                 $card,
+                $customer,
                 $currency,
                 $description
             );
@@ -99,7 +115,7 @@ class StripePaymentGateway
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
 
-        return $charge['id'];
+        return $charge;
     }
 
     /**
@@ -107,7 +123,7 @@ class StripePaymentGateway
      * @param $externalPaymentId
      * @param $reason
      * @param $gatewayName
-     * @return string
+     * @return Refund
      * @throws PaymentFailedException
      */
     public function refund($gatewayName, $amount, $externalPaymentId, $reason = null)
@@ -130,6 +146,6 @@ class StripePaymentGateway
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
 
-        return $refund['id'];
+        return $refund;
     }
 }

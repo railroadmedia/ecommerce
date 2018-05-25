@@ -2,45 +2,104 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Railroad\Ecommerce\Factories\GatewayFactory;
-
+use Carbon\Carbon;
+use Railroad\Ecommerce\Repositories\CreditCardRepository;
+use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
+use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
+use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 
 class PaymentMethodService
 {
     /**
-     * @var \Railroad\Ecommerce\Factories\GatewayFactory
+     * @var CreditCardRepository
      */
-    private $gatewayFactory;
-
-    //constants that represent payment method types
-    CONST PAYPAL_PAYMENT_METHOD_TYPE      = 'paypal';
-    CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit card';
-    //constants for update action
-    CONST UPDATE_PAYMENT_METHOD_AND_CREATE_NEW_CREDIT_CARD = 'create-credit-card';
-    CONST UPDATE_PAYMENT_METHOD_AND_UPDATE_CREDIT_CARD     = 'update-current-credit-card';
-    CONST UPDATE_PAYMENT_METHOD_AND_USE_PAYPAL             = 'use-paypal';
-
+    private $creditCardRepository;
     /**
-     * PaymentMethodService constructor.
-     *
-     * @param \Railroad\Ecommerce\Factories\GatewayFactory $gatewayFactory
+     * @var PaypalBillingAgreementRepository
      */
-    public function __construct(GatewayFactory $gatewayFactory)
-    {
-        $this->gatewayFactory = $gatewayFactory;
+    private $paypalBillingAgreementRepository;
+    /**
+     * @var PaymentMethodRepository
+     */
+    private $paymentMethodRepository;
+    /**
+     * @var UserPaymentMethodsRepository
+     */
+    private $userPaymentMethodsRepository;
+    /**
+     * @var CustomerPaymentMethodsRepository
+     */
+    private $customerPaymentMethodsRepository;
+
+    CONST PAYPAL_PAYMENT_METHOD_TYPE = 'paypal';
+    CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit-card';
+
+    public function __construct(
+        CreditCardRepository $creditCardRepository,
+        PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
+        PaymentMethodRepository $paymentMethodRepository,
+        UserPaymentMethodsRepository $userPaymentMethodsRepository,
+        CustomerPaymentMethodsRepository $customerPaymentMethodsRepository
+    ) {
+        $this->creditCardRepository = $creditCardRepository;
+        $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
+        $this->paymentMethodRepository = $paymentMethodRepository;
+        $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
+        $this->customerPaymentMethodsRepository = $customerPaymentMethodsRepository;
     }
 
-    /**
-     * @param \Railroad\Ecommerce\Requests\PaymentMethodCreateRequest $request
-     * @return array|int
-     * @throws \Railroad\Ecommerce\Exceptions\NotFoundException
-     */
-    public function saveMethod(array $data)
-    {
-        $gateway = $this->gatewayFactory->create($data['method_type']);
+    public function createUserCreditCard(
+        $userId,
+        $fingerPrint,
+        $last4,
+        $cardHolderName,
+        $companyName,
+        $expirationYear,
+        $expirationMonth,
+        $externalId,
+        $externalCustomerId,
+        $gatewayName,
+        $currency = null,
+        $makePrimary = false
+    ) {
+        $creditCard = $this->creditCardRepository->create(
+            [
+                'fingerprint' => $fingerPrint,
+                'last_four_digits' => $last4,
+                'cardholder_name' => $cardHolderName,
+                'company_name' => $companyName,
+                'expiration_date' => Carbon::createFromDate($expirationYear, $expirationMonth)->toDateTimeString(),
+                'external_id' => $externalId,
+                'external_customer_id' => $externalCustomerId,
+                'payment_gateway_name' => $gatewayName,
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
 
-        $results = $gateway->saveExternalData($data);
+        $paymentMethod = $this->paymentMethodRepository->create(
+            [
+                'method_id' => $creditCard['id'],
+                'method_type' => self::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'currency' => $currency ?? ConfigService::$defaultCurrency,
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
 
-        return $results;
+        if ($makePrimary) {
+            $this->userPaymentMethodsRepository->query()->where('user_id', $userId)->update(['is_primary' => false]);
+        }
+
+        $userPaymentMethod = $this->userPaymentMethodsRepository->create(
+            [
+                'user_id' => $userId,
+                'payment_method_id' => $paymentMethod['id'],
+                'is_primary' => $makePrimary,
+                'created_on' => Carbon::now()->toDateTimeString(),
+                'updated_on' => '',
+            ]
+        );
+
+        return $paymentMethod['id'];
     }
 }

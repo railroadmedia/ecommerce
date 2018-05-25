@@ -19,15 +19,13 @@ class CreateCreditCardTable extends Migration
             ConfigService::$tableCreditCard,
             function(Blueprint $table) {
                 $table->increments('id');
-                $table->string('type')->index();
                 $table->string('fingerprint');
                 $table->integer('last_four_digits');
                 $table->string('cardholder_name')->nullable();
                 $table->string('company_name')->index();
+                $table->dateTime('expiration_date');
                 $table->string('external_id',64)->index();
                 $table->string('external_customer_id',64)->index()->nullable();
-                $table->string('external_provider',64)->index();
-                $table->dateTime('expiration_date');
                 $table->string('payment_gateway_name', 64)->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
