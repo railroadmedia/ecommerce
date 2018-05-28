@@ -54,7 +54,11 @@ class PayPalPaymentGateway
                 $currency
             );
         } catch (Exception $exception) {
-            throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
+            error_log($exception->getMessage());
+
+            throw new PaymentFailedException(
+                'Payment failed. Please ensure your PayPal account is funded and has a linked credit card then try again.'
+            );
         }
 
         return $transactionId;
@@ -91,6 +95,32 @@ class PayPalPaymentGateway
         }
 
         return $transactionId;
+    }
+
+    /**
+     * @param $returnUrl
+     * @return mixed
+     * @throws PaymentFailedException
+     */
+    public function getBillingAgreementExpressCheckoutUrl($gatewayName, $returnUrl)
+    {
+        $config = ConfigService::$paymentGateways['paypal'][$gatewayName];
+
+        if (empty($config)) {
+            throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
+        }
+
+        try {
+            $this->paypal->configure($config);
+
+            return $config['paypal_api_checkout_redirect_url'] .
+                $this->paypal->createBillingAgreementExpressCheckoutToken(
+                    $returnUrl,
+                    $returnUrl
+                );
+        } catch (Exception $exception) {
+            throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
+        }
     }
 
     /**
