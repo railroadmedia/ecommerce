@@ -38,6 +38,6 @@ class CreatePaypalBillingAgreementTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableShippingCostsWeightRange);
+        Schema::dropIfExists(ConfigService::$tablePaypalBillingAgreement);
     }
 }

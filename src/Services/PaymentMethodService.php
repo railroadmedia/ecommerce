@@ -60,6 +60,7 @@ class PaymentMethodService
         $externalId,
         $externalCustomerId,
         $gatewayName,
+        $billingAddressId = null,
         $currency = null,
         $makePrimary = false
     ) {
@@ -82,6 +83,7 @@ class PaymentMethodService
                 'method_id' => $creditCard['id'],
                 'method_type' => self::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'currency' => $currency ?? ConfigService::$defaultCurrency,
+                'billing_address_id' => $billingAddressId,
                 'created_on' => Carbon::now()->toDateTimeString(),
             ]
         );
@@ -96,7 +98,6 @@ class PaymentMethodService
                 'payment_method_id' => $paymentMethod['id'],
                 'is_primary' => $makePrimary,
                 'created_on' => Carbon::now()->toDateTimeString(),
-                'updated_on' => '',
             ]
         );
 

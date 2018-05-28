@@ -22,6 +22,7 @@ class CreatePaymentMethodTable extends Migration
                 $table->integer('method_id')->index();
                 $table->string('method_type')->index();
                 $table->string('currency')->index();
+                $table->integer('billing_address_id')->nullable();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }
