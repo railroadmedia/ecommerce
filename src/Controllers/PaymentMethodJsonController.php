@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Factories\GatewayFactory;
+use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
@@ -49,6 +50,11 @@ class PaymentMethodJsonController extends Controller
     private $paymentMethodService;
 
     /**
+     * @var \Railroad\Ecommerce\Gateways\StripePaymentGateway
+     */
+    private $stripePaymentGateway;
+
+    /**
      * PaymentMethodJsonController constructor.
      *
      * @param \Railroad\Permissions\Services\PermissionService                  $permissionService
@@ -63,7 +69,8 @@ class PaymentMethodJsonController extends Controller
         GatewayFactory $gatewayFactory,
         UserPaymentMethodsRepository $userPaymentMethodsRepository,
         CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
-        PaymentMethodService $paymentMethodService
+        PaymentMethodService $paymentMethodService,
+    StripePaymentGateway $stripePaymentGateway
     ) {
         $this->permissionService               = $permissionService;
         $this->paymentMethodRepository         = $paymentMethodRepository;
@@ -71,6 +78,7 @@ class PaymentMethodJsonController extends Controller
         $this->userPaymentMethodRepository     = $userPaymentMethodsRepository;
         $this->customerPaymentMethodRepository = $customerPaymentMethodsRepository;
         $this->paymentMethodService            = $paymentMethodService;
+        $this->stripePaymentGateway = $stripePaymentGateway;
     }
 
     /** Call the service method to create a new payment method based on request parameters.

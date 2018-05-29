@@ -96,7 +96,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         $creditCard     = $this->creditCardRepository->create($this->faker->creditCard());
         $paymentMethod  = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => 'credit card',
+            'method_type' => 'credit-card',
             'method_id'   => $creditCard['id']
         ]));
         $userPayment    = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
@@ -149,7 +149,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         $creditCard     = $this->creditCardRepository->create($this->faker->creditCard());
         $paymentMethod  = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => 'credit card',
+            'method_type' => 'credit-card',
             'method_id'   => $creditCard['id']
         ]));
         $userPayment    = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([

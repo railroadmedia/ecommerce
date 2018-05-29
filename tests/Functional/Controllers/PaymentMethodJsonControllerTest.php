@@ -86,23 +86,23 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertEquals([
             [
                 "source" => "card_year",
-                "detail" => "The card year field is required when method type is credit card.",
+                "detail" => "The card year field is required when method type is credit-card.",
             ],
             [
                 "source" => "card_month",
-                "detail" => "The card month field is required when method type is credit card.",
+                "detail" => "The card month field is required when method type is credit-card.",
             ],
             [
                 "source" => "card_fingerprint",
-                "detail" => "The card fingerprint field is required when method type is credit card.",
+                "detail" => "The card fingerprint field is required when method type is credit-card.",
             ],
             [
                 "source" => "card_number_last_four_digits",
-                "detail" => "The card number last four digits field is required when method type is credit card.",
+                "detail" => "The card number last four digits field is required when method type is credit-card.",
             ],
             [
                 "source" => "company_name",
-                "detail" => "The company name field is required when method type is credit card.",
+                "detail" => "The company name field is required when method type is credit-card.",
             ],
             [
                 "source" => "user_id",
