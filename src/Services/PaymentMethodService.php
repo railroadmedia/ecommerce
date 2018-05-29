@@ -103,4 +103,46 @@ class PaymentMethodService
 
         return $paymentMethod['id'];
     }
+
+    public function createPayPalBillingAgreement(
+        $userId,
+        $billingAgreementExternalId,
+        $billingAddressId,
+        $paymentGatewayName,
+        $currency = null,
+        $makePrimary = false
+    ) {
+        $billingAgreement = $this->paypalBillingAgreementRepository->create(
+            [
+                'external_id' => $billingAgreementExternalId,
+                'payment_gateway_name' => $paymentGatewayName,
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $paymentMethod = $this->paymentMethodRepository->create(
+            [
+                'method_id' => $billingAgreement['id'],
+                'method_type' => self::PAYPAL_PAYMENT_METHOD_TYPE,
+                'currency' => $currency ?? ConfigService::$defaultCurrency,
+                'billing_address_id' => $billingAddressId,
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        if ($makePrimary) {
+            $this->userPaymentMethodsRepository->query()->where('user_id', $userId)->update(['is_primary' => false]);
+        }
+
+        $userPaymentMethod = $this->userPaymentMethodsRepository->create(
+            [
+                'user_id' => $userId,
+                'payment_method_id' => $paymentMethod['id'],
+                'is_primary' => $makePrimary,
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        return $paymentMethod['id'];
+    }
 }

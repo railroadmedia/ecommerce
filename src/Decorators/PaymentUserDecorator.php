@@ -29,8 +29,8 @@ class PaymentUserDecorator implements DecoratorInterface
         foreach($payment as $index => $paymentData)
         {
             $payment[$index]['user'] = [
-                'user_id'    => $userPaymentMethod['user_id'],
-                'is_primary' => $userPaymentMethod['is_primary']
+                'user_id'    => $userPaymentMethod->user_id,
+                'is_primary' => $userPaymentMethod->is_primary
             ];
         }
 

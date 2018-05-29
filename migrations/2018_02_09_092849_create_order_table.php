@@ -20,7 +20,6 @@ class CreateOrderTable extends Migration
             function(Blueprint $table) {
                 $table->increments('id');
 
-                $table->string('uuid')->unique();
                 $table->decimal('due');
                 $table->decimal('tax');
                 $table->decimal('shipping_costs');

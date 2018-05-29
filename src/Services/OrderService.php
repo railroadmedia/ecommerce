@@ -38,7 +38,6 @@ class OrderService
     public function store($due, $tax, $shippingCosts, $paid, $userId, $customerId, $shippingAddressId, $billingAddressId, $brand = null)
     {
         $orderId = $this->orderRepository->create([
-            'uuid'                => bin2hex(openssl_random_pseudo_bytes(16)),
             'due'                 => $due,
             'tax'                 => $tax,
             'shipping_costs'      => $shippingCosts,

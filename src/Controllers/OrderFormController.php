@@ -291,7 +291,6 @@ class OrderFormController extends Controller
 
         $order = $this->orderRepository->create(
             [
-                'uuid' => bin2hex(openssl_random_pseudo_bytes(16)),
                 'due' => $cartItemsWithTaxesAndCosts['totalDue'],
                 'tax' => $cartItemsWithTaxesAndCosts['totalTax'],
                 'paid' => $cartItemsWithTaxesAndCosts['totalDue'],

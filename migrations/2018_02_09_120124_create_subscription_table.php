@@ -20,7 +20,6 @@ class CreateSubscriptionTable extends Migration
             function(Blueprint $table) {
                 $table->increments('id');
 
-                $table->string('uuid')->unique();
                 $table->string('brand')->index();
                 $table->string('type')->index();
                 $table->integer('user_id')->index()->nullable();
@@ -35,7 +34,7 @@ class CreateSubscriptionTable extends Migration
                 $table->decimal('total_price_per_payment');
                 $table->decimal('tax_per_payment')->nullable();
                 $table->decimal('shipping_per_payment')->nullable();
-                $table->string('currency')->index();
+                $table->string('currency', 3)->index();
                 $table->string('interval_type')->index();
                 $table->integer('interval_count');
                 $table->integer('total_cycles_due')->nullable();

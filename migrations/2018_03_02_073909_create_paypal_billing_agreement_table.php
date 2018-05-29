@@ -19,12 +19,8 @@ class CreatePaypalBillingAgreementTable extends Migration
             ConfigService::$tablePaypalBillingAgreement,
             function(Blueprint $table) {
                 $table->increments('id');
-                $table->string('agreement_id',64)->index();
-
-                $table->string('express_checkout_token', 64)->index();
-                $table->integer('address_id');
+                $table->string('external_id',64)->index();
                 $table->string('payment_gateway_name', 64)->index();
-                $table->dateTime('expiration_date')->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }

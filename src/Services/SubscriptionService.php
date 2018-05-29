@@ -94,7 +94,6 @@ class SubscriptionService
 
         $subscriptionId = $this->subscriptionRepository->create(
             [
-                'uuid'                    => bin2hex(openssl_random_pseudo_bytes(16)),
                 'brand'                   => ConfigService::$brand,
                 'type'                    => $type,
                 'user_id'                 => $userId,

@@ -34,7 +34,7 @@ class PayPalPaymentGateway
      * @return string
      * @throws PaymentFailedException
      */
-    public function chargeToken($gatewayName, $amount, $currency, $expressCheckoutToken, $description = '')
+    public function createBillingAgreement($gatewayName, $amount, $currency, $expressCheckoutToken, $description = '')
     {
         $config = ConfigService::$paymentGateways['paypal'][$gatewayName];
 
@@ -46,13 +46,6 @@ class PayPalPaymentGateway
             $this->paypal->configure($config);
 
             $billingAgreementId = $this->paypal->confirmAndCreateBillingAgreement($expressCheckoutToken);
-
-            $transactionId = $this->paypal->createReferenceTransaction(
-                $amount,
-                $description,
-                $billingAgreementId,
-                $currency
-            );
         } catch (Exception $exception) {
             error_log($exception->getMessage());
 
@@ -61,7 +54,7 @@ class PayPalPaymentGateway
             );
         }
 
-        return $transactionId;
+        return $billingAgreementId;
     }
 
     /**

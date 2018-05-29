@@ -30,10 +30,10 @@ class ProductDiscountDecorator implements DecoratorInterface
         foreach ($products as $productIndex => $product) {
             $products[$productIndex]['discounts'] = [];
             foreach ($productDiscounts as $productDiscountIndex => $productDiscount) {
-                if ($productDiscount['product_id'] == $product['id']) {
+                if ($productDiscount->product_id == $product['id']) {
                     $products[$productIndex]['discounts'][] = [
-                        'id' => $productDiscount['id'],
-                        'order_id' => $productDiscount['discount_id']
+                        'id' => $productDiscount->id,
+                        'order_id' => $productDiscount->discount_id
                     ];
                 }
             }

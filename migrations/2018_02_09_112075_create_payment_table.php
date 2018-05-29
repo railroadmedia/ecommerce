@@ -24,12 +24,12 @@ class CreatePaymentTable extends Migration
                 $table->decimal('paid')->nullable();
                 $table->decimal('refunded')->nullable();
                 $table->string('type')->index();
-                $table->string('external_provider')->index()->nullable();
-                $table->string('external_id')->index()->nullable();
-                $table->string('status')->index();
+                $table->string('external_id', 64)->index()->nullable();
+                $table->string('external_provider', 64)->index()->nullable();
+                $table->string('status', 64)->index();
                 $table->text('message')->nullable();
                 $table->integer('payment_method_id')->index()->nullable();
-                $table->string('currency')->index();
+                $table->string('currency', 3)->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }

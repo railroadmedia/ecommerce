@@ -262,7 +262,6 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $userId  = $this->createAndLogInNewUser();
         $address = $this->addressRepository->create($this->faker->address(['user_id' => $userId]));
         $order   = [
-            'uuid'                => $this->faker->uuid,
             'due'                 => $this->faker->numberBetween(0, 1000),
             'tax'                 => rand(),
             'shipping_costs'      => rand(),

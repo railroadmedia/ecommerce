@@ -22,6 +22,7 @@ class MethodDecorator implements DecoratorInterface
     public function decorate($paymentMethod)
     {
         $methodId = $paymentMethod->pluck('method_id');
+
         $paymentMethod->map(function ($item) use ($methodId) {
             switch($item->method_type)
             {
@@ -41,7 +42,6 @@ class MethodDecorator implements DecoratorInterface
 
     public function decorateCreditCard($methodId)
     {
-
         return $this->databaseManager->connection(ConfigService::$databaseConnectionName)
             ->table(ConfigService::$tableCreditCard)
             ->whereIn(ConfigService::$tableCreditCard . '.id', $methodId->toArray())
