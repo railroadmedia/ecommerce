@@ -61,6 +61,11 @@ class EcommerceTestCase extends BaseTestCase
     protected $stripeExternalHelperMock;
 
     /**
+     * @var \PHPUnit\Framework\MockObject\MockObject
+     */
+    protected $paypalExternalHelperMock;
+
+    /**
      * @var Application
      */
     protected $app;
@@ -86,6 +91,11 @@ class EcommerceTestCase extends BaseTestCase
             ->disableOriginalConstructor()
             ->getMock();
         $this->app->instance(\Railroad\Ecommerce\ExternalHelpers\Stripe::class, $this->stripeExternalHelperMock);
+
+        $this->paypalExternalHelperMock = $this->getMockBuilder(\Railroad\Ecommerce\ExternalHelpers\PayPal::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->app->instance(\Railroad\Ecommerce\ExternalHelpers\PayPal::class, $this->paypalExternalHelperMock);
 
         Carbon::setTestNow(Carbon::now());
     }
@@ -113,6 +123,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.paypal', $defaultConfig['payment_gateways']['paypal']);
         $app['config']->set('ecommerce.stripe', $defaultConfig['payment_gateways']['stripe']);
         $app['config']->set('ecommerce.payment_gateways', $defaultConfig['payment_gateways']);
+        $app['config']->set('ecommerce.supported_currencies', $defaultConfig['supported_currencies']);
 
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
@@ -193,11 +204,16 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function createAndLogInNewUser()
     {
+        $email = $this->faker->email;
         $userId = $this->databaseManager->connection()->query()->from('users')->insertGetId(
-            ['email' => $this->faker->email]
+            ['email' => $email]
         );
 
         Auth::shouldReceive('id')->andReturn($userId);
+
+        $userMockResults = new \stdClass();
+        $userMockResults->email = $email;
+        Auth::shouldReceive('user')->andReturn($userMockResults);
 
         return $userId;
     }
