@@ -204,4 +204,9 @@ class ConfigService
      * @var string
      */
     public static $defaultCurrency;
+
+    /**
+     * @var array
+     */
+    public static $defaultCurrencyPairPriceOffsets;
 }

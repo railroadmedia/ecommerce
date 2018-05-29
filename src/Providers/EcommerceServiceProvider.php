@@ -184,6 +184,7 @@ class EcommerceServiceProvider extends ServiceProvider
         // currencies
         ConfigService::$supportedCurrencies = config('ecommerce.supported_currencies');
         ConfigService::$defaultCurrency = config('ecommerce.default_currency');
+        ConfigService::$defaultCurrencyPairPriceOffsets = config('ecommerce.default_currency_pair_price_offsets');
     }
 
     /**

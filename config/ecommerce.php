@@ -51,6 +51,17 @@ return [
     ],
 
     'default_currency' => 'USD',
+    'default_currency_pair_price_offsets' => [
+        'CAD' => [
+            97 => 125,
+        ],
+        'GBP' => [
+            97 => 73,
+        ],
+        'EUR' => [
+            97 => 84,
+        ],
+    ],
 
     'payment_gateways' => [
         'paypal' => [

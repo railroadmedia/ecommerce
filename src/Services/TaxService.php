@@ -12,19 +12,13 @@ class TaxService
      */
     public function getTaxRate($country, $region)
     {
-        if(array_key_exists(strtolower($country), ConfigService::$taxRate))
-        {
-            if(array_key_exists(strtolower($region), ConfigService::$taxRate[strtolower($country)]))
-            {
+        if (array_key_exists(strtolower($country), ConfigService::$taxRate)) {
+            if (array_key_exists(strtolower($region), ConfigService::$taxRate[strtolower($country)])) {
                 return ConfigService::$taxRate[strtolower($country)][strtolower($region)];
-            }
-            else
-            {
+            } else {
                 return 0.05;
             }
-        }
-        else
-        {
+        } else {
             return 0;
         }
     }
@@ -35,52 +29,65 @@ class TaxService
      *      'totalTax' => float
      *      'shippingCosts' => float
      *
-     * @param array  $cartItems
+     * @param array $cartItems
      * @param string $country
      * @param string $region
-     * @param int    $shippingCosts
+     * @param int $shippingCosts
+     * @param null $currency
      * @return array
      */
-    public function calculateTaxesForCartItems($cartItems, $country, $region, $shippingCosts = 0)
+    public function calculateTaxesForCartItems($cartItems, $country, $region, $shippingCosts = 0, $currency = null)
     {
+        if (is_null($currency)) {
+            $currency = ConfigService::$defaultCurrency;
+        }
+
         $taxRate = $this->getTaxRate($country, $region);
+
+        foreach ($cartItems as $key => $item) {
+            $cartItems[$key]['totalPrice'] =
+                ConfigService::$defaultCurrencyPairPriceOffsets[$currency][$item['totalPrice']] ?? $item['totalPrice'];
+        }
 
         $cartItemsTotalDue = array_sum(array_column($cartItems, 'totalPrice'));
 
         $productsTaxAmount = round($cartItemsTotalDue * $taxRate, 2);
 
-        $shippingTaxAmount = round((float) $shippingCosts * $taxRate, 2);
+        $shippingTaxAmount = round((float)$shippingCosts * $taxRate, 2);
 
         //TODO: should be implemented
         $financeCharge = 0;
-        $discount      = 0;
+        $discount = 0;
 
         $taxAmount = $productsTaxAmount + $shippingTaxAmount;
 
-        $totalDue        = round($cartItemsTotalDue -
+        $totalDue = round(
+            $cartItemsTotalDue -
             $discount +
             $taxAmount +
-            (float) $shippingCosts +
-            $financeCharge, 2);
+            (float)$shippingCosts +
+            $financeCharge,
+            2
+        );
         $cartItemsWeight = array_sum(array_column($cartItems, 'weight'));
 
-        foreach($cartItems as $key => $item)
-        {
-            if($item['totalPrice'] > 0)
-            {
+        foreach ($cartItems as $key => $item) {
+            if ($item['totalPrice'] > 0) {
                 $cartItems[$key]['itemTax'] = $item['totalPrice'] / ($totalDue - $taxAmount) * $taxAmount;
             }
-            $cartItems[$key]['itemShippingCosts'] = ($cartItemsWeight != 0) ? ($shippingCosts * ($cartItems[$key]['weight'] / $cartItemsWeight)) : 0;
+            $cartItems[$key]['itemShippingCosts'] =
+                ($cartItemsWeight != 0) ? ($shippingCosts * ($cartItems[$key]['weight'] / $cartItemsWeight)) : 0;
         }
-        $results['cartItems']     = $cartItems;
-        $results['totalDue']      = $totalDue;
-        $results['totalTax']      = $taxAmount;
-        $results['shippingCosts'] = (float) $shippingCosts;
+        $results['cartItems'] = $cartItems;
+        $results['totalDue'] = $totalDue;
+        $results['totalTax'] = $taxAmount;
+        $results['shippingCosts'] = (float)$shippingCosts;
 
         return $results;
     }
 
     /** Calculate total taxes based on billing address and the amount that should be paid.
+     *
      * @param integer $costs
      * @return float|int
      */
