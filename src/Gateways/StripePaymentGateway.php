@@ -148,4 +148,63 @@ class StripePaymentGateway
 
         return $refund;
     }
+
+    /**
+     * @param $gatewayName
+     * @param $customerId
+     * @return \Stripe\Customer
+     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     */
+    public function getCustomer($gatewayName, $customerId)
+    {
+        $config = ConfigService::$paymentGateways['stripe'][$gatewayName];
+
+        if(empty($config))
+        {
+            throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
+        }
+
+        try
+        {
+            $this->stripe->setApiKey($config['stripe_api_secret']);
+
+            $customer = $this->stripe->retrieveCustomer($customerId);
+        }
+        catch(Exception $exception)
+        {
+            throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
+        }
+
+        return $customer;
+    }
+
+    /**
+     * @param \Stripe\Customer $customer
+     * @param                  $cardId
+     * @param                  $gatewayName
+     * @return \Stripe\Card
+     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     */
+    public function getCard(Customer $customer, $cardId, $gatewayName)
+    {
+        $config = ConfigService::$paymentGateways['stripe'][$gatewayName];
+
+        if(empty($config))
+        {
+            throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
+        }
+
+        try
+        {
+            $this->stripe->setApiKey($config['stripe_api_secret']);
+
+            $card = $this->stripe->retrieveCard($customer, $cardId);
+        }
+        catch(Exception $exception)
+        {
+            throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
+        }
+
+        return $card;
+    }
 }

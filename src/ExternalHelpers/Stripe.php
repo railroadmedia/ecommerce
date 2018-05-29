@@ -122,7 +122,7 @@ class Stripe
      */
     public function retrieveCard(Customer $customer, $cardId)
     {
-        return $this->stripe->card->retrieve($cardId);
+        return $customer->sources->retrieve($cardId);
     }
 
     /**
