@@ -7,6 +7,7 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use PDO;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Decorators\MethodDecorator;
+use Railroad\Ecommerce\Decorators\PaymentMethodOwnerDecorator;
 use Railroad\Ecommerce\Decorators\PaymentPaymentMethodDecorator;
 use Railroad\Ecommerce\Decorators\PaymentUserDecorator;
 use Railroad\Ecommerce\Decorators\ProductDecorator;
@@ -88,7 +89,8 @@ class EcommerceServiceProvider extends ServiceProvider
             array_merge(
                 config()->get('resora.decorators.paymentMethod', []),
                 [
-                    MethodDecorator::class
+                    MethodDecorator::class,
+                    PaymentMethodOwnerDecorator::class
                 ]
             )
         );
