@@ -7,11 +7,14 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use PDO;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Decorators\MethodDecorator;
+use Railroad\Ecommerce\Decorators\PaymentMethodBillingAddressDecorator;
+use Railroad\Ecommerce\Decorators\PaymentMethodEntityDecorator;
 use Railroad\Ecommerce\Decorators\PaymentMethodOwnerDecorator;
 use Railroad\Ecommerce\Decorators\PaymentPaymentMethodDecorator;
 use Railroad\Ecommerce\Decorators\PaymentUserDecorator;
 use Railroad\Ecommerce\Decorators\ProductDecorator;
 use Railroad\Ecommerce\Decorators\ProductDiscountDecorator;
+use Railroad\Ecommerce\Decorators\SubscriptionPaymentMethodDecorator;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -90,7 +93,9 @@ class EcommerceServiceProvider extends ServiceProvider
                 config()->get('resora.decorators.paymentMethod', []),
                 [
                     MethodDecorator::class,
-                    PaymentMethodOwnerDecorator::class
+                    PaymentMethodOwnerDecorator::class,
+                    PaymentMethodEntityDecorator::class,
+                    PaymentMethodBillingAddressDecorator::class,
                 ]
             )
         );
@@ -102,6 +107,16 @@ class EcommerceServiceProvider extends ServiceProvider
                 [
                     PaymentPaymentMethodDecorator::class,
                     PaymentUserDecorator::class,
+                ]
+            )
+        );
+
+        config()->set(
+            'resora.decorators.subscription',
+            array_merge(
+                config()->get('resora.decorators.subscription', []),
+                [
+                    SubscriptionPaymentMethodDecorator::class,
                 ]
             )
         );

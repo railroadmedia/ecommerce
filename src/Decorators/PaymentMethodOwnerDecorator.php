@@ -38,6 +38,7 @@ class PaymentMethodOwnerDecorator implements DecoratorInterface
 
             if($userPaymentMethod)
             {
+                $paymentMethod[$index]['user_id'] = $userPaymentMethod->user_id;
                 $paymentMethod[$index]['user'] = [
                     'user_id'    => $userPaymentMethod->user_id,
                     'is_primary' => $userPaymentMethod->is_primary
@@ -45,6 +46,7 @@ class PaymentMethodOwnerDecorator implements DecoratorInterface
             }
             if($customerPaymentMethod)
             {
+                $paymentMethod[$index]['customer'] = $userPaymentMethod->customer_id;
                 $paymentMethod[$index]['customer'] = [
                     'customer_id' => $customerPaymentMethod->customer_id,
                     'is_primary'  => $customerPaymentMethod->is_primary

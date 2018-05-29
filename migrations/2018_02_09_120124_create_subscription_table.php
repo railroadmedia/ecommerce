@@ -39,6 +39,7 @@ class CreateSubscriptionTable extends Migration
                 $table->integer('interval_count');
                 $table->integer('total_cycles_due')->nullable();
                 $table->integer('total_cycles_paid');
+                $table->integer('payment_method_id')->index()->nullable();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
             }

@@ -20,12 +20,7 @@ class SubscriptionRepository extends RepositoryBase
 
     protected function decorate($results)
     {
-        /* if(is_array($results))
-         {
-             $results = new Product($results);
-         } */
-
-        return Decorator::decorate($results, 'address');
+        return Decorator::decorate($results, 'subscription');
     }
 
     /** Get all the active due subscriptions

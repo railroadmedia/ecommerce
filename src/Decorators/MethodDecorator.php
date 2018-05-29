@@ -42,7 +42,7 @@ class MethodDecorator implements DecoratorInterface
 
     public function decorateCreditCard($methodId)
     {
-        return $this->databaseManager->connection(ConfigService::$databaseConnectionName)
+        return (array)$this->databaseManager->connection(ConfigService::$databaseConnectionName)
             ->table(ConfigService::$tableCreditCard)
             ->whereIn(ConfigService::$tableCreditCard . '.id', $methodId->toArray())
             ->first();
@@ -50,7 +50,7 @@ class MethodDecorator implements DecoratorInterface
 
     public function decoratePaypalBillingAgreement($methodId)
     {
-        return $this->databaseManager->connection(ConfigService::$databaseConnectionName)
+        return (array)$this->databaseManager->connection(ConfigService::$databaseConnectionName)
             ->table(ConfigService::$tablePaypalBillingAgreement)
             ->whereIn(ConfigService::$tablePaypalBillingAgreement . '.id', $methodId->toArray())
             ->first();

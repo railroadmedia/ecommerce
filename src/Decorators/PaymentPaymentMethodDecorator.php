@@ -18,23 +18,21 @@ class PaymentPaymentMethodDecorator implements DecoratorInterface
         $this->databaseManager = $databaseManager;
     }
 
-    public function decorate($payment)
+    public function decorate($payments)
     {
-        $productMethodId = $payment->pluck('payment_method_id');
+        $productMethodIds = $payments->pluck('payment_method_id');
 
         $paymentMethods = $this->databaseManager
             ->connection(ConfigService::$databaseConnectionName)
             ->table(ConfigService::$tablePaymentMethod)
-            ->where(ConfigService::$tablePaymentMethod.'.id', $productMethodId)
-            ->first();
+            ->whereIn(ConfigService::$tablePaymentMethod . '.id', $productMethodIds)
+            ->get()
+            ->keyBy('id');
 
-        foreach ($payment as $index => $paymentData) {
-            $payment[$index]['payment_method'] = [
-                'method_id' => $paymentMethods->method_id,
-                'method_type' => $paymentMethods->method_type,
-            ];
+        foreach ($payments as $index => $payment) {
+            $payments[$index]['payment_method'] = ((array)$paymentMethods[$payment['payment_method_id']]) ?? null;
         }
 
-        return $payment;
+        return $payments;
     }
 }
