@@ -149,14 +149,12 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'type'                 => $this->creditCardType,
                 'fingerprint'          => '4242424242424242',
                 'last_four_digits'     => $this->randomNumber(4),
                 'cardholder_name'      => $this->name,
                 'company_name'         => $this->creditCardType,
                 'external_id'          => 'card_1CT9rUE2yPYKc9YRHSwdADbH',
                 'external_customer_id' => 'cus_CsviON4xYQxcwC',
-                'external_provider'    => $this->word,
                 'expiration_date'      => $this->creditCardExpirationDateString,
                 'payment_gateway_name'   => $this->randomElement(['drumeo','recordeo']),
                 'created_on'           => Carbon::now()->toDateTimeString()
