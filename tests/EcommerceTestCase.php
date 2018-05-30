@@ -80,7 +80,7 @@ class EcommerceTestCase extends BaseTestCase
 
         $this->faker           = Factory::create();
         $this->databaseManager = $this->app->make(DatabaseManager::class);
-        $this->authManager = $this->app->make(AuthManager::class);
+        $this->authManager     = $this->app->make(AuthManager::class);
 
         $this->permissionServiceMock = $this->getMockBuilder(PermissionService::class)
             ->disableOriginalConstructor()
@@ -119,7 +119,6 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.data_mode', $defaultConfig['data_mode']);
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
         $app['config']->set('ecommerce.tax_rate', $defaultConfig['tax_rate']);
-        $app['config']->set('ecommerce.credit_card', $defaultConfig['credit_card']);
         $app['config']->set('ecommerce.paypal', $defaultConfig['payment_gateways']['paypal']);
         $app['config']->set('ecommerce.stripe', $defaultConfig['payment_gateways']['stripe']);
         $app['config']->set('ecommerce.payment_gateways', $defaultConfig['payment_gateways']);
@@ -204,15 +203,14 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function createAndLogInNewUser()
     {
-        $email = $this->faker->email;
+        $email  = $this->faker->email;
         $userId = $this->databaseManager->connection()->query()->from('users')->insertGetId(
             ['email' => $email]
         );
 
         Auth::shouldReceive('id')->andReturn($userId);
 
-        $userMockResults = new \stdClass();
-        $userMockResults->email = $email;
+        $userMockResults = ['id' => $userId, 'email' => $email];
         Auth::shouldReceive('user')->andReturn($userMockResults);
 
         return $userId;

@@ -38,18 +38,18 @@ class OrderFormSubmitRequest extends FormRequest
         $minMonth = (request()->get('credit-card-year-selector') == date('Y')) ? '|min:' . intval(date('n')) : '';
 
         $rules = [
-            'payment-type-selector' => 'required',
+            'payment_method_type' => 'required',
 
             'billing-country'            => 'required|regex:/^(?!Country$)/',
-            'credit-card-month-selector' => 'required_if:payment-type-selector,' .
+            'credit-card-month-selector' => 'required_if:payment_method_type,' .
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE . '|numeric' . $minMonth,
-            'credit-card-year-selector'  => 'required_if:payment-type-selector,' .
+            'credit-card-year-selector'  => 'required_if:payment_method_type,' .
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE . '|numeric|min:' . intval(date('Y')),
-            'credit-card-number'         => 'required_if:payment-type-selector,' .
+            'credit-card-number'         => 'required_if:payment_method_type,' .
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'credit-card-cvv'            => 'numeric|digits_between:3,4|required_if:payment-type-selector,' .
+            'credit-card-cvv'            => 'numeric|digits_between:3,4|required_if:payment_method_type,' .
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'gateway'                    => 'required|numeric'
+            'gateway'                    => 'required'
         ];
 
         if(request()->get('billing-country') == 'Canada')
@@ -75,7 +75,7 @@ class OrderFormSubmitRequest extends FormRequest
                 'shipping-country'        => 'required|regex:/^(?!Country$)/'
             ];
 
-            if(!request()->user())
+            if(!auth()->user())
             {
                 $rules += [
                     'billing-email' => 'required|email'

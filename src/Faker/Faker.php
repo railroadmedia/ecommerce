@@ -190,11 +190,8 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'agreement_id'           => 'B-5Y6562572W918445E',
-                'express_checkout_token' => 'EC-73P77133DA956953G',
-                'address_id'             => $this->randomNumber(),
+                'external_id'           => 'B-5Y6562572W918445E',
                 'payment_gateway_name'     => $this->randomElement(['stripe','paypal']),
-                'expiration_date'        => $this->creditCardExpirationDateString,
                 'created_on'             => Carbon::now()->toDateTimeString()
             ], $override
         );

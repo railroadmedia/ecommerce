@@ -14,7 +14,12 @@ use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ProductService;
+use Railroad\Ecommerce\Services\SubscriptionService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use Stripe\Card;
+use Stripe\Charge;
+use Stripe\Customer;
+use Stripe\Token;
 
 class OrderFormJsonControllerTest extends EcommerceTestCase
 {
@@ -53,81 +58,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->cartFactory              = $this->app->make(CartFactory::class);
     }
 
-    public function testIndex()
-    {
-        $product1 = $this->productRepository->create($this->faker->product([
-            'price'       => 10,
-            'type'        => ProductService::TYPE_PRODUCT,
-            'active'      => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 1,
-            'weight'      => 2,
-        ]));
-
-        $product2 = $this->productRepository->create($this->faker->product([
-            'price'       => 5,
-            'type'        => ProductService::TYPE_PRODUCT,
-            'active'      => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 1,
-            'weight'      => 1,
-        ]));
-
-        $shippingOption  = $this->shippingOptionRepository->create($this->faker->shippingOption([
-            'country'  => 'Canada',
-            'active'   => 1,
-            'priority' => 1
-        ]));
-        $shippingOption2 = $this->shippingOptionRepository->create($this->faker->shippingOption([
-            'country'  => '*',
-            'active'   => 1,
-            'priority' => 0
-        ]));
-
-        $this->shippingCostsRepository->create($this->faker->shippingCost([
-            'shipping_option_id' => $shippingOption['id'],
-            'min'                => 0,
-            'max'                => 1000,
-            'price'              => 520
-        ]));
-
-        $this->shippingCostsRepository->create($this->faker->shippingCost([
-            'shipping_option_id' => $shippingOption2['id'],
-            'min'                => 0,
-            'max'                => 1,
-            'price'              => 13.50
-        ]));
-        $this->shippingCostsRepository->create($this->faker->shippingCost([
-            'shipping_option_id' => $shippingOption2['id'],
-            'min'                => 1,
-            'max'                =>2,
-            'price'              => 19
-        ]));
-        $this->shippingCostsRepository->create($this->faker->shippingCost([
-            'shipping_option_id' => $shippingOption2['id'],
-            'min'                => 2,
-            'max'                => 50,
-            'price'              => 24
-        ]));
-
-        $response = $this->call('PUT', '/add-to-cart/', [
-            'products' => [
-                $product1['sku'] => 2,
-                $product2['sku'] => 3
-            ]
-        ]);
-
-        $results        = $this->call('GET', '/order');
-        $decodedResults = $results->decodeResponseJson();
-
-        $this->assertEquals(200, $results->getStatusCode());
-        $this->assertNull($decodedResults['results']['shippingAddress']);
-        $this->assertEquals(0, $decodedResults['results']['shippingCosts']);
-    }
-
     public function test_submit_order_validation_not_physical_products()
     {
-        $shippingOption  = $this->shippingOptionRepository->create($this->faker->shippingOption([
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption([
             'country'  => 'Canada',
             'active'   => 1,
             'priority' => 1
@@ -138,30 +71,29 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'                => 10,
             'price'              => 5.50
         ]));
-      //  $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
-        $product1 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            12.95,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0.20);
 
-        $product2 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            247,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0);
+        $product1 =$this->productRepository->create($this->faker->product([
+            'price'                       => 12.95,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+
+        $product2 = $this->productRepository->create($this->faker->product([
+            'price'                       => 274,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
 
         $cart = $this->cartFactory->addCartItem($product1['name'],
             $product1['description'],
@@ -194,8 +126,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals([
             [
-                "source" => "payment-type-selector",
-                "detail" => "The payment-type-selector field is required.",
+                "source" => "payment_method_type",
+                "detail" => "The payment method type field is required.",
             ],
             [
                 "source" => "billing-country",
@@ -210,31 +142,28 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_submit_order_validation_customer_and_physical_products()
     {
-        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
-        $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
-        $product1 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            12.95,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            1,
-            0.20);
+        $product1 = $this->productRepository->create($this->faker->product([
+            'price'                       => 274,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 1,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
 
-        $product2 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            247,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            1,
-            0);
+        $product2 = $this->productRepository->create($this->faker->product([
+            'price'                       => 4,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
 
         $cart = $this->cartFactory->addCartItem($product1['name'],
             $product1['description'],
@@ -267,8 +196,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals([
             [
-                "source" => "payment-type-selector",
-                "detail" => "The payment-type-selector field is required.",
+                "source" => "payment_method_type",
+                "detail" => "The payment method type field is required.",
             ],
             [
                 "source" => "billing-country",
@@ -317,31 +246,28 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_validation_member_and_physical_products()
     {
         $userId         = $this->createAndLogInNewUser();
-        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
-        $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
 
-        $product1 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            12.95,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            1,
-            0.20);
+        $product1 = $this->productRepository->create($this->faker->product([
+            'price'                       => 4,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
 
-        $product2 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            247,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            1,
-            0);
+        $product2 = $this->productRepository->create($this->faker->product([
+            'price'                       => 4,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 1,
+            'weight'                      => 12,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
 
         $cart = $this->cartFactory->addCartItem($product1['name'],
             $product1['description'],
@@ -374,8 +300,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals([
             [
-                "source" => "payment-type-selector",
-                "detail" => "The payment-type-selector field is required.",
+                "source" => "payment_method_type",
+                "detail" => "The payment method type field is required.",
             ],
             [
                 "source" => "billing-country",
@@ -661,40 +587,65 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_submit_order()
     {
-        $userId         = $this->createAndLogInNewUser();
-        $shippingOption  = $this->shippingOptionRepository->create($this->faker->shippingOption([
+        $userId      = $this->createAndLogInNewUser();
+        $fingerPrint = '4242424242424242';
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')->willReturn(['data' => '']);
+        $fakerCustomer        = new Customer();
+        $fakerCustomer->email = $this->faker->email;
+        $this->stripeExternalHelperMock->method('createCustomer')->willReturn($fakerCustomer);
+
+        $fakerCard              = new Card();
+        $fakerCard->fingerprint = $fingerPrint;
+        $fakerCard->brand       = $this->faker->word;
+        $fakerCard->last4       = $this->faker->randomNumber(3);
+        $fakerCard->exp_year    = 2020;
+        $fakerCard->exp_month   = 12;
+        $fakerCard->id          = $this->faker->word;
+        $this->stripeExternalHelperMock->method('createCard')->willReturn($fakerCard);
+
+        $fakerCharge           = new Charge();
+        $fakerCharge->id       = $this->faker->word;
+        $fakerCharge->currency = 'cad';
+        $fakerCharge->amount   = 100;
+        $fakerCharge->status   = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')->willReturn($fakerToken);
+
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption([
             'country'  => 'Canada',
             'active'   => 1,
             'priority' => 1
         ]));
-        $shippingCost = $this->shippingCostsRepository->create($this->faker->shippingCost([
+        $shippingCost   = $this->shippingCostsRepository->create($this->faker->shippingCost([
             'shipping_option_id' => $shippingOption['id'],
             'min'                => 0,
             'max'                => 10,
             'price'              => 5.50
         ]));
-        $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway([
-            'config' => 'stripe_1'
-        ]));
 
         $product1 = $this->productRepository->create($this->faker->product([
-            'price'       => 12.95,
-            'type'        => ProductService::TYPE_PRODUCT,
-            'active'      => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight'      => 0.20,
+            'price'                       => 12.95,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 1,
+            'weight'                      => 0.20,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
         ]));
 
         $product2 = $this->productRepository->create($this->faker->product([
-            'price'       => 247,
-            'type'        => ProductService::TYPE_PRODUCT,
-            'active'      => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight'      => 0,
+            'price'                       => 247,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
         ]));
-
 
         $cart = $this->cartFactory->addCartItem($product1['name'],
             $product1['description'],
@@ -725,134 +676,73 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expirationDate = $this->faker->creditCardExpirationDate;
         $results        = $this->call('PUT', '/order',
             [
-                'payment-type-selector'      => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'payment_method_type'        => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'billing-region'             => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country'            => 'Canada',
-                'company_name' => $this->faker->creditCardType,
+                'company_name'               => $this->faker->creditCardType,
                 'credit-card-year-selector'  => $expirationDate->format('Y'),
                 'credit-card-month-selector' => $expirationDate->format('m'),
-                'credit-card-number'         => '4242424242424242',
+                'credit-card-number'         => $fingerPrint,
                 'credit-card-cvv'            => $this->faker->randomNumber(4),
-                'gateway'                    => $paymentGateway['id']
+                'gateway'                    => 'drumeo',
+                'card-token'                 => '4242424242424242',
+                'shipping-first-name'        => $this->faker->firstName,
+                'shipping-last-name'         => $this->faker->lastName,
+                'shipping-address-line-1'    => $this->faker->address,
+                'shipping-city'              => 'Canada',
+                'shipping-region'            => 'ab',
+                'shipping-zip'               => $this->faker->postcode,
+                'shipping-country'           => 'Canada'
+            ]);
+dd($results);
+        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals(1, $results->decodeResponseJson()['results']['id']);
+    }
+
+    public function test_submit_order_subscription()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 12.95,
+            'type'                        => ProductService::TYPE_SUBSCRIPTION,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => SubscriptionService::INTERVAL_TYPE_YEARLY,
+            'subscription_interval_count' => 1
+        ]));
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            1,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $results        = $this->call('PUT', '/order',
+            [
+                'payment_method_type'              => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                   => $this->faker->word,
+                'billing-zip-or-postal-code'       => $this->faker->postcode,
+                'billing-country'                  => 'Canada',
+                'gateway'                          => 'drumeo',
+                'validated-express-checkout-token' => $this->faker->word
             ]);
 
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertEquals(1, $results->decodeResponseJson()['results']['id']);
     }
 
-    public function test_submit_order_invalid_credit_card_number()
-    {
-        $userId         = $this->createAndLogInNewUser();
-        $shippingOption  = $this->shippingOptionRepository->create($this->faker->shippingOption([
-            'country'  => 'Canada',
-            'active'   => 1,
-            'priority' => 1
-        ]));
-        $shippingCost = $this->shippingCostsRepository->create($this->faker->shippingCost([
-            'shipping_option_id' => $shippingOption['id'],
-            'min'                => 0,
-            'max'                => 10,
-            'price'              => 5.50
-        ]));
-        $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway([
-            'config' => 'stripe_1'
-        ]));
-
-        $product = $this->productRepository->create($this->faker->product([
-            'price'       => 12.95,
-            'type'        => ProductService::TYPE_PRODUCT,
-            'active'      => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight'      => 0.20,
-        ]));
-
-        $cart = $this->cartFactory->addCartItem($product['name'],
-            $product['description'],
-            1,
-            $product['price'],
-            $product['is_physical'],
-            $product['is_physical'],
-            $this->faker->word,
-            rand(),
-            $product['weight'],
-            [
-                'product-id' => $product['id']
-            ]);
-
-        $expirationDate = $this->faker->creditCardExpirationDate;
-        $results        = $this->call('PUT', '/order',
-            [
-                'payment-type-selector'      => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'billing-region'             => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country'            => 'Canada',
-                'credit-card-year-selector'  => $expirationDate->format('Y'),
-                'credit-card-month-selector' => $expirationDate->format('m'),
-                'credit-card-number'         => rand(),
-                'credit-card-cvv'            => $this->faker->randomNumber(4),
-                'gateway'                    => $paymentGateway['id']
-            ]);
-
-        $this->assertEquals(422, $results->getStatusCode());
-        $this->assertEquals(
-            [
-                "title"  => "Unprocessable Entity.",
-                "detail" => "Order failed. Error message: Can not create token:: Your card number is incorrect.",
-            ]
-            , $results->decodeResponseJson()['error']);
-    }
-
-    public function test_submit_order_invalid_paypal()
-    {
-        $userId         = $this->createAndLogInNewUser();
-        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
-        $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'paypal', 'paypal_1');
-
-        $product = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            12.95,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0.20);
-
-        $cart = $this->cartFactory->addCartItem($product['name'],
-            $product['description'],
-            1,
-            $product['price'],
-            $product['is_physical'],
-            $product['is_physical'],
-            $this->faker->word,
-            rand(),
-            $product['weight'],
-            [
-                'product-id' => $product['id']
-            ]);
-
-        $expirationDate = $this->faker->creditCardExpirationDate;
-        $results        = $this->call('PUT', '/order',
-            [
-                'payment-type-selector'         => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'billing-region'                => $this->faker->word,
-                'billing-zip-or-postal-code'    => $this->faker->postcode,
-                'billing-country'               => 'Canada',
-                'paypal-express-checkout-token' => rand(),
-                'gateway'                       => $paymentGateway['id']
-            ]);
-
-        $this->assertEquals(422, $results->getStatusCode());
-        $this->assertArraySubset(
-            [
-                "title" => "Unprocessable Entity."
-            ]
-            , $results->decodeResponseJson()['error']);
-    }
 
     /**
      * @return \Illuminate\Database\Connection

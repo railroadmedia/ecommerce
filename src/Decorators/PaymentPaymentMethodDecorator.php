@@ -30,7 +30,7 @@ class PaymentPaymentMethodDecorator implements DecoratorInterface
             ->keyBy('id');
 
         foreach ($payments as $index => $payment) {
-            $payments[$index]['payment_method'] = ((array)$paymentMethods[$payment['payment_method_id']]) ?? null;
+            $payments[$index]['payment_method'] = $paymentMethods[$payment['payment_method_id']] ?? null;
         }
 
         return $payments;

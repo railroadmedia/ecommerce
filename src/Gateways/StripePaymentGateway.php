@@ -207,4 +207,66 @@ class StripePaymentGateway
 
         return $card;
     }
+
+    /**
+     * @param      $gatewayName
+     * @param      $number
+     * @param      $expirationMonth
+     * @param      $expirationYear
+     * @param null $cvc
+     * @param null $cardholderName
+     * @param null $city
+     * @param null $country
+     * @param null $addressLineOne
+     * @param null $addressLineTwo
+     * @param null $state
+     * @param null $zip
+     * @return \Stripe\Token
+     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     */
+    public function createCardToken(
+        $gatewayName,
+        $number,
+        $expirationMonth,
+        $expirationYear,
+        $cvc = null,
+        $cardholderName = null,
+        $city = null,
+        $country = null,
+        $addressLineOne = null,
+        $addressLineTwo = null,
+        $state = null,
+        $zip = null
+    ) {
+
+        $config = ConfigService::$paymentGateways['stripe'][$gatewayName];
+
+        if(empty($config))
+        {
+            throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
+        }
+
+        try
+        {
+            $this->stripe->setApiKey($config['stripe_api_secret']);
+
+            $cardToken = $this->stripe->createCardToken($number,
+                $expirationMonth,
+                $expirationYear,
+                $cvc ,
+                $cardholderName,
+                $city ,
+                $country,
+                $addressLineOne,
+                $addressLineTwo,
+                $state,
+                $zip);
+        }
+        catch(Exception $exception)
+        {
+            throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
+        }
+
+        return $cardToken;
+    }
 }

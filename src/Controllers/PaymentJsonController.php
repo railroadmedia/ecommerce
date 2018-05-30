@@ -213,7 +213,7 @@ class PaymentJsonController extends Controller
                 $request->get('payment_gateway'),
                 $request->get('due'),
                 ($currency ?? $paymentMethod['currency']),
-                $paymentMethod['method']['agreement_id'],
+                $paymentMethod['method']['external_id'],
                 ''
             );
 
