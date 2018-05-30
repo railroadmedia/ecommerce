@@ -18,42 +18,49 @@ class PaymentMethodOwnerDecorator implements DecoratorInterface
         $this->databaseManager = $databaseManager;
     }
 
-    public function decorate($paymentMethod)
+    public function decorate($paymentMethods)
     {
-        $paymentMethodId   = $paymentMethod->pluck('id');
-        $userPaymentMethod = $this->databaseManager->connection(ConfigService::$databaseConnectionName)
+        $paymentMethodIds = $paymentMethods->pluck('id');
+
+        $userPaymentMethods = $this->databaseManager->connection(ConfigService::$databaseConnectionName)
             ->table(ConfigService::$tableUserPaymentMethods)
-            ->where(ConfigService::$tableUserPaymentMethods . '.payment_method_id', $paymentMethodId)
-            ->first();
+            ->whereIn(ConfigService::$tableUserPaymentMethods . '.payment_method_id', $paymentMethodIds)
+            ->get()
+            ->keyBy('payment_method_id');
 
-        $customerPaymentMethod = $this->databaseManager->connection(ConfigService::$databaseConnectionName)
+        $customerPaymentMethods = $this->databaseManager->connection(ConfigService::$databaseConnectionName)
             ->table(ConfigService::$tableCustomerPaymentMethods)
-            ->where(ConfigService::$tableCustomerPaymentMethods . '.payment_method_id', $paymentMethodId)
-            ->first();
+            ->whereIn(ConfigService::$tableCustomerPaymentMethods . '.payment_method_id', $paymentMethodIds)
+            ->get()
+            ->keyBy('payment_method_id');
 
-        foreach($paymentMethod as $index => $paymentData)
-        {
-            $paymentMethod[$index]['user']     = null;
-            $paymentMethod[$index]['customer'] = null;
+        foreach ($paymentMethods as $index => $paymentData) {
+            $paymentMethods[$index]['user'] = null;
+            $paymentMethods[$index]['customer'] = null;
 
-            if(!is_null($userPaymentMethod))
-            {
-                $paymentMethod[$index]['user_id'] = $userPaymentMethod['user_id'];
-                $paymentMethod[$index]['user'] = [
-                    'user_id'    => $userPaymentMethod['user_id'],
-                    'is_primary' => $userPaymentMethod['is_primary']
+            $userPaymentMethod = $userPaymentMethods[$paymentData['id']] ?? null;
+            $customerPaymentMethod = $customerPaymentMethods[$paymentData['id']] ?? null;
+
+            if (!is_null($userPaymentMethod)) {
+                $userPaymentMethod = (array)$userPaymentMethod;
+
+                $paymentMethods[$index]['user_id'] = $userPaymentMethod['user_id'];
+                $paymentMethods[$index]['user'] = [
+                    'user_id' => $userPaymentMethod['user_id'],
+                    'is_primary' => $userPaymentMethod['is_primary'],
                 ];
             }
-            if($customerPaymentMethod)
-            {
-                $paymentMethod[$index]['customer'] = $customerPaymentMethod['customer_id'];
-                $paymentMethod[$index]['customer'] = [
+            if (!is_null($customerPaymentMethod)) {
+                $customerPaymentMethod = (array)$customerPaymentMethod;
+
+                $paymentMethods[$index]['customer'] = $customerPaymentMethod['customer_id'];
+                $paymentMethods[$index]['customer'] = [
                     'customer_id' => $customerPaymentMethod['customer_id'],
-                    'is_primary'  => $customerPaymentMethod['is_primary']
+                    'is_primary' => $customerPaymentMethod['is_primary'],
                 ];
             }
         }
 
-        return $paymentMethod;
+        return $paymentMethods;
     }
 }
