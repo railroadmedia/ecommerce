@@ -207,4 +207,32 @@ class Faker extends Generator
             ], $override
         );
     }
+
+    public function discount(array $override =[]){
+        return array_merge(
+            [
+                'name'            => $this->word(),
+                'description' => $this->text,
+                'type' => $this->word,
+                'amount' => $this->randomNumber(2),
+                'active' => $this->boolean,
+                'created_on'         => Carbon::now()->toDateTimeString()
+            ], $override
+        );
+    }
+
+    public function discountCriteria(array $override = [])
+    {
+        return array_merge(
+            [
+                'name'            => $this->word(),
+                'type' => $this->word,
+                'product_id' => $this->randomNumber(2),
+                'min' => $this->randomNumber(1),
+                'max' => $this->randomNumber(2),
+                'discount_id' => $this->randomNumber(1),
+                'created_on'         => Carbon::now()->toDateTimeString()
+            ], $override
+        );
+    }
 }

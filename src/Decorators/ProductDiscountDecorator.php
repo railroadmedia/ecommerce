@@ -24,17 +24,18 @@ class ProductDiscountDecorator implements DecoratorInterface
         $productDiscounts = $this->databaseManager
             ->connection(ConfigService::$databaseConnectionName)
             ->table(ConfigService::$tableDiscountCriteria)
+            ->select(ConfigService::$tableDiscountCriteria.'.*', ConfigService::$tableDiscount.'.active', ConfigService::$tableDiscount.'.type as discount_type', ConfigService::$tableDiscount.'.amount')
+            ->join(ConfigService::$tableDiscount, ConfigService::$tableDiscountCriteria.'.discount_id','=', ConfigService::$tableDiscount.'.id')
             ->whereIn('product_id', $productIds)
+            ->where(ConfigService::$tableDiscount.'.active', true)
             ->get();
 
         foreach ($products as $productIndex => $product) {
             $products[$productIndex]['discounts'] = [];
             foreach ($productDiscounts as $productDiscountIndex => $productDiscount) {
-                if ($productDiscount->product_id == $product['id']) {
-                    $products[$productIndex]['discounts'][] = [
-                        'id' => $productDiscount->id,
-                        'order_id' => $productDiscount->discount_id
-                    ];
+                $productDiscount = (array)$productDiscount;
+                if ($productDiscount['product_id'] == $product['id']) {
+                    $products[$productIndex]['discounts'][] = $productDiscount;
                 }
             }
         }

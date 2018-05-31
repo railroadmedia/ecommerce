@@ -6,6 +6,7 @@ use Illuminate\Database\Events\StatementPrepared;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use PDO;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
+use Railroad\Ecommerce\Decorators\DiscountDiscountCriteriaDecorator;
 use Railroad\Ecommerce\Decorators\MethodDecorator;
 use Railroad\Ecommerce\Decorators\PaymentMethodBillingAddressDecorator;
 use Railroad\Ecommerce\Decorators\PaymentMethodEntityDecorator;
@@ -117,6 +118,16 @@ class EcommerceServiceProvider extends ServiceProvider
                 config()->get('resora.decorators.subscription', []),
                 [
                     SubscriptionPaymentMethodDecorator::class,
+                ]
+            )
+        );
+
+        config()->set(
+            'resora.decorators.discount',
+            array_merge(
+                config()->get('resora.decorators.discount', []),
+                [
+                    DiscountDiscountCriteriaDecorator::class
                 ]
             )
         );

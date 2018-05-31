@@ -215,6 +215,48 @@ Route::delete(
     ]
 )->name('paymentGateway.delete');
 
+Route::put(
+    '/discount',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\DiscountJsonController::class . '@store',
+    ]
+)->name('discount.store');
+
+Route::patch(
+    '/discount/{discountId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\DiscountJsonController::class . '@update',
+    ]
+)->name('discount.update');
+
+Route::delete(
+    '/discount/{discountId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\DiscountJsonController::class . '@delete',
+    ]
+)->name('discount.delete');
+
+Route::put(
+    '/discount-criteria/{discountId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\DiscountCriteriaJsonController::class . '@store',
+    ]
+)->name('discount.criteria.store');
+
+Route::patch(
+    '/discount-criteria/{discountCriteriaId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\DiscountCriteriaJsonController::class . '@update',
+    ]
+)->name('discount.criteria.update');
+
+Route::delete(
+    '/discount-criteria/{discountCriteriaId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\DiscountCriteriaJsonController::class . '@delete',
+    ]
+)->name('discount.criteria.delete');
+
 
 
 

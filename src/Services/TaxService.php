@@ -2,8 +2,41 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Railroad\Ecommerce\Repositories\ProductRepository;
+
 class TaxService
 {
+    /**
+     * @var \Railroad\Ecommerce\Repositories\ProductRepository
+     */
+    private $productRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Services\DiscountCriteriaService
+     */
+    private $discountCriteriaService;
+
+    const PRODUCT_AMOUNT_OFF_TYPE = 'product amount off';
+    const PRODUCT_PERCENT_OFF_TYPE = 'product percent off';
+    const SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE = 'subscription free trial days';
+    const SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE = 'subscription recurring price amount off';
+    const ORDER_TOTAL_AMOUNT_OFF_TYPE = 'order total amount off';
+    const ORDER_TOTAL_PERCENT_OFF_TYPE = 'order total percent off';
+    const ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE = 'order total shipping amount off';
+    const ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE = 'order total shipping percent off';
+    const ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE = 'order total shipping overwrite';
+
+    /**
+     * TaxService constructor.
+     *
+     * @param \Railroad\Ecommerce\Repositories\ProductRepository $productRepository
+     */
+    public function __construct(ProductRepository $productRepository, DiscountCriteriaService $discountCriteriaService)
+    {
+        $this->productRepository = $productRepository;
+        $this->discountCriteriaService = $discountCriteriaService;
+    }
+
     /** Calculate the tax rate based on country and region
      *
      * @param string $country
@@ -43,21 +76,34 @@ class TaxService
         }
 
         $taxRate = $this->getTaxRate($country, $region);
-
+        $discountsToApply = [];
         foreach ($cartItems as $key => $item) {
             $cartItems[$key]['totalPrice'] =
                 ConfigService::$defaultCurrencyPairPriceOffsets[$currency][$item['totalPrice']] ?? $item['totalPrice'];
+            $product = $this->productRepository->read($cartItems[$key]['options']['product-id']);
+            if(!empty($product['discounts'])){
+                $meetCriteria = ($this->discountCriteriaService->discountCriteriaMetForOrder($product['discounts'], $cartItems));
+                if($meetCriteria){
+
+                    $discountsToApply = array_merge($discountsToApply, $product['discounts']);
+                }
+            }
         }
 
         $cartItemsTotalDue = array_sum(array_column($cartItems, 'totalPrice'));
+
+        //TODO: should be implemented
+        if(empty($discountsToApply)){
+            $discount = 0;
+        } else{
+            $discount = $this->getAmountDiscounted($discountsToApply, $cartItemsTotalDue);
+        }
 
         $productsTaxAmount = round($cartItemsTotalDue * $taxRate, 2);
 
         $shippingTaxAmount = round((float)$shippingCosts * $taxRate, 2);
 
-        //TODO: should be implemented
         $financeCharge = 0;
-        $discount = 0;
 
         $taxAmount = $productsTaxAmount + $shippingTaxAmount;
 
@@ -94,5 +140,25 @@ class TaxService
     public function getTaxTotal($costs, $country, $region)
     {
         return $costs * $this->getTaxRate($country, $region);
+    }
+
+    /**
+     * @param $discountsToApply
+     * @param $cartItemsTotalDue
+     * @return float|int
+     */
+    public function getAmountDiscounted($discountsToApply, $cartItemsTotalDue)
+    {
+        $amountDiscounted = 0;
+
+        foreach ($discountsToApply as $discount) {
+            if ($discount['discount_type'] == self::ORDER_TOTAL_AMOUNT_OFF_TYPE) {
+                $amountDiscounted += $discount['amount'];
+            } elseif ($discount['discount_type'] == self::ORDER_TOTAL_PERCENT_OFF_TYPE) {
+                $amountDiscounted += $discount['amount'] / 100 * $cartItemsTotalDue;
+            }
+        }
+
+        return $amountDiscounted;
     }
 }

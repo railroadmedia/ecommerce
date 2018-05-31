@@ -2,25 +2,17 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Illuminate\Database\Query\Builder;
-use Railroad\Ecommerce\Repositories\Traits\ProductTrait;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Queries\CachedQuery;
 use Railroad\Resora\Repositories\RepositoryBase;
 
 class DiscountCriteriaRepository extends RepositoryBase
 {
-    use ProductTrait;
-
     /**
-     * @return Builder
+     * @return CachedQuery|$this
      */
-    public function query()
+    protected function newQuery()
     {
-        return $this->connection()->table(ConfigService::$tableDiscountCriteria);
-    }
-
-    protected function connection()
-    {
-        return app('db')->connection(ConfigService::$databaseConnectionName);
+        return (new CachedQuery($this->connection()))->from(ConfigService::$tableDiscountCriteria);
     }
 }

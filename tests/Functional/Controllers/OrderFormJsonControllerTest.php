@@ -7,6 +7,8 @@ use Railroad\Ecommerce\Factories\CartFactory;
 use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
 use Railroad\Ecommerce\Factories\ShippingCostsFactory;
 use Railroad\Ecommerce\Factories\ShippingOptionFactory;
+use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
+use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingCostsRepository;
@@ -44,6 +46,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     protected $paymentGatewayRepository;
 
     /**
+     * @var \Railroad\Ecommerce\Repositories\DiscountRepository
+     */
+    protected $discountRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\DiscountCriteriaRepository
+     */
+    protected $discountCriteriaRepository;
+
+    /**
      * @var \Railroad\Ecommerce\Factories\CartFactory
      */
     protected $cartFactory;
@@ -56,6 +68,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->shippingCostsRepository  = $this->app->make(ShippingCostsRepository::class);
         $this->paymentGatewayRepository = $this->app->make(PaymentGatewayRepository::class);
         $this->cartFactory              = $this->app->make(CartFactory::class);
+        $this->discountCriteriaRepository = $this->app->make(DiscountCriteriaRepository::class);
+        $this->discountRepository = $this->app->make(DiscountRepository::class);
     }
 
     public function test_submit_order_validation_not_physical_products()
@@ -645,6 +659,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'weight'                      => 0,
             'subscription_interval_type'  => '',
             'subscription_interval_count' => ''
+        ]));
+        $discount = $this->discountRepository->create($this->faker->discount(['active' => true,
+            'type' => 'order total amount off']));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id' => $product1['id'],
+            'type' => 'order total requirement',
+            'min' => '2',
+            'max' => '2000000'
         ]));
 
         $cart = $this->cartFactory->addCartItem($product1['name'],
