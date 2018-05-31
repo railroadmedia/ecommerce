@@ -16,6 +16,7 @@ use Railroad\Ecommerce\Decorators\PaymentUserDecorator;
 use Railroad\Ecommerce\Decorators\ProductDecorator;
 use Railroad\Ecommerce\Decorators\ProductDiscountDecorator;
 use Railroad\Ecommerce\Decorators\SubscriptionPaymentMethodDecorator;
+use Railroad\Ecommerce\Decorators\SubscriptionProductDecorator;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -118,6 +119,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 config()->get('resora.decorators.subscription', []),
                 [
                     SubscriptionPaymentMethodDecorator::class,
+                    SubscriptionProductDecorator::class,
                 ]
             )
         );
