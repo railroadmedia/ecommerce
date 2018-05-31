@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Repositories\Queries\SubscriptionQuery;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Decorators\Decorator;
 use Railroad\Resora\Queries\CachedQuery;
@@ -15,7 +16,7 @@ class SubscriptionRepository extends RepositoryBase
      */
     protected function newQuery()
     {
-        return (new CachedQuery($this->connection()))->from(ConfigService::$tableSubscription);
+        return (new SubscriptionQuery($this->connection()))->from(ConfigService::$tableSubscription);
     }
 
     protected function decorate($results)

@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Repositories\Queries\PaymentQuery;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Decorators\Decorator;
 use Railroad\Resora\Queries\CachedQuery;
@@ -15,7 +16,7 @@ class PaymentRepository extends RepositoryBase
      */
     protected function newQuery()
     {
-        return (new CachedQuery($this->connection()))->from(ConfigService::$tablePayment);
+        return (new PaymentQuery($this->connection()))->from(ConfigService::$tablePayment);
     }
 
     protected function decorate($results)

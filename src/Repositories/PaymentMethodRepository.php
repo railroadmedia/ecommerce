@@ -3,7 +3,7 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Railroad\Ecommerce\Entities\PaymentMethod;
-use Railroad\Ecommerce\Queries\PaymentMethodQuery;
+use Railroad\Ecommerce\Repositories\Queries\PaymentMethodQuery;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Decorators\Decorator;
 use Railroad\Resora\Repositories\RepositoryBase;
