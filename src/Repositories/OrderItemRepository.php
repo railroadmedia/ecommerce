@@ -2,21 +2,24 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Illuminate\Database\Query\Builder;
-use Railroad\Ecommerce\Repositories\Traits\ProductTrait;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Decorators\Decorator;
+use Railroad\Resora\Queries\CachedQuery;
 use Railroad\Resora\Repositories\RepositoryBase;
 
 class OrderItemRepository extends RepositoryBase
 {
-    use ProductTrait;
-
     /**
-     * @return Builder
+     * @return CachedQuery|$this
      */
-    public function query()
+    protected function newQuery()
     {
-        return $this->connection()->table(ConfigService::$tableOrderItem);
+        return (new CachedQuery($this->connection()))->from(ConfigService::$tableOrderItem);
+    }
+
+    protected function decorate($results)
+    {
+        return Decorator::decorate($results, 'orderItem');
     }
 
     protected function connection()
