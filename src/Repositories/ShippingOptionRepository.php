@@ -48,7 +48,7 @@ class ShippingOptionRepository extends RepositoryBase
             )
             ->where('min', '<=', $totalWeight)
             ->where('max', '>=', $totalWeight)
-            ->get();
+            ->first();
     }
 
     /** Get all the shipping costs weight ranges based on shipping option id

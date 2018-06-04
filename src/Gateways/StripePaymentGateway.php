@@ -38,7 +38,8 @@ class StripePaymentGateway
     {
         $config = ConfigService::$paymentGateways['stripe'][$gatewayName];
 
-        if (empty($config)) {
+        if(empty($config))
+        {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
@@ -46,9 +47,12 @@ class StripePaymentGateway
 
         $customers = $this->stripe->getCustomersByEmail($customerEmail)['data'];
 
-        if (empty($customers)) {
+        if(empty($customers))
+        {
             $customer = $this->stripe->createCustomer(['email' => $customerEmail]);
-        } else {
+        }
+        else
+        {
             $customer = reset($customers);
         }
 
@@ -56,9 +60,9 @@ class StripePaymentGateway
     }
 
     /**
-     * @param $gatewayName
+     * @param          $gatewayName
      * @param Customer $customer
-     * @param $tokenId
+     * @param          $tokenId
      * @return Card
      * @throws PaymentFailedException
      */
@@ -66,24 +70,25 @@ class StripePaymentGateway
     {
         $config = ConfigService::$paymentGateways['stripe'][$gatewayName];
 
-        if (empty($config)) {
+        if(empty($config))
+        {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
         $this->stripe->setApiKey($config['stripe_api_secret']);
 
-        $card = $customer->sources->create(['source' => $tokenId]);
+        $card = $this->stripe->createCard($customer, $this->stripe->retrieveToken($tokenId));
 
         return $card;
     }
 
     /**
-     * @param $gatewayName
-     * @param $amount
-     * @param $currency
-     * @param Card $card
+     * @param          $gatewayName
+     * @param          $amount
+     * @param          $currency
+     * @param Card     $card
      * @param Customer $customer
-     * @param string $description
+     * @param string   $description
      * @return Charge
      * @throws PaymentFailedException
      */
@@ -97,11 +102,13 @@ class StripePaymentGateway
     ) {
         $config = ConfigService::$paymentGateways['stripe'][$gatewayName];
 
-        if (empty($config)) {
+        if(empty($config))
+        {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
-        try {
+        try
+        {
             $this->stripe->setApiKey($config['stripe_api_secret']);
 
             $charge = $this->stripe->chargeCard(
@@ -111,7 +118,9 @@ class StripePaymentGateway
                 $currency,
                 $description
             );
-        } catch (Exception $exception) {
+        }
+        catch(Exception $exception)
+        {
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
 
@@ -130,19 +139,24 @@ class StripePaymentGateway
     {
         $config = ConfigService::$paymentGateways['stripe'][$gatewayName];
 
-        if (empty($config)) {
+        if(empty($config))
+        {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
-        if (!in_array($reason, ['duplicate', 'fraudulent', 'requested_by_customer'])) {
+        if(!in_array($reason, ['duplicate', 'fraudulent', 'requested_by_customer']))
+        {
             $reason = null;
         }
 
-        try {
+        try
+        {
             $this->stripe->setApiKey($config['stripe_api_secret']);
 
             $refund = $this->stripe->createRefund($amount * 100, $externalPaymentId, $reason);
-        } catch (Exception $exception) {
+        }
+        catch(Exception $exception)
+        {
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
 
@@ -253,9 +267,9 @@ class StripePaymentGateway
             $cardToken = $this->stripe->createCardToken($number,
                 $expirationMonth,
                 $expirationYear,
-                $cvc ,
+                $cvc,
                 $cardholderName,
-                $city ,
+                $city,
                 $country,
                 $addressLineOne,
                 $addressLineTwo,

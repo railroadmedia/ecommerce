@@ -12,6 +12,7 @@ use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
+use Railroad\Ecommerce\Repositories\OrderDiscountRepository;
 use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
 use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
@@ -28,6 +29,7 @@ use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\SubscriptionService;
@@ -142,6 +144,16 @@ class OrderFormController extends Controller
     private $orderItemFulfillmentRepository;
 
     /**
+     * @var  OrderDiscountRepository
+     */
+    private $orderDiscountRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Services\DiscountService
+     */
+    private $discountService;
+
+    /**
      * OrderFormController constructor.
      *
      * @param \Railroad\Ecommerce\Services\CartService                        $cartService
@@ -187,7 +199,9 @@ class OrderFormController extends Controller
         OrderItemRepository $orderItemRepository,
         SubscriptionRepository $subscriptionRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
-        OrderItemFulfillmentRepository $orderItemFulfillmentRepository
+        OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
+        OrderDiscountRepository $orderDiscountRepository,
+        DiscountService $discountService
     ) {
         $this->cartService                    = $cartService;
         $this->orderFormService               = $orderFormService;
@@ -210,6 +224,8 @@ class OrderFormController extends Controller
         $this->subscriptionRepository         = $subscriptionRepository;
         $this->subscriptionPaymentRepository  = $subscriptionPaymentRepository;
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
+        $this->orderDiscountRepository        = $orderDiscountRepository;
+        $this->discountService                = $discountService;
     }
 
     /** Submit an order
@@ -228,6 +244,21 @@ class OrderFormController extends Controller
         throw_if(
             empty($cartItems),
             new NotFoundException('The cart it\'s empty')
+        );
+
+        //set the shipping address on session
+        $shippingAddress = $this->cartAddressService->setAddress(
+            [
+                'firstName'       => $request->get('shipping-first-name'),
+                'lastName'        => $request->get('shipping-last-name'),
+                'streetLineOne'   => $request->get('shipping-address-line-1'),
+                'streetLineTwo'   => $request->get('shipping-address-line-2'),
+                'zipOrPostalCode' => $request->get('shipping-zip-or-postal-code'),
+                'city'            => $request->get('shipping-city'),
+                'region'          => $request->get('shipping-region'),
+                'country'         => $request->get('shipping-country'),
+            ],
+            ConfigService::$shippingAddressType
         );
 
         // calculate totals
@@ -368,21 +399,6 @@ class OrderFormController extends Controller
             );
         }
 
-        //set the shipping address on session
-        $shippingAddress = $this->cartAddressService->setAddress(
-            [
-                'firstName'       => $request->get('shipping-first-name'),
-                'lastName'        => $request->get('shipping-last-name'),
-                'streetLineOne'   => $request->get('shipping-address-line-1'),
-                'streetLineTwo'   => $request->get('shipping-address-line-2'),
-                'zipOrPostalCode' => $request->get('shipping-zip-or-postal-code'),
-                'city'            => $request->get('shipping-city'),
-                'region'          => $request->get('shipping-region'),
-                'country'         => $request->get('shipping-country'),
-            ],
-            ConfigService::$shippingAddressType
-        );
-
         //save the shipping address
         $shippingAddressDB = $this->addressRepository->create(
             [
@@ -444,8 +460,18 @@ class OrderFormController extends Controller
             ]
         );
 
+        if(array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems']))
+        {
+            //save order discount
+            $orderDiscount = $this->orderDiscountRepository->create([
+                'order_id'    => $order['id'],
+                'discount_id' => $cartItemsWithTaxesAndCosts['cartItems']['applyDiscount']['discount_id'],
+                'created_on'  => Carbon::now()->toDateTimeString()
+            ]);
+        }
+
         // order items
-        foreach($cartItems as $cartItem)
+        foreach($cartItems as $key => $cartItem)
         {
             $product = $this->productRepository->read($cartItem['options']['product-id']);
             if(!$product['active'])
@@ -465,6 +491,23 @@ class OrderFormController extends Controller
                     'created_on'     => Carbon::now()->toDateTimeString(),
                 ]
             );
+
+            if(array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems'][$key]))
+            {
+                //save order item discount
+                $orderDiscount = $this->orderDiscountRepository->create([
+                    'order_id'      => $order['id'],
+                    'order_item_id' => $orderItem['id'],
+                    'discount_id'   => $cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_id'],
+                    'created_on'    => Carbon::now()->toDateTimeString()
+                ]);
+
+                $amountDiscounted = $this->discountService->getAmountDiscounted([$cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']], $cartItemsWithTaxesAndCosts['totalDue'], $cartItems);
+                $this->orderItemRepository->update($orderItem['id'], [
+                    'discount' => $amountDiscounted,
+                    'total_price' => $orderItem['total_price'] - $amountDiscounted
+                ]);
+            }
 
             if(!empty($product['subscription_interval_type']))
             {
