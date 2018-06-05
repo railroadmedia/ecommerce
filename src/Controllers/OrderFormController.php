@@ -30,7 +30,6 @@ use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\DiscountService;
-use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\SubscriptionService;
 use Railroad\Ecommerce\Services\TaxService;
@@ -42,11 +41,6 @@ class OrderFormController extends Controller
      * @var CartService
      */
     private $cartService;
-
-    /**
-     * @var OrderFormService
-     */
-    private $orderFormService;
 
     /**
      * @var \Railroad\Ecommerce\Repositories\OrderRepository
@@ -157,7 +151,6 @@ class OrderFormController extends Controller
      * OrderFormController constructor.
      *
      * @param \Railroad\Ecommerce\Services\CartService                        $cartService
-     * @param \Railroad\Ecommerce\Services\OrderFormService                   $orderFormService
      * @param \Railroad\Ecommerce\Repositories\OrderRepository                $orderRepository
      * @param \Railroad\Ecommerce\Repositories\CustomerRepository             $customerRepository
      * @param \Railroad\Ecommerce\Services\CartAddressService                 $cartAddressService
@@ -180,7 +173,6 @@ class OrderFormController extends Controller
      */
     public function __construct(
         CartService $cartService,
-        OrderFormService $orderFormService,
         OrderRepository $orderRepository,
         CustomerRepository $customerRepository,
         CartAddressService $cartAddressService,
@@ -204,7 +196,6 @@ class OrderFormController extends Controller
         DiscountService $discountService
     ) {
         $this->cartService                    = $cartService;
-        $this->orderFormService               = $orderFormService;
         $this->orderRepository                = $orderRepository;
         $this->customerRepository             = $customerRepository;
         $this->cartAddressService             = $cartAddressService;

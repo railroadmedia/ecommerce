@@ -4,6 +4,9 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
+use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
+use Railroad\Ecommerce\Repositories\DiscountRepository;
+use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -15,11 +18,29 @@ class ProductControllerTest extends EcommerceTestCase
      */
     protected $productRepository;
 
+    /**
+     * @var \Railroad\Ecommerce\Repositories\DiscountCriteriaRepository
+     */
+    protected $discountCriteriaRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\DiscountRepository
+     */
+    protected $discountRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\OrderItemRepository
+     */
+    protected $orderItemRepository;
+
     protected function setUp()
     {
         parent::setUp();
 
-        $this->productRepository = $this->app->make(ProductRepository::class);
+        $this->productRepository          = $this->app->make(ProductRepository::class);
+        $this->discountRepository         = $this->app->make(DiscountRepository::class);
+        $this->discountCriteriaRepository = $this->app->make(DiscountCriteriaRepository::class);
+        $this->orderItemRepository        = $this->app->make(OrderItemRepository::class);
     }
 
     public function test_store_product()
@@ -299,24 +320,12 @@ class ProductControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('is')->willReturn(true);
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->productRepository->create($this->faker->product());
+        $product   = $this->productRepository->create($this->faker->product());
+        $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+            'product_id' => $product['id']
+        ]));
 
-        $orderItem1 = [
-            'order_id'       => 1,
-            'product_id'     => $product['id'],
-            'quantity'       => 2,
-            'initial_price'  => 5,
-            'discount'       => 0,
-            'tax'            => 0,
-            'shipping_costs' => 0,
-            'total_price'    => 10,
-            'created_on'     => Carbon::now()->toDateTimeString(),
-            'updated_on'     => null
-        ];
-
-        $orderItemId = $this->databaseManager->table(ConfigService::$tableOrderItem)->insertGetId($orderItem1);
-
-        $results = $this->call('DELETE', '/product/' . $product['id']);
+        $results   = $this->call('DELETE', '/product/' . $product['id']);
 
         $this->assertEquals(403, $results->status());
         $this->assertEquals('Not allowed.', json_decode($results->getContent())->error->title, true);
@@ -328,21 +337,15 @@ class ProductControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('is')->willReturn(true);
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->productRepository->create($this->faker->product());
-
-        $discount = [
-            'name'        => $this->faker->word,
-            'type'        => $this->faker->word,
+        $product          = $this->productRepository->create($this->faker->product());
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => 1
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
             'product_id'  => $product['id'],
-            'min'         => 2,
-            'max'         => 10,
-            'discount_id' => rand(),
-            'created_on'  => Carbon::now()->toDateTimeString(),
-            'updated_on'  => null
-        ];
-
-        $this->databaseManager->table(ConfigService::$tableDiscountCriteria)->insertGetId($discount);
-        $results = $this->call('DELETE', '/product/' . $product['id']);
+            'discount_id' => $discount['id']
+        ]));
+        $results          = $this->call('DELETE', '/product/' . $product['id']);
 
         $this->assertEquals(403, $results->status());
         $this->assertEquals('Not allowed.', json_decode($results->getContent())->error->title, true);

@@ -10,8 +10,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Orchestra\Testbench\TestCase as BaseTestCase;
-use Railroad\Ecommerce\Factories\AccessFactory;
-use Railroad\Ecommerce\Factories\UserAccessFactory;
 use Railroad\Ecommerce\Faker\Factory;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Repositories\AddressRepository;
@@ -39,16 +37,6 @@ class EcommerceTestCase extends BaseTestCase
      * @var AuthManager
      */
     protected $authManager;
-
-    /**
-     * @var AccessFactory
-     */
-    protected $accessFactory;
-
-    /**
-     * @var UserAccessFactory
-     */
-    protected $userAccessFactory;
 
     /**
      * @var \PHPUnit\Framework\MockObject\MockObject
@@ -216,17 +204,6 @@ class EcommerceTestCase extends BaseTestCase
         return $userId;
     }
 
-    public function createAndLoginAdminUser()
-    {
-        $userId = $this->createAndLogInNewUser();
-
-        $adminRole = $this->accessFactory->store(
-            'admin', 'admin', ''
-        );
-        $admin     = $this->userAccessFactory->assignAccessToUser($adminRole['id'], $userId);
-
-        return $userId;
-    }
 
     protected function tearDown()
     {

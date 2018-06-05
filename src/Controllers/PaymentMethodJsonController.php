@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
-use Railroad\Ecommerce\Factories\GatewayFactory;
+use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Repositories\AddressRepository;
@@ -48,11 +48,6 @@ class PaymentMethodJsonController extends Controller
     private $customerPaymentMethodRepository;
 
     /**
-     * @var GatewayFactory
-     */
-    private $gatewayFactory;
-
-    /**
      * @var \Railroad\Ecommerce\Services\PaymentMethodService
      */
     private $paymentMethodService;
@@ -92,14 +87,12 @@ class PaymentMethodJsonController extends Controller
      *
      * @param \Railroad\Permissions\Services\PermissionService                  $permissionService
      * @param \Railroad\Ecommerce\Repositories\PaymentMethodRepository          $paymentMethodRepository
-     * @param \Railroad\Ecommerce\Factories\GatewayFactory                      $gatewayFactory
      * @param \Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository     $userPaymentMethodsRepository
      * @param \Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository $customerPaymentMethodsRepository
      */
     public function __construct(
         PermissionService $permissionService,
         PaymentMethodRepository $paymentMethodRepository,
-        GatewayFactory $gatewayFactory,
         UserPaymentMethodsRepository $userPaymentMethodsRepository,
         CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
         PaymentMethodService $paymentMethodService,
@@ -112,7 +105,6 @@ class PaymentMethodJsonController extends Controller
     ) {
         $this->permissionService                = $permissionService;
         $this->paymentMethodRepository          = $paymentMethodRepository;
-        $this->gatewayFactory                   = $gatewayFactory;
         $this->userPaymentMethodRepository      = $userPaymentMethodsRepository;
         $this->customerPaymentMethodRepository  = $customerPaymentMethodsRepository;
         $this->paymentMethodService             = $paymentMethodService;
@@ -136,77 +128,83 @@ class PaymentMethodJsonController extends Controller
     public function store(PaymentMethodCreateRequest $request)
     {
         $user = auth()->user();
-
-        if($request->get('method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
+        try
         {
-            $customer = $this->stripePaymentGateway->getOrCreateCustomer(
-                $request->get('payment_gateway'),
-                $user['email']
-            );
-
-            $cardToken = $this->stripePaymentGateway->createCardToken(
-                $request->get('payment_gateway'),
-                $request->get('card_fingerprint'),
-                $request->get('card_month'),
-                $request->get('card_year'),
-                $request->get('card_number_last_four_digits'),
-                $request->get('cardholder_name')
-
-            );
-
-            $card = $this->stripePaymentGateway->createCustomerCard(
-                $request->get('payment_gateway'), $customer, $cardToken->id
-            );
-
-            $paymentMethodId = $this->paymentMethodService->createUserCreditCard(
-                $user['id'],
-                $card->fingerprint,
-                $card->last4,
-                $request->get('cardholder_name'),
-                $card->brand,
-                $card->exp_year,
-                $card->exp_month,
-                $card->id,
-                $card->customer,
-                $request->get('payment_gateway'),
-                null,
-                $request->get('currency', $this->currencyService->get()),
-                true);
-        }
-        else if($request->get('method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE)
-        {
-            $billingAgreementId =
-                $this->payPalPaymentGateway->createBillingAgreement(
+            if($request->get('method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
+            {
+                $customer = $this->stripePaymentGateway->getOrCreateCustomer(
                     $request->get('payment_gateway'),
-                    '',
-                    '',
-                    $request->get('validated-express-checkout-token')
+                    $user['email']
                 );
 
-            // save billing address
-            $billingAddressDB = $this->addressRepository->create(
-                [
-                    'type'       => CartAddressService::BILLING_ADDRESS_TYPE,
-                    'brand'      => ConfigService::$brand,
-                    'user_id'    => $user['id'],
-                    'state'      => $request->get('billing_region'),
-                    'country'    => $request->get('billing_country'),
-                    'created_on' => Carbon::now()->toDateTimeString(),
-                ]
-            );
+                $cardToken = $this->stripePaymentGateway->createCardToken(
+                    $request->get('payment_gateway'),
+                    $request->get('card_fingerprint'),
+                    $request->get('card_month'),
+                    $request->get('card_year'),
+                    $request->get('card_number_last_four_digits'),
+                    $request->get('cardholder_name')
 
-            $paymentMethodId = $this->paymentMethodService->createPayPalBillingAgreement(
-                $user['id'],
-                $billingAgreementId,
-                $billingAddressDB['id'],
-                $request->get('payment_gateway'),
-                $request->get('currency', $this->currencyService->get()),
-                true
-            );
+                );
+
+                $card = $this->stripePaymentGateway->createCustomerCard(
+                    $request->get('payment_gateway'), $customer, $cardToken->id
+                );
+
+                $paymentMethodId = $this->paymentMethodService->createUserCreditCard(
+                    $user['id'],
+                    $card->fingerprint,
+                    $card->last4,
+                    $request->get('cardholder_name'),
+                    $card->brand,
+                    $card->exp_year,
+                    $card->exp_month,
+                    $card->id,
+                    $card->customer,
+                    $request->get('payment_gateway'),
+                    null,
+                    $request->get('currency', $this->currencyService->get()),
+                    true);
+            }
+            else if($request->get('method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE)
+            {
+                $billingAgreementId =
+                    $this->payPalPaymentGateway->createBillingAgreement(
+                        $request->get('payment_gateway'),
+                        '',
+                        '',
+                        $request->get('validated-express-checkout-token')
+                    );
+
+                // save billing address
+                $billingAddressDB = $this->addressRepository->create(
+                    [
+                        'type'       => CartAddressService::BILLING_ADDRESS_TYPE,
+                        'brand'      => ConfigService::$brand,
+                        'user_id'    => $user['id'],
+                        'state'      => $request->get('billing_region'),
+                        'country'    => $request->get('billing_country'),
+                        'created_on' => Carbon::now()->toDateTimeString(),
+                    ]
+                );
+
+                $paymentMethodId = $this->paymentMethodService->createPayPalBillingAgreement(
+                    $user['id'],
+                    $billingAgreementId,
+                    $billingAddressDB['id'],
+                    $request->get('payment_gateway'),
+                    $request->get('currency', $this->currencyService->get()),
+                    true
+                );
+            }
+            else
+            {
+                throw new NotAllowedException('Payment method not supported.');
+            }
         }
-        else
+        catch(\Exception $paymentFailedException)
         {
-            throw new NotAllowedException('Payment method not supported.');
+            throw new PaymentFailedException($paymentFailedException->getMessage());
         }
 
         $paymentMethod = $this->paymentMethodRepository->read($paymentMethodId);

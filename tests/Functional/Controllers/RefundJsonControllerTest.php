@@ -4,9 +4,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 
-use Railroad\Ecommerce\Factories\PaymentFactory;
-use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
-use Railroad\Ecommerce\Factories\PaymentMethodFactory;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
@@ -17,18 +14,8 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class RefundJsonControllerTest extends EcommerceTestCase
 {
-    /**
-     * @var PaymentFactory
-     */
-    private $paymentFactory;
-
 
     CONST VALID_VISA_CARD_NUM = '4242424242424242';
-
-    /**
-     * @var PaymentMethodFactory
-     */
-    protected $paymentMethodFactory;
 
     /**
      * @var \Railroad\Ecommerce\Repositories\PaymentRepository
@@ -58,8 +45,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
     public function setUp()
     {
         parent::setUp();
-        $this->paymentMethodFactory        = $this->app->make(PaymentMethodFactory::class);
-        $this->paymentFactory              = $this->app->make(PaymentFactory::class);
+
         $this->paymentRepository           = $this->app->make(PaymentRepository::class);
         $this->paymentMethodRepository     = $this->app->make(PaymentMethodRepository::class);
         $this->creditCardRepository        = $this->app->make(CreditCardRepository::class);

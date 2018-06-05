@@ -69,7 +69,7 @@ class EcommerceServiceProvider extends ServiceProvider
 
         $this->commands(
             [
-                RenewalDueSubscriptions::class,
+                //RenewalDueSubscriptions::class,
             ]
         );
 

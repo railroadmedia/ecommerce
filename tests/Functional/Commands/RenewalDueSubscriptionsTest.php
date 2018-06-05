@@ -2,29 +2,19 @@
 namespace Railroad\Ecommerce\Tests\Functional\Commands;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Factories\PaymentGatewayFactory;
-use Railroad\Ecommerce\Factories\SubscriptionFactoryOld;
+
 use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
+
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class RenewalDueSubscriptionsTest extends EcommerceTestCase
 {
-    /**
-     * @var \Railroad\Ecommerce\Factories\SubscriptionFactoryOld
-     */
-    private $subscriptionFactory;
 
-    /**
-     * @var \Railroad\Ecommerce\Factories\PaymentGatewayFactory
-     */
-    private $paymentGateway;
 
     public function setUp()
     {
         parent::setUp();
-        $this->subscriptionFactory = $this->app->make(SubscriptionFactoryOld::class);
-        $this->paymentGateway      = $this->app->make(PaymentGatewayFactory::class);
+
     }
 
     public function test_command()

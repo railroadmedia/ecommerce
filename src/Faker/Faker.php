@@ -156,7 +156,7 @@ class Faker extends Generator
                 'external_id'          => 'card_1CT9rUE2yPYKc9YRHSwdADbH',
                 'external_customer_id' => 'cus_CsviON4xYQxcwC',
                 'expiration_date'      => $this->creditCardExpirationDateString,
-                'payment_gateway_name'   => $this->randomElement(['drumeo','recordeo']),
+                'payment_gateway_name' => $this->randomElement(['drumeo', 'recordeo']),
                 'created_on'           => Carbon::now()->toDateTimeString()
             ], $override
         );
@@ -190,9 +190,9 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'external_id'           => 'B-5Y6562572W918445E',
-                'payment_gateway_name'     => $this->randomElement(['stripe','paypal']),
-                'created_on'             => Carbon::now()->toDateTimeString()
+                'external_id'          => 'B-5Y6562572W918445E',
+                'payment_gateway_name' => $this->randomElement(['stripe', 'paypal']),
+                'created_on'           => Carbon::now()->toDateTimeString()
             ], $override
         );
     }
@@ -208,15 +208,16 @@ class Faker extends Generator
         );
     }
 
-    public function discount(array $override =[]){
+    public function discount(array $override = [])
+    {
         return array_merge(
             [
-                'name'            => $this->word(),
+                'name'        => $this->word(),
                 'description' => $this->text,
-                'type' => $this->word,
-                'amount' => $this->randomNumber(2),
-                'active' => $this->boolean,
-                'created_on'         => Carbon::now()->toDateTimeString()
+                'type'        => $this->word,
+                'amount'      => $this->randomNumber(2),
+                'active'      => $this->boolean,
+                'created_on'  => Carbon::now()->toDateTimeString()
             ], $override
         );
     }
@@ -225,13 +226,30 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'name'            => $this->word(),
-                'type' => $this->word,
-                'product_id' => $this->randomNumber(2),
-                'min' => $this->randomNumber(1),
-                'max' => $this->randomNumber(2),
+                'name'        => $this->word(),
+                'type'        => $this->word,
+                'product_id'  => $this->randomNumber(2),
+                'min'         => $this->randomNumber(1),
+                'max'         => $this->randomNumber(2),
                 'discount_id' => $this->randomNumber(1),
-                'created_on'         => Carbon::now()->toDateTimeString()
+                'created_on'  => Carbon::now()->toDateTimeString()
+            ], $override
+        );
+    }
+
+    public function orderItem(array $override = [])
+    {
+        return array_merge(
+            [
+                'order_id'       => $this->randomNumber(),
+                'product_id'     => $this->randomNumber(),
+                'quantity'       => $this->randomNumber(),
+                'initial_price'  => $this->randomNumber(),
+                'discount'       => $this->randomNumber(),
+                'tax'            => $this->randomNumber(),
+                'shipping_costs' => $this->randomNumber(),
+                'total_price'    => $this->randomNumber(),
+                'created_on'     => Carbon::now()->toDateTimeString()
             ], $override
         );
     }

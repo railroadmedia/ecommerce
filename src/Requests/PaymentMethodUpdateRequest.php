@@ -28,7 +28,7 @@ class PaymentMethodUpdateRequest extends FormRequest
             'method_type'                  => 'max:255',
             'update_method'                => 'required',
             'card_year'                    => 'required_if:update_method,create-credit-card,update-current-credit-card',
-            'card_month'                   => 'required_if:update_method,create-credit-card, update-current-credit-card',
+            'card_month'                   => 'required_if:update_method,create-credit-card,update-current-credit-card',
             'card_fingerprint'             => 'required_if:update_method,create-credit-card',
             'card_number_last_four_digits' => 'required_if:update_method,create-credit-card',
             'company_name'                 => 'required_if:update_method,create-credit-card',

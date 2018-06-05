@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
-use Railroad\Ecommerce\Factories\GatewayFactory;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
@@ -33,11 +32,6 @@ class RefundJsonController extends Controller
     private $permissionService;
 
     /**
-     * @var \Railroad\Ecommerce\Factories\GatewayFactory
-     */
-    private $gatewayFactory;
-
-    /**
      * @var StripePaymentGateway
      */
     private $stripePaymentGateway;
@@ -53,20 +47,17 @@ class RefundJsonController extends Controller
      * @param \Railroad\Ecommerce\Repositories\RefundRepository  $refundRepository
      * @param \Railroad\Ecommerce\Repositories\PaymentRepository $paymentRepository
      * @param \Railroad\Permissions\Services\PermissionService   $permissionService
-     * @param \Railroad\Ecommerce\Factories\GatewayFactory       $gatewayFactory
      */
     public function __construct(
         RefundRepository $refundRepository,
         PaymentRepository $paymentRepository,
         PermissionService $permissionService,
-        GatewayFactory $gatewayFactory,
         StripePaymentGateway $stripePaymentGateway,
         PayPalPaymentGateway $payPalPaymentGateway
     ) {
         $this->refundRepository     = $refundRepository;
         $this->paymentRepository    = $paymentRepository;
         $this->permissionService    = $permissionService;
-        $this->gatewayFactory       = $gatewayFactory;
         $this->stripePaymentGateway = $stripePaymentGateway;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
     }
