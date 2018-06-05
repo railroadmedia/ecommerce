@@ -24,7 +24,7 @@
     "guzzlehttp/guzzle": "~6.0",
     "doctrine/dbal": "^2.5",
     "ramsey/uuid": "^3.6",
-    "railroad/location": "5.60.03",
+    "railroad/location": "5.60.04",
     "railroad/permissions": "5.61.06",
     "railroad/remotestorage": "@dev",
     "webpatser/laravel-countries": "1.5.4",
