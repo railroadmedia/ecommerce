@@ -295,7 +295,6 @@ class OrderFormController extends Controller
         // try to make the payment
         try
         {
-
             if($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
             {
                 $customer = $this->stripePaymentGateway->getOrCreateCustomer(
@@ -495,7 +494,7 @@ class OrderFormController extends Controller
 
                 $amountDiscounted = $this->discountService->getAmountDiscounted([$cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']], $cartItemsWithTaxesAndCosts['totalDue'], $cartItems);
                 $this->orderItemRepository->update($orderItem['id'], [
-                    'discount' => $amountDiscounted,
+                    'discount'    => $amountDiscounted,
                     'total_price' => $orderItem['total_price'] - $amountDiscounted
                 ]);
             }
@@ -515,6 +514,21 @@ class OrderFormController extends Controller
                 {
                     throw new UnprocessableEntityException('Failed to create subscription for order id: ' . $order['id']);
                 }
+
+                if(array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems'][$key]))
+                {
+                    if($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_type'] == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE)
+                    {
+                        //add the days from the discount to the subscription next bill date
+                        $nextBillDate = Carbon::now()->addDays($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['amount']);
+                    }
+                    elseif($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_type'] == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE)
+                    {
+                        //calculate subscription price per payment after discount
+                        $subscriptionPricePerPayment = $cartItem['price'] - $cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['amount'];
+                    }
+                }
+
                 $subscription = $this->subscriptionRepository->create(
                     [
                         'brand'                   => $request->get('brand', ConfigService::$brand),
@@ -525,7 +539,7 @@ class OrderFormController extends Controller
                         'is_active'               => true,
                         'start_date'              => Carbon::now()->toDateTimeString(),
                         'paid_until'              => $nextBillDate->toDateTimeString(),
-                        'total_price_per_payment' => $cartItem['price'],
+                        'total_price_per_payment' => $subscriptionPricePerPayment ?? $cartItem['price'],
                         'tax_per_payment'         => $cartItemsWithTaxesAndCosts['totalTax'],
                         'shipping_per_payment'    => 0,
                         'currency'                => $currency,

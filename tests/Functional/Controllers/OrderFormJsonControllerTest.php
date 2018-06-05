@@ -942,8 +942,8 @@ dd($results);
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             $product['weight'],
             [
                 'product-id' => $product['id']
@@ -978,6 +978,73 @@ dd($results);
             'shipping_costs' => $shippingCost['price'],
             'user_id'        => $userId
         ]);
+    }
+
+    public function test_submit_order_subscription_with_discount()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 12.95,
+            'type'                        => ProductService::TYPE_SUBSCRIPTION,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => 'year',
+            'subscription_interval_count' => 1
+        ]));
+
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => 'subscription free trial days',
+            'amount' => 10
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product['id'],
+            'type'        => 'date requirement',
+            'min' => $this->faker->year('now'),
+            'max' => $this->faker->dateTimeInInterval('','+5days')
+        ]));
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            1,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $results = $this->call('PUT', '/order',
+            [
+                'payment_method_type'              => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                   => $this->faker->word,
+                'billing-zip-or-postal-code'       => $this->faker->postcode,
+                'billing-country'                  => 'Canada',
+                'gateway'                          => 'drumeo',
+                'validated-express-checkout-token' => $this->faker->word
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals(1, $results->decodeResponseJson()['results']['id']);
+
+        //assert the discount days are added to the paid_until data
+        $this->assertDatabaseHas(ConfigService::$tableSubscription,
+            [
+                'brand' => ConfigService::$brand,
+                'product_id' => $product['id'],
+                'user_id' => $userId,
+                'is_active' => "1",
+                'start_date' => Carbon::now()->toDateTimeString(),
+                'paid_until' => Carbon::now()->addYear(1)->addDays(10)->toDateTimeString()
+            ]);
     }
 
     /**
