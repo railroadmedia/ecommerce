@@ -350,7 +350,7 @@ class OrderFormController extends Controller
                 {
                     $url = $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl(
                         $request->get('gateway'),
-                        ConfigService::$paymentGateways['paypal'][$request->get('gateway')]
+                        ConfigService::$paymentGateways['paypal'][$request->get('gateway')]['paypal_api_checkout_redirect_url']
                     );
                     session()->put('order-form-input', $request->all());
 
