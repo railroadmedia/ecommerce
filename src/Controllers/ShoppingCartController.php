@@ -37,8 +37,10 @@ class ShoppingCartController extends Controller
     /**
      * ShoppingCartController constructor.
      *
-     * @param $cartService
-     * @param $productService
+     * @param \Railroad\Ecommerce\Services\CartService           $cartService
+     * @param \Railroad\Ecommerce\Repositories\ProductRepository $productRepository
+     * @param \Railroad\Ecommerce\Services\CartAddressService    $cartAddressService
+     * @param \Railroad\Ecommerce\Services\TaxService            $taxService
      */
     public function __construct(
         CartService $cartService,

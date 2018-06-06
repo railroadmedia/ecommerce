@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Requests;
 
 
-use Railroad\Ecommerce\Services\AddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 
 class AddressUpdateRequest extends FormRequest
@@ -30,8 +29,8 @@ class AddressUpdateRequest extends FormRequest
                 implode(
                     ',',
                     [
-                        AddressService::BILLING_ADDRESS,
-                        AddressService::SHIPPING_ADDRESS
+                        config('constants.BILLING_ADDRESS'),
+                        config('constants.SHIPPING_ADDRESS')
                     ]
                 ),
             'first_name' => 'max:255',

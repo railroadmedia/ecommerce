@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Requests;
 
 
 use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\ProductService;
 
 class ProductCreateRequest extends FormRequest
 {
@@ -33,16 +32,16 @@ class ProductCreateRequest extends FormRequest
                 implode(
                     ',',
                     [
-                        ProductService::TYPE_PRODUCT,
-                        ProductService::TYPE_SUBSCRIPTION
+                        config('constants.TYPE_PRODUCT'),
+                        config('constants.TYPE_SUBSCRIPTION')
                     ]
                 ),
             'active' => 'required|boolean',
             'is_physical' => 'required|boolean',
             'weight' => 'required_if:is_physical,true',
             'stock' => 'required|numeric',
-            'subscription_interval_type' => 'required_if:type,' . ProductService::TYPE_SUBSCRIPTION,
-            'subscription_interval_count' => 'required_if:type,' . ProductService::TYPE_SUBSCRIPTION
+            'subscription_interval_type' => 'required_if:type,' . config('constants.TYPE_SUBSCRIPTION'),
+            'subscription_interval_count' => 'required_if:type,' . config('constants.TYPE_SUBSCRIPTION')
         ];
     }
 }

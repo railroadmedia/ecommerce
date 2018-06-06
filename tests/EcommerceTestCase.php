@@ -101,6 +101,9 @@ class EcommerceTestCase extends BaseTestCase
         $locationConfig      = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
         $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
 
+        $constants = require(__DIR__ . '/../config/constants.php');
+        $app['config']->set('constants', $constants);
+
         $app['config']->set('ecommerce.database_connection_name', 'testbench');
         $app['config']->set('ecommerce.cache_duration', 60);
         $app['config']->set('ecommerce.table_prefix', $defaultConfig['table_prefix']);

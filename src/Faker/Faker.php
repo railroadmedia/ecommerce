@@ -4,11 +4,8 @@ namespace Railroad\Ecommerce\Faker;
 
 use Carbon\Carbon;
 use Faker\Generator;
-use Railroad\Ecommerce\Services\AddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentService;
-use Railroad\Ecommerce\Services\ProductService;
-use Railroad\Ecommerce\Services\SubscriptionService;
 use Webpatser\Countries\Countries;
 
 class Faker extends Generator
@@ -22,8 +19,8 @@ class Faker extends Generator
                 'price'                       => $this->numberBetween(1, 1000),
                 'type'                        => $this->randomElement(
                     [
-                        ProductService::TYPE_PRODUCT,
-                        ProductService::TYPE_SUBSCRIPTION,
+                        config('constants.TYPE_PRODUCT'),
+                        config('constants.TYPE_SUBSCRIPTION'),
                     ]
                 ),
                 'active'                      => $this->randomElement([0, 1]),
@@ -33,9 +30,9 @@ class Faker extends Generator
                 'weight'                      => $this->numberBetween(0, 100),
                 'subscription_interval_type'  => $this->randomElement(
                     [
-                        SubscriptionService::INTERVAL_TYPE_YEARLY,
-                        SubscriptionService::INTERVAL_TYPE_MONTHLY,
-                        SubscriptionService::INTERVAL_TYPE_DAILY,
+                        config('constants.INTERVAL_TYPE_YEARLY'),
+                        config('constants.INTERVAL_TYPE_MONTHLY'),
+                        config('constants.INTERVAL_TYPE_DAILY')
                     ]
                 ),
                 'subscription_interval_count' => $this->numberBetween(0, 12),
@@ -66,8 +63,8 @@ class Faker extends Generator
             [
                 'type'          => $this->randomElement(
                     [
-                        AddressService::BILLING_ADDRESS,
-                        AddressService::SHIPPING_ADDRESS,
+                        config('constants.BILLING_ADDRESS'),
+                        config('constants.SHIPPING_ADDRESS')
                     ]
                 ),
                 'brand'         => ConfigService::$brand,

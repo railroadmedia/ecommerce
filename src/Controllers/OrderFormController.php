@@ -31,7 +31,6 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
-use Railroad\Ecommerce\Services\SubscriptionService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Location\Services\LocationService;
 
@@ -350,7 +349,7 @@ class OrderFormController extends Controller
                 {
                     $url = $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl(
                         $request->get('gateway'),
-                        ConfigService::$paymentGateways['paypal'][$request->get('gateway')]['paypal_api_checkout_redirect_url']
+                        ConfigService::$paymentGateways['paypal'][$request->get('gateway')]['paypal_api_checkout_return_url']
                     );
                     session()->put('order-form-input', $request->all());
 
@@ -518,12 +517,12 @@ class OrderFormController extends Controller
 
             if(!empty($product['subscription_interval_type']))
             {
-                if($product['subscription_interval_type'] == SubscriptionService::INTERVAL_TYPE_MONTHLY)
+                if($product['subscription_interval_type'] == config('constants.INTERVAL_TYPE_MONTHLY'))
                 {
                     // dd($product['subscription_interval_type']);
                     $nextBillDate = Carbon::now()->addMonths($product['subscription_interval_count']);
                 }
-                elseif($product['subscription_interval_type'] == SubscriptionService::INTERVAL_TYPE_YEARLY)
+                elseif($product['subscription_interval_type'] == config('constants.INTERVAL_TYPE_YEARLY'))
                 {
                     $nextBillDate = Carbon::now()->addYears($product['subscription_interval_count']);
                 }
