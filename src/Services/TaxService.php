@@ -124,9 +124,11 @@ class TaxService
         $cartItems = $this->discountService->applyDiscounts($discountsToApply, $cartItems);
         $discount  = $this->discountService->getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cartItems);
 
+        $shippingCostsWithDiscount = $this->discountService->getShippingCostsDiscounted($discountsToApply, $shippingCosts);
+
         $productsTaxAmount = round($cartItemsTotalDue * $taxRate, 2);
 
-        $shippingTaxAmount = round((float) $shippingCosts * $taxRate, 2);
+        $shippingTaxAmount = round((float) $shippingCostsWithDiscount * $taxRate, 2);
 
         $financeCharge = 0;
 
@@ -136,7 +138,7 @@ class TaxService
             $cartItemsTotalDue -
             $discount +
             $taxAmount +
-            (float) $shippingCosts +
+            (float) $shippingCostsWithDiscount +
             $financeCharge,
             2
         );
@@ -154,12 +156,12 @@ class TaxService
                 $cartItems[$key]['itemTax'] = $item['totalPrice'] / ($totalDue - $taxAmount) * $taxAmount;
             }
             $cartItems[$key]['itemShippingCosts'] =
-                ($cartItemsWeight != 0) ? ($shippingCosts * ($cartItems[$key]['weight'] / $cartItemsWeight)) : 0;
+                ($cartItemsWeight != 0) ? ($shippingCostsWithDiscount * ($cartItems[$key]['weight'] / $cartItemsWeight)) : 0;
         }
         $results['cartItems']     = $cartItems;
         $results['totalDue']      = $totalDue;
         $results['totalTax']      = $taxAmount;
-        $results['shippingCosts'] = (float) $shippingCosts;
+        $results['shippingCosts'] = (float) $shippingCostsWithDiscount;
 
         return $results;
     }

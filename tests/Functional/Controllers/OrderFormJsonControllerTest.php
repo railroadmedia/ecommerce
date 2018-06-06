@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Factories\CartFactory;
 use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
@@ -11,6 +12,8 @@ use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingCostsRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\DiscountCriteriaService;
+use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ProductService;
 use Railroad\Ecommerce\Services\SubscriptionService;
@@ -69,7 +72,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->discountRepository         = $this->app->make(DiscountRepository::class);
     }
 
-    public function _test_submit_order_validation_not_physical_products()
+    public function test_submit_order_validation_not_physical_products()
     {
         $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption([
             'country'  => 'Canada',
@@ -131,7 +134,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product-id' => $product2['id']
             ]);
         $results = $this->call('PUT', '/order');
-dd($results);
+
         $this->assertEquals(422, $results->getStatusCode());
 
         $this->assertEquals([
@@ -150,7 +153,7 @@ dd($results);
         ], $results->decodeResponseJson()['errors']);
     }
 
-    public function _test_submit_order_validation_customer_and_physical_products()
+    public function test_submit_order_validation_customer_and_physical_products()
     {
 
         $product1 = $this->productRepository->create($this->faker->product([
@@ -253,7 +256,7 @@ dd($results);
         ], $results->decodeResponseJson()['errors']);
     }
 
-    public function _test_submit_order_validation_member_and_physical_products()
+    public function test_submit_order_validation_member_and_physical_products()
     {
         $userId = $this->createAndLogInNewUser();
 
@@ -352,33 +355,11 @@ dd($results);
         ], $results->decodeResponseJson()['errors']);
     }
 
-    public function _test_submit_order_validation_credit_card()
+    public function test_submit_order_validation_credit_card()
     {
-        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
-        $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
+        $this->stripeExternalHelperMock->method('createCardToken')->willThrowException(new PaymentFailedException('The card number is incorrect. Check the card’s number or use a different card.'));
 
-        $product1 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            12.95,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0.20);
-
-        $product2 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            247,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0);
+        $product1 = $this->productRepository->create($this->faker->product(['is_physical' => 0]));
 
         $cart = $this->cartFactory->addCartItem($product1['name'],
             $product1['description'],
@@ -393,25 +374,13 @@ dd($results);
                 'product-id' => $product1['id']
             ]);
 
-        $this->cartFactory->addCartItem($product2['name'],
-            $product2['description'],
-            1,
-            $product2['price'],
-            $product2['is_physical'],
-            $product2['is_physical'],
-            $this->faker->word,
-            rand(),
-            $product2['weight'],
-            [
-                'product-id' => $product2['id']
-            ]);
         $results = $this->call('PUT', '/order',
             [
-                'payment-type-selector'      => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'payment_method_type'        => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'billing-region'             => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country'            => $this->faker->country,
-                'gateway'                    => $paymentGateway['id']
+                'gateway'                    => 'drumeo'
             ]);
 
         $this->assertEquals(422, $results->getStatusCode());
@@ -419,50 +388,26 @@ dd($results);
         $this->assertEquals([
             [
                 "source" => "credit-card-month-selector",
-                "detail" => "The credit-card-month-selector field is required when payment-type-selector is credit card.",
+                "detail" => "The credit-card-month-selector field is required when payment method type is credit-card.",
             ],
             [
                 "source" => "credit-card-year-selector",
-                "detail" => "The credit-card-year-selector field is required when payment-type-selector is credit card.",
+                "detail" => "The credit-card-year-selector field is required when payment method type is credit-card.",
             ],
             [
                 "source" => "credit-card-number",
-                "detail" => "The credit-card-number field is required when payment-type-selector is credit card.",
+                "detail" => "The credit-card-number field is required when payment method type is credit-card.",
             ],
             [
                 "source" => "credit-card-cvv",
-                "detail" => "The credit-card-cvv field is required when payment-type-selector is credit card.",
+                "detail" => "The credit-card-cvv field is required when payment method type is credit-card.",
             ]
         ], $results->decodeResponseJson()['errors']);
     }
 
-    public function _test_submit_order_validation_credit_card_expiration_date()
+    public function test_submit_order_validation_rules_for_canadian_users()
     {
-        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
-        $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
-
-        $product1 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            12.95,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0.20);
-
-        $product2 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            247,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0);
+        $product1 = $this->productRepository->create($this->faker->product());
 
         $cart = $this->cartFactory->addCartItem($product1['name'],
             $product1['description'],
@@ -477,113 +422,16 @@ dd($results);
                 'product-id' => $product1['id']
             ]);
 
-        $this->cartFactory->addCartItem($product2['name'],
-            $product2['description'],
-            1,
-            $product2['price'],
-            $product2['is_physical'],
-            $product2['is_physical'],
-            $this->faker->word,
-            rand(),
-            $product2['weight'],
-            [
-                'product-id' => $product2['id']
-            ]);
         $results = $this->call('PUT', '/order',
             [
-                'payment-type-selector'      => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'billing-region'             => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country'            => $this->faker->country,
-                'credit-card-year-selector'  => 1990,
-                'gateway'                    => 1
-            ]);
-
-        $this->assertEquals(422, $results->getStatusCode());
-
-        $this->assertEquals([
-            [
-                "source" => "credit-card-month-selector",
-                "detail" => "The credit-card-month-selector field is required when payment-type-selector is credit card.",
-            ],
-            [
-                "source" => "credit-card-year-selector",
-                "detail" => "The credit-card-year-selector must be at least 2018.",
-            ],
-            [
-                "source" => "credit-card-number",
-                "detail" => "The credit-card-number field is required when payment-type-selector is credit card.",
-            ],
-            [
-                "source" => "credit-card-cvv",
-                "detail" => "The credit-card-cvv field is required when payment-type-selector is credit card.",
-            ]
-        ], $results->decodeResponseJson()['errors']);
-    }
-
-    public function _test_submit_order_validation_rules_for_canadian_users()
-    {
-        $shippingOption = $this->shippingOptionFactory->store('Canada', 1, 1);
-        $shippingCost   = $this->shippingCostsFactory->store($shippingOption['id'], 0, 10, 5.50);
-        $paymentGateway = $this->paymentGatewayFactory->store(ConfigService::$brand, 'stripe', 'stripe_1');
-
-        $product1 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            12.95,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0.20);
-
-        $product2 = $this->productFactory->store(ConfigService::$brand,
-            $this->faker->word,
-            $this->faker->word,
-            247,
-            ProductService::TYPE_PRODUCT,
-            1,
-            $this->faker->text,
-            $this->faker->url,
-            0,
-            0);
-
-        $cart = $this->cartFactory->addCartItem($product1['name'],
-            $product1['description'],
-            1,
-            $product1['price'],
-            $product1['is_physical'],
-            $product1['is_physical'],
-            $this->faker->word,
-            rand(),
-            $product1['weight'],
-            [
-                'product-id' => $product1['id']
-            ]);
-
-        $this->cartFactory->addCartItem($product2['name'],
-            $product2['description'],
-            1,
-            $product2['price'],
-            $product2['is_physical'],
-            $product2['is_physical'],
-            $this->faker->word,
-            rand(),
-            $product2['weight'],
-            [
-                'product-id' => $product2['id']
-            ]);
-        $results = $this->call('PUT', '/order',
-            [
-                'payment-type-selector' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
                 'billing-country'       => 'Canada',
                 'gateway'               => 1
             ]);
 
         $this->assertEquals(422, $results->getStatusCode());
 
-        $this->assertEquals([
+        $this->assertArraySubset([
             [
                 "source" => "billing-region",
                 "detail" => "The billing-region field is required.",
@@ -718,7 +566,6 @@ dd($results);
             ]);
 
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertEquals(1, $results->decodeResponseJson()['results']['id']);
     }
 
     public function test_submit_order_subscription()
@@ -761,7 +608,6 @@ dd($results);
             ]);
 
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertEquals(1, $results->decodeResponseJson()['results']['id']);
     }
 
     public function test_submit_order_with_discount_based_on_shipping_requirements()
@@ -974,13 +820,13 @@ dd($results);
 
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertDatabaseHas(ConfigService::$tableOrder, [
-            'due'            => ($product['price'] - $discount['amount'])*2 + $shippingCost['price'] + 1.58,
+            'due'            => ($product['price'] - $discount['amount']) * 2 + $shippingCost['price'] + 1.58,
             'shipping_costs' => $shippingCost['price'],
             'user_id'        => $userId
         ]);
     }
 
-    public function test_submit_order_subscription_with_discount()
+    public function test_submit_order_subscription_with_discount_free_days()
     {
         $userId = $this->createAndLogInNewUser();
         $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
@@ -998,15 +844,15 @@ dd($results);
 
         $discount         = $this->discountRepository->create($this->faker->discount([
             'active' => true,
-            'type'   => 'subscription free trial days',
+            'type'   => DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE,
             'amount' => 10
         ]));
         $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
             'discount_id' => $discount['id'],
             'product_id'  => $product['id'],
             'type'        => 'date requirement',
-            'min' => $this->faker->year('now'),
-            'max' => $this->faker->dateTimeInInterval('','+5days')
+            'min'         => $this->faker->year('now'),
+            'max'         => $this->faker->dateTimeInInterval('', '+5days')
         ]));
 
         $cart = $this->cartFactory->addCartItem($product['name'],
@@ -1033,25 +879,656 @@ dd($results);
             ]);
 
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertEquals(1, $results->decodeResponseJson()['results']['id']);
 
         //assert the discount days are added to the paid_until data
         $this->assertDatabaseHas(ConfigService::$tableSubscription,
             [
-                'brand' => ConfigService::$brand,
+                'brand'      => ConfigService::$brand,
                 'product_id' => $product['id'],
-                'user_id' => $userId,
-                'is_active' => "1",
+                'user_id'    => $userId,
+                'is_active'  => "1",
                 'start_date' => Carbon::now()->toDateTimeString(),
                 'paid_until' => Carbon::now()->addYear(1)->addDays(10)->toDateTimeString()
             ]);
     }
 
-    /**
-     * @return \Illuminate\Database\Connection
-     */
-    public function query()
+    public function test_submit_order_subscription_with_discount_recurring_amount()
     {
-        return $this->databaseManager->connection();
+        $userId = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 25,
+            'type'                        => ProductService::TYPE_SUBSCRIPTION,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => 'year',
+            'subscription_interval_count' => 1
+        ]));
+
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE,
+            'amount' => 10
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product['id'],
+            'type'        => 'date requirement',
+            'min'         => $this->faker->year('now'),
+            'max'         => $this->faker->dateTimeInInterval('', '+5days')
+        ]));
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            1,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $results = $this->call('PUT', '/order',
+            [
+                'payment_method_type'              => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                   => $this->faker->word,
+                'billing-zip-or-postal-code'       => $this->faker->postcode,
+                'billing-country'                  => 'Canada',
+                'gateway'                          => 'drumeo',
+                'validated-express-checkout-token' => $this->faker->word
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount days are added to the paid_until data
+        $this->assertDatabaseHas(ConfigService::$tableSubscription,
+            [
+                'brand'                   => ConfigService::$brand,
+                'product_id'              => $product['id'],
+                'user_id'                 => $userId,
+                'is_active'               => "1",
+                'start_date'              => Carbon::now()->toDateTimeString(),
+                'paid_until'              => Carbon::now()->addYear(1)->toDateTimeString(),
+                'total_price_per_payment' => $product['price'] - $discount['amount']
+            ]);
+    }
+
+    public function test_submit_order_with_discount_order_total_amount()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+        $quantity = 2;
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 25,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
+            'amount' => 10
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product['id'],
+            'type'        => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min'         => 5,
+            'max'         => 500
+        ]));
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            $quantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $results = $this->call('PUT', '/order',
+            [
+                'payment_method_type'              => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                   => $this->faker->word,
+                'billing-zip-or-postal-code'       => $this->faker->postcode,
+                'billing-country'                  => 'Romanian',
+                'gateway'                          => 'drumeo',
+                'validated-express-checkout-token' => $this->faker->word
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount amount it's included in order due
+        $this->assertDatabaseHas(ConfigService::$tableOrder,
+            [
+                'brand'          => ConfigService::$brand,
+                'user_id'        => $userId,
+                'due'            => $product['price'] * $quantity - $discount['amount'],
+                'tax'            => 0,
+                'shipping_costs' => 0,
+                'paid'           => $product['price'] * $quantity - $discount['amount']
+            ]);
+    }
+
+    public function test_submit_order_with_discount_order_total_percent()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+        $quantity = 2;
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 25,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE,
+            'amount' => 10
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product['id'],
+            'type'        => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min'         => 5,
+            'max'         => 500
+        ]));
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            $quantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $results = $this->call('PUT', '/order',
+            [
+                'payment_method_type'              => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                   => $this->faker->word,
+                'billing-zip-or-postal-code'       => $this->faker->postcode,
+                'billing-country'                  => 'Romanian',
+                'gateway'                          => 'drumeo',
+                'validated-express-checkout-token' => $this->faker->word
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount amount it's included in order due
+        $this->assertDatabaseHas(ConfigService::$tableOrder,
+            [
+                'brand'          => ConfigService::$brand,
+                'user_id'        => $userId,
+                'due'            => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity,
+                'tax'            => 0,
+                'shipping_costs' => 0,
+                'paid'           => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity
+            ]);
+    }
+
+    public function test_submit_order_with_discount_product_amount()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+        $quantity = 2;
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 25,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+            'amount' => 10
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product['id'],
+            'type'        => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min'         => 5,
+            'max'         => 500
+        ]));
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            $quantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $results = $this->call('PUT', '/order',
+            [
+                'payment_method_type'              => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                   => $this->faker->word,
+                'billing-zip-or-postal-code'       => $this->faker->postcode,
+                'billing-country'                  => 'Romanian',
+                'gateway'                          => 'drumeo',
+                'validated-express-checkout-token' => $this->faker->word
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount amount it's included in order due
+        $this->assertDatabaseHas(ConfigService::$tableOrder,
+            [
+                'brand'          => ConfigService::$brand,
+                'user_id'        => $userId,
+                'due'            => ($product['price'] - $discount['amount']) * $quantity,
+                'tax'            => 0,
+                'shipping_costs' => 0,
+                'paid'           => ($product['price'] - $discount['amount']) * $quantity
+            ]);
+
+        //assert the discount amount it's saved in order item data
+        $this->assertDatabaseHas(ConfigService::$tableOrderItem,
+            [
+                'product_id'    => $product['id'],
+                'quantity'      => $quantity,
+                'initial_price' => $product['price'],
+                'discount'      => $discount['amount'] * $quantity,
+                'total_price'   => ($product['price'] - $discount['amount']) * $quantity
+            ]);
+    }
+
+    public function test_submit_order_with_discount_product_percent()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+        $quantity = 2;
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 25,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
+            'amount' => 10
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product['id'],
+            'type'        => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min'         => 5,
+            'max'         => 500
+        ]));
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            $quantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $results = $this->call('PUT', '/order',
+            [
+                'payment_method_type'              => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                   => $this->faker->word,
+                'billing-zip-or-postal-code'       => $this->faker->postcode,
+                'billing-country'                  => 'Romanian',
+                'gateway'                          => 'drumeo',
+                'validated-express-checkout-token' => $this->faker->word
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount amount it's included in order due
+        $this->assertDatabaseHas(ConfigService::$tableOrder,
+            [
+                'brand'          => ConfigService::$brand,
+                'user_id'        => $userId,
+                'due'            => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity,
+                'tax'            => 0,
+                'shipping_costs' => 0,
+                'paid'           => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity
+            ]);
+
+        //assert the discount amount it's saved in order item data
+        $this->assertDatabaseHas(ConfigService::$tableOrderItem,
+            [
+                'product_id'    => $product['id'],
+                'quantity'      => $quantity,
+                'initial_price' => $product['price'],
+                'discount'      => $discount['amount'] / 100 * $product['price'] * $quantity,
+                'total_price'   => ($product['price'] - $discount['amount'] / 100 * $product['price']) * $quantity
+            ]);
+    }
+
+    public function test_submit_order_with_discount_shipping_costs_amount()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+        $quantity = 2;
+
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption([
+            'country'  => 'Canada',
+            'active'   => 1,
+            'priority' => 1
+        ]));
+        $shippingCosts  = $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min'                => 0,
+            'max'                => 10,
+            'price'              => 5.50
+        ]));
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 25,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 1,
+            'weight'                      => 2,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
+            'amount' => 2
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product['id'],
+            'type'        => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min'         => 5,
+            'max'         => 500
+        ]));
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            $quantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $results = $this->call('PUT', '/order',
+            [
+                'payment_method_type'              => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                   => $this->faker->word,
+                'billing-zip-or-postal-code'       => $this->faker->postcode,
+                'billing-country'                  => 'Romanian',
+                'gateway'                          => 'drumeo',
+                'validated-express-checkout-token' => $this->faker->word,
+                'shipping-first-name'              => $this->faker->firstName,
+                'shipping-last-name'               => $this->faker->lastName,
+                'shipping-address-line-1'          => $this->faker->address,
+                'shipping-city'                    => 'Canada',
+                'shipping-region'                  => 'ab',
+                'shipping-zip'                     => $this->faker->postcode,
+                'shipping-country'                 => 'Canada'
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount amount it's included in order due
+        $this->assertDatabaseHas(ConfigService::$tableOrder,
+            [
+                'brand'          => ConfigService::$brand,
+                'user_id'        => $userId,
+                'due'            => $product['price'] * $quantity + $shippingCosts['price'] - $discount['amount'],
+                'tax'            => 0,
+                'shipping_costs' => $shippingCosts['price'] - $discount['amount'],
+                'paid'           => $product['price'] * $quantity + $shippingCosts['price'] - $discount['amount']
+            ]);
+
+        //assert the discount amount it's saved in order item data
+        $this->assertDatabaseHas(ConfigService::$tableOrderItem,
+            [
+                'product_id'    => $product['id'],
+                'quantity'      => $quantity,
+                'initial_price' => $product['price'],
+                'total_price'   => $product['price'] * $quantity + $shippingCosts['price'] - $discount['amount']
+            ]);
+    }
+
+    public function test_submit_order_with_discount_shipping_costs_percent()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+        $quantity = 2;
+
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption([
+            'country'  => 'Canada',
+            'active'   => 1,
+            'priority' => 1
+        ]));
+        $shippingCosts  = $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min'                => 0,
+            'max'                => 10,
+            'price'              => 5.50
+        ]));
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 25,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 1,
+            'weight'                      => 2,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE,
+            'amount' => 10
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product['id'],
+            'type'        => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min'         => 5,
+            'max'         => 500
+        ]));
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            $quantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $results = $this->call('PUT', '/order',
+            [
+                'payment_method_type'              => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                   => $this->faker->word,
+                'billing-zip-or-postal-code'       => $this->faker->postcode,
+                'billing-country'                  => 'Romanian',
+                'gateway'                          => 'drumeo',
+                'validated-express-checkout-token' => $this->faker->word,
+                'shipping-first-name'              => $this->faker->firstName,
+                'shipping-last-name'               => $this->faker->lastName,
+                'shipping-address-line-1'          => $this->faker->address,
+                'shipping-city'                    => 'Canada',
+                'shipping-region'                  => 'ab',
+                'shipping-zip'                     => $this->faker->postcode,
+                'shipping-country'                 => 'Canada'
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount amount it's included in order due
+        $this->assertDatabaseHas(ConfigService::$tableOrder,
+            [
+                'brand'          => ConfigService::$brand,
+                'user_id'        => $userId,
+                'due'            => $product['price'] * $quantity + $shippingCosts['price'] - $discount['amount'] / 100 * $shippingCosts['price'],
+                'tax'            => 0,
+                'shipping_costs' => $shippingCosts['price'] - $discount['amount'] / 100 * $shippingCosts['price'],
+                'paid'           => $product['price'] * $quantity + $shippingCosts['price'] - $discount['amount'] / 100 * $shippingCosts['price']
+            ]);
+
+        //assert the discount amount it's saved in order item data
+        $this->assertDatabaseHas(ConfigService::$tableOrderItem,
+            [
+                'product_id'    => $product['id'],
+                'quantity'      => $quantity,
+                'initial_price' => $product['price'],
+                'total_price'   => $product['price'] * $quantity + $shippingCosts['price'] - $discount['amount'] / 100 * $shippingCosts['price']
+            ]);
+    }
+
+    public function test_submit_order_with_discount_shipping_costs_overwrite()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+        $quantity = 2;
+
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption([
+            'country'  => 'Canada',
+            'active'   => 1,
+            'priority' => 1
+        ]));
+        $shippingCosts  = $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min'                => 0,
+            'max'                => 10,
+            'price'              => 5.50
+        ]));
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 25,
+            'type'                        => ProductService::TYPE_PRODUCT,
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 1,
+            'weight'                      => 2,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
+            'amount' => 10
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product['id'],
+            'type'        => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min'         => 5,
+            'max'         => 500
+        ]));
+
+        $cart = $this->cartFactory->addCartItem($product['name'],
+            $product['description'],
+            $quantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $results = $this->call('PUT', '/order',
+            [
+                'payment_method_type'              => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                   => $this->faker->word,
+                'billing-zip-or-postal-code'       => $this->faker->postcode,
+                'billing-country'                  => 'Romanian',
+                'gateway'                          => 'drumeo',
+                'validated-express-checkout-token' => $this->faker->word,
+                'shipping-first-name'              => $this->faker->firstName,
+                'shipping-last-name'               => $this->faker->lastName,
+                'shipping-address-line-1'          => $this->faker->address,
+                'shipping-city'                    => 'Canada',
+                'shipping-region'                  => 'ab',
+                'shipping-zip'                     => $this->faker->postcode,
+                'shipping-country'                 => 'Canada'
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount amount it's included in order due
+        $this->assertDatabaseHas(ConfigService::$tableOrder,
+            [
+                'brand'          => ConfigService::$brand,
+                'user_id'        => $userId,
+                'due'            => $product['price'] * $quantity + $discount['amount'],
+                'tax'            => 0,
+                'shipping_costs' => $discount['amount'],
+                'paid'           => $product['price'] * $quantity + $discount['amount']
+            ]);
+
+        //assert the discount amount it's saved in order item data
+        $this->assertDatabaseHas(ConfigService::$tableOrderItem,
+            [
+                'product_id'    => $product['id'],
+                'quantity'      => $quantity,
+                'initial_price' => $product['price'],
+                'total_price'   => $product['price'] * $quantity + $discount['amount']
+            ]);
     }
 }

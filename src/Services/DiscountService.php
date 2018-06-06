@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Services;
 
 class DiscountService
 {
-
     const PRODUCT_AMOUNT_OFF_TYPE                      = 'product amount off';
     const PRODUCT_PERCENT_OFF_TYPE                     = 'product percent off';
     const SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE            = 'subscription free trial days';
@@ -73,10 +72,12 @@ class DiscountService
                 if($discount['discount_type'] == self::ORDER_TOTAL_AMOUNT_OFF_TYPE)
                 {
                     $amountDiscounted += $discount['amount'];
+                    break;
                 }
                 elseif($discount['discount_type'] == self::ORDER_TOTAL_PERCENT_OFF_TYPE)
                 {
                     $amountDiscounted += $discount['amount'] / 100 * $cartItemsTotalDue;
+                    break;
                 }
                 elseif($discount['discount_type'] == self::PRODUCT_AMOUNT_OFF_TYPE)
                 {
@@ -91,28 +92,8 @@ class DiscountService
 
                     if($cartItem['options']['product-id'] == $discount['product_id'])
                     {
-                        $amountDiscounted += $discount['amount'] / 100 * $cartItem['price'];
+                        $amountDiscounted += $discount['amount'] / 100 * $cartItem['price'] * $cartItem['quantity'];
                     }
-                }
-                else if($discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE)
-                {
-                    $amountDiscounted += $discount['amount'];
-                }
-                elseif($discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE)
-                {
-                    $amountDiscounted += $discount['amount'] / 100 * $cartItems['shippingCosts'];
-                }
-                elseif($discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE)
-                {
-                    $amountDiscounted += $discount['amount'];
-                }
-                elseif($discount['discount_type'] == self::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE)
-                {
-
-                }
-                elseif($discount['discount_type'] == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE)
-                {
-
                 }
             }
         }
@@ -120,4 +101,34 @@ class DiscountService
         return $amountDiscounted;
     }
 
+    /**
+     * @param $discountsToApply
+     * @param $initialShippingCosts
+     * @return mixed
+     */
+    public function getShippingCostsDiscounted($discountsToApply, $initialShippingCosts)
+    {
+        $amountDiscounted = 0;
+
+        if($discountsToApply)
+        {
+            foreach($discountsToApply as $discount)
+            {
+                if($discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE)
+                {
+                    $amountDiscounted += $discount['amount'];
+                }
+                elseif($discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE)
+                {
+                    $amountDiscounted += $discount['amount'] / 100 * $initialShippingCosts;
+                }
+                elseif($discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE)
+                {
+                    return $discount['amount'];
+                }
+            }
+        }
+
+        return max((float) ($initialShippingCosts - $amountDiscounted), 0);
+    }
 }

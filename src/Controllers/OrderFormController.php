@@ -237,6 +237,14 @@ class OrderFormController extends Controller
             new NotFoundException('The cart it\'s empty')
         );
 
+        if(!empty($request->get('validated-express-checkout-token')))
+        {
+            $orderFormInput = session()->get('order-form-input', []);
+            unset($orderFormInput['validated-express-checkout-token']);
+            session()->forget('order-form-input');
+            $request->merge($orderFormInput);
+        }
+
         //set the shipping address on session
         $shippingAddress = $this->cartAddressService->setAddress(
             [
@@ -260,14 +268,6 @@ class OrderFormController extends Controller
                 $cartItemsWeight
             )['price'] ?? 0;
 
-        $cartItemsWithTaxesAndCosts =
-            $this->taxService->calculateTaxesForCartItems(
-                $cartItems,
-                $request->get('billing-country'),
-                $request->get('billing-region'),
-                $shippingCosts
-            );
-
         //set the billing address on session
         $billingAddress = $this->cartAddressService->setAddress(
             [
@@ -277,6 +277,15 @@ class OrderFormController extends Controller
             ],
             CartAddressService::BILLING_ADDRESS_TYPE
         );
+
+        $cartItemsWithTaxesAndCosts =
+            $this->taxService->calculateTaxesForCartItems(
+                $cartItems,
+                $billingAddress['country'],
+                $billingAddress['region'],
+                $shippingCosts,
+                $currency
+            );
 
         //save billing address in database
         $billingAddressDB = $this->addressRepository->create(
@@ -295,7 +304,8 @@ class OrderFormController extends Controller
         // try to make the payment
         try
         {
-            if($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
+            if(($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) &&
+                empty($request->get('validated-express-checkout-token')))
             {
                 $customer = $this->stripePaymentGateway->getOrCreateCustomer(
                     $request->get('gateway'),
@@ -333,7 +343,8 @@ class OrderFormController extends Controller
                     false
                 );
             }
-            elseif($request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE)
+            elseif(($request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) ||
+                !empty($request->get('validated-express-checkout-token')))
             {
                 if(empty($request->get('validated-express-checkout-token')))
                 {
@@ -349,14 +360,14 @@ class OrderFormController extends Controller
                     $this->payPalPaymentGateway->createBillingAgreement(
                         $request->get('gateway'),
                         $cartItemsWithTaxesAndCosts['totalDue'],
-                        $request->get('currency', $this->currencyService->get()),
+                        $currency,
                         $request->get('validated-express-checkout-token')
                     );
                 $transactionId      =
                     $this->payPalPaymentGateway->chargeBillingAgreement(
                         $request->get('gateway'),
                         $cartItemsWithTaxesAndCosts['totalDue'],
-                        $request->get('currency', $this->currencyService->get()),
+                        $currency,
                         $billingAgreementId
                     );
                 $paymentMethodId    = $this->paymentMethodService->createPayPalBillingAgreement(
@@ -370,12 +381,16 @@ class OrderFormController extends Controller
             }
             else
             {
-                return redirect()->back()->withErrors(['payment' => 'Payment method not supported.']);
+                return redirect()->to(strtok(app('url')->previous(), '?'))->withErrors(
+                    ['payment' => 'Payment method not supported.']
+                );
             }
         }
         catch(PaymentFailedException $paymentFailedException)
         {
-            return redirect()->back()->withErrors(['payment' => $paymentFailedException->getMessage()]);
+            return redirect()->to(strtok(app('url')->previous(), '?'))->withErrors(
+                ['payment' => $paymentFailedException->getMessage()]
+            );
         }
 
         //save customer if billing email exists on request
@@ -434,7 +449,7 @@ class OrderFormController extends Controller
                 'brand'               => $request->input('brand', ConfigService::$brand),
                 'user_id'             => $user['id'] ?? null,
                 'customer_id'         => $customer['id'] ?? null,
-                'shipping_costs'      => $shippingCosts,
+                'shipping_costs'      => $cartItemsWithTaxesAndCosts['shippingCosts'],
                 'shipping_address_id' => $shippingAddressDB['id'],
                 'billing_address_id'  => $billingAddressDB['id'],
                 'created_on'          => Carbon::now()->toDateTimeString(),
@@ -449,15 +464,17 @@ class OrderFormController extends Controller
                 'created_on' => Carbon::now()->toDateTimeString(),
             ]
         );
+        $amountDiscounted = 0;
 
         if(array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems']))
         {
             //save order discount
-            $orderDiscount = $this->orderDiscountRepository->create([
+            $orderDiscount    = $this->orderDiscountRepository->create([
                 'order_id'    => $order['id'],
                 'discount_id' => $cartItemsWithTaxesAndCosts['cartItems']['applyDiscount']['discount_id'],
                 'created_on'  => Carbon::now()->toDateTimeString()
             ]);
+            $amountDiscounted = array_sum(array_column($cartItems, 'totalPrice')) + $cartItemsWithTaxesAndCosts['shippingCosts'] - $cartItemsWithTaxesAndCosts['totalDue'];
         }
 
         // order items
@@ -474,10 +491,10 @@ class OrderFormController extends Controller
                     'product_id'     => $product['id'],
                     'quantity'       => $cartItem['quantity'],
                     'initial_price'  => $cartItem['price'],
-                    'discount'       => 0,
+                    'discount'       => $amountDiscounted,
                     'tax'            => $cartItemsWithTaxesAndCosts['totalTax'],
                     'shipping_costs' => $cartItemsWithTaxesAndCosts['shippingCosts'],
-                    'total_price'    => $cartItem['totalPrice'],
+                    'total_price'    => $cartItem['totalPrice'] + $cartItemsWithTaxesAndCosts['shippingCosts'] - $amountDiscounted,
                     'created_on'     => Carbon::now()->toDateTimeString(),
                 ]
             );
@@ -492,10 +509,10 @@ class OrderFormController extends Controller
                     'created_on'    => Carbon::now()->toDateTimeString()
                 ]);
 
-                $amountDiscounted = $this->discountService->getAmountDiscounted([$cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']], $cartItemsWithTaxesAndCosts['totalDue'], $cartItems);
+                $itemAmountDiscounted = $this->discountService->getAmountDiscounted([$cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']], $cartItemsWithTaxesAndCosts['totalDue'], $cartItems);
                 $this->orderItemRepository->update($orderItem['id'], [
-                    'discount'    => $amountDiscounted,
-                    'total_price' => $orderItem['total_price'] - $amountDiscounted
+                    'discount'    => $itemAmountDiscounted,
+                    'total_price' => $orderItem['total_price'] - $itemAmountDiscounted
                 ]);
             }
 
@@ -520,7 +537,7 @@ class OrderFormController extends Controller
                     if($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_type'] == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE)
                     {
                         //add the days from the discount to the subscription next bill date
-                        $nextBillDate = Carbon::now()->addDays($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['amount']);
+                        $nextBillDate = $nextBillDate->addDays($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['amount']);
                     }
                     elseif($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_type'] == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE)
                     {
