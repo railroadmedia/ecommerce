@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Ecommerce\Faker\Factory;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
+use Railroad\Ecommerce\Providers\UserProviderInterface;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Tests\Resources\Models\User;
@@ -176,6 +177,16 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(RemoteStorageServiceProvider::class);
         $app->register(CountriesServiceProvider::class);
         $app->register(PermissionsServiceProvider::class);
+
+        $app->bind('UserProviderInterface', function () {
+            $mock = $this->getMockBuilder('UserProviderInterface')
+                ->setMethods(['create'])
+                ->getMock();
+            $mock->method('create')->willReturn([
+                'id'    => 1,
+                'email' => $this->faker->email
+            ]);
+        });
     }
 
     /**

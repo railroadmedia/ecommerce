@@ -15,24 +15,28 @@ class PaymentMethodService
      * @var CreditCardRepository
      */
     private $creditCardRepository;
+
     /**
      * @var PaypalBillingAgreementRepository
      */
     private $paypalBillingAgreementRepository;
+
     /**
      * @var PaymentMethodRepository
      */
     private $paymentMethodRepository;
+
     /**
      * @var UserPaymentMethodsRepository
      */
     private $userPaymentMethodsRepository;
+
     /**
      * @var CustomerPaymentMethodsRepository
      */
     private $customerPaymentMethodsRepository;
 
-    CONST PAYPAL_PAYMENT_METHOD_TYPE = 'paypal';
+    CONST PAYPAL_PAYMENT_METHOD_TYPE      = 'paypal';
     CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit-card';
 
     public function __construct(
@@ -42,10 +46,10 @@ class PaymentMethodService
         UserPaymentMethodsRepository $userPaymentMethodsRepository,
         CustomerPaymentMethodsRepository $customerPaymentMethodsRepository
     ) {
-        $this->creditCardRepository = $creditCardRepository;
+        $this->creditCardRepository             = $creditCardRepository;
         $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
-        $this->paymentMethodRepository = $paymentMethodRepository;
-        $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
+        $this->paymentMethodRepository          = $paymentMethodRepository;
+        $this->userPaymentMethodsRepository     = $userPaymentMethodsRepository;
         $this->customerPaymentMethodsRepository = $customerPaymentMethodsRepository;
     }
 
@@ -62,44 +66,65 @@ class PaymentMethodService
         $gatewayName,
         $billingAddressId = null,
         $currency = null,
-        $makePrimary = false
+        $makePrimary = false,
+        $customerId
     ) {
         $creditCard = $this->creditCardRepository->create(
             [
-                'fingerprint' => $fingerPrint,
-                'last_four_digits' => $last4,
-                'cardholder_name' => $cardHolderName,
-                'company_name' => $companyName,
-                'expiration_date' => Carbon::createFromDate($expirationYear, $expirationMonth)->toDateTimeString(),
-                'external_id' => $externalId,
+                'fingerprint'          => $fingerPrint,
+                'last_four_digits'     => $last4,
+                'cardholder_name'      => $cardHolderName,
+                'company_name'         => $companyName,
+                'expiration_date'      => Carbon::createFromDate($expirationYear, $expirationMonth)->toDateTimeString(),
+                'external_id'          => $externalId,
                 'external_customer_id' => $externalCustomerId,
                 'payment_gateway_name' => $gatewayName,
-                'created_on' => Carbon::now()->toDateTimeString(),
+                'created_on'           => Carbon::now()->toDateTimeString(),
             ]
         );
 
         $paymentMethod = $this->paymentMethodRepository->create(
             [
-                'method_id' => $creditCard['id'],
-                'method_type' => self::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'currency' => $currency ?? ConfigService::$defaultCurrency,
+                'method_id'          => $creditCard['id'],
+                'method_type'        => self::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'currency'           => $currency ?? ConfigService::$defaultCurrency,
                 'billing_address_id' => $billingAddressId,
-                'created_on' => Carbon::now()->toDateTimeString(),
+                'created_on'         => Carbon::now()->toDateTimeString(),
             ]
         );
 
-        if ($makePrimary) {
-            $this->userPaymentMethodsRepository->query()->where('user_id', $userId)->update(['is_primary' => false]);
+        if($userId)
+        {
+            if($makePrimary)
+            {
+                $this->userPaymentMethodsRepository->query()->where('user_id', $userId)->update(['is_primary' => false]);
+            }
+
+            $this->userPaymentMethodsRepository->create(
+                [
+                    'user_id'           => $userId,
+                    'payment_method_id' => $paymentMethod['id'],
+                    'is_primary'        => $makePrimary,
+                    'created_on'        => Carbon::now()->toDateTimeString(),
+                ]
+            );
         }
+        elseif($customerId)
+        {
+            if($makePrimary)
+            {
+                $this->customerPaymentMethodsRepository->query()->where('customer_id', $customerId)->update(['is_primary' => false]);
+            }
 
-        $userPaymentMethod = $this->userPaymentMethodsRepository->create(
-            [
-                'user_id' => $userId,
-                'payment_method_id' => $paymentMethod['id'],
-                'is_primary' => $makePrimary,
-                'created_on' => Carbon::now()->toDateTimeString(),
-            ]
-        );
+            $this->customerPaymentMethodsRepository->create(
+                [
+                    'customer_id'       => $customerId,
+                    'payment_method_id' => $paymentMethod['id'],
+                    'is_primary'        => $makePrimary,
+                    'created_on'        => Carbon::now()->toDateTimeString(),
+                ]
+            );
+        }
 
         return $paymentMethod['id'];
     }
@@ -114,32 +139,33 @@ class PaymentMethodService
     ) {
         $billingAgreement = $this->paypalBillingAgreementRepository->create(
             [
-                'external_id' => $billingAgreementExternalId,
+                'external_id'          => $billingAgreementExternalId,
                 'payment_gateway_name' => $paymentGatewayName,
-                'created_on' => Carbon::now()->toDateTimeString(),
+                'created_on'           => Carbon::now()->toDateTimeString(),
             ]
         );
 
         $paymentMethod = $this->paymentMethodRepository->create(
             [
-                'method_id' => $billingAgreement['id'],
-                'method_type' => self::PAYPAL_PAYMENT_METHOD_TYPE,
-                'currency' => $currency ?? ConfigService::$defaultCurrency,
+                'method_id'          => $billingAgreement['id'],
+                'method_type'        => self::PAYPAL_PAYMENT_METHOD_TYPE,
+                'currency'           => $currency ?? ConfigService::$defaultCurrency,
                 'billing_address_id' => $billingAddressId,
-                'created_on' => Carbon::now()->toDateTimeString(),
+                'created_on'         => Carbon::now()->toDateTimeString(),
             ]
         );
 
-        if ($makePrimary) {
+        if($makePrimary)
+        {
             $this->userPaymentMethodsRepository->query()->where('user_id', $userId)->update(['is_primary' => false]);
         }
 
         $userPaymentMethod = $this->userPaymentMethodsRepository->create(
             [
-                'user_id' => $userId,
+                'user_id'           => $userId,
                 'payment_method_id' => $paymentMethod['id'],
-                'is_primary' => $makePrimary,
-                'created_on' => Carbon::now()->toDateTimeString(),
+                'is_primary'        => $makePrimary,
+                'created_on'        => Carbon::now()->toDateTimeString(),
             ]
         );
 
