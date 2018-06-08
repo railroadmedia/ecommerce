@@ -12,7 +12,6 @@ use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Mail\OrderInvoice;
-use Railroad\Ecommerce\Providers\UserProviderInterface;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Repositories\OrderDiscountRepository;
@@ -151,7 +150,6 @@ class OrderFormController extends Controller
 
     private $userProvider;
 
-    private $orderInvoice;
 
     /**
      * OrderFormController constructor.
@@ -224,7 +222,6 @@ class OrderFormController extends Controller
         $this->orderDiscountRepository        = $orderDiscountRepository;
         $this->discountService                = $discountService;
         $this->userProvider                   = app()->make('UserProviderInterface');
-        // $this->orderInvoice = $orderInvoice;
     }
 
     /** Submit an order
