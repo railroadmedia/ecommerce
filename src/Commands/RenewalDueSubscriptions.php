@@ -2,7 +2,10 @@
 
 namespace Railroad\Ecommerce\Commands;
 
-use Railroad\Ecommerce\Services\PaymentService;
+use Carbon\Carbon;
+use Railroad\Ecommerce\Repositories\PaymentRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Services\ConfigService;
 
 class RenewalDueSubscriptions extends \Illuminate\Console\Command
 {
@@ -21,27 +24,22 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     protected $description = 'Renewal of due subscriptions.';
 
     /**
-     * @var \Railroad\Ecommerce\Services\SubscriptionService
+     * @var \Railroad\Ecommerce\Repositories\SubscriptionRepository
      */
-    private $subscriptionService;
+    private $subscriptionRepository;
 
     /**
-     * @var \Railroad\Ecommerce\Services\PaymentService
+     * @var \Railroad\Ecommerce\Repositories\PaymentRepository
      */
-    private $paymentService;
+    private $paymentRepository;
 
-    /**
-     * Create a new command instance.
-     *
-     * @param \Railroad\Ecommerce\Services\SubscriptionService $subscriptionService
-     */
     public function __construct(
-        \Railroad\Ecommerce\Services\SubscriptionService $subscriptionService,
-        PaymentService $paymentService
+        SubscriptionRepository $subscriptionRepository,
+        PaymentRepository $paymentRepository
     ) {
         parent::__construct();
-        $this->subscriptionService = $subscriptionService;
-        $this->paymentService      = $paymentService;
+        $this->subscriptionRepository = $subscriptionRepository;
+        $this->paymentRepository      = $paymentRepository;
     }
 
     /**
@@ -52,21 +50,29 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     public function handle()
     {
         $this->info('------------------Renewal Due Subscriptions command------------------');
-        $dueSubscriptions = $this->subscriptionService->renewalDueSubscriptions();
+        $dueSubscriptions = $this->subscriptionRepository->query()
+            ->join(
+                ConfigService::$tableSubscriptionPayment,
+                ConfigService::$tableSubscription . '.id',
+                '=',
+                ConfigService::$tableSubscriptionPayment . '.subscription_id'
+            )
+            ->join(
+                ConfigService::$tablePayment,
+                ConfigService::$tableSubscriptionPayment . '.payment_id',
+                '=',
+                ConfigService::$tablePayment . '.id'
+            )
+            ->where('paid_until', '<=', Carbon::now()->toDateTimeString())
+            ->where('is_active', '=', true)
+            ->get()
+            ->toArray();
 
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
-        $pay              = [];
+        $pay = [];
         foreach($dueSubscriptions as $dueSubcription)
         {
-            $this->paymentService->store(
-                $dueSubcription['total_price_per_payment'],
-                $dueSubcription['total_price_per_payment'],
-                0,
-                $dueSubcription['payment_method_id'],
-                $dueSubcription['currency'],
-                null,
-                $dueSubcription['subscription_id']
-            );
+
         }
 
         $this->info('-----------------End Renewal Due Subscriptions command-----------------------');

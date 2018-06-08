@@ -9,7 +9,6 @@ use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
-use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Permissions\Services\PermissionService;
 use Stripe\Card;
@@ -89,7 +88,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertArraySubset([
             'due'               => $due,
-            'type'              => PaymentService::ORDER_PAYMENT_TYPE,
+            'type'              => config('constants.ORDER_PAYMENT_TYPE'),
             'payment_method_id' => $paymentMethod['id'],
             'created_on'        => Carbon::now()->toDateTimeString(),
             'updated_on'        => null
@@ -99,7 +98,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(ConfigService::$tablePayment,
             [
                 'due'               => $due,
-                'type'              => PaymentService::ORDER_PAYMENT_TYPE,
+                'type'              => config('constants.ORDER_PAYMENT_TYPE'),
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'stripe',
                 'currency'          => 'cad',
@@ -136,7 +135,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertArraySubset([
             'due'               => 100,
-            'type'              => PaymentService::ORDER_PAYMENT_TYPE,
+            'type'              => config('constants.ORDER_PAYMENT_TYPE'),
             'payment_method_id' => $paymentMethod['id'],
             'created_on'        => Carbon::now()->toDateTimeString(),
             'updated_on'        => null
@@ -146,7 +145,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(ConfigService::$tablePayment,
             [
                 'due'               => 100,
-                'type'              => PaymentService::ORDER_PAYMENT_TYPE,
+                'type'              => config('constants.ORDER_PAYMENT_TYPE'),
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'paypal',
                 'currency'          => 'CAD',
@@ -191,7 +190,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertArraySubset([
             'due'               => $due,
-            'type'              => PaymentService::ORDER_PAYMENT_TYPE,
+            'type'              => config('constants.ORDER_PAYMENT_TYPE'),
             'currency'          => 'cad',
             'payment_method_id' => $paymentMethod['id'],
             'created_on'        => Carbon::now()->toDateTimeString(),
@@ -202,7 +201,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(ConfigService::$tablePayment,
             [
                 'due'               => $due,
-                'type'              => PaymentService::ORDER_PAYMENT_TYPE,
+                'type'              => config('constants.ORDER_PAYMENT_TYPE'),
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'stripe',
                 'currency'          => 'cad',
@@ -261,10 +260,10 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $this->assertArraySubset([
             'due'               => $due,
-            'type'              => PaymentService::ORDER_PAYMENT_TYPE,
+            'type'              => config('constants.ORDER_PAYMENT_TYPE'),
             'payment_method_id' => $paymentMethod,
             'status'            => true,
-            'external_provider' => PaymentService::MANUAL_PAYMENT_TYPE,
+            'external_provider' => config('constants.MANUAL_PAYMENT_TYPE'),
             'created_on'        => Carbon::now()->toDateTimeString(),
             'updated_on'        => null
         ], $results->decodeResponseJson()['results']);

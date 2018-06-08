@@ -199,7 +199,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'updated_on'  => null,
             'currency'    => $currency,
             'method'      => [
-                //   'type'              => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'fingerprint'      => $cardFingerprint,
                 'last_four_digits' => $cardLast4,
                 'cardholder_name'  => '',

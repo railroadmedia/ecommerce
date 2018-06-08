@@ -115,6 +115,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.stripe', $defaultConfig['payment_gateways']['stripe']);
         $app['config']->set('ecommerce.payment_gateways', $defaultConfig['payment_gateways']);
         $app['config']->set('ecommerce.supported_currencies', $defaultConfig['supported_currencies']);
+        $app['config']->set('ecommerce.invoiceSender', $defaultConfig['invoiceSender']);
 
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
@@ -182,10 +183,12 @@ class EcommerceTestCase extends BaseTestCase
             $mock = $this->getMockBuilder('UserProviderInterface')
                 ->setMethods(['create'])
                 ->getMock();
+
             $mock->method('create')->willReturn([
                 'id'    => 1,
                 'email' => $this->faker->email
             ]);
+            return $mock;
         });
     }
 

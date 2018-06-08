@@ -126,4 +126,6 @@ return [
             'create.payment',
         ],
     ],
+    'invoiceSender' => 'support@drumeo.com',
+    'invoicerSenderName' => 'Drumeo'
 ];

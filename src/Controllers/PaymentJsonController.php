@@ -18,7 +18,6 @@ use Railroad\Ecommerce\Requests\PaymentCreateRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
-use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Location\Services\LocationService;
 use Railroad\Permissions\Services\PermissionService;
 
@@ -162,8 +161,8 @@ class PaymentJsonController extends Controller
         $paymentMethod = $this->paymentMethodRepository->read($request->get('payment_method_id'));
 
         $paymentType =
-            ($request->has('subscription_id')) ? (PaymentService::RENEWAL_PAYMENT_TYPE) :
-                (PaymentService::ORDER_PAYMENT_TYPE);
+            ($request->has('subscription_id')) ? (config('constants.RENEWAL_PAYMENT_TYPE')) :
+                (config('constants.ORDER_PAYMENT_TYPE'));
 
         //manual payment
         if(is_null($paymentMethod))
@@ -171,7 +170,7 @@ class PaymentJsonController extends Controller
             $paymentData = [
                 'due'               => $request->get('due'),
                 'paid'              => $request->get('due'),
-                'external_provider' => PaymentService::MANUAL_PAYMENT_TYPE,
+                'external_provider' => config('constants.MANUAL_PAYMENT_TYPE'),
                 'status'            => true,
                 'payment_method_id' => null,
                 'currency'          => $currency,

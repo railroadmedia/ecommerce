@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Faker;
 use Carbon\Carbon;
 use Faker\Generator;
 use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\PaymentService;
 use Webpatser\Countries\Countries;
 
 class Faker extends Generator
@@ -118,7 +117,7 @@ class Faker extends Generator
                 'due'               => $this->randomNumber(),
                 'paid'              => $this->randomNumber(),
                 'refunded'          => $this->randomNumber(),
-                'type'              => $this->randomElement([PaymentService::ORDER_PAYMENT_TYPE, PaymentService::RENEWAL_PAYMENT_TYPE]),
+                'type'              => $this->randomElement([config('constants.ORDER_PAYMENT_TYPE'), config('constants.RENEWAL_PAYMENT_TYPE')]),
                 'external_provider' => $this->word,
                 'external_id'       => $this->word,
                 'status'            => 1,
@@ -247,6 +246,35 @@ class Faker extends Generator
                 'shipping_costs' => $this->randomNumber(),
                 'total_price'    => $this->randomNumber(),
                 'created_on'     => Carbon::now()->toDateTimeString()
+            ], $override
+        );
+    }
+
+    public function subscription(array $override = [])
+    {
+        return array_merge(
+            [
+                'brand'                   => ConfigService::$brand,
+                'type'                    => config('constants.TYPE_SUBSCRIPTION'),
+                'user_id'                 => $this->randomNumber(),
+                'customer_id'             => null,
+                'order_id'                => $this->randomNumber(),
+                'product_id'              => $this->randomNumber(),
+                'is_active'               => 1,
+                'start_date'              => Carbon::now()->toDateTimeString(),
+                'paid_until'              => Carbon::now()->addYear(1)->toDateTimeString(),
+                'canceled_on'             => null,
+                'note'                    => null,
+                'total_price_per_payment' => $this->randomNumber(),
+                'tax_per_payment'         => $this->randomNumber(),
+                'shipping_per_payment'    => $this->randomNumber(),
+                'currency'                => 'CAD',
+                'interval_type'           => 'year',
+                'interval_count'          => $this->randomNumber(),
+                'total_cycles_due'        => $this->randomNumber(),
+                'total_cycles_paid'       => $this->randomNumber(),
+                'payment_method_id'       => $this->randomNumber(),
+                'created_on'              => Carbon::now()->toDateTimeString()
             ], $override
         );
     }

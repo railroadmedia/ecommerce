@@ -3,14 +3,16 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
-use Railroad\Ecommerce\Factories\CartFactory;
+use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingCostsRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
+use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
@@ -54,9 +56,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     protected $discountCriteriaRepository;
 
     /**
-     * @var \Railroad\Ecommerce\Factories\CartFactory
+     * @var CartService
      */
-    protected $cartFactory;
+    protected $cartService;
 
     protected function setUp()
     {
@@ -65,7 +67,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->shippingOptionRepository   = $this->app->make(ShippingOptionRepository::class);
         $this->shippingCostsRepository    = $this->app->make(ShippingCostsRepository::class);
         $this->paymentGatewayRepository   = $this->app->make(PaymentGatewayRepository::class);
-        $this->cartFactory                = $this->app->make(CartFactory::class);
+        $this->cartService                = $this->app->make(CartService::class);
         $this->discountCriteriaRepository = $this->app->make(DiscountCriteriaRepository::class);
         $this->discountRepository         = $this->app->make(DiscountRepository::class);
     }
@@ -106,7 +108,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'subscription_interval_count' => ''
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product1['name'],
+        $cart = $this->cartService->addCartItem($product1['name'],
             $product1['description'],
             1,
             $product1['price'],
@@ -119,7 +121,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product-id' => $product1['id']
             ]);
 
-        $this->cartFactory->addCartItem($product2['name'],
+        $this->cartService->addCartItem($product2['name'],
             $product2['description'],
             1,
             $product2['price'],
@@ -176,7 +178,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'subscription_interval_count' => ''
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product1['name'],
+        $cart = $this->cartService->addCartItem($product1['name'],
             $product1['description'],
             1,
             $product1['price'],
@@ -189,7 +191,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product-id' => $product1['id']
             ]);
 
-        $this->cartFactory->addCartItem($product2['name'],
+        $this->cartService->addCartItem($product2['name'],
             $product2['description'],
             1,
             $product2['price'],
@@ -280,7 +282,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'subscription_interval_count' => ''
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product1['name'],
+        $cart = $this->cartService->addCartItem($product1['name'],
             $product1['description'],
             1,
             $product1['price'],
@@ -293,7 +295,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product-id' => $product1['id']
             ]);
 
-        $this->cartFactory->addCartItem($product2['name'],
+        $this->cartService->addCartItem($product2['name'],
             $product2['description'],
             1,
             $product2['price'],
@@ -359,7 +361,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product1 = $this->productRepository->create($this->faker->product(['is_physical' => 0]));
 
-        $cart = $this->cartFactory->addCartItem($product1['name'],
+        $cart = $this->cartService->addCartItem($product1['name'],
             $product1['description'],
             1,
             $product1['price'],
@@ -407,7 +409,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     {
         $product1 = $this->productRepository->create($this->faker->product());
 
-        $cart = $this->cartFactory->addCartItem($product1['name'],
+        $cart = $this->cartService->addCartItem($product1['name'],
             $product1['description'],
             1,
             $product1['price'],
@@ -514,7 +516,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => '2000000'
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product1['name'],
+        $cart = $this->cartService->addCartItem($product1['name'],
             $product1['description'],
             1,
             $product1['price'],
@@ -527,7 +529,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product-id' => $product1['id']
             ]);
 
-        $this->cartFactory->addCartItem($product2['name'],
+        $this->cartService->addCartItem($product2['name'],
             $product2['description'],
             1,
             $product2['price'],
@@ -582,7 +584,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'subscription_interval_count' => 1
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             1,
             $product['price'],
@@ -672,7 +674,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => '2000'
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             1,
             $product['price'],
@@ -780,7 +782,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => 5
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             2,
             $product['price'],
@@ -849,11 +851,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'discount_id' => $discount['id'],
             'product_id'  => $product['id'],
             'type'        => 'date requirement',
-            'min'         => $this->faker->year('now'),
+            'min'         => $this->faker->dateTimeInInterval('', '-5days'),
             'max'         => $this->faker->dateTimeInInterval('', '+5days')
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             1,
             $product['price'],
@@ -915,11 +917,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'discount_id' => $discount['id'],
             'product_id'  => $product['id'],
             'type'        => 'date requirement',
-            'min'         => $this->faker->year('now'),
+            'min'         => $this->faker->dateTimeInInterval('', '-5days'),
             'max'         => $this->faker->dateTimeInInterval('', '+5days')
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             1,
             $product['price'],
@@ -987,7 +989,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => 500
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             $quantity,
             $product['price'],
@@ -1054,7 +1056,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => 500
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             $quantity,
             $product['price'],
@@ -1121,7 +1123,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => 500
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             $quantity,
             $product['price'],
@@ -1198,7 +1200,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => 500
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             $quantity,
             $product['price'],
@@ -1287,7 +1289,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => 500
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             $quantity,
             $product['price'],
@@ -1382,7 +1384,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => 500
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             $quantity,
             $product['price'],
@@ -1477,7 +1479,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => 500
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             $quantity,
             $product['price'],
@@ -1602,7 +1604,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => '2000000'
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product1['name'],
+        $cart = $this->cartService->addCartItem($product1['name'],
             $product1['description'],
             1,
             $product1['price'],
@@ -1615,7 +1617,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product-id' => $product1['id']
             ]);
 
-        $this->cartFactory->addCartItem($product2['name'],
+        $this->cartService->addCartItem($product2['name'],
             $product2['description'],
             1,
             $product2['price'],
@@ -1686,7 +1688,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'subscription_interval_count' => ''
         ]));
 
-        $cart = $this->cartFactory->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
             $quantity,
             $product['price'],
@@ -1738,5 +1740,69 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'user_id'    => 1,
                 'created_on' => Carbon::now()->toDateTimeString()
             ]);
+    }
+
+    public function test_invoice_order_send_after_submit()
+    {
+        Mail::fake();
+
+        $userId = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 25,
+            'type'                        => config('constants.TYPE_PRODUCT'),
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+
+        $cart = $this->cartService->addCartItem($product['name'],
+            $product['description'],
+            1,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $results = $this->call('PUT', '/order',
+            [
+                'payment_method_type'              => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing-region'                   => $this->faker->word,
+                'billing-zip-or-postal-code'       => $this->faker->postcode,
+                'billing-country'                  => 'Canada',
+                'gateway'                          => 'drumeo',
+                'validated-express-checkout-token' => $this->faker->word,
+                'shipping-first-name'              => $this->faker->firstName,
+                'shipping-last-name'               => $this->faker->lastName,
+                'shipping-address-line-1'          => $this->faker->address,
+                'shipping-city'                    => 'Canada',
+                'shipping-region'                  => 'ab',
+                'shipping-zip'                     => $this->faker->postcode,
+                'shipping-country'                 => 'Canada'
+            ]);
+
+        // Assert a message was sent to the given users...
+        Mail::assertSent(OrderInvoice::class, function ($mail)  {
+            $mail->build();
+
+            return $mail->hasTo(auth()->user()['email']) &&
+                $mail->hasFrom(config('ecommerce.invoiceSender')) &&
+                $mail->subject('Order Invoice - Thank You!');
+        });
+
+        //assert a mailable was sent
+        Mail::assertSent(OrderInvoice::class, 1);
+
+        //assert cart it's empty after submit
+        $this->assertEmpty($this->cartService->getAllCartItems());
     }
 }

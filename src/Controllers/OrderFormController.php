@@ -4,12 +4,14 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
+use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Providers\UserProviderInterface;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
@@ -149,6 +151,8 @@ class OrderFormController extends Controller
 
     private $userProvider;
 
+    private $orderInvoice;
+
     /**
      * OrderFormController constructor.
      *
@@ -220,6 +224,7 @@ class OrderFormController extends Controller
         $this->orderDiscountRepository        = $orderDiscountRepository;
         $this->discountService                = $discountService;
         $this->userProvider                   = app()->make('UserProviderInterface');
+        // $this->orderInvoice = $orderInvoice;
     }
 
     /** Submit an order
@@ -374,17 +379,17 @@ class OrderFormController extends Controller
             );
         }
 
-
         //create Payment
-        $payment           = $this->createPayment($cartItemsWithTaxesAndCosts, $charge??null, $transactionId??null, $paymentMethodId, $currency);
+        $payment = $this->createPayment($cartItemsWithTaxesAndCosts, $charge ?? null, $transactionId ?? null, $paymentMethodId, $currency);
 
         //create order
-        $order            = $this->createOrder($request, $cartItemsWithTaxesAndCosts, $user??null, $customer??null, $billingAddressDB, $payment);
+        $order = $this->createOrder($request, $cartItemsWithTaxesAndCosts, $user ?? null, $customer ?? null, $billingAddressDB, $payment);
 
         //apply order discounts
         $amountDiscounted = $this->applyOrderDiscounts($cartItemsWithTaxesAndCosts, $order, $cartItems);
 
         // order items
+        $orderItems = [];
         foreach($cartItems as $key => $cartItem)
         {
             $product = $this->productRepository->read($cartItem['options']['product-id']);
@@ -422,6 +427,8 @@ class OrderFormController extends Controller
                     'created_on'    => Carbon::now()->toDateTimeString()
                 ]);
             }
+
+            $orderItems[] = $orderItem;
         }
 
         //if the order failed; we throw the proper exception
@@ -429,7 +436,45 @@ class OrderFormController extends Controller
             !($order),
             new UnprocessableEntityException('Order failed. Error message: ')
         );
+
+        //prepare currency symbol for order invoice
+        switch($currency)
+        {
+            case 'USD':
+            case 'CAD':
+            default:
+                $currencySymbol = '$';
+                break;
+            case 'GBP':
+                $currencySymbol = '£';
+                break;
+            case 'EUR':
+                $currencySymbol = '€';
+                break;
+        }
+
+        try
+        {
+            //prepare the order invoice
+            $orderInvoiceEmail = new OrderInvoice([
+                'order'          => $order,
+                'orderItems'     => $orderItems,
+                'payment'        => $payment,
+                'currencySymbol' => $currencySymbol
+            ]);
+            $emailAddress      = $user['email'] ?? $customer['email'];
+
+            Mail::to($emailAddress)->send($orderInvoiceEmail);
+        }
+        catch(\Exception $e)
+        {
+            error_log('Failed to send invoice for order: ' . $order['id']);
+        }
+
         event(new GiveContentAccess($order));
+
+        //remove all items from the cart
+        $this->cartService->removeAllCartItems();
 
         return new JsonResponse($order, 200);
     }

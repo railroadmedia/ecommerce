@@ -164,7 +164,8 @@ class PaymentMethodJsonController extends Controller
                     $request->get('payment_gateway'),
                     null,
                     $request->get('currency', $this->currencyService->get()),
-                    true);
+                    true,
+                    null);
             }
             else if($request->get('method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE)
             {

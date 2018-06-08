@@ -3,98 +3,91 @@ namespace Railroad\Ecommerce\Tests\Functional\Commands;
 
 use Carbon\Carbon;
 
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
+use Railroad\Ecommerce\Repositories\PaymentRepository;
+use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use Railroad\Ecommerce\Repositories\CreditCardRepository;
 
 class RenewalDueSubscriptionsTest extends EcommerceTestCase
 {
+    /**
+     * @var \Railroad\Ecommerce\Repositories\CreditCardRepository
+     */
+    protected $creditCardRepository;
 
+    /**
+     * @var \Railroad\Ecommerce\Repositories\PaymentMethodRepository
+     */
+    protected $paymentMethodRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\PaymentRepository
+     */
+    protected $paymentRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\SubscriptionRepository
+     */
+    protected $subscriptionRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository
+     */
+    protected $subscriptionPaymentRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\ProductRepository
+     */
+    protected $productRepository;
 
     public function setUp()
     {
         parent::setUp();
-
+        $this->creditCardRepository = $this->app->make(CreditCardRepository::class);
+        $this->paymentMethodRepository = $this->app->make(PaymentMethodRepository::class);
+        $this->paymentRepository = $this->app->make(PaymentRepository::class);
+        $this->subscriptionRepository = $this->app->make(SubscriptionRepository::class);
+        $this->subscriptionPaymentRepository = $this->app->make(SubscriptionPaymentRepository::class);
+        $this->productRepository = $this->app->make(ProductRepository::class);
     }
 
     public function test_command()
     {
         $userId         = $this->createAndLogInNewUser();
-        $paymentGateway = $this->paymentGateway->store(ConfigService::$brand, 'stripe', 'stripe_1');
+
         for($i = 0; $i < 10; $i++)
         {
-            $creditCard   = [
-                'type'                 => $this->faker->creditCardType,
-                'fingerprint'          => $this->faker->creditCardNumber,
-                'last_four_digits'     => $this->faker->randomNumber(4),
-                'company_name'         => $this->faker->word,
-                'external_id'          => 'card_1CQF4CE2yPYKc9YRou0O5ghP',
-                'external_customer_id' => 'cus_CputG11eqRn0UO',
-                'external_provider'    => $this->faker->word,
-                'expiration_date'      => $this->faker->creditCardExpirationDateString,
-                'payment_gateway_id'   => $paymentGateway['id'],
-                'created_on'           => time()
-            ];
-            $creditCardId = $this->databaseManager->table(ConfigService::$tableCreditCard)
-                ->insertGetId($creditCard);
-            $this->databaseManager->table(ConfigService::$tableUserStripeCustomer)
-                ->insertGetId([
-                    'user_id'            => $userId,
-                    'stripe_customer_id' => 'cus_CputG11eqRn0UO',
-                    'created_on'         => time()
-                ]);
-            $paymentMethod = [
-                'method_id'   => $creditCardId,
-                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            $creditCard   = $this->creditCardRepository->create($this->faker->creditCard());
+            $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
+                'method_id' => $creditCard['id'],
+                'method_type' => config('constants.CREDIT_CARD_PAYMENT_METHOD_TYPE'),
                 'currency'    => 'usd',
                 'created_on'  => time(),
                 'updated_on'  => time(),
-            ];
+            ]));
+            $payment = $this->paymentRepository->create($this->faker->payment([
+                'payment_method_id' => $paymentMethod['id']
+            ]));
+            $product = $this->productRepository->create($this->faker->product());
+            $subscription = $this->subscriptionRepository->create($this->faker->subscription([
+                'user_id' => $userId,
+                'start_date' => Carbon::now()->subYear(2),
+                'paid_until' => Carbon::now()->subYear(1),
+                'product_id' => $product['id']
+            ]));
 
-            $paymentMethodId = $this->databaseManager->table(ConfigService::$tablePaymentMethod)
-                ->insertGetId($paymentMethod);
+            $subscriptionPayment = $this->subscriptionPaymentRepository->create([
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+                'created_on' => time()
+            ]);
 
-            $this->databaseManager->table(ConfigService::$tableUserPaymentMethods)
-                ->insertGetId([
-                    'payment_method_id' => $paymentMethodId,
-                    'user_id'           => $userId,
-                    'created_on'        => time()
-                ]);
-            $payment   = [
-                'due'               => 50,
-                'paid'              => 50,
-                'type'              => 'order',
-                'external_provider' => 'stripe',
-                'external_id'       => $this->faker->word,
-                'status'            => 1,
-                'currency'          => $paymentMethod['currency'],
-                'payment_method_id' => $paymentMethodId
-            ];
-            $paymentId = $this->databaseManager->table(ConfigService::$tablePayment)
-                ->insertGetId($payment);
 
-            $subscription = $this->subscriptionFactory->store('subscription',
-                $userId,
-                null,
-                null,
-                rand(),
-                1,
-                Carbon::now()->subYear(2),
-                Carbon::now()->subYear(1),
-                rand(),
-                0,
-                0,
-                'cad',
-                'year',
-                $this->faker->randomNumber(1),
-                0,
-                1);
-            $this->databaseManager->table(ConfigService::$tableSubscriptionPayment)
-                ->insertGetId([
-                    'subscription_id' => $subscription['id'],
-                    'payment_id'      => $paymentId,
-                    'created_on'      => time()
-                ]);
             $initialSubscriptions[] = $subscription;
         }
 
