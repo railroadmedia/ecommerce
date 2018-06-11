@@ -144,15 +144,6 @@ class EcommerceServiceProvider extends ServiceProvider
                 ]
             )
         );
-
-        // merge in permissions settings
-        config()->set(
-            'permissions.role_abilities',
-            array_merge(
-                config()->get('permissions.role_abilities', []),
-                config()->get('ecommerce.role_abilities', [])
-            )
-        );
     }
 
     private function setupConfig()
