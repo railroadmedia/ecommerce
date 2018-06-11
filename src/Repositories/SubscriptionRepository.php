@@ -23,34 +23,4 @@ class SubscriptionRepository extends RepositoryBase
     {
         return Decorator::decorate($results, 'subscription');
     }
-
-    /** Get all the active due subscriptions
-     *
-     * @return array
-     */
-    public function getDueSubscriptions()
-    {
-        return $this->query()
-            ->join(
-                ConfigService::$tableSubscriptionPayment,
-                ConfigService::$tableSubscription . '.id',
-                '=',
-                ConfigService::$tableSubscriptionPayment . '.subscription_id'
-            )
-            ->join(
-                ConfigService::$tablePayment,
-                ConfigService::$tableSubscriptionPayment . '.payment_id',
-                '=',
-                ConfigService::$tablePayment . '.id'
-            )
-            ->where('paid_until', '<=', Carbon::now()->toDateTimeString())
-            ->where('is_active', '=', true)
-            ->get()
-            ->toArray();
-    }
-
-    protected function connection()
-    {
-        return app('db')->connection(ConfigService::$databaseConnectionName);
-    }
 }
