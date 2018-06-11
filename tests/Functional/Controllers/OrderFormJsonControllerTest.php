@@ -1796,7 +1796,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
             return $mail->hasTo(auth()->user()['email']) &&
                 $mail->hasFrom(config('ecommerce.invoiceSender')) &&
-                $mail->subject('Order Invoice - Thank You!');
+                $mail->subject(config('ecommerce.invoicerEmailSubject'));
         });
 
         //assert a mailable was sent

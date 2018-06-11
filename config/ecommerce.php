@@ -127,5 +127,7 @@ return [
         ],
     ],
     'invoiceSender' => 'support@drumeo.com',
-    'invoicerSenderName' => 'Drumeo'
+    'invoiceSenderName' => 'Drumeo',
+    'invoiceAddress' => 'Drumeo 107-31265 Wheel Avenue - Abbotsford BC, Canada',
+    'invoiceEmailSubject' =>'Order Invoice - Thank You!'
 ];

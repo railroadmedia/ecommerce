@@ -64,6 +64,10 @@ class EcommerceServiceProvider extends ServiceProvider
             $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
         }
 
+        //load package views file (email template)
+        $this->loadViewsFrom(__DIR__.'/../../views', 'ecommerce');
+
+
         //load package routes file
         $this->loadRoutesFrom(__DIR__ . '/../../routes/routes.php');
 
@@ -134,6 +138,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 ]
             )
         );
+
 
         config()->set(
             'resora.decorators.discount',

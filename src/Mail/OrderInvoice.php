@@ -30,7 +30,7 @@ class OrderInvoice extends Mailable
     {
         return $this
             ->from(config('ecommerce.invoiceSender'), config('ecommerce.invoiceSenderName'))
-            ->subject('Order Invoice - Thank You!')
-            ->html('Thank you for your order! You have paid ' . $this->viewData['order']['paid'].$this->viewData['currencySymbol']);
+            ->subject(config('ecommerce.invoiceEmailSubject'))
+            ->view('ecommerce::billing', $this->viewData);
     }
 }

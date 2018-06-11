@@ -403,7 +403,7 @@ class OrderFormController extends Controller
                     'discount'       => $amountDiscounted,
                     'tax'            => $cartItemsWithTaxesAndCosts['totalTax'],
                     'shipping_costs' => $cartItemsWithTaxesAndCosts['shippingCosts'],
-                    'total_price'    => $cartItem['totalPrice'] + $cartItemsWithTaxesAndCosts['shippingCosts'] - $amountDiscounted,
+                    'total_price'    => max((float)($cartItem['totalPrice'] + $cartItemsWithTaxesAndCosts['shippingCosts'] - $amountDiscounted),0),
                     'created_on'     => Carbon::now()->toDateTimeString(),
                 ]
             );
@@ -788,9 +788,10 @@ class OrderFormController extends Controller
      */
     private function applyOrderItemDiscounts($cartItemsWithTaxesAndCosts, $key, $order, $orderItem, $cartItems): void
     {
-//apply order item discount
+        //apply order item discount
         if(array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems'][$key]))
         {
+
             //save order item discount
             $orderDiscount = $this->orderDiscountRepository->create([
                 'order_id'      => $order['id'],
@@ -802,7 +803,7 @@ class OrderFormController extends Controller
             $itemAmountDiscounted = $this->discountService->getAmountDiscounted([$cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']], $cartItemsWithTaxesAndCosts['totalDue'], $cartItems);
             $this->orderItemRepository->update($orderItem['id'], [
                 'discount'    => $itemAmountDiscounted,
-                'total_price' => $orderItem['total_price'] - $itemAmountDiscounted
+                'total_price' => max((float)($orderItem['total_price'] - $itemAmountDiscounted), 0)
             ]);
         }
     }

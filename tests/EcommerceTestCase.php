@@ -116,6 +116,8 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.payment_gateways', $defaultConfig['payment_gateways']);
         $app['config']->set('ecommerce.supported_currencies', $defaultConfig['supported_currencies']);
         $app['config']->set('ecommerce.invoiceSender', $defaultConfig['invoiceSender']);
+        $app['config']->set('ecommerce.invoiceAddress', $defaultConfig['invoiceAddress']);
+        $app['config']->set('ecommerce.invoiceEmailSubject', $defaultConfig['invoiceEmailSubject']);
 
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
