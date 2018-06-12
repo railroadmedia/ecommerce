@@ -34,6 +34,11 @@ class TaxService
     private $discountService;
 
     /**
+     * @var \Railroad\Ecommerce\Services\CartService
+     */
+    private $cartService;
+
+    /**
      * TaxService constructor.
      *
      * @param \Railroad\Ecommerce\Repositories\ProductRepository   $productRepository
@@ -46,13 +51,15 @@ class TaxService
         OrderItemRepository $orderItemRepository,
         OrderRepository $orderRepository,
         DiscountCriteriaService $discountCriteriaService,
-        DiscountService $discountService
+        DiscountService $discountService,
+        CartService $cartService
     ) {
         $this->productRepository       = $productRepository;
         $this->orderItemRepository     = $orderItemRepository;
         $this->orderRepository         = $orderRepository;
         $this->discountCriteriaService = $discountCriteriaService;
         $this->discountService         = $discountService;
+        $this->cartService             = $cartService;
     }
 
     /** Calculate the tax rate based on country and region
@@ -130,11 +137,13 @@ class TaxService
 
         $shippingTaxAmount = round((float) $shippingCostsWithDiscount * $taxRate, 2);
 
-        $financeCharge = 0;
+        $paymentPlan = $this->cartService->getPaymentPlanNumberOfPayments();
+
+        $financeCharge = ($paymentPlan > 1) ? 1 : 0;
 
         $taxAmount = $productsTaxAmount + $shippingTaxAmount;
 
-        $totalDue        = round(
+        $totalDue = $pricePerPayment = $initialPricePerPayment = round(
             $cartItemsTotalDue -
             $discount +
             $taxAmount +
@@ -142,6 +151,17 @@ class TaxService
             $financeCharge,
             2
         );
+        if(!empty($paymentPlan) && $paymentPlan > 1)
+        {
+            $initialPricePerPayment = round(
+                $cartItemsTotalDue / $paymentPlan + $shippingCostsWithDiscount + $taxAmount,
+                2
+            );
+            $pricePerPayment        = round(
+                $cartItemsTotalDue / $paymentPlan + $taxAmount,
+                2
+            );
+        }
 
         $cartItemsWeight = array_sum(array_column($cartItems, 'weight'));
 
@@ -158,10 +178,12 @@ class TaxService
             $cartItems[$key]['itemShippingCosts'] =
                 ($cartItemsWeight != 0) ? ($shippingCostsWithDiscount * ($cartItems[$key]['weight'] / $cartItemsWeight)) : 0;
         }
-        $results['cartItems']     = $cartItems;
-        $results['totalDue']      = $totalDue;
-        $results['totalTax']      = $taxAmount;
-        $results['shippingCosts'] = (float) $shippingCostsWithDiscount;
+        $results['cartItems']              = $cartItems;
+        $results['totalDue']               = $totalDue;
+        $results['totalTax']               = $taxAmount;
+        $results['shippingCosts']          = (float) $shippingCostsWithDiscount;
+        $results['pricePerPayment']        = $pricePerPayment;
+        $results['initialPricePerPayment'] = $initialPricePerPayment;
 
         return $results;
     }

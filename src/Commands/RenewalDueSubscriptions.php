@@ -76,6 +76,7 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     {
         $this->info('------------------Renewal Due Subscriptions command------------------');
         $dueSubscriptions = $this->subscriptionRepository->query()
+            ->select(ConfigService::$tableSubscription.'.*')
             ->join(
                 ConfigService::$tableSubscriptionPayment,
                 ConfigService::$tableSubscription . '.id',

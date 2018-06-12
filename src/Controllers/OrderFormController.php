@@ -33,6 +33,7 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Ecommerce\Services\PaymentPlanService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Location\Services\LocationService;
 
@@ -148,8 +149,15 @@ class OrderFormController extends Controller
      */
     private $discountService;
 
+    /**
+     * @var mixed UserProviderInterface
+     */
     private $userProvider;
 
+    /**
+     * @var \Railroad\Ecommerce\Services\PaymentPlanService
+     */
+    private $paymentPlanService;
 
     /**
      * OrderFormController constructor.
@@ -197,7 +205,8 @@ class OrderFormController extends Controller
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         OrderDiscountRepository $orderDiscountRepository,
-        DiscountService $discountService
+        DiscountService $discountService,
+        PaymentPlanService $paymentPlanService
     ) {
         $this->cartService                    = $cartService;
         $this->orderRepository                = $orderRepository;
@@ -221,6 +230,7 @@ class OrderFormController extends Controller
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->orderDiscountRepository        = $orderDiscountRepository;
         $this->discountService                = $discountService;
+        $this->paymentPlanService             = $paymentPlanService;
         $this->userProvider                   = app()->make('UserProviderInterface');
     }
 
@@ -302,6 +312,8 @@ class OrderFormController extends Controller
             CartAddressService::BILLING_ADDRESS_TYPE
         );
 
+        $this->cartService->setPaymentPlanNumberOfPayments($request->get('payment-plan-selector'));
+
         $cartItemsWithTaxesAndCosts =
             $this->taxService->calculateTaxesForCartItems(
                 $cartItems,
@@ -382,6 +394,24 @@ class OrderFormController extends Controller
         //create order
         $order = $this->createOrder($request, $cartItemsWithTaxesAndCosts, $user ?? null, $customer ?? null, $billingAddressDB, $payment);
 
+        //create payment plan
+        $paymentPlanNumbersOfPayments = $this->cartService->getPaymentPlanNumberOfPayments();
+        if($paymentPlanNumbersOfPayments > 1)
+        {
+            $this->createSubscription(
+                $request->get('brand', ConfigService::$brand),
+                null,
+                $order,
+                $cartItemsWithTaxesAndCosts,
+                0,
+                [],
+                $user,
+                $currency,
+                $paymentMethodId,
+                $payment,
+                false,
+                $paymentPlanNumbersOfPayments);
+        }
         //apply order discounts
         $amountDiscounted = $this->applyOrderDiscounts($cartItemsWithTaxesAndCosts, $order, $cartItems);
 
@@ -403,7 +433,7 @@ class OrderFormController extends Controller
                     'discount'       => $amountDiscounted,
                     'tax'            => $cartItemsWithTaxesAndCosts['totalTax'],
                     'shipping_costs' => $cartItemsWithTaxesAndCosts['shippingCosts'],
-                    'total_price'    => max((float)($cartItem['totalPrice'] + $cartItemsWithTaxesAndCosts['shippingCosts'] - $amountDiscounted),0),
+                    'total_price'    => max((float) ($cartItem['totalPrice'] + $cartItemsWithTaxesAndCosts['shippingCosts'] - $amountDiscounted), 0),
                     'created_on'     => Carbon::now()->toDateTimeString(),
                 ]
             );
@@ -412,8 +442,21 @@ class OrderFormController extends Controller
             $this->applyOrderItemDiscounts($cartItemsWithTaxesAndCosts, $key, $order, $orderItem, $cartItems);
 
             //create subscription
-            $this->createSubscription($request, $product, $order, $cartItemsWithTaxesAndCosts, $key, $cartItem, $user, $currency, $paymentMethodId, $payment);
-
+            if($product['type'] == config('constants.TYPE_SUBSCRIPTION'))
+            {
+                $this->createSubscription(
+                    $request->get('brand', ConfigService::$brand),
+                    $product,
+                    $order,
+                    $cartItemsWithTaxesAndCosts,
+                    $key,
+                    $cartItem,
+                    $user,
+                    $currency,
+                    $paymentMethodId,
+                    $payment,
+                    true);
+            }
             //product fulfillment
             if($product['is_physical'])
             {
@@ -508,7 +551,7 @@ class OrderFormController extends Controller
         $charge =
             $this->stripePaymentGateway->chargeCustomerCard(
                 $request->get('gateway'),
-                $cartItemsWithTaxesAndCosts['totalDue'],
+                $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
                 $currency,
                 $card,
                 $customerCreditCard
@@ -553,14 +596,14 @@ class OrderFormController extends Controller
         $billingAgreementId =
             $this->payPalPaymentGateway->createBillingAgreement(
                 $request->get('gateway'),
-                $cartItemsWithTaxesAndCosts['totalDue'],
+                $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
                 $currency,
                 $request->get('validated-express-checkout-token')
             );
         $transactionId      =
             $this->payPalPaymentGateway->chargeBillingAgreement(
                 $request->get('gateway'),
-                $cartItemsWithTaxesAndCosts['totalDue'],
+                $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
                 $currency,
                 $billingAgreementId
             );
@@ -590,19 +633,29 @@ class OrderFormController extends Controller
      * @throws \Railroad\Ecommerce\Exceptions\UnprocessableEntityException
      */
     private function createSubscription(
-        OrderFormSubmitRequest $request,
-        $product,
+        $brand,
+        $product = null,
         $order,
         $cartItemsWithTaxesAndCosts,
-        $key,
-        $cartItem,
+        $key = 0,
+        $cartItem = [],
         $user,
         $currency,
         $paymentMethodId,
-        $payment
+        $payment,
+        $applyDiscounts = false,
+        $totalCyclesDue = null
     ) {
+        $type         = config('constants.TYPE_SUBSCRIPTION');
+
         //calculate subscription next bill date
-        if(!empty($product['subscription_interval_type']))
+        if(is_null($product))
+        {
+            $nextBillDate                = Carbon::now()->addMonths(1);
+            $type                        = config('constants.TYPE_PAYMENT_PLAN');
+            $subscriptionPricePerPayment = $cartItemsWithTaxesAndCosts['pricePerPayment'];
+        }
+        else if(!empty($product['subscription_interval_type']))
         {
             if($product['subscription_interval_type'] == config('constants.INTERVAL_TYPE_MONTHLY'))
             {
@@ -616,57 +669,57 @@ class OrderFormController extends Controller
             {
                 $nextBillDate = Carbon::now()->addDays($product['subscription_interval_count']);
             }
-            else
-            {
-                throw new UnprocessableEntityException('Failed to create subscription for order id: ' . $order['id']);
-            }
-
-            //apply subscription discounts
-            if(array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems'][$key]))
-            {
-                if($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_type'] == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE)
-                {
-                    //add the days from the discount to the subscription next bill date
-                    $nextBillDate = $nextBillDate->addDays($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['amount']);
-                }
-                elseif($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_type'] == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE)
-                {
-                    //calculate subscription price per payment after discount
-                    $subscriptionPricePerPayment = $cartItem['price'] - $cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['amount'];
-                }
-            }
-
-            //create subscription
-            $subscription = $this->subscriptionRepository->create(
-                [
-                    'brand'                   => $request->get('brand', ConfigService::$brand),
-                    'type'                    => 'subscription',
-                    'user_id'                 => $user['id'],
-                    'order_id'                => $order['id'],
-                    'product_id'              => $product['id'],
-                    'is_active'               => true,
-                    'start_date'              => Carbon::now()->toDateTimeString(),
-                    'paid_until'              => $nextBillDate->toDateTimeString(),
-                    'total_price_per_payment' => $subscriptionPricePerPayment ?? $cartItem['price'],
-                    'tax_per_payment'         => $cartItemsWithTaxesAndCosts['totalTax'],
-                    'shipping_per_payment'    => 0,
-                    'currency'                => $currency,
-                    'interval_type'           => $product['subscription_interval_type'],
-                    'interval_count'          => $product['subscription_interval_count'],
-                    'total_cycles_paid'       => 1,
-                    'payment_method_id'       => $paymentMethodId,
-                    'created_on'              => Carbon::now()->toDateTimeString(),
-                ]
-            );
-            // attach subscription to payment
-            $this->subscriptionPaymentRepository->create(
-                [
-                    'subscription_id' => $subscription['id'],
-                    'payment_id'      => $payment['id'],
-                    'created_on'      => Carbon::now()->toDateTimeString(),
-                ]
-            );
         }
+        else
+        {
+            throw new UnprocessableEntityException('Failed to create subscription for order id: ' . $order['id']);
+        }
+        //apply subscription discounts
+        if(($applyDiscounts) && (array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems'][$key])))
+        {
+            if($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_type'] == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE)
+            {
+                //add the days from the discount to the subscription next bill date
+                $nextBillDate = $nextBillDate->addDays($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['amount']);
+            }
+            elseif($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_type'] == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE)
+            {
+                //calculate subscription price per payment after discount
+                $subscriptionPricePerPayment = $cartItem['price'] - $cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['amount'];
+            }
+        }
+
+        //create subscription
+        $subscription = $this->subscriptionRepository->create(
+            [
+                'brand'                   => $brand,
+                'type'                    => $type,
+                'user_id'                 => $user['id'],
+                'order_id'                => $order['id'],
+                'product_id'              => $product['id'] ?? null,
+                'is_active'               => true,
+                'start_date'              => Carbon::now()->toDateTimeString(),
+                'paid_until'              => $nextBillDate->toDateTimeString(),
+                'total_price_per_payment' => $subscriptionPricePerPayment ?? $cartItem['price'],
+                'tax_per_payment'         => $cartItemsWithTaxesAndCosts['totalTax'],
+                'shipping_per_payment'    => 0,
+                'currency'                => $currency,
+                'interval_type'           => $product['subscription_interval_type'] ?? config('constants.INTERVAL_TYPE_MONTHLY'),
+                'interval_count'          => $product['subscription_interval_count'] ?? 1,
+                'total_cycles_paid'       => 1,
+                'total_cycles_due'        => $totalCyclesDue,
+                'payment_method_id'       => $paymentMethodId,
+                'created_on'              => Carbon::now()->toDateTimeString(),
+            ]
+        );
+        // attach subscription to payment
+        $this->subscriptionPaymentRepository->create(
+            [
+                'subscription_id' => $subscription['id'],
+                'payment_id'      => $payment['id'],
+                'created_on'      => Carbon::now()->toDateTimeString(),
+            ]
+        );
     }
 
     /**
@@ -703,7 +756,7 @@ class OrderFormController extends Controller
             [
                 'due'                 => $cartItemsWithTaxesAndCosts['totalDue'],
                 'tax'                 => $cartItemsWithTaxesAndCosts['totalTax'],
-                'paid'                => $cartItemsWithTaxesAndCosts['totalDue'],
+                'paid'                => $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
                 'brand'               => $request->input('brand', ConfigService::$brand),
                 'user_id'             => $user['id'] ?? null,
                 'customer_id'         => $customer['id'] ?? null,
@@ -739,7 +792,7 @@ class OrderFormController extends Controller
         $payment = $this->paymentRepository->create(
             [
                 'due'               => $cartItemsWithTaxesAndCosts['totalDue'],
-                'paid'              => $cartItemsWithTaxesAndCosts['totalDue'],
+                'paid'              => $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
                 'refunded'          => 0,
                 'type'              => 'order',
                 'external_id'       => $charge['id'] ?? $transactionId,
@@ -786,7 +839,7 @@ class OrderFormController extends Controller
      * @param $orderItem
      * @param $cartItems
      */
-    private function applyOrderItemDiscounts($cartItemsWithTaxesAndCosts, $key, $order, $orderItem, $cartItems): void
+    private function applyOrderItemDiscounts($cartItemsWithTaxesAndCosts, $key, $order, $orderItem, $cartItems)
     {
         //apply order item discount
         if(array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems'][$key]))
@@ -803,7 +856,7 @@ class OrderFormController extends Controller
             $itemAmountDiscounted = $this->discountService->getAmountDiscounted([$cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']], $cartItemsWithTaxesAndCosts['totalDue'], $cartItems);
             $this->orderItemRepository->update($orderItem['id'], [
                 'discount'    => $itemAmountDiscounted,
-                'total_price' => max((float)($orderItem['total_price'] - $itemAmountDiscounted), 0)
+                'total_price' => max((float) ($orderItem['total_price'] - $itemAmountDiscounted), 0)
             ]);
         }
     }

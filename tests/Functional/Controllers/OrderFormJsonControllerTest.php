@@ -1791,7 +1791,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]);
 
         // Assert a message was sent to the given users...
-        Mail::assertSent(OrderInvoice::class, function ($mail)  {
+        Mail::assertSent(OrderInvoice::class, function ($mail) {
             $mail->build();
 
             return $mail->hasTo(auth()->user()['email']) &&
@@ -1804,5 +1804,96 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         //assert cart it's empty after submit
         $this->assertEmpty($this->cartService->getAllCartItems());
+    }
+
+    public function test_payment_plan()
+    {
+        $userId      = $this->createAndLogInNewUser();
+        $fingerPrint = '4242424242424242';
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')->willReturn(['data' => '']);
+        $fakerCustomer        = new Customer();
+        $fakerCustomer->email = $this->faker->email;
+        $this->stripeExternalHelperMock->method('createCustomer')->willReturn($fakerCustomer);
+
+        $fakerCard              = new Card();
+        $fakerCard->fingerprint = $fingerPrint;
+        $fakerCard->brand       = $this->faker->word;
+        $fakerCard->last4       = $this->faker->randomNumber(3);
+        $fakerCard->exp_year    = 2020;
+        $fakerCard->exp_month   = 12;
+        $fakerCard->id          = $this->faker->word;
+        $this->stripeExternalHelperMock->method('createCard')->willReturn($fakerCard);
+
+        $fakerCharge           = new Charge();
+        $fakerCharge->id       = $this->faker->word;
+        $fakerCharge->currency = 'cad';
+        $fakerCharge->amount   = 100;
+        $fakerCharge->status   = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')->willReturn($fakerToken);
+
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption([
+            'country'  => 'Canada',
+            'active'   => 1,
+            'priority' => 1
+        ]));
+        $shippingCost   = $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min'                => 0,
+            'max'                => 10,
+            'price'              => 5.50
+        ]));
+
+        $product = $this->productRepository->create($this->faker->product([
+            'price'                       => 130,
+            'type'                        => config('constants.TYPE_PRODUCT'),
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 1,
+            'weight'                      => 2,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+
+        $cart = $this->cartService->addCartItem($product['name'],
+            $product['description'],
+            3,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id']
+            ]);
+
+        $expirationDate = $this->faker->creditCardExpirationDate;
+        $results        = $this->call('PUT', '/order',
+            [
+                'payment_method_type'        => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'billing-region'             => $this->faker->word,
+                'billing-zip-or-postal-code' => $this->faker->postcode,
+                'billing-country'            => 'Canada',
+                'company_name'               => $this->faker->creditCardType,
+                'credit-card-year-selector'  => $expirationDate->format('Y'),
+                'credit-card-month-selector' => $expirationDate->format('m'),
+                'credit-card-number'         => $fingerPrint,
+                'credit-card-cvv'            => $this->faker->randomNumber(4),
+                'gateway'                    => 'drumeo',
+                'card-token'                 => '4242424242424242',
+                'shipping-first-name'        => $this->faker->firstName,
+                'shipping-last-name'         => $this->faker->lastName,
+                'shipping-address-line-1'    => $this->faker->address,
+                'shipping-city'              => 'Canada',
+                'shipping-region'            => 'ab',
+                'shipping-zip'               => $this->faker->postcode,
+                'shipping-country'           => 'Canada',
+                'payment-plan-selector'            => 2
+            ]);
+
+        $this->assertEquals(200, $results->getStatusCode());
     }
 }

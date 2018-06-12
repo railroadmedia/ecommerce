@@ -10,6 +10,7 @@ return [
     'RENEWAL_PAYMENT_TYPE'            => 'renewal',
     'TYPE_PRODUCT'                    => 'product',
     'TYPE_SUBSCRIPTION'               => 'subscription',
+    'TYPE_PAYMENT_PLAN'               => 'payment plan',
     'INTERVAL_TYPE_DAILY'             => 'day',
     'INTERVAL_TYPE_MONTHLY'           => 'month',
     'INTERVAL_TYPE_YEARLY'            => 'year'

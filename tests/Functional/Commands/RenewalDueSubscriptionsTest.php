@@ -86,9 +86,12 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'currency'    => 'CAD',
                 'due' => $this->faker->numberBetween(1,100)
             ]));
-            $product = $this->productRepository->create($this->faker->product());
+            $product = $this->productRepository->create($this->faker->product([
+                'type' => config('constants.TYPE_SUBSCRIPTION')
+            ]));
             $subscription = $this->subscriptionRepository->create($this->faker->subscription([
                 'user_id' => $userId,
+                'type' => config('constants.TYPE_SUBSCRIPTION'),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()->subYear(1),
                 'product_id' => $product['id'],
@@ -96,7 +99,8 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'interval_type' => config('constants.INTERVAL_TYPE_YEARLY'),
                 'interval_count' => 1,
                 'total_cycles_paid' => 1,
-                'total_price_per_payment' => $payment['due']
+                'total_price_per_payment' => $payment['due'],
+                'payment_method_id' => $paymentMethod['id']
             ]));
 
             $subscriptionPayment = $this->subscriptionPaymentRepository->create([
@@ -109,7 +113,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $initialSubscriptions[] = $subscription;
         }
 
-        $this->artisan('renewalDueSubscriptions');
+         $this->artisan('renewalDueSubscriptions');
 
         for($i = 0; $i < 10; $i++)
         {

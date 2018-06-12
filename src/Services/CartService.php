@@ -11,6 +11,8 @@ class CartService
 
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
+    const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
+    const PAYMENT_PLAN_LOCKED_SESSION_KEY = 'order-form-payment-plan-locked';
 
     /**
      * CartService constructor.
@@ -137,6 +139,7 @@ class CartService
     public function unlockCart()
     {
         $this->removeAllItems();
+        $this->unlockPaymentPlan();
 
         $this->session->put(ConfigService::$brand . '-' . self::LOCKED_SESSION_KEY, false);
     }
@@ -179,4 +182,41 @@ class CartService
         }
         return null;
     }
+
+    /**
+     * @param $numberOfPayments
+     */
+    public function setPaymentPlanNumberOfPayments($numberOfPayments)
+    {
+        if (empty($numberOfPayments) || $numberOfPayments == 1) {
+            $this->session->put(self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY, 1);
+        } else {
+            $this->session->put(self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY, $numberOfPayments);
+        }
+    }
+
+    /**
+     * @return mixed|integer
+     */
+    public function getPaymentPlanNumberOfPayments()
+    {
+        if ($this->session->has(self::PAYMENT_PLAN_LOCKED_SESSION_KEY) &&
+            $this->session->get(self::PAYMENT_PLAN_LOCKED_SESSION_KEY) > 0
+        ) {
+            return $this->session->get(self::PAYMENT_PLAN_LOCKED_SESSION_KEY, 1);
+        }
+
+        return $this->session->get(self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY, 1);
+    }
+
+    public function lockPaymentPlan($numberOfPaymentsToForce)
+    {
+        $this->session->put(self::PAYMENT_PLAN_LOCKED_SESSION_KEY, $numberOfPaymentsToForce);
+    }
+
+    public function unlockPaymentPlan()
+    {
+        $this->session->remove(self::PAYMENT_PLAN_LOCKED_SESSION_KEY);
+    }
+
 }
