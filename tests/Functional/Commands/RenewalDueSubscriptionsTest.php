@@ -51,6 +51,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
     public function setUp()
     {
         parent::setUp();
+
         $this->creditCardRepository = $this->app->make(CreditCardRepository::class);
         $this->paymentMethodRepository = $this->app->make(PaymentMethodRepository::class);
         $this->paymentRepository = $this->app->make(PaymentRepository::class);
@@ -62,12 +63,13 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
     public function test_command()
     {
         $userId         = $this->createAndLogInNewUser();
+        $due    = $this->faker->numberBetween(0, 1000);
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
         $this->stripeExternalHelperMock->method('retrieveCard')->willReturn(new Card());
         $fakerCharge           = new Charge();
-        $fakerCharge->currency = 'CAD';
-        $fakerCharge->amount   = rand();
+        $fakerCharge->currency = 'cad';
+        $fakerCharge->amount   = $due;
         $fakerCharge->status   = 'succeeded';
         $this->stripeExternalHelperMock->method('chargeCard')->willReturn($fakerCharge);
 
@@ -91,14 +93,15 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]));
             $subscription = $this->subscriptionRepository->create($this->faker->subscription([
                 'user_id' => $userId,
-                'type' => config('constants.TYPE_SUBSCRIPTION'),
+                'type' => $this->faker->randomElement([config('constants.TYPE_SUBSCRIPTION'), config('constants.TYPE_PAYMENT_PLAN')]),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()->subYear(1),
                 'product_id' => $product['id'],
                 'currency'    => 'CAD',
-                'interval_type' => config('constants.INTERVAL_TYPE_YEARLY'),
+                'interval_type' => config('constants.INTERVAL_TYPE_MONTHLY'),
                 'interval_count' => 1,
                 'total_cycles_paid' => 1,
+                'total_cycles_due' => $this->faker->numberBetween(1,5),
                 'total_price_per_payment' => $payment['due'],
                 'payment_method_id' => $paymentMethod['id']
             ]));
@@ -109,18 +112,22 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'created_on' => Carbon::now()->toDateTimeString()
             ]);
 
+            if(($subscription['type'] != config('constants.TYPE_PAYMENT_PLAN')) ||
+                ((int)$subscription['total_cycles_paid'] < (int)$subscription['total_cycles_due']))
+            {
+                $initialSubscriptions[] = $subscription;
+            }
 
-            $initialSubscriptions[] = $subscription;
         }
 
          $this->artisan('renewalDueSubscriptions');
 
-        for($i = 0; $i < 10; $i++)
+        for($i = 0; $i < count($initialSubscriptions); $i++)
         {
             $this->assertDatabaseHas(ConfigService::$tableSubscription,
                 [
                     'id'                => $initialSubscriptions[$i]['id'],
-                    'paid_until'        => Carbon::now()->addYear($initialSubscriptions[$i]['interval_count'])->toDateTimeString(),
+                    'paid_until'        => Carbon::now()->addMonth($initialSubscriptions[$i]['interval_count'])->toDateTimeString(),
                     'is_active'         => 1,
                     'total_cycles_paid' => $initialSubscriptions[$i]['total_cycles_paid'] + 1,
                     'updated_on'        => Carbon::now()->toDateTimeString()

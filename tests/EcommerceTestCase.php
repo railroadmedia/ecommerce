@@ -63,10 +63,6 @@ class EcommerceTestCase extends BaseTestCase
     {
         parent::setUp();
 
-        $this->artisan('countries:migration');
-        $this->artisan('migrate');
-        $this->artisan('cache:clear');
-
         $this->faker           = Factory::create();
         $this->databaseManager = $this->app->make(DatabaseManager::class);
         $this->authManager     = $this->app->make(AuthManager::class);
@@ -87,6 +83,10 @@ class EcommerceTestCase extends BaseTestCase
         $this->app->instance(\Railroad\Ecommerce\ExternalHelpers\PayPal::class, $this->paypalExternalHelperMock);
 
         Carbon::setTestNow(Carbon::now());
+
+        $this->artisan('countries:migration');
+        $this->artisan('migrate');
+        $this->artisan('cache:clear');
     }
 
     /**

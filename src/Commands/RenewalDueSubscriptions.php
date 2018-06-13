@@ -60,6 +60,7 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         SubscriptionPaymentRepository $subscriptionPaymentRepository
     ) {
         parent::__construct();
+
         $this->subscriptionRepository        = $subscriptionRepository;
         $this->paymentRepository             = $paymentRepository;
         $this->stripePaymentGateway          = $stripePaymentGateway;
@@ -76,7 +77,7 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     {
         $this->info('------------------Renewal Due Subscriptions command------------------');
         $dueSubscriptions = $this->subscriptionRepository->query()
-            ->select(ConfigService::$tableSubscription.'.*')
+            ->select(ConfigService::$tableSubscription . '.*')
             ->join(
                 ConfigService::$tableSubscriptionPayment,
                 ConfigService::$tableSubscription . '.id',
@@ -99,6 +100,12 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
 
         foreach($dueSubscriptions as $dueSubcription)
         {
+            //check for payment plan if the user have already paid all the cycles
+            if(($dueSubcription['type'] == config('constants.TYPE_PAYMENT_PLAN')) &&
+                ((int)$dueSubcription['total_cycles_paid'] >= (int)$dueSubcription['total_cycles_due']))
+            {
+                continue;
+            }
             if($dueSubcription['payment_method']['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
             {
                 $customer = $this->stripePaymentGateway->getCustomer(
