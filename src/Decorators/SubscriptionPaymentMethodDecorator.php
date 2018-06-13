@@ -29,7 +29,8 @@ class SubscriptionPaymentMethodDecorator implements DecoratorInterface
 
         foreach ($subscriptions as $index => $subscription) {
             $subscriptions[$index]['payment_method'] =
-                ((array)$paymentMethods[$subscription['payment_method_id']]) ?? null;
+                isset($paymentMethods[$subscription['payment_method_id']]) ?
+                    (array)$paymentMethods[$subscription['payment_method_id']] : null;
         }
 
         return $subscriptions;
