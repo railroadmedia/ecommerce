@@ -1841,25 +1841,38 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]));
         $shippingCost   = $this->shippingCostsRepository->create($this->faker->shippingCost([
             'shipping_option_id' => $shippingOption['id'],
-            'min'                => 0,
+            'min'                => 5,
             'max'                => 10,
             'price'              => 5.50
         ]));
 
         $product = $this->productRepository->create($this->faker->product([
-            'price'                       => 130,
+            'price'                       => 247,
             'type'                        => config('constants.TYPE_PRODUCT'),
             'active'                      => 1,
             'description'                 => $this->faker->word,
-            'is_physical'                 => 1,
-            'weight'                      => 2,
+            'is_physical'                 => 0,
+            'weight'                      =>0,
             'subscription_interval_type'  => '',
             'subscription_interval_count' => ''
         ]));
 
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => 'product amount off',
+            'amount' => 50
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product['id'],
+            'type'        => 'product quantity requirement',
+            'min'         => '1',
+            'max'         => '100'
+        ]));
+
         $cart = $this->cartService->addCartItem($product['name'],
             $product['description'],
-            3,
+            1,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
@@ -1874,7 +1887,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $results        = $this->call('PUT', '/order',
             [
                 'payment_method_type'        => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'billing-region'             => $this->faker->word,
+                'billing-region'             => 'british columbia',
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country'            => 'Canada',
                 'company_name'               => $this->faker->creditCardType,
@@ -1888,10 +1901,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-last-name'         => $this->faker->lastName,
                 'shipping-address-line-1'    => $this->faker->address,
                 'shipping-city'              => 'Canada',
-                'shipping-region'            => 'ab',
+                'shipping-region'            => 'british columbia',
                 'shipping-zip'               => $this->faker->postcode,
                 'shipping-country'           => 'Canada',
-                'payment-plan-selector'            => 2
+                'payment-plan-selector'            => 5
             ]);
 
         $this->assertEquals(200, $results->getStatusCode());

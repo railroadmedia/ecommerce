@@ -39,12 +39,15 @@ class TaxService
     private $cartService;
 
     /**
+     *
+     * /**
      * TaxService constructor.
      *
      * @param \Railroad\Ecommerce\Repositories\ProductRepository   $productRepository
      * @param \Railroad\Ecommerce\Repositories\OrderItemRepository $orderItemRepository
      * @param \Railroad\Ecommerce\Repositories\OrderRepository     $orderRepository
      * @param \Railroad\Ecommerce\Services\DiscountCriteriaService $discountCriteriaService
+     * @param \Railroad\Ecommerce\Services\DiscountService         $discountService
      */
     public function __construct(
         ProductRepository $productRepository,
@@ -151,14 +154,22 @@ class TaxService
             $financeCharge,
             2
         );
+
         if(!empty($paymentPlan) && $paymentPlan > 1)
         {
-            $initialPricePerPayment = round(
-                $cartItemsTotalDue / $paymentPlan + $shippingCostsWithDiscount + $taxAmount,
+
+            $pricePerPayment = round(
+                ($totalDue - $shippingCostsWithDiscount) / $paymentPlan,
                 2
             );
-            $pricePerPayment        = round(
-                $cartItemsTotalDue / $paymentPlan + $taxAmount,
+
+            /*
+             * We need to make sure we add any rounded off $$ back to the first payment.
+             */
+            $roundingFirstPaymentAdjustment = ($pricePerPayment * $paymentPlan) - ($totalDue - $shippingCostsWithDiscount);
+
+            $initialPricePerPayment = round(
+                $pricePerPayment - $roundingFirstPaymentAdjustment + $shippingCostsWithDiscount,
                 2
             );
         }
