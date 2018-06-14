@@ -111,6 +111,7 @@ class TaxService
         }
 
         $taxRate          = $this->getTaxRate($country, $region);
+
         $discountsToApply = [];
 
         foreach($cartItems as $key => $item)
@@ -129,14 +130,17 @@ class TaxService
             }
         }
 
-        $cartItemsTotalDue = array_sum(array_column($cartItems, 'totalPrice'));
+
 
         $cartItems = $this->discountService->applyDiscounts($discountsToApply, $cartItems);
+
+        $cartItemsTotalDue = array_sum(array_column($cartItems, 'totalPrice'));
         $discount  = $this->discountService->getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cartItems);
 
         $shippingCostsWithDiscount = $this->discountService->getShippingCostsDiscounted($discountsToApply, $shippingCosts);
+        $cartItemsTotalDueDiscounted = $cartItemsTotalDue - $discount;
 
-        $productsTaxAmount = round($cartItemsTotalDue * $taxRate, 2);
+        $productsTaxAmount = round($cartItemsTotalDueDiscounted * $taxRate, 2);
 
         $shippingTaxAmount = round((float) $shippingCostsWithDiscount * $taxRate, 2);
 
@@ -147,8 +151,7 @@ class TaxService
         $taxAmount = $productsTaxAmount + $shippingTaxAmount;
 
         $totalDue = $pricePerPayment = $initialPricePerPayment = round(
-            $cartItemsTotalDue -
-            $discount +
+            $cartItemsTotalDueDiscounted +
             $taxAmount +
             (float) $shippingCostsWithDiscount +
             $financeCharge,

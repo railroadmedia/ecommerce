@@ -439,7 +439,7 @@ class OrderFormController extends Controller
             );
 
             //apply order items discounts
-            $this->applyOrderItemDiscounts($cartItemsWithTaxesAndCosts, $key, $order, $orderItem, $cartItems);
+            $orderItem = $this->applyOrderItemDiscounts($cartItemsWithTaxesAndCosts, $key, $order, $orderItem, $cartItems);
 
             //create subscription
             if($product['type'] == config('constants.TYPE_SUBSCRIPTION'))
@@ -457,11 +457,12 @@ class OrderFormController extends Controller
                     $payment,
                     true);
             }
+
             //product fulfillment
-            if($product['is_physical'])
+            if($product['is_physical'] == 1)
             {
                 $this->orderItemFulfillmentRepository->create([
-                    'order_id'      => $orderItem['order_id'],
+                    'order_id'      => $order['id'],
                     'order_item_id' => $orderItem['id'],
                     'status'        => 'pending',
                     'created_on'    => Carbon::now()->toDateTimeString()
@@ -646,14 +647,16 @@ class OrderFormController extends Controller
         $applyDiscounts = false,
         $totalCyclesDue = null
     ) {
-        $type         = config('constants.TYPE_SUBSCRIPTION');
+        $type = config('constants.TYPE_SUBSCRIPTION');
 
-        //calculate subscription next bill date
+        //if the product it's not defined we should create a payment plan.
+        //Define payment plan next bill date, price per payment and tax per payment.
         if(is_null($product))
         {
-            $nextBillDate                = Carbon::now()->addMonths(1);
-            $type                        = config('constants.TYPE_PAYMENT_PLAN');
-            $subscriptionPricePerPayment = $cartItemsWithTaxesAndCosts['pricePerPayment'];
+            $nextBillDate                  = Carbon::now()->addMonths(1);
+            $type                          = config('constants.TYPE_PAYMENT_PLAN');
+            $subscriptionPricePerPayment   = $cartItemsWithTaxesAndCosts['pricePerPayment'];
+            $totalTaxSplitedPerPaymentPlan = $cartItemsWithTaxesAndCosts['totalTax'] / $totalCyclesDue;
         }
         else if(!empty($product['subscription_interval_type']))
         {
@@ -701,7 +704,7 @@ class OrderFormController extends Controller
                 'start_date'              => Carbon::now()->toDateTimeString(),
                 'paid_until'              => $nextBillDate->toDateTimeString(),
                 'total_price_per_payment' => $subscriptionPricePerPayment ?? $cartItem['price'],
-                'tax_per_payment'         => $cartItemsWithTaxesAndCosts['totalTax'],
+                'tax_per_payment'         => $totalTaxSplitedPerPaymentPlan ?? $cartItemsWithTaxesAndCosts['totalTax'],
                 'shipping_per_payment'    => 0,
                 'currency'                => $currency,
                 'interval_type'           => $product['subscription_interval_type'] ?? config('constants.INTERVAL_TYPE_MONTHLY'),
@@ -818,15 +821,18 @@ class OrderFormController extends Controller
     {
         $amountDiscounted = 0;
 
-        if(array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems']))
+        foreach($cartItemsWithTaxesAndCosts['cartItems'] as $item)
         {
-            //save order discount
-            $orderDiscount    = $this->orderDiscountRepository->create([
-                'order_id'    => $order['id'],
-                'discount_id' => $cartItemsWithTaxesAndCosts['cartItems']['applyDiscount']['discount_id'],
-                'created_on'  => Carbon::now()->toDateTimeString()
-            ]);
-            $amountDiscounted = array_sum(array_column($cartItems, 'totalPrice')) + $cartItemsWithTaxesAndCosts['shippingCosts'] - $cartItemsWithTaxesAndCosts['totalDue'];
+            if(array_key_exists('applyDiscount', $item))
+            {
+                //save order discount
+                $orderDiscount    = $this->orderDiscountRepository->create([
+                    'order_id'    => $order['id'],
+                    'discount_id' => $item['applyDiscount']['discount_id'],
+                    'created_on'  => Carbon::now()->toDateTimeString()
+                ]);
+                $amountDiscounted = array_sum(array_column($cartItems, 'totalPrice')) + $cartItemsWithTaxesAndCosts['shippingCosts'] - $cartItemsWithTaxesAndCosts['totalDue'];
+            }
         }
 
         return $amountDiscounted;
@@ -844,7 +850,6 @@ class OrderFormController extends Controller
         //apply order item discount
         if(array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems'][$key]))
         {
-
             //save order item discount
             $orderDiscount = $this->orderDiscountRepository->create([
                 'order_id'      => $order['id'],
@@ -854,10 +859,13 @@ class OrderFormController extends Controller
             ]);
 
             $itemAmountDiscounted = $this->discountService->getAmountDiscounted([$cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']], $cartItemsWithTaxesAndCosts['totalDue'], $cartItems);
-            $this->orderItemRepository->update($orderItem['id'], [
+
+            $orderItem = $this->orderItemRepository->updateOrCreate(['id' => $orderItem['id']], [
                 'discount'    => $itemAmountDiscounted,
                 'total_price' => max((float) ($orderItem['total_price'] - $itemAmountDiscounted), 0)
             ]);
         }
+
+        return $orderItem;
     }
 }

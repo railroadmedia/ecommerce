@@ -645,7 +645,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]));
         $shippingCost   = $this->shippingCostsRepository->create($this->faker->shippingCost([
             'shipping_option_id' => $shippingOption['id'],
-            'min'                => 0,
+            'min'                => 1,
             'max'                => 10,
             'price'              => 5.50
         ]));
@@ -711,8 +711,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]);
 
         $this->assertEquals(200, $results->getStatusCode());
+        $tax = round(0.05 * ($product['price'] - $discount['amount']) + 0.05 * $shippingCost['price'], 2);
+
         $this->assertDatabaseHas(ConfigService::$tableOrder, [
-            'due'            => $product['price'] - $discount['amount'] + $shippingCost['price'] + 0.93,
+            'due'            => $product['price'] - $discount['amount'] + $shippingCost['price'] + $tax,
             'shipping_costs' => $shippingCost['price'],
             'user_id'        => $userId
         ]);
@@ -759,7 +761,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]));
 
         $product = $this->productRepository->create($this->faker->product([
-            'price'                       => 13,
+            'price'                       => 12.95,
             'type'                        => config('constants.TYPE_PRODUCT'),
             'active'                      => 1,
             'description'                 => $this->faker->word,
@@ -782,9 +784,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'max'         => 5
         ]));
 
-        $cart = $this->cartService->addCartItem($product['name'],
+        $quantity = 2;
+        $cart     = $this->cartService->addCartItem($product['name'],
             $product['description'],
-            2,
+            $quantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
@@ -813,14 +816,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-last-name'         => $this->faker->lastName,
                 'shipping-address-line-1'    => $this->faker->address,
                 'shipping-city'              => 'Canada',
-                'shipping-region'            => 'ab',
+                'shipping-region'            => 'bc',
                 'shipping-zip'               => $this->faker->postcode,
                 'shipping-country'           => 'Canada'
             ]);
 
+        $tax = round(0.05 * ($product['price'] - $discount['amount']) * $quantity + 0.05 * $shippingCost['price'], 2);
+
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertDatabaseHas(ConfigService::$tableOrder, [
-            'due'            => ($product['price'] - $discount['amount']) * 2 + $shippingCost['price'] + 1.58,
+            'due'            => ($product['price'] - $discount['amount']) * 2 + $shippingCost['price'] + $tax,
             'shipping_costs' => $shippingCost['price'],
             'user_id'        => $userId
         ]);
@@ -1811,8 +1816,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId      = $this->createAndLogInNewUser();
         $fingerPrint = '4242424242424242';
         $this->stripeExternalHelperMock->method('getCustomersByEmail')->willReturn(['data' => '']);
-        $fakerCustomer        = new Customer();
-        $fakerCustomer->email = $this->faker->email;
+        $fakerCustomer = new Customer();
+        // $fakerCustomer->email = $this->faker->email;
         $this->stripeExternalHelperMock->method('createCustomer')->willReturn($fakerCustomer);
 
         $fakerCard              = new Card();
@@ -1852,7 +1857,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'active'                      => 1,
             'description'                 => $this->faker->word,
             'is_physical'                 => 0,
-            'weight'                      =>0,
+            'weight'                      => 0,
             'subscription_interval_type'  => '',
             'subscription_interval_count' => ''
         ]));
@@ -1883,8 +1888,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product-id' => $product['id']
             ]);
 
-        $expirationDate = $this->faker->creditCardExpirationDate;
-        $results        = $this->call('PUT', '/order',
+        $expirationDate    = $this->faker->creditCardExpirationDate;
+        $paymentPlanOption = $this->faker->randomElement([2, 5]);
+        $results           = $this->call('PUT', '/order',
             [
                 'payment_method_type'        => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'billing-region'             => 'british columbia',
@@ -1904,9 +1910,165 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-region'            => 'british columbia',
                 'shipping-zip'               => $this->faker->postcode,
                 'shipping-country'           => 'Canada',
-                'payment-plan-selector'            => 5
+                'payment-plan-selector'      => $paymentPlanOption
             ]);
 
         $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableSubscription, [
+                'type'              => config('constants.TYPE_PAYMENT_PLAN'),
+                'brand'             => ConfigService::$brand,
+                'user_id'           => $userId,
+                'start_date'        => Carbon::now()->toDateTimeString(),
+                'paid_until'        => Carbon::now()->addMonth(1)->toDateTimeString(),
+                'total_cycles_due'  => $paymentPlanOption,
+                'total_cycles_paid' => 1,
+                'created_on'        => Carbon::now()->toDateTimeString()
+            ]
+        );
+    }
+
+    public function test_multiple_discounts()
+    {
+        $userId      = $this->createAndLogInNewUser();
+        $fingerPrint = '4242424242424242';
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')->willReturn(['data' => '']);
+        $fakerCustomer = new Customer();
+        // $fakerCustomer->email = $this->faker->email;
+        $this->stripeExternalHelperMock->method('createCustomer')->willReturn($fakerCustomer);
+
+        $fakerCard              = new Card();
+        $fakerCard->fingerprint = $fingerPrint;
+        $fakerCard->brand       = $this->faker->word;
+        $fakerCard->last4       = $this->faker->randomNumber(3);
+        $fakerCard->exp_year    = 2020;
+        $fakerCard->exp_month   = 12;
+        $fakerCard->id          = $this->faker->word;
+        $this->stripeExternalHelperMock->method('createCard')->willReturn($fakerCard);
+
+        $fakerCharge           = new Charge();
+        $fakerCharge->id       = $this->faker->word;
+        $fakerCharge->currency = 'cad';
+        $fakerCharge->amount   = 100;
+        $fakerCharge->status   = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')->willReturn($fakerToken);
+
+        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption([
+            'country'  => 'Canada',
+            'active'   => 1,
+            'priority' => 1
+        ]));
+        $shippingCost   = $this->shippingCostsRepository->create($this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min'                => 5,
+            'max'                => 10,
+            'price'              => 19
+        ]));
+
+        $product1 = $this->productRepository->create($this->faker->product([
+            'price'                       => 147,
+            'type'                        => config('constants.TYPE_PRODUCT'),
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+        $product2 = $this->productRepository->create($this->faker->product([
+            'price'                       => 79,
+            'type'                        => config('constants.TYPE_PRODUCT'),
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 1,
+            'weight'                      => 5.10,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => 'product amount off',
+            'amount' => 20
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product1['id'],
+            'type'        => 'product quantity requirement',
+            'min'         => '1',
+            'max'         => '100'
+        ]));
+        $discount2         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => 'product amount off',
+            'amount' => 20
+        ]));
+        $discountCriteria2 = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount2['id'],
+            'product_id'  => $product2['id'],
+            'type'        => 'product quantity requirement',
+            'min'         => '1',
+            'max'         => '100'
+        ]));
+
+        $this->cartService->addCartItem($product1['name'],
+            $product1['description'],
+            1,
+            $product1['price'],
+            $product1['is_physical'],
+            $product1['is_physical'],
+            $product1['subscription_interval_type'],
+            $product1['subscription_interval_count'],
+            $product1['weight'],
+            [
+                'product-id' => $product1['id']
+            ]);
+        $this->cartService->addCartItem($product2['name'],
+            $product2['description'],
+            1,
+            $product2['price'],
+            $product2['is_physical'],
+            $product2['is_physical'],
+            $product2['subscription_interval_type'],
+            $product2['subscription_interval_count'],
+            $product2['weight'],
+            [
+                'product-id' => $product2['id']
+            ]);
+
+        $expirationDate    = $this->faker->creditCardExpirationDate;
+
+        $results           = $this->call('PUT', '/order',
+            [
+                'payment_method_type'        => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'billing-region'             => 'ro',
+                'billing-zip-or-postal-code' => $this->faker->postcode,
+                'billing-country'            => 'Romania',
+                'company_name'               => $this->faker->creditCardType,
+                'credit-card-year-selector'  => $expirationDate->format('Y'),
+                'credit-card-month-selector' => $expirationDate->format('m'),
+                'credit-card-number'         => $fingerPrint,
+                'credit-card-cvv'            => $this->faker->randomNumber(4),
+                'gateway'                    => 'drumeo',
+                'card-token'                 => '4242424242424242',
+                'shipping-first-name'        => $this->faker->firstName,
+                'shipping-last-name'         => $this->faker->lastName,
+                'shipping-address-line-1'    => $this->faker->address,
+                'shipping-city'              => 'Canada',
+                'shipping-region'            => 'british columbia',
+                'shipping-zip'               => $this->faker->postcode,
+                'shipping-country'           => 'Canada'
+            ]);
+dd($results);
+        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertDatabaseHas(ConfigService::$tableOrder,
+            [
+                'due' => ($product1['price'] - $discount['amount'] + $product2['price'] - $discount2['amount'] + $shippingCost['price']),
+                'tax' => 0,
+                'shipping_costs' => $shippingCost['price']
+            ]);
     }
 }

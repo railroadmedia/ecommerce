@@ -26,6 +26,4 @@ class OrderItemRepository extends RepositoryBase
         }
         return Decorator::decorate($results, 'orderItem');
     }
-
-
 }

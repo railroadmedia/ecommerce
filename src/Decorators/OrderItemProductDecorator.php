@@ -30,7 +30,7 @@ class OrderItemProductDecorator implements DecoratorInterface
 
         foreach ($orderItems as $index => $orderItem) {
             $orderItems[$index]['product'] =
-                ((array)$products[$orderItem['product_id']]) ?? null;
+                isset($products[$orderItem['product_id']]) ? (array) $products[$orderItem['product_id']] : null;
         }
 
         return $orderItems;
