@@ -420,16 +420,18 @@ class OrderFormController extends Controller
         foreach($cartItems as $key => $cartItem)
         {
             $product = $this->productRepository->read($cartItem['options']['product-id']);
+
             if(!$product['active'])
             {
                 continue;
             }
-            $orderItem = $this->orderItemRepository->create(
+
+            $orderItem = $this->orderItemRepository->query()->create(
                 [
                     'order_id'       => $order['id'],
                     'product_id'     => $product['id'],
                     'quantity'       => $cartItem['quantity'],
-                    'initial_price'  => $cartItem['price'],
+                    'initial_price'  => $cartItem['price'] * $cartItem['quantity'],
                     'discount'       => $amountDiscounted,
                     'tax'            => $cartItemsWithTaxesAndCosts['totalTax'],
                     'shipping_costs' => $cartItemsWithTaxesAndCosts['shippingCosts'],
@@ -860,9 +862,10 @@ class OrderFormController extends Controller
 
             $itemAmountDiscounted = $this->discountService->getAmountDiscounted([$cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']], $cartItemsWithTaxesAndCosts['totalDue'], $cartItems);
 
-            $orderItem = $this->orderItemRepository->updateOrCreate(['id' => $orderItem['id']], [
+            return $this->orderItemRepository->update($orderItem['id'], [
+                'order_id'    => $order['id'],
                 'discount'    => $itemAmountDiscounted,
-                'total_price' => max((float) ($orderItem['total_price'] - $itemAmountDiscounted), 0)
+                'total_price' => max((float) ($orderItem['initial_price'] - $itemAmountDiscounted), 0)
             ]);
         }
 

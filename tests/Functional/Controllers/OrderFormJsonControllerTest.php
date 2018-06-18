@@ -1169,7 +1169,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'product_id'    => $product['id'],
                 'quantity'      => $quantity,
-                'initial_price' => $product['price'],
+                'initial_price' => $product['price'] * $quantity,
                 'discount'      => $discount['amount'] * $quantity,
                 'total_price'   => ($product['price'] - $discount['amount']) * $quantity
             ]);
@@ -1246,9 +1246,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'product_id'    => $product['id'],
                 'quantity'      => $quantity,
-                'initial_price' => $product['price'],
-                'discount'      => $discount['amount'] / 100 * $product['price'] * $quantity,
-                'total_price'   => ($product['price'] - $discount['amount'] / 100 * $product['price']) * $quantity
+                'initial_price' => $product['price'] * $quantity,
+                'discount'      => $product['price'] * $quantity * $discount['amount'] / 100,
+                'total_price'   => ($product['price'] - $product['price'] * $discount['amount'] / 100) * $quantity
             ]);
     }
 
@@ -1342,7 +1342,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'product_id'    => $product['id'],
                 'quantity'      => $quantity,
-                'initial_price' => $product['price'],
+                'initial_price' => $product['price'] * $quantity,
                 'total_price'   => $product['price'] * $quantity + $shippingCosts['price'] - $discount['amount']
             ]);
     }
@@ -1437,7 +1437,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'product_id'    => $product['id'],
                 'quantity'      => $quantity,
-                'initial_price' => $product['price'],
+                'initial_price' => $product['price'] * $quantity,
                 'total_price'   => $product['price'] * $quantity + $shippingCosts['price'] - $discount['amount'] / 100 * $shippingCosts['price']
             ]);
     }
@@ -1532,7 +1532,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'product_id'    => $product['id'],
                 'quantity'      => $quantity,
-                'initial_price' => $product['price'],
+                'initial_price' => $product['price'] * $quantity,
                 'total_price'   => $product['price'] * $quantity + $discount['amount']
             ]);
     }
@@ -1969,7 +1969,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'price'              => 19
         ]));
 
-        $product1 = $this->productRepository->create($this->faker->product([
+        $product1          = $this->productRepository->create($this->faker->product([
             'price'                       => 147,
             'type'                        => config('constants.TYPE_PRODUCT'),
             'active'                      => 1,
@@ -1979,7 +1979,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'subscription_interval_type'  => '',
             'subscription_interval_count' => ''
         ]));
-        $product2 = $this->productRepository->create($this->faker->product([
+        $product2          = $this->productRepository->create($this->faker->product([
             'price'                       => 79,
             'type'                        => config('constants.TYPE_PRODUCT'),
             'active'                      => 1,
@@ -1989,12 +1989,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'subscription_interval_type'  => '',
             'subscription_interval_count' => ''
         ]));
-        $discount         = $this->discountRepository->create($this->faker->discount([
+        $discount          = $this->discountRepository->create($this->faker->discount([
             'active' => true,
             'type'   => 'product amount off',
             'amount' => 20
         ]));
-        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+        $discountCriteria  = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
             'discount_id' => $discount['id'],
             'product_id'  => $product1['id'],
             'type'        => 'product quantity requirement',
@@ -2039,9 +2039,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product-id' => $product2['id']
             ]);
 
-        $expirationDate    = $this->faker->creditCardExpirationDate;
+        $expirationDate = $this->faker->creditCardExpirationDate;
 
-        $results           = $this->call('PUT', '/order',
+        $results = $this->call('PUT', '/order',
             [
                 'payment_method_type'        => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'billing-region'             => 'ro',
@@ -2062,12 +2062,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-zip'               => $this->faker->postcode,
                 'shipping-country'           => 'Canada'
             ]);
-dd($results);
+
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertDatabaseHas(ConfigService::$tableOrder,
             [
-                'due' => ($product1['price'] - $discount['amount'] + $product2['price'] - $discount2['amount'] + $shippingCost['price']),
-                'tax' => 0,
+                'due'            => ($product1['price'] - $discount['amount'] + $product2['price'] - $discount2['amount'] + $shippingCost['price']),
+                'paid'            => ($product1['price'] - $discount['amount'] + $product2['price'] - $discount2['amount'] + $shippingCost['price']),
+                'tax'            => 0,
                 'shipping_costs' => $shippingCost['price']
             ]);
     }
