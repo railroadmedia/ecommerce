@@ -130,8 +130,6 @@ class TaxService
             }
         }
 
-
-
         $cartItems = $this->discountService->applyDiscounts($discountsToApply, $cartItems);
 
         $cartItemsTotalDue = array_sum(array_column($cartItems, 'totalPrice'));

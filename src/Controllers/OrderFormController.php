@@ -266,7 +266,8 @@ class OrderFormController extends Controller
         return array_merge(
             [
                 'shippingAddress' => $shippingAddress,
-                'billingAddress'  => $billingAddress
+                'billingAddress'  => $billingAddress,
+                'paymentPlanOptions' => $this->paymentPlanService->getPaymentPlanPricingForCartItems()
             ],
             $cartItemsWithTaxesAndCosts
         );

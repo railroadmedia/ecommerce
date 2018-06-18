@@ -2158,6 +2158,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]);
 
         $results = $this->call('GET', '/order');
+
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset([
@@ -2168,7 +2169,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'totalPrice'              => $product1['price'],
                 'requiresShippingAddress' => $product1['is_physical'] ?? 0,
                 'requiresBillinggAddress' => $product1['is_physical'] ?? 0,
-                'options' => [
+                'options'                 => [
                     'product-id' => $product1['id']
                 ]
             ],
@@ -2179,13 +2180,20 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'totalPrice'              => $product2['price'],
                 'requiresShippingAddress' => $product2['is_physical'] ?? 0,
                 'requiresBillinggAddress' => $product2['is_physical'] ?? 0,
-                'options' => [
+                'options'                 => [
                     'product-id' => $product2['id']
                 ]
             ]
         ], $results->decodeResponseJson('cartItems'));
 
-        $tax = 27.12;
-        $this->assertEquals($product1['price'] + $product2['price']+ $tax, $results->decodeResponseJson('totalDue'));
+        $tax           = 27.12;
+        $financeCharge = 1;
+        $this->assertEquals($product1['price'] + $product2['price'] + $tax, $results->decodeResponseJson('totalDue'));
+        $this->assertEquals([
+                1 => $product1['price'] + $product2['price'] + $tax,
+                2 => round(($product1['price'] + $product2['price'] + $tax + $financeCharge) / 2, 2) ,
+                5 => round(($product1['price'] + $product2['price'] + $tax + $financeCharge) / 5, 2)
+            ]
+            , $results->decodeResponseJson('paymentPlanOptions'));
     }
 }

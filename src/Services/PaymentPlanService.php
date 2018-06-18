@@ -54,8 +54,14 @@ class PaymentPlanService
      */
     public function isPaymentPlanEligible()
     {
-        $cartItems = $this->cartService->getAllCartItems();
-        if((!$this->hasSubscriptionItems($cartItems['cartItems'])) &&
+        $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+        $cartItems      = $this->taxService->calculateTaxesForCartItems(
+            $this->cartService->getAllCartItems(),
+            $billingAddress['country'],
+            $billingAddress['region']
+        );
+
+        if((!$this->hasSubscriptionItems($cartItems)) &&
             (($cartItems['totalDue'] - $cartItems['totalTax'] - $cartItems['shippingCosts']) > config('ecommerce.paymentPlanMinimumPrice')))
         {
             return true;
@@ -71,7 +77,7 @@ class PaymentPlanService
      */
     public function hasSubscriptionItems(array $cartItems)
     {
-        foreach($cartItems as $cartItem)
+        foreach($cartItems['cartItems'] as $cartItem)
         {
             $product = $this->productRepository->read($cartItem['options']['product-id']);
             if($product['type'] == config('constants.TYPE_SUBSCRIPTION'))
@@ -89,13 +95,16 @@ class PaymentPlanService
     public function getPaymentPlanPricingForCartItems()
     {
         $paymentPlanPricing = [];
-        $cartItems      = $this->cartService->getAllCartItems();
-        $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
-        foreach(config('ecommerce.paymentPlanOptions') as $paymentPlan)
+        if($this->isPaymentPlanEligible())
         {
-            $this->cartService->setPaymentPlanNumberOfPayments($paymentPlan);
-            $costsAndTaxes = $this->taxService->calculateTaxesForCartItems($cartItems, $billingAddress['country'], $billingAddress['region']);
-            $paymentPlanPricing[$paymentPlan] = $costsAndTaxes['pricePerPayment'];
+            $cartItems      = $this->cartService->getAllCartItems();
+            $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+            foreach(config('ecommerce.paymentPlanOptions') as $paymentPlan)
+            {
+                $this->cartService->setPaymentPlanNumberOfPayments($paymentPlan);
+                $costsAndTaxes                    = $this->taxService->calculateTaxesForCartItems($cartItems, $billingAddress['country'], $billingAddress['region']);
+                $paymentPlanPricing[$paymentPlan] = $costsAndTaxes['pricePerPayment'];
+            }
         }
 
         return $paymentPlanPricing;
