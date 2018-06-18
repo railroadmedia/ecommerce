@@ -27,8 +27,6 @@ Route::put(
     '/product',
     [
         'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@store',
-       // 'middleware' => ['permission'],
-      //  'permissions' => ['admin'],
     ]
 )->name('product.store');
 
@@ -36,8 +34,6 @@ Route::patch(
     '/product/{productId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@update',
-        //'middleware' => ['permission'],
-        //'permissions' => ['admin'],
     ]
 )->name('product.update');
 
@@ -45,8 +41,6 @@ Route::delete(
     '/product/{productId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@delete',
-        //'middleware' => ['permission'],
-        //'permissions' => ['admin'],
     ]
 )->name('product.delete');
 
@@ -54,8 +48,6 @@ Route::put(
     '/product/upload/',
     [
         'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@uploadThumbnail',
-        //'middleware' => ['permission'],
-        //'permissions' => ['admin'],
     ]
 )->name('product.upload');
 
@@ -73,8 +65,6 @@ Route::put(
     '/shipping-option',
     [
         'uses' => Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@store',
-        //'middleware' => ['permission'],
-        //'permissions' => ['admin'],
     ]
 )->name('shipping-option.store');
 
@@ -82,8 +72,6 @@ Route::patch(
     '/shipping-option/{shippingOptionId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@update',
-       // 'middleware' => ['permission'],
-       // 'permissions' => ['admin'],
     ]
 )->name('shipping-option.update');
 
@@ -91,8 +79,6 @@ Route::delete(
     '/shipping-option/{shippingOptionId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@delete',
-      //  'middleware' => ['permission'],
-       // 'permissions' => ['admin'],
     ]
 )->name('shipping-option.delete');
 
@@ -100,8 +86,6 @@ Route::put(
     '/shipping-cost',
     [
         'uses' => Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@store',
-      //  'middleware' => ['permission'],
-      //  'permissions' => ['admin'],
     ]
 )->name('shipping-cost-weight-range.store');
 
@@ -109,8 +93,6 @@ Route::patch(
     '/shipping-cost/{shippingCostId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@update',
-      //  'middleware' => ['permission'],
-      //  'permissions' => ['admin'],
     ]
 
 )->name('shipping-cost-weight-range.update');
@@ -119,8 +101,6 @@ Route::delete(
     '/shipping-cost/{shippingCostId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\ShippingCostsWeightRangeController::class . '@delete',
-      //  'middleware' => ['permission'],
-      //  'permissions' => ['admin'],
     ]
 )->name('shipping-cost-weight-range.delete');
 
@@ -128,8 +108,6 @@ Route::put(
     '/payment',
     [
         'uses' => Railroad\Ecommerce\Controllers\PaymentJsonController::class . '@store',
-       // 'middleware' => ['permission'],
-       // 'permissions' => ['admin', 'isOwner'],
     ]
 )->name('payment.store');
 
@@ -137,8 +115,6 @@ Route::put(
     '/refund',
     [
         'uses' => Railroad\Ecommerce\Controllers\RefundJsonController::class . '@store',
-      //  'middleware' => ['permission'],
-      //  'permissions' => ['admin', 'isOwner'],
     ]
 )->name('refund.store');
 
@@ -151,8 +127,6 @@ Route::patch(
     '/payment-method/{paymentMethodId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@update',
-     //   'middleware' => ['permission'],
-     //   'permissions' => ['admin', 'isOwner'],
     ]
 )->name('payment-method.update');
 
@@ -160,8 +134,6 @@ Route::delete(
     '/payment-method/{paymentMethodId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@delete',
-      //  'middleware' => ['permission'],
-      //  'permissions' => ['admin', 'isOwner'],
     ]
 )->name('payment-method.delete');
 
@@ -174,8 +146,6 @@ Route::patch(
     '/address/{addressId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\AddressJsonController::class . '@update',
-     //   'middleware' => ['permission'],
-     //   'permissions' => ['admin', 'isOwner'],
     ]
 )->name('address.update');
 
@@ -183,37 +153,8 @@ Route::delete(
     '/address/{addressId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\AddressJsonController::class . '@delete',
-      //  'middleware' => ['permission'],
-      //  'permissions' => ['admin', 'isOwner'],
     ]
 )->name('address.delete');
-
-Route::put(
-    '/payment-gateway',
-    [
-        'uses' => Railroad\Ecommerce\Controllers\PaymentGatewayJsonController::class . '@store',
-     //   'middleware' => ['permission'],
-    //    'permissions' => ['admin'],
-    ]
-)->name('paymentGateway.store');
-
-Route::patch(
-    '/payment-gateway/{paymentGatewayId}',
-    [
-        'uses' => Railroad\Ecommerce\Controllers\PaymentGatewayJsonController::class . '@update',
-      //  'middleware' => ['permission'],
-     //   'permissions' => ['admin'],
-    ]
-)->name('paymentGateway.update');
-
-Route::delete(
-    '/payment-gateway/{paymentGatewayId}',
-    [
-        'uses' => Railroad\Ecommerce\Controllers\PaymentGatewayJsonController::class . '@delete',
-      //  'middleware' => ['permission'],
-      //  'permissions' => ['admin'],
-    ]
-)->name('paymentGateway.delete');
 
 Route::put(
     '/discount',

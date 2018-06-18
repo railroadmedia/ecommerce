@@ -7,7 +7,6 @@ use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
-use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
@@ -20,11 +19,6 @@ use Stripe\Token;
 
 class PaymentMethodJsonControllerTest extends EcommerceTestCase
 {
-    /**
-     * @var PaymentGatewayRepository
-     */
-    protected $paymentGatewayRepository;
-
     /**
      * @var \Railroad\Ecommerce\Repositories\PaymentMethodRepository
      */
@@ -57,7 +51,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         parent::setUp();
 
-        $this->paymentGatewayRepository         = $this->app->make(PaymentGatewayRepository::class);
         $this->paymentMethodRepository          = $this->app->make(PaymentMethodRepository::class);
         $this->creditCardRepository             = $this->app->make(CreditCardRepository::class);
         $this->paypalBillingAgreementRepository = $this->app->make(PaypalBillingAgreementRepository::class);
@@ -420,9 +413,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway(['config' => 'stripe_1']));
         $creditCard     = $this->creditCardRepository->create($this->faker->creditCard([
-            'payment_gateway_name' => $paymentGateway['name']
+            'payment_gateway_name' => 'recordeo'
         ]));
 
         $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
@@ -439,7 +431,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             [
                 'update_method'   => 'create-credit-card',
                 'method_type'     => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'payment_gateway' => $paymentGateway['id']
+                'payment_gateway' => 'drumeo'
             ]
         );
 
@@ -523,9 +515,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_update_payment_method_use_paypal_validation()
     {
         $userId         = $this->createAndLogInNewUser();
-        $paymentGateway = $this->paymentGatewayRepository->create($this->faker->paymentGateway(['config' => 'stripe_1']));
         $creditCard     = $this->creditCardRepository->create($this->faker->creditCard([
-            'payment_gateway_name' => $paymentGateway['name']
+            'payment_gateway_name' => 'recordeo'
         ]));
 
         $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
@@ -533,12 +524,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'method_id'   => $creditCard['id']
         ]));
 
-        $paymentGatewayPayPal = $this->paymentGatewayRepository->create($this->faker->paymentGateway(['config' => 'paypal_1']));
         $results              = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
             [
                 'update_method'   => 'use-paypal',
                 'method_type'     => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'payment_gateway' => $paymentGatewayPayPal['id']
+                'payment_gateway' => 'recordeo'
             ]
         );
 

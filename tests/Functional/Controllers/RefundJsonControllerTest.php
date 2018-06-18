@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
-use Railroad\Ecommerce\Repositories\PaymentGatewayRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
@@ -33,11 +32,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
     protected $creditCardRepository;
 
     /**
-     * @var PaymentGatewayRepository
-     */
-    protected $paymentGatewayRepository;
-
-    /**
      * @var \Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository
      */
     protected $userPaymentMethodRepository;
@@ -49,7 +43,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $this->paymentRepository           = $this->app->make(PaymentRepository::class);
         $this->paymentMethodRepository     = $this->app->make(PaymentMethodRepository::class);
         $this->creditCardRepository        = $this->app->make(CreditCardRepository::class);
-        $this->paymentGatewayRepository    = $this->app->make(PaymentGatewayRepository::class);
         $this->userPaymentMethodRepository = $this->app->make(UserPaymentMethodsRepository::class);
     }
 

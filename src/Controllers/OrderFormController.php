@@ -234,6 +234,44 @@ class OrderFormController extends Controller
         $this->userProvider                   = app()->make('UserProviderInterface');
     }
 
+
+    public function index()
+    {
+        $cartItems = $this->cartService->getAllCartItems();
+
+        //if the cart it's empty; we throw an exception
+        throw_if(
+            empty($cartItems),
+            new NotFoundException('The cart it\'s empty')
+        );
+
+        $currency = $this->currencyService->get();
+        $billingAddress  = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+        $shippingAddress = $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
+
+        //calculate shipping costs
+        $shippingCosts = $this->shippingOptionsRepository->getShippingCosts(
+                $shippingAddress['country'],
+                array_sum(array_column($cartItems, 'weight'))
+            )['price'] ?? 0;
+
+        $cartItemsWithTaxesAndCosts =
+            $this->taxService->calculateTaxesForCartItems(
+                $cartItems,
+                $billingAddress['country'],
+                $billingAddress['region'],
+                $shippingCosts,
+                $currency
+            );
+        return array_merge(
+            [
+                'shippingAddress' => $shippingAddress,
+                'billingAddress'  => $billingAddress
+            ],
+            $cartItemsWithTaxesAndCosts
+        );
+
+    }
     /** Submit an order
      *
      * @param $request
