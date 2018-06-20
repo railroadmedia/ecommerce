@@ -88,7 +88,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertArraySubset([
             'due'               => $due,
-            'type'              => config('constants.ORDER_PAYMENT_TYPE'),
+            'type'              => ConfigService::$orderPaymentType,
             'payment_method_id' => $paymentMethod['id'],
             'created_on'        => Carbon::now()->toDateTimeString(),
             'updated_on'        => null
@@ -98,7 +98,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(ConfigService::$tablePayment,
             [
                 'due'               => $due,
-                'type'              => config('constants.ORDER_PAYMENT_TYPE'),
+                'type'              => ConfigService::$orderPaymentType,
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'stripe',
                 'currency'          => 'cad',
@@ -135,7 +135,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertArraySubset([
             'due'               => 100,
-            'type'              => config('constants.ORDER_PAYMENT_TYPE'),
+            'type'              => ConfigService::$orderPaymentType,
             'payment_method_id' => $paymentMethod['id'],
             'created_on'        => Carbon::now()->toDateTimeString(),
             'updated_on'        => null
@@ -145,7 +145,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(ConfigService::$tablePayment,
             [
                 'due'               => 100,
-                'type'              => config('constants.ORDER_PAYMENT_TYPE'),
+                'type'              => ConfigService::$orderPaymentType,
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'paypal',
                 'currency'          => 'CAD',
@@ -190,7 +190,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertArraySubset([
             'due'               => $due,
-            'type'              => config('constants.ORDER_PAYMENT_TYPE'),
+            'type'              => ConfigService::$orderPaymentType,
             'currency'          => 'cad',
             'payment_method_id' => $paymentMethod['id'],
             'created_on'        => Carbon::now()->toDateTimeString(),
@@ -201,7 +201,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(ConfigService::$tablePayment,
             [
                 'due'               => $due,
-                'type'              => config('constants.ORDER_PAYMENT_TYPE'),
+                'type'              => ConfigService::$orderPaymentType,
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'stripe',
                 'currency'          => 'cad',
@@ -260,10 +260,10 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $this->assertArraySubset([
             'due'               => $due,
-            'type'              => config('constants.ORDER_PAYMENT_TYPE'),
+            'type'              => ConfigService::$orderPaymentType,
             'payment_method_id' => $paymentMethod,
             'status'            => true,
-            'external_provider' => config('constants.MANUAL_PAYMENT_TYPE'),
+            'external_provider' => ConfigService::$manualPaymentType,
             'created_on'        => Carbon::now()->toDateTimeString(),
             'updated_on'        => null
         ], $results->decodeResponseJson()['results']);

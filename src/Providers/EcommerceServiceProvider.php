@@ -214,16 +214,33 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$middleware = config('ecommerce.middleware', []);
 
         //product type
-        ConfigService::$typeProduct = 'product';
+        ConfigService::$typeProduct = config('ecommerce.typeProduct');
 
         //subscription type
-        ConfigService::$typeSubscription = 'subscription';
+        ConfigService::$typeSubscription = config('ecommerce.typeSubscription');
+
+        //payment plan type
+        ConfigService::$paymentPlanType = config('ecommerce.typePaymentPlan');
 
         //shipping address type
-        ConfigService::$shippingAddressType = 'shipping';
+        ConfigService::$shippingAddressType = config('ecommerce.shippingAddress');
 
         //billing address type
-        ConfigService::$billingAddressType = 'billing';
+        ConfigService::$billingAddressType = config('ecommerce.billingAddress');
+
+        //payment method types
+        ConfigService::$paypalPaymentMethodType = config('ecommerce.paypalPaymentMethodType');
+        ConfigService::$creditCartPaymentMethodType = config('ecommerce.creditCartPaymentMethodType');
+        ConfigService::$manualPaymentType = config('ecommerce.manualPaymentMethodType');
+
+        //payment types
+        ConfigService::$orderPaymentType = config('ecommerce.orderPaymentType');
+        ConfigService::$renewalPaymentType = config('ecommerce.renewalPaymentType');
+
+        //subscription interval types
+        ConfigService::$intervalTypeDaily = config('ecommerce.intervalTypeDaily');
+        ConfigService::$intervalTypeMonthly = config('ecommerce.intervalTypeMonthly');
+        ConfigService::$intervalTypeYearly = config('ecommerce.intervalTypeYearly');
 
         // currencies
         ConfigService::$supportedCurrencies = config('ecommerce.supported_currencies');

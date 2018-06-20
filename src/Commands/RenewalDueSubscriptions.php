@@ -101,7 +101,7 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         foreach($dueSubscriptions as $dueSubcription)
         {
             //check for payment plan if the user have already paid all the cycles
-            if(($dueSubcription['type'] == config('constants.TYPE_PAYMENT_PLAN')) &&
+            if(($dueSubcription['type'] == ConfigService::$paymentPlanType) &&
                 ((int)$dueSubcription['total_cycles_paid'] >= (int)$dueSubcription['total_cycles_due']))
             {
                 continue;
@@ -160,7 +160,7 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                 array_merge(
                     $paymentData, [
                         'due'               => $dueSubcription['total_price_per_payment'],
-                        'type'              => config('constants.RENEWAL_PAYMENT_TYPE'),
+                        'type'              => ConfigService::$renewalPaymentType,
                         'payment_method_id' => $dueSubcription['payment_method']['id'],
                         'created_on'        => Carbon::now()->toDateTimeString()
                     ]
@@ -173,15 +173,15 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                 'created_on'      => Carbon::now()->toDateTimeString()
             ]);
 
-            if($dueSubcription['interval_type'] == config('constants.INTERVAL_TYPE_MONTHLY'))
+            if($dueSubcription['interval_type'] == ConfigService::$intervalTypeMonthly)
             {
                 $nextBillDate = Carbon::now()->addMonths($dueSubcription['interval_count']);
             }
-            elseif($dueSubcription['interval_type'] == config('constants.INTERVAL_TYPE_YEARLY'))
+            elseif($dueSubcription['interval_type'] == ConfigService::$intervalTypeYearly)
             {
                 $nextBillDate = Carbon::now()->addYears($dueSubcription['interval_count']);
             }
-            elseif($dueSubcription['interval_type'] == config('constants.INTERVAL_TYPE_DAILY'))
+            elseif($dueSubcription['interval_type'] == ConfigService::$intervalTypeDaily)
             {
                 $nextBillDate = Carbon::now()->addDays($dueSubcription['interval_count']);
             }

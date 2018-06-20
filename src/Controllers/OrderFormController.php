@@ -485,7 +485,7 @@ class OrderFormController extends Controller
             $orderItem = $this->applyOrderItemDiscounts($cartItemsWithTaxesAndCosts, $key, $order, $orderItem, $cartItems);
 
             //create subscription
-            if($product['type'] == config('constants.TYPE_SUBSCRIPTION'))
+            if($product['type'] == ConfigService::$typeSubscription)
             {
                 $this->createSubscription(
                     $request->get('brand', ConfigService::$brand),
@@ -690,28 +690,28 @@ class OrderFormController extends Controller
         $applyDiscounts = false,
         $totalCyclesDue = null
     ) {
-        $type = config('constants.TYPE_SUBSCRIPTION');
+        $type = ConfigService::$typeSubscription;
 
         //if the product it's not defined we should create a payment plan.
         //Define payment plan next bill date, price per payment and tax per payment.
         if(is_null($product))
         {
             $nextBillDate                  = Carbon::now()->addMonths(1);
-            $type                          = config('constants.TYPE_PAYMENT_PLAN');
+            $type                          = ConfigService::$paymentPlanType;
             $subscriptionPricePerPayment   = $cartItemsWithTaxesAndCosts['pricePerPayment'];
             $totalTaxSplitedPerPaymentPlan = $cartItemsWithTaxesAndCosts['totalTax'] / $totalCyclesDue;
         }
         else if(!empty($product['subscription_interval_type']))
         {
-            if($product['subscription_interval_type'] == config('constants.INTERVAL_TYPE_MONTHLY'))
+            if($product['subscription_interval_type'] == ConfigService::$intervalTypeMonthly)
             {
                 $nextBillDate = Carbon::now()->addMonths($product['subscription_interval_count']);
             }
-            elseif($product['subscription_interval_type'] == config('constants.INTERVAL_TYPE_YEARLY'))
+            elseif($product['subscription_interval_type'] == ConfigService::$intervalTypeYearly)
             {
                 $nextBillDate = Carbon::now()->addYears($product['subscription_interval_count']);
             }
-            elseif($product['subscription_interval_type'] == config('constants.INTERVAL_TYPE_DAILY'))
+            elseif($product['subscription_interval_type'] == ConfigService::$intervalTypeDaily)
             {
                 $nextBillDate = Carbon::now()->addDays($product['subscription_interval_count']);
             }
@@ -750,7 +750,7 @@ class OrderFormController extends Controller
                 'tax_per_payment'         => $totalTaxSplitedPerPaymentPlan ?? $cartItemsWithTaxesAndCosts['totalTax'],
                 'shipping_per_payment'    => 0,
                 'currency'                => $currency,
-                'interval_type'           => $product['subscription_interval_type'] ?? config('constants.INTERVAL_TYPE_MONTHLY'),
+                'interval_type'           => $product['subscription_interval_type'] ?? ConfigService::$intervalTypeMonthly,
                 'interval_count'          => $product['subscription_interval_count'] ?? 1,
                 'total_cycles_paid'       => 1,
                 'total_cycles_due'        => $totalCyclesDue,

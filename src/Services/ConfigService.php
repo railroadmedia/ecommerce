@@ -209,4 +209,59 @@ class ConfigService
      * @var array
      */
     public static $defaultCurrencyPairPriceOffsets;
+
+    /**
+     * @var string
+     */
+    public static $billingAddress;
+
+    /**
+     * @var string
+     */
+    public static $shippingAddress;
+
+    /**
+     * @var string
+     */
+    public static $paypalPaymentMethodType;
+
+    /**
+     * @var string
+     */
+    public static $creditCartPaymentMethodType;
+
+    /**
+     * @var string
+     */
+    public static $manualPaymentType;
+
+    /**
+     * @var string
+     */
+    public static $orderPaymentType;
+
+    /**
+     * @var string
+     */
+    public static $renewalPaymentType;
+
+    /**
+     * @var string
+     */
+    public static $paymentPlanType;
+
+    /**
+     * @var string
+     */
+    public static $intervalTypeDaily;
+
+    /**
+     * @var string
+     */
+    public static $intervalTypeMonthly;
+
+    /**
+     * @var string
+     */
+    public static $intervalTypeYearly;
 }

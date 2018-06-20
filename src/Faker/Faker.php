@@ -18,8 +18,8 @@ class Faker extends Generator
                 'price'                       => $this->numberBetween(1, 1000),
                 'type'                        => $this->randomElement(
                     [
-                        config('constants.TYPE_PRODUCT'),
-                        config('constants.TYPE_SUBSCRIPTION'),
+                        ConfigService::$typeProduct,
+                        ConfigService::$typeSubscription,
                     ]
                 ),
                 'active'                      => $this->randomElement([0, 1]),
@@ -29,9 +29,9 @@ class Faker extends Generator
                 'weight'                      => $this->numberBetween(0, 100),
                 'subscription_interval_type'  => $this->randomElement(
                     [
-                        config('constants.INTERVAL_TYPE_YEARLY'),
-                        config('constants.INTERVAL_TYPE_MONTHLY'),
-                        config('constants.INTERVAL_TYPE_DAILY')
+                        ConfigService::$intervalTypeDaily,
+                        ConfigService::$intervalTypeMonthly,
+                        ConfigService::$intervalTypeYearly
                     ]
                 ),
                 'subscription_interval_count' => $this->numberBetween(0, 12),
@@ -62,8 +62,8 @@ class Faker extends Generator
             [
                 'type'          => $this->randomElement(
                     [
-                        config('constants.BILLING_ADDRESS'),
-                        config('constants.SHIPPING_ADDRESS')
+                        ConfigService::$billingAddressType,
+                        ConfigService::$shippingAddressType
                     ]
                 ),
                 'brand'         => ConfigService::$brand,
@@ -117,7 +117,7 @@ class Faker extends Generator
                 'due'               => $this->randomNumber(),
                 'paid'              => $this->randomNumber(),
                 'refunded'          => $this->randomNumber(),
-                'type'              => $this->randomElement([config('constants.ORDER_PAYMENT_TYPE'), config('constants.RENEWAL_PAYMENT_TYPE')]),
+                'type'              => $this->randomElement([ConfigService::$orderPaymentType, ConfigService::$renewalPaymentType]),
                 'external_provider' => $this->word,
                 'external_id'       => $this->word,
                 'status'            => 1,
@@ -255,7 +255,7 @@ class Faker extends Generator
         return array_merge(
             [
                 'brand'                   => ConfigService::$brand,
-                'type'                    => config('constants.TYPE_SUBSCRIPTION'),
+                'type'                    => ConfigService::$typeSubscription,
                 'user_id'                 => $this->randomNumber(),
                 'customer_id'             => null,
                 'order_id'                => $this->randomNumber(),

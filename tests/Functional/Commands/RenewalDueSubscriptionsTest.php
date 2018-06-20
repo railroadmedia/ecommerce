@@ -78,7 +78,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $creditCard   = $this->creditCardRepository->create($this->faker->creditCard());
             $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
                 'method_id' => $creditCard['id'],
-                'method_type' => config('constants.CREDIT_CARD_PAYMENT_METHOD_TYPE'),
+                'method_type' => ConfigService::$creditCartPaymentMethodType,
                 'currency'    => 'CAD',
                 'created_on'  => time(),
                 'updated_on'  => time(),
@@ -88,17 +88,18 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'currency'    => 'CAD',
                 'due' => $this->faker->numberBetween(1,100)
             ]));
+
             $product = $this->productRepository->create($this->faker->product([
-                'type' => config('constants.TYPE_SUBSCRIPTION')
+                'type' => ConfigService::$typeSubscription
             ]));
             $subscription = $this->subscriptionRepository->create($this->faker->subscription([
                 'user_id' => $userId,
-                'type' => $this->faker->randomElement([config('constants.TYPE_SUBSCRIPTION'), config('constants.TYPE_PAYMENT_PLAN')]),
+                'type' => $this->faker->randomElement([ConfigService::$typeSubscription, ConfigService::$paymentPlanType]),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()->subYear(1),
                 'product_id' => $product['id'],
                 'currency'    => 'CAD',
-                'interval_type' => config('constants.INTERVAL_TYPE_MONTHLY'),
+                'interval_type' => ConfigService::$intervalTypeMonthly,
                 'interval_count' => 1,
                 'total_cycles_paid' => 1,
                 'total_cycles_due' => $this->faker->numberBetween(1,5),
@@ -112,7 +113,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'created_on' => Carbon::now()->toDateTimeString()
             ]);
 
-            if(($subscription['type'] != config('constants.TYPE_PAYMENT_PLAN')) ||
+            if(($subscription['type'] != ConfigService::$paymentPlanType) ||
                 ((int)$subscription['total_cycles_paid'] < (int)$subscription['total_cycles_due']))
             {
                 $initialSubscriptions[] = $subscription;

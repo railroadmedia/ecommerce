@@ -29,8 +29,8 @@ class AddressCreateRequest extends FormRequest
                 implode(
                     ',',
                     [
-                        config('constants.BILLING_ADDRESS'),
-                        config('constants.SHIPPING_ADDRESS')
+                        ConfigService::$billingAddressType,
+                        ConfigService::$shippingAddressType
                     ]
                 ),
             'first_name' => 'nullable|max:255',

@@ -102,9 +102,6 @@ class EcommerceTestCase extends BaseTestCase
         $locationConfig      = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
         $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
 
-        $constants = require(__DIR__ . '/../config/constants.php');
-        $app['config']->set('constants', $constants);
-
         $app['config']->set('ecommerce.database_connection_name', 'testbench');
         $app['config']->set('ecommerce.cache_duration', 60);
         $app['config']->set('ecommerce.table_prefix', $defaultConfig['table_prefix']);
@@ -120,6 +117,19 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.invoiceEmailSubject', $defaultConfig['invoiceEmailSubject']);
         $app['config']->set('ecommerce.paymentPlanMinimumPrice', $defaultConfig['paymentPlanMinimumPrice']);
         $app['config']->set('ecommerce.paymentPlanOptions', $defaultConfig['paymentPlanOptions']);
+        $app['config']->set('ecommerce.typeProduct', $defaultConfig['typeProduct']);
+        $app['config']->set('ecommerce.typeSubscription', $defaultConfig['typeSubscription']);
+        $app['config']->set('ecommerce.typePaymentPlan', $defaultConfig['typePaymentPlan']);
+        $app['config']->set('ecommerce.shippingAddress', $defaultConfig['shippingAddress']);
+        $app['config']->set('ecommerce.billingAddress', $defaultConfig['billingAddress']);
+        $app['config']->set('ecommerce.paypalPaymentMethodType', $defaultConfig['paypalPaymentMethodType']);
+        $app['config']->set('ecommerce.creditCartPaymentMethodType', $defaultConfig['creditCartPaymentMethodType']);
+        $app['config']->set('ecommerce.manualPaymentMethodType', $defaultConfig['manualPaymentMethodType']);
+        $app['config']->set('ecommerce.orderPaymentType', $defaultConfig['orderPaymentType']);
+        $app['config']->set('ecommerce.renewalPaymentType', $defaultConfig['renewalPaymentType']);
+        $app['config']->set('ecommerce.intervalTypeDaily', $defaultConfig['intervalTypeDaily']);
+        $app['config']->set('ecommerce.intervalTypeMonthly', $defaultConfig['intervalTypeMonthly']);
+        $app['config']->set('ecommerce.intervalTypeYearly', $defaultConfig['intervalTypeYearly']);
 
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);

@@ -81,7 +81,7 @@ class PaymentPlanService
         foreach($cartItems['cartItems'] as $cartItem)
         {
             $product = $this->productRepository->read($cartItem['options']['product-id']);
-            if($product['type'] == config('constants.TYPE_SUBSCRIPTION'))
+            if($product['type'] == ConfigService::$typeSubscription)
             {
                 return true;
             }

@@ -32,16 +32,16 @@ class ProductUpdateRequest extends FormRequest
                 implode(
                     ',',
                     [
-                        config('constants.TYPE_PRODUCT'),
-                        config('constants.TYPE_SUBSCRIPTION')
+                        ConfigService::$typeProduct,
+                        ConfigService::$typeSubscription
                     ]
                 ),
             'active' => 'boolean',
             'is_physical' => 'boolean',
             'weight' => 'required_if:is_physical,true',
             'stock' => 'numeric',
-            'subscription_interval_type' => 'required_if:type,' . config('constants.TYPE_SUBSCRIPTION'),
-            'subscription_interval_count' => 'required_if:type,' . config('constants.TYPE_SUBSCRIPTION')
+            'subscription_interval_type' => 'required_if:type,' . ConfigService::$typeSubscription,
+            'subscription_interval_count' => 'required_if:type,' . ConfigService::$typeSubscription
         ];
     }
 }

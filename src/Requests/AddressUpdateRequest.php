@@ -29,8 +29,8 @@ class AddressUpdateRequest extends FormRequest
                 implode(
                     ',',
                     [
-                        config('constants.BILLING_ADDRESS'),
-                        config('constants.SHIPPING_ADDRESS')
+                        ConfigService::$billingAddressType,
+                        ConfigService::$shippingAddressType
                     ]
                 ),
             'first_name' => 'max:255',

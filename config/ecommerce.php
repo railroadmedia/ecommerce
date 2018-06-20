@@ -92,12 +92,12 @@ return [
         ],
 
         'stripe' => [
-            'drumeo' => [
-                'stripe_api_secret' => '',
+            'drumeo'   => [
+                'stripe_api_secret'      => '',
                 'stripe_publishable_key' => '',
             ],
             'recordeo' => [
-                'stripe_api_secret' => '',
+                'stripe_api_secret'      => '',
                 'stripe_publishable_key' => '',
             ],
         ],
@@ -110,7 +110,7 @@ return [
         \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
     ],
 
-    'role_abilities'      => [
+    'role_abilities'              => [
         'administrator' => [
             'create.payment_gateway',
             'edit.payment_gateway',
@@ -126,10 +126,24 @@ return [
             'create.payment',
         ],
     ],
-    'invoiceSender'       => 'support@drumeo.com',
-    'invoiceSenderName'   => 'Drumeo',
-    'invoiceAddress'      => 'Drumeo 107-31265 Wheel Avenue - Abbotsford BC, Canada',
-    'invoiceEmailSubject' => 'Order Invoice - Thank You!',
-    'paymentPlanOptions'  => [1, 2, 5],
-    'paymentPlanMinimumPrice' => 20
+    'invoiceSender'               => 'support@drumeo.com',
+    'invoiceSenderName'           => 'Drumeo',
+    'invoiceAddress'              => 'Drumeo 107-31265 Wheel Avenue - Abbotsford BC, Canada',
+    'invoiceEmailSubject'         => 'Order Invoice - Thank You!',
+    'paymentPlanOptions'          => [1, 2, 5],
+    'paymentPlanMinimumPrice'     => 20,
+
+    'billingAddress'              => 'billing',
+    'shippingAddress'             => 'shipping',
+    'paypalPaymentMethodType'     => 'paypal',
+    'creditCartPaymentMethodType' => 'credit-card',
+    'manualPaymentMethodType'     => 'manual',
+    'orderPaymentType'            => 'order',
+    'renewalPaymentType'          => 'renewal',
+    'typeProduct'                 => 'product',
+    'typeSubscription'            => 'subscription',
+    'typePaymentPlan'             => 'payment plan',
+    'intervalTypeDaily'           => 'day',
+    'intervalTypeMonthly'         => 'month',
+    'intervalTypeYearly'          => 'year'
 ];
