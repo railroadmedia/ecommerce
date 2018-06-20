@@ -31,6 +31,7 @@ class CreateOrderTable extends Migration
                 $table->integer('billing_address_id')->nullable();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
+                $table->dateTime('deleted_on')->index()->nullable();
             }
         );
     }
