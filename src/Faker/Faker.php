@@ -274,7 +274,8 @@ class Faker extends Generator
                 'total_cycles_due'        => $this->randomNumber(),
                 'total_cycles_paid'       => $this->randomNumber(),
                 'payment_method_id'       => $this->randomNumber(),
-                'created_on'              => Carbon::now()->toDateTimeString()
+                'created_on'              => Carbon::now()->toDateTimeString(),
+                'deleted_on'              => null
             ], $override
         );
     }

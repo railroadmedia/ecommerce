@@ -42,6 +42,7 @@ class CreateSubscriptionTable extends Migration
                 $table->integer('payment_method_id')->index()->nullable();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
+                $table->dateTime('deleted_on')->index()->nullable();
             }
         );
     }

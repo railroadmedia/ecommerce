@@ -197,6 +197,12 @@ Route::delete(
         'uses' => Railroad\Ecommerce\Controllers\DiscountCriteriaJsonController::class . '@delete',
     ]
 )->name('discount.criteria.delete');
+Route::delete(
+    '/subscription/{subscriptionId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@delete',
+    ]
+)->name('subscription.delete');
 
 
 
