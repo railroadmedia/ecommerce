@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
@@ -24,6 +25,7 @@ use Stripe\Token;
 
 class OrderFormJsonControllerTest extends EcommerceTestCase
 {
+    use WithoutMiddleware;
     /**
      * @var \Railroad\Ecommerce\Repositories\ProductRepository
      */
@@ -2195,5 +2197,98 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 5 => round(($product1['price'] + $product2['price'] + $tax + $financeCharge) / 5, 2)
             ]
             , $results->decodeResponseJson('paymentPlanOptions'));
+    }
+
+    public function test_order_with_promo_code()
+    {
+        $userId      = $this->createAndLogInNewUser();
+        $fingerPrint = '4242424242424242';
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')->willReturn(['data' => '']);
+        $fakerCustomer = new Customer();
+        // $fakerCustomer->email = $this->faker->email;
+        $this->stripeExternalHelperMock->method('createCustomer')->willReturn($fakerCustomer);
+
+        $fakerCard              = new Card();
+        $fakerCard->fingerprint = $fingerPrint;
+        $fakerCard->brand       = $this->faker->word;
+        $fakerCard->last4       = $this->faker->randomNumber(3);
+        $fakerCard->exp_year    = 2020;
+        $fakerCard->exp_month   = 12;
+        $fakerCard->id          = $this->faker->word;
+        $this->stripeExternalHelperMock->method('createCard')->willReturn($fakerCard);
+
+        $fakerCharge           = new Charge();
+        $fakerCharge->id       = $this->faker->word;
+        $fakerCharge->currency = 'cad';
+        $fakerCharge->amount   = 100;
+        $fakerCharge->status   = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')->willReturn($fakerToken);
+
+        $product1          = $this->productRepository->create($this->faker->product([
+            'price'                       => 147,
+            'type'                        => config('constants.TYPE_PRODUCT'),
+            'active'                      => 1,
+            'description'                 => $this->faker->word,
+            'is_physical'                 => 0,
+            'weight'                      => 0,
+            'subscription_interval_type'  => '',
+            'subscription_interval_count' => ''
+        ]));
+        $promoCode = $this->faker->word;
+
+        $discount         = $this->discountRepository->create($this->faker->discount([
+            'active' => true,
+            'type'   => 'order total amount off',
+            'amount' => 50
+        ]));
+        $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id'  => $product1['id'],
+            'type'        => DiscountCriteriaService::PROMO_CODE_REQUIREMENT_TYPE,
+            'min'         => $promoCode,
+            'max'         => $promoCode
+        ]));
+
+        $this->call('GET', '/add-to-cart/', [
+            'products' => [
+                $product1['sku'] => 1,
+            ],
+            'promo-code' => $promoCode
+        ]);
+        $expirationDate = $this->faker->creditCardExpirationDate;
+        $results = $this->call('PUT', '/order',
+            [
+                'payment_method_type'        => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'billing-region'             => 'ro',
+                'billing-zip-or-postal-code' => $this->faker->postcode,
+                'billing-country'            => 'Romania',
+                'company_name'               => $this->faker->creditCardType,
+                'credit-card-year-selector'  => $expirationDate->format('Y'),
+                'credit-card-month-selector' => $expirationDate->format('m'),
+                'credit-card-number'         => $fingerPrint,
+                'credit-card-cvv'            => $this->faker->randomNumber(4),
+                'gateway'                    => 'drumeo',
+                'card-token'                 => '4242424242424242',
+                'shipping-first-name'        => $this->faker->firstName,
+                'shipping-last-name'         => $this->faker->lastName,
+                'shipping-address-line-1'    => $this->faker->address,
+                'shipping-city'              => 'Canada',
+                'shipping-region'            => 'british columbia',
+                'shipping-zip'               => $this->faker->postcode,
+                'shipping-country'           => 'Canada'
+            ]);
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrder,
+            [
+                'tax' => 0,
+                'due' => $product1['price'] - $discount['amount'],
+                'shipping_costs' => 0,
+                'user_id' => $userId,
+                'created_on' => Carbon::now()->toDateTimeString()
+            ]
+        );
     }
 }

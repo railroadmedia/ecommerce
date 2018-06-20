@@ -315,4 +315,23 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         //assert user redirected to previous page
         $response->assertRedirect('/checkout');
     }
+
+    public function test_promo_code()
+    {
+        $product = $this->productRepository->create($this->faker->product([
+            'active' => 1,
+            'stock'  => $this->faker->numberBetween(2, 5),
+        ]));
+
+        $promoCode = $this->faker->word;
+
+        $response = $this->call('GET', '/add-to-cart/', [
+            'products' => [
+                $product['sku'] => $this->faker->numberBetween(1, 2),
+            ],
+            'promo-code' => $promoCode
+        ]);
+
+        $response->assertSessionHas('promo-code', $promoCode);
+    }
 }

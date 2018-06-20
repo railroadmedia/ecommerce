@@ -110,7 +110,7 @@ class TaxService
             $currency = ConfigService::$defaultCurrency;
         }
 
-        $taxRate          = $this->getTaxRate($country, $region);
+        $taxRate = $this->getTaxRate($country, $region);
 
         $discountsToApply = [];
 
@@ -122,7 +122,12 @@ class TaxService
             if(!empty($product['discounts']))
             {
                 //Check whether the discount criteria are met
-                $meetCriteria = ($this->discountCriteriaService->discountCriteriaMetForOrder($product['discounts'], $cartItems, $shippingCosts));
+                $meetCriteria = $this->discountCriteriaService->discountCriteriaMetForOrder(
+                    $product['discounts'],
+                    $cartItems,
+                    $shippingCosts,
+                    $this->cartService->getPromoCode()
+                );
                 if($meetCriteria)
                 {
                     $discountsToApply = array_merge($discountsToApply, $product['discounts']);
@@ -133,9 +138,9 @@ class TaxService
         $cartItems = $this->discountService->applyDiscounts($discountsToApply, $cartItems);
 
         $cartItemsTotalDue = array_sum(array_column($cartItems, 'totalPrice'));
-        $discount  = $this->discountService->getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cartItems);
+        $discount          = $this->discountService->getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cartItems);
 
-        $shippingCostsWithDiscount = $this->discountService->getShippingCostsDiscounted($discountsToApply, $shippingCosts);
+        $shippingCostsWithDiscount   = $this->discountService->getShippingCostsDiscounted($discountsToApply, $shippingCosts);
         $cartItemsTotalDueDiscounted = $cartItemsTotalDue - $discount;
 
         $productsTaxAmount = round($cartItemsTotalDueDiscounted * $taxRate, 2);

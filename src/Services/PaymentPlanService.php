@@ -58,7 +58,8 @@ class PaymentPlanService
         $cartItems      = $this->taxService->calculateTaxesForCartItems(
             $this->cartService->getAllCartItems(),
             $billingAddress['country'],
-            $billingAddress['region']
+            $billingAddress['region'],
+            $this->cartService->getPromoCode()
         );
 
         if((!$this->hasSubscriptionItems($cartItems)) &&
@@ -102,7 +103,12 @@ class PaymentPlanService
             foreach(config('ecommerce.paymentPlanOptions') as $paymentPlan)
             {
                 $this->cartService->setPaymentPlanNumberOfPayments($paymentPlan);
-                $costsAndTaxes                    = $this->taxService->calculateTaxesForCartItems($cartItems, $billingAddress['country'], $billingAddress['region']);
+                $costsAndTaxes                    = $this->taxService->calculateTaxesForCartItems(
+                    $cartItems,
+                    $billingAddress['country'],
+                    $billingAddress['region'],
+                    $this->cartService->getPromoCode()
+                );
                 $paymentPlanPricing[$paymentPlan] = $costsAndTaxes['pricePerPayment'];
             }
         }

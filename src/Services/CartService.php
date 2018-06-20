@@ -13,6 +13,7 @@ class CartService
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
     const PAYMENT_PLAN_LOCKED_SESSION_KEY = 'order-form-payment-plan-locked';
+    const PROMO_CODE_KEY = 'promo-code';
 
     /**
      * CartService constructor.
@@ -183,7 +184,7 @@ class CartService
         return null;
     }
 
-    /**
+    /** Set on the session the number of payments
      * @param $numberOfPayments
      */
     public function setPaymentPlanNumberOfPayments($numberOfPayments)
@@ -195,7 +196,7 @@ class CartService
         }
     }
 
-    /**
+    /** Get the number of payments
      * @return mixed|integer
      */
     public function getPaymentPlanNumberOfPayments()
@@ -209,14 +210,36 @@ class CartService
         return $this->session->get(self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY, 1);
     }
 
+    /** Lock payment plan
+     * @param $numberOfPaymentsToForce
+     */
     public function lockPaymentPlan($numberOfPaymentsToForce)
     {
         $this->session->put(self::PAYMENT_PLAN_LOCKED_SESSION_KEY, $numberOfPaymentsToForce);
     }
 
+    /**
+     * Unlock payment plan
+     */
     public function unlockPaymentPlan()
     {
         $this->session->remove(self::PAYMENT_PLAN_LOCKED_SESSION_KEY);
+    }
+
+   /** Set promo code on the session
+     * @param string $promoCode
+     */
+    public function setPromoCode($promoCode)
+    {
+        $this->session->put(self::PROMO_CODE_KEY, $promoCode);
+    }
+
+    /** Get promo code from the session
+     * @return mixed
+     */
+    public function getPromoCode()
+    {
+        return $this->session->get(self::PROMO_CODE_KEY);
     }
 
 }

@@ -146,6 +146,14 @@ class ShoppingCartController extends Controller
         }
 
         $billingAddress        = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+
+        //if the promo code exists on the requests, set it on the session
+        if (!empty($input['promo-code'])) {
+            $this->cartService->setPromoCode($input['promo-code']);
+        } else {
+            $this->cartService->setPromoCode(null);
+        }
+
         $cartItemsPriceWithTax =
             $this->taxService->calculateTaxesForCartItems(
                 $this->cartService->getAllCartItems(),

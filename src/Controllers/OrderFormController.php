@@ -261,7 +261,8 @@ class OrderFormController extends Controller
                 $billingAddress['country'],
                 $billingAddress['region'],
                 $shippingCosts,
-                $currency
+                $currency,
+                $this->cartService->getPromoCode()
             );
         return array_merge(
             [
@@ -359,7 +360,8 @@ class OrderFormController extends Controller
                 $billingAddress['country'],
                 $billingAddress['region'],
                 $shippingCosts,
-                $currency
+                $currency,
+                $this->cartService->getPromoCode()
             );
 
         //save billing address in database
