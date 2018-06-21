@@ -4,12 +4,14 @@ namespace Railroad\Ecommerce\Repositories;
 
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Repositories\Queries\PaymentMethodQuery;
+use Railroad\Ecommerce\Repositories\Traits\SoftDelete;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Decorators\Decorator;
 use Railroad\Resora\Repositories\RepositoryBase;
 
 class PaymentMethodRepository extends RepositoryBase
 {
+    use SoftDelete;
     /**
      * @return PaymentMethodQuery|$this
      */

@@ -781,4 +781,30 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
+
+    public function test_admin_delete_payment_method()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+
+        $creditCard    = $this->creditCardRepository->create($this->faker->creditCard());
+        $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
+            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'method_id'   => $creditCard['id']
+        ]));
+
+        $userPaymentMethod = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
+            'user_id'           => rand(),
+            'payment_method_id' => $paymentMethod['id']
+        ]));
+
+        $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
+
+        $this->assertEquals(204, $results->getStatusCode());
+
+        $this->assertSoftDeleted(ConfigService::$tablePaymentMethod,
+            [
+                'id' => $paymentMethod['id']
+            ]);
+    }
 }

@@ -421,7 +421,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
                 'billing-country'     => 'Canada',
-                'gateway'             => 1
+                'gateway'             => 'drumeo'
             ]);
 
         $this->assertEquals(422, $results->getStatusCode());

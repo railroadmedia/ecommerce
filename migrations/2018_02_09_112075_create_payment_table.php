@@ -32,6 +32,7 @@ class CreatePaymentTable extends Migration
                 $table->string('currency', 3)->index();
                 $table->dateTime('created_on')->index();
                 $table->dateTime('updated_on')->index()->nullable();
+                $table->dateTime('deleted_on')->index()->nullable();
             }
         );
     }

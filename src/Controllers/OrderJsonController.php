@@ -6,6 +6,7 @@ use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Responses\JsonResponse;
+use Railroad\Permissions\Services\PermissionService;
 
 class OrderJsonController extends Controller
 {
@@ -15,23 +16,31 @@ class OrderJsonController extends Controller
     private $orderRepository;
 
     /**
+     * @var \Railroad\Permissions\Services\PermissionService
+     */
+    private $permissionService;
+
+    /**
      * OrderJsonController constructor.
      *
      * @param \Railroad\Ecommerce\Repositories\OrderRepository $orderRepository
+     * @param \Railroad\Permissions\Services\PermissionService $permissionService
      */
-    public function __construct(OrderRepository $orderRepository)
+    public function __construct(OrderRepository $orderRepository, PermissionService $permissionService)
     {
-        $this->orderRepository = $orderRepository;
+        $this->orderRepository   = $orderRepository;
+        $this->permissionService = $permissionService;
     }
 
     /** Soft delete order
      * @param int $orderId
      * @return \Railroad\Ecommerce\Responses\JsonResponse
      */
-    public function deleteOrder($orderId)
+    public function delete($orderId)
     {
-        $order = $this->orderRepository->read($orderId);
+        $this->permissionService->canOrThrow(auth()->id(), 'delete.order');
 
+        $order = $this->orderRepository->read($orderId);
         throw_if(
             is_null($order),
             new NotFoundException('Delete failed, order not found with id: ' . $orderId)

@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
+use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
@@ -309,5 +310,24 @@ class PaymentJsonController extends Controller
         }
 
         return $paidUntil;
+    }
+
+    /** Soft delete a payment
+     * @param $paymentId
+     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     */
+    public function delete($paymentId)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'delete.payment');
+
+        $payment = $this->paymentRepository->read($paymentId);
+        throw_if(
+            is_null($payment),
+            new NotFoundException('Delete failed, payment not found with id: ' . $paymentId)
+        );
+
+        $this->paymentRepository->delete($paymentId);
+
+        return new JsonResponse(null, 204);
     }
 }

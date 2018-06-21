@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
+use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -42,6 +43,11 @@ class PaymentJsonControllerTest extends EcommerceTestCase
      */
     private $paypalBillingAgreementRepository;
 
+    /**
+     * @var \Railroad\Ecommerce\Repositories\PaymentRepository
+     */
+    private $paymentRepository;
+
     protected function setUp()
     {
         parent::setUp();
@@ -51,6 +57,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->permissionService                = $this->app->make(PermissionService::class);
         $this->userPaymentMethodRepository      = $this->app->make(UserPaymentMethodsRepository::class);
         $this->paypalBillingAgreementRepository = $this->app->make(PaypalBillingAgreementRepository::class);
+        $this->paymentRepository                = $this->app->make(PaymentRepository::class);
     }
 
     public function test_user_store_payment()
@@ -111,7 +118,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
     public function test_user_store_paypal_payment()
     {
-        $userId                 = $this->createAndLogInNewUser();
+        $userId = $this->createAndLogInNewUser();
         $this->paypalExternalHelperMock->method('createReferenceTransaction')->willReturn(rand());
 
         $paypalBillingAgreement = $this->paypalBillingAgreementRepository->create($this->faker->paypalBillingAgreement());
@@ -158,7 +165,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_store_any_payment()
     {
-        $due     = $this->faker->numberBetween(0, 1000);
+        $due = $this->faker->numberBetween(0, 1000);
 
         $this->permissionServiceMock->method('is')->willReturn(true);
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
@@ -320,5 +327,38 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
             , $results->decodeResponseJson()['errors']);
         $this->assertArraySubset([], $results->decodeResponseJson()['results']);
+    }
+
+    public function test_payment()
+    {
+        $payment = $this->paymentRepository->create($this->faker->payment());
+        $results = $this->call('DELETE', '/payment/' . $payment['id']);
+
+        $this->assertEquals(204, $results->getStatusCode());
+        $this->assertSoftDeleted(
+            ConfigService::$tablePayment,
+            [
+                'id' => $payment['id']
+            ]
+        );
+    }
+
+    public function test_delete_not_existing_payment()
+
+    {
+        $randomId = $this->faker->randomNumber();
+
+        $results = $this->call('DELETE', '/payment/' . $randomId);
+
+        //assert response status code
+        $this->assertEquals(404, $results->getStatusCode());
+
+        //assert the error message that it's returned in JSON format
+        $this->assertEquals(
+            [
+                "title"  => "Not found.",
+                "detail" => "Delete failed, payment not found with id: " . $randomId,
+            ]
+            , $results->decodeResponseJson()['error']);
     }
 }

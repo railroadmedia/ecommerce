@@ -233,6 +233,25 @@ class Faker extends Generator
         );
     }
 
+    public function order(array $override = [])
+    {
+        return array_merge(
+            [
+                'due'                 => $this->randomNumber(),
+                'tax'                 => $this->randomNumber(),
+                'shipping_costs'      => $this->randomNumber(),
+                'paid'                => $this->randomNumber(),
+                'user_id'             => $this->randomNumber(),
+                'customer_id'         => null,
+                'brand'               => ConfigService::$brand,
+                'shipping_address_id' => $this->randomNumber(),
+                'billing_address_id'  => $this->randomNumber(),
+                'created_on'          => Carbon::now()->toDateTimeString()
+            ],
+            $override
+        );
+    }
+
     public function orderItem(array $override = [])
     {
         return array_merge(

@@ -347,11 +347,10 @@ class PaymentMethodJsonController extends Controller
      * Delete a payment method and return a JsonResponse.
      *  Throw  - NotFoundException if the payment method not exist
      *
-     * @param PaymentMethodDeleteRequest $request
      * @param integer                    $paymentMethodId
      * @return JsonResponse
      */
-    public function delete(PaymentMethodDeleteRequest $request, $paymentMethodId)
+    public function delete($paymentMethodId)
     {
         $paymentMethod = $this->paymentMethodRepository->read($paymentMethodId);
         if($paymentMethod['user_id'] !== auth()->id())
@@ -364,7 +363,7 @@ class PaymentMethodJsonController extends Controller
             new NotFoundException('Delete failed, payment method not found with id: ' . $paymentMethodId)
         );
 
-        $results = $this->paymentMethodRepository->destroy($paymentMethodId);
+        $results = $this->paymentMethodRepository->delete($paymentMethodId);
 
         return new JsonResponse(null, 204);
     }

@@ -111,6 +111,13 @@ Route::put(
     ]
 )->name('payment.store');
 
+Route::delete(
+    '/payment/{paymentId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\PaymentJsonController::class . '@delete',
+    ]
+)->name('payment.delete');
+
 Route::put(
     '/refund',
     [
@@ -203,6 +210,12 @@ Route::delete(
         'uses' => Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@delete',
     ]
 )->name('subscription.delete');
+Route::delete(
+    '/order/{orderId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\OrderJsonController::class . '@delete',
+    ]
+)->name('order.delete');
 
 
 
