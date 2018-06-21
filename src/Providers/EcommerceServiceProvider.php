@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Decorators\DiscountDiscountCriteriaDecorator;
 use Railroad\Ecommerce\Decorators\MethodDecorator;
 use Railroad\Ecommerce\Decorators\OrderItemProductDecorator;
+use Railroad\Ecommerce\Decorators\OrderOrderItemsDecorators;
 use Railroad\Ecommerce\Decorators\PaymentMethodBillingAddressDecorator;
 use Railroad\Ecommerce\Decorators\PaymentMethodEntityDecorator;
 use Railroad\Ecommerce\Decorators\PaymentMethodOwnerDecorator;
@@ -125,6 +126,15 @@ class EcommerceServiceProvider extends ServiceProvider
                 [
                     SubscriptionPaymentMethodDecorator::class,
                     SubscriptionProductDecorator::class,
+                ]
+            )
+        );
+        config()->set(
+            'resora.decorators.order',
+            array_merge(
+                config()->get('resora.decorators.order', []),
+                [
+                    OrderOrderItemsDecorators::class,
                 ]
             )
         );
