@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Decorators;
 
-use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Decorators\DecoratorInterface;

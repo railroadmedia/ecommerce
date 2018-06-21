@@ -2,10 +2,13 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\OrderRepository;
+use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
 use Railroad\Ecommerce\Responses\JsonResponse;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 
 class OrderJsonController extends Controller
@@ -32,7 +35,41 @@ class OrderJsonController extends Controller
         $this->permissionService = $permissionService;
     }
 
+    /** Pull orders 
+     * @param \Illuminate\Http\Request $request
+     * @return \Railroad\Ecommerce\Responses\JsonPaginatedResponse
+     */
+    public function index(Request $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.orders');
+        $orders = $this->orderRepository->query()
+            ->whereIn('brand', $request->get('brand', [ConfigService::$brand]));
+
+        if($request->has('user_id'))
+        {
+            $orders = $orders->where('user_id', $request->get('user_id'));
+        }
+        $orders = $orders->limit($request->get('limit', 100))
+            ->skip(($request->get('page', 1) - 1) * $request->get('limit', 100))
+            ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
+            ->get();
+
+        $ordersCount = $this->orderRepository->query()
+            ->whereIn('brand', $request->get('brand', [ConfigService::$brand]));
+        if($request->has('user_id'))
+        {
+            $ordersCount = $ordersCount->where('user_id', $request->get('user_id'));
+        }
+        $ordersCount = $ordersCount->count();
+
+        return new JsonPaginatedResponse(
+            $orders,
+            $ordersCount,
+            200);
+    }
+
     /** Soft delete order
+     *
      * @param int $orderId
      * @return \Railroad\Ecommerce\Responses\JsonResponse
      */

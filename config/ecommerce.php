@@ -122,8 +122,10 @@ return [
             'create.payment',
             'delete.payment',
 
+            'pull.orders',
             'delete.order',
 
+            'pull.subscriptions',
             'delete.subscription'
         ],
     ],

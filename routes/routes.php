@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Railroad\Ecommerce\Middleware\AdministratorMiddleware;
 
+//shopping cart
 Route::get(
     '/add-to-cart',
     Railroad\Ecommerce\Controllers\ShoppingCartController::class . '@addToCart'
@@ -18,6 +19,7 @@ Route::put(
     Railroad\Ecommerce\Controllers\ShoppingCartController::class . '@updateCartItemQuantity'
 )->name('shopping-cart.update-cart-item-quantity');
 
+//product
 Route::get(
     '/product',
     Railroad\Ecommerce\Controllers\ProductJsonController::class . '@index'
@@ -51,6 +53,7 @@ Route::put(
     ]
 )->name('product.upload');
 
+//order form
 Route::get(
     '/order',
     Railroad\Ecommerce\Controllers\OrderFormController::class . '@index'
@@ -61,6 +64,7 @@ Route::put(
     Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitOrder'
 )->name('order.submit');
 
+//shipping option
 Route::put(
     '/shipping-option',
     [
@@ -82,6 +86,7 @@ Route::delete(
     ]
 )->name('shipping-option.delete');
 
+//shipping costs weight range
 Route::put(
     '/shipping-cost',
     [
@@ -104,6 +109,7 @@ Route::delete(
     ]
 )->name('shipping-cost-weight-range.delete');
 
+//payment
 Route::put(
     '/payment',
     [
@@ -118,6 +124,7 @@ Route::delete(
     ]
 )->name('payment.delete');
 
+//refund
 Route::put(
     '/refund',
     [
@@ -125,6 +132,7 @@ Route::put(
     ]
 )->name('refund.store');
 
+//payment method
 Route::put(
     '/payment-method',
     Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@store'
@@ -144,6 +152,7 @@ Route::delete(
     ]
 )->name('payment-method.delete');
 
+//address
 Route::put(
     '/address',
     Railroad\Ecommerce\Controllers\AddressJsonController::class . '@store'
@@ -163,6 +172,7 @@ Route::delete(
     ]
 )->name('address.delete');
 
+//discount
 Route::put(
     '/discount',
     [
@@ -184,6 +194,7 @@ Route::delete(
     ]
 )->name('discount.delete');
 
+//discount criteria
 Route::put(
     '/discount-criteria/{discountId}',
     [
@@ -204,12 +215,24 @@ Route::delete(
         'uses' => Railroad\Ecommerce\Controllers\DiscountCriteriaJsonController::class . '@delete',
     ]
 )->name('discount.criteria.delete');
+
+//subscriptions
+Route::get(
+    '/subscriptions',
+    Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@index'
+)->name('subscriptions.index');
 Route::delete(
     '/subscription/{subscriptionId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@delete',
     ]
 )->name('subscription.delete');
+
+//order
+Route::get(
+    '/orders',
+    Railroad\Ecommerce\Controllers\OrderJsonController::class . '@index'
+)->name('orders.index');
 Route::delete(
     '/order/{orderId}',
     [
