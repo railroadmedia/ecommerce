@@ -112,9 +112,10 @@ return [
 
     'role_abilities'              => [
         'administrator' => [
-            'create.shipping_option',
-            'edit.shipping_option',
-            'delete.shipping_option',
+            'create.shipping.option',
+            'edit.shipping.option',
+            'delete.shipping.option',
+            'pull.shipping.options',
 
             'update.payment.method',
             'delete.payment.method',
@@ -126,7 +127,9 @@ return [
             'delete.order',
 
             'pull.subscriptions',
-            'delete.subscription'
+            'delete.subscription',
+
+            'pull.discounts'
         ],
     ],
     'invoiceSender'               => 'support@drumeo.com',

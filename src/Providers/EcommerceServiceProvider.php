@@ -17,6 +17,7 @@ use Railroad\Ecommerce\Decorators\PaymentPaymentMethodDecorator;
 use Railroad\Ecommerce\Decorators\PaymentUserDecorator;
 use Railroad\Ecommerce\Decorators\ProductDecorator;
 use Railroad\Ecommerce\Decorators\ProductDiscountDecorator;
+use Railroad\Ecommerce\Decorators\ShippingOptionsCostsDecorator;
 use Railroad\Ecommerce\Decorators\SubscriptionPaymentMethodDecorator;
 use Railroad\Ecommerce\Decorators\SubscriptionProductDecorator;
 use Railroad\Ecommerce\Events\GiveContentAccess;
@@ -159,6 +160,28 @@ class EcommerceServiceProvider extends ServiceProvider
                 ]
             )
         );
+
+        config()->set(
+            'resora.decorators.discountCriteria',
+            array_merge(
+                config()->get('resora.decorators.discountCriteria', []),
+                [
+                    SubscriptionProductDecorator::class
+                ]
+            )
+        );
+
+        config()->set(
+            'resora.decorators.shippingOptions',
+            array_merge(
+                config()->get('resora.decorators.shippingOptions', []),
+                [
+                    ShippingOptionsCostsDecorator::class
+                ]
+            )
+        );
+
+
 
         // merge in permissions settings
         config()->set(

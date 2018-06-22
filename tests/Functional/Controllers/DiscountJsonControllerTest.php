@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
+use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
@@ -20,11 +21,17 @@ class DiscountJsonControllerTest extends EcommerceTestCase
      */
     protected $discountCriteriaRepository;
 
+    /**
+     * @var \Railroad\Ecommerce\Repositories\ProductRepository
+     */
+    protected $productRepository;
+
     public function setUp()
     {
         parent::setUp();
         $this->discountRepository         = $this->app->make(DiscountRepository::class);
         $this->discountCriteriaRepository = $this->app->make(DiscountCriteriaRepository::class);
+        $this->productRepository          = $this->app->make(ProductRepository::class);
     }
 
     public function test_store_validation()
@@ -130,5 +137,45 @@ class DiscountJsonControllerTest extends EcommerceTestCase
 
         //assert that the discount not exists anymore in the database
         $this->assertDatabaseMissing(ConfigService::$tableDiscount, $discount);
+    }
+
+    public function test_pull_discounts_empty()
+    {
+        $results = $this->call('GET', '/discounts');
+
+        $this->assertEmpty($results->decodeResponseJson('results'));
+        $this->assertEquals(0, $results->decodeResponseJson('total_results'));
+    }
+
+    public function test_pull_discounts()
+    {
+        $page                   = 1;
+        $limit                  = 10;
+        $totalNumberOfDiscounts = $this->faker->numberBetween(2, 25);
+        $discounts              = [];
+
+        for($i = 0; $i < $totalNumberOfDiscounts; $i++)
+        {
+            $product  = $this->productRepository->create($this->faker->product());
+            $discount = $this->discountRepository->create($this->faker->discount());
+            $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
+                'product_id' => $product['id'],
+                'discount_id' => $discount['id']
+            ]));
+            if($i < $limit)
+            {
+                $discounts[$i]             = $discount;
+                $discounts[$i]['criteria'][] = (array)$discountCriteria;
+            }
+        }
+
+        $results = $this->call('GET', '/discounts', [
+            'page'               => $page,
+            'limit'              => $limit,
+            'order_by_direction' => 'asc'
+        ]);
+
+        $this->assertEquals($discounts, $results->decodeResponseJson('results'));
+        $this->assertEquals($totalNumberOfDiscounts, $results->decodeResponseJson('total_results'));
     }
 }

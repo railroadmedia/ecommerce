@@ -185,7 +185,8 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         //assert that the discount criteria not exists in the database
-        $this->assertDatabaseMissing(ConfigService::$tableDiscountCriteria, $discountCriteria);
-
+        $this->assertDatabaseMissing(ConfigService::$tableDiscountCriteria,[
+            'id' => $discountCriteria['id']
+        ]);
     }
 }

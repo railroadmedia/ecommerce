@@ -3,11 +3,13 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Requests\DiscountCreateRequest;
 use Railroad\Ecommerce\Requests\DiscountUpdateRequest;
+use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Permissions\Services\PermissionService;
 
@@ -33,6 +35,23 @@ class DiscountJsonController extends Controller
     {
         $this->discountRepository = $discountRepository;
         $this->permissionService  = $permissionService;
+    }
+
+    public function index(Request $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.discounts');
+
+        $discounts = $this->discountRepository->query()
+            ->limit($request->get('limit', 100))
+            ->skip(($request->get('page', 1) - 1) * $request->get('limit', 100))
+            ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
+            ->get();
+        $discountsCount = $this->discountRepository->query()->count();
+
+        return new JsonPaginatedResponse(
+            $discounts,
+            $discountsCount,
+            200);
     }
 
     /**

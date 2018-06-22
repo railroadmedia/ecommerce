@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Repositories\ShippingCostsRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
@@ -13,11 +14,17 @@ class ShippingOptionControllerTest extends EcommerceTestCase
      */
     protected $shippingOptionRepository;
 
+    /**
+     * @var \Railroad\Ecommerce\Repositories\ShippingCostsRepository
+     */
+    protected $shippingCostsRepository;
+
     protected function setUp()
     {
         parent::setUp();
 
         $this->shippingOptionRepository = $this->app->make(ShippingOptionRepository::class);
+        $this->shippingCostsRepository = $this->app->make(ShippingCostsRepository::class);
     }
 
     public function test_store()
@@ -39,6 +46,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                     'id' => 1,
                     'created_on' => Carbon::now()->toDateTimeString(),
                     'updated_on' => null,
+                    'weightRanges' => []
                 ],
                 $shippingOption
             ),
@@ -172,5 +180,31 @@ class ShippingOptionControllerTest extends EcommerceTestCase
         $results = $this->call('DELETE', '/shipping-option/' . $shippingOption['id']);
 
         $this->assertEquals(204, $results->getStatusCode());
+    }
+
+    public function test_pull_shipping_options()
+    {
+        for($i =0; $i<3; $i++){
+            $shippingOption[$i] = (array)$this->shippingOptionRepository->create($this->faker->shippingOption());
+            $shippingOption[$i]['weightRanges'][] = (array)$this->shippingCostsRepository->create($this->faker->shippingCost([
+                'shipping_option_id' => $shippingOption[$i]['id']
+            ]));
+        }
+
+        $results = $this->call('GET','/shipping-options',
+            [
+                'order_by_direction' => 'asc'
+            ]);
+        $this->assertEquals($shippingOption, $results->decodeResponseJson('results'));
+    }
+
+    public function test_pull_shipping_options_empty()
+    {
+        $results = $this->call('GET','/shipping-options',
+            [
+                'order_by_direction' => 'asc'
+            ]);
+        $this->assertEmpty($results->decodeResponseJson('results'));
+        $this->assertEquals(0, $results->decodeResponseJson('total_results'));
     }
 }

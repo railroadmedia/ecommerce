@@ -2,28 +2,29 @@
 
 namespace Railroad\Ecommerce\Decorators;
 
-use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
+use Illuminate\Database\DatabaseManager;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Decorators\DecoratorInterface;
 
 class SubscriptionProductDecorator implements DecoratorInterface
 {
     /**
-     * @var ProductRepository
+     * @var DatabaseManager
      */
-    private $productRepository;
+    private $databaseManager;
 
-    public function __construct(ProductRepository $productRepository)
+    public function __construct(DatabaseManager $databaseManager)
     {
-        $this->productRepository = $productRepository;
+        $this->databaseManager = $databaseManager;
     }
 
     public function decorate($subscriptions)
     {
         $productIds = $subscriptions->pluck('product_id');
 
-        $products = $this->productRepository->query()
+        $products = $this->databaseManager
+            ->connection(ConfigService::$databaseConnectionName)
+            ->table(ConfigService::$tableProduct)
             ->whereIn(ConfigService::$tableProduct . '.id', $productIds)
             ->get()
             ->keyBy('id');

@@ -2,37 +2,37 @@
 
 namespace Railroad\Ecommerce\Decorators;
 
-use Illuminate\Database\DatabaseManager;
-use Railroad\Ecommerce\Services\ConfigService;
+
+use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
 use Railroad\Resora\Decorators\DecoratorInterface;
 
 class DiscountDiscountCriteriaDecorator implements DecoratorInterface
 {
     /**
-     * @var DatabaseManager
+     * @var \Railroad\Ecommerce\Repositories\DiscountCriteriaRepository
      */
-    private $databaseManager;
+    private $discountCriteriaRepository;
 
-    public function __construct(DatabaseManager $databaseManager)
+    public function __construct(DiscountCriteriaRepository $discountCriteriaRepository)
     {
-        $this->databaseManager = $databaseManager;
+        $this->discountCriteriaRepository = $discountCriteriaRepository;
     }
 
     public function decorate($discounts)
     {
         $discountIds = $discounts->pluck('id');
 
-        $discountCriteria = $this->databaseManager
-            ->connection(ConfigService::$databaseConnectionName)
-            ->table(ConfigService::$tableDiscountCriteria)
+        $discountCriteria = $this->discountCriteriaRepository
+            ->query()
             ->whereIn('discount_id', $discountIds->toArray())
             ->get();
 
         foreach ($discounts as $discountIndex => $discount) {
-            $discounts[$discountIndex]['discounts'] = [];
-            foreach ($discountCriteria as $discountCriteriaIndex => $discountCriteria) {
-                if ($discountCriteria->discount_id == $discount['id']) {
-                    $discounts[$discountIndex]['discounts'][] = $discountCriteria->toArray();
+            $discounts[$discountIndex]['criteria'] = [];
+            foreach ($discountCriteria as $discountCriteriaIndex => $discountCriteriaItem) {
+                $discountCriteriaItem = (array)$discountCriteriaItem;
+                if ($discountCriteriaItem['discount_id'] == $discount['id']) {
+                    $discounts[$discountIndex]['criteria'][] = $discountCriteriaItem;
                 }
             }
         }

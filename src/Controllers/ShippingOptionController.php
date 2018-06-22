@@ -3,11 +3,13 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Requests\ShippingOptionCreateRequest;
 use Railroad\Ecommerce\Requests\ShippingOptionUpdateRequest;
+use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Permissions\Services\PermissionService;
 
@@ -27,14 +29,35 @@ class ShippingOptionController extends Controller
      * ShippingOptionController constructor.
      *
      * @param ShippingOptionRepository $shippingOptionRepository
-     * @param PermissionService $permissionService
+     * @param PermissionService        $permissionService
      */
     public function __construct(
         ShippingOptionRepository $shippingOptionRepository,
         PermissionService $permissionService
     ) {
         $this->shippingOptionRepository = $shippingOptionRepository;
-        $this->permissionService = $permissionService;
+        $this->permissionService        = $permissionService;
+    }
+
+    public function index(Request $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.shipping.options');
+        $shippingOptions = $this->shippingOptionRepository->query()
+            ->limit($request->get('limit', 100))
+            ->skip(($request->get('page', 1) - 1) * $request->get('limit', 100))
+            ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
+            ->get();
+
+        $shippingOptionsCount = $this->shippingOptionRepository->query()
+            ->limit($request->get('limit', 100))
+            ->skip(($request->get('page', 1) - 1) * $request->get('limit', 100))
+            ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
+            ->count();
+
+        return new JsonPaginatedResponse(
+            $shippingOptions,
+            $shippingOptionsCount,
+            200);
     }
 
     /**
@@ -45,7 +68,7 @@ class ShippingOptionController extends Controller
      */
     public function store(ShippingOptionCreateRequest $request)
     {
-        $this->permissionService->canOrThrow(auth()->id(), 'create.shipping_option');
+        $this->permissionService->canOrThrow(auth()->id(), 'create.shipping.option');
 
         $shippingOption = $this->shippingOptionRepository->create(
             array_merge(
@@ -68,12 +91,12 @@ class ShippingOptionController extends Controller
      * or proper exception if the shipping option not exist
      *
      * @param ShippingOptionUpdateRequest $request
-     * @param integer $shippingOptionId
+     * @param integer                     $shippingOptionId
      * @return JsonResponse
      */
     public function update(ShippingOptionUpdateRequest $request, $shippingOptionId)
     {
-        $this->permissionService->canOrThrow(auth()->id(), 'edit.shipping_option');
+        $this->permissionService->canOrThrow(auth()->id(), 'edit.shipping.option');
 
         $shippingOption = $this->shippingOptionRepository->update(
             $shippingOptionId,
@@ -107,7 +130,7 @@ class ShippingOptionController extends Controller
      */
     public function delete($shippingOptionId)
     {
-        $this->permissionService->canOrThrow(auth()->id(), 'delete.shipping_option');
+        $this->permissionService->canOrThrow(auth()->id(), 'delete.shipping.option');
 
         $results = $this->shippingOptionRepository->destroy($shippingOptionId);
 

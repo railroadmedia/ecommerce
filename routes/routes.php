@@ -65,6 +65,10 @@ Route::put(
 )->name('order.submit');
 
 //shipping option
+Route::get(
+    '/shipping-options',
+    Railroad\Ecommerce\Controllers\ShippingOptionController::class . '@index'
+)->name('shipping-option.index');
 Route::put(
     '/shipping-option',
     [
@@ -173,6 +177,10 @@ Route::delete(
 )->name('address.delete');
 
 //discount
+Route::get(
+    '/discounts',
+    Railroad\Ecommerce\Controllers\DiscountJsonController::class . '@index'
+)->name('discounts.index');
 Route::put(
     '/discount',
     [

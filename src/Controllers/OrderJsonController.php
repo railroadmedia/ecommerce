@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -35,15 +36,38 @@ class OrderJsonController extends Controller
         $this->permissionService = $permissionService;
     }
 
-    /** Pull orders 
+    /** Pull orders between two dates
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Railroad\Ecommerce\Responses\JsonPaginatedResponse
      */
     public function index(Request $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.orders');
+
+        if($request->has('start-date'))
+        {
+            $startDate = Carbon::createFromFormat('m/d/y', $request->get('start-date'))
+                ->timezone('America/Los_Angeles');
+        }
+        else
+        {
+            $startDate = Carbon::now()->subDay();
+        }
+
+        if($request->has('end-date'))
+        {
+            $endDate = Carbon::createFromFormat('m/d/y', $request->get('end-date'))
+                ->timezone('America/Los_Angeles');
+        }
+        else
+        {
+            $endDate = Carbon::now();
+        }
+
         $orders = $this->orderRepository->query()
-            ->whereIn('brand', $request->get('brand', [ConfigService::$brand]));
+            ->whereIn('brand', $request->get('brand', [ConfigService::$brand]))
+            ->whereBetween('created_on', [$startDate, $endDate]);
 
         if($request->has('user_id'))
         {
