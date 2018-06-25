@@ -1,0 +1,100 @@
+<?php
+
+namespace Railroad\Ecommerce\Tests\Functional\Controllers;
+
+use Railroad\Ecommerce\Controllers\ShippingFulfillmentJsonController;
+use PHPUnit\Framework\TestCase;
+use Railroad\Ecommerce\Repositories\AddressRepository;
+use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
+use Railroad\Ecommerce\Repositories\OrderRepository;
+use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Tests\EcommerceTestCase;
+
+class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
+{
+    /**
+     * @var \Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository
+     */
+    protected $orderItemFulfillmentRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\OrderRepository
+     */
+    protected $orderRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\AddressRepository
+     */
+    protected $addressRepository;
+
+    public function setUp()
+    {
+        parent::setUp();
+        $this->orderItemFulfillmentRepository = $this->app->make(OrderItemFulfillmentRepository::class);
+        $this->orderRepository = $this->app->make(OrderRepository::class);
+        $this->addressRepository = $this->app->make(AddressRepository::class);
+
+    }
+
+    public function test_index_no_ressults()
+    {
+        $results = $this->call('GET', '/fulfillment');
+
+        $this->assertEmpty($results->decodeResponseJson('results'));
+        $this->assertEquals(0, $results->decodeResponseJson('total_results'));
+    }
+
+    public function test_index_all()
+    {
+        for ($i =0; $i< 10; $i++)
+        {
+            $shippingAddress = $this->addressRepository->create($this->faker->address([
+                'type' => ConfigService::$shippingAddressType
+            ]));
+
+            $order = $this->orderRepository->create($this->faker->order([
+                'shipping_address_id' => $shippingAddress['id']
+            ]));
+            $shippingAddress['order_id'] = $order['id'];
+
+            $fulfillments[$i] = $this->orderItemFulfillmentRepository->create($this->faker->orderItemFulfillment([
+                'order_id' => $order['id']
+            ]));
+            $fulfillments[$i]['shipping_address'] = $shippingAddress;
+        }
+        $results = $this->call('GET', '/fulfillment');
+
+        $this->assertEquals($fulfillments, $results->decodeResponseJson('results'));
+    }
+
+    public function test_index_filtered_fulfillments()
+    {
+        $expectedResults = [];
+        for ($i =0; $i< 10; $i++)
+        {
+            $shippingAddress = $this->addressRepository->create($this->faker->address([
+                'type' => ConfigService::$shippingAddressType
+            ]));
+
+            $order = $this->orderRepository->create($this->faker->order([
+                'shipping_address_id' => $shippingAddress['id']
+            ]));
+            $shippingAddress['order_id'] = $order['id'];
+
+            $fulfillments[$i] = $this->orderItemFulfillmentRepository->create($this->faker->orderItemFulfillment([
+                'order_id' => $order['id'],
+                'status' => $this->faker->randomElement([ConfigService::$fulfillmentStatusPending, ConfigService::$fulfillmentStatusFulfilled])
+            ]));
+            $fulfillments[$i]['shipping_address'] = $shippingAddress;
+            if($fulfillments[$i]['status'] === ConfigService::$fulfillmentStatusFulfilled){
+                $expectedResults[] = $fulfillments[$i];
+            }
+        }
+
+        $results = $this->call('GET', '/fulfillment',[
+            'status' => [ConfigService::$fulfillmentStatusFulfilled]
+        ]);
+
+        $this->assertEquals($expectedResults, $results->decodeResponseJson('results'));
+    }
+}

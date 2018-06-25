@@ -110,7 +110,7 @@ return [
         \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
     ],
 
-    'role_abilities'              => [
+    'role_abilities'          => [
         'administrator' => [
             'create.shipping.option',
             'edit.shipping.option',
@@ -129,15 +129,17 @@ return [
             'pull.subscriptions',
             'delete.subscription',
 
-            'pull.discounts'
+            'pull.discounts',
+
+            'pull.fulfillments'
         ],
     ],
-    'invoiceSender'               => 'support@drumeo.com',
-    'invoiceSenderName'           => 'Drumeo',
-    'invoiceAddress'              => 'Drumeo 107-31265 Wheel Avenue - Abbotsford BC, Canada',
-    'invoiceEmailSubject'         => 'Order Invoice - Thank You!',
-    'paymentPlanOptions'          => [1, 2, 5],
-    'paymentPlanMinimumPrice'     => 20,
+    'invoiceSender'           => 'support@drumeo.com',
+    'invoiceSenderName'       => 'Drumeo',
+    'invoiceAddress'          => 'Drumeo 107-31265 Wheel Avenue - Abbotsford BC, Canada',
+    'invoiceEmailSubject'     => 'Order Invoice - Thank You!',
+    'paymentPlanOptions'      => [1, 2, 5],
+    'paymentPlanMinimumPrice' => 20,
 
     'billingAddress'              => 'billing',
     'shippingAddress'             => 'shipping',
@@ -151,5 +153,7 @@ return [
     'typePaymentPlan'             => 'payment plan',
     'intervalTypeDaily'           => 'day',
     'intervalTypeMonthly'         => 'month',
-    'intervalTypeYearly'          => 'year'
+    'intervalTypeYearly'          => 'year',
+    'fulfillmentStatusPending'    => 'pending',
+    'fulfillmentStatusFulfilled'  => 'fulfilled'
 ];

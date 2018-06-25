@@ -8,6 +8,7 @@ use PDO;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Decorators\DiscountDiscountCriteriaDecorator;
 use Railroad\Ecommerce\Decorators\MethodDecorator;
+use Railroad\Ecommerce\Decorators\OrderItemFulfillmentAddressDecorator;
 use Railroad\Ecommerce\Decorators\OrderItemProductDecorator;
 use Railroad\Ecommerce\Decorators\OrderOrderItemsDecorators;
 use Railroad\Ecommerce\Decorators\PaymentMethodBillingAddressDecorator;
@@ -181,7 +182,15 @@ class EcommerceServiceProvider extends ServiceProvider
             )
         );
 
-
+        config()->set(
+            'resora.decorators.orderItemFulfillment',
+            array_merge(
+                config()->get('resora.decorators.orderItemFulfillment', []),
+                [
+                    OrderItemFulfillmentAddressDecorator::class
+                ]
+            )
+        );
 
         // merge in permissions settings
         config()->set(
@@ -274,6 +283,10 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$intervalTypeDaily = config('ecommerce.intervalTypeDaily');
         ConfigService::$intervalTypeMonthly = config('ecommerce.intervalTypeMonthly');
         ConfigService::$intervalTypeYearly = config('ecommerce.intervalTypeYearly');
+
+        //shipping fulfillment status
+        ConfigService::$fulfillmentStatusPending = config('ecommerce.fulfillmentStatusPending');
+        ConfigService::$fulfillmentStatusFulfilled = config('ecommerce.fulfillmentStatusFulfilled');
 
         // currencies
         ConfigService::$supportedCurrencies = config('ecommerce.supported_currencies');

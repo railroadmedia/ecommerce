@@ -248,6 +248,13 @@ Route::delete(
     ]
 )->name('order.delete');
 
+//shipping fulfillment
+Route::get(
+    '/fulfillment',
+    Railroad\Ecommerce\Controllers\ShippingFulfillmentJsonController::class . '@index'
+)->name('fulfillment.index');
+
+
 
 
 

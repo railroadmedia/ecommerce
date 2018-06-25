@@ -158,19 +158,6 @@ class Faker extends Generator
         );
     }
 
-    public function paymentGateway(array $override = [])
-    {
-        return array_merge(
-            [
-                'brand'      => ConfigService::$brand,
-                'type'       => $this->word,
-                'name'       => $this->word,
-                'config'     => $this->word,
-                'created_on' => Carbon::now()->toDateTimeString()
-            ], $override
-        );
-    }
-
     public function userPaymentMethod(array $override = [])
     {
         return array_merge(
@@ -295,6 +282,21 @@ class Faker extends Generator
                 'payment_method_id'       => $this->randomNumber(),
                 'created_on'              => Carbon::now()->toDateTimeString(),
                 'deleted_on'              => null
+            ], $override
+        );
+    }
+
+    public function orderItemFulfillment(array $override = [])
+    {
+        return array_merge(
+            [
+                'order_id' => $this->randomNumber(),
+                'order_item_id' => $this->randomNumber(),
+                'status' => ConfigService::$fulfillmentStatusPending,
+                'company' => null,
+                'tracking_number' => null,
+                'fulfilled_on' => null,
+                'created_on' => Carbon::now()->toDateTimeString()
             ], $override
         );
     }

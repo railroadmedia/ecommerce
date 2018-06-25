@@ -264,4 +264,16 @@ class ConfigService
      * @var string
      */
     public static $intervalTypeYearly;
+
+    /**
+     * @var string
+     */
+    public static $fulfillmentStatusPending;
+
+    /**
+     * @var string
+     */
+    public static $fulfillmentStatusFulfilled;
+
+
 }

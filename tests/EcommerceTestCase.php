@@ -130,6 +130,8 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.intervalTypeDaily', $defaultConfig['intervalTypeDaily']);
         $app['config']->set('ecommerce.intervalTypeMonthly', $defaultConfig['intervalTypeMonthly']);
         $app['config']->set('ecommerce.intervalTypeYearly', $defaultConfig['intervalTypeYearly']);
+        $app['config']->set('ecommerce.fulfillmentStatusPending', $defaultConfig['fulfillmentStatusPending']);
+        $app['config']->set('ecommerce.fulfillmentStatusFulfilled', $defaultConfig['fulfillmentStatusFulfilled']);
 
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
