@@ -111,6 +111,14 @@ class RefundJsonController extends Controller
             ]
         );
 
+        //update refund column in payment table
+        $this->paymentRepository->update(
+            $payment['id'],
+            [
+                'refunded' => $payment['refunded'] + $refund['refunded_amount']
+            ]
+        );
+
         return new JsonResponse($refund, 200);
     }
 }

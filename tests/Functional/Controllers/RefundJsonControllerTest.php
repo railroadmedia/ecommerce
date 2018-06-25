@@ -119,6 +119,15 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 'updated_on'        => null
             ]
         );
+
+        //assert refund value saved in payment table
+        $this->assertDatabaseHas(
+            ConfigService::$tablePayment,
+            [
+                'id' => $payment['id'],
+                'refunded' => $payment['refunded'] + $refundAmount
+            ]
+        );
     }
 
     public function test_user_can_not_create_other_refund()
