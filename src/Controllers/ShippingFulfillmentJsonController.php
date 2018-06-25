@@ -56,7 +56,7 @@ class ShippingFulfillmentJsonController extends Controller
             ->get();
 
         $fulfillmentsCount = $this->orderItemFulfillmentRepository->query()
-            ->whereIn('status', (array)$request->get('status', [ConfigService::$fulfillmentStatusPending, ConfigService::$fulfillmentStatusFulfilled]))
+            ->whereIn('status', (array) $request->get('status', [ConfigService::$fulfillmentStatusPending, ConfigService::$fulfillmentStatusFulfilled]))
             ->count();
 
         return new JsonPaginatedResponse(
@@ -67,6 +67,7 @@ class ShippingFulfillmentJsonController extends Controller
 
     /** Fulfilled order or order item. If the order_item_id it's set on the request only the order item it's fulfilled,
      * otherwise entire order it's fulfilled.
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Railroad\Ecommerce\Responses\JsonResponse
      */
@@ -83,18 +84,14 @@ class ShippingFulfillmentJsonController extends Controller
             $fulfillmentsQuery = $fulfillmentsQuery->where('order_item_id', $request->get('order_item_id'));
         }
 
-        $fulfillments    = $fulfillmentsQuery->get();
-        $fulfillmentsIds = $fulfillments->pluck('id');
-
-        $updated =  $this->orderItemFulfillmentRepository->query()
-            ->whereIn('id', $fulfillmentsIds)
+        $updated = $fulfillmentsQuery
             ->update(
-            [
-                'status'          => ConfigService::$fulfillmentStatusFulfilled,
-                'company'         => $request->get('shipping_company'),
-                'tracking_number' => $request->get('tracking_number'),
-                'fulfilled_on'    => Carbon::now()->toDateTimeString()
-            ]);
+                [
+                    'status'          => ConfigService::$fulfillmentStatusFulfilled,
+                    'company'         => $request->get('shipping_company'),
+                    'tracking_number' => $request->get('tracking_number'),
+                    'fulfilled_on'    => Carbon::now()->toDateTimeString()
+                ]);
 
         throw_if(
             ($updated === 0),
