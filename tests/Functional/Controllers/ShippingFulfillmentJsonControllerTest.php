@@ -150,7 +150,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $trackingNumber  = $this->faker->randomNumber();
         $results         = $this->call('PATCH', '/fulfillment', [
             'order_id'         => $fulfillment['order_id'],
-            'order_item_id' => $fulfillment['order_item_id'],
+            'order_item_id'    => $fulfillment['order_item_id'],
             'shipping_company' => $shippingCompany,
             'tracking_number'  => $trackingNumber
         ]);
@@ -180,5 +180,75 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
                 'fulfilled_on'    => null
             ]
         );
+    }
+
+    public function test_delete_order_fulfillments()
+    {
+        $fulfillment  = $this->orderItemFulfillmentRepository->create($this->faker->orderItemFulfillment());
+        $fulfillment2 = $this->orderItemFulfillmentRepository->create($this->faker->orderItemFulfillment([
+            'order_id' => $fulfillment['order_id']
+        ]));
+
+        $results = $this->call('DELETE', '/fulfillment', [
+            'order_id' => $fulfillment['order_id']
+        ]);
+
+        $this->assertEquals(204, $results->getStatusCode());
+
+        $this->assertDatabaseMissing(
+            ConfigService::$tableOrderItemFulfillment,
+            [
+                'id'       => $fulfillment['id'],
+                'order_id' => $fulfillment['order_id'],
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            ConfigService::$tableOrderItemFulfillment,
+            [
+                'id'       => $fulfillment2['id'],
+                'order_id' => $fulfillment['order_id'],
+            ]
+        );
+    }
+
+    public function test_delete_order_item_fulfillment()
+    {
+        $fulfillment  = $this->orderItemFulfillmentRepository->create($this->faker->orderItemFulfillment());
+        $fulfillment2 = $this->orderItemFulfillmentRepository->create($this->faker->orderItemFulfillment([
+            'order_id' => $fulfillment['order_id']
+        ]));
+
+        $results = $this->call('DELETE', '/fulfillment', [
+            'order_id'      => $fulfillment['order_id'],
+            'order_item_id' => $fulfillment['order_item_id']
+        ]);
+
+        $this->assertEquals(204, $results->getStatusCode());
+
+        $this->assertDatabaseMissing(
+            ConfigService::$tableOrderItemFulfillment,
+            [
+                'id'       => $fulfillment['id'],
+                'order_id' => $fulfillment['order_id'],
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrderItemFulfillment,
+            [
+                'id'       => $fulfillment2['id'],
+                'order_id' => $fulfillment['order_id'],
+            ]
+        );
+    }
+
+    public function test_fulfillment_not_exist()
+    {
+        $results = $this->call('DELETE', '/fulfillment', [
+            'order_id'      => rand()
+        ]);
+
+        $this->assertEquals(422, $results->status());
     }
 }

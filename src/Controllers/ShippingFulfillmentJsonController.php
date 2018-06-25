@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
 use Railroad\Ecommerce\Requests\OrderFulfilledRequest;
+use Railroad\Ecommerce\Requests\OrderFulfillmentDeleteRequest;
 use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -99,5 +100,29 @@ class ShippingFulfillmentJsonController extends Controller
         );
 
         return new JsonResponse(null, 201);
+    }
+
+    /** Delete order or order item fulfillment.
+     *
+     * @param \Railroad\Ecommerce\Requests\OrderFulfillmentDeleteRequest $request
+     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     */
+    public function delete(OrderFulfillmentDeleteRequest $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'delete.fulfillment');
+
+        //if the order item id it's set on the request we delete only order item fulfillment,
+        // otherwise the entire order fulfillment it's deleted
+        $fulfillmentsQuery = $this->orderItemFulfillmentRepository->query()
+            ->where('order_id', $request->get('order_id'))
+            ->where('status', ConfigService::$fulfillmentStatusPending);
+        if($request->has('order_item_id'))
+        {
+            $fulfillmentsQuery = $fulfillmentsQuery->where('order_item_id', $request->get('order_item_id'));
+        }
+
+        $fulfillmentsQuery->delete();
+
+        return new JsonResponse(null, 204);
     }
 }

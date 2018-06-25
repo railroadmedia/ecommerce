@@ -255,9 +255,11 @@ Route::get(
 )->name('fulfillment.index');
 Route::patch(
     '/fulfillment',
-    [
-        'uses' => Railroad\Ecommerce\Controllers\ShippingFulfillmentJsonController::class . '@markShippingFulfilled',
-    ]
+    Railroad\Ecommerce\Controllers\ShippingFulfillmentJsonController::class . '@markShippingFulfilled'
+)->name('fulfillment.fulfilled');
+Route::delete(
+    '/fulfillment',
+    Railroad\Ecommerce\Controllers\ShippingFulfillmentJsonController::class . '@delete'
 )->name('fulfillment.fulfilled');
 
 
