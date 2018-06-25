@@ -29,7 +29,7 @@
     "doctrine/dbal": "^2.5",
     "ramsey/uuid": "^3.6",
     "railroad/location": "5.60.04",
-    "railroad/permissions": "5.61.06",
+    "railroad/permissions": "0.0.01",
     "railroad/remotestorage": "@dev",
     "railroad/response": "0.0.1",
     "webpatser/laravel-countries": "1.5.4",
