@@ -29,12 +29,11 @@
     "doctrine/dbal": "^2.5",
     "ramsey/uuid": "^3.6",
     "railroad/location": "5.60.04",
-    "railroad/permissions": "0.0.01",
+    "railroad/permissions": "5.61.*",
     "railroad/remotestorage": "@dev",
-    "railroad/response": "0.0.1",
+    "railroad/resora": "5.60.*",
     "webpatser/laravel-countries": "1.5.4",
     "stripe/stripe-php": "^4.4",
-    "railroad/resora": "5.60.01"
   },
   "require-dev": {
     "phpunit/phpunit": "~7.0",
