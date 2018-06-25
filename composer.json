@@ -32,6 +32,7 @@
     "railroad/permissions": "5.61.*",
     "railroad/remotestorage": "@dev",
     "railroad/resora": "5.60.*",
+    "railroad/response": "0.0.1",
     "webpatser/laravel-countries": "1.5.4",
     "stripe/stripe-php": "^4.4",
   },
