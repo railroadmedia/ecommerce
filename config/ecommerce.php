@@ -131,7 +131,8 @@ return [
 
             'pull.discounts',
 
-            'pull.fulfillments'
+            'pull.fulfillments',
+            'fulfilled.fulfillment'
         ],
     ],
     'invoiceSender'           => 'support@drumeo.com',

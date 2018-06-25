@@ -253,6 +253,12 @@ Route::get(
     '/fulfillment',
     Railroad\Ecommerce\Controllers\ShippingFulfillmentJsonController::class . '@index'
 )->name('fulfillment.index');
+Route::patch(
+    '/fulfillment',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\ShippingFulfillmentJsonController::class . '@markShippingFulfilled',
+    ]
+)->name('fulfillment.fulfilled');
 
 
 
