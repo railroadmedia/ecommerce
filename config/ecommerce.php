@@ -127,6 +127,7 @@ return [
             'delete.order',
 
             'pull.subscriptions',
+            'edit.subscription',
             'delete.subscription',
 
             'pull.discounts',

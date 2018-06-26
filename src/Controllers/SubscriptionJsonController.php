@@ -2,10 +2,12 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
 use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -36,6 +38,7 @@ class SubscriptionJsonController extends Controller
     }
 
     /** Pull subscriptions paginated
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Railroad\Ecommerce\Responses\JsonPaginatedResponse
      */
@@ -86,5 +89,56 @@ class SubscriptionJsonController extends Controller
         $this->subscriptionRepository->delete($subscriptionId);
 
         return new JsonResponse(null, 204);
+    }
+
+    /** Update a subscription and returned updated data in JSON format
+     * @param  integer                                               $subscriptionId
+     * @param \Railroad\Ecommerce\Requests\SubscriptionUpdateRequest $request
+     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     */
+    public function update($subscriptionId, SubscriptionUpdateRequest $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'edit.subscription');
+
+        $subscription = $this->subscriptionRepository->read($subscriptionId);
+
+        throw_if(is_null($subscription),
+            new NotFoundException('Update failed, subscription not found with id: ' . $subscriptionId)
+        );
+        $cancelDate = null;
+        if($request->has('canceled_on') || ($request->get('is_active') === false))
+        {
+            $cancelDate = Carbon::parse($request->get('canceled_on', Carbon::now()));
+        }
+
+        $updatedSubscription = $this->subscriptionRepository->update(
+            $subscriptionId,
+            array_merge(
+                $request->only(
+                    [
+                        'interval_type',
+                        'interval_count',
+                        'total_cycles_due',
+                        'total_cycles_paid',
+                        'type',
+                        'order_id',
+                        'product_id',
+                        'is_active',
+                        'note',
+                        'payment_method_id',
+                        'currency'
+                    ]
+                ),
+                [
+                    'total_price_per_payment' => round($request->get('total_price_per_payment', $subscription['total_price_per_payment']), 2),
+                    'start_date'              => Carbon::parse($request->get('start_date', Carbon::createFromTimeString($subscription['start_date']))),
+                    'paid_until'              => Carbon::parse($request->get('paid_until', Carbon::createFromTimeString($subscription['paid_until']))),
+                    'canceled_on'             => $cancelDate,
+                    'updated_on'              => Carbon::now()->toDateTimeString()
+                ]
+            )
+        );
+
+        return new JsonResponse($updatedSubscription, 201);
     }
 }

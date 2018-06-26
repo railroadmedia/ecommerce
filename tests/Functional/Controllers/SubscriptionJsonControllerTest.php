@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
+use Carbon\Carbon;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
@@ -98,7 +99,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $this->assertEquals($subscriptions, $results->decodeResponseJson('results'));
     }
 
-    public function test_pull_subscriptions_for_specific_user(){
+    public function test_pull_subscriptions_for_specific_user()
+    {
         $page            = 1;
         $limit           = 10;
         $nrSubscriptions = 10;
@@ -111,20 +113,20 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         for($i = 0; $i < 5; $i++)
         {
-            $paymentMethod                       = $this->paymentMethodRepository->create($this->faker->paymentMethod());
-            $subscription                        = $this->subscriptionRepository->create($this->faker->subscription([
+            $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod());
+            $subscription  = $this->subscriptionRepository->create($this->faker->subscription([
                 'product_id'        => $product['id'],
                 'payment_method_id' => $paymentMethod['id'],
-                'user_id' => rand()
+                'user_id'           => rand()
             ]));
         }
         for($i = 0; $i < $nrSubscriptions; $i++)
         {
-            $paymentMethod                       = $this->paymentMethodRepository->create($this->faker->paymentMethod());
-            $subscription                        = $this->subscriptionRepository->create($this->faker->subscription([
+            $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod());
+            $subscription  = $this->subscriptionRepository->create($this->faker->subscription([
                 'product_id'        => $product['id'],
                 'payment_method_id' => $paymentMethod['id'],
-                'user_id' => $userId
+                'user_id'           => $userId
             ]));
 
             $subscriptions[$i]                   = $subscription;
@@ -134,12 +136,81 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call('GET', '/subscriptions',
             [
-                'page'  => $page,
-                'limit' => $limit,
+                'page'    => $page,
+                'limit'   => $limit,
                 'user_id' => $userId
             ]);
 
         $this->assertEquals($subscriptions, $results->decodeResponseJson('results'));
         $this->assertEquals($nrSubscriptions, $results->decodeResponseJson('total_results'));
+    }
+
+    public function test_update_not_existing_subscription()
+    {
+        $results = $this->call('PATCH', '/subscription/' . rand());
+
+        $this->assertEquals(404, $results->getStatusCode());
+    }
+
+    public function test_update_subscription()
+    {
+        $subscription = $this->subscriptionRepository->create($this->faker->subscription());
+        $newPrice     = $this->faker->numberBetween();
+        $results      = $this->call('PATCH', '/subscription/' . $subscription['id'],
+            [
+                'total_price_per_payment' => $newPrice
+            ]);
+
+        $this->assertEquals(201, $results->getStatusCode());
+        $this->assertEquals(array_merge($subscription, [
+            'total_price_per_payment' => $newPrice,
+            'updated_on'              => Carbon::now()->toDateTimeString()
+        ]), $results->decodeResponseJson('results'));
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableSubscription,
+            array_merge($subscription, [
+                'total_price_per_payment' => $newPrice,
+                'updated_on'              => Carbon::now()->toDateTimeString()
+            ])
+        );
+    }
+
+    public function test_cancel_subscription()
+    {
+        $subscription = $this->subscriptionRepository->create($this->faker->subscription());
+        $results      = $this->call('PATCH', '/subscription/' . $subscription['id'],
+            [
+                'is_active' => false
+            ]);
+
+        $this->assertEquals(201, $results->getStatusCode());
+        $this->assertEquals(array_merge($subscription, [
+            'is_active'   => 0,
+            'canceled_on' => Carbon::now()->toDateTimeString(),
+            'updated_on'  => Carbon::now()->toDateTimeString()
+        ]), $results->decodeResponseJson('results'));
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableSubscription,
+            array_merge($subscription, [
+                'is_active'   => false,
+                'canceled_on' => Carbon::now()->toDateTimeString(),
+                'updated_on'  => Carbon::now()->toDateTimeString()
+            ])
+        );
+    }
+
+    public function test_update_subscription_validation()
+    {
+        $subscription = $this->subscriptionRepository->create($this->faker->subscription());
+        $results = $this->call('PATCH', '/subscription/'.$subscription['id'],[
+            'payment_method_id' => rand(),
+            'total_cycles_due' => -2,
+            'interval_type' => $this->faker->word
+        ]);
+
+        $this->assertEquals(422, $results->getStatusCode());
+        $this->assertEquals(3, count($results->decodeResponseJson('errors')));
     }
 }
