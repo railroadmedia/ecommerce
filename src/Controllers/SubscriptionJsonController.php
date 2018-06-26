@@ -13,7 +13,7 @@ use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 
-class SubscriptionJsonController extends Controller
+class SubscriptionJsonController extends BaseController
 {
     /**
      * @var \Railroad\Ecommerce\Repositories\SubscriptionRepository
@@ -33,6 +33,8 @@ class SubscriptionJsonController extends Controller
      */
     public function __construct(SubscriptionRepository $subscriptionRepository, PermissionService $permissionService)
     {
+        parent::__construct();
+
         $this->subscriptionRepository = $subscriptionRepository;
         $this->permissionService      = $permissionService;
     }

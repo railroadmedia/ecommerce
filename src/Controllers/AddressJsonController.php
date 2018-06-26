@@ -15,7 +15,7 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 use Throwable;
 
-class AddressJsonController extends Controller
+class AddressJsonController extends BaseController
 {
     /**
      * @var AddressRepository
@@ -35,6 +35,8 @@ class AddressJsonController extends Controller
      */
     public function __construct(AddressRepository $addressRepository, PermissionService $permissionService)
     {
+        parent::__construct();
+
         $this->addressRepository = $addressRepository;
         $this->permissionService = $permissionService;
     }

@@ -12,7 +12,7 @@ use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\TaxService;
 
-class ShoppingCartController extends Controller
+class ShoppingCartController extends BaseController
 {
     /**
      * @var CartService
@@ -48,20 +48,12 @@ class ShoppingCartController extends Controller
         CartAddressService $cartAddressService,
         TaxService $taxService
     ) {
+        parent::__construct();
+
         $this->cartService        = $cartService;
         $this->productRepository  = $productRepository;
         $this->cartAddressService = $cartAddressService;
         $this->taxService         = $taxService;
-        $this->middleware(
-            [
-                EncryptCookies::class,
-                \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-                \Illuminate\Session\Middleware\StartSession::class,
-                \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-                VerifyCsrfToken::class,
-                \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            ]
-        );
     }
 
     /** Add products to cart; if the products are active and available(the product stock > requested quantity).

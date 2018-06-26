@@ -11,7 +11,7 @@ use Railroad\Ecommerce\Requests\ShippingCostUpdateRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Permissions\Services\PermissionService;
 
-class ShippingCostsWeightRangeController extends Controller
+class ShippingCostsWeightRangeController extends BaseController
 {
     /**
      * @var ShippingCostsRepository
@@ -30,6 +30,8 @@ class ShippingCostsWeightRangeController extends Controller
      */
     public function __construct(ShippingCostsRepository $shippingCostsRepository, PermissionService $permissionService)
     {
+        parent::__construct();
+
         $this->shippingCostsRepository = $shippingCostsRepository;
         $this->permissionService = $permissionService;
     }

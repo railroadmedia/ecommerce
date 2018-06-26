@@ -25,7 +25,7 @@ use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Permissions\Services\PermissionService;
 
-class PaymentMethodJsonController extends Controller
+class PaymentMethodJsonController extends BaseController
 {
     /**
      * @var \Railroad\Permissions\Services\PermissionService
@@ -103,6 +103,8 @@ class PaymentMethodJsonController extends Controller
         CreditCardRepository $creditCardRepository,
         PaypalBillingAgreementRepository $paypalBillingAgreementRepository
     ) {
+        parent::__construct();
+
         $this->permissionService                = $permissionService;
         $this->paymentMethodRepository          = $paymentMethodRepository;
         $this->userPaymentMethodRepository      = $userPaymentMethodsRepository;

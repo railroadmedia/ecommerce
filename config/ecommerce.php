@@ -138,6 +138,7 @@ return [
             'delete.fulfillment'
         ],
     ],
+
     'invoiceSender'           => 'support@drumeo.com',
     'invoiceSenderName'       => 'Drumeo',
     'invoiceAddress'          => 'Drumeo 107-31265 Wheel Avenue - Abbotsford BC, Canada',

@@ -14,7 +14,7 @@ use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Permissions\Services\PermissionService;
 
-class RefundJsonController extends Controller
+class RefundJsonController extends BaseController
 {
     /**
      * @var RefundRepository
@@ -55,6 +55,8 @@ class RefundJsonController extends Controller
         StripePaymentGateway $stripePaymentGateway,
         PayPalPaymentGateway $payPalPaymentGateway
     ) {
+        parent::__construct();
+
         $this->refundRepository     = $refundRepository;
         $this->paymentRepository    = $paymentRepository;
         $this->permissionService    = $permissionService;

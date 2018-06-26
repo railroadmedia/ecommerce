@@ -37,7 +37,7 @@ use Railroad\Ecommerce\Services\PaymentPlanService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Location\Services\LocationService;
 
-class OrderFormController extends Controller
+class OrderFormController extends BaseController
 {
     /**
      * @var CartService
@@ -208,6 +208,8 @@ class OrderFormController extends Controller
         DiscountService $discountService,
         PaymentPlanService $paymentPlanService
     ) {
+        parent::__construct();
+
         $this->cartService                    = $cartService;
         $this->orderRepository                = $orderRepository;
         $this->customerRepository             = $customerRepository;
