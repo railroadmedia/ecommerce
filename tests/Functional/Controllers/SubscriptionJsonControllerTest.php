@@ -156,6 +156,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
     {
         $subscription = $this->subscriptionRepository->create($this->faker->subscription());
         $newPrice     = $this->faker->numberBetween();
+
         $results      = $this->call('PATCH', '/subscription/' . $subscription['id'],
             [
                 'total_price_per_payment' => $newPrice
@@ -187,7 +188,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(201, $results->getStatusCode());
         $this->assertEquals(array_merge($subscription, [
             'is_active'   => 0,
-            'canceled_on' => Carbon::now()->toDateTimeString(),
+            'canceled_on' => Carbon::now()->timezone('America/Los_Angeles')->toDateTimeString(),
             'updated_on'  => Carbon::now()->toDateTimeString()
         ]), $results->decodeResponseJson('results'));
 
@@ -195,7 +196,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ConfigService::$tableSubscription,
             array_merge($subscription, [
                 'is_active'   => false,
-                'canceled_on' => Carbon::now()->toDateTimeString(),
+                'canceled_on' => Carbon::now()->timezone('America/Los_Angeles')->toDateTimeString(),
                 'updated_on'  => Carbon::now()->toDateTimeString()
             ])
         );

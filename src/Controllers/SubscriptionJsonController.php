@@ -92,6 +92,7 @@ class SubscriptionJsonController extends Controller
     }
 
     /** Update a subscription and returned updated data in JSON format
+     *
      * @param  integer                                               $subscriptionId
      * @param \Railroad\Ecommerce\Requests\SubscriptionUpdateRequest $request
      * @return \Railroad\Ecommerce\Responses\JsonResponse
@@ -108,7 +109,8 @@ class SubscriptionJsonController extends Controller
         $cancelDate = null;
         if($request->has('canceled_on') || ($request->get('is_active') === false))
         {
-            $cancelDate = Carbon::parse($request->get('canceled_on', Carbon::now()));
+            $cancelDate = Carbon::createFromFormat('m/d/y', $request->get('canceled_on', Carbon::now()->format('m/d/y')))
+                ->timezone('America/Los_Angeles');
         }
 
         $updatedSubscription = $this->subscriptionRepository->update(
@@ -131,8 +133,8 @@ class SubscriptionJsonController extends Controller
                 ),
                 [
                     'total_price_per_payment' => round($request->get('total_price_per_payment', $subscription['total_price_per_payment']), 2),
-                    'start_date'              => Carbon::parse($request->get('start_date', Carbon::createFromTimeString($subscription['start_date']))),
-                    'paid_until'              => Carbon::parse($request->get('paid_until', Carbon::createFromTimeString($subscription['paid_until']))),
+                    'start_date'              => ($request->has('start_date'))?Carbon::createFromFormat('m/d/y', $request->get('start_date'))->timezone('America/Los_Angeles'):$subscription['start_date'],
+                    'paid_until'              => ($request->has('paid_until'))?Carbon::createFromFormat('m/d/y', $request->get('paid_until'))->timezone('America/Los_Angeles'):$subscription['paid_until'],
                     'canceled_on'             => $cancelDate,
                     'updated_on'              => Carbon::now()->toDateTimeString()
                 ]
