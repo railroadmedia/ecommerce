@@ -124,6 +124,7 @@ return [
             'delete.payment',
 
             'pull.orders',
+            'edit.order',
             'delete.order',
 
             'pull.subscriptions',

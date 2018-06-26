@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\OrderRepository;
+use Railroad\Ecommerce\Requests\OrderUpdateRequest;
 use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -110,5 +111,39 @@ class OrderJsonController extends Controller
         $this->orderRepository->delete($orderId);
 
         return new JsonResponse(null, 204);
+    }
+
+    /** Update order if exists in db and the user have rights to update it.
+     * Return updated data in JSON format
+     * @param  int                                               $orderId
+     * @param \Railroad\Ecommerce\Requests\OrderUpdateRequest $request
+     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     */
+    public function update($orderId, OrderUpdateRequest $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'edit.order');
+
+        $order = $this->orderRepository->read($orderId);
+
+        throw_if(is_null($order),
+            new NotFoundException('Update failed, order not found with id: ' . $orderId)
+        );
+
+        //update order with the data sent on the request
+        $updatedOrder = $this->orderRepository->update(
+            $orderId,
+            array_merge(
+                $request->only(
+                    [
+                        'due',
+                        'tax',
+                        'shipping_costs',
+                        'paid'
+                    ]
+                ), [
+                'updated_on' => Carbon::now()->toDateTimeString()
+            ])
+        );
+        return new JsonResponse($updatedOrder, 201);
     }
 }

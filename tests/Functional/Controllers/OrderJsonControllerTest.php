@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
+use Carbon\Carbon;
 use Railroad\Ecommerce\Controllers\OrderJsonController;
 use PHPUnit\Framework\TestCase;
 use Railroad\Ecommerce\Repositories\OrderItemRepository;
@@ -82,10 +83,10 @@ class OrderJsonControllerTest extends EcommerceTestCase
             $order     = $this->orderRepository->create($this->faker->order());
             $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
                 'product_id' => $product['id'],
-                'order_id' => $order['id']
+                'order_id'   => $order['id']
             ]));
 
-            $orders[]                   = $order;
+            $orders[] = $order;
         }
 
         $results = $this->call('GET', '/orders',
@@ -94,6 +95,49 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'limit' => $limit,
             ]);
 
-         $this->assertArraySubset($orders, $results->decodeResponseJson('results'));
+        $this->assertArraySubset($orders, $results->decodeResponseJson('results'));
+    }
+
+    public function test_update_not_existing_order()
+    {
+        $results = $this->call('PATCH', '/order/' . rand());
+
+        $this->assertEquals(404, $results->getStatusCode());
+    }
+
+    public function test_update_order()
+    {
+        $order   = $this->orderRepository->create($this->faker->order());
+        $newDue  = $this->faker->numberBetween();
+        $results = $this->call('PATCH', '/order/' . $order['id'],
+            [
+                'due' => $newDue
+            ]);
+        $this->assertEquals(201, $results->getStatusCode());
+        $this->assertEquals(
+            array_merge($order, [
+                    'updated_on' => Carbon::now()->toDateTimeString(),
+                    'due'        => $newDue
+                ]
+            ), $results->decodeResponseJson('results'));
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrder,
+            array_merge($order, [
+                    'updated_on' => Carbon::now()->toDateTimeString(),
+                    'due'        => $newDue
+                ]
+            )
+        );
+    }
+
+    public function test_update_order_validation()
+    {
+        $order = $this->orderRepository->create($this->faker->order());
+        $results = $this->call('PATCH', '/order/'.$order['id'],
+            [
+                'due' => -110
+            ]);
+        $this->assertEquals(422, $results->getStatusCode());
+        $this->assertEquals(1, count($results->decodeResponseJson('errors')));
     }
 }

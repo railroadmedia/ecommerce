@@ -245,6 +245,10 @@ Route::get(
     '/orders',
     Railroad\Ecommerce\Controllers\OrderJsonController::class . '@index'
 )->name('orders.index');
+Route::patch(
+    '/order/{orderId}',
+    Railroad\Ecommerce\Controllers\OrderJsonController::class . '@update'
+)->name('order.update');
 Route::delete(
     '/order/{orderId}',
     [
