@@ -16,10 +16,6 @@
     {
       "type": "path",
       "url": "../remotestorage"
-    },
-    {
-      "type": "vcs",
-      "url": "https://github.com/railroadmedia/response"
     }
   ],
   "require": {

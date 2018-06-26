@@ -66,14 +66,14 @@ class AddressJsonController extends Controller
                     ]
                 ),
                 [
-                    'brand' => $request->input('brand', ConfigService::$brand),
+                    'brand'      => $request->input('brand', ConfigService::$brand),
                     'created_on' => Carbon::now()->toDateTimeString(),
                 ]
             )
 
         );
 
-        return new JsonResponse($address, 200);
+        return reply()->json($address);
     }
 
     /**
@@ -83,7 +83,7 @@ class AddressJsonController extends Controller
      *        - JsonResponse with the updated address
      *
      * @param AddressUpdateRequest $request
-     * @param int $addressId
+     * @param int                  $addressId
      * @return JsonResponse
      * @throws Throwable
      */
@@ -105,7 +105,7 @@ class AddressJsonController extends Controller
         );
 
         //update address with the data sent on the request
-        $address = $this->addressRepository->update(
+        $addressU = $this->addressRepository->update(
             $addressId,
             array_merge(
                 $request->only(
@@ -128,7 +128,9 @@ class AddressJsonController extends Controller
             )
         );
 
-        return new JsonResponse($address, 201);
+        return reply()->json($addressU, [
+            'code' => 201
+        ]);
     }
 
     /**
@@ -138,7 +140,7 @@ class AddressJsonController extends Controller
      * the user have not rights to access it
      *        - JsonResponse with code 204 otherwise
      *
-     * @param integer $addressId
+     * @param integer              $addressId
      * @param AddressDeleteRequest $request
      * @return JsonResponse
      * @throws Throwable
@@ -169,6 +171,6 @@ class AddressJsonController extends Controller
             new NotAllowedException('Delete failed, exists orders defined for the selected address.')
         );
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, ['code' => 204]);
     }
 }

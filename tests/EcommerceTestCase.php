@@ -20,6 +20,7 @@ use Railroad\Location\Providers\LocationServiceProvider;
 use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
+use Railroad\Response\Providers\ResponseServiceProvider;
 use Webpatser\Countries\CountriesServiceProvider;
 
 class EcommerceTestCase extends BaseTestCase
@@ -194,6 +195,7 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(RemoteStorageServiceProvider::class);
         $app->register(CountriesServiceProvider::class);
         $app->register(PermissionsServiceProvider::class);
+        $app->register(ResponseServiceProvider::class);
 
         $app->bind('UserProviderInterface', function () {
             $mock = $this->getMockBuilder('UserProviderInterface')

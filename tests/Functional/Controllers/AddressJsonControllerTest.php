@@ -98,7 +98,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         //assert that the new created address it's returned in response in JSON format
-        $this->assertArraySubset($address, $results->decodeResponseJson()['results']);
+        $this->assertArraySubset($address, $results->decodeResponseJson()['data'][0]);
 
         //assert that the address exists in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
@@ -159,7 +159,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'country'       => $address['country'],
             'created_on'    => $address['created_on'],
             'updated_on'    => Carbon::now()->toDateTimeString()
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert that the address was updated in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, [
@@ -218,7 +218,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         ], $results->decodeResponseJson()['error']);
 
         //assert that the address was not modified in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());
     }
 
     public function test_delete_unauthorized_user()
@@ -238,7 +238,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             , $results->decodeResponseJson()['error']);
 
         //assert that the address was not deleted from the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());
     }
 
     public function test_user_delete_his_address()
@@ -254,7 +254,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         //assert that the address was deleted
-        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address->getArrayCopy());
     }
 
     public function _test_delete_address_with_orders()
@@ -363,7 +363,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         ], $results->decodeResponseJson()['errors']);
 
         //assert that the address was not modified in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());
         $this->assertDatabaseMissing(ConfigService::$tableAddress,
             [
                 'id'      => $address['id'],
@@ -421,7 +421,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'country'       => $country,
             'created_on'    => Carbon::now()->toDateTimeString(),
             'updated_on'    => null
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert address was saved in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, [
@@ -447,7 +447,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
 
-        $address = $this->addressRepository->create($this->faker->address());
+        $address = $this->addressRepository->query()->create($this->faker->address());
 
         $newStreetLine1 = $this->faker->streetAddress;
 
@@ -476,7 +476,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'country'       => $address['country'],
             'created_on'    => $address['created_on'],
             'updated_on'    => Carbon::now()->toDateTimeString()
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert that the address was updated in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, [
@@ -509,7 +509,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         //assert that address was deleted from database
-        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address->getArrayCopy());
     }
 
     public function test_customer_create_address()
@@ -557,7 +557,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'country'       => $country,
             'created_on'    => Carbon::now()->toDateTimeString(),
             'updated_on'    => null
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert record exists in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, [
@@ -602,7 +602,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'country'       => $address['country'],
             'created_on'    => $address['created_on'],
             'updated_on'    => Carbon::now()->toDateTimeString()
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert address raw was updated in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, [
@@ -655,7 +655,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         //assert database content
-        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address->getArrayCopy());
     }
 
     public function test_customer_can_not_delete_others_address()
@@ -676,6 +676,6 @@ class AddressJsonControllerTest extends EcommerceTestCase
             , $results->decodeResponseJson()['error']);
 
         //assert database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());
     }
 }
