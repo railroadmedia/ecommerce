@@ -89,10 +89,9 @@ class OrderJsonController extends BaseController
         }
         $ordersCount = $ordersCount->count();
 
-        return new JsonPaginatedResponse(
-            $orders,
-            $ordersCount,
-            200);
+        return reply()->json($orders, [
+            'totalResults' => $ordersCount
+        ]);
     }
 
     /** Soft delete order
@@ -112,7 +111,9 @@ class OrderJsonController extends BaseController
 
         $this->orderRepository->delete($orderId);
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 
     /** Update order if exists in db and the user have rights to update it.
@@ -146,6 +147,8 @@ class OrderJsonController extends BaseController
                 'updated_on' => Carbon::now()->toDateTimeString()
             ])
         );
-        return new JsonResponse($updatedOrder, 201);
+        return reply()->json($updatedOrder, [
+            'code' => 201
+        ]);
     }
 }

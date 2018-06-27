@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Repositories;
 use Railroad\Ecommerce\Repositories\Traits\SoftDelete;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Decorators\Decorator;
+use Railroad\Resora\Entities\Entity;
 use Railroad\Resora\Queries\CachedQuery;
 use Railroad\Resora\Repositories\RepositoryBase;
 
@@ -21,6 +22,10 @@ class OrderRepository extends RepositoryBase
 
     protected function decorate($results)
     {
+        if(is_array($results))
+        {
+            return new Entity($results);
+        }
         return Decorator::decorate($results, 'order');
     }
 

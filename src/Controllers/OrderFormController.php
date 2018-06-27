@@ -562,7 +562,9 @@ class OrderFormController extends BaseController
         //remove all items from the cart
         $this->cartService->removeAllCartItems();
 
-        return new JsonResponse($order, 200);
+        return reply()->json($order, [
+            'code' => 200
+        ]);
     }
 
     /**

@@ -104,7 +104,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
             'external_provider' => $payment['external_provider'],
             'created_on'        => Carbon::now()->toDateTimeString(),
             'updated_on'        => null
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert refund raw saved in db
         $this->assertDatabaseHas(

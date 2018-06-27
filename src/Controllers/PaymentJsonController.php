@@ -286,7 +286,9 @@ class PaymentJsonController extends BaseController
             );
         }
 
-        return new JsonResponse($payment, 200);
+        return reply()->json($payment, [
+            'code' => 200
+        ]);
     }
 
     /** Calculate next bill date for subscription

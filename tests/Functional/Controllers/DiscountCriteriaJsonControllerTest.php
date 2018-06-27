@@ -97,7 +97,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         $discountCriteria['discount_id'] = $discount['id'];
 
         //assert that the new created discount criteria it's returned in response in JSON format
-        $this->assertArraySubset($discountCriteria, $results->decodeResponseJson()['results']);
+        $this->assertArraySubset($discountCriteria, $results->decodeResponseJson()['data'][0]);
 
         //assert that the discount criteria exists in the database
         $this->assertDatabaseHas(ConfigService::$tableDiscountCriteria, $discountCriteria);
@@ -149,7 +149,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                 'discount_id' => $discountCriteria['discount_id'],
                 'updated_on' => Carbon::now()->toDateTimeString()
             ]
-            , $results->decodeResponseJson()['results']);
+            , $results->decodeResponseJson()['data'][0]);
     }
 
     public function test_delete_inexistent_discount_criteria()

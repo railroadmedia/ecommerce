@@ -50,10 +50,9 @@ class DiscountJsonController extends BaseController
             ->get();
         $discountsCount = $this->discountRepository->query()->count();
 
-        return new JsonPaginatedResponse(
-            $discounts,
-            $discountsCount,
-            200);
+        return reply()->json($discounts, [
+            'totalResults' => $discountsCount
+        ]);
     }
 
     /**
@@ -81,8 +80,9 @@ class DiscountJsonController extends BaseController
             )
 
         );
-
-        return new JsonResponse($discount, 200);
+        return reply()->json($discount, [
+            'code' => 200
+        ]);
     }
 
     /**
@@ -119,7 +119,9 @@ class DiscountJsonController extends BaseController
             )
         );
 
-        return new JsonResponse($discount, 201);
+        return reply()->json($discount, [
+            'code' => 201
+        ]);
     }
 
     /**
@@ -140,6 +142,8 @@ class DiscountJsonController extends BaseController
        //TODO: delete discount criteria links
         $this->discountRepository->destroy($discountId);
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 }

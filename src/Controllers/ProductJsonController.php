@@ -73,10 +73,9 @@ class ProductJsonController extends BaseController
             ->whereIn('active', $active)
             ->count();
 
-        return new JsonPaginatedResponse(
-            $products,
-            $productsCount,
-            200);
+        return reply()->json($products, [
+            'totalResults' => $productsCount
+        ]);
     }
 
     /** Create a new product and return it in JSON format
@@ -113,7 +112,7 @@ class ProductJsonController extends BaseController
                 ]
             ));
 
-        return new JsonResponse($product, 200);
+        return reply()->json($product);
     }
 
     /** Update a product based on product id and return it in JSON format
@@ -156,7 +155,9 @@ class ProductJsonController extends BaseController
             ])
         );
 
-        return new JsonResponse($product, 201);
+        return reply()->json($product, [
+            'code' => 201
+        ]);
     }
 
     /** Delete a product that it's not connected to orders or discounts and return a JsonResponse.
@@ -187,7 +188,9 @@ class ProductJsonController extends BaseController
 
         $this->productRepository->destroy($productId);
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 
     /** Upload product thumbnail on remote storage using remotestorage package.

@@ -31,7 +31,7 @@ class PaymentMethodBillingAddressDecorator implements DecoratorInterface
             $address = $addresses[$paymentMethod['billing_address_id']] ?? null;
 
             if (!empty($address)) {
-                $paymentMethods[$index]['billing_address'] = $address->getArrayCopy();
+                $paymentMethods[$index]['billing_address'] = (array)$address;
             }
         }
 

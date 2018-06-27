@@ -86,7 +86,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'order_id'   => $order['id']
             ]));
 
-            $orders[] = $order;
+            $orders[] = $order->getArrayCopy();
         }
 
         $results = $this->call('GET', '/orders',
@@ -95,7 +95,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'limit' => $limit,
             ]);
 
-        $this->assertArraySubset($orders, $results->decodeResponseJson('results'));
+        $this->assertArraySubset($orders, $results->decodeResponseJson('data'));
     }
 
     public function test_update_not_existing_order()
@@ -113,16 +113,17 @@ class OrderJsonControllerTest extends EcommerceTestCase
             [
                 'due' => $newDue
             ]);
+
         $this->assertEquals(201, $results->getStatusCode());
         $this->assertEquals(
-            array_merge($order, [
+            array_merge($order->getArrayCopy(), [
                     'updated_on' => Carbon::now()->toDateTimeString(),
                     'due'        => $newDue
                 ]
-            ), $results->decodeResponseJson('results'));
+            ), $results->decodeResponseJson('data')[0]);
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
-            array_merge($order, [
+            array_merge($order->getArrayCopy(), [
                     'updated_on' => Carbon::now()->toDateTimeString(),
                     'due'        => $newDue
                 ]

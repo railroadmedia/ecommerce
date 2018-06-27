@@ -121,6 +121,6 @@ class RefundJsonController extends BaseController
             ]
         );
 
-        return new JsonResponse($refund, 200);
+        return reply()->json($refund);
     }
 }

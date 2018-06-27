@@ -63,7 +63,7 @@ class ShippingCostsWeightRangeController extends BaseController
             )
         );
 
-        return new JsonResponse($shippingCosts, 200);
+        return reply()->json($shippingCosts);
     }
 
     /**
@@ -98,7 +98,9 @@ class ShippingCostsWeightRangeController extends BaseController
             new NotFoundException('Update failed, shipping cost weight range not found with id: ' . $shippingCostId)
         );
 
-        return new JsonResponse($shippingCost, 201);
+        return reply()->json($shippingCost, [
+            'code' => 201
+        ]);
     }
 
     /**
@@ -120,6 +122,8 @@ class ShippingCostsWeightRangeController extends BaseController
             new NotFoundException('Delete failed, shipping cost weight range not found with id: ' . $shippingCostId)
         );
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 }

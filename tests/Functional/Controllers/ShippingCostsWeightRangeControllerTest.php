@@ -148,7 +148,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                 'created_on' => Carbon::now()->toDateTimeString(),
                 'updated_on' => null,
             ],
-            $results->decodeResponseJson()['results']
+            $results->decodeResponseJson()['data'][0]
         );
 
     }
@@ -236,7 +236,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                 'created_on' => $shippingCost['created_on'],
                 'updated_on' => Carbon::now()->toDateTimeString(),
             ],
-            $results->decodeResponseJson()['results']
+            $results->decodeResponseJson()['data'][0]
         );
     }
 

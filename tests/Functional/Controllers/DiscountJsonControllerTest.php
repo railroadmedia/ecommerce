@@ -75,7 +75,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         //assert that the new created discount it's returned in response in JSON format
-        $this->assertArraySubset($discount, $results->decodeResponseJson()['results']);
+        $this->assertArraySubset($discount, $results->decodeResponseJson()['data'][0]);
 
         //assert that the discount exists in the database
         $this->assertDatabaseHas(ConfigService::$tableDiscount, $discount);
@@ -123,7 +123,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                 'active'      => $discount['active'],
                 'updated_on'  => Carbon::now()->toDateTimeString()
             ]
-            , $results->decodeResponseJson()['results']);
+            , $results->decodeResponseJson()['data'][0]);
     }
 
     public function test_delete()
@@ -136,7 +136,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         //assert that the discount not exists anymore in the database
-        $this->assertDatabaseMissing(ConfigService::$tableDiscount, $discount);
+        $this->assertDatabaseMissing(ConfigService::$tableDiscount, $discount->getArrayCopy());
     }
 
     public function test_pull_discounts_empty()
@@ -164,7 +164,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
             ]));
             if($i < $limit)
             {
-                $discounts[$i]             = $discount;
+                $discounts[$i]             = (array)$discount;
                 $discounts[$i]['criteria'][] = (array)$discountCriteria;
             }
         }
@@ -175,7 +175,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
             'order_by_direction' => 'asc'
         ]);
 
-        $this->assertEquals($discounts, $results->decodeResponseJson('results'));
-        $this->assertEquals($totalNumberOfDiscounts, $results->decodeResponseJson('total_results'));
+        $this->assertEquals($discounts, $results->decodeResponseJson('data'));
+        $this->assertEquals($totalNumberOfDiscounts, $results->decodeResponseJson('meta')['totalResults']);
     }
 }

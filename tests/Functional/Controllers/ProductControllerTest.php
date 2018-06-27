@@ -55,7 +55,7 @@ class ProductControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         //assert product data subset or results
-        $this->assertArraySubset($product, $results->decodeResponseJson('results'));
+        $this->assertArraySubset($product, $results->decodeResponseJson('data')[0]);
 
         //assert the product was saved in the db
         $this->assertDatabaseHas(
@@ -77,7 +77,7 @@ class ProductControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         //assert subscription data subset of response
-        $this->assertArraySubset($subscription, $jsonResponse['results']);
+        $this->assertArraySubset($subscription, $jsonResponse['data'][0]);
 
         //assert subscription data exist in db
         $this->assertDatabaseHas(
@@ -259,7 +259,7 @@ class ProductControllerTest extends EcommerceTestCase
         //assert product with the new description subset of response
         $product['description'] = $newDescription;
         $product['updated_on']  = Carbon::now()->toDateTimeString();
-        $this->assertArraySubset($product, $jsonResponse['results']);
+        $this->assertArraySubset($product, $jsonResponse['data'][0]);
 
         //assert product updated in the db
         $this->assertDatabaseHas(
@@ -371,8 +371,12 @@ class ProductControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('is')->willReturn(true);
         $results         = $this->call('GET', '/product');
         $expectedResults = [
-            'results'       => [],
-            'total_results' => 0
+            'data'       => [],
+            'meta' => [
+                'totalResults' => 0,
+                'page' => 1,
+                'limit' => 10
+            ]
         ];
 
         $this->assertEquals(200, $results->status());
@@ -402,7 +406,7 @@ class ProductControllerTest extends EcommerceTestCase
                 'order_by_direction' => 'asc'
             ]);
 
-        $this->assertEquals($products, $results->decodeResponseJson('results'));
+        $this->assertEquals($products, $results->decodeResponseJson('data'));
     }
 
     public function test_upload_thumb()
@@ -422,7 +426,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             storage_path('app') . '/' . $filenameRelative,
-            json_decode($response->getContent())->results
+            $response->decodeResponseJson('results')
         );
     }
 
@@ -451,12 +455,12 @@ class ProductControllerTest extends EcommerceTestCase
 
         $expectedContent =
             [
-                'status'        => 'ok',
-                'code'          => 200,
-                'page'          => $page,
-                'limit'         => $limit,
-                'results'       => array_slice($products, 3, $limit),
-                'total_results' => $nrProducts / 2
+                'data'       => array_slice($products, 3, $limit),
+                'meta' => [
+                    'totalResults' => $nrProducts/2,
+                    'page' => $page,
+                    'limit' => $limit
+                ]
             ];
 
         $results = $this->call('GET', '/product',

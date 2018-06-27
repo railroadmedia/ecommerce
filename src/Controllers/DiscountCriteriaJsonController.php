@@ -80,9 +80,9 @@ class DiscountCriteriaJsonController extends BaseController
             )
 
         );
-
-        return new JsonResponse($discountCriteria, 200);
-
+        return reply()->json($discountCriteria, [
+            'code' => 200
+        ]);
     }
 
     /**
@@ -118,8 +118,9 @@ class DiscountCriteriaJsonController extends BaseController
                 ]
             )
         );
-
-        return new JsonResponse($discountCriteria, 201);
+        return reply()->json($discountCriteria, [
+            'code' => 201
+        ]);
     }
 
     /**
@@ -138,6 +139,8 @@ class DiscountCriteriaJsonController extends BaseController
 
         $this->discountCriteriaRepository->destroy($discountCriteriaId);
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 }

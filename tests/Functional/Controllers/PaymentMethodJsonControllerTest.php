@@ -200,7 +200,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'created_on' => Carbon::now()->toDateTimeString(),
                 'updated_on' => null
             ]
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert payment method, credit card, link between user and payment method saved in the db
         $this->assertDatabaseHas(
@@ -263,7 +263,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'created_on' => Carbon::now()->toDateTimeString(),
                 'updated_on' => null
             ]
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert payment method, credit card, link between user and payment method saved in the db
         $this->assertDatabaseHas(
@@ -616,7 +616,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'created_on'  => $paymentMethod['created_on'],
             'updated_on'  => Carbon::now()->toDateTimeString(),
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert new credit card saved in the db
         $this->assertDatabaseHas(ConfigService::$tableCreditCard,
@@ -671,7 +671,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'created_on'  => $paymentMethod['created_on'],
             'updated_on'  => Carbon::now()->toDateTimeString(),
             'currency'    => $paymentMethod['currency'],
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert data updated in db
         $this->assertDatabaseHas(ConfigService::$tablePaymentMethod,
@@ -850,13 +850,13 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $results                                     = $this->call('GET', '/user-payment-method/' . $userId);
 
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertEquals([$assignPaymentMethodToUser, $userPaymentMethod], $results->decodeResponseJson('results'));
+        $this->assertEquals([$assignPaymentMethodToUser, $userPaymentMethod], $results->decodeResponseJson('data'));
     }
 
     public function test_get_user_payment_methods_not_exists()
     {
         $results = $this->call('GET', '/user-payment-method/'.rand());
 
-        $this->assertEmpty($results->decodeResponseJson('results'));
+        $this->assertEmpty($results->decodeResponseJson('data'));
     }
 }

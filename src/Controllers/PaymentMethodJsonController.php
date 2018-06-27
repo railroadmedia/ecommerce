@@ -212,7 +212,7 @@ class PaymentMethodJsonController extends BaseController
 
         $paymentMethod = $this->paymentMethodRepository->read($paymentMethodId);
 
-        return new JsonResponse($paymentMethod, 200);
+        return reply()->json($paymentMethod);
     }
 
     /** Update a payment method based on request data and payment method id.
@@ -342,7 +342,9 @@ class PaymentMethodJsonController extends BaseController
             )
         );
 
-        return new JsonResponse($paymentMethodUpdated, 201);
+        return reply()->json($paymentMethodUpdated, [
+            'code' => 201
+        ]);
     }
 
     /**
@@ -367,7 +369,9 @@ class PaymentMethodJsonController extends BaseController
 
         $results = $this->paymentMethodRepository->delete($paymentMethodId);
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 
     /**
@@ -428,6 +432,6 @@ class PaymentMethodJsonController extends BaseController
 
         $paymentMethods = $this->userPaymentMethodRepository->query()->where(['user_id' => $userId])->get();
 
-        return new JsonResponse($paymentMethods, 200);
+        return reply()->json($paymentMethods);
     }
 }

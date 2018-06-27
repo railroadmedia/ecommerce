@@ -99,7 +99,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'payment_method_id' => $paymentMethod['id'],
             'created_on'        => Carbon::now()->toDateTimeString(),
             'updated_on'        => null
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert payment exists in the db
         $this->assertDatabaseHas(ConfigService::$tablePayment,
@@ -146,7 +146,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'payment_method_id' => $paymentMethod['id'],
             'created_on'        => Carbon::now()->toDateTimeString(),
             'updated_on'        => null
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert payment exists in the db
         $this->assertDatabaseHas(ConfigService::$tablePayment,
@@ -202,7 +202,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'payment_method_id' => $paymentMethod['id'],
             'created_on'        => Carbon::now()->toDateTimeString(),
             'updated_on'        => null
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
 
         //assert payment exists in the db
         $this->assertDatabaseHas(ConfigService::$tablePayment,
@@ -273,7 +273,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'external_provider' => ConfigService::$manualPaymentType,
             'created_on'        => Carbon::now()->toDateTimeString(),
             'updated_on'        => null
-        ], $results->decodeResponseJson()['results']);
+        ], $results->decodeResponseJson()['data'][0]);
     }
 
     public function test_user_store_payment_invalid_order_id()
