@@ -119,6 +119,7 @@ return [
 
             'update.payment.method',
             'delete.payment.method',
+            'pull.user.payment.method',
 
             'create.payment',
             'delete.payment',

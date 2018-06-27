@@ -191,6 +191,17 @@ class EcommerceServiceProvider extends ServiceProvider
                 ]
             )
         );
+
+        config()->set(
+            'resora.decorators.userPaymentMethods',
+            array_merge(
+                config()->get('resora.decorators.userPaymentMethods', []),
+                [
+                    PaymentPaymentMethodDecorator::class,
+                    PaymentMethodEntityDecorator::class,
+                ]
+            )
+        );
     }
 
     private function setupConfig()

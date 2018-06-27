@@ -155,6 +155,10 @@ Route::delete(
         'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@delete',
     ]
 )->name('payment-method.delete');
+Route::get(
+    '/user-payment-method/{userId}',
+    Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@getUserPaymentMethods'
+)->name('user.payment-method.index');
 
 //address
 Route::put(
