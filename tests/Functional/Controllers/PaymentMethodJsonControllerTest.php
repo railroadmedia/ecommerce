@@ -413,7 +413,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $creditCard     = $this->creditCardRepository->create($this->faker->creditCard([
+        $creditCard = $this->creditCardRepository->create($this->faker->creditCard([
             'payment_gateway_name' => 'recordeo'
         ]));
 
@@ -514,8 +514,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_update_payment_method_use_paypal_validation()
     {
-        $userId         = $this->createAndLogInNewUser();
-        $creditCard     = $this->creditCardRepository->create($this->faker->creditCard([
+        $userId     = $this->createAndLogInNewUser();
+        $creditCard = $this->creditCardRepository->create($this->faker->creditCard([
             'payment_gateway_name' => 'recordeo'
         ]));
 
@@ -524,7 +524,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'method_id'   => $creditCard['id']
         ]));
 
-        $results              = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
+        $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
             [
                 'update_method'   => 'use-paypal',
                 'method_type'     => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
@@ -806,5 +806,57 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             [
                 'id' => $paymentMethod['id']
             ]);
+    }
+
+    public function test_get_user_payment_methods()
+    {
+        $userId                    = $this->faker->numberBetween();
+        $creditCard                = $this->creditCardRepository->create($this->faker->creditCard());
+        $paymentMethod1            = $this->paymentMethodRepository->create($this->faker->paymentMethod([
+            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'method_id'   => $creditCard['id']
+        ]));
+        $paymentMethod1['user']    = [
+            'user_id'    => $userId,
+            'is_primary' => 1
+        ];
+        $paymentMethod1['user_id'] = $userId;
+        $paypalBilling             = $this->paypalBillingAgreementRepository->create($this->faker->paypalBillingAgreement([
+            'payment_gateway_name' => 'drumeo'
+        ]));
+
+        $paymentMethod2 = $this->paymentMethodRepository->create($this->faker->paymentMethod([
+            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'method_id'   => $paypalBilling['id']
+        ]));
+        $paymentMethod2['user']    = [
+            'user_id'    => $userId,
+            'is_primary' => 1
+        ];
+        $paymentMethod2['user_id'] = $userId;
+
+        $assignPaymentMethodToUser                   = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
+            'user_id'           => $userId,
+            'payment_method_id' => $paymentMethod1['id'],
+            'is_primary'        => 1
+        ]));
+        $assignPaymentMethodToUser['payment_method'] = (array) $paymentMethod1;
+        $userPaymentMethod                           = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
+            'user_id'           => $userId,
+            'payment_method_id' => $paymentMethod2['id'],
+            'is_primary'        => 1
+        ]));
+        $userPaymentMethod['payment_method']         = (array) $paymentMethod2;
+        $results                                     = $this->call('GET', '/user-payment-method/' . $userId);
+
+        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals([$assignPaymentMethodToUser, $userPaymentMethod], $results->decodeResponseJson('results'));
+    }
+
+    public function test_get_user_payment_methods_not_exists()
+    {
+        $results = $this->call('GET', '/user-payment-method/'.rand());
+
+        $this->assertEmpty($results->decodeResponseJson('results'));
     }
 }

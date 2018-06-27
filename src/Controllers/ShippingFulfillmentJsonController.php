@@ -14,7 +14,7 @@ use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 
-class ShippingFulfillmentJsonController extends Controller
+class ShippingFulfillmentJsonController extends BaseController
 {
     /**
      * @var \Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository
@@ -36,6 +36,8 @@ class ShippingFulfillmentJsonController extends Controller
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         PermissionService $permissionService
     ) {
+        parent::__construct();
+
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->permissionService              = $permissionService;
     }

@@ -13,7 +13,7 @@ use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Permissions\Services\PermissionService;
 
-class DiscountJsonController extends Controller
+class DiscountJsonController extends BaseController
 {
     /**
      * @var \Railroad\Ecommerce\Repositories\DiscountRepository
@@ -33,6 +33,8 @@ class DiscountJsonController extends Controller
      */
     public function __construct(DiscountRepository $discountRepository, PermissionService $permissionService)
     {
+        parent::__construct();
+
         $this->discountRepository = $discountRepository;
         $this->permissionService  = $permissionService;
     }

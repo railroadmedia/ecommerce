@@ -13,7 +13,7 @@ use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Permissions\Services\PermissionService;
 
-class ShippingOptionController extends Controller
+class ShippingOptionController extends BaseController
 {
     /**
      * @var ShippingOptionRepository
@@ -35,6 +35,8 @@ class ShippingOptionController extends Controller
         ShippingOptionRepository $shippingOptionRepository,
         PermissionService $permissionService
     ) {
+        parent::__construct();
+
         $this->shippingOptionRepository = $shippingOptionRepository;
         $this->permissionService        = $permissionService;
     }

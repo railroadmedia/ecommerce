@@ -23,7 +23,7 @@ use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Location\Services\LocationService;
 use Railroad\Permissions\Services\PermissionService;
 
-class PaymentJsonController extends Controller
+class PaymentJsonController extends BaseController
 {
     /**
      * @var PaymentRepository
@@ -120,6 +120,8 @@ class PaymentJsonController extends Controller
         StripePaymentGateway $stripePaymentGateway,
         PayPalPaymentGateway $payPalPaymentGateway
     ) {
+        parent::__construct();
+
         $this->paymentRepository                = $paymentRepository;
         $this->locationService                  = $locationService;
         $this->paymentMethodRepository          = $paymentMethodRepository;

@@ -192,12 +192,14 @@ class EcommerceServiceProvider extends ServiceProvider
             )
         );
 
-        // merge in permissions settings
         config()->set(
-            'permissions.role_abilities',
+            'resora.decorators.userPaymentMethods',
             array_merge(
-                config()->get('permissions.role_abilities', []),
-                config()->get('ecommerce.role_abilities', [])
+                config()->get('resora.decorators.userPaymentMethods', []),
+                [
+                    PaymentPaymentMethodDecorator::class,
+                    PaymentMethodEntityDecorator::class,
+                ]
             )
         );
     }

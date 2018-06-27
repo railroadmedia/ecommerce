@@ -16,7 +16,7 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Services\RemoteStorageService;
 
-class ProductJsonController extends Controller
+class ProductJsonController extends BaseController
 {
     /**
      * @var \Railroad\Ecommerce\Repositories\ProductRepository
@@ -45,6 +45,8 @@ class ProductJsonController extends Controller
         PermissionService $permissionService,
         RemoteStorageService $remoteStorageService
     ) {
+        parent::__construct();
+
         $this->productRepository    = $productRepository;
         $this->permissionService    = $permissionService;
         $this->remoteStorageService = $remoteStorageService;

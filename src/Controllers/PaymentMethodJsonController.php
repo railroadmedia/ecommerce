@@ -25,7 +25,7 @@ use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Permissions\Services\PermissionService;
 
-class PaymentMethodJsonController extends Controller
+class PaymentMethodJsonController extends BaseController
 {
     /**
      * @var \Railroad\Permissions\Services\PermissionService
@@ -103,6 +103,8 @@ class PaymentMethodJsonController extends Controller
         CreditCardRepository $creditCardRepository,
         PaypalBillingAgreementRepository $paypalBillingAgreementRepository
     ) {
+        parent::__construct();
+
         $this->permissionService                = $permissionService;
         $this->paymentMethodRepository          = $paymentMethodRepository;
         $this->userPaymentMethodRepository      = $userPaymentMethodsRepository;
@@ -347,7 +349,7 @@ class PaymentMethodJsonController extends Controller
      * Delete a payment method and return a JsonResponse.
      *  Throw  - NotFoundException if the payment method not exist
      *
-     * @param integer                    $paymentMethodId
+     * @param integer $paymentMethodId
      * @return JsonResponse
      */
     public function delete($paymentMethodId)
@@ -413,5 +415,19 @@ class PaymentMethodJsonController extends Controller
                 'payment_method_id' => $paymentMethod['id'],
             ]
         )->delete();
+    }
+
+    /** Get all user's payment methods with all the method details: credit card or paypal billing agreement
+     *
+     * @param integer $userId
+     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     */
+    public function getUserPaymentMethods($userId)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.user.payment.method');
+
+        $paymentMethods = $this->userPaymentMethodRepository->query()->where(['user_id' => $userId])->get();
+
+        return new JsonResponse($paymentMethods, 200);
     }
 }

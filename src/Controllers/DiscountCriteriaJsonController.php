@@ -12,7 +12,7 @@ use Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest;
 use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Permissions\Services\PermissionService;
 
-class DiscountCriteriaJsonController extends Controller
+class DiscountCriteriaJsonController extends BaseController
 {
     /**
      * @var \Railroad\Ecommerce\Repositories\DiscountCriteriaRepository
@@ -40,6 +40,8 @@ class DiscountCriteriaJsonController extends Controller
         DiscountRepository $discountRepository,
         PermissionService $permissionService
     ) {
+        parent::__construct();
+
         $this->discountCriteriaRepository = $discountCriteriaRepository;
         $this->discountRepository         = $discountRepository;
         $this->permissionService          = $permissionService;

@@ -119,6 +119,7 @@ return [
 
             'update.payment.method',
             'delete.payment.method',
+            'pull.user.payment.method',
 
             'create.payment',
             'delete.payment',
@@ -138,6 +139,7 @@ return [
             'delete.fulfillment'
         ],
     ],
+
     'invoiceSender'           => 'support@drumeo.com',
     'invoiceSenderName'       => 'Drumeo',
     'invoiceAddress'          => 'Drumeo 107-31265 Wheel Avenue - Abbotsford BC, Canada',
