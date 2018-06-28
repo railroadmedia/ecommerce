@@ -3,13 +3,11 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest;
 use Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Permissions\Services\PermissionService;
 
 class DiscountCriteriaJsonController extends BaseController
@@ -50,7 +48,7 @@ class DiscountCriteriaJsonController extends BaseController
     /**
      * @param \Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest $request
      * @param                                                            $discountId
-     * @return \Railroad\Ecommerce\Controllers\JsonResponse
+     * @return JsonResponse
      */
     public function store(DiscountCriteriaCreateRequest $request, $discountId)
     {
@@ -88,7 +86,7 @@ class DiscountCriteriaJsonController extends BaseController
     /**
      * @param \Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest $request
      * @param                                                            $discountCriteriaId
-     * @return \Railroad\Ecommerce\Controllers\JsonResponse
+     * @return JsonResponse
      */
     public function update(DiscountCriteriaUpdateRequest $request, $discountCriteriaId)
     {
@@ -125,7 +123,7 @@ class DiscountCriteriaJsonController extends BaseController
 
     /**
      * @param $discountCriteriaId
-     * @return \Railroad\Ecommerce\Controllers\JsonResponse
+     * @return JsonResponse
      */
     public function delete($discountCriteriaId)
     {

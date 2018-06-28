@@ -2,15 +2,12 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\TaxService;
+use Railroad\Resora\Entities\Entity;
 
 class ShoppingCartController extends BaseController
 {
@@ -137,12 +134,15 @@ class ShoppingCartController extends BaseController
             }
         }
 
-        $billingAddress        = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+        $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
 
         //if the promo code exists on the requests, set it on the session
-        if (!empty($input['promo-code'])) {
+        if(!empty($input['promo-code']))
+        {
             $this->cartService->setPromoCode($input['promo-code']);
-        } else {
+        }
+        else
+        {
             $this->cartService->setPromoCode(null);
         }
 
@@ -154,7 +154,6 @@ class ShoppingCartController extends BaseController
             );
 
         $response = [
-            'success'              => $success,
             'addedProducts'        => $addedProducts,
             'cartSubTotal'         => $cartItemsPriceWithTax['totalDue'],
             'cartNumberOfItems'    => count($this->cartService->getAllCartItems()),
@@ -163,10 +162,14 @@ class ShoppingCartController extends BaseController
 
         if(!empty($input['redirect']))
         {
-            return redirect()->to($input['redirect']);
+            return reply()->form([$success], $input['redirect']);
         }
 
-        return redirect()->back()->with($response);
+        return reply()->form([$success],
+            null,
+            [],
+            $response
+        );
     }
 
     /** Remove product from cart.
@@ -186,7 +189,9 @@ class ShoppingCartController extends BaseController
             }
         }
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 
     /** Update the cart item quantity.
@@ -229,13 +234,15 @@ class ShoppingCartController extends BaseController
             $errors[] = $message;
         }
 
-        $response = [
+        $response = new Entity([
             'success'              => $success,
             'addedProducts'        => $this->cartService->getAllCartItems(),
             'cartNumberOfItems'    => count($this->cartService->getAllCartItems()),
             'notAvailableProducts' => $errors,
-        ];
+        ]);
 
-        return new JsonResponse($response, 201);
+        return reply()->json($response, [
+            'code' => 201
+        ]);
     }
 }

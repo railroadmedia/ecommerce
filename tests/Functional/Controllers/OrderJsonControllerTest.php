@@ -66,7 +66,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not found.",
                 "detail" => "Delete failed, order not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_pull_orders()
@@ -139,6 +139,6 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'due' => -110
             ]);
         $this->assertEquals(422, $results->getStatusCode());
-        $this->assertEquals(1, count($results->decodeResponseJson('errors')));
+        $this->assertEquals(1, count($results->decodeResponseJson('meta')['errors']));
     }
 }

@@ -4,13 +4,10 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Requests\ShippingOptionCreateRequest;
 use Railroad\Ecommerce\Requests\ShippingOptionUpdateRequest;
-use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Permissions\Services\PermissionService;
 
 class ShippingOptionController extends BaseController
@@ -41,6 +38,10 @@ class ShippingOptionController extends BaseController
         $this->permissionService        = $permissionService;
     }
 
+    /** Pull shipping options
+     * @param \Illuminate\Http\Request $request
+     * @return JsonResponse
+     */
     public function index(Request $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.shipping.options');
@@ -56,10 +57,9 @@ class ShippingOptionController extends BaseController
             ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
             ->count();
 
-        return new JsonPaginatedResponse(
-            $shippingOptions,
-            $shippingOptionsCount,
-            200);
+        return reply()->json($shippingOptions, [
+            'totalResults' => $shippingOptionsCount
+        ]);
     }
 
     /**
@@ -85,7 +85,7 @@ class ShippingOptionController extends BaseController
             )
         );
 
-        return new JsonResponse($shippingOption, 200);
+        return reply()->json($shippingOption);
     }
 
     /**
@@ -120,7 +120,9 @@ class ShippingOptionController extends BaseController
             new NotFoundException('Update failed, shipping option not found with id: ' . $shippingOptionId)
         );
 
-        return new JsonResponse($shippingOption, 201);
+        return reply()->json($shippingOption, [
+            'code' => 201
+        ]);
     }
 
     /**
@@ -142,6 +144,8 @@ class ShippingOptionController extends BaseController
             new NotFoundException('Delete failed, shipping option not found with id: ' . $shippingOptionId)
         );
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 }

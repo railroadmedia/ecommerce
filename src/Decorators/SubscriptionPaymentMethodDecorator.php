@@ -28,8 +28,9 @@ class SubscriptionPaymentMethodDecorator implements DecoratorInterface
             ->keyBy('id');
 
         foreach ($subscriptions as $index => $subscription) {
+            $subscription = (array)$subscription;
             $subscriptions[$index]['payment_method'] =
-                ((array)$paymentMethods[$subscription['payment_method_id']]) ?? null;
+                ($paymentMethods[$subscription['payment_method_id']]) ?? null;
         }
 
         return $subscriptions;

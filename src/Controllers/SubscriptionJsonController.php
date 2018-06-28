@@ -4,12 +4,9 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
-use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 
@@ -42,7 +39,7 @@ class SubscriptionJsonController extends BaseController
     /** Pull subscriptions paginated
      *
      * @param \Illuminate\Http\Request $request
-     * @return \Railroad\Ecommerce\Responses\JsonPaginatedResponse
+     * @return JsonResponse
      */
     public function index(Request $request)
     {
@@ -67,16 +64,15 @@ class SubscriptionJsonController extends BaseController
         }
         $subscriptionsCount = $subscriptionsCount->count();
 
-        return new JsonPaginatedResponse(
-            $subscriptions,
-            $subscriptionsCount,
-            200);
+        return reply()->json($subscriptions, [
+            'totalResults' => $subscriptionsCount
+        ]);
     }
 
     /** Soft delete a subscription if exists in the database
      *
      * @param integer $subscriptionId
-     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     * @return JsonResponse
      */
     public function delete($subscriptionId)
     {
@@ -90,14 +86,16 @@ class SubscriptionJsonController extends BaseController
 
         $this->subscriptionRepository->delete($subscriptionId);
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 
     /** Update a subscription and returned updated data in JSON format
      *
      * @param  integer                                               $subscriptionId
      * @param \Railroad\Ecommerce\Requests\SubscriptionUpdateRequest $request
-     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     * @return JsonResponse
      */
     public function update($subscriptionId, SubscriptionUpdateRequest $request)
     {
@@ -142,7 +140,8 @@ class SubscriptionJsonController extends BaseController
                 ]
             )
         );
-
-        return new JsonResponse($updatedSubscription, 201);
+        return reply()->json($updatedSubscription, [
+            'code' => 201
+        ]);
     }
 }

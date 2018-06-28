@@ -60,11 +60,11 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
             $fulfillments[$i]                     = $this->orderItemFulfillmentRepository->create($this->faker->orderItemFulfillment([
                 'order_id' => $order['id']
             ]));
-            $fulfillments[$i]['shipping_address'] = $shippingAddress;
+            $fulfillments[$i]['shipping_address'] = $shippingAddress->getArrayCopy();
         }
         $results = $this->call('GET', '/fulfillment');
 
-        $this->assertEquals($fulfillments, $results->decodeResponseJson('results'));
+        $this->assertEquals($fulfillments, $results->decodeResponseJson('data'));
     }
 
     public function test_index_filtered_fulfillments()
@@ -85,7 +85,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
                 'order_id' => $order['id'],
                 'status'   => $this->faker->randomElement([ConfigService::$fulfillmentStatusPending, ConfigService::$fulfillmentStatusFulfilled])
             ]));
-            $fulfillments[$i]['shipping_address'] = $shippingAddress;
+            $fulfillments[$i]['shipping_address'] = $shippingAddress->getArrayCopy();
             if($fulfillments[$i]['status'] === ConfigService::$fulfillmentStatusFulfilled)
             {
                 $expectedResults[] = $fulfillments[$i];
@@ -96,7 +96,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
             'status' => [ConfigService::$fulfillmentStatusFulfilled]
         ]);
 
-        $this->assertEquals($expectedResults, $results->decodeResponseJson('results'));
+        $this->assertEquals($expectedResults, $results->decodeResponseJson('data'));
     }
 
     public function test_fulfilled_order()

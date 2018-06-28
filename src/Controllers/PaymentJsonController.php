@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
@@ -16,7 +15,6 @@ use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentCreateRequest;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
@@ -318,7 +316,7 @@ class PaymentJsonController extends BaseController
 
     /** Soft delete a payment
      * @param $paymentId
-     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     * @return JsonResponse
      */
     public function delete($paymentId)
     {
@@ -332,6 +330,8 @@ class PaymentJsonController extends BaseController
 
         $this->paymentRepository->delete($paymentId);
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 }

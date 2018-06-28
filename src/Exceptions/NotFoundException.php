@@ -15,19 +15,13 @@ class NotFoundException extends \Exception
     }
 
     public function render($request){
-
-        return response()->json(
+        return reply()->json([],
             [
-                'status' => 'error',
                 'code' => 404,
-                'total_results' => 0,
-                'results' => [],
-                'error' => [
+                'errors' => [
                     'title' => 'Not found.',
-                    'detail' => $this->message,
+                    'detail' => $this->message
                 ]
-            ],
-            404
-        );
+            ]);
     }
 }

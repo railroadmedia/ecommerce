@@ -95,7 +95,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 "source" => "customer_id",
                 "detail" => "The customer id field is required when user id is not present."
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_store_payment_method_paypal_without_required_fields()
@@ -123,7 +123,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 "source" => "customer_id",
                 "detail" => "The customer id field is required when user id is not present."
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_store_method_type_required()
@@ -140,7 +140,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 "source" => "method_type",
                 "detail" => "The method type field is required.",
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_user_store_credit_card_payment_method()
@@ -459,7 +459,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 "source" => "company_name",
                 "detail" => "The company name field is required when create a new credit card.",
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
 
         //assert payment method not updated in the db
         $this->assertDatabaseHas(ConfigService::$tablePaymentMethod,
@@ -509,7 +509,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 "source" => "card_month",
                 "detail" => "The card month field is required when create or update a credit card.",
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_update_payment_method_use_paypal_validation()
@@ -542,7 +542,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 "source" => "address_id",
                 "detail" => "The address id field is required when update payment method and use paypal.",
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
 
         //assert payment method data not updated in the db
         $this->assertDatabaseHas(ConfigService::$tablePaymentMethod,
@@ -711,7 +711,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not allowed.",
                 "detail" => "This action is unauthorized.",
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
 
         //assert payment method still exist in db
         $this->assertDatabaseHas(ConfigService::$tablePaymentMethod,

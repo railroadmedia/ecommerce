@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -26,7 +25,6 @@ use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -406,7 +404,7 @@ class OrderFormController extends BaseController
                     );
                     session()->put('order-form-input', $request->all());
 
-                    return redirect()->away($url);
+                    return reply()->form([],$url);
                 }
 
                 list($transactionId, $paymentMethodId) = $this->transactionAndCreatePaymentMethod(
@@ -419,14 +417,18 @@ class OrderFormController extends BaseController
             }
             else
             {
-                return redirect()->to(strtok(app('url')->previous(), '?'))->withErrors(
+                return reply()->form(
+                    [false],
+                    strtok(app('url')->previous(), '?'),
                     ['payment' => 'Payment method not supported.']
-                );
+                    );
             }
         }
         catch(PaymentFailedException $paymentFailedException)
         {
-            return redirect()->to(strtok(app('url')->previous(), '?'))->withErrors(
+            return reply()->form(
+                [false],
+                strtok(app('url')->previous(), '?'),
                 ['payment' => $paymentFailedException->getMessage()]
             );
         }

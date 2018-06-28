@@ -15,20 +15,14 @@ class UnprocessableEntityException extends \Exception
     }
 
     public function render($request){
-
-        return response()->json(
+        return reply()->json([],
             [
-                'status' => 'error',
                 'code' => 422,
-                'total_results' => 0,
-                'results' => [],
-                'error' => [
+                'errors' => [
                     'title' => 'Unprocessable Entity.',
-                    'detail' => $this->message,
+                    'detail' => $this->message
                 ]
-            ],
-            422
-        );
+            ]);
     }
 
 }

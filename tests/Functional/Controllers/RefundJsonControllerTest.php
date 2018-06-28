@@ -63,8 +63,8 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     "detail" => "The selected payment id is invalid.",
                 ]
             ]
-            , $results->decodeResponseJson()['errors']);
-        $this->assertArraySubset([], $results->decodeResponseJson()['results']);
+            , $results->decodeResponseJson('meta')['errors']);
+        $this->assertArraySubset([], $results->decodeResponseJson('data'));
     }
 
     public function test_user_create_own_refund()
@@ -162,6 +162,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not allowed.",
                 "detail" => "This action is unauthorized.",
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
     }
 }

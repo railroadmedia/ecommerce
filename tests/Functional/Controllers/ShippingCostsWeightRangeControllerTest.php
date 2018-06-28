@@ -51,7 +51,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                     "detail" => "The selected shipping option id is invalid.",
                 ],
             ],
-            $results->decodeResponseJson()['errors']
+            $results->decodeResponseJson('meta')['errors']
         );
     }
 
@@ -82,7 +82,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                     "detail" => "The max must be at least " . $minValue . ".",
                 ],
             ],
-            $results->decodeResponseJson()['errors']
+            $results->decodeResponseJson('meta')['errors']
         );
     }
 
@@ -112,7 +112,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                     "detail" => "The price field is required.",
                 ],
             ],
-            $results->decodeResponseJson()['errors']
+            $results->decodeResponseJson('meta')['errors']
         );
     }
 
@@ -168,7 +168,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                 "detail" => "Update failed, shipping cost weight range not found with id: " . $randomId,
             ]
             ,
-            $results->decodeResponseJson()['error']
+            $results->decodeResponseJson('meta')['errors']
         );
     }
 
@@ -200,7 +200,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                     "detail" => "The max must be at least " . $minValue . ".",
                 ],
             ],
-            $results->decodeResponseJson()['errors']
+            $results->decodeResponseJson('meta')['errors']
         );
     }
 
@@ -253,7 +253,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                 "title" => "Not found.",
                 "detail" => "Delete failed, shipping cost weight range not found with id: " . $randomId,
             ],
-            $results->decodeResponseJson()['error']
+            $results->decodeResponseJson('meta')['errors']
         );
     }
 

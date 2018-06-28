@@ -63,7 +63,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                 "source" => "active",
                 "detail" => "The active field is required."
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_store()
@@ -96,7 +96,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not found.",
                 "detail" => "Update failed, discount not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_update()

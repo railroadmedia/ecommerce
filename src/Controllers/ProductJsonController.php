@@ -4,17 +4,15 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\ProductCreateRequest;
 use Railroad\Ecommerce\Requests\ProductUpdateRequest;
-use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Services\RemoteStorageService;
+use Railroad\Resora\Entities\Entity;
 
 class ProductJsonController extends BaseController
 {
@@ -55,7 +53,7 @@ class ProductJsonController extends BaseController
     /** Pull paginated products
      *
      * @param Request $request
-     * @return JsonPaginatedResponse
+     * @return JsonResponse
      */
     public function index(Request $request)
     {
@@ -206,11 +204,13 @@ class ProductJsonController extends BaseController
 
         throw_if(
             (!$upload),
-            new JsonResponse('Upload product thumbnail failed', 400)
+            reply()->json(new Entity(['message' =>'Upload product thumbnail failed']), [
+                'code' => 400
+            ])
         );
 
-        return new JsonResponse(
-            $this->remoteStorageService->url($target), 201
-        );
+        return reply()->json(new Entity(['url' => $this->remoteStorageService->url($target)]), [
+            'code' => 201
+        ]);
     }
 }

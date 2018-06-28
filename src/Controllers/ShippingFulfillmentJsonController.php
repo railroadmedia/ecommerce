@@ -4,13 +4,10 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
 use Railroad\Ecommerce\Requests\OrderFulfilledRequest;
 use Railroad\Ecommerce\Requests\OrderFulfillmentDeleteRequest;
-use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 
@@ -45,7 +42,7 @@ class ShippingFulfillmentJsonController extends BaseController
     /** Pull shipping fulfillments. If the status it's set on the requests the results are filtered by status.
      *
      * @param \Illuminate\Http\Request $request
-     * @return \Railroad\Ecommerce\Responses\JsonPaginatedResponse
+     * @return JsonResponse
      */
     public function index(Request $request)
     {
@@ -62,17 +59,16 @@ class ShippingFulfillmentJsonController extends BaseController
             ->whereIn('status', (array) $request->get('status', [ConfigService::$fulfillmentStatusPending, ConfigService::$fulfillmentStatusFulfilled]))
             ->count();
 
-        return new JsonPaginatedResponse(
-            $fulfillments,
-            $fulfillmentsCount,
-            200);
+        return reply()->json($fulfillments, [
+            'totalResults' => $fulfillmentsCount
+        ]);
     }
 
     /** Fulfilled order or order item. If the order_item_id it's set on the request only the order item it's fulfilled,
      * otherwise entire order it's fulfilled.
      *
      * @param \Illuminate\Http\Request $request
-     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     * @return JsonResponse
      */
     public function markShippingFulfilled(OrderFulfilledRequest $request)
     {
@@ -101,13 +97,15 @@ class ShippingFulfillmentJsonController extends BaseController
             new NotFoundException('Fulfilled failed.')
         );
 
-        return new JsonResponse(null, 201);
+        return reply()->json(null, [
+            'code' => 201
+        ]);
     }
 
     /** Delete order or order item fulfillment.
      *
      * @param \Railroad\Ecommerce\Requests\OrderFulfillmentDeleteRequest $request
-     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     * @return JsonResponse
      */
     public function delete(OrderFulfillmentDeleteRequest $request)
     {
@@ -125,6 +123,8 @@ class ShippingFulfillmentJsonController extends BaseController
 
         $fulfillmentsQuery->delete();
 
-        return new JsonResponse(null, 204);
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 }

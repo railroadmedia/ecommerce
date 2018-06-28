@@ -145,7 +145,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 "source" => "gateway",
                 "detail" => "The gateway field is required.",
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_submit_order_validation_customer_and_physical_products()
@@ -248,7 +248,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 "source" => "billing-email",
                 "detail" => "The billing-email field is required.",
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_submit_order_validation_member_and_physical_products()
@@ -347,7 +347,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 "source" => "shipping-country",
                 "detail" => "The shipping-country field is required.",
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_submit_order_validation_credit_card()
@@ -397,7 +397,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 "source" => "credit-card-cvv",
                 "detail" => "The credit-card-cvv field is required when payment method type is credit-card.",
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_submit_order_validation_rules_for_canadian_users()
@@ -435,7 +435,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 "source" => "billing-zip-or-postal-code",
                 "detail" => "The billing-zip-or-postal-code field is required.",
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_submit_order()

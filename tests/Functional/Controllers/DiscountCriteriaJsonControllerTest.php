@@ -56,7 +56,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                 "source" => "product_id",
                 "detail" => "The product id field is required."
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_store_invalid_discount()
@@ -78,7 +78,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not found.",
                 "detail" => "Create discount criteria failed, discount not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_store()
@@ -118,7 +118,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not found.",
                 "detail" => "Update discount criteria failed, discount criteria not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_update()
@@ -167,7 +167,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not found.",
                 "detail" => "Delete discount criteria failed, discount criteria not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_delete()

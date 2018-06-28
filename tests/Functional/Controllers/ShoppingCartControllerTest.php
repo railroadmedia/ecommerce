@@ -240,14 +240,14 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $newQuantity   = $this->faker->numberBetween(6, 10);
         $response      = $this->call('PUT', '/update-product-quantity/' . $product['id'] . '/' . $newQuantity);
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->decodeResponseJson('data');
 
         //assert response code status
-        $this->assertEquals(201, $decodedResponse['code']);
-        $this->assertTrue($decodedResponse['results']['success']);
+        $this->assertEquals(201, $response->getStatusCode());
+        $this->assertTrue($decodedResponse[0]['success']);
 
         //assert updated cart item returned in response
-        $this->assertEquals($newQuantity, $decodedResponse['results']['addedProducts'][0]['quantity']);
+        $this->assertEquals($newQuantity, $decodedResponse[0]['addedProducts'][0]['quantity']);
 
     }
 
@@ -276,12 +276,12 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $newQuantity = $this->faker->numberBetween(6, 10);
         $response    = $this->call('PUT', '/update-product-quantity/' . $product['id'] . '/' . $newQuantity);
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->decodeResponseJson('data');
 
         //assert response
-        $this->assertEquals(201, $decodedResponse['code']);
-        $this->assertFalse($decodedResponse['results']['success']);
-        $this->assertEquals($firstQuantity, $decodedResponse['results']['addedProducts'][0]['quantity']);
+        $this->assertEquals(201, $response->getStatusCode());
+        $this->assertFalse($decodedResponse[0]['success']);
+        $this->assertEquals($firstQuantity, $decodedResponse[0]['addedProducts'][0]['quantity']);
 
     }
 

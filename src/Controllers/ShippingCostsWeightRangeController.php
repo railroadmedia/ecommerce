@@ -3,12 +3,10 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\ShippingCostsRepository;
 use Railroad\Ecommerce\Requests\ShippingCostCreateRequest;
 use Railroad\Ecommerce\Requests\ShippingCostUpdateRequest;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Permissions\Services\PermissionService;
 
 class ShippingCostsWeightRangeController extends BaseController

@@ -126,7 +126,7 @@ class ProductControllerTest extends EcommerceTestCase
             ]
         ];
 
-        $this->assertEquals($errors, json_decode($results->content(), true)['errors']);
+        $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_validation_for_new_subscription()
@@ -157,7 +157,7 @@ class ProductControllerTest extends EcommerceTestCase
             ]
         ];
 
-        $this->assertEquals($errors, json_decode($results->content(), true)['errors']);
+        $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_validation_sku_unique()
@@ -182,7 +182,7 @@ class ProductControllerTest extends EcommerceTestCase
                 "detail" => "The sku has already been taken."
             ]
         ];
-        $this->assertEquals($errors, json_decode($results->content(), true)['errors']);
+        $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
 
         //assert product with the same sku was not saved in the db
         $this->assertDatabaseMissing(
@@ -215,7 +215,7 @@ class ProductControllerTest extends EcommerceTestCase
             ]
         ];
 
-        $this->assertEquals($errors, json_decode($results->content(), true)['errors']);
+        $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_update_product_inexistent()
@@ -233,7 +233,7 @@ class ProductControllerTest extends EcommerceTestCase
             'title'  => "Not found.",
             "detail" => "Update failed, product not found with id: " . $randomProductId
         ];
-        $this->assertEquals($errors, json_decode($results->content(), true)['error']);
+        $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_update_product()
@@ -291,7 +291,7 @@ class ProductControllerTest extends EcommerceTestCase
                 "detail" => "The subscription interval count field is required when type is subscription."
             ]
         ];
-        $this->assertEquals($errors, json_decode($results->content(), true)['errors']);
+        $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
 
         unset($product['order']);
         unset($product['discounts']);
@@ -311,8 +311,8 @@ class ProductControllerTest extends EcommerceTestCase
         $results  = $this->call('DELETE', '/product/' . $randomId);
 
         $this->assertEquals(404, $results->status());
-        $this->assertEquals('Not found.', json_decode($results->getContent())->error->title, true);
-        $this->assertEquals('Delete failed, product not found with id: ' . $randomId, json_decode($results->getContent())->error->detail, true);
+        $this->assertEquals('Not found.', $results->decodeResponseJson('meta')['errors']['title']);
+        $this->assertEquals('Delete failed, product not found with id: ' . $randomId, $results->decodeResponseJson('meta')['errors']['detail']);
     }
 
     public function test_delete_product_when_exists_product_order()
@@ -325,11 +325,11 @@ class ProductControllerTest extends EcommerceTestCase
             'product_id' => $product['id']
         ]));
 
-        $results   = $this->call('DELETE', '/product/' . $product['id']);
+        $results = $this->call('DELETE', '/product/' . $product['id']);
 
         $this->assertEquals(403, $results->status());
-        $this->assertEquals('Not allowed.', json_decode($results->getContent())->error->title, true);
-        $this->assertEquals('Delete failed, exists orders that contain the selected product.', json_decode($results->getContent())->error->detail, true);
+        $this->assertEquals('Not allowed.', $results->decodeResponseJson('meta')['errors']['title']);
+        $this->assertEquals('Delete failed, exists orders that contain the selected product.', $results->decodeResponseJson('meta')['errors']['detail']);
     }
 
     public function test_delete_product_when_exists_product_discounts()
@@ -348,8 +348,8 @@ class ProductControllerTest extends EcommerceTestCase
         $results          = $this->call('DELETE', '/product/' . $product['id']);
 
         $this->assertEquals(403, $results->status());
-        $this->assertEquals('Not allowed.', json_decode($results->getContent())->error->title, true);
-        $this->assertEquals('Delete failed, exists discounts defined for the selected product.', json_decode($results->getContent())->error->detail, true);
+        $this->assertEquals('Not allowed.', $results->decodeResponseJson('meta')['errors']['title']);
+        $this->assertEquals('Delete failed, exists discounts defined for the selected product.', $results->decodeResponseJson('meta')['errors']['detail']);
     }
 
     public function test_delete_product()
@@ -371,11 +371,11 @@ class ProductControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('is')->willReturn(true);
         $results         = $this->call('GET', '/product');
         $expectedResults = [
-            'data'       => [],
+            'data' => [],
             'meta' => [
                 'totalResults' => 0,
-                'page' => 1,
-                'limit' => 10
+                'page'         => 1,
+                'limit'        => 10
             ]
         ];
 
@@ -426,7 +426,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             storage_path('app') . '/' . $filenameRelative,
-            $response->decodeResponseJson('results')
+            $response->decodeResponseJson('data')[0]['url']
         );
     }
 
@@ -455,11 +455,11 @@ class ProductControllerTest extends EcommerceTestCase
 
         $expectedContent =
             [
-                'data'       => array_slice($products, 3, $limit),
+                'data' => array_slice($products, 3, $limit),
                 'meta' => [
-                    'totalResults' => $nrProducts/2,
-                    'page' => $page,
-                    'limit' => $limit
+                    'totalResults' => $nrProducts / 2,
+                    'page'         => $page,
+                    'limit'        => $limit
                 ]
             ];
 

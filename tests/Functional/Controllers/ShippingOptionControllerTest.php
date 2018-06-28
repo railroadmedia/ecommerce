@@ -50,7 +50,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                 ],
                 $shippingOption
             ),
-            $results->decodeResponseJson()['results']
+            $results->decodeResponseJson()['data'][0]
         );
     }
 
@@ -77,7 +77,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                     "detail" => "The active field is required.",
                 ],
             ],
-            $results->decodeResponseJson()['errors']
+            $results->decodeResponseJson('meta')['errors']
         );
     }
 
@@ -103,7 +103,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                     "detail" => "The priority must be at least 0.",
                 ],
             ],
-            $results->decodeResponseJson()['errors']
+            $results->decodeResponseJson('meta')['errors']
         );
     }
 
@@ -122,7 +122,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                 "detail" => "Update failed, shipping option not found with id: " . $randomId,
             ]
             ,
-            $results->decodeResponseJson()['error']
+            $results->decodeResponseJson('meta')['errors']
         );
     }
 
@@ -148,9 +148,10 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                 'active' => 1,
                 'priority' => $shippingOption['priority'],
                 'created_on' => $shippingOption['created_on'],
+                'weightRanges' => [],
                 'updated_on' => Carbon::now()->toDateTimeString(),
             ],
-            $results->decodeResponseJson()['results']
+            $results->decodeResponseJson('data')[0]
         );
     }
 
@@ -168,7 +169,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                 "detail" => "Delete failed, shipping option not found with id: " . $randomId,
             ]
             ,
-            $results->decodeResponseJson()['error']
+            $results->decodeResponseJson('meta')['errors']
         );
     }
 
@@ -195,7 +196,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
             [
                 'order_by_direction' => 'asc'
             ]);
-        $this->assertEquals($shippingOption, $results->decodeResponseJson('results'));
+        $this->assertEquals($shippingOption, $results->decodeResponseJson('data'));
     }
 
     public function test_pull_shipping_options_empty()
@@ -204,7 +205,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
             [
                 'order_by_direction' => 'asc'
             ]);
-        $this->assertEmpty($results->decodeResponseJson('results'));
-        $this->assertEquals(0, $results->decodeResponseJson('total_results'));
+        $this->assertEmpty($results->decodeResponseJson('data'));
+        $this->assertEquals(0, $results->decodeResponseJson('meta')['totalResults']);
     }
 }

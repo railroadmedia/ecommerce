@@ -247,8 +247,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not allowed.",
                 "detail" => "This action is unauthorized.",
             ]
-            , $results->decodeResponseJson()['error']);
-        $this->assertArraySubset([], $results->decodeResponseJson()['results']);
+            , $results->decodeResponseJson('meta')['errors']);
+        $this->assertArraySubset([], $results->decodeResponseJson('data'));
     }
 
     public function test_admin_store_manual_payment()
@@ -298,8 +298,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     "detail" => "The selected order id is invalid.",
                 ]
             ]
-            , $results->decodeResponseJson()['errors']);
-        $this->assertArraySubset([], $results->decodeResponseJson()['results']);
+            , $results->decodeResponseJson('meta')['errors']);
+        $this->assertEquals([], $results->decodeResponseJson('data'));
+        $this->assertEquals(0, $results->decodeResponseJson('meta')['totalResults']);
     }
 
     public function test_user_store_payment_invalid_subscription_id()
@@ -325,8 +326,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     "detail" => "The selected subscription id is invalid.",
                 ]
             ]
-            , $results->decodeResponseJson()['errors']);
-        $this->assertArraySubset([], $results->decodeResponseJson()['results']);
+            , $results->decodeResponseJson('meta')['errors']);
+        $this->assertEquals([], $results->decodeResponseJson('data'));
     }
 
     public function test_payment()
@@ -359,6 +360,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not found.",
                 "detail" => "Delete failed, payment not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
     }
 }

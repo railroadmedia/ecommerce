@@ -37,6 +37,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
     public function test_delete()
     {
         $subscription = $this->subscriptionRepository->create($this->faker->subscription());
+
         $results      = $this->call('DELETE', '/subscription/' . $subscription['id']);
 
         $this->assertEquals(204, $results->getStatusCode());
@@ -64,7 +65,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not found.",
                 "detail" => "Delete failed, subscription not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_pull_subscriptions()
@@ -85,7 +86,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'product_id'        => $product['id'],
                 'payment_method_id' => $paymentMethod['id']
             ]));
-            $subscriptions[$i]                   = $subscription;
+            $subscriptions[$i]                   = $subscription->getArrayCopy();
             $subscriptions[$i]['payment_method'] = (array) $paymentMethod;
             $subscriptions[$i]['product']        = (array) $product;
         }
@@ -96,7 +97,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'limit' => $limit,
             ]);
 
-        $this->assertEquals($subscriptions, $results->decodeResponseJson('results'));
+        $this->assertEquals($subscriptions, $results->decodeResponseJson('data'));
     }
 
     public function test_pull_subscriptions_for_specific_user()
@@ -129,7 +130,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'user_id'           => $userId
             ]));
 
-            $subscriptions[$i]                   = $subscription;
+            $subscriptions[$i]                   = $subscription->getArrayCopy();
             $subscriptions[$i]['payment_method'] = (array) $paymentMethod;
             $subscriptions[$i]['product']        = (array) $product;
         }
@@ -141,8 +142,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'user_id' => $userId
             ]);
 
-        $this->assertEquals($subscriptions, $results->decodeResponseJson('results'));
-        $this->assertEquals($nrSubscriptions, $results->decodeResponseJson('total_results'));
+        $this->assertEquals($subscriptions, $results->decodeResponseJson('data'));
+        $this->assertEquals($nrSubscriptions, $results->decodeResponseJson('meta')['totalResults']);
     }
 
     public function test_update_not_existing_subscription()
@@ -163,14 +164,17 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]);
 
         $this->assertEquals(201, $results->getStatusCode());
-        $this->assertEquals(array_merge($subscription, [
+        $this->assertEquals(array_merge($subscription->getArrayCopy(), [
             'total_price_per_payment' => $newPrice,
             'updated_on'              => Carbon::now()->toDateTimeString()
-        ]), $results->decodeResponseJson('results'));
+        ]), $results->decodeResponseJson('data')[0]);
+
+        unset($subscription['payment_method']);
+        unset($subscription['product']);
 
         $this->assertDatabaseHas(
             ConfigService::$tableSubscription,
-            array_merge($subscription, [
+            array_merge($subscription->getArrayCopy(), [
                 'total_price_per_payment' => $newPrice,
                 'updated_on'              => Carbon::now()->toDateTimeString()
             ])
@@ -186,16 +190,19 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]);
 
         $this->assertEquals(201, $results->getStatusCode());
-        $this->assertEquals(array_merge($subscription, [
+        $this->assertEquals(array_merge($subscription->getArrayCopy(), [
             'is_active'   => 0,
             'canceled_on' => Carbon::now()->timezone('America/Los_Angeles')->toDateTimeString(),
             'updated_on'  => Carbon::now()->toDateTimeString()
-        ]), $results->decodeResponseJson('results'));
+        ]), $results->decodeResponseJson('data')[0]);
+
+        unset($subscription['payment_method']);
+        unset($subscription['product']);
 
         $this->assertDatabaseHas(
             ConfigService::$tableSubscription,
-            array_merge($subscription, [
-                'is_active'   => false,
+            array_merge($subscription->getArrayCopy(), [
+                'is_active'   => 0,
                 'canceled_on' => Carbon::now()->timezone('America/Los_Angeles')->toDateTimeString(),
                 'updated_on'  => Carbon::now()->toDateTimeString()
             ])
@@ -212,6 +219,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         ]);
 
         $this->assertEquals(422, $results->getStatusCode());
-        $this->assertEquals(3, count($results->decodeResponseJson('errors')));
+        $this->assertEquals(3, count($results->decodeResponseJson('meta')['errors']));
     }
 }

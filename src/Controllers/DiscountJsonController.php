@@ -4,13 +4,10 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Requests\DiscountCreateRequest;
 use Railroad\Ecommerce\Requests\DiscountUpdateRequest;
-use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Permissions\Services\PermissionService;
 
 class DiscountJsonController extends BaseController
@@ -39,6 +36,10 @@ class DiscountJsonController extends BaseController
         $this->permissionService  = $permissionService;
     }
 
+    /** Pull discounts
+     * @param \Illuminate\Http\Request $request
+     * @return sonResponse
+     */
     public function index(Request $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.discounts');
@@ -57,7 +58,7 @@ class DiscountJsonController extends BaseController
 
     /**
      * @param \Railroad\Ecommerce\Requests\DiscountCreateRequest $request
-     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     * @return JsonResponse
      */
     public function store(DiscountCreateRequest $request)
     {
@@ -87,8 +88,8 @@ class DiscountJsonController extends BaseController
 
     /**
      * @param \Railroad\Ecommerce\Requests\DiscountUpdateRequest $request
-     * @param                                                    $discountId
-     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     * @param  int                                               $discountId
+     * @return JsonResponse
      */
     public function update(DiscountUpdateRequest $request, $discountId)
     {
@@ -126,7 +127,7 @@ class DiscountJsonController extends BaseController
 
     /**
      * @param $discountId
-     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     * @return JsonResponse
      */
     public function delete($discountId)
     {

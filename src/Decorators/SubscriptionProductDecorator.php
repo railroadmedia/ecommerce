@@ -31,7 +31,7 @@ class SubscriptionProductDecorator implements DecoratorInterface
 
         foreach ($subscriptions as $index => $subscription) {
             $subscriptions[$index]['product'] =
-                ((array)$products[$subscription['product_id']]) ?? null;
+                isset($products[$subscription['product_id']]) ? (array) $products[$subscription['product_id']] : null;
         }
 
         return $subscriptions;

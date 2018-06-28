@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
@@ -16,9 +15,7 @@ use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentMethodCreateRequest;
-use Railroad\Ecommerce\Requests\PaymentMethodDeleteRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodUpdateRequest;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
@@ -424,7 +421,7 @@ class PaymentMethodJsonController extends BaseController
     /** Get all user's payment methods with all the method details: credit card or paypal billing agreement
      *
      * @param integer $userId
-     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     * @return JsonResponse
      */
     public function getUserPaymentMethods($userId)
     {

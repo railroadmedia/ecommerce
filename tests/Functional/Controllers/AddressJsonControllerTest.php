@@ -59,7 +59,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "source" => "country",
                 "detail" => "The country field is required."
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_store_address_invalid_type()
@@ -86,7 +86,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "source" => "type",
                 "detail" => "The selected type is invalid.",
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_store_response()
@@ -122,7 +122,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not found.",
                 "detail" => "Update failed, address not found with id: " . $randomId,
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
     }
 
     public function test_user_update_his_address_response()
@@ -215,7 +215,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals([
             'title'  => 'Not allowed.',
             'detail' => 'This action is unauthorized.'
-        ], $results->decodeResponseJson()['error']);
+        ], $results->decodeResponseJson('meta')['errors']);
 
         //assert that the address was not modified in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());
@@ -235,7 +235,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not allowed.",
                 "detail" => "This action is unauthorized.",
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
 
         //assert that the address was not deleted from the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());
@@ -323,7 +323,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "source" => "country",
                 "detail" => "The country field it's invalid."
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
 
         //assert that the address with invalid country was not created
         $this->assertDatabaseMissing(ConfigService::$tableAddress,
@@ -360,7 +360,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "source" => "country",
                 "detail" => "The country field it's invalid."
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->decodeResponseJson('meta')['errors']);
 
         //assert that the address was not modified in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());
@@ -421,7 +421,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'country'       => $country,
             'created_on'    => Carbon::now()->toDateTimeString(),
             'updated_on'    => null
-        ], $results->decodeResponseJson()['data'][0]);
+        ], $results->decodeResponseJson('data')[0]);
 
         //assert address was saved in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, [
@@ -632,7 +632,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not allowed.",
                 "detail" => "This action is unauthorized.",
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
 
         //assert database content
         $this->assertDatabaseMissing(ConfigService::$tableAddress,
@@ -673,7 +673,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "title"  => "Not allowed.",
                 "detail" => "This action is unauthorized.",
             ]
-            , $results->decodeResponseJson()['error']);
+            , $results->decodeResponseJson('meta')['errors']);
 
         //assert database
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());

@@ -4,12 +4,9 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Requests\OrderUpdateRequest;
-use Railroad\Ecommerce\Responses\JsonPaginatedResponse;
-use Railroad\Ecommerce\Responses\JsonResponse;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 
@@ -42,7 +39,7 @@ class OrderJsonController extends BaseController
     /** Pull orders between two dates
      *
      * @param \Illuminate\Http\Request $request
-     * @return \Railroad\Ecommerce\Responses\JsonPaginatedResponse
+     * @return JsonResponse
      */
     public function index(Request $request)
     {
@@ -97,7 +94,7 @@ class OrderJsonController extends BaseController
     /** Soft delete order
      *
      * @param int $orderId
-     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     * @return JsonResponse
      */
     public function delete($orderId)
     {
@@ -120,7 +117,7 @@ class OrderJsonController extends BaseController
      * Return updated data in JSON format
      * @param  int                                               $orderId
      * @param \Railroad\Ecommerce\Requests\OrderUpdateRequest $request
-     * @return \Railroad\Ecommerce\Responses\JsonResponse
+     * @return JsonResponse
      */
     public function update($orderId, OrderUpdateRequest $request)
     {
