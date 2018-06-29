@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Requests\OrderUpdateRequest;
@@ -48,34 +47,27 @@ class OrderJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.orders');
 
-        if($request->has('start-date'))
-        {
+        if ($request->has('start-date')) {
             $startDate = Carbon::createFromFormat('m/d/y', $request->get('start-date'))
                 ->timezone('America/Los_Angeles');
         }
-        else
-        {
-            $startDate = Carbon::now()->subDay();
-        }
 
-        if($request->has('end-date'))
-        {
+        if ($request->has('end-date')) {
             $endDate = Carbon::createFromFormat('m/d/y', $request->get('end-date'))
                 ->timezone('America/Los_Angeles');
         }
-        else
-        {
-            $endDate = Carbon::now();
-        }
 
         $orders = $this->orderRepository->query()
-            ->whereIn('brand', $request->get('brand', [ConfigService::$brand]))
-            ->whereBetween('created_on', [$startDate, $endDate]);
+            ->whereIn('brand', $request->get('brand', [ConfigService::$brand]));
 
-        if($request->has('user_id'))
-        {
+        if (isset($startDate) && isset($endDate)) {
+            $orders->whereBetween('created_on', [$startDate, $endDate]);
+        }
+
+        if ($request->has('user_id')) {
             $orders = $orders->where('user_id', $request->get('user_id'));
         }
+
         $orders = $orders->limit($request->get('limit', 100))
             ->skip(($request->get('page', 1) - 1) * $request->get('limit', 100))
             ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
@@ -83,16 +75,18 @@ class OrderJsonController extends BaseController
 
         $ordersCount = $this->orderRepository->query()
             ->whereIn('brand', $request->get('brand', [ConfigService::$brand]));
-        if($request->has('user_id'))
-        {
+
+        if ($request->has('user_id')) {
             $ordersCount = $ordersCount->where('user_id', $request->get('user_id'));
         }
+
         $ordersCount = $ordersCount->count();
 
         return new JsonPaginatedResponse(
             $orders,
             $ordersCount,
-            200);
+            200
+        );
     }
 
     /** Soft delete order
