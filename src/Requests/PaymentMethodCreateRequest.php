@@ -28,10 +28,9 @@ class PaymentMethodCreateRequest extends FormRequest
             'method_type' => 'required|max:255',
             'card_year' => 'required_if:method_type,' . PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'card_month' => 'required_if:method_type,' . PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'card_fingerprint' => 'required_if:method_type,' . PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'card_number_last_four_digits' => 'required_if:method_type,' . PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'company_name' => 'required_if:method_type,' . PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'express_checkout_token' => 'required_if:method_type,' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'gateway' => 'required',
+            'token' => 'required_if:method_type,' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             'address_id' => 'required_if:method_type,' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             'user_id' => 'required_without:customer_id',
             'customer_id' => 'required_without:user_id'
