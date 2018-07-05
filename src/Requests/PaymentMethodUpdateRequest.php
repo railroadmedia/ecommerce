@@ -25,17 +25,15 @@ class PaymentMethodUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'method_type'                  => 'max:255',
-            'update_method'                => 'required',
-            'card_year'                    => 'required_if:update_method,create-credit-card,update-current-credit-card',
-            'card_month'                   => 'required_if:update_method,create-credit-card,update-current-credit-card',
-            'card_fingerprint'             => 'required_if:update_method,create-credit-card',
-            'card_number_last_four_digits' => 'required_if:update_method,create-credit-card',
-            'company_name'                 => 'required_if:update_method,create-credit-card',
-            'express_checkout_token'       => 'required_if:update_method,use-paypal',
-            'address_id'                   => 'required_if:update_method,use-paypal',
-            'user_id'                      => 'numeric',
-            'customer_id'                  => 'numeric|exists:' . ConfigService::$tableCustomer . ',id'
+            'method_type'   => 'max:255',
+            'update_method' => 'required',
+            'card_year'     => 'required_if:update_method,update-current-credit-card',
+            'card_month'    => 'required_if:update_method,update-current-credit-card',
+            'card_token'    => 'required_if:update_method,create-credit-card',
+            'token'         => 'required_if:update_method,use-paypal',
+            'address_id'    => 'required_if:update_method,use-paypal',
+            'user_id'       => 'numeric',
+            'customer_id'   => 'numeric|exists:' . ConfigService::$tableCustomer . ',id'
         ];
     }
 
