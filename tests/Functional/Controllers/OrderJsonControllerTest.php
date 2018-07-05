@@ -174,9 +174,9 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'order_id'   => $order['id']
             ]));
 
-            $orders[] = $order;
+            $orders[] = $order->getArrayCopy();
         }
-        $orders[] = $oldOrder;
+        $orders[] = $oldOrder->getArrayCopy();
         $results = $this->call('GET', '/orders',
             [
                 'page'  => $page,
@@ -185,6 +185,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'end-date' => Carbon::now()->toDateTimeString()
             ]);
 
-        $this->assertArraySubset($orders, $results->decodeResponseJson('results'));
+
+        $this->assertArraySubset($orders, $results->decodeResponseJson('data'));
     }
 }
