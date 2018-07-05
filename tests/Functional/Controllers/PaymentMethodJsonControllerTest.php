@@ -68,24 +68,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals([
             [
-                "source" => "card_year",
-                "detail" => "The card year field is required when method type is credit-card.",
+                "source" => "card_token",
+                "detail" => "The card token field is required when method type is credit-card.",
             ],
             [
-                "source" => "card_month",
-                "detail" => "The card month field is required when method type is credit-card.",
-            ],
-            [
-                "source" => "card_fingerprint",
-                "detail" => "The card fingerprint field is required when method type is credit-card.",
-            ],
-            [
-                "source" => "card_number_last_four_digits",
-                "detail" => "The card number last four digits field is required when method type is credit-card.",
-            ],
-            [
-                "source" => "company_name",
-                "detail" => "The company name field is required when method type is credit-card.",
+                "source" => "gateway",
+                "detail" => "The gateway field is required.",
             ],
             [
                 "source" => "user_id",
@@ -108,8 +96,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals([
             [
-                "source" => "express_checkout_token",
-                "detail" => "The express checkout token field is required when method type is paypal.",
+                "source" => "gateway",
+                "detail" => "The gateway field is required.",
+            ],
+            [
+                "source" => "token",
+                "detail" => "The token field is required when method type is paypal.",
             ],
             [
                 "source" => "address_id",
@@ -130,7 +122,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $results = $this->call('PUT', '/payment-method',
             [
-                'user_id' => rand()
+                'user_id' => rand(),
+                'gateway' => 'stripe'
             ]);
 
         $this->assertEquals(422, $results->getStatusCode());
@@ -179,7 +172,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'company_name'                 => $cardType,
             'currency'                     => $currency,
             'user_id'                      => $userId,
-            'payment_gateway'              => 'drumeo'
+            'gateway'                      => 'drumeo',
+            'card_token'                   => $cardToken->id
         ]);
 
         //assert response status code
@@ -244,12 +238,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call('PUT', '/payment-method', [
             'method_type'            => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'express_checkout_token' => $expressCheckoutToken,
+            'token' => $expressCheckoutToken,
             'address_id'             => $addressId,
             'user_id'                => $userId,
             'customer_id'            => $customerId,
             'currency'               => $currency,
-            'payment_gateway'        => 'drumeo'
+            'gateway'        => 'drumeo'
         ]);
 
         $this->assertEquals(200, $results->getStatusCode());
@@ -302,24 +296,36 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $cardLast4          = $this->faker->randomNumber(4);
         $cardType           = $this->faker->creditCardType;
         $currency           = $this->faker->currencyCode;
+        $cardExpirationDate     = $this->faker->creditCardExpirationDate;
+        $cardFingerprint        = self::VALID_VISA_CARD_NUM;
+        $customer               = new Customer();
+        $customer->email        = $this->faker->email;
+        $fakerCard              = new Card();
+        $fakerCard->fingerprint = $cardFingerprint;
+        $fakerCard->brand       = $cardType;
+        $fakerCard->last4       = $cardLast4;
+        $fakerCard->exp_year    = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month   = $cardExpirationDate->format('m');
+        $fakerCard->id          = $this->faker->word;
+        $cardToken              = new Token();
+        $cardToken->id          = rand();
+        $cardToken->card        = $fakerCard;
+        $this->stripeExternalHelperMock->method('createCustomer')->willReturn($customer);
+        $this->stripeExternalHelperMock->method('retrieveToken')->willReturn($cardToken);
 
         //incorrect card number
         $cardFingerprint = $this->faker->randomNumber();
 
-        $this->stripeExternalHelperMock->method('createCardToken')->willThrowException(new PaymentFailedException('The card number is incorrect. Check the card’s number or use a different card.'));
+        $this->stripeExternalHelperMock->method('createCard')->willThrowException(new PaymentFailedException('The card number is incorrect. Check the card’s number or use a different card.'));
 
         $this->expectException(PaymentFailedException::class);
 
         $results = $this->call('PUT', '/payment-method', [
             'method_type'                  => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'card_year'                    => $cardYear,
-            'card_month'                   => $cardMonth,
-            'card_fingerprint'             => $cardFingerprint,
-            'card_number_last_four_digits' => $cardLast4,
-            'company_name'                 => $cardType,
+            'card_token'                    => $this->faker->creditCardNumber,
             'currency'                     => $currency,
             'user_id'                      => $userId,
-            'payment_gateway'              => 'drumeo'
+            'gateway'              => 'drumeo'
         ]);
 
         //assert error message subset results
@@ -363,12 +369,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->expectException(PaymentFailedException::class);
         $results = $this->call('PUT', '/payment-method', [
             'method_type'            => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'express_checkout_token' => $expressCheckoutToken,
+            'token' => $expressCheckoutToken,
             'address_id'             => $addressId,
             'user_id'                => $userId,
             'customer_id'            => $customerId,
             'currency'               => $currency,
-            'payment_gateway'        => 'drumeo'
+            'gateway'        => 'drumeo'
         ]);
 
         //assert error message subset results
@@ -440,24 +446,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals([
             [
-                "source" => "card_year",
-                "detail" => "The card year field is required when create or update a credit card.",
-            ],
-            [
-                "source" => "card_month",
-                "detail" => "The card month field is required when create or update a credit card.",
-            ],
-            [
-                "source" => "card_fingerprint",
-                "detail" => "The card finger print field is required when create a new credit card.",
-            ],
-            [
-                "source" => "card_number_last_four_digits",
-                "detail" => "The card last four digits field is required when create a new credit card.",
-            ],
-            [
-                "source" => "company_name",
-                "detail" => "The company name field is required when create a new credit card.",
+                "source" => "card_token",
+                "detail" => "The card token field is required when update method is create-credit-card.",
             ]
         ], $results->decodeResponseJson()['errors']);
 
@@ -535,8 +525,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(422, $results->getStatusCode());
         $this->assertEquals([
             [
-                "source" => "express_checkout_token",
-                "detail" => "The express checkout token field is required when update payment method and use paypal.",
+                "source" => "token",
+                "detail" => "The token field is required when update method is use-paypal.",
             ],
             [
                 "source" => "address_id",
@@ -599,14 +589,9 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             [
                 'update_method'                => 'create-credit-card',
                 'method_type'                  => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'card_year'                    => $expirationDate->format('Y'),
-                'card_month'                   => $expirationDate->format('m'),
-                'card_fingerprint'             => $cardFingerprint,
-                'card_number_last_four_digits' => $cardLast4,
-                'cardholder_name'              => $cardHolderName,
-                'company_name'                 => $cardType,
+                'card_token'                    => $cardToken->id,
                 'user_id'                      => $userId,
-                'payment_gateway'              => 'drumeo'
+                'gateway'              => 'drumeo'
             ]
         );
 
@@ -617,16 +602,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'created_on'  => $paymentMethod['created_on'],
             'updated_on'  => Carbon::now()->toDateTimeString(),
         ], $results->decodeResponseJson()['results']);
-
-        //assert new credit card saved in the db
-        $this->assertDatabaseHas(ConfigService::$tableCreditCard,
-            [
-                'fingerprint'          => $cardFingerprint,
-                'last_four_digits'     => $cardLast4,
-                'cardholder_name'      => $cardHolderName,
-                'company_name'         => $cardType,
-                'payment_gateway_name' => 'drumeo'
-            ]);
 
         $this->assertDatabaseMissing(ConfigService::$tablePaymentMethod,
             [
@@ -658,9 +633,9 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             [
                 'update_method'          => 'use-paypal',
                 'method_type'            => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'express_checkout_token' => $expressCheckoutToken,
+                'token' => $expressCheckoutToken,
                 'address_id'             => $addressId,
-                'payment_gateway'        => 'drumeo'
+                'gateway'        => 'drumeo'
             ]
         );
 
@@ -825,7 +800,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'payment_gateway_name' => 'drumeo'
         ]));
 
-        $paymentMethod2 = $this->paymentMethodRepository->create($this->faker->paymentMethod([
+        $paymentMethod2            = $this->paymentMethodRepository->create($this->faker->paymentMethod([
             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             'method_id'   => $paypalBilling['id']
         ]));
@@ -855,7 +830,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_get_user_payment_methods_not_exists()
     {
-        $results = $this->call('GET', '/user-payment-method/'.rand());
+        $results = $this->call('GET', '/user-payment-method/' . rand());
 
         $this->assertEmpty($results->decodeResponseJson('results'));
     }

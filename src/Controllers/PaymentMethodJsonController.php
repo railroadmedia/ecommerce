@@ -135,35 +135,27 @@ class PaymentMethodJsonController extends BaseController
             if($request->get('method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
             {
                 $customer = $this->stripePaymentGateway->getOrCreateCustomer(
-                    $request->get('payment_gateway'),
+                    $request->get('gateway'),
                     $user['email']
                 );
 
-                $cardToken = $this->stripePaymentGateway->createCardToken(
-                    $request->get('payment_gateway'),
-                    $request->get('card_fingerprint'),
-                    $request->get('card_month'),
-                    $request->get('card_year'),
-                    $request->get('card_number_last_four_digits'),
-                    $request->get('cardholder_name')
-
-                );
-
                 $card = $this->stripePaymentGateway->createCustomerCard(
-                    $request->get('payment_gateway'), $customer, $cardToken->id
+                    $request->get('gateway'),
+                    $customer,
+                    $request->get('card_token')
                 );
 
                 $paymentMethodId = $this->paymentMethodService->createUserCreditCard(
                     $user['id'],
                     $card->fingerprint,
                     $card->last4,
-                    $request->get('cardholder_name'),
+                    $card->name,
                     $card->brand,
                     $card->exp_year,
                     $card->exp_month,
                     $card->id,
                     $card->customer,
-                    $request->get('payment_gateway'),
+                    $request->get('gateway'),
                     null,
                     $request->get('currency', $this->currencyService->get()),
                     true,
@@ -173,7 +165,7 @@ class PaymentMethodJsonController extends BaseController
             {
                 $billingAgreementId =
                     $this->payPalPaymentGateway->createBillingAgreement(
-                        $request->get('payment_gateway'),
+                        $request->get('gateway'),
                         '',
                         '',
                         $request->get('validated-express-checkout-token')
@@ -195,7 +187,7 @@ class PaymentMethodJsonController extends BaseController
                     $user['id'],
                     $billingAgreementId,
                     $billingAddressDB['id'],
-                    $request->get('payment_gateway'),
+                    $request->get('gateway'),
                     $request->get('currency', $this->currencyService->get()),
                     true
                 );
@@ -244,34 +236,28 @@ class PaymentMethodJsonController extends BaseController
             case 'create-credit-card':
                 $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
                 $create     = true;
-                $customer   = $this->stripePaymentGateway->getOrCreateCustomer(
-                    $request->get('payment_gateway'),
+
+                $customer = $this->stripePaymentGateway->getOrCreateCustomer(
+                    $request->get('gateway'),
                     $user['email']
                 );
 
-                $cardToken = $this->stripePaymentGateway->createCardToken(
-                    $request->get('payment_gateway'),
-                    $request->get('card_fingerprint'),
-                    $request->get('card_month'),
-                    $request->get('card_year'),
-                    $request->get('card_number_last_four_digits'),
-                    $request->get('cardholder_name')
-
+                $card = $this->stripePaymentGateway->createCustomerCard(
+                    $request->get('gateway'),
+                    $customer,
+                    $request->get('card_token')
                 );
 
-                $card   = $this->stripePaymentGateway->createCustomerCard(
-                    $request->get('payment_gateway'), $customer, $cardToken->id
-                );
                 $method = $this->creditCardRepository->create(
                     [
                         'fingerprint'          => $card->fingerprint,
                         'last_four_digits'     => $card->last4,
-                        'cardholder_name'      => $request->get('cardholder_name'),
+                        'cardholder_name'      => $card->name,
                         'company_name'         => $card->brand,
                         'expiration_date'      => Carbon::createFromDate($card->exp_year, $card->exp_month)->toDateTimeString(),
                         'external_id'          => $card->id,
                         'external_customer_id' => $card->customer,
-                        'payment_gateway_name' => $request->get('payment_gateway'),
+                        'payment_gateway_name' => $request->get('gateway'),
                         'created_on'           => Carbon::now()->toDateTimeString(),
                     ]
                 );
@@ -282,7 +268,7 @@ class PaymentMethodJsonController extends BaseController
                 $create             = true;
                 $billingAgreementId =
                     $this->payPalPaymentGateway->createBillingAgreement(
-                        $request->get('payment_gateway'),
+                        $request->get('gateway'),
                         '',
                         '',
                         $request->get('validated-express-checkout-token')
@@ -302,7 +288,7 @@ class PaymentMethodJsonController extends BaseController
                 $method           = $this->paypalBillingAgreementRepository->create(
                     [
                         'external_id'          => $billingAgreementId,
-                        'payment_gateway_name' => $request->get('payment_gateway'),
+                        'payment_gateway_name' => $request->get('gateway'),
                         'created_on'           => Carbon::now()->toDateTimeString(),
                     ]
                 );
