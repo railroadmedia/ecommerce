@@ -192,7 +192,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(201, $results->getStatusCode());
         $this->assertEquals(array_merge($subscription->getArrayCopy(), [
             'is_active'   => 0,
-            'canceled_on' => Carbon::now()->timezone('America/Los_Angeles')->toDateTimeString(),
+            'canceled_on' => Carbon::now()->toDateTimeString(),
             'updated_on'  => Carbon::now()->toDateTimeString()
         ]), $results->decodeResponseJson('data')[0]);
 
@@ -220,5 +220,16 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(422, $results->getStatusCode());
         $this->assertEquals(3, count($results->decodeResponseJson('meta')['errors']));
+    }
+
+    public function test_update_subscription_date()
+    {
+        $subscription = $this->subscriptionRepository->create($this->faker->subscription());
+        $results = $this->call('PATCH', '/subscription/'.$subscription['id'],[
+            'paid_until' => Carbon::now()->toDateTimeString()
+        ]);
+
+        $this->assertEquals(201, $results->getStatusCode());
+        $this->assertEquals(Carbon::now()->toDateTimeString(),$results->decodeResponseJson('results')['paid_until']);
     }
 }
