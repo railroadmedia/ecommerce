@@ -111,8 +111,7 @@ class SubscriptionJsonController extends BaseController
         $cancelDate = null;
         if(!empty($request->get('canceled_on')) || ($request->get('is_active') === false))
         {
-            $cancelDate = Carbon::createFromFormat('Y-m-d', $request->get('canceled_on', Carbon::now()->format('Y-m-d')))
-                ->timezone('America/Los_Angeles');
+            $cancelDate = Carbon::parse($request->get('canceled_on', Carbon::now()->toDateTimeString()));
         }
 
         $updatedSubscription = $this->subscriptionRepository->update(
@@ -135,8 +134,8 @@ class SubscriptionJsonController extends BaseController
                 ),
                 [
                     'total_price_per_payment' => round($request->get('total_price_per_payment', $subscription['total_price_per_payment']), 2),
-                    'start_date'              => ($request->has('start_date'))?Carbon::createFromFormat('Y-m-d', $request->get('start_date'))->timezone('America/Los_Angeles'):$subscription['start_date'],
-                    'paid_until'              => ($request->has('paid_until'))?Carbon::createFromFormat('Y-m-d', $request->get('paid_until'))->timezone('America/Los_Angeles'):$subscription['paid_until'],
+                    'start_date'              => ($request->has('start_date'))?Carbon::parse($request->get('start_date')):$subscription['start_date'],
+                    'paid_until'              => ($request->has('paid_until'))?Carbon::parse($request->get('paid_until')):$subscription['paid_until'],
                     'canceled_on'             => $cancelDate,
                     'updated_on'              => Carbon::now()->toDateTimeString()
                 ]

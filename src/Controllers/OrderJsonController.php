@@ -48,13 +48,11 @@ class OrderJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'pull.orders');
 
         if ($request->has('start-date')) {
-            $startDate = Carbon::createFromFormat('m/d/y', $request->get('start-date'))
-                ->timezone('America/Los_Angeles');
+            $startDate = Carbon::parse($request->get('start-date'));
         }
 
         if ($request->has('end-date')) {
-            $endDate = Carbon::createFromFormat('m/d/y', $request->get('end-date'))
-                ->timezone('America/Los_Angeles');
+            $endDate = Carbon::parse($request->get('end-date'));
         }
 
         $orders = $this->orderRepository->query()

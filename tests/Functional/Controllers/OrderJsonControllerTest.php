@@ -140,4 +140,50 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(422, $results->getStatusCode());
         $this->assertEquals(1, count($results->decodeResponseJson('errors')));
     }
+
+    public function test_pull_orders_between_start_date_and_end_date()
+    {
+        $page     = 1;
+        $limit    = 10;
+        $nrOrders = 7;
+        $product  = $this->productRepository->create($this->faker->product([
+            'type' => ConfigService::$typeSubscription
+        ]));
+
+        $order     = $this->orderRepository->create($this->faker->order([
+            'created_on' => Carbon::now()->subMonth(1)->toDateTimeString()
+        ]));
+        $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+            'product_id' => $product['id'],
+            'order_id'   => $order['id']
+        ]));
+        $oldOrder     = $this->orderRepository->create($this->faker->order([
+            'created_on' => Carbon::now()->subDay(1)->toDateTimeString()
+        ]));
+        $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+            'product_id' => $product['id'],
+            'order_id'   => $oldOrder['id']
+        ]));
+
+        for($i = 0; $i < $nrOrders; $i++)
+        {
+            $order     = $this->orderRepository->create($this->faker->order());
+            $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+                'product_id' => $product['id'],
+                'order_id'   => $order['id']
+            ]));
+
+            $orders[] = $order;
+        }
+        $orders[] = $oldOrder;
+        $results = $this->call('GET', '/orders',
+            [
+                'page'  => $page,
+                'limit' => $limit,
+                'start-date' => Carbon::now()->subDay(2)->toDateTimeString(),
+                'end-date' => Carbon::now()->toDateTimeString()
+            ]);
+
+        $this->assertArraySubset($orders, $results->decodeResponseJson('results'));
+    }
 }

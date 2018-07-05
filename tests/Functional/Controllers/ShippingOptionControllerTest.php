@@ -141,7 +141,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
         );
 
         $this->assertEquals(201, $results->getStatusCode());
-        $this->assertEquals(
+        $this->assertArraySubset(
             [
                 'id' => $shippingOption['id'],
                 'country' => $shippingOption['country'],
