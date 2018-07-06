@@ -161,6 +161,11 @@ Route::get(
 )->name('user.payment-method.index');
 
 //address
+Route::get(
+    '/address',
+    Railroad\Ecommerce\Controllers\AddressJsonController::class . '@index'
+)->name('address.index');
+
 Route::put(
     '/address',
     Railroad\Ecommerce\Controllers\AddressJsonController::class . '@store'

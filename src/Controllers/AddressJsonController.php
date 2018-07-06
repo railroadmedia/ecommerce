@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\AddressRepository;
@@ -40,6 +41,23 @@ class AddressJsonController extends BaseController
     }
 
     /**
+     * @param Request $request
+     * @throws \Railroad\Permissions\Exceptions\NotAllowedException
+     */
+    public function index(Request $request)
+    {
+        if ($request->get('user_id') !== auth()->id()) {
+            $this->permissionService->canOrThrow(auth()->id(), 'pull.user.payment.method');
+        }
+
+        $addresses = $this->addressRepository->query()
+            ->where('user_id', $request->get('user_id', auth()->id()))
+            ->get();
+
+        return reply()->json($addresses);
+    }
+
+    /**
      * Call the method to store a new address based on request parameters.
      * Return a JsonResponse with the new created address.
      *
@@ -66,7 +84,7 @@ class AddressJsonController extends BaseController
                     ]
                 ),
                 [
-                    'brand'      => $request->input('brand', ConfigService::$brand),
+                    'brand' => $request->input('brand', ConfigService::$brand),
                     'created_on' => Carbon::now()->toDateTimeString(),
                 ]
             )
@@ -83,7 +101,7 @@ class AddressJsonController extends BaseController
      *        - JsonResponse with the updated address
      *
      * @param AddressUpdateRequest $request
-     * @param int                  $addressId
+     * @param int $addressId
      * @return JsonResponse
      * @throws Throwable
      */
@@ -140,7 +158,7 @@ class AddressJsonController extends BaseController
      * the user have not rights to access it
      *        - JsonResponse with code 204 otherwise
      *
-     * @param integer              $addressId
+     * @param integer $addressId
      * @param AddressDeleteRequest $request
      * @return JsonResponse
      * @throws Throwable
