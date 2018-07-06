@@ -8,6 +8,7 @@ use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use Railroad\Location\Services\LocationService;
 use Webpatser\Countries\Countries;
 
 class AddressJsonControllerTest extends EcommerceTestCase
@@ -74,7 +75,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'city'          => $this->faker->city,
             'zip'           => $this->faker->postcode,
             'state'         => $this->faker->word,
-            'country'       => $this->faker->randomElement(array_column(Countries::getCountries(), 'full_name'))
+            'country'       => $this->faker->randomElement(LocationService::countries())
         ]);
 
         //assert results status code
@@ -321,7 +322,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals([
             [
                 "source" => "country",
-                "detail" => "The country field it's invalid."
+                "detail" => 'The selected country is invalid.'
             ]
         ], $results->decodeResponseJson('meta')['errors']);
 
@@ -389,7 +390,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $city         = $this->faker->city;
         $zip          = $this->faker->postcode;
         $state        = $this->faker->word;
-        $country      = $this->faker->randomElement(array_column(Countries::getCountries(), 'full_name'));
+        $country      = $this->faker->randomElement(LocationService::countries());
 
         $results = $this->call('PUT', '/address', [
             'type'          => $type,
@@ -525,7 +526,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $city        = $this->faker->city;
         $zip         = $this->faker->postcode;
         $state       = $this->faker->word;
-        $country     = $this->faker->randomElement(array_column(Countries::getCountries(), 'full_name'));
+        $country     = $this->faker->randomElement(LocationService::countries());
 
         $results = $this->call('PUT', '/address', [
             'type'          => $type,

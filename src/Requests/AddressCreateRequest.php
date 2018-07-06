@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Requests;
 
 
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Location\Services\LocationService;
 
 class AddressCreateRequest extends FormRequest
 {
@@ -40,7 +41,7 @@ class AddressCreateRequest extends FormRequest
             'city' => 'required|max:255',
             'zip' => 'required|max:255',
             'state' => 'required|max:255',
-            'country' => 'required|max:255|country',
+            'country' => 'required|max:255|in:' . implode(',', LocationService::countries()),
             'user_id' => 'integer|nullable',
             'customer_id' => 'integer|nullable|exists:'.ConfigService::$tableCustomer.',id'
         ];

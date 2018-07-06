@@ -253,7 +253,6 @@ class ProductControllerTest extends EcommerceTestCase
         //assert response status code
         $this->assertEquals(201, $results->getStatusCode());
 
-        unset($product['order']);
         unset($product['discounts']);
 
         //assert product with the new description subset of response
@@ -293,7 +292,6 @@ class ProductControllerTest extends EcommerceTestCase
         ];
         $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
 
-        unset($product['order']);
         unset($product['discounts']);
 
         //assert product raw was not modified in db
@@ -327,9 +325,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         $results = $this->call('DELETE', '/product/' . $product['id']);
 
-        $this->assertEquals(403, $results->status());
-        $this->assertEquals('Not allowed.', $results->decodeResponseJson('meta')['errors']['title']);
-        $this->assertEquals('Delete failed, exists orders that contain the selected product.', $results->decodeResponseJson('meta')['errors']['detail']);
+        $this->assertEquals(204, $results->status());
     }
 
     public function test_delete_product_when_exists_product_discounts()

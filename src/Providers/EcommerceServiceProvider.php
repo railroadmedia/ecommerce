@@ -36,19 +36,6 @@ class EcommerceServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->listen = [
-            StatementPrepared::class => [
-                function (StatementPrepared $event) {
-
-                    // we only want to use assoc fetching for this packages database calls
-                    // so we need to use a separate 'mask' connection
-
-                    if($event->connection->getName() ==
-                        ConfigService::$connectionMaskPrefix . ConfigService::$databaseConnectionName)
-                    {
-                        $event->statement->setFetchMode(PDO::FETCH_ASSOC);
-                    }
-                },
-            ],
             GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
         ];
 

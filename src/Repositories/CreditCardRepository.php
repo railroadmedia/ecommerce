@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Resora\Decorators\Decorator;
 use Railroad\Resora\Queries\CachedQuery;
 use Railroad\Resora\Repositories\RepositoryBase;
 
@@ -28,6 +29,11 @@ class CreditCardRepository extends RepositoryBase
             )
             ->where(ConfigService::$tableCreditCard . '.id', $id)
             ->first();
+    }
+
+    protected function decorate($results)
+    {
+        return Decorator::decorate($results, 'credit-card');
     }
 
     protected function connection()

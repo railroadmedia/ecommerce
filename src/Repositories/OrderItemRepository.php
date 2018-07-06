@@ -20,10 +20,6 @@ class OrderItemRepository extends RepositoryBase
 
     protected function decorate($results)
     {
-        if(is_array($results))
-        {
-            $results = new OrderItem($results);
-        }
         return Decorator::decorate($results, 'orderItem');
     }
 }

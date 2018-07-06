@@ -24,10 +24,6 @@ class PaymentMethodRepository extends RepositoryBase
 
     protected function decorate($results)
     {
-        if (is_array($results)) {
-            $results = new PaymentMethod($results);
-        }
-
         return Decorator::decorate($results, 'paymentMethod');
     }
 

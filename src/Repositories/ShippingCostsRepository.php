@@ -24,10 +24,6 @@ class ShippingCostsRepository extends RepositoryBase
 
     protected function decorate($results)
     {
-        if(is_array($results)){
-            $results = new Entity($results);
-        }
-
         return $results;
     }
 }

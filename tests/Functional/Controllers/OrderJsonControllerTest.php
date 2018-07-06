@@ -86,7 +86,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'order_id'   => $order['id']
             ]));
 
-            $orders[] = $order->getArrayCopy();
+            $orders[] = $this->orderRepository->read($order['id'])->getArrayCopy();
         }
 
         $results = $this->call('GET', '/orders',

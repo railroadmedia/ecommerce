@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Faker;
 use Carbon\Carbon;
 use Faker\Generator;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Location\Services\LocationService;
 use Webpatser\Countries\Countries;
 
 class Faker extends Generator
@@ -76,7 +77,7 @@ class Faker extends Generator
                 'city'          => $this->city,
                 'zip'           => $this->postcode,
                 'state'         => $this->word,
-                'country'       => $this->randomElement(array_column(Countries::getCountries(), 'full_name')),
+                'country'       => $this->randomElement(LocationService::countries()),
                 'created_on'    => Carbon::now()->toDateTimeString(),
             ],
             $override

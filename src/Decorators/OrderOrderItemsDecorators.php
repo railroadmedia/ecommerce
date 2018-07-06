@@ -34,8 +34,9 @@ class OrderOrderItemsDecorators implements DecoratorInterface
             ->keyBy('order_id');
 
         foreach ($data as $index => $orderItem) {
-            $data[$index]['items'] =
-                isset($orderItems[$orderItem['id']]) ? (array) $orderItems[$orderItem['id']] : null;
+            if (isset($orderItems[$orderItem['id']])) {
+                $data[$index]['items'] = (array)$orderItems[$orderItem['id']];
+            }
         }
 
         return $data;

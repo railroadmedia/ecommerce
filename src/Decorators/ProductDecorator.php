@@ -20,27 +20,6 @@ class ProductDecorator implements DecoratorInterface
 
     public function decorate($products)
     {
-        $productIds = $products->pluck('id');
-
-        $productOrders = $this->databaseManager->connection(ConfigService::$databaseConnectionName)
-            ->table(ConfigService::$tableOrderItem)
-            ->whereIn('product_id', $productIds)
-            ->get()
-            ->toArray();
-
-        foreach ($products as $productIndex => $product) {
-            $products[$productIndex]['order'] = [];
-            foreach ($productOrders as $productOrderIndex => $productOrder) {
-                $productOrder = (array) $productOrder;
-                if ($productOrder['product_id'] == $product['id']) {
-                    $products[$productIndex]['order'][] = [
-                        'id' => $productOrder['id'],
-                        'order_id' => $productOrder['order_id'],
-                    ];
-                }
-            }
-        }
-
         return $products;
     }
 }

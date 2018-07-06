@@ -22,10 +22,6 @@ class OrderRepository extends RepositoryBase
 
     protected function decorate($results)
     {
-        if(is_array($results))
-        {
-            return new Entity($results);
-        }
         return Decorator::decorate($results, 'order');
     }
 
