@@ -74,11 +74,6 @@ class RefundJsonController extends BaseController
 
         $payment = $this->paymentRepository->read($request->get('payment_id'));
 
-        // if the logged in user it's not admin => can refund only own charge
-        throw_if(((!$this->permissionService->is(auth()->id(), 'admin')) && (auth()->id() != $payment['user']['user_id'])),
-            new NotAllowedException('This action is unauthorized.')
-        );
-
         if($payment['payment_method']['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
         {
             $refundExternalId = $this->stripePaymentGateway->refund(

@@ -59,7 +59,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
 
             $fulfillments[$i]                     = $this->orderItemFulfillmentRepository->create($this->faker->orderItemFulfillment([
                 'order_id' => $order['id']
-            ]));
+            ]))->getArrayCopy();
             $fulfillments[$i]['shipping_address'] = $shippingAddress->getArrayCopy();
         }
         $results = $this->call('GET', '/fulfillment');
@@ -84,7 +84,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
             $fulfillments[$i]                     = $this->orderItemFulfillmentRepository->create($this->faker->orderItemFulfillment([
                 'order_id' => $order['id'],
                 'status'   => $this->faker->randomElement([ConfigService::$fulfillmentStatusPending, ConfigService::$fulfillmentStatusFulfilled])
-            ]));
+            ]))->getArrayCopy();
             $fulfillments[$i]['shipping_address'] = $shippingAddress->getArrayCopy();
             if($fulfillments[$i]['status'] === ConfigService::$fulfillmentStatusFulfilled)
             {

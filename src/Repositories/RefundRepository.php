@@ -26,6 +26,6 @@ class RefundRepository extends RepositoryBase
 
     protected function decorate($results)
     {
-        return $results;
+        return Decorator::decorate($results, 'refund');
     }
 }

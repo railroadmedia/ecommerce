@@ -76,7 +76,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $product         = $this->productRepository->create($this->faker->product([
             'type' => ConfigService::$typeSubscription
         ]));
-        unset($product['order']);
         unset($product['discounts']);
 
         for($i = 0; $i < $nrSubscriptions; $i++)
@@ -108,7 +107,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $product         = $this->productRepository->create($this->faker->product([
             'type' => ConfigService::$typeSubscription
         ]));
-        unset($product['order']);
         unset($product['discounts']);
         $userId = $this->faker->numberBetween();
 

@@ -70,7 +70,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
     public function test_user_create_own_refund()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->permissionServiceMock->method('canOrThrow');
         $this->stripeExternalHelperMock->method('createRefund')->willReturn(1);
 
         $creditCard     = $this->creditCardRepository->create($this->faker->creditCard());
@@ -88,6 +87,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]));
         $refundAmount   = $this->faker->numberBetween(0, 100);
 
+        $this->permissionServiceMock->method('canOrThrow');
         $results = $this->call('PUT', '/refund', [
             'payment_id'    => $payment['id'],
             'refund_amount' => $refundAmount,
@@ -128,40 +128,5 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 'refunded' => $payment['refunded'] + $refundAmount
             ]
         );
-    }
-
-    public function test_user_can_not_create_other_refund()
-    {
-        $userId = $this->createAndLogInNewUser();
-        $this->permissionServiceMock->method('canOrThrow');
-
-        $creditCard     = $this->creditCardRepository->create($this->faker->creditCard());
-        $paymentMethod  = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => 'credit-card',
-            'method_id'   => $creditCard['id']
-        ]));
-        $userPayment    = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
-            'user_id'           => rand(),
-            'payment_method_id' => $paymentMethod['id'],
-        ]));
-        $payment        = $this->paymentRepository->create($this->faker->payment([
-            'payment_method_id' => $paymentMethod['id'],
-            'external_id'       => 'ch_1CQFAJE2yPYKc9YRFZUa5ACI'
-        ]));
-        $refundAmount   = $this->faker->numberBetween(0, 100);
-
-        $results = $this->call('PUT', '/refund', [
-            'payment_id'    => $payment['id'],
-            'refund_amount' => $refundAmount
-        ]);
-
-        $this->assertEquals(403, $results->getStatusCode());
-
-        $this->assertEquals(
-            [
-                "title"  => "Not allowed.",
-                "detail" => "This action is unauthorized.",
-            ]
-            , $results->decodeResponseJson('meta')['errors']);
     }
 }
