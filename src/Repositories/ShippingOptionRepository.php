@@ -38,7 +38,7 @@ class ShippingOptionRepository extends RepositoryBase
      */
     public function getShippingCosts($country, $totalWeight)
     {
-        return $this->newQuery()
+        $results = $this->query()
             ->join(
                 ConfigService::$tableShippingCostsWeightRange,
                 $this->connection()->raw(ConfigService::$tableShippingOption . '.id'),
@@ -54,6 +54,8 @@ class ShippingOptionRepository extends RepositoryBase
             ->where('min', '<=', $totalWeight)
             ->where('max', '>=', $totalWeight)
             ->first();
+
+        return $results;
     }
 
     /** Get all the shipping costs weight ranges based on shipping option id
