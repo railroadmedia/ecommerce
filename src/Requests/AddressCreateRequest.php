@@ -40,7 +40,7 @@ class AddressCreateRequest extends FormRequest
             'street_line_2' => 'nullable|max:255',
             'city' => 'nullable|max:255',
             'zip' => 'nullable|max:255',
-            'state' => 'required|max:255',
+            'state' => 'nullable|max:255',
             'country' => 'required|max:255|in:' . implode(',', LocationService::countries()),
             'user_id' => 'integer|nullable',
             'customer_id' => 'integer|nullable|exists:'.ConfigService::$tableCustomer.',id'
