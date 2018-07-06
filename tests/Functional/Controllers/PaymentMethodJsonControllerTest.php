@@ -825,7 +825,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $results                                     = $this->call('GET', '/user-payment-method/' . $userId);
 
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertEquals([$assignPaymentMethodToUser->getArrayCopy(), $assignPaymentMethodToUser->getArrayCopy()],
+        $this->assertEquals([$assignPaymentMethodToUser->getArrayCopy(), $userPaymentMethod->getArrayCopy()],
             $results->decodeResponseJson('data'));
     }
 
