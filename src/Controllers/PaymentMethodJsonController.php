@@ -123,10 +123,18 @@ class PaymentMethodJsonController extends BaseController
      *
      * @param PaymentMethodCreateRequest $request
      * @return JsonResponse|NotFoundException
+     * @throws \Railroad\Permissions\Exceptions\NotAllowedException
      */
     public function store(PaymentMethodCreateRequest $request)
     {
         $user = auth()->user();
+
+        if ($this->permissionService->can(auth()->id(), 'update.payment.method')) {
+            $user = ['id' => $request->get('user_id'), 'email' => $request->get('user_email')];
+        } else {
+            throw new \Railroad\Permissions\Exceptions\NotAllowedException('You cannot create payment methods.');
+        }
+
         try
         {
             if($request->get('method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
@@ -209,12 +217,18 @@ class PaymentMethodJsonController extends BaseController
      *        - JsonResponse with the updated payment method
      *
      * @param PaymentMethodUpdateRequest $request
-     * @param integer                    $paymentMethodId
+     * @param integer $paymentMethodId
      * @return JsonResponse|NotFoundException
+     * @throws \Railroad\Permissions\Exceptions\NotAllowedException
      */
     public function update(PaymentMethodUpdateRequest $request, $paymentMethodId)
     {
-        $user          = auth()->user();
+        if ($this->permissionService->can(auth()->id(), 'update.payment.method')) {
+            $user = ['id' => $request->get('user_id'), 'email' => $request->get('user_email')];
+        } else {
+            throw new \Railroad\Permissions\Exceptions\NotAllowedException('You cannot create payment methods.');
+        }
+
         $paymentMethod = $this->paymentMethodRepository->read($paymentMethodId);
 
         if($paymentMethod['user_id'] !== auth()->id())
