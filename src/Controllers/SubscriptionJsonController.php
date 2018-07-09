@@ -95,14 +95,11 @@ class SubscriptionJsonController extends BaseController
      * @param  integer $subscriptionId
      * @param \Railroad\Ecommerce\Requests\SubscriptionUpdateRequest $request
      * @return JsonResponse
+     * @throws \Railroad\Permissions\Exceptions\NotAllowedException
      */
     public function store(SubscriptionCreateRequest $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'create.subscription');
-
-        if ($request->has('canceled_on') || ($request->get('is_active') === false)) {
-            $cancelDate = Carbon::parse($request->get('canceled_on', Carbon::now()->toDateTimeString()));
-        }
 
         $updatedSubscription = $this->subscriptionRepository->create(
             $request->only(
@@ -121,7 +118,7 @@ class SubscriptionJsonController extends BaseController
                     'total_price_per_payment',
                     'start_date' => Carbon::parse($request->get('start_date')),
                     'paid_until' => Carbon::parse($request->get('paid_until')),
-                    'canceled_on' => $cancelDate,
+                    'canceled_on' => Carbon::parse($request->get('canceled_on')),
                     'updated_on' => Carbon::now()->toDateTimeString()
                 ]
             )
