@@ -102,29 +102,30 @@ class SubscriptionJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'create.subscription');
 
         $updatedSubscription = $this->subscriptionRepository->create(
-            $request->only(
-                [
-                    'brand',
-                    'user_id',
-                    'customer_id',
-                    'interval_type',
-                    'interval_count',
-                    'total_cycles_due',
-                    'total_cycles_paid',
-                    'type',
-                    'order_id',
-                    'product_id',
-                    'is_active',
-                    'note',
-                    'payment_method_id',
-                    'currency',
-                    'total_price_per_payment',
-                    'start_date' => Carbon::parse($request->get('start_date')),
-                    'paid_until' => Carbon::parse($request->get('paid_until')),
-                    'canceled_on' => Carbon::parse($request->get('canceled_on')),
-                    'updated_on' => Carbon::now()->toDateTimeString()
-                ]
-            )
+            array_merge(
+                $request->only(
+                    [
+                        'brand',
+                        'user_id',
+                        'customer_id',
+                        'interval_type',
+                        'interval_count',
+                        'total_cycles_due',
+                        'total_cycles_paid',
+                        'type',
+                        'order_id',
+                        'product_id',
+                        'is_active',
+                        'note',
+                        'payment_method_id',
+                        'currency',
+                        'total_price_per_payment',
+                        'start_date',
+                        'paid_until',
+                        'canceled_on',
+                    ]
+                ), ['created_on' => Carbon::now()->toDateTimeString()
+            ])
         );
         return reply()->json($updatedSubscription, [
             'code' => 201
