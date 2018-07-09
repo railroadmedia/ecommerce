@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
 use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
@@ -26,14 +27,14 @@ class SubscriptionJsonController extends BaseController
      * SubscriptionJsonController constructor.
      *
      * @param \Railroad\Ecommerce\Repositories\SubscriptionRepository $subscriptionRepository
-     * @param \Railroad\Permissions\Services\PermissionService        $permissionService
+     * @param \Railroad\Permissions\Services\PermissionService $permissionService
      */
     public function __construct(SubscriptionRepository $subscriptionRepository, PermissionService $permissionService)
     {
         parent::__construct();
 
         $this->subscriptionRepository = $subscriptionRepository;
-        $this->permissionService      = $permissionService;
+        $this->permissionService = $permissionService;
     }
 
     /** Pull subscriptions paginated
@@ -47,8 +48,7 @@ class SubscriptionJsonController extends BaseController
         $subscriptions = $this->subscriptionRepository->query()
             ->whereIn('brand', $request->get('brand', [ConfigService::$brand]));
 
-        if($request->has('user_id'))
-        {
+        if ($request->has('user_id')) {
             $subscriptions = $subscriptions->where('user_id', $request->get('user_id'));
         }
         $subscriptions = $subscriptions->limit($request->get('limit', 100))
@@ -58,8 +58,7 @@ class SubscriptionJsonController extends BaseController
 
         $subscriptionsCount = $this->subscriptionRepository->query()
             ->whereIn('brand', $request->get('brand', [ConfigService::$brand]));
-        if($request->has('user_id'))
-        {
+        if ($request->has('user_id')) {
             $subscriptionsCount = $subscriptionsCount->where('user_id', $request->get('user_id'));
         }
         $subscriptionsCount = $subscriptionsCount->count();
@@ -93,7 +92,48 @@ class SubscriptionJsonController extends BaseController
 
     /** Update a subscription and returned updated data in JSON format
      *
-     * @param  integer                                               $subscriptionId
+     * @param  integer $subscriptionId
+     * @param \Railroad\Ecommerce\Requests\SubscriptionUpdateRequest $request
+     * @return JsonResponse
+     */
+    public function store(SubscriptionCreateRequest $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'create.subscription');
+
+        if ($request->has('canceled_on') || ($request->get('is_active') === false)) {
+            $cancelDate = Carbon::parse($request->get('canceled_on', Carbon::now()->toDateTimeString()));
+        }
+
+        $updatedSubscription = $this->subscriptionRepository->create(
+            $request->only(
+                [
+                    'interval_type',
+                    'interval_count',
+                    'total_cycles_due',
+                    'total_cycles_paid',
+                    'type',
+                    'order_id',
+                    'product_id',
+                    'is_active',
+                    'note',
+                    'payment_method_id',
+                    'currency',
+                    'total_price_per_payment',
+                    'start_date' => Carbon::parse($request->get('start_date')),
+                    'paid_until' => Carbon::parse($request->get('paid_until')),
+                    'canceled_on' => $cancelDate,
+                    'updated_on' => Carbon::now()->toDateTimeString()
+                ]
+            )
+        );
+        return reply()->json($updatedSubscription, [
+            'code' => 201
+        ]);
+    }
+
+    /** Update a subscription and returned updated data in JSON format
+     *
+     * @param  integer $subscriptionId
      * @param \Railroad\Ecommerce\Requests\SubscriptionUpdateRequest $request
      * @return JsonResponse
      */
@@ -107,8 +147,7 @@ class SubscriptionJsonController extends BaseController
             new NotFoundException('Update failed, subscription not found with id: ' . $subscriptionId)
         );
         $cancelDate = null;
-        if($request->has('canceled_on') || ($request->get('is_active') === false))
-        {
+        if ($request->has('canceled_on') || ($request->get('is_active') === false)) {
             $cancelDate = Carbon::parse($request->get('canceled_on', Carbon::now()->toDateTimeString()));
         }
 
@@ -132,10 +171,10 @@ class SubscriptionJsonController extends BaseController
                 ),
                 [
                     'total_price_per_payment' => round($request->get('total_price_per_payment', $subscription['total_price_per_payment']), 2),
-                    'start_date'              => ($request->has('start_date'))?Carbon::parse($request->get('start_date')):$subscription['start_date'],
-                    'paid_until'              => ($request->has('paid_until'))?Carbon::parse($request->get('paid_until')):$subscription['paid_until'],
-                    'canceled_on'             => $cancelDate,
-                    'updated_on'              => Carbon::now()->toDateTimeString()
+                    'start_date' => ($request->has('start_date')) ? Carbon::parse($request->get('start_date')) : $subscription['start_date'],
+                    'paid_until' => ($request->has('paid_until')) ? Carbon::parse($request->get('paid_until')) : $subscription['paid_until'],
+                    'canceled_on' => $cancelDate,
+                    'updated_on' => Carbon::now()->toDateTimeString()
                 ]
             )
         );
