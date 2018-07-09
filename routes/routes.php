@@ -239,7 +239,7 @@ Route::get(
     Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@index'
 )->name('subscriptions.index');
 Route::put(
-    '/subscription/{subscriptionId}',
+    '/subscription',
     Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@store'
 )->name('subscription.store');
 Route::patch(
