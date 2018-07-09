@@ -104,6 +104,9 @@ class SubscriptionJsonController extends BaseController
         $updatedSubscription = $this->subscriptionRepository->create(
             $request->only(
                 [
+                    'brand',
+                    'user_id',
+                    'customer_id',
                     'interval_type',
                     'interval_count',
                     'total_cycles_due',
