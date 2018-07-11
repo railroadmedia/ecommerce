@@ -114,6 +114,13 @@ Route::delete(
 )->name('shipping-cost-weight-range.delete');
 
 //payment
+Route::get(
+    '/payment',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\PaymentJsonController::class . '@index',
+    ]
+)->name('payment.index');
+
 Route::put(
     '/payment',
     [
