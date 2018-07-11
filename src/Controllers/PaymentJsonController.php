@@ -16,6 +16,7 @@ use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentCreateRequest;
+use Railroad\Ecommerce\Requests\PaymentIndexRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
@@ -141,7 +142,7 @@ class PaymentJsonController extends BaseController
      * @param Request $request
      * @throws NotAllowedException
      */
-    public function index(Request $request)
+    public function index(PaymentIndexRequest $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'list.payment');
 
