@@ -77,7 +77,7 @@ class RefundJsonController extends BaseController
         if($payment['payment_method']['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
         {
             $refundExternalId = $this->stripePaymentGateway->refund(
-                $request->get('gateway-name'),
+                $request->get('gateway_name'),
                 $request->get('refund_amount'),
                 $payment['external_id'],
                 $request->get('note')
@@ -89,7 +89,7 @@ class RefundJsonController extends BaseController
                 $request->get('refund_amount'),
                 $payment['currency'],
                 $payment['external_id'],
-                $request->get('gateway-name'),
+                $request->get('gateway_name'),
                 $request->get('note')
             );
         }

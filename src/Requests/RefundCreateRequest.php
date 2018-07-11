@@ -28,6 +28,7 @@ class RefundCreateRequest extends FormRequest
             'refund_amount' => 'required|numeric',
             'note' => 'max:255',
             'payment_id' => 'numeric|exists:' . ConfigService::$tablePayment . ',id',
+            'gateway_name' => 'required'
         ];
     }
 }

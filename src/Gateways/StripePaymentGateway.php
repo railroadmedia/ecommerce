@@ -132,7 +132,7 @@ class StripePaymentGateway
      * @param $externalPaymentId
      * @param $reason
      * @param $gatewayName
-     * @return Refund
+     * @return string
      * @throws PaymentFailedException
      */
     public function refund($gatewayName, $amount, $externalPaymentId, $reason = null)
@@ -153,14 +153,14 @@ class StripePaymentGateway
         {
             $this->stripe->setApiKey($config['stripe_api_secret']);
 
-            $refund = $this->stripe->createRefund($amount * 100, $externalPaymentId, $reason);
+            $refund = $this->stripe->createRefund($amount, $externalPaymentId, $reason);
         }
         catch(Exception $exception)
         {
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
 
-        return $refund;
+        return $refund->id;
     }
 
     /**
