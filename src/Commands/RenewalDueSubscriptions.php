@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
+use Exception;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
@@ -61,10 +62,10 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     ) {
         parent::__construct();
 
-        $this->subscriptionRepository        = $subscriptionRepository;
-        $this->paymentRepository             = $paymentRepository;
-        $this->stripePaymentGateway          = $stripePaymentGateway;
-        $this->paypalPaymentGateway          = $payPalPaymentGateway;
+        $this->subscriptionRepository = $subscriptionRepository;
+        $this->paymentRepository = $paymentRepository;
+        $this->stripePaymentGateway = $stripePaymentGateway;
+        $this->paypalPaymentGateway = $payPalPaymentGateway;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
     }
 
@@ -72,126 +73,151 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
      * Execute the console command.
      *
      * @return mixed
+     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
      */
     public function handle()
     {
+        Carbon::setTestNow(Carbon::parse('2018-07-25 22:39:20'));
+
         $this->info('------------------Renewal Due Subscriptions command------------------');
-        $dueSubscriptions = $this->subscriptionRepository->query()
-            ->select(ConfigService::$tableSubscription . '.*')
-            ->join(
-                ConfigService::$tableSubscriptionPayment,
-                ConfigService::$tableSubscription . '.id',
-                '=',
-                ConfigService::$tableSubscriptionPayment . '.subscription_id'
-            )
-            ->join(
-                ConfigService::$tablePayment,
-                ConfigService::$tableSubscriptionPayment . '.payment_id',
-                '=',
-                ConfigService::$tablePayment . '.id'
-            )
-            ->where('paid_until', '<=', Carbon::now()->toDateTimeString())
-            ->where('is_active', '=', true)
-            ->get()
-            ->toArray();
+
+        $dueSubscriptions =
+            $this->subscriptionRepository->query()->select(ConfigService::$tableSubscription . '.*')->where(
+                    'paid_until',
+                    '<=',
+                    Carbon::now()->toDateTimeString()
+                )->where(
+                    'paid_until',
+                    '>=',
+                    Carbon::now()->subDays(7)->toDateTimeString()
+                )->where('is_active', '=', true)->whereNull('canceled_on')->get()->toArray();
 
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
-        $pay = [];
 
-        foreach($dueSubscriptions as $dueSubcription)
-        {
+        foreach ($dueSubscriptions as $dueSubscription) {
+
             //check for payment plan if the user have already paid all the cycles
-            if(($dueSubcription['type'] == ConfigService::$paymentPlanType) &&
-                ((int)$dueSubcription['total_cycles_paid'] >= (int)$dueSubcription['total_cycles_due']))
-            {
+            if (($dueSubscription['type'] == ConfigService::$paymentPlanType) &&
+                ((int)$dueSubscription['total_cycles_paid'] >= (int)$dueSubscription['total_cycles_due'])) {
                 continue;
             }
-            if($dueSubcription['payment_method']['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE)
-            {
-                $customer = $this->stripePaymentGateway->getCustomer(
-                    $dueSubcription['payment_method']['method']['payment_gateway_name'],
-                    $dueSubcription['payment_method']['method']['external_customer_id']
-                );
-                $card     = $this->stripePaymentGateway->getCard(
-                    $customer,
-                    $dueSubcription['payment_method']['method']['external_id'],
-                    $dueSubcription['payment_method']['method']['payment_gateway_name']
-                );
 
-                $charge      = $this->stripePaymentGateway->chargeCustomerCard(
-                    $dueSubcription['payment_method']['method']['payment_gateway_name'],
-                    $dueSubcription['total_price_per_payment'],
-                    $dueSubcription['currency'],
-                    $card,
-                    $customer,
-                    ''
-                );
-                $paymentData = [
-                    'paid'              => $charge->amount,
-                    'external_provider' => 'stripe',
-                    'external_id'       => $charge->id,
-                    'status'            => ($charge->status == 'succeeded') ? 1 : 0,
-                    'message'           => '',
-                    'currency'          => $charge->currency,
-                ];
-            }
-            else if($dueSubcription['payment_method']['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE)
-            {
-                $transactionId = $this->payPalPaymentGateway->chargeBillingAgreement(
-                    $dueSubcription['payment_method']['method']['payment_gateway_name'],
-                    $dueSubcription['total_price_per_payment'],
-                    $dueSubcription['currency'],
-                    $dueSubcription['payment_method']['method']['external_id'],
-                    ''
-                );
 
-                $paymentData = [
-                    'paid'              => $dueSubcription['total_price_per_payment'],
-                    'external_provider' => 'paypal',
-                    'external_id'       => $transactionId,
-                    'status'            => 1,
-                    'message'           => '',
-                    'currency'          => $dueSubcription['currency'],
-                ];
+            if ($dueSubscription['payment_method']['method_type'] ==
+                PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+
+                try {
+                    $customer = $this->stripePaymentGateway->getCustomer(
+                        $dueSubscription['payment_method']['method']['payment_gateway_name'],
+                        $dueSubscription['payment_method']['method']['external_customer_id']
+                    );
+
+                    $card = $this->stripePaymentGateway->getCard(
+                        $customer,
+                        $dueSubscription['payment_method']['method']['external_id'],
+                        $dueSubscription['payment_method']['method']['payment_gateway_name']
+                    );
+
+                    $charge = $this->stripePaymentGateway->chargeCustomerCard(
+                        $dueSubscription['payment_method']['method']['payment_gateway_name'],
+                        $dueSubscription['total_price_per_payment'],
+                        $dueSubscription['currency'],
+                        $card,
+                        $customer,
+                        ''
+                    );
+
+                    $paymentData = [
+                        'paid' => $charge->amount,
+                        'external_provider' => 'stripe',
+                        'external_id' => $charge->id,
+                        'status' => 'succeeded',
+                        'message' => '',
+                        'currency' => $charge->currency,
+                    ];
+
+                } catch (Exception $exception) {
+                    $paymentData = [
+                        'paid' => 0,
+                        'external_provider' => 'stripe',
+                        'external_id' => $charge->id ?? null,
+                        'status' => 'failed',
+                        'message' => $exception->getMessage(),
+                        'currency' => $dueSubscription['currency'],
+                    ];
+                }
+
+            } elseif ($dueSubscription['payment_method']['method_type'] ==
+                PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+
+                try {
+                    $transactionId = $this->paypalPaymentGateway->chargeBillingAgreement(
+                        $dueSubscription['payment_method']['method']['payment_gateway_name'],
+                        $dueSubscription['total_price_per_payment'],
+                        $dueSubscription['currency'],
+                        $dueSubscription['payment_method']['method']['external_id'],
+                        ''
+                    );
+
+                    $paymentData = [
+                        'paid' => $dueSubscription['total_price_per_payment'],
+                        'external_provider' => 'paypal',
+                        'external_id' => $transactionId,
+                        'status' => 'succeeded',
+                        'message' => '',
+                        'currency' => $dueSubscription['currency'],
+                    ];
+
+                } catch (Exception $exception) {
+                    $paymentData = [
+                        'paid' => 0,
+                        'external_provider' => 'paypal',
+                        'external_id' => $transactionId ?? null,
+                        'status' => 'failed',
+                        'message' => $exception->getMessage(),
+                        'currency' => $dueSubscription['currency'],
+                    ];
+                }
             }
 
             //save payment data in DB
             $payment = $this->paymentRepository->create(
                 array_merge(
-                    $paymentData, [
-                        'due'               => $dueSubcription['total_price_per_payment'],
-                        'type'              => ConfigService::$renewalPaymentType,
-                        'payment_method_id' => $dueSubcription['payment_method']['id'],
-                        'created_on'        => Carbon::now()->toDateTimeString()
+                    $paymentData,
+                    [
+                        'due' => $dueSubscription['total_price_per_payment'],
+                        'type' => ConfigService::$renewalPaymentType,
+                        'payment_method_id' => $dueSubscription['payment_method']['id'],
+                        'created_on' => Carbon::now()->toDateTimeString(),
                     ]
                 )
             );
 
-            $subscriptionPayment = $this->subscriptionPaymentRepository->create([
-                'subscription_id' => $dueSubcription['id'],
-                'payment_id'      => $payment['id'],
-                'created_on'      => Carbon::now()->toDateTimeString()
-            ]);
-
-            if($dueSubcription['interval_type'] == ConfigService::$intervalTypeMonthly)
-            {
-                $nextBillDate = Carbon::now()->addMonths($dueSubcription['interval_count']);
-            }
-            elseif($dueSubcription['interval_type'] == ConfigService::$intervalTypeYearly)
-            {
-                $nextBillDate = Carbon::now()->addYears($dueSubcription['interval_count']);
-            }
-            elseif($dueSubcription['interval_type'] == ConfigService::$intervalTypeDaily)
-            {
-                $nextBillDate = Carbon::now()->addDays($dueSubcription['interval_count']);
-            }
-
-            $this->subscriptionRepository->update(
+            $subscriptionPayment = $this->subscriptionPaymentRepository->create(
                 [
-                    'total_cycles_paid' => $dueSubcription['total_cycles_paid'] + 1,
-                    'paid_until'        => $nextBillDate->toDateTimeString(),
-                    'updated_on'        => Carbon::now()->toDateTimeString()
-                ]);
+                    'subscription_id' => $dueSubscription['id'],
+                    'payment_id' => $payment['id'],
+                    'created_on' => Carbon::now()->toDateTimeString(),
+                ]
+            );
+
+            if ($dueSubscription['interval_type'] == ConfigService::$intervalTypeMonthly) {
+                $nextBillDate = Carbon::now()->addMonths($dueSubscription['interval_count']);
+            } elseif ($dueSubscription['interval_type'] == ConfigService::$intervalTypeYearly) {
+                $nextBillDate = Carbon::now()->addYears($dueSubscription['interval_count']);
+            } elseif ($dueSubscription['interval_type'] == ConfigService::$intervalTypeDaily) {
+                $nextBillDate = Carbon::now()->addDays($dueSubscription['interval_count']);
+            }
+
+            if ($paymentData['paid'] > 0) {
+                $this->subscriptionRepository->update(
+                    [
+                        'total_cycles_paid' => $dueSubscription['total_cycles_paid'] + 1,
+                        'paid_until' => $nextBillDate->toDateTimeString(),
+                        'updated_on' => Carbon::now()->toDateTimeString(),
+                    ]
+                );
+            }
         }
 
         $this->info('-----------------End Renewal Due Subscriptions command-----------------------');

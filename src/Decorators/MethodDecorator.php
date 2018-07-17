@@ -19,32 +19,30 @@ class MethodDecorator implements DecoratorInterface
         $this->databaseManager = $databaseManager;
     }
 
-    public function decorate($paymentMethod)
+    public function decorate($paymentMethods)
     {
-        $methodId = $paymentMethod->pluck('method_id');
-
-        $paymentMethod->map(function ($item) use ($methodId) {
+        $paymentMethods->map(function ($item) {
             switch($item->method_type)
             {
                 case PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE:
-                    $item['method'] = $this->decorateCreditCard($methodId);
+                    $item['method'] = $this->decorateCreditCard($item['method_id']);
                     break;
                 case PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE:
-                    $item['method'] = $this->decoratePaypalBillingAgreement($methodId);
+                    $item['method'] = $this->decoratePaypalBillingAgreement($item['method_id']);
                     break;
                 default:
                     $item['method'] = [];
             }
         });
 
-        return $paymentMethod;
+        return $paymentMethods;
     }
 
     public function decorateCreditCard($methodId)
     {
         return (array)$this->databaseManager->connection(ConfigService::$databaseConnectionName)
             ->table(ConfigService::$tableCreditCard)
-            ->whereIn(ConfigService::$tableCreditCard . '.id', $methodId->toArray())
+            ->where(ConfigService::$tableCreditCard . '.id', $methodId)
             ->first();
     }
 
@@ -52,7 +50,7 @@ class MethodDecorator implements DecoratorInterface
     {
         return (array)$this->databaseManager->connection(ConfigService::$databaseConnectionName)
             ->table(ConfigService::$tablePaypalBillingAgreement)
-            ->whereIn(ConfigService::$tablePaypalBillingAgreement . '.id', $methodId->toArray())
+            ->where(ConfigService::$tablePaypalBillingAgreement . '.id', $methodId)
             ->first();
     }
 }
