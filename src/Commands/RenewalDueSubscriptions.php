@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
 use Exception;
+use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
@@ -216,6 +217,8 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                         'updated_on' => Carbon::now()->toDateTimeString(),
                     ]
                 );
+
+                event(new SubscriptionEvent($dueSubscription['id'], 'renewed'));
             }
         }
 
