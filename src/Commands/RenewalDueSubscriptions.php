@@ -77,8 +77,6 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
      */
     public function handle()
     {
-        Carbon::setTestNow(Carbon::parse('2018-07-25 22:39:20'));
-
         $this->info('------------------Renewal Due Subscriptions command------------------');
 
         $dueSubscriptions =
@@ -128,12 +126,12 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                     );
 
                     $paymentData = [
-                        'paid' => $charge->amount,
+                        'paid' => $dueSubscription['total_price_per_payment'],
                         'external_provider' => 'stripe',
                         'external_id' => $charge->id,
                         'status' => 'succeeded',
                         'message' => '',
-                        'currency' => $charge->currency,
+                        'currency' => $dueSubscription['currency'],
                     ];
 
                 } catch (Exception $exception) {
@@ -211,6 +209,7 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
 
             if ($paymentData['paid'] > 0) {
                 $this->subscriptionRepository->update(
+                    $dueSubscription['id'],
                     [
                         'total_cycles_paid' => $dueSubscription['total_cycles_paid'] + 1,
                         'paid_until' => $nextBillDate->toDateTimeString(),
