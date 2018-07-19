@@ -201,11 +201,11 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
             );
 
             if ($dueSubscription['interval_type'] == ConfigService::$intervalTypeMonthly) {
-                $nextBillDate = Carbon::now()->addMonths($dueSubscription['interval_count']);
+                $nextBillDate = Carbon::now()->addMonths($dueSubscription['interval_count'])->startOfDay();
             } elseif ($dueSubscription['interval_type'] == ConfigService::$intervalTypeYearly) {
-                $nextBillDate = Carbon::now()->addYears($dueSubscription['interval_count']);
+                $nextBillDate = Carbon::now()->addYears($dueSubscription['interval_count'])->startOfDay();
             } elseif ($dueSubscription['interval_type'] == ConfigService::$intervalTypeDaily) {
-                $nextBillDate = Carbon::now()->addDays($dueSubscription['interval_count']);
+                $nextBillDate = Carbon::now()->addDays($dueSubscription['interval_count'])->startOfDay();
             }
 
             if ($paymentData['paid'] > 0) {
