@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
+use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Repositories\AddressRepository;
@@ -150,6 +151,20 @@ class PaymentMethodJsonController extends BaseController
                     $request->get('card_token')
                 );
 
+                $billingCountry = $card->address_country ?? $card->country;
+
+                // save billing address
+                $billingAddress = $this->addressRepository->create(
+                    [
+                        'type'       => CartAddressService::BILLING_ADDRESS_TYPE,
+                        'brand'      => ConfigService::$brand,
+                        'user_id'    => $user['id'],
+                        'state'      => $card->address_state ?? '',
+                        'country'    => $billingCountry ?? '',
+                        'created_on' => Carbon::now()->toDateTimeString(),
+                    ]
+                );
+
                 $paymentMethodId = $this->paymentMethodService->createUserCreditCard(
                     $user['id'],
                     $card->fingerprint,
@@ -161,7 +176,7 @@ class PaymentMethodJsonController extends BaseController
                     $card->id,
                     $card->customer,
                     $request->get('gateway'),
-                    null,
+                    $billingAddress['id'],
                     $request->get('currency', $this->currencyService->get()),
                     true,
                     null);
@@ -201,6 +216,18 @@ class PaymentMethodJsonController extends BaseController
             {
                 throw new NotAllowedException('Payment method not supported.');
             }
+        }
+        catch (\Stripe\Error\Card $exception)
+        {
+            $exceptionData = $exception->getJsonBody();
+
+            // validate UI known error format
+            if (isset($exceptionData['error']) && isset($exceptionData['error']['code'])) {
+                throw new StripeCardException($exceptionData['error']);
+            }
+
+            // throw generic
+            throw new PaymentFailedException($paymentFailedException->getMessage());
         }
         catch(\Exception $paymentFailedException)
         {
