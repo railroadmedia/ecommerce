@@ -130,10 +130,8 @@ class PaymentMethodJsonController extends BaseController
     {
         $user = auth()->user();
 
-        if ($this->permissionService->can(auth()->id(), 'update.payment.method')) {
+        if ($this->permissionService->can(auth()->id(), 'create.payment.method')) {
             $user = ['id' => $request->get('user_id'), 'email' => $request->get('user_email')];
-        } else {
-            throw new \Railroad\Permissions\Exceptions\NotAllowedException('You cannot create payment methods.');
         }
 
         try
