@@ -219,6 +219,16 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                 );
 
                 event(new SubscriptionEvent($dueSubscription['id'], 'renewed'));
+            } else {
+                $this->subscriptionRepository->update(
+                    $dueSubscription['id'],
+                    [
+                        'is_active' => false,
+                        'updated_on' => Carbon::now()->toDateTimeString(),
+                    ]
+                );
+
+                event(new SubscriptionEvent($dueSubscription['id'], 'deactivated'));
             }
         }
 
