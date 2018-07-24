@@ -195,6 +195,8 @@ class RenewalService
             $this->subscriptionRepository->update(
                 $dueSubscription['id'],
                 [
+                    'is_active' => true,
+                    'canceled_on' => null,
                     'total_cycles_paid' => $dueSubscription['total_cycles_paid'] + 1,
                     'paid_until' => $nextBillDate->toDateTimeString(),
                     'updated_on' => Carbon::now()
