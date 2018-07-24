@@ -64,11 +64,10 @@ class RenewalService
     /**
      * @param $subscriptionId
      * @return mixed
+     * @throws Exception
      */
     public function renew($subscriptionId)
     {
-        $this->info('------------------Renewal Due Subscriptions command------------------');
-
         $dueSubscription = $this->subscriptionRepository->read($subscriptionId);
 
         //check for payment plan if the user have already paid all the cycles
@@ -119,6 +118,8 @@ class RenewalService
                     'message' => $exception->getMessage(),
                     'currency' => $dueSubscription['currency'],
                 ];
+
+                $paymentException = $exception;
             }
 
         } elseif ($dueSubscription['payment_method']['method_type'] ==
@@ -151,6 +152,8 @@ class RenewalService
                     'message' => $exception->getMessage(),
                     'currency' => $dueSubscription['currency'],
                 ];
+
+                $paymentException = $exception;
             }
         }
 
@@ -216,6 +219,8 @@ class RenewalService
             );
 
             event(new SubscriptionEvent($dueSubscription['id'], 'deactivated'));
+
+            throw $paymentException;
         }
 
         return $this->subscriptionRepository->read($subscriptionId);
