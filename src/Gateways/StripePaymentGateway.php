@@ -10,6 +10,7 @@ use Stripe\Card;
 use Stripe\Charge;
 use Stripe\Customer;
 use Stripe\Refund;
+use Stripe\StripeObject;
 
 class StripePaymentGateway
 {
@@ -80,6 +81,44 @@ class StripePaymentGateway
         $card = $this->stripe->createCard($customer, $this->stripe->retrieveToken($tokenId));
 
         return $card;
+    }
+
+    /**
+     * @param string   $gatewayName
+     * @param Card     $card
+     * @param int      $expirationMonth
+     * @param int      $expirationYear
+     * @param string   $addressCountry
+     * @param string   $addressState
+     *
+     * @return StripeObject
+     *
+     * @throws PaymentFailedException
+     */
+    public function updateCard(
+        $gatewayName,
+        Card $card,
+        $expirationMonth,
+        $expirationYear,
+        $addressCountry,
+        $addressState
+    ) {
+        $config = ConfigService::$paymentGateways['stripe'][$gatewayName];
+
+        if(empty($config)) {
+            $message = 'Gateway ' . $gatewayName . ' is not configured.';
+            throw new PaymentFailedException($message);
+        }
+
+        $this->stripe->setApiKey($config['stripe_api_secret']);
+
+        return $this->stripe->updateCard(
+            $card,
+            $expirationMonth,
+            $expirationYear,
+            $addressCountry,
+            $addressState
+        );
     }
 
     /**

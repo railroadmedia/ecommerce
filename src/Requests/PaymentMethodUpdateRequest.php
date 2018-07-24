@@ -25,35 +25,10 @@ class PaymentMethodUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'method_type'   => 'max:255',
-            'update_method' => 'required',
-            'card_year'     => 'required_if:update_method,update-current-credit-card',
-            'card_month'    => 'required_if:update_method,update-current-credit-card',
-            'card_token'    => 'required_if:update_method,create-credit-card',
-            'token'         => 'required_if:update_method,use-paypal',
-            'address_id'    => 'required_if:update_method,use-paypal',
-            'user_id'       => 'numeric',
-            'customer_id'   => 'numeric|exists:' . ConfigService::$tableCustomer . ',id'
-        ];
-    }
-
-    /**
-     * Customize some error messages for the defined validation rules.
-     *
-     * @return array
-     */
-    public function messages()
-    {
-        return [
-            'card_year.required_if'                    => 'The card year field is required when create or update a credit card.',
-            'card_month.required_if'                   => 'The card month field is required when create or update a credit card.',
-            'card_fingerprint.required_if'             => 'The card finger print field is required when create a new credit card.',
-            'card_number_last_four_digits.required_if' => 'The card last four digits field is required when create a new credit card.',
-            'company_name.required_if'                 => 'The company name field is required when create a new credit card.',
-            'external_id.required_if'                  => 'The external ID field is required when create a new credit card.',
-            'agreement_id.required_if'                 => 'The agreement id field is required when update payment method and use paypal.',
-            'express_checkout_token.required_if'       => 'The express checkout token field is required when update payment method and use paypal.',
-            'address_id.required_if'                   => 'The address id field is required when update payment method and use paypal.'
+            'gateway' => 'required',
+            'year'    => 'required|numeric',
+            'month'   => 'required|numeric',
+            'country' => 'required|string',
         ];
     }
 }

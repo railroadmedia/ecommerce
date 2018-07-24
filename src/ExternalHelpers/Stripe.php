@@ -11,6 +11,7 @@ use Stripe\Error\InvalidRequest;
 use Stripe\Refund;
 use Stripe\Source;
 use Stripe\Token;
+use Stripe\StripeObject;
 
 class Stripe
 {
@@ -128,23 +129,23 @@ class Stripe
     /**
      * @param Customer $customer
      * @param string   $cardId
-     * @param          $expirationMonth
-     * @param          $expirationYear
-     * @return \Stripe\ExternalAccount
+     * @param int      $expirationMonth
+     * @param int      $expirationYear
+     * @param string   $addressCountry
+     * @param string   $addressState
+     * @return StripeObject
      */
     public function updateCard(
-        Customer $customer,
-        $cardId,
+        Card $card,
         $expirationMonth,
-        $expirationYear
+        $expirationYear,
+        $addressCountry,
+        $addressState
     ) {
-        $card = $this->retrieveCard(
-            $customer,
-            $cardId
-        );
-
         $card->exp_month = $expirationMonth;
         $card->exp_year  = $expirationYear;
+        $card->address_country = $addressCountry;
+        $card->address_state = $addressState;
 
         return $card->save();
     }

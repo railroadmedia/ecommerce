@@ -21,6 +21,7 @@ use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Permissions\Exceptions\NotAllowedException as PermissionsNotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
 
 class PaymentMethodJsonController extends BaseController
@@ -225,7 +226,7 @@ class PaymentMethodJsonController extends BaseController
             }
 
             // throw generic
-            throw new PaymentFailedException($paymentFailedException->getMessage());
+            throw new PaymentFailedException($exception->getMessage());
         }
         catch(\Exception $paymentFailedException)
         {
@@ -237,135 +238,97 @@ class PaymentMethodJsonController extends BaseController
         return reply()->json($paymentMethod);
     }
 
-    /** Update a payment method based on request data and payment method id.
+    /**
+     * Update a payment method based on request data and payment method id.
      * Return - NotFoundException if the payment method doesn't exist or the user have not rights to access it
      *        - JsonResponse with the updated payment method
      *
      * @param PaymentMethodUpdateRequest $request
      * @param integer $paymentMethodId
-     * @return JsonResponse|NotFoundException
+     * @return \Illuminate\Http\JsonResponse|NotFoundException
      * @throws \Railroad\Permissions\Exceptions\NotAllowedException
+     * @throws \Railroad\Ecommerce\Exceptions\NotFoundException | \Throwable
      */
     public function update(PaymentMethodUpdateRequest $request, $paymentMethodId)
     {
-        if ($this->permissionService->can(auth()->id(), 'update.payment.method')) {
-            $user = ['id' => $request->get('user_id'), 'email' => $request->get('user_email')];
-        } else {
-            throw new \Railroad\Permissions\Exceptions\NotAllowedException('You cannot create payment methods.');
-        }
-
-        $paymentMethod = $this->paymentMethodRepository->read($paymentMethodId);
-
-        if($paymentMethod['user_id'] !== auth()->id())
-        {
-            $this->permissionService->canOrThrow(auth()->id(), 'update.payment.method');
-        }
-
-        //if the payment method not exist; we throw the proper exception
-        throw_if(
-            is_null($paymentMethod),
-            new NotFoundException('Update failed, payment method not found with id: ' . $paymentMethodId)
-        );
-
-        switch($request->get('update_method'))
-        {
-            case 'create-credit-card':
-                $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
-                $create     = true;
-
-                $customer = $this->stripePaymentGateway->getOrCreateCustomer(
-                    $request->get('gateway'),
-                    $user['email']
-                );
-
-                $card = $this->stripePaymentGateway->createCustomerCard(
-                    $request->get('gateway'),
-                    $customer,
-                    $request->get('card_token')
-                );
-
-                $method = $this->creditCardRepository->create(
-                    [
-                        'fingerprint'          => $card->fingerprint,
-                        'last_four_digits'     => $card->last4,
-                        'cardholder_name'      => $card->name,
-                        'company_name'         => $card->brand,
-                        'expiration_date'      => Carbon::createFromDate($card->exp_year, $card->exp_month)->toDateTimeString(),
-                        'external_id'          => $card->id,
-                        'external_customer_id' => $card->customer,
-                        'payment_gateway_name' => $request->get('gateway'),
-                        'created_on'           => Carbon::now()->toDateTimeString(),
-                    ]
-                );
-
-                break;
-            case 'use-paypal':
-                $methodType         = PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE;
-                $create             = true;
-                $billingAgreementId =
-                    $this->payPalPaymentGateway->createBillingAgreement(
-                        $request->get('gateway'),
-                        '',
-                        '',
-                        $request->get('validated-express-checkout-token')
-                    );
-
-                // save billing address
-                $billingAddressDB = $this->addressRepository->create(
-                    [
-                        'type'       => CartAddressService::BILLING_ADDRESS_TYPE,
-                        'brand'      => ConfigService::$brand,
-                        'user_id'    => $user['id'],
-                        'state'      => $request->get('billing_region'),
-                        'country'    => $request->get('billing_country'),
-                        'created_on' => Carbon::now()->toDateTimeString(),
-                    ]
-                );
-                $method           = $this->paypalBillingAgreementRepository->create(
-                    [
-                        'external_id'          => $billingAgreementId,
-                        'payment_gateway_name' => $request->get('gateway'),
-                        'created_on'           => Carbon::now()->toDateTimeString(),
-                    ]
-                );
-
-                break;
-            default:
-                $this->creditCardRepository->update(
-                    $paymentMethod['method']['id'],
-                    [
-                        Carbon::create(
-                            $request->get('card_year'),
-                            $request->get('card_month'),
-                            12,
-                            0,
-                            0,
-                            0
-                        ),
-                        'updated_on' => Carbon::now()->toDateTimeString(),
-                    ]
-                );
-        }
-
-        //update payment method
-        $paymentMethodUpdated = $this->paymentMethodRepository->update(
-            $paymentMethodId,
-            array_merge(
-                $request->only(
-                    [
-                        'currency',
-                    ]
-                ),
-                [
-                    'method_type' => $methodType,
-                    'method_id'   => $method['id'] ?? $paymentMethod['id'],
-                    'updated_on'  => Carbon::now()->toDateTimeString(),
-                ]
+        if (
+            !$this->permissionService->can(
+                auth()->id(),
+                'update.payment.method'
             )
+        ) {
+            $message = 'You cannot update payment methods.';
+            throw new PermissionsNotAllowedException($message);
+        }
+
+        $paymentMethod = $this->paymentMethodRepository
+            ->read($paymentMethodId);
+
+        if ($paymentMethod['user_id'] !== auth()->id()) {
+            $this->permissionService
+                ->canOrThrow(auth()->id(), 'update.payment.method');
+        }
+
+        $message = 'Update failed, payment method not found with id: '
+            . $paymentMethodId;
+
+        throw_if(is_null($paymentMethod), new NotFoundException($message));
+
+        $customer = $this->stripePaymentGateway->getCustomer(
+            $request->get('gateway'),
+            $paymentMethod->method['external_customer_id']
         );
 
-        return reply()->json($paymentMethodUpdated, [
-            'code' => 201
+        $card = $this->stripePaymentGateway->getCard(
+            $customer,
+            $paymentMethod->method['external_id'],
+            $request->get('gateway')
+        );
+
+        $card = $this->stripePaymentGateway->updateCard(
+            $request->get('gateway'),
+            $card,
+            $request->get('month'),
+            $request->get('year'),
+            $request->get('country', $request->has('country') ? '' : null),
+            $request->get('state', $request->has('state') ? '' : null)
+        );
+
+        $expirationDate = Carbon::createFromDate(
+            $card->exp_year,
+            $card->exp_month
+        )->toDateTimeString();
+
+        $this->creditCardRepository->update(
+            $paymentMethod->method['id'],
+            [
+                'fingerprint'          => $card->fingerprint,
+                'last_four_digits'     => $card->last4,
+                'cardholder_name'      => $card->name,
+                'expiration_date'      => $expirationDate,
+                'external_id'          => $card->id,
+                'external_customer_id' => $card->customer,
+                'payment_gateway_name' => $request->get('gateway'),
+                'updated_on'           => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $billingCountry = $card->address_country ?? $card->country;
+
+        $this->addressRepository->update(
+            $paymentMethod->billing_address['id'],
+            [
+                'state'      => $card->address_state ?? '',
+                'country'    => $billingCountry ?? '',
+                'updated_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $card = $this->creditCardRepository
+            ->read($paymentMethod->method['id']);
+
+        return reply()->json($card, [
+            'code' => 200
         ]);
     }
 
