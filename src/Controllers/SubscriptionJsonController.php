@@ -3,12 +3,15 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Exception;
+use HttpResponseException;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
 use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Permissions\Services\PermissionService;
 
 class SubscriptionJsonController extends BaseController
@@ -22,6 +25,10 @@ class SubscriptionJsonController extends BaseController
      * @var \Railroad\Permissions\Services\PermissionService
      */
     private $permissionService;
+    /**
+     * @var RenewalService
+     */
+    private $renewalService;
 
     /**
      * SubscriptionJsonController constructor.
@@ -29,12 +36,16 @@ class SubscriptionJsonController extends BaseController
      * @param \Railroad\Ecommerce\Repositories\SubscriptionRepository $subscriptionRepository
      * @param \Railroad\Permissions\Services\PermissionService $permissionService
      */
-    public function __construct(SubscriptionRepository $subscriptionRepository, PermissionService $permissionService)
-    {
+    public function __construct(
+        SubscriptionRepository $subscriptionRepository,
+        PermissionService $permissionService,
+        RenewalService $renewalService
+    ) {
         parent::__construct();
 
         $this->subscriptionRepository = $subscriptionRepository;
         $this->permissionService = $permissionService;
+        $this->renewalService = $renewalService;
     }
 
     /** Pull subscriptions paginated
@@ -182,5 +193,30 @@ class SubscriptionJsonController extends BaseController
         return reply()->json($updatedSubscription, [
             'code' => 201
         ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param $subscriptionId
+     * @return mixed
+     */
+    public function renew(Request $request, $subscriptionId)
+    {
+        try {
+            $updatedSubscription = $this->renewalService->renew($subscriptionId);
+
+            return reply()->json($updatedSubscription, [
+                'code' => 201
+            ]);
+        } catch (Exception $exception) {
+            return reply()->json(
+                null,
+                [
+                    'code' => 422,
+                    'totalResults' => 0,
+                    'errors' => [$exception->getCode() => $exception->getMessage()]
+                ]
+            );
+        }
     }
 }

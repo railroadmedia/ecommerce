@@ -260,6 +260,13 @@ Route::delete(
     ]
 )->name('subscription.delete');
 
+Route::post(
+    '/subscription-renew/{subscriptionId}',
+    [
+        'uses' => Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@renew',
+    ]
+)->name('subscription.renew');
+
 //order
 Route::get(
     '/orders',
