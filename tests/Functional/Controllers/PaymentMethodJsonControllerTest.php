@@ -51,186 +51,228 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
      */
     protected $addressRepository;
 
-    CONST VALID_VISA_CARD_NUM          = '4242424242424242';
+    CONST VALID_VISA_CARD_NUM = '4242424242424242';
     CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-84G07962U40732257';
 
     protected function setUp()
     {
         parent::setUp();
 
-        $this->paymentMethodRepository          = $this->app->make(PaymentMethodRepository::class);
-        $this->creditCardRepository             = $this->app->make(CreditCardRepository::class);
+        $this->paymentMethodRepository = $this->app->make(PaymentMethodRepository::class);
+        $this->creditCardRepository = $this->app->make(CreditCardRepository::class);
         $this->paypalBillingAgreementRepository = $this->app->make(PaypalBillingAgreementRepository::class);
-        $this->customerRepository               = $this->app->make(CustomerRepository::class);
-        $this->userPaymentMethodRepository      = $this->app->make(UserPaymentMethodsRepository::class);
-        $this->addressRepository                = $this->app->make(AddressRepository::class);
+        $this->customerRepository = $this->app->make(CustomerRepository::class);
+        $this->userPaymentMethodRepository = $this->app->make(UserPaymentMethodsRepository::class);
+        $this->addressRepository = $this->app->make(AddressRepository::class);
     }
 
     public function test_store_payment_method_credit_card_without_required_fields()
     {
-        $results = $this->call('PUT', '/payment-method', [
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
-        ]);
+        $results = $this->call(
+            'PUT',
+            '/payment-method',
+            [
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'user_email' => $this->faker->email
+            ]
+        );
 
         $this->assertEquals(422, $results->getStatusCode());
 
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "card_token",
-                "detail" => "The card token field is required when method type is credit-card.",
+                [
+                    "source" => "card_token",
+                    "detail" => "The card token field is required when method type is credit-card.",
+                ],
+                [
+                    "source" => "gateway",
+                    "detail" => "The gateway field is required.",
+                ],
+                [
+                    "source" => "user_id",
+                    "detail" => "The user id field is required when customer id is not present.",
+                ],
+                [
+                    "source" => "customer_id",
+                    "detail" => "The customer id field is required when user id is not present.",
+                ],
             ],
-            [
-                "source" => "gateway",
-                "detail" => "The gateway field is required.",
-            ],
-            [
-                "source" => "user_id",
-                "detail" => "The user id field is required when customer id is not present."
-            ],
-            [
-                "source" => "customer_id",
-                "detail" => "The customer id field is required when user id is not present."
-            ]
-        ], $results->decodeResponseJson('meta')['errors']);
+            $results->decodeResponseJson('meta')['errors']
+        );
     }
 
     public function test_store_payment_method_paypal_without_required_fields()
     {
-        $results = $this->call('PUT', '/payment-method', [
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE
-        ]);
+        $results = $this->call(
+            'PUT',
+            '/payment-method',
+            [
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'user_email' => $this->faker->email
+            ]
+        );
 
         $this->assertEquals(422, $results->getStatusCode());
 
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "gateway",
-                "detail" => "The gateway field is required.",
+                [
+                    "source" => "gateway",
+                    "detail" => "The gateway field is required.",
+                ],
+                [
+                    "source" => "token",
+                    "detail" => "The token field is required when method type is paypal.",
+                ],
+                [
+                    "source" => "address_id",
+                    "detail" => "The address id field is required when method type is paypal.",
+                ],
+                [
+                    "source" => "user_id",
+                    "detail" => "The user id field is required when customer id is not present.",
+                ],
+                [
+                    "source" => "customer_id",
+                    "detail" => "The customer id field is required when user id is not present.",
+                ],
             ],
-            [
-                "source" => "token",
-                "detail" => "The token field is required when method type is paypal.",
-            ],
-            [
-                "source" => "address_id",
-                "detail" => "The address id field is required when method type is paypal.",
-            ],
-            [
-                "source" => "user_id",
-                "detail" => "The user id field is required when customer id is not present."
-            ],
-            [
-                "source" => "customer_id",
-                "detail" => "The customer id field is required when user id is not present."
-            ]
-        ], $results->decodeResponseJson('meta')['errors']);
+            $results->decodeResponseJson('meta')['errors']
+        );
     }
 
     public function test_store_method_type_required()
     {
-        $results = $this->call('PUT', '/payment-method',
+        $results = $this->call(
+            'PUT',
+            '/payment-method',
             [
                 'user_id' => rand(),
-                'gateway' => 'stripe'
-            ]);
+                'gateway' => 'stripe',
+            ]
+        );
 
         $this->assertEquals(422, $results->getStatusCode());
 
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "method_type",
-                "detail" => "The method type field is required.",
-            ]
-        ], $results->decodeResponseJson('meta')['errors']);
+                [
+                    "source" => "method_type",
+                    "detail" => "The method type field is required.",
+                ],
+                [
+                    "source" => "user_email",
+                    "detail" => "The user email field is required when customer id is not present.",
+                ],
+            ],
+            $results->decodeResponseJson('meta')['errors']
+        );
     }
 
     public function test_user_store_credit_card_payment_method()
     {
-        $userId                 = $this->createAndLogInNewUser();
-        $cardExpirationDate     = $this->faker->creditCardExpirationDate;
-        $cardYear               = $cardExpirationDate->format('Y');
-        $cardMonth              = $cardExpirationDate->format('m');
-        $cardFingerprint        = self::VALID_VISA_CARD_NUM;
-        $cardLast4              = $this->faker->randomNumber(4);
-        $cardType               = $this->faker->creditCardType;
-        $currency               = $this->faker->currencyCode;
-        $customer               = new Customer();
-        $customer->email        = $this->faker->email;
-        $fakerCard              = new Card();
+        $userId = $this->createAndLogInNewUser();
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $cardYear = $cardExpirationDate->format('Y');
+        $cardMonth = $cardExpirationDate->format('m');
+        $cardFingerprint = self::VALID_VISA_CARD_NUM;
+        $cardLast4 = $this->faker->randomNumber(4);
+        $cardType = $this->faker->creditCardType;
+        $currency = $this->faker->currencyCode;
+        $customer = new Customer();
+        $customer->email = $this->faker->email;
+        $fakerCard = new Card();
         $fakerCard->fingerprint = $cardFingerprint;
-        $fakerCard->brand       = $cardType;
-        $fakerCard->last4       = $cardLast4;
-        $fakerCard->exp_year    = $cardExpirationDate->format('Y');
-        $fakerCard->exp_month   = $cardExpirationDate->format('m');
-        $fakerCard->id          = $this->faker->word;
-        $cardToken              = new Token();
-        $cardToken->id          = rand();
-        $cardToken->card        = $fakerCard;
-        $this->stripeExternalHelperMock->method('createCustomer')->willReturn($customer);
-        $this->stripeExternalHelperMock->method('createCardToken')->willReturn($cardToken);
-        $this->stripeExternalHelperMock->method('retrieveToken')->willReturn($cardToken);
-        $this->stripeExternalHelperMock->method('createCard')->willReturn($fakerCard);
+        $fakerCard->brand = $cardType;
+        $fakerCard->last4 = $cardLast4;
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+        $cardToken = new Token();
+        $cardToken->id = rand();
+        $cardToken->card = $fakerCard;
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($customer);
+        $this->stripeExternalHelperMock->method('createCardToken')
+            ->willReturn($cardToken);
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($cardToken);
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
 
-        $results = $this->call('PUT', '/payment-method', [
-            'method_type'                  => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'card_year'                    => $cardYear,
-            'card_month'                   => $cardMonth,
-            'card_fingerprint'             => $cardFingerprint,
-            'card_number_last_four_digits' => $cardLast4,
-            'company_name'                 => $cardType,
-            'currency'                     => $currency,
-            'user_id'                      => $userId,
-            'gateway'                      => 'drumeo',
-            'card_token'                   => $cardToken->id
-        ]);
+        $results = $this->call(
+            'PUT',
+            '/payment-method',
+            [
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card_year' => $cardYear,
+                'card_month' => $cardMonth,
+                'card_fingerprint' => $cardFingerprint,
+                'card_number_last_four_digits' => $cardLast4,
+                'company_name' => $cardType,
+                'currency' => $currency,
+                'user_id' => $userId,
+                'gateway' => 'drumeo',
+                'card_token' => $cardToken->id,
+            ]
+        );
 
         //assert response status code
         $this->assertEquals(200, $results->getStatusCode());
 
         //assert payment data subset
-        $this->assertArraySubset([
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'created_on'  => Carbon::now()->toDateTimeString(),
-            'updated_on'  => null,
-            'currency'    => $currency,
-            'method'      => [
-                'fingerprint'      => $cardFingerprint,
-                'last_four_digits' => $cardLast4,
-                'cardholder_name'  => '',
-                'company_name'     => $cardType,
+        $this->assertArraySubset(
+            [
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
+                'updated_on' => null,
+                'currency' => $currency,
+                'method' => [
+                    'fingerprint' => $cardFingerprint,
+                    'last_four_digits' => $cardLast4,
+                    'cardholder_name' => '',
+                    'company_name' => $cardType,
 
-                'created_on' => Carbon::now()->toDateTimeString(),
-                'updated_on' => null
-            ]
-        ], $results->decodeResponseJson()['data'][0]);
+                    'created_on' => Carbon::now()
+                        ->toDateTimeString(),
+                    'updated_on' => null,
+                ],
+            ],
+            $results->decodeResponseJson()['data'][0]
+        );
 
         //assert payment method, credit card, link between user and payment method saved in the db
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
                 'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'currency'    => $currency,
-                'created_on'  => Carbon::now()->toDateTimeString()
+                'currency' => $currency,
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
         $this->assertDatabaseHas(
             ConfigService::$tableCreditCard,
             [
-                'fingerprint'          => $cardFingerprint,
-                'last_four_digits'     => $cardLast4,
-                'company_name'         => $cardType,
+                'fingerprint' => $cardFingerprint,
+                'last_four_digits' => $cardLast4,
+                'company_name' => $cardType,
                 'payment_gateway_name' => 'drumeo',
-                'created_on'           => Carbon::now()->toDateTimeString(),
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
         $this->assertDatabaseHas(
             ConfigService::$tableUserPaymentMethods,
             [
-                'user_id'           => $userId,
+                'user_id' => $userId,
                 'payment_method_id' => 1,
-                'created_on'        => Carbon::now()->toDateTimeString()
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }
@@ -238,42 +280,53 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_user_store_paypal_payment_method()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
+            ->willReturn(rand());
         $expressCheckoutToken = self::VALID_EXPRESS_CHECKOUT_TOKEN;
-        $addressId            = $this->faker->numberBetween();
-        $customerId           = null;
-        $currency             = 'cad';
+        $addressId = $this->faker->numberBetween();
+        $customerId = null;
+        $currency = 'cad';
 
-        $results = $this->call('PUT', '/payment-method', [
-            'method_type'            => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'token' => $expressCheckoutToken,
-            'address_id'             => $addressId,
-            'user_id'                => $userId,
-            'customer_id'            => $customerId,
-            'currency'               => $currency,
-            'gateway'        => 'drumeo'
-        ]);
+        $results = $this->call(
+            'PUT',
+            '/payment-method',
+            [
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'token' => $expressCheckoutToken,
+                'address_id' => $addressId,
+                'user_id' => $userId,
+                'customer_id' => $customerId,
+                'currency' => $currency,
+                'gateway' => 'drumeo',
+            ]
+        );
 
         $this->assertEquals(200, $results->getStatusCode());
 
-        $this->assertArraySubset([
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'created_on'  => Carbon::now()->toDateTimeString(),
-            'updated_on'  => null,
-            'currency'    => $currency,
-            'method'      => [
-                'created_on' => Carbon::now()->toDateTimeString(),
-                'updated_on' => null
-            ]
-        ], $results->decodeResponseJson()['data'][0]);
+        $this->assertArraySubset(
+            [
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
+                'updated_on' => null,
+                'currency' => $currency,
+                'method' => [
+                    'created_on' => Carbon::now()
+                        ->toDateTimeString(),
+                    'updated_on' => null,
+                ],
+            ],
+            $results->decodeResponseJson()['data'][0]
+        );
 
         //assert payment method, credit card, link between user and payment method saved in the db
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
                 'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'currency'    => $currency,
-                'created_on'  => Carbon::now()->toDateTimeString()
+                'currency' => $currency,
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -281,74 +334,96 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ConfigService::$tablePaypalBillingAgreement,
             [
                 'payment_gateway_name' => 'drumeo',
-                'created_on'           => Carbon::now()->toDateTimeString(),
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
         $this->assertDatabaseHas(
             ConfigService::$tableUserPaymentMethods,
             [
-                'user_id'           => $userId,
+                'user_id' => $userId,
                 'payment_method_id' => 1,
-                'created_on'        => Carbon::now()->toDateTimeString()
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }
 
     public function test_store_payment_method_credit_card_failed()
     {
-        $userId             = $this->createAndLogInNewUser();
-        $cardExpirationDate = Carbon::now()->addYear(2);
-        $cardYear           = $cardExpirationDate->format('Y');
-        $cardMonth          = $cardExpirationDate->format('m');
-        $cardLast4          = $this->faker->randomNumber(4);
-        $cardType           = $this->faker->creditCardType;
-        $currency           = $this->faker->currencyCode;
-        $cardExpirationDate     = $this->faker->creditCardExpirationDate;
-        $cardFingerprint        = self::VALID_VISA_CARD_NUM;
-        $customer               = new Customer();
-        $customer->email        = $this->faker->email;
-        $fakerCard              = new Card();
+        $userId = $this->createAndLogInNewUser();
+        $cardExpirationDate =
+            Carbon::now()
+                ->addYear(2);
+        $cardYear = $cardExpirationDate->format('Y');
+        $cardMonth = $cardExpirationDate->format('m');
+        $cardLast4 = $this->faker->randomNumber(4);
+        $cardType = $this->faker->creditCardType;
+        $currency = $this->faker->currencyCode;
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $cardFingerprint = self::VALID_VISA_CARD_NUM;
+        $customer = new Customer();
+        $customer->email = $this->faker->email;
+        $fakerCard = new Card();
         $fakerCard->fingerprint = $cardFingerprint;
-        $fakerCard->brand       = $cardType;
-        $fakerCard->last4       = $cardLast4;
-        $fakerCard->exp_year    = $cardExpirationDate->format('Y');
-        $fakerCard->exp_month   = $cardExpirationDate->format('m');
-        $fakerCard->id          = $this->faker->word;
-        $cardToken              = new Token();
-        $cardToken->id          = rand();
-        $cardToken->card        = $fakerCard;
-        $this->stripeExternalHelperMock->method('createCustomer')->willReturn($customer);
-        $this->stripeExternalHelperMock->method('retrieveToken')->willReturn($cardToken);
+        $fakerCard->brand = $cardType;
+        $fakerCard->last4 = $cardLast4;
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+        $cardToken = new Token();
+        $cardToken->id = rand();
+        $cardToken->card = $fakerCard;
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($customer);
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($cardToken);
 
         //incorrect card number
         $cardFingerprint = $this->faker->randomNumber();
 
-        $this->stripeExternalHelperMock->method('createCard')->willThrowException(new PaymentFailedException('The card number is incorrect. Check the card’s number or use a different card.'));
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willThrowException(
+                new PaymentFailedException(
+                    'The card number is incorrect. Check the card’s number or use a different card.'
+                )
+            );
 
         $this->expectException(PaymentFailedException::class);
 
-        $results = $this->call('PUT', '/payment-method', [
-            'method_type'                  => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'card_token'                    => $this->faker->creditCardNumber,
-            'currency'                     => $currency,
-            'user_id'                      => $userId,
-            'gateway'              => 'drumeo'
-        ]);
+        $results = $this->call(
+            'PUT',
+            '/payment-method',
+            [
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card_token' => $this->faker->creditCardNumber,
+                'currency' => $currency,
+                'user_id' => $userId,
+                'gateway' => 'drumeo',
+                'user_email' => $this->faker->email,
+            ]
+        );
 
         //assert error message subset results
-        $this->assertArraySubset([
-            'title'  => 'Not found.',
-            'detail' => 'Creation failed, method type(' . PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE . ') not allowed or incorrect data.Can not create token:: The card number is not a valid credit card number.'
-        ], $results->decodeResponseJson('error'));
+        $this->assertArraySubset(
+            [
+                'title' => 'Not found.',
+                'detail' => 'Creation failed, method type(' .
+                    PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE .
+                    ') not allowed or incorrect data.Can not create token:: The card number is not a valid credit card number.',
+            ],
+            $results->decodeResponseJson('meta')['errors'][0]
+        );
 
         //assert payment method data not saved in the db
         $this->assertDatabaseMissing(
             ConfigService::$tablePaymentMethod,
             [
                 'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'currency'    => $currency,
-                'created_on'  => Carbon::now()->toDateTimeString()
+                'currency' => $currency,
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -356,11 +431,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseMissing(
             ConfigService::$tableCreditCard,
             [
-                'type'             => $cardType,
-                'fingerprint'      => $cardFingerprint,
+                'type' => $cardType,
+                'fingerprint' => $cardFingerprint,
                 'last_four_digits' => $cardLast4,
-                'company_name'     => $cardType,
-                'created_on'       => Carbon::now()->toDateTimeString()
+                'company_name' => $cardType,
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }
@@ -368,36 +444,45 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_user_store_paypal_payment_method_failed()
     {
         $expressCheckoutToken = $this->faker->numberBetween();
-        $addressId            = $this->faker->numberBetween();
-        $userId               = rand();
-        $customerId           = null;
-        $currency             = 'cad';
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willThrowException(new PaymentFailedException('Payment failed'));
+        $addressId = $this->faker->numberBetween();
+        $userId = rand();
+        $customerId = null;
+        $currency = 'cad';
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
+            ->willThrowException(new PaymentFailedException('Payment failed'));
 
         $this->expectException(PaymentFailedException::class);
-        $results = $this->call('PUT', '/payment-method', [
-            'method_type'            => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'token' => $expressCheckoutToken,
-            'address_id'             => $addressId,
-            'user_id'                => $userId,
-            'customer_id'            => $customerId,
-            'currency'               => $currency,
-            'gateway'        => 'drumeo'
-        ]);
+        $results = $this->call(
+            'PUT',
+            '/payment-method',
+            [
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'token' => $expressCheckoutToken,
+                'address_id' => $addressId,
+                'user_id' => $userId,
+                'customer_id' => $customerId,
+                'currency' => $currency,
+                'gateway' => 'drumeo',
+            ]
+        );
 
         //assert error message subset results
-        $this->assertArraySubset([
-            'title' => 'Not found.',
-            // 'detail' => 'Creation failed, method type(' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE . ') not allowed or incorrect data.'
-        ], $results->decodeResponseJson('error'));
+        $this->assertArraySubset(
+            [
+                'title' => 'Not found.',
+                // 'detail' => 'Creation failed, method type(' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE . ') not allowed or incorrect data.'
+            ],
+            $results->decodeResponseJson('error')
+        );
 
         //assert payment method data not saved in the db
         $this->assertDatabaseMissing(
             ConfigService::$tablePaymentMethod,
             [
                 'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'currency'    => $currency,
-                'created_on'  => Carbon::now()->toDateTimeString()
+                'currency' => $currency,
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -406,19 +491,23 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ConfigService::$tablePaypalBillingAgreement,
             [
                 'express_checkout_token' => $expressCheckoutToken,
-                'address_id'             => $addressId,
-                'expiration_date'        => Carbon::now()->addYears(10)->toDateTimeString(),
-                'payment_gateway_name'   => 'drumeo',
-                'created_on'             => Carbon::now()->toDateTimeString(),
+                'address_id' => $addressId,
+                'expiration_date' => Carbon::now()
+                    ->addYears(10)
+                    ->toDateTimeString(),
+                'payment_gateway_name' => 'drumeo',
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
         $this->assertDatabaseMissing(
             ConfigService::$tableUserPaymentMethods,
             [
-                'user_id'           => $userId,
+                'user_id' => $userId,
                 'payment_method_id' => 1,
-                'created_on'        => Carbon::now()->toDateTimeString()
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }
@@ -428,91 +517,102 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $response = $this->call(
-            'PATCH', '/payment-method/' . $this->faker->randomNumber(4),
+            'PATCH',
+            '/payment-method/' . $this->faker->randomNumber(4),
             []
         );
 
         // assert respons status code and errors
         $this->assertEquals(422, $response->getStatusCode());
 
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                'source' => 'gateway',
-                'detail' => 'The gateway field is required.',
+                [
+                    'source' => 'gateway',
+                    'detail' => 'The gateway field is required.',
+                ],
+                [
+                    'source' => 'year',
+                    'detail' => 'The year field is required.',
+                ],
+                [
+                    'source' => 'month',
+                    'detail' => 'The month field is required.',
+                ],
+                [
+                    'source' => 'country',
+                    'detail' => 'The country field is required.',
+                ],
             ],
-            [
-                'source' => 'year',
-                'detail' => 'The year field is required.',
-            ],
-            [
-                'source' => 'month',
-                'detail' => 'The month field is required.',
-            ],
-            [
-                'source' => 'country',
-                'detail' => 'The country field is required.',
-            ],
-        ], $response->decodeResponseJson('meta')['errors']);
+            $response->decodeResponseJson('meta')['errors']
+        );
     }
 
     public function test_update_payment_method_permissions_fail()
     {
         $userId = $this->createAndLogInNewUser();
-        $expirationDate  = $this->faker->creditCardExpirationDate;
+        $expirationDate = $this->faker->creditCardExpirationDate;
 
         $payload = [
             'gateway' => 'recordeo',
             'year' => $expirationDate->format('Y'),
             'month' => $expirationDate->format('m'),
-            'country' => $this->faker->word
+            'country' => $this->faker->word,
         ];
 
         $response = $this->call(
-            'PATCH', '/payment-method/' . $this->faker->randomNumber(4),
+            'PATCH',
+            '/payment-method/' . $this->faker->randomNumber(4),
             $payload
         );
 
         // assert respons status code and errors
         $this->assertEquals(403, $response->getStatusCode());
 
-        $response->assertJsonFragment([
+        $response->assertJsonFragment(
             [
-                'title' => 'Not allowed.',
-                'detail' => 'You cannot update payment methods.',
-            ],
-        ]);
+                [
+                    'title' => 'Not allowed.',
+                    'detail' => 'You cannot update payment methods.',
+                ],
+            ]
+        );
     }
 
     public function test_update_payment_method_not_found()
     {
         $userId = $this->createAndLogInNewUser();
-        $expirationDate  = $this->faker->creditCardExpirationDate;
+        $expirationDate = $this->faker->creditCardExpirationDate;
 
         $payload = [
             'gateway' => 'recordeo',
             'year' => $expirationDate->format('Y'),
             'month' => $expirationDate->format('m'),
-            'country' => $this->faker->word
+            'country' => $this->faker->word,
         ];
 
         $id = $this->faker->randomNumber(4);
 
-        $this->permissionServiceMock->method('can')->willReturn(true);
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
 
         $response = $this->call(
-            'PATCH', '/payment-method/' . $id,
+            'PATCH',
+            '/payment-method/' . $id,
             $payload
         );
 
         // assert respons status code and errors
         $this->assertEquals(404, $response->getStatusCode());
 
-        $response->assertJsonFragment([
+        $response->assertJsonFragment(
             [
-                'title' => 'Not found.',
-                'detail' => 'Update failed, payment method not found with id: ' . $id,
-            ],
-        ]);
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Update failed, payment method not found with id: ' . $id,
+                ],
+            ]
+        );
     }
 
     public function test_update_payment_method()
@@ -520,50 +620,60 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $creditCard = $this->creditCardRepository->create(
-            $this->faker->creditCard([
-                'payment_gateway_name' => 'recordeo'
-            ])
+            $this->faker->creditCard(
+                [
+                    'payment_gateway_name' => 'recordeo',
+                ]
+            )
         );
 
-        $billingAddress = $this->addressRepository->create([
-            'type'       => CartAddressService::BILLING_ADDRESS_TYPE,
-            'brand'      => 'recordeo',
-            'user_id'    => $userId,
-            'state'      => '',
-            'country'    => '',
-            'created_on' => Carbon::now()->toDateTimeString(),
-        ]);
+        $billingAddress = $this->addressRepository->create(
+            [
+                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+                'brand' => 'recordeo',
+                'user_id' => $userId,
+                'state' => '',
+                'country' => '',
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
 
         $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
 
         $paymentMethod = $this->paymentMethodRepository->create(
-            $this->faker->paymentMethod([
-                'method_type'        => $methodType,
-                'method_id'          => $creditCard['id'],
-                'billing_address_id' => $billingAddress->id
-            ])
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => $methodType,
+                    'method_id' => $creditCard['id'],
+                    'billing_address_id' => $billingAddress->id,
+                ]
+            )
         );
 
         $userPaymentMethod = $this->userPaymentMethodRepository->create(
-            $this->faker->userPaymentMethod([
-                'user_id'           => $userId,
-                'payment_method_id' => $paymentMethod['id']
-            ])
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $paymentMethod['id'],
+                ]
+            )
         );
 
-        $expirationDate  = $this->faker->creditCardExpirationDate;
+        $expirationDate = $this->faker->creditCardExpirationDate;
 
         $payload = [
             'gateway' => 'recordeo',
             'year' => $expirationDate->format('Y'),
             'month' => $expirationDate->format('m'),
             'country' => $this->faker->word,
-            'state' => $this->faker->word
+            'state' => $this->faker->word,
         ];
 
-        $this->permissionServiceMock->method('can')->willReturn(true);
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
 
-        $updatedCard = (object) [
+        $updatedCard = (object)[
             'fingerprint' => $creditCard->fingerprint,
             'last4' => $creditCard->last_four_digits,
             'name' => $creditCard->cardholder_name,
@@ -575,12 +685,16 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'address_state' => $payload['state'],
         ];
 
-        $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
-        $this->stripeExternalHelperMock->method('retrieveCard')->willReturn(new Card());
-        $this->stripeExternalHelperMock->method('updateCard')->willReturn($updatedCard);
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $this->stripeExternalHelperMock->method('updateCard')
+            ->willReturn($updatedCard);
 
         $response = $this->call(
-            'PATCH', '/payment-method/' . $paymentMethod['id'],
+            'PATCH',
+            '/payment-method/' . $paymentMethod['id'],
             $payload
         );
 
@@ -590,20 +704,23 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $expirationDate = Carbon::createFromDate(
             $updatedCard->exp_year,
             $updatedCard->exp_month
-        )->toDateTimeString();
+        )
+            ->toDateTimeString();
 
-        $response->assertJsonFragment([
-            'fingerprint' => $updatedCard->fingerprint,
-            'last_four_digits' => $updatedCard->last4,
-            'expiration_date' => $expirationDate,
-        ]);
+        $response->assertJsonFragment(
+            [
+                'fingerprint' => $updatedCard->fingerprint,
+                'last_four_digits' => $updatedCard->last4,
+                'expiration_date' => $expirationDate,
+            ]
+        );
 
         // assert database updates
         $this->assertDatabaseHas(
             ConfigService::$tableCreditCard,
             [
                 'id' => $creditCard['id'],
-                'expiration_date' => $expirationDate
+                'expiration_date' => $expirationDate,
             ]
         );
 
@@ -612,240 +729,335 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             [
                 'id' => $billingAddress->id,
                 'state' => $updatedCard->address_state,
-                'country' => $updatedCard->address_country
+                'country' => $updatedCard->address_country,
             ]
         );
     }
 
     public function test_update_payment_method_update_credit_card_validation()
     {
-        $userId     = $this->createAndLogInNewUser();
-        $creditCard = $this->creditCardRepository->create($this->faker->creditCard([
-            'payment_gateway_name' => 'drumeo'
-        ]));
+        $userId = $this->createAndLogInNewUser();
+        $creditCard = $this->creditCardRepository->create(
+            $this->faker->creditCard(
+                [
+                    'payment_gateway_name' => 'drumeo',
+                ]
+            )
+        );
 
-        $paymentMethod     = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'method_id'   => $creditCard['id']
-        ]));
-        $userPaymentMethod = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
-            'user_id'           => $userId,
-            'payment_method_id' => $paymentMethod['id']
-        ]));
+        $paymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $creditCard['id'],
+                ]
+            )
+        );
+        $userPaymentMethod = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $paymentMethod['id'],
+                ]
+            )
+        );
 
-        $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
+        $results = $this->call(
+            'PATCH',
+            '/payment-method/' . $paymentMethod['id'],
             [
                 'update_method' => 'update-current-credit-card',
-                'method_type'   => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'user_id'       => $userId
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'user_id' => $userId,
             ]
         );
 
         //assert results status code and errors
         $this->assertEquals(422, $results->getStatusCode());
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "card_year",
-                "detail" => "The card year field is required when create or update a credit card.",
+                [
+                    "source" => "gateway",
+                    "detail" => "The gateway field is required.",
+                ],
+                [
+                    "source" => "year",
+                    "detail" => "The year field is required.",
+                ],
+                [
+                    "source" => "month",
+                    "detail" => "The month field is required.",
+                ],
+                [
+                    "source" => "country",
+                    "detail" => "The country field is required.",
+                ],
             ],
-            [
-                "source" => "card_month",
-                "detail" => "The card month field is required when create or update a credit card.",
-            ]
-        ], $results->decodeResponseJson('meta')['errors']);
+            $results->decodeResponseJson('meta')['errors']
+        );
     }
 
     public function test_update_payment_method_use_paypal_validation()
     {
-        $userId     = $this->createAndLogInNewUser();
-        $creditCard = $this->creditCardRepository->create($this->faker->creditCard([
-            'payment_gateway_name' => 'recordeo'
-        ]));
+        $userId = $this->createAndLogInNewUser();
+        $creditCard = $this->creditCardRepository->create(
+            $this->faker->creditCard(
+                [
+                    'payment_gateway_name' => 'recordeo',
+                ]
+            )
+        );
 
-        $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'method_id'   => $creditCard['id']
-        ]));
+        $paymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $creditCard['id'],
+                ]
+            )
+        );
 
-        $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
+        $results = $this->call(
+            'PATCH',
+            '/payment-method/' . $paymentMethod['id'],
             [
-                'update_method'   => 'use-paypal',
-                'method_type'     => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'payment_gateway' => 'recordeo'
+                'update_method' => 'use-paypal',
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_gateway' => 'recordeo',
             ]
         );
 
         $this->assertEquals(422, $results->getStatusCode());
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "token",
-                "detail" => "The token field is required when update method is use-paypal.",
+                [
+                    "source" => "token",
+                    "detail" => "The token field is required when update method is use-paypal.",
+                ],
+                [
+                    "source" => "address_id",
+                    "detail" => "The address id field is required when update payment method and use paypal.",
+                ],
             ],
-            [
-                "source" => "address_id",
-                "detail" => "The address id field is required when update payment method and use paypal.",
-            ]
-        ], $results->decodeResponseJson('meta')['errors']);
+            $results->decodeResponseJson('meta')['errors']
+        );
 
         //assert payment method data not updated in the db
-        $this->assertDatabaseHas(ConfigService::$tablePaymentMethod,
+        $this->assertDatabaseHas(
+            ConfigService::$tablePaymentMethod,
             [
-                'id'          => $paymentMethod['id'],
-                'method_id'   => $creditCard['id'],
-                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
-            ]);
+                'id' => $paymentMethod['id'],
+                'method_id' => $creditCard['id'],
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            ]
+        );
     }
 
     public function test_user_update_payment_method_create_credit_card_response()
     {
-        $userId          = $this->createAndLogInNewUser();
-        $expirationDate  = $this->faker->creditCardExpirationDate;
+        $userId = $this->createAndLogInNewUser();
+        $expirationDate = $this->faker->creditCardExpirationDate;
         $cardFingerprint = self::VALID_VISA_CARD_NUM;
-        $cardLast4       = $this->faker->randomNumber(4);
-        $cardType        = $this->faker->creditCardType;
-        $cardHolderName  = $this->faker->word;
+        $cardLast4 = $this->faker->randomNumber(4);
+        $cardType = $this->faker->creditCardType;
+        $cardHolderName = $this->faker->word;
 
         $userId = $this->createAndLogInNewUser();
 
-        $customer               = new Customer();
-        $customer->email        = $this->faker->email;
-        $fakerCard              = new Card();
+        $customer = new Customer();
+        $customer->email = $this->faker->email;
+        $fakerCard = new Card();
         $fakerCard->fingerprint = $cardFingerprint;
-        $fakerCard->brand       = $cardType;
-        $fakerCard->last4       = $cardLast4;
-        $fakerCard->exp_year    = $expirationDate->format('Y');
-        $fakerCard->exp_month   = $expirationDate->format('m');
-        $fakerCard->id          = $this->faker->word;
-        $cardToken              = new Token();
-        $cardToken->id          = rand();
-        $cardToken->card        = $fakerCard;
-        $this->stripeExternalHelperMock->method('createCustomer')->willReturn($customer);
-        $this->stripeExternalHelperMock->method('createCardToken')->willReturn($cardToken);
-        $this->stripeExternalHelperMock->method('retrieveToken')->willReturn($cardToken);
-        $this->stripeExternalHelperMock->method('createCard')->willReturn($fakerCard);
+        $fakerCard->brand = $cardType;
+        $fakerCard->last4 = $cardLast4;
+        $fakerCard->exp_year = $expirationDate->format('Y');
+        $fakerCard->exp_month = $expirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+        $cardToken = new Token();
+        $cardToken->id = rand();
+        $cardToken->card = $fakerCard;
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($customer);
+        $this->stripeExternalHelperMock->method('createCardToken')
+            ->willReturn($cardToken);
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($cardToken);
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
 
-        $creditCard = $this->creditCardRepository->create($this->faker->creditCard([
-            'payment_gateway_name' => 'drumeo'
-        ]));
+        $creditCard = $this->creditCardRepository->create(
+            $this->faker->creditCard(
+                [
+                    'payment_gateway_name' => 'drumeo',
+                ]
+            )
+        );
 
-        $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'method_id'   => $creditCard['id']
-        ]));
+        $paymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $creditCard['id'],
+                ]
+            )
+        );
 
-        $userPaymentMethod = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
-            'user_id'           => $userId,
-            'payment_method_id' => $paymentMethod['id']
-        ]));
+        $userPaymentMethod = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $paymentMethod['id'],
+                ]
+            )
+        );
 
-        $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
+        $results = $this->call(
+            'PATCH',
+            '/payment-method/' . $paymentMethod['id'],
             [
-                'update_method'                => 'create-credit-card',
-                'method_type'                  => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'card_token'                    => $cardToken->id,
-                'user_id'                      => $userId,
-                'gateway'              => 'drumeo'
+                'update_method' => 'create-credit-card',
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card_token' => $cardToken->id,
+                'user_id' => $userId,
+                'gateway' => 'drumeo',
             ]
         );
 
         $this->assertEquals(201, $results->getStatusCode());
-        $this->assertArraySubset([
-            'id'          => $paymentMethod['id'],
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'created_on'  => $paymentMethod['created_on'],
-            'updated_on'  => Carbon::now()->toDateTimeString(),
-        ], $results->decodeResponseJson()['data'][0]);
-
-        $this->assertDatabaseMissing(ConfigService::$tablePaymentMethod,
+        $this->assertArraySubset(
             [
-                'id'        => $paymentMethod['id'],
-                'method_id' => $creditCard['id']
-            ]);
+                'id' => $paymentMethod['id'],
+                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'created_on' => $paymentMethod['created_on'],
+                'updated_on' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            $results->decodeResponseJson()['data'][0]
+        );
+
+        $this->assertDatabaseMissing(
+            ConfigService::$tablePaymentMethod,
+            [
+                'id' => $paymentMethod['id'],
+                'method_id' => $creditCard['id'],
+            ]
+        );
     }
 
     public function test_update_payment_method_use_paypal()
     {
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')->willReturn(rand());
-        $userId     = $this->createAndLogInNewUser();
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
+            ->willReturn(rand());
+        $userId = $this->createAndLogInNewUser();
         $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
 
-        $paymentMethod     = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'method_id'   => $creditCard['id']
-        ]));
-        $userPaymentMethod = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
-            'user_id'           => $userId,
-            'payment_method_id' => $paymentMethod['id']
-        ]));
+        $paymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $creditCard['id'],
+                ]
+            )
+        );
+        $userPaymentMethod = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $paymentMethod['id'],
+                ]
+            )
+        );
 
         $expressCheckoutToken = self::VALID_EXPRESS_CHECKOUT_TOKEN;
 
         $addressId = rand();
 
-        $results = $this->call('PATCH', '/payment-method/' . $paymentMethod['id'],
+        $results = $this->call(
+            'PATCH',
+            '/payment-method/' . $paymentMethod['id'],
             [
-                'update_method'          => 'use-paypal',
-                'method_type'            => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'update_method' => 'use-paypal',
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
                 'token' => $expressCheckoutToken,
-                'address_id'             => $addressId,
-                'gateway'        => 'drumeo'
+                'address_id' => $addressId,
+                'gateway' => 'drumeo',
             ]
         );
 
         $this->assertEquals(201, $results->getStatusCode());
-        $this->assertArraySubset([
-            'id'          => $paymentMethod['id'],
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'created_on'  => $paymentMethod['created_on'],
-            'updated_on'  => Carbon::now()->toDateTimeString(),
-            'currency'    => $paymentMethod['currency'],
-        ], $results->decodeResponseJson()['data'][0]);
+        $this->assertArraySubset(
+            [
+                'id' => $paymentMethod['id'],
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'created_on' => $paymentMethod['created_on'],
+                'updated_on' => Carbon::now()
+                    ->toDateTimeString(),
+                'currency' => $paymentMethod['currency'],
+            ],
+            $results->decodeResponseJson()['data'][0]
+        );
 
         //assert data updated in db
-        $this->assertDatabaseHas(ConfigService::$tablePaymentMethod,
+        $this->assertDatabaseHas(
+            ConfigService::$tablePaymentMethod,
             [
-                'id'          => $paymentMethod['id'],
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE
-            ]);
-        $this->assertDatabaseHas(ConfigService::$tablePaypalBillingAgreement,
+                'id' => $paymentMethod['id'],
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            ]
+        );
+        $this->assertDatabaseHas(
+            ConfigService::$tablePaypalBillingAgreement,
             [
-                'payment_gateway_name' => 'drumeo'
-            ]);
+                'payment_gateway_name' => 'drumeo',
+            ]
+        );
     }
 
     public function test_delete_payment_method_not_authenticated_user()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->permissionServiceMock->method('canOrThrow')->willThrowException(
-            new NotAllowedException('This action is unauthorized.')
+        $this->permissionServiceMock->method('canOrThrow')
+            ->willThrowException(
+                new NotAllowedException('This action is unauthorized.')
+            );
+
+        $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
+        $paymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $creditCard['id'],
+                ]
+            )
         );
 
-        $creditCard    = $this->creditCardRepository->create($this->faker->creditCard());
-        $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'method_id'   => $creditCard['id']
-        ]));
-
-        $userPaymentMethod = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
-            'user_id'           => $userId,
-            'payment_method_id' => $paymentMethod['id']
-        ]));
+        $userPaymentMethod = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $paymentMethod['id'],
+                ]
+            )
+        );
 
         $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
 
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals(
             [
-                "title"  => "Not allowed.",
+                "title" => "Not allowed.",
                 "detail" => "This action is unauthorized.",
-            ]
-            , $results->decodeResponseJson('meta')['errors']);
+            ],
+            $results->decodeResponseJson('meta')['errors']
+        );
 
         //assert payment method still exist in db
-        $this->assertDatabaseHas(ConfigService::$tablePaymentMethod,
+        $this->assertDatabaseHas(
+            ConfigService::$tablePaymentMethod,
             [
-                'id' => $paymentMethod['id']
-            ]);
+                'id' => $paymentMethod['id'],
+            ]
+        );
     }
 
     public function test_user_delete_payment_method_credit_card()
@@ -854,15 +1066,23 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
 
-        $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'method_id'   => $creditCard['id']
-        ]));
+        $paymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $creditCard['id'],
+                ]
+            )
+        );
 
-        $assignPaymentMethodToUser = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
-            'user_id'           => $userId,
-            'payment_method_id' => $paymentMethod['id']
-        ]));
+        $assignPaymentMethodToUser = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $paymentMethod['id'],
+                ]
+            )
+        );
 
         $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
 
@@ -870,10 +1090,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'id'          => $paymentMethod['id'],
+                'id' => $paymentMethod['id'],
                 'method_type' => $paymentMethod['method_type'],
-                'method_id'   => 1,
-                'deleted_on'  => Carbon::now()->toDateTimeString()
+                'method_id' => 1,
+                'deleted_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }
@@ -882,19 +1103,31 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $paypalBilling = $this->paypalBillingAgreementRepository->create($this->faker->paypalBillingAgreement([
-            'payment_gateway_name' => 'drumeo'
-        ]));
+        $paypalBilling = $this->paypalBillingAgreementRepository->create(
+            $this->faker->paypalBillingAgreement(
+                [
+                    'payment_gateway_name' => 'drumeo',
+                ]
+            )
+        );
 
-        $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'method_id'   => $paypalBilling['id']
-        ]));
+        $paymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                    'method_id' => $paypalBilling['id'],
+                ]
+            )
+        );
 
-        $assignPaymentMethodToUser = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
-            'user_id'           => $userId,
-            'payment_method_id' => $paymentMethod['id']
-        ]));
+        $assignPaymentMethodToUser = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $paymentMethod['id'],
+                ]
+            )
+        );
 
         $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
 
@@ -902,10 +1135,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'id'          => $paymentMethod['id'],
+                'id' => $paymentMethod['id'],
                 'method_type' => $paymentMethod['method_type'],
-                'method_id'   => 1,
-                'deleted_on'  => Carbon::now()->toDateTimeString()
+                'method_id' => 1,
+                'deleted_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }
@@ -913,73 +1147,106 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_admin_delete_payment_method()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')
+            ->willReturn(true);
 
-        $creditCard    = $this->creditCardRepository->create($this->faker->creditCard());
-        $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'method_id'   => $creditCard['id']
-        ]));
+        $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
+        $paymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $creditCard['id'],
+                ]
+            )
+        );
 
-        $userPaymentMethod = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
-            'user_id'           => rand(),
-            'payment_method_id' => $paymentMethod['id']
-        ]));
+        $userPaymentMethod = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => rand(),
+                    'payment_method_id' => $paymentMethod['id'],
+                ]
+            )
+        );
 
         $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
 
         $this->assertEquals(204, $results->getStatusCode());
 
-        $this->assertSoftDeleted(ConfigService::$tablePaymentMethod,
+        $this->assertSoftDeleted(
+            ConfigService::$tablePaymentMethod,
             [
-                'id' => $paymentMethod['id']
-            ]);
+                'id' => $paymentMethod['id'],
+            ]
+        );
     }
 
     public function test_get_user_payment_methods()
     {
-        $userId                    = $this->faker->numberBetween();
-        $creditCard                = $this->creditCardRepository->create($this->faker->creditCard());
-        $paymentMethod1            = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'method_id'   => $creditCard['id']
-        ]));
-        $paymentMethod1['user']    = [
-            'user_id'    => $userId,
-            'is_primary' => 1
+        $userId = $this->faker->numberBetween();
+        $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
+        $paymentMethod1 = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $creditCard['id'],
+                ]
+            )
+        );
+        $paymentMethod1['user'] = [
+            'user_id' => $userId,
+            'is_primary' => 1,
         ];
         $paymentMethod1['user_id'] = $userId;
-        $paypalBilling             = $this->paypalBillingAgreementRepository->create($this->faker->paypalBillingAgreement([
-            'payment_gateway_name' => 'drumeo'
-        ]));
+        $paypalBilling = $this->paypalBillingAgreementRepository->create(
+            $this->faker->paypalBillingAgreement(
+                [
+                    'payment_gateway_name' => 'drumeo',
+                ]
+            )
+        );
 
-        $paymentMethod2            = $this->paymentMethodRepository->create($this->faker->paymentMethod([
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'method_id'   => $paypalBilling['id']
-        ]));
-        $paymentMethod2['user']    = [
-            'user_id'    => $userId,
-            'is_primary' => 1
+        $paymentMethod2 = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                    'method_id' => $paypalBilling['id'],
+                ]
+            )
+        );
+        $paymentMethod2['user'] = [
+            'user_id' => $userId,
+            'is_primary' => 1,
         ];
         $paymentMethod2['user_id'] = $userId;
 
-        $assignPaymentMethodToUser                   = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
-            'user_id'           => $userId,
-            'payment_method_id' => $paymentMethod1['id'],
-            'is_primary'        => 1
-        ]));
-        $assignPaymentMethodToUser['payment_method'] = (array) $paymentMethod1;
-        $userPaymentMethod                           = $this->userPaymentMethodRepository->create($this->faker->userPaymentMethod([
-            'user_id'           => $userId,
-            'payment_method_id' => $paymentMethod2['id'],
-            'is_primary'        => 1
-        ]));
-        $userPaymentMethod['payment_method']         = (array) $paymentMethod2;
-        $results                                     = $this->call('GET', '/user-payment-method/' . $userId);
+        $assignPaymentMethodToUser = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $paymentMethod1['id'],
+                    'is_primary' => 1,
+                ]
+            )
+        );
+        $assignPaymentMethodToUser['payment_method'] = (array)$paymentMethod1;
+        $userPaymentMethod = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $paymentMethod2['id'],
+                    'is_primary' => 1,
+                ]
+            )
+        );
+        $userPaymentMethod['payment_method'] = (array)$paymentMethod2;
+        $results = $this->call('GET', '/user-payment-method/' . $userId);
 
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertEquals([$assignPaymentMethodToUser->getArrayCopy(), $userPaymentMethod->getArrayCopy()],
-            $results->decodeResponseJson('data'));
+        $this->assertEquals(
+            [$assignPaymentMethodToUser->getArrayCopy(), $userPaymentMethod->getArrayCopy()],
+            $results->decodeResponseJson('data')
+        );
     }
 
     public function test_get_user_payment_methods_not_exists()

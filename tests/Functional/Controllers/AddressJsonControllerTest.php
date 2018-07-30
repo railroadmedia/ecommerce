@@ -45,18 +45,6 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 "detail" => "The type field is required.",
             ],
             [
-                "source" => "city",
-                "detail" => "The city field is required.",
-            ],
-            [
-                "source" => "zip",
-                "detail" => "The zip field is required.",
-            ],
-            [
-                "source" => "state",
-                "detail" => "The state field is required."
-            ],
-            [
                 "source" => "country",
                 "detail" => "The country field is required."
             ]
@@ -448,7 +436,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('is')->willReturn(true);
 
-        $address = $this->addressRepository->query()->create($this->faker->address());
+        $address = (array)$this->addressRepository->query()->create($this->faker->address());
 
         $newStreetLine1 = $this->faker->streetAddress;
 
