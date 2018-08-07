@@ -15,4 +15,9 @@ class OrderDiscountRepository extends RepositoryBase
     {
         return (new CachedQuery($this->connection()))->from(ConfigService::$tableOrderDiscount);
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

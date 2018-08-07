@@ -22,4 +22,9 @@ class DiscountCriteriaRepository extends RepositoryBase
     {
         return Decorator::decorate($results, 'discountCriteria');
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

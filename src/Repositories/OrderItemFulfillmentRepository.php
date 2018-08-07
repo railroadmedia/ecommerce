@@ -21,4 +21,9 @@ class OrderItemFulfillmentRepository extends RepositoryBase
     {
         return Decorator::decorate($results, 'orderItemFulfillment');
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

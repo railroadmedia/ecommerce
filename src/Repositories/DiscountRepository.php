@@ -22,4 +22,9 @@ class DiscountRepository extends RepositoryBase
     {
         return Decorator::decorate($results, 'discount');
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

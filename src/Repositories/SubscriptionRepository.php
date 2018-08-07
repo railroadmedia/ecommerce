@@ -29,4 +29,9 @@ class SubscriptionRepository extends RepositoryBase
     {
         return Decorator::decorate($results, 'subscription');
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }

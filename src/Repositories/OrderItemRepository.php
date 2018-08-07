@@ -22,4 +22,9 @@ class OrderItemRepository extends RepositoryBase
     {
         return Decorator::decorate($results, 'orderItem');
     }
+
+    protected function connection()
+    {
+        return app('db')->connection(ConfigService::$databaseConnectionName);
+    }
 }
