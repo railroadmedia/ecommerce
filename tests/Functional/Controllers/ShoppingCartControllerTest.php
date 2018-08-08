@@ -32,27 +32,36 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->classBeingTested  = $this->app->make(CartService::class);
-        $this->cartService       = $this->app->make(CartService::class);
+        $this->classBeingTested = $this->app->make(CartService::class);
+        $this->cartService = $this->app->make(CartService::class);
         $this->productRepository = $this->app->make(ProductRepository::class);
     }
 
     public function test_add_to_cart()
     {
-        $product = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => $this->faker->numberBetween(15, 100),
-        ]));
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(15, 100),
+                ]
+            )
+        );
 
         $initialQuantity = 2;
-        $this->call('PUT', '/add-to-cart/', [
-            'products' => [$product['sku'] => $initialQuantity]
-        ]);
+        $this->call(
+            'PUT',
+            '/add-to-cart/',
+            [
+                'products' => [$product['sku'] => $initialQuantity],
+            ]
+        );
 
         $newQuantity = 10;
-        $response    = $this->call('GET', '/add-to-cart/', [
-            'products' => [$product['sku'] => $newQuantity]
-        ]);
+        $response = $this->call(
+            'GET',
+            '/add-to-cart?products[' . $product['sku'] . ']=1'
+        );
 
         // assert the session has the success message
         $response->assertSessionHas('success', true);
@@ -63,15 +72,23 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
     public function test_add_product_with_stock_empty_to_cart()
     {
-        $product = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => 0,
-        ]));
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => 0,
+                ]
+            )
+        );
 
         $quantity = $this->faker->numberBetween(1, 1000);
-        $response = $this->call('GET', '/add-to-cart/', [
-            'products' => [$product['sku'] => $quantity]
-        ]);
+        $response = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [$product['sku'] => $quantity],
+            ]
+        );
 
         // assert the session has the messages set on false
         $response->assertSessionHas('success', false);
@@ -81,15 +98,30 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas('cartNumberOfItems', 0);
 
         // assert the session has the error message
-        $response->assertSessionHas('notAvailableProducts', ['Product with SKU:' . $product['sku'] . ' could not be added to cart. The product stock(' . $product['stock'] . ') is smaller than the quantity you\'ve selected(' . $quantity . ')']);
+        $response->assertSessionHas(
+            'notAvailableProducts',
+            [
+                'Product with SKU:' .
+                $product['sku'] .
+                ' could not be added to cart. The product stock(' .
+                $product['stock'] .
+                ') is smaller than the quantity you\'ve selected(' .
+                $quantity .
+                ')',
+            ]
+        );
     }
 
     public function test_add_inexistent_product_to_cart()
     {
         $randomSku = $this->faker->word;
-        $response  = $this->call('GET', '/add-to-cart', [
-            'products' => [$randomSku => 10]
-        ]);
+        $response = $this->call(
+            'GET',
+            '/add-to-cart',
+            [
+                'products' => [$randomSku => 10],
+            ]
+        );
 
         // assert the session has the success message set to false
         $response->assertSessionHas('success', false);
@@ -99,26 +131,41 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas('cartNumberOfItems', 0);
 
         // assert the session has the error message
-        $response->assertSessionHas('notAvailableProducts', ['Product with SKU:' . $randomSku . ' could not be added to cart.']);
+        $response->assertSessionHas(
+            'notAvailableProducts',
+            ['Product with SKU:' . $randomSku . ' could not be added to cart.']
+        );
     }
 
     public function test_add_many_products_to_cart()
     {
-        $product1 = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => $this->faker->numberBetween(5, 100),
-        ]));
-        $product2 = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => $this->faker->numberBetween(5, 100),
-        ]));
+        $product1 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(5, 100),
+                ]
+            )
+        );
+        $product2 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(5, 100),
+                ]
+            )
+        );
 
-        $response = $this->call('GET', '/add-to-cart/', [
-            'products' => [
-                $product1['sku'] => 2,
-                $product2['sku'] => 3
+        $response = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [
+                    $product1['sku'] => 2,
+                    $product2['sku'] => 3,
+                ],
             ]
-        ]);
+        );
 
         // assert the session has the success message
         $response->assertSessionHas('success', true);
@@ -131,14 +178,22 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
     public function test_add_to_cart_higher_amount_than_product_stock()
     {
-        $product  = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => $this->faker->numberBetween(1, 3),
-        ]));
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(1, 3),
+                ]
+            )
+        );
         $quantity = $this->faker->numberBetween(5, 100);
-        $response = $this->call('GET', '/add-to-cart/', [
-            'products' => [$product['sku'] => $quantity]
-        ]);
+        $response = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [$product['sku'] => $quantity],
+            ]
+        );
 
         // assert the session has the success message set to false
         $response->assertSessionHas('success', false);
@@ -148,30 +203,53 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas('cartNumberOfItems', 0);
 
         // assert the session has the error message
-        $response->assertSessionHas('notAvailableProducts', ['Product with SKU:' . $product['sku'] . ' could not be added to cart. The product stock(' . $product['stock'] . ') is smaller than the quantity you\'ve selected(' . $quantity . ')']);
+        $response->assertSessionHas(
+            'notAvailableProducts',
+            [
+                'Product with SKU:' .
+                $product['sku'] .
+                ' could not be added to cart. The product stock(' .
+                $product['stock'] .
+                ') is smaller than the quantity you\'ve selected(' .
+                $quantity .
+                ')',
+            ]
+        );
     }
 
     public function test_add_products_available_and_not_available_to_cart()
     {
-        $product1   = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => $this->faker->numberBetween(10, 3000),
-        ]));
-        $product2   = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => $this->faker->numberBetween(10, 300),
-        ]));
+        $product1 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(10, 3000),
+                ]
+            )
+        );
+        $product2 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(10, 300),
+                ]
+            )
+        );
         $randomSku1 = $this->faker->word . 'sku1';
         $randomSku2 = $this->faker->word . 'sku2';
 
-        $response = $this->call('GET', '/add-to-cart/', [
-            'products' => [
-                $product1['sku'] => $this->faker->numberBetween(1, 5),
-                $randomSku1      => 2,
-                $product2['sku'] => $this->faker->numberBetween(1, 5),
-                $randomSku2      => 2
+        $response = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [
+                    $product1['sku'] => $this->faker->numberBetween(1, 5),
+                    $randomSku1 => 2,
+                    $product2['sku'] => $this->faker->numberBetween(1, 5),
+                    $randomSku2 => 2,
+                ],
             ]
-        ]);
+        );
 
         // assert the session has the success message
         $response->assertSessionHas('success', true);
@@ -181,20 +259,28 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas('cartNumberOfItems', 2);
 
         // assert the session has the error messages for the invalid products
-        $response->assertSessionHas('notAvailableProducts', [
-            'Product with SKU:' . $randomSku1 . ' could not be added to cart.',
-            'Product with SKU:' . $randomSku2 . ' could not be added to cart.'
-        ]);
+        $response->assertSessionHas(
+            'notAvailableProducts',
+            [
+                'Product with SKU:' . $randomSku1 . ' could not be added to cart.',
+                'Product with SKU:' . $randomSku2 . ' could not be added to cart.',
+            ]
+        );
     }
 
     public function test_remove_product_from_cart()
     {
-        $product = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => $this->faker->numberBetween(6, 3000),
-        ]));
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(6, 3000),
+                ]
+            )
+        );
 
-        $cart = $this->cartService->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem(
+            $product['name'],
             $product['description'],
             $this->faker->numberBetween(1, 1000),
             $product['price'],
@@ -204,8 +290,9 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             rand(),
             0,
             [
-                'product-id' => $product['id']
-            ]);
+                'product-id' => $product['id'],
+            ]
+        );
 
         $response = $this->call('PUT', '/remove-from-cart/' . $product['id']);
 
@@ -218,14 +305,19 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
     public function test_update_cart_item_quantity()
     {
-        $product = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'is_physical' => 1,
-            'stock'  => $this->faker->numberBetween(6, 3000),
-        ]));
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'is_physical' => 1,
+                    'stock' => $this->faker->numberBetween(6, 3000),
+                ]
+            )
+        );
 
         $firstQuantity = $this->faker->numberBetween(1, 5);
-        $cart          = $this->cartService->addCartItem($product['name'],
+        $cart = $this->cartService->addCartItem(
+            $product['name'],
             $product['description'],
             $firstQuantity,
             $product['price'],
@@ -235,10 +327,11 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             rand(),
             0,
             [
-                'product-id' => $product['id']
-            ]);
-        $newQuantity   = $this->faker->numberBetween(6, 10);
-        $response      = $this->call('PUT', '/update-product-quantity/' . $product['id'] . '/' . $newQuantity);
+                'product-id' => $product['id'],
+            ]
+        );
+        $newQuantity = $this->faker->numberBetween(6, 10);
+        $response = $this->call('PUT', '/update-product-quantity/' . $product['id'] . '/' . $newQuantity);
 
         $decodedResponse = $response->decodeResponseJson('data');
 
@@ -253,14 +346,19 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
     public function test_update_cart_item_quantity_insufficient_stock()
     {
-        $product = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => $this->faker->numberBetween(2, 5),
-        ]));
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(2, 5),
+                ]
+            )
+        );
 
         $firstQuantity = $this->faker->numberBetween(1, 2);
 
-        $this->cartService->addCartItem($product['name'],
+        $this->cartService->addCartItem(
+            $product['name'],
             $product['description'],
             $firstQuantity,
             $product['price'],
@@ -270,11 +368,12 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             0,
             rand(),
             [
-                'product-id' => $product['id']
-            ]);
+                'product-id' => $product['id'],
+            ]
+        );
 
         $newQuantity = $this->faker->numberBetween(6, 10);
-        $response    = $this->call('PUT', '/update-product-quantity/' . $product['id'] . '/' . $newQuantity);
+        $response = $this->call('PUT', '/update-product-quantity/' . $product['id'] . '/' . $newQuantity);
 
         $decodedResponse = $response->decodeResponseJson('data');
 
@@ -287,15 +386,23 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
     public function test_redirect_to_shop()
     {
-        $product = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => $this->faker->numberBetween(1, 100),
-        ]));
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(1, 100),
+                ]
+            )
+        );
 
-        $response = $this->call('GET', '/add-to-cart/', [
-            'products' => [$product['sku'] => 2],
-            'redirect' => '/shop'
-        ]);
+        $response = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [$product['sku'] => 2],
+                'redirect' => '/shop',
+            ]
+        );
 
         //assert redirect was done
         $response->assertRedirect('/shop');
@@ -303,14 +410,25 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
     public function test_redirect_checkout()
     {
-        $product = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => $this->faker->numberBetween(1, 100),
-        ]));
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(1, 100),
+                ]
+            )
+        );
 
-        $response = $this->call('GET', '/add-to-cart/', [
-            'products' => [$product['sku'] => 2]
-        ], [], [], ['HTTP_REFERER' => '/checkout']);
+        $response = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [$product['sku'] => 2],
+            ],
+            [],
+            [],
+            ['HTTP_REFERER' => '/checkout']
+        );
 
         //assert user redirected to previous page
         $response->assertRedirect('/checkout');
@@ -318,20 +436,120 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
     public function test_promo_code()
     {
-        $product = $this->productRepository->create($this->faker->product([
-            'active' => 1,
-            'stock'  => $this->faker->numberBetween(2, 5),
-        ]));
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(2, 5),
+                ]
+            )
+        );
 
         $promoCode = $this->faker->word;
 
-        $response = $this->call('GET', '/add-to-cart/', [
-            'products' => [
-                $product['sku'] => $this->faker->numberBetween(1, 2),
-            ],
-            'promo-code' => $promoCode
-        ]);
+        $response = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [
+                    $product['sku'] => $this->faker->numberBetween(1, 2),
+                ],
+                'promo-code' => $promoCode,
+            ]
+        );
 
         $response->assertSessionHas('promo-code', $promoCode);
+    }
+
+    public function test_lock_cart()
+    {
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(15, 100),
+                ]
+            )
+        );
+        $product2 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(15, 100),
+                    'sku' => 'DLM',
+                ]
+            )
+        );
+
+        $initialQuantity = 2;
+        $this->call(
+            'PUT',
+            '/add-to-cart/',
+            [
+                'products' => [$product['sku'] => $initialQuantity],
+                'locked' => true
+            ]
+        );
+
+        $newQuantity = 10;
+        $response = $this->call(
+            'GET',
+            '/add-to-cart?products[DLM]=1,year,1'
+        );
+
+        // assert the session has the success message
+        $response->assertSessionHas('success', true);
+
+        // assert the number of items contain only the products added to cart
+        $response->assertSessionHas('cartNumberOfItems', 1);
+
+        // assert that the cart was cleared and only the product was added to the cart
+        $response->assertSessionHas('addedProducts', [0 => $product2]);
+    }
+
+    public function test_multiple_add_to_cart()
+    {
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(15, 100),
+                ]
+            )
+        );
+        $product2 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(15, 100),
+                    'sku' => 'DLM',
+                ]
+            )
+        );
+
+        $initialQuantity = 2;
+        $resp = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [$product['sku'] => $initialQuantity]
+            ]
+        );
+
+        $newQuantity = 10;
+        $response = $this->withSession($this->app['session.store']->all())
+            ->call(
+            'GET',
+            '/add-to-cart?products[DLM]=1,year,1'
+        );
+
+        // assert the session has the success message
+        $response->assertSessionHas('success', true);
+
+        //assert the old item still exist on session
+        $response->assertSessionHas('cartNumberOfItems', 2);
+
+        // assert that the added product exists on session
+        $response->assertSessionHas('addedProducts', [0  => $product2]);
     }
 }
