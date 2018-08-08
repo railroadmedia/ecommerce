@@ -384,13 +384,14 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
     }
 
-    public function test_redirect_to_shop()
+    public function test_redirect_to_shop_with_added_product_data()
     {
         $product = $this->productRepository->create(
             $this->faker->product(
                 [
                     'active' => 1,
                     'stock' => $this->faker->numberBetween(1, 100),
+                    'is_physical' => 0
                 ]
             )
         );
@@ -406,6 +407,12 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         //assert redirect was done
         $response->assertRedirect('/shop');
+
+        //assert product info exists on session
+        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('addedProducts', [$product]);
+        $response->assertSessionHas('cartNumberOfItems', 1);
+        $response->assertSessionHas('cartSubTotal');
     }
 
     public function test_redirect_checkout()
@@ -432,6 +439,12 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         //assert user redirected to previous page
         $response->assertRedirect('/checkout');
+
+        //assert product info exists on session
+        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('addedProducts', [$product]);
+        $response->assertSessionHas('cartNumberOfItems', 1);
+        $response->assertSessionHas('cartSubTotal');
     }
 
     public function test_promo_code()
@@ -503,7 +516,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         // assert the number of items contain only the products added to cart
         $response->assertSessionHas('cartNumberOfItems', 1);
 
-        // assert that the cart was cleared and only the product was added to the cart
+        // assert that the cart was cleared and only the second product was added to the cart
         $response->assertSessionHas('addedProducts', [0 => $product2]);
     }
 
