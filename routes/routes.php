@@ -297,6 +297,12 @@ Route::delete(
     Railroad\Ecommerce\Controllers\ShippingFulfillmentJsonController::class . '@delete'
 )->name('fulfillment.fulfilled');
 
+//stats
+Route::get(
+    '/stats/products',
+    Railroad\Ecommerce\Controllers\StatsController::class . '@statsProduct'
+)->name('stats.products');
+
 //stripe webhook
 Route::post(
     'stripe/webhook',
