@@ -18,12 +18,12 @@ class StatsControllerTest extends EcommerceTestCase
             'GET',
             '/stats/products/',
             [
-                'brand' => 'recordeo',
-                'start-date' => '2018-06-20 00:00:00',
-                'end-date' => '2018-06-20 23:19:08',
+                'brand' => 'drumeo',
+                'start-date' => '2018-07-05 00:00:00',
+                'end-date' => '2018-07-05 23:59:59',
             ]
         );
-        //dd($results->decodeResponseJson('data'));
+       // dd($results->decodeResponseJson('data'));
         $this->assertTrue(true);
     }
 }

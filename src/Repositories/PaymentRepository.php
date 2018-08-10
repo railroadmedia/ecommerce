@@ -20,7 +20,7 @@ class PaymentRepository extends RepositoryBase
     {
         return (new PaymentQuery($this->connection()))
             ->from(ConfigService::$tablePayment)
-            ->whereNull('deleted_on');
+            ->whereNull(ConfigService::$tablePayment.'.deleted_on');
     }
 
     protected function decorate($results)
