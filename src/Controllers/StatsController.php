@@ -50,6 +50,7 @@ class StatsController extends BaseController
                     $request->get('brand', ConfigService::$brand)
                 )
                 ->get();
+
         foreach ($products as $index => $product) {
             //get info from orders
             $orders =
@@ -88,9 +89,6 @@ class StatsController extends BaseController
             foreach ($orders as $order) {
                 $fullOrder = Decorator::decorate($order, 'order');
                 $quantity += $fullOrder->items['quantity'];
-                $paid += (($fullOrder->paid / $fullOrder->due * $fullOrder->items['total_price']) +
-                    $fullOrder->items['shipping_costs'] +
-                    $fullOrder->items['tax']);
 
                 if ($product->weight > 0) {
                     $totalOrderWeight += $fullOrder->items['product']['weight'];
@@ -114,9 +112,13 @@ class StatsController extends BaseController
                     $totalOrderRefunded = $orderPayments->sum('refunded');
                     $refunded += $order->total_price / $order->paid * $totalOrderRefunded;
                 }
+
+                $paid += (($fullOrder->paid / $fullOrder->due * $fullOrder->items['total_price']) +
+                    $shippingCosts +
+                    $tax);
             }
 
-            //get info from subscriptions/payment plans
+            //get subscriptions stats
             $subscriptions =
                 $this->paymentRepository->query()
                     ->select(
@@ -164,10 +166,66 @@ class StatsController extends BaseController
                 $tax += $subscription->tax_per_payment;
                 $shippingCosts += $subscription->shipping_per_payment;
                 $renewal++;
-                if ($subscription->subscription_type == ConfigService::$paymentPlanType) {
-                    $finance++;
-                }
+            }
 
+            //get payment plans renewal stats
+            $paymentPlans =
+                $this->paymentRepository->query()
+                    ->select(
+                        ConfigService::$tablePayment . '.id',
+                        ConfigService::$tablePayment . '.paid as payment_paid',
+                        ConfigService::$tablePayment . '.type as payment_type',
+                        ConfigService::$tablePayment . '.refunded',
+                        ConfigService::$tablePayment . '.payment_method_id',
+                        ConfigService::$tableSubscription . '.order_id',
+                        ConfigService::$tableSubscription . '.tax_per_payment',
+                        ConfigService::$tableSubscription . '.type as subscription_type'
+                    )
+                    ->join(
+                        ConfigService::$tableSubscriptionPayment,
+                        ConfigService::$tablePayment . '.id',
+                        '=',
+                        ConfigService::$tableSubscriptionPayment . '.payment_id'
+                    )
+                    ->join(
+                        ConfigService::$tableSubscription,
+                        ConfigService::$tableSubscriptionPayment . '.subscription_id',
+                        '=',
+                        ConfigService::$tableSubscription . '.id'
+                    )
+                    ->join(
+                        ConfigService::$tableOrderItem,
+                        ConfigService::$tableSubscription . '.order_id',
+                        '=',
+                        ConfigService::$tableOrderItem . '.order_id'
+                    )
+                    ->where(
+                        ConfigService::$tablePayment . '.created_on',
+                        '>',
+                        Carbon::parse($request->get('start-date', Carbon::now()))
+                            ->startOfDay()
+                    )
+                    ->where(
+                        ConfigService::$tablePayment . '.created_on',
+                        '<',
+                        Carbon::parse($request->get('end-date', Carbon::now()))
+                            ->endOfDay()
+                    )
+                    ->whereIn(ConfigService::$tablePayment . '.type', [ConfigService::$renewalPaymentType])
+                    ->whereIn(ConfigService::$tablePayment . '.status', ['succeeded', 'paid', 1])
+                    ->where(ConfigService::$tableSubscription . '.brand', $request->get('brand', ConfigService::$brand))
+                    ->whereNull(ConfigService::$tableSubscription . '.product_id')
+                    ->where(ConfigService::$tableOrderItem . '.product_id', $product->id)
+                    ->get();
+
+            foreach ($paymentPlans as $paymentPlan) {
+                $quantity++;
+                $paid += $paymentPlan->payment_paid;
+                $refunded += $paymentPlan->refunded;
+                $tax += $paymentPlan->tax_per_payment;
+                $shippingCosts += $paymentPlan->shipping_per_payment;
+                $renewal++;
+                $finance++;
             }
 
             $products[$index]['quantity'] = $quantity;
@@ -177,6 +235,7 @@ class StatsController extends BaseController
             $products[$index]['refunded'] = $refunded;
             $products[$index]['renewal'] = $renewal;
             $products[$index]['finance'] = $finance;
+
         }
 
         return reply()->json($products);
