@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Decorators\Decorator;
+use Railroad\Resora\Entities\Entity;
 
 class StatsController extends BaseController
 {
@@ -237,6 +238,72 @@ class StatsController extends BaseController
             $products[$index]['finance'] = $finance;
 
         }
+
+        //unknown plans
+        //get subscriptions stats
+        $unknownPlans =
+            $this->paymentRepository->query()
+                ->select(
+                    ConfigService::$tablePayment . '.id',
+                    ConfigService::$tablePayment . '.paid as payment_paid',
+                    ConfigService::$tablePayment . '.type as payment_type',
+                    ConfigService::$tablePayment . '.refunded',
+                    ConfigService::$tablePayment . '.payment_method_id',
+                    ConfigService::$tableSubscription . '.order_id',
+                    ConfigService::$tableSubscription . '.tax_per_payment',
+                    ConfigService::$tableSubscription . '.type as subscription_type'
+                )
+                ->join(
+                    ConfigService::$tableSubscriptionPayment,
+                    ConfigService::$tablePayment . '.id',
+                    '=',
+                    ConfigService::$tableSubscriptionPayment . '.payment_id'
+                )
+                ->join(
+                    ConfigService::$tableSubscription,
+                    ConfigService::$tableSubscriptionPayment . '.subscription_id',
+                    '=',
+                    ConfigService::$tableSubscription . '.id'
+                )
+                ->where(
+                    ConfigService::$tablePayment . '.created_on',
+                    '>',
+                    Carbon::parse($request->get('start-date', Carbon::now()))
+                        ->startOfDay()
+                )
+                ->where(
+                    ConfigService::$tablePayment . '.created_on',
+                    '<',
+                    Carbon::parse($request->get('end-date', Carbon::now()))
+                        ->endOfDay()
+                )
+                ->whereIn(ConfigService::$tablePayment . '.status', ['succeeded', 'paid', 1])
+                ->whereNull(ConfigService::$tableSubscription . '.product_id')
+                ->whereNull(ConfigService::$tableSubscription.'.order_id')
+                ->get();
+        $quantity = 0;
+        $paid = 0;
+        $refunded =0;
+        $tax = 0;
+        $shippingCosts = 0;
+
+        foreach ($unknownPlans as $unknownPlan) {
+            $quantity++;
+            $paid += $unknownPlan->payment_paid;
+            $refunded += $unknownPlan->refunded;
+            $tax += $unknownPlan->tax_per_payment;
+            $shippingCosts += $unknownPlan->shipping_per_payment;
+        }
+        $products[count($products)] = new Entity([
+            'name' => 'unknown (old payment plans)',
+            'sku' => 'unknown',
+            'quantity' => $quantity,
+            'paid' => $paid,
+            'refunded' => $refunded,
+            'tax' => $tax,
+            'shippingCosts' => $shippingCosts,
+            'finance' => 0
+        ]);
 
         return reply()->json($products);
     }
