@@ -251,20 +251,10 @@ class PaymentMethodJsonController extends BaseController
      */
     public function update(PaymentMethodUpdateRequest $request, $paymentMethodId)
     {
-        if (
-            !$this->permissionService->can(
-                auth()->id(),
-                'update.payment.method'
-            )
-        ) {
-            $message = 'You cannot update payment methods.';
-            throw new PermissionsNotAllowedException($message);
-        }
-
         $paymentMethod = $this->paymentMethodRepository
             ->read($paymentMethodId);
 
-        if ($paymentMethod['user_id'] !== auth()->id()) {
+        if (($paymentMethod['user']['user_id'] ?? 0) !== auth()->id()) {
             $this->permissionService
                 ->canOrThrow(auth()->id(), 'update.payment.method');
         }
@@ -342,6 +332,7 @@ class PaymentMethodJsonController extends BaseController
     public function delete($paymentMethodId)
     {
         $paymentMethod = $this->paymentMethodRepository->read($paymentMethodId);
+
         if($paymentMethod['user_id'] !== auth()->id())
         {
             $this->permissionService->canOrThrow(auth()->id(), 'delete.payment.method');
@@ -416,6 +407,10 @@ class PaymentMethodJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'pull.user.payment.method');
 
         $paymentMethods = $this->userPaymentMethodRepository->query()->where(['user_id' => $userId])->get();
+
+        foreach ($paymentMethods as $paymentMethod) {
+            $paymentMethod['id'] = $paymentMethod['payment_method_id'];
+        }
 
         return reply()->json($paymentMethods);
     }
