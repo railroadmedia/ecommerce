@@ -177,7 +177,7 @@ class PaymentMethodJsonController extends BaseController
                     $request->get('gateway'),
                     $billingAddress['id'],
                     $request->get('currency', $this->currencyService->get()),
-                    true,
+                    $request->get('set_default', false),
                     null);
             }
             else if($request->get('method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE)
@@ -313,6 +313,20 @@ class PaymentMethodJsonController extends BaseController
                 'updated_on' => Carbon::now()->toDateTimeString(),
             ]
         );
+
+        if ($request->get('set_default')) {
+
+            $this->userPaymentMethodRepository
+                ->query()
+                ->where('user_id', auth()->id())
+                ->update(['is_primary' => false]);
+
+            $this->userPaymentMethodRepository
+                ->query()
+                ->where('user_id', auth()->id())
+                ->where('payment_method_id', $paymentMethodId)
+                ->update(['is_primary' => true]);
+        }
 
         $card = $this->creditCardRepository
             ->read($paymentMethod->method['id']);
