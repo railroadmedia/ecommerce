@@ -134,6 +134,8 @@ class PayPalPaymentGateway
         }
 
         try {
+            $this->paypal->configure($config);
+
             $refundId = $this->paypal->createTransactionRefund(
                 $amount,
                 true,
