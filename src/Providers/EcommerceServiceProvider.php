@@ -22,7 +22,9 @@ use Railroad\Ecommerce\Decorators\ShippingOptionsCostsDecorator;
 use Railroad\Ecommerce\Decorators\SubscriptionPaymentMethodDecorator;
 use Railroad\Ecommerce\Decorators\SubscriptionProductDecorator;
 use Railroad\Ecommerce\Events\GiveContentAccess;
+use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
+use Railroad\Ecommerce\Listeners\UserDefaultPaymentMethodListener;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CustomValidationRules;
 
@@ -37,6 +39,7 @@ class EcommerceServiceProvider extends ServiceProvider
     {
         $this->listen = [
             GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
+            UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class]
         ];
 
         parent::boot();

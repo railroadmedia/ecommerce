@@ -2,9 +2,9 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Railroad\Ecommerce\Repositories\Queries\UserPaymentMethodQuery;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Resora\Decorators\Decorator;
-use Railroad\Resora\Queries\CachedQuery;
 use Railroad\Resora\Repositories\RepositoryBase;
 
 class UserPaymentMethodsRepository extends RepositoryBase
@@ -15,7 +15,7 @@ class UserPaymentMethodsRepository extends RepositoryBase
      */
     protected function newQuery()
     {
-        return (new CachedQuery($this->connection()))
+        return (new UserPaymentMethodQuery($this->connection()))
             ->from(ConfigService::$tableUserPaymentMethods);
     }
 
