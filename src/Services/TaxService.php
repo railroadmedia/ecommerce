@@ -184,7 +184,7 @@ class TaxService
 
         foreach($cartItems as $key => $item)
         {
-            if($key == 'applyDiscount')
+            if($key === 'applyDiscount')
             {
                 break;
             }
