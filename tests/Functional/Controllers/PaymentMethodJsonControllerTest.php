@@ -1619,7 +1619,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_delete_payment_method_not_authenticated_user()
     {
-        $userId = $this->createAndLogInNewUser();
         $this->permissionServiceMock->method('canOrThrow')
             ->willThrowException(
                 new NotAllowedException('This action is unauthorized.')
@@ -1638,7 +1637,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $userPaymentMethod = $this->userPaymentMethodRepository->create(
             $this->faker->userPaymentMethod(
                 [
-                    'user_id' => $userId,
+                    'user_id' => rand(2, 32767),
                     'payment_method_id' => $paymentMethod['id'],
                 ]
             )
@@ -1646,14 +1645,15 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
 
-        // $this->assertEquals(403, $results->getStatusCode());
-        // $this->assertEquals(
-        //     [
-        //         "title" => "Not allowed.",
-        //         "detail" => "This action is unauthorized.",
-        //     ],
-        //     $results->decodeResponseJson('meta')['errors']
-        // );
+        $this->assertEquals(403, $results->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                "title" => "Not allowed.",
+                "detail" => "This action is unauthorized.",
+            ],
+            $results->decodeResponseJson('error')
+        );
 
         //assert payment method still exist in db
         $this->assertDatabaseHas(
@@ -1667,6 +1667,27 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_user_delete_payment_method_credit_card()
     {
         $userId = $this->createAndLogInNewUser();
+
+        $defaultCreditCard = $this->creditCardRepository->create($this->faker->creditCard());
+
+        $defaultPaymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $defaultCreditCard['id'],
+                ]
+            )
+        );
+
+        $assignDefaultPaymentMethodToUser = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $defaultPaymentMethod['id'],
+                    'is_primary' => 1
+                ]
+            )
+        );
 
         $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
 
@@ -1684,6 +1705,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 [
                     'user_id' => $userId,
                     'payment_method_id' => $paymentMethod['id'],
+                    'is_primary' => 0
                 ]
             )
         );
@@ -1696,7 +1718,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             [
                 'id' => $paymentMethod['id'],
                 'method_type' => $paymentMethod['method_type'],
-                'method_id' => 1,
+                'method_id' => $creditCard['id'],
                 'deleted_on' => Carbon::now()
                     ->toDateTimeString(),
             ]
@@ -1706,6 +1728,27 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_delete_payment_method_paypal()
     {
         $userId = $this->createAndLogInNewUser();
+
+        $defaultCreditCard = $this->creditCardRepository->create($this->faker->creditCard());
+
+        $defaultPaymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $defaultCreditCard['id'],
+                ]
+            )
+        );
+
+        $assignDefaultPaymentMethodToUser = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $defaultPaymentMethod['id'],
+                    'is_primary' => 1
+                ]
+            )
+        );
 
         $paypalBilling = $this->paypalBillingAgreementRepository->create(
             $this->faker->paypalBillingAgreement(
@@ -1729,6 +1772,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 [
                     'user_id' => $userId,
                     'payment_method_id' => $paymentMethod['id'],
+                    'is_primary' => 0
                 ]
             )
         );
@@ -1751,8 +1795,30 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_admin_delete_payment_method()
     {
         $userId = $this->createAndLogInNewUser();
+
         $this->permissionServiceMock->method('canOrThrow')
             ->willReturn(true);
+
+        $defaultCreditCard = $this->creditCardRepository->create($this->faker->creditCard());
+
+        $defaultPaymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $defaultCreditCard['id'],
+                ]
+            )
+        );
+
+        $assignDefaultPaymentMethodToUser = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => $userId,
+                    'payment_method_id' => $defaultPaymentMethod['id'],
+                    'is_primary' => 1
+                ]
+            )
+        );
 
         $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
         $paymentMethod = $this->paymentMethodRepository->create(
@@ -1769,6 +1835,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 [
                     'user_id' => rand(),
                     'payment_method_id' => $paymentMethod['id'],
+                    'is_primary' => 0
                 ]
             )
         );
@@ -1777,12 +1844,60 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(204, $results->getStatusCode());
 
-        // $this->assertSoftDeleted(
-        //     ConfigService::$tablePaymentMethod,
-        //     [
-        //         'id' => $paymentMethod['id'],
-        //     ]
-        // );
+        $this->assertDatabaseHas(
+            ConfigService::$tablePaymentMethod,
+            [
+                'id' => $paymentMethod['id'],
+                'method_type' => $paymentMethod['method_type'],
+                'deleted_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+    }
+
+    public function test_delete_default_payment_method_not_allowed()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
+        $paymentMethod = $this->paymentMethodRepository->create(
+            $this->faker->paymentMethod(
+                [
+                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                    'method_id' => $creditCard['id'],
+                ]
+            )
+        );
+
+        $userPaymentMethod = $this->userPaymentMethodRepository->create(
+            $this->faker->userPaymentMethod(
+                [
+                    'user_id' => rand(),
+                    'payment_method_id' => $paymentMethod['id'],
+                    'is_primary' => 1
+                ]
+            )
+        );
+
+        $results = $this->call('DELETE', '/payment-method/' . $paymentMethod['id']);
+
+        $this->assertEquals(403, $results->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                "title" => "Not allowed.",
+                "detail" => "Delete failed, can not delete the default payment method",
+            ],
+            $results->decodeResponseJson('meta')['errors']
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tablePaymentMethod,
+            [
+                'id' => $paymentMethod['id'],
+                'method_type' => $paymentMethod['method_type'],
+                'deleted_on' => null,
+            ]
+        );
     }
 
     public function test_get_user_payment_methods()

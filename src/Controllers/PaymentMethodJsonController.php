@@ -347,14 +347,19 @@ class PaymentMethodJsonController extends BaseController
     {
         $paymentMethod = $this->paymentMethodRepository->read($paymentMethodId);
 
+        throw_if(
+            is_null($paymentMethod),
+            new NotFoundException('Delete failed, payment method not found with id: ' . $paymentMethodId)
+        );
+
         if($paymentMethod['user_id'] !== auth()->id())
         {
             $this->permissionService->canOrThrow(auth()->id(), 'delete.payment.method');
         }
 
         throw_if(
-            is_null($paymentMethod),
-            new NotFoundException('Delete failed, payment method not found with id: ' . $paymentMethodId)
+            $paymentMethod->user['is_primary'],
+            new NotAllowedException('Delete failed, can not delete the default payment method')
         );
 
         $results = $this->paymentMethodRepository->delete($paymentMethodId);
