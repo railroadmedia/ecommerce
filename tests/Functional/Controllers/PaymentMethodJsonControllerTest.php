@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
+use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
@@ -97,46 +98,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 [
                     "source" => "gateway",
                     "detail" => "The gateway field is required.",
-                ],
-                [
-                    "source" => "user_id",
-                    "detail" => "The user id field is required when customer id is not present.",
-                ],
-                [
-                    "source" => "customer_id",
-                    "detail" => "The customer id field is required when user id is not present.",
-                ],
-            ],
-            $results->decodeResponseJson('meta')['errors']
-        );
-    }
-
-    public function test_store_payment_method_paypal_without_required_fields()
-    {
-        $results = $this->call(
-            'PUT',
-            '/payment-method',
-            [
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'user_email' => $this->faker->email
-            ]
-        );
-
-        $this->assertEquals(422, $results->getStatusCode());
-
-        $this->assertEquals(
-            [
-                [
-                    "source" => "gateway",
-                    "detail" => "The gateway field is required.",
-                ],
-                [
-                    "source" => "token",
-                    "detail" => "The token field is required when method type is paypal.",
-                ],
-                [
-                    "source" => "address_id",
-                    "detail" => "The address id field is required when method type is paypal.",
                 ],
                 [
                     "source" => "user_id",
@@ -501,80 +462,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_user_store_paypal_payment_method()
-    {
-        $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
-        $expressCheckoutToken = self::VALID_EXPRESS_CHECKOUT_TOKEN;
-        $addressId = $this->faker->numberBetween();
-        $customerId = null;
-        $currency = 'cad';
-
-        $results = $this->call(
-            'PUT',
-            '/payment-method',
-            [
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'token' => $expressCheckoutToken,
-                'address_id' => $addressId,
-                'user_id' => $userId,
-                'customer_id' => $customerId,
-                'currency' => $currency,
-                'gateway' => 'drumeo',
-            ]
-        );
-
-        // TO-DO: fix temp disable
-        // $this->assertEquals(200, $results->getStatusCode());
-
-        // $this->assertArraySubset(
-        //     [
-        //         'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-        //         'created_on' => Carbon::now()
-        //             ->toDateTimeString(),
-        //         'updated_on' => null,
-        //         'currency' => $currency,
-        //         'method' => [
-        //             'created_on' => Carbon::now()
-        //                 ->toDateTimeString(),
-        //             'updated_on' => null,
-        //         ],
-        //     ],
-        //     $results->decodeResponseJson()['data'][0]
-        // );
-
-        //assert payment method, credit card, link between user and payment method saved in the db
-        // $this->assertDatabaseHas(
-        //     ConfigService::$tablePaymentMethod,
-        //     [
-        //         'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-        //         'currency' => $currency,
-        //         'created_on' => Carbon::now()
-        //             ->toDateTimeString(),
-        //     ]
-        // );
-
-        // $this->assertDatabaseHas(
-        //     ConfigService::$tablePaypalBillingAgreement,
-        //     [
-        //         'payment_gateway_name' => 'drumeo',
-        //         'created_on' => Carbon::now()
-        //             ->toDateTimeString(),
-        //     ]
-        // );
-
-        // $this->assertDatabaseHas(
-        //     ConfigService::$tableUserPaymentMethods,
-        //     [
-        //         'user_id' => $userId,
-        //         'payment_method_id' => 1,
-        //         'created_on' => Carbon::now()
-        //             ->toDateTimeString(),
-        //     ]
-        // );
-    }
-
     public function test_store_payment_method_credit_card_failed()
     {
         $userId = $this->createAndLogInNewUser();
@@ -660,79 +547,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'fingerprint' => $cardFingerprint,
                 'last_four_digits' => $cardLast4,
                 'company_name' => $cardType,
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
-            ]
-        );
-    }
-
-    public function test_user_store_paypal_payment_method_failed()
-    {
-        $expressCheckoutToken = $this->faker->numberBetween();
-        $addressId = $this->faker->numberBetween();
-        $userId = rand();
-        $customerId = null;
-        $currency = 'cad';
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willThrowException(new PaymentFailedException('Payment failed'));
-
-        // $this->expectException(PaymentFailedException::class); // TO-DO: fix temp disable
-        $results = $this->call(
-            'PUT',
-            '/payment-method',
-            [
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'token' => $expressCheckoutToken,
-                'address_id' => $addressId,
-                'user_id' => $userId,
-                'user_email' => $this->faker->email,
-                'customer_id' => $customerId,
-                'currency' => $currency,
-                'gateway' => 'drumeo',
-            ]
-        );
-
-        // TO-DO: fix temp disable
-        // //assert error message subset results
-        // $this->assertArraySubset(
-        //     [
-        //         'title' => 'Not found.',
-        //         // 'detail' => 'Creation failed, method type(' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE . ') not allowed or incorrect data.'
-        //     ],
-        //     $results->decodeResponseJson('error')
-        // );
-
-        //assert payment method data not saved in the db
-        $this->assertDatabaseMissing(
-            ConfigService::$tablePaymentMethod,
-            [
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'currency' => $currency,
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
-            ]
-        );
-
-        //assert paypal billing agreement data not saved in the db
-        // $this->assertDatabaseMissing(
-        //     ConfigService::$tablePaypalBillingAgreement,
-        //     [
-        //         'express_checkout_token' => $expressCheckoutToken,
-        //         'address_id' => $addressId,
-        //         'expiration_date' => Carbon::now()
-        //             ->addYears(10)
-        //             ->toDateTimeString(),
-        //         'payment_gateway_name' => 'drumeo',
-        //         'created_on' => Carbon::now()
-        //             ->toDateTimeString(),
-        //     ]
-        // );
-
-        $this->assertDatabaseMissing(
-            ConfigService::$tableUserPaymentMethods,
-            [
-                'user_id' => $userId,
-                'payment_method_id' => 1,
                 'created_on' => Carbon::now()
                     ->toDateTimeString(),
             ]
@@ -1427,6 +1241,109 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_get_paypal_url()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $redirectToken = $this->faker->word;
+
+        $this->paypalExternalHelperMock->method('createBillingAgreementExpressCheckoutToken')
+            ->willReturn($redirectToken);
+
+        $response = $this->call('GET', '/payment-method/paypal-url');
+
+        // assert respons status code and response
+        $this->assertEquals(200, $response->getStatusCode());
+
+        // assert the redirect token is present in the response redirect url
+        $this->assertContains($redirectToken, $response->decodeResponseJson('url'));
+    }
+
+    public function test_paypal_agreement()
+    {
+        Event::fake();
+        $userId = $this->createAndLogInNewUser();
+
+        $agreementToken = $this->faker->word;
+        $agreementId = $this->faker->word;
+
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
+            ->willReturn($agreementId);
+
+        $response = $this->call(
+            'GET',
+            '/payment-method/paypal-agreement',
+            ['token' => $agreementToken]
+        );
+
+        // assert respons status code and response
+        $this->assertEquals(204, $response->getStatusCode());
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            [
+                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+                'brand' => ConfigService::$brand,
+                'user_id' => $userId
+            ]
+        );
+
+        $addressId = 1;
+
+        // assert database updates
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            [
+                'id' => $addressId,
+                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+                'brand' => ConfigService::$brand,
+                'user_id' => $userId
+            ]
+        );
+
+        $paypalBillingAgreementId = 1;
+
+        $this->assertDatabaseHas(
+            ConfigService::$tablePaypalBillingAgreement,
+            [
+                'id' => $paypalBillingAgreementId,
+                'external_id' => $agreementId,
+                'payment_gateway_name' => ConfigService::$brand,
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $paymentMethodId = 1;
+
+        $this->assertDatabaseHas(
+            ConfigService::$tablePaymentMethod,
+            [
+                'method_id' => $paymentMethodId,
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'billing_address_id' => 1,
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserPaymentMethods,
+            [
+                'user_id' => $userId,
+                'payment_method_id' => $paymentMethodId,
+                'is_primary' => 0,
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // assert event raised and test the id from event
+        Event::assertDispatched(
+            PaypalPaymentMethodEvent::class,
+            function ($e) use ($paymentMethodId) {
+                return $paymentMethodId == $e->getPaymentMethodId();
+            }
+        );
+    }
+
     public function test_update_payment_method_update_credit_card_validation()
     {
         $userId = $this->createAndLogInNewUser();
@@ -1488,133 +1405,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ],
             $results->decodeResponseJson('meta')['errors']
         );
-    }
-
-    public function test_update_payment_method_use_paypal_validation()
-    {
-        $userId = $this->createAndLogInNewUser();
-        $creditCard = $this->creditCardRepository->create(
-            $this->faker->creditCard(
-                [
-                    'payment_gateway_name' => 'recordeo',
-                ]
-            )
-        );
-
-        $paymentMethod = $this->paymentMethodRepository->create(
-            $this->faker->paymentMethod(
-                [
-                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                    'method_id' => $creditCard['id'],
-                ]
-            )
-        );
-
-        $results = $this->call(
-            'PATCH',
-            '/payment-method/' . $paymentMethod['id'],
-            [
-                'update_method' => 'use-paypal',
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'payment_gateway' => 'recordeo',
-            ]
-        );
-
-        $this->assertEquals(422, $results->getStatusCode());
-        // TO-DO: fix temp disable
-        // $this->assertEquals(
-        //     [
-        //         [
-        //             "source" => "token",
-        //             "detail" => "The token field is required when update method is use-paypal.",
-        //         ],
-        //         [
-        //             "source" => "address_id",
-        //             "detail" => "The address id field is required when update payment method and use paypal.",
-        //         ],
-        //     ],
-        //     $results->decodeResponseJson('meta')['errors']
-        // );
-
-        //assert payment method data not updated in the db
-        $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
-            [
-                'id' => $paymentMethod['id'],
-                'method_id' => $creditCard['id'],
-                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            ]
-        );
-    }
-
-    public function test_update_payment_method_use_paypal()
-    {
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
-        $userId = $this->createAndLogInNewUser();
-        $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
-
-        $paymentMethod = $this->paymentMethodRepository->create(
-            $this->faker->paymentMethod(
-                [
-                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                    'method_id' => $creditCard['id'],
-                ]
-            )
-        );
-        $userPaymentMethod = $this->userPaymentMethodRepository->create(
-            $this->faker->userPaymentMethod(
-                [
-                    'user_id' => $userId,
-                    'payment_method_id' => $paymentMethod['id'],
-                ]
-            )
-        );
-
-        $expressCheckoutToken = self::VALID_EXPRESS_CHECKOUT_TOKEN;
-
-        $addressId = rand();
-
-        $results = $this->call(
-            'PATCH',
-            '/payment-method/' . $paymentMethod['id'],
-            [
-                'update_method' => 'use-paypal',
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'token' => $expressCheckoutToken,
-                'address_id' => $addressId,
-                'gateway' => 'drumeo',
-            ]
-        );
-
-        // TO-DO: fix temp disable
-        // $this->assertEquals(201, $results->getStatusCode());
-        // $this->assertArraySubset(
-        //     [
-        //         'id' => $paymentMethod['id'],
-        //         'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-        //         'created_on' => $paymentMethod['created_on'],
-        //         'updated_on' => Carbon::now()
-        //             ->toDateTimeString(),
-        //         'currency' => $paymentMethod['currency'],
-        //     ],
-        //     $results->decodeResponseJson()['data'][0]
-        // );
-
-        //assert data updated in db
-        // $this->assertDatabaseHas(
-        //     ConfigService::$tablePaymentMethod,
-        //     [
-        //         'id' => $paymentMethod['id'],
-        //         'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-        //     ]
-        // );
-        // $this->assertDatabaseHas(
-        //     ConfigService::$tablePaypalBillingAgreement,
-        //     [
-        //         'payment_gateway_name' => 'drumeo',
-        //     ]
-        // );
     }
 
     public function test_delete_payment_method_not_authenticated_user()

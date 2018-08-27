@@ -284,6 +284,10 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$supportedCurrencies = config('ecommerce.supported_currencies');
         ConfigService::$defaultCurrency = config('ecommerce.default_currency');
         ConfigService::$defaultCurrencyPairPriceOffsets = config('ecommerce.default_currency_pair_price_offsets');
+
+        // paypal
+        ConfigService::$paypalAgreementRoute = config('ecommerce.paypal.agreementRoute');
+        ConfigService::$paypalAgreementFulfilledRoute = config('ecommerce.paypal.agreementFulfilledRoute');
     }
 
     /**

@@ -134,6 +134,9 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.fulfillmentStatusPending', $defaultConfig['fulfillmentStatusPending']);
         $app['config']->set('ecommerce.fulfillmentStatusFulfilled', $defaultConfig['fulfillmentStatusFulfilled']);
 
+        $app['config']->set('ecommerce.paypal.agreementRoute', $defaultConfig['paypal']['agreementRoute']);
+        $app['config']->set('ecommerce.paypal.agreementFulfilledRoute', $defaultConfig['paypal']['agreementFulfilledRoute']);
+
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
         $app['config']->set('location.api', $locationConfig['api']);

@@ -72,7 +72,7 @@ return [
                 'paypal_api_currency_code'             => '',
                 'paypal_api_version'                   => '',
                 'paypal_api_nvp_curl_url'              => '',
-                'paypal_api_checkout_redirect_url'     => '',
+                'paypal_api_checkout_redirect_url'     => 'https://www.sandbox.paypal.com/checkoutnow/2?useraction=commit&token=',
                 'paypal_api_checkout_return_url'       => '',
                 'paypal_api_checkout_cancel_url'       => '',
                 'paypal_api_test_billing_agreement_id' => '',
@@ -108,6 +108,11 @@ return [
         \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
         \Illuminate\Session\Middleware\StartSession::class,
         \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+    ],
+
+    'paypal' => [
+        'agreementRoute' => 'payment-method.paypal.agreement',
+        'agreementFulfilledRoute' => '' // route to redirect after handling a paypal agreement, eg for recordeo 'account.settings.payments'
     ],
 
     'role_abilities'          => [

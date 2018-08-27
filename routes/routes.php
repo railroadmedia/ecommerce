@@ -149,6 +149,16 @@ Route::put(
     Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@store'
 )->name('payment-method.store');
 
+Route::get(
+    '/payment-method/paypal-url',
+    Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@getPaypalUrl'
+)->name('payment-method.paypal.url');
+
+Route::get(
+    '/payment-method/paypal-agreement',
+    Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@paypalAgreement'
+)->name('payment-method.paypal.agreement');
+
 Route::patch(
     '/payment-method/{paymentMethodId}',
     [
@@ -162,6 +172,7 @@ Route::delete(
         'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@delete',
     ]
 )->name('payment-method.delete');
+
 Route::get(
     '/user-payment-method/{userId}',
     Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@getUserPaymentMethods'

@@ -275,5 +275,13 @@ class ConfigService
      */
     public static $fulfillmentStatusFulfilled;
 
+    /**
+     * @var string
+     */
+    public static $paypalAgreementRoute;
 
+    /**
+     * @var string
+     */
+    public static $paypalAgreementFulfilledRoute;
 }

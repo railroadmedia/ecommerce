@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
@@ -180,37 +182,6 @@ class PaymentMethodJsonController extends BaseController
                     $request->get('set_default', false),
                     null);
             }
-            else if($request->get('method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE)
-            {
-                $billingAgreementId =
-                    $this->payPalPaymentGateway->createBillingAgreement(
-                        $request->get('gateway'),
-                        '',
-                        '',
-                        $request->get('validated-express-checkout-token')
-                    );
-
-                // save billing address
-                $billingAddressDB = $this->addressRepository->create(
-                    [
-                        'type'       => CartAddressService::BILLING_ADDRESS_TYPE,
-                        'brand'      => ConfigService::$brand,
-                        'user_id'    => $user['id'],
-                        'state'      => $request->get('billing_region'),
-                        'country'    => $request->get('billing_country'),
-                        'created_on' => Carbon::now()->toDateTimeString(),
-                    ]
-                );
-
-                $paymentMethodId = $this->paymentMethodService->createPayPalBillingAgreement(
-                    $user['id'],
-                    $billingAgreementId,
-                    $billingAddressDB['id'],
-                    $request->get('gateway'),
-                    $request->get('currency', $this->currencyService->get()),
-                    true
-                );
-            }
             else
             {
                 throw new NotAllowedException('Payment method not supported.');
@@ -236,6 +207,72 @@ class PaymentMethodJsonController extends BaseController
         $paymentMethod = $this->paymentMethodRepository->read($paymentMethodId);
 
         return reply()->json($paymentMethod);
+    }
+
+    /**
+     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPaypalUrl()
+    {
+        $url = $this->payPalPaymentGateway
+            ->getBillingAgreementExpressCheckoutUrl(
+                ConfigService::$brand,
+                url()->route(ConfigService::$paypalAgreementRoute)
+            );
+
+        return response()->json(["url" => $url]);
+    }
+
+    /**
+     * @param Request $request
+     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     * @return \Illuminate\Http\RedirectResponse | JsonResponse
+     */
+    public function paypalAgreement(Request $request)
+    {
+        if ($request->has('token')) {
+
+            $billingAgreementId =
+                $this->payPalPaymentGateway->createBillingAgreement(
+                    ConfigService::$brand,
+                    '',
+                    '',
+                    $request->get('token')
+                );
+
+            // save billing address
+            $billingAddressDB = $this->addressRepository->create(
+                [
+                    'type'       => CartAddressService::BILLING_ADDRESS_TYPE,
+                    'brand'      => ConfigService::$brand,
+                    'user_id'    => auth()->id(),
+                    'state'      => '',
+                    'country'    => '',
+                    'created_on' => Carbon::now()->toDateTimeString(),
+                ]
+            );
+
+            $paymentMethodId = $this->paymentMethodService
+                ->createPayPalBillingAgreement(
+                    auth()->id(),
+                    $billingAgreementId,
+                    $billingAddressDB['id'],
+                    ConfigService::$brand,
+                    $this->currencyService->get(),
+                    false
+                );
+
+            event(new PaypalPaymentMethodEvent($paymentMethodId));
+        }
+
+        if (ConfigService::$paypalAgreementFulfilledRoute) {
+            return redirect()->route(ConfigService::$paypalAgreementFulfilledRoute);
+        }
+
+        return reply()->json(null, [
+            'code' => 204
+        ]);
     }
 
     /**
