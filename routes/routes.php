@@ -160,6 +160,11 @@ Route::get(
 )->name('payment-method.paypal.agreement');
 
 Route::patch(
+    '/payment-method/set-default',
+    Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@setDefault'
+)->name('payment-method.set-default');
+
+Route::patch(
     '/payment-method/{paymentMethodId}',
     [
         'uses' => Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@update',

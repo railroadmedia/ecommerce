@@ -19,6 +19,8 @@ use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentMethodCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodUpdateRequest;
+use Railroad\Ecommerce\Requests\PaymentMethodCreatePaypalRequest;
+use Railroad\Ecommerce\Requests\PaymentMethodSetDefaultRequest;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
@@ -221,15 +223,15 @@ class PaymentMethodJsonController extends BaseController
                 url()->route(ConfigService::$paypalAgreementRoute)
             );
 
-        return response()->json(["url" => $url]);
+        return response()->json(['url' => $url]);
     }
 
     /**
-     * @param Request $request
+     * @param PaymentMethodCreatePaypalRequest $request
      * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
      * @return \Illuminate\Http\RedirectResponse | JsonResponse
      */
-    public function paypalAgreement(Request $request)
+    public function paypalAgreement(PaymentMethodCreatePaypalRequest $request)
     {
         if ($request->has('token')) {
 
@@ -272,6 +274,43 @@ class PaymentMethodJsonController extends BaseController
 
         return reply()->json(null, [
             'code' => 204
+        ]);
+    }
+
+    /**
+     * @param PaymentMethodSetDefaultRequest $request
+     * @throws \Railroad\Permissions\Exceptions\NotAllowedException
+     * @throws \Railroad\Ecommerce\Exceptions\NotFoundException
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setDefault(PaymentMethodSetDefaultRequest $request)
+    {
+        $paymentMethod = $this->paymentMethodRepository
+            ->read($request->get('id'));
+
+        if (($paymentMethod['user']['user_id'] ?? 0) !== auth()->id()) {
+            $this->permissionService
+                ->canOrThrow(auth()->id(), 'update.payment.method');
+        }
+
+        $message = 'Update failed, payment method not found with id: '
+            . $request->get('id');
+
+        throw_if(is_null($paymentMethod), new NotFoundException($message));
+
+        $this->userPaymentMethodRepository
+            ->query()
+            ->where('user_id', auth()->id())
+            ->update(['is_primary' => false]);
+
+        $userPaymentMethodId = $this->userPaymentMethodRepository
+            ->query()
+            ->where('user_id', auth()->id())
+            ->where('payment_method_id', $paymentMethod['id'])
+            ->update(['is_primary' => true]);
+
+        return response()->json([
+            'userPaymentMethodId' => $userPaymentMethodId
         ]);
     }
 
