@@ -96,7 +96,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'user_id' => $userId,
                 'type' => $this->faker->randomElement([ConfigService::$typeSubscription, ConfigService::$paymentPlanType]),
                 'start_date' => Carbon::now()->subYear(2),
-                'paid_until' => Carbon::now()->subYear(1),
+                'paid_until' => Carbon::now()->subDay(1),
                 'product_id' => $product['id'],
                 'currency'    => 'CAD',
                 'interval_type' => ConfigService::$intervalTypeMonthly,
@@ -128,7 +128,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $this->assertDatabaseHas(ConfigService::$tableSubscription,
                 [
                     'id'                => $initialSubscriptions[$i]['id'],
-                    'paid_until'        => Carbon::now()->addMonth($initialSubscriptions[$i]['interval_count'])->toDateTimeString(),
+                    'paid_until'        => Carbon::now()->addMonth($initialSubscriptions[$i]['interval_count'])->startOfDay()->toDateTimeString(),
                     'is_active'         => 1,
                     'total_cycles_paid' => $initialSubscriptions[$i]['total_cycles_paid'] + 1,
                     'updated_on'        => Carbon::now()->toDateTimeString()

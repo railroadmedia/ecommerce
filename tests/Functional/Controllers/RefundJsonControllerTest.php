@@ -53,7 +53,8 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $results = $this->call('PUT', '/refund', [
             'payment_id'    => rand(),
             'note'          => '',
-            'refund_amount' => rand()
+            'refund_amount' => rand(),
+            'gateway_name' => $this->faker->word
         ]);
 
         $this->assertEquals(422, $results->getStatusCode());
@@ -70,7 +71,9 @@ class RefundJsonControllerTest extends EcommerceTestCase
     public function test_user_create_own_refund()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->stripeExternalHelperMock->method('createRefund')->willReturn(1);
+        $refund = new \stdClass();
+        $refund->id = 1;
+        $this->stripeExternalHelperMock->method('createRefund')->willReturn($refund);
 
         $creditCard     = $this->creditCardRepository->create($this->faker->creditCard());
         $paymentMethod  = $this->paymentMethodRepository->create($this->faker->paymentMethod([
@@ -91,7 +94,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $results = $this->call('PUT', '/refund', [
             'payment_id'    => $payment['id'],
             'refund_amount' => $refundAmount,
-            'gateway-name' => 'drumeo'
+            'gateway_name' => 'drumeo'
         ]);
 
         //assert refund data subset of results

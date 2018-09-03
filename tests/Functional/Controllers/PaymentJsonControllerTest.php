@@ -241,14 +241,15 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'payment_gateway'   => 'drumeo',
             'due'               => $due
         ]);
+
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals(
             [
                 "title"  => "Not allowed.",
                 "detail" => "This action is unauthorized.",
             ]
-            , $results->decodeResponseJson('meta')['errors']);
-        $this->assertArraySubset([], $results->decodeResponseJson('data'));
+            , $results->decodeResponseJson('error'));
+        $this->assertArraySubset([], $results->decodeResponseJson('results'));
     }
 
     public function test_admin_store_manual_payment()
