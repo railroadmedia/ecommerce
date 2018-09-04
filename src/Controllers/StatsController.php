@@ -89,7 +89,7 @@ class StatsController extends BaseController
         $products =
             $this->productRepository->query()
                 ->select('id', 'sku', 'name', 'type', 'is_physical', 'weight')
-                ->selectRaw('0 as quantity, 0 as paid, 0 as tax, 0 as refunded, 0 as shippingCosts,  0 as finance')
+                ->selectRaw('0 as paid, 0 as shippingCosts, 0 as finance, 0 as tax, 0 as refunded, 0 as quantity')
                 ->where(
                     ConfigService::$tableProduct . '.brand',
                     $request->get('brand', ConfigService::$brand)
@@ -165,12 +165,20 @@ class StatsController extends BaseController
             $orderTotalPaid = $items->sum('total_price');
             $payment = $orderPaymentDetails[$orderPayments[$order->id]->payment_id];
 
-            foreach ($items as $item) {
+            foreach ($items as $index => $item) {
                 $quantity = $products[$item->product_id]->quantity;
                 $shippingCosts = $products[$item->product_id]->shippingCosts;
-                $tax = $products[$item->product_id]->tax;
                 $refunded = $products[$item->product_id]->refunded;
                 $paid = $products[$item->product_id]->paid;
+                $finance = $products[$item->product_id]->finance;
+                $tax = $products[$item->product_id]->tax;
+                if($orderTotalPaid > 0){
+                    $paid += $item->total_price / $orderTotalPaid * $payment->paid;
+                } else {
+                    $paidForThisOrderItem = $payment->paid / count($items);
+
+                    $paid += $paidForThisOrderItem;
+                }
                 if ($payment->refunded == 0) {
                     if (($products[$item->product_id]->is_physical == 1) && ($orderTotalWeight > 0)) {
                         $shippingCosts += $products[$item->product_id]->weight /
@@ -178,8 +186,16 @@ class StatsController extends BaseController
                             $order->shipping_costs;
                     }
                     $quantity += $item->quantity;
-                    $tax += $item->total_price / $order->paid * $order->tax;
-                    $paid += $item->total_price/$orderTotalPaid * $payment->paid;
+                    if($orderTotalPaid > 0) {
+                        $tax += $item->total_price / $orderTotalPaid * ($order->tax * $payment->paid / $order->due);
+                    } else {
+                        $tax += $order->tax/count($items);
+                    }
+                    //finance
+                    if (($index == 0) && ($order->paid < $order->due) && ($order->due > 0)) {
+                        $finance++;
+                    }
+
                 }
                 $refunded += $item->total_price / $order->paid * $payment->refunded;
 
@@ -188,33 +204,36 @@ class StatsController extends BaseController
                 $products[$item->product_id]->offsetSet('tax', $tax);
                 $products[$item->product_id]->offsetSet('refunded', $refunded);
                 $products[$item->product_id]->offsetSet('paid', $paid);
+                $products[$item->product_id]->offsetSet('finance', $finance);
 
             }
         }
-
         //renewal stats
         $subscriptionRenewed = $subscriptions[ConfigService::$typeSubscription];
         foreach ($subscriptionRenewed as $subscription) {
             $payment = $subscriptionPaymentDetails[$subscriptionRenewalPayments[$subscription->id]->payment_id];
-            $orderTotalPaid = $items->sum('total_price');
+
             if ($payment->refunded == 0) {
-                $quantity = $products[$subscription->product_id]->quantity + 1;
+
                 $shippingCosts = $products[$subscription->product_id]->shippingCosts + $subscription->shipping_costs;
-                $tax = $products[$subscription->product_id]->tax+ $subscription->tax_per_payment;
-                $paid = $products[$subscription->product_id]->paid + $subscription->total_price_per_payment;
+                $tax = $products[$subscription->product_id]->tax + $subscription->tax_per_payment;
+
+                $products[$subscription->product_id]->offsetSet('shippingCosts', $shippingCosts);
+                $products[$subscription->product_id]->offsetSet('tax', $tax);
+
             }
 
-            $refunded = $products[$item->product_id]->refunded + $payment->refunded;
-            $products[$subscription->product_id]->offsetSet('quantity', $quantity);
-            $products[$subscription->product_id]->offsetSet('shippingCosts', $shippingCosts);
-            $products[$subscription->product_id]->offsetSet('tax', $tax);
+            $refunded = $products[$subscription->product_id]->refunded + $payment->refunded;
+
+            $paid = $products[$subscription->product_id]->paid + $payment->paid;
+
             $products[$subscription->product_id]->offsetSet('refunded', $refunded);
             $products[$subscription->product_id]->offsetSet('paid', $paid);
         }
 
         $paymentPlansRenewed = $subscriptions[ConfigService::$paymentPlanType];
         foreach ($paymentPlansRenewed as $subscription) {
-            if($subscription->order_id) {
+            if ($subscription->order_id) {
                 $orderForPaymentPlansRenewed =
                     $this->orderRepository->query()
                         ->whereIn('id', [$subscription->order_id])
@@ -233,6 +252,11 @@ class StatsController extends BaseController
                 foreach ($items as $item) {
                     $quantity = $products[$item->product_id]->quantity;
                     $paid = $products[$item->product_id]->paid;
+                    if($orderTotalPaid > 0) {
+                        $paid += $item->total_price / $orderTotalPaid * $payment->paid;
+                    } else {
+                        $paid += $payment->paid/count($items);
+                    }
                     if ($payment->refunded == 0) {
                         $quantity += $item->quantity;
                         $shippingCosts =
@@ -243,13 +267,14 @@ class StatsController extends BaseController
                             $products[$item->product_id]->tax +
                             $paymentPlansRenewed->whereStrict('order_id', $orderPaymentPlan->id)
                                 ->sum('tax_per_payment');
-                        $paid += $item->total_price/$orderTotalPaid * $payment->paid;
+
                         $products[$item->product_id]->offsetSet('quantity', $quantity);
                         $products[$item->product_id]->offsetSet('shippingCosts', $shippingCosts);
 
                         $products[$item->product_id]->offsetSet('tax', $tax);
-                        $products[$item->product_id]->offsetSet('paid', $paid);
+
                     }
+                    $products[$item->product_id]->offsetSet('paid', $paid);
                 }
             }
         }
