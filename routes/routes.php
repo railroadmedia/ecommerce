@@ -319,6 +319,11 @@ Route::get(
     Railroad\Ecommerce\Controllers\StatsController::class . '@statsProduct'
 )->name('stats.products');
 
+Route::get(
+    'stats/orders',
+    \Railroad\Ecommerce\Controllers\StatsController::class . '@statsOrder'
+)->name('stats.orders');
+
 //stripe webhook
 Route::post(
     'stripe/webhook',

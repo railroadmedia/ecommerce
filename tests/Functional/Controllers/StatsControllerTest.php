@@ -148,4 +148,18 @@ class StatsControllerTest extends EcommerceTestCase
         $this->assertEquals($order->tax, $results->decodeResponseJson('data')[0]['totalTax']);
         $this->assertEquals(($product->price + $product2->price), $results->decodeResponseJson('data')[0]['totalNet']);
     }
+
+    public function test_order_stats()
+    {
+        $results = $this->call(
+            'GET',
+            '/stats/orders/',
+            [
+                'start-date' => '2018-08-06 00:00:00',
+                'end-date' => '2018-08-06 23:59:59'
+            ]
+        );
+
+        dd($results->decodeResponseJson('data'));
+    }
 }

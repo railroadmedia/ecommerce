@@ -21,6 +21,7 @@ use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
 use Railroad\Response\Providers\ResponseServiceProvider;
+use Railroad\Usora\Providers\UsoraServiceProvider;
 use Webpatser\Countries\CountriesServiceProvider;
 
 class EcommerceTestCase extends BaseTestCase
@@ -102,8 +103,9 @@ class EcommerceTestCase extends BaseTestCase
         $defaultConfig       = require(__DIR__ . '/../config/ecommerce.php');
         $locationConfig      = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
         $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
+        $usoraConfig = require (__DIR__ . '/../vendor/railroad/usora/config/usora.php');
 
-        $app['config']->set('ecommerce.database_connection_name', 'testbench');
+        $app['config']->set('ecommerce.database_connection_name', 'mysql');
         $app['config']->set('ecommerce.cache_duration', 60);
         $app['config']->set('ecommerce.table_prefix', $defaultConfig['table_prefix']);
         $app['config']->set('ecommerce.data_mode', $defaultConfig['data_mode']);
@@ -146,15 +148,18 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
 
+        $app['config']->set('usora.table_prefix', $usoraConfig['table_prefix']);
+        $app['config']->set('usora.tables', $usoraConfig['tables']);
+
         // setup default database to use sqlite :memory:
-        $app['config']->set('database.default', 'testbench');
+        $app['config']->set('database.default', 'mysql');
         $app['config']->set(
             'database.connections.mysql',
             [
                 'driver'    => 'mysql',
                 'host'      => 'mysql',
                 'port'      => env('MYSQL_PORT', '3306'),
-                'database'  => env('MYSQL_DB', 'ecommerce'),
+                'database'  => env('MYSQL_DB', 'musora_laravel'),
                 'username'  => 'root',
                 'password'  => 'root',
                 'charset'   => 'utf8',
@@ -202,6 +207,7 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(CountriesServiceProvider::class);
         $app->register(PermissionsServiceProvider::class);
         $app->register(ResponseServiceProvider::class);
+        $app->register(UsoraServiceProvider::class);
 
         $app->bind('UserProviderInterface', function () {
             $mock = $this->getMockBuilder('UserProviderInterface')
