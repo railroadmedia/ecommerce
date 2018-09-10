@@ -111,6 +111,7 @@ class ShoppingCartController extends BaseController
                         [
                             'product-id' => $product['id'],
                             'requires-shipping-address' => $product['is_physical'],
+                            'thumbnail_url' => $product['thumbnail_url'],
                         ]
                     );
                 } else {
@@ -122,7 +123,7 @@ class ShoppingCartController extends BaseController
                         ') is smaller than the quantity you\'ve selected(' .
                         $quantityToAdd .
                         ')' : '';
-                    $errors[] = $message;
+                    $errors[] = ['message' => $message, 'product' => $product];
                 }
             }
         }

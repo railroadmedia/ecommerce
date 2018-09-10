@@ -101,13 +101,17 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas(
             'notAvailableProducts',
             [
-                'Product with SKU:' .
-                $product['sku'] .
-                ' could not be added to cart. The product stock(' .
-                $product['stock'] .
-                ') is smaller than the quantity you\'ve selected(' .
-                $quantity .
-                ')',
+                [
+                    'message' =>
+                        'Product with SKU:' .
+                        $product['sku'] .
+                        ' could not be added to cart. The product stock(' .
+                        $product['stock'] .
+                        ') is smaller than the quantity you\'ve selected(' .
+                        $quantity .
+                        ')',
+                    'product' => $product
+                ]
             ]
         );
     }
@@ -133,7 +137,12 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         // assert the session has the error message
         $response->assertSessionHas(
             'notAvailableProducts',
-            ['Product with SKU:' . $randomSku . ' could not be added to cart.']
+            [
+                [
+                    'message' => 'Product with SKU:' . $randomSku . ' could not be added to cart.',
+                    'product' => null
+                ]
+            ]
         );
     }
 
@@ -206,13 +215,16 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas(
             'notAvailableProducts',
             [
-                'Product with SKU:' .
-                $product['sku'] .
-                ' could not be added to cart. The product stock(' .
-                $product['stock'] .
-                ') is smaller than the quantity you\'ve selected(' .
-                $quantity .
-                ')',
+                [
+                    'message' => 'Product with SKU:' .
+                        $product['sku'] .
+                        ' could not be added to cart. The product stock(' .
+                        $product['stock'] .
+                        ') is smaller than the quantity you\'ve selected(' .
+                        $quantity .
+                        ')',
+                    'product' => $product
+                ]
             ]
         );
     }
@@ -262,8 +274,14 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas(
             'notAvailableProducts',
             [
-                'Product with SKU:' . $randomSku1 . ' could not be added to cart.',
-                'Product with SKU:' . $randomSku2 . ' could not be added to cart.',
+                [
+                    'message' => 'Product with SKU:' . $randomSku1 . ' could not be added to cart.',
+                    'product' => null,
+                ],
+                [
+                    'message' => 'Product with SKU:' . $randomSku2 . ' could not be added to cart.',
+                    'product' => null,
+                ]
             ]
         );
     }
