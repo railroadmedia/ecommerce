@@ -242,6 +242,7 @@ class StatsController extends BaseController
             $subscriptions =
                 $this->subscriptionRepository->query()
                     ->whereIn('id', $subscriptionRenewalPayments->pluck('subscription_id'))
+                    ->where('brand',  $request->get('brand', ConfigService::$brand))
                     ->orderBy('created_on')
                     ->chunk(
                         250,
@@ -275,9 +276,6 @@ class StatsController extends BaseController
                                     $refunded = $products[$subscription->product_id]->refunded + $payment->refunded;
 
                                     $paid = $products[$subscription->product_id]->paid + $payment->paid;
-                                    if ($subscription->product_id == 133) {
-                                        var_dump('add refunded si results::' . $refunded);
-                                    }
                                     $products[$subscription->product_id]->offsetSet('refunded', $refunded);
                                     $products[$subscription->product_id]->offsetSet('paid', $paid);
                                     $products[$subscription->product_id]->offsetSet('totalNet', ($paid - $refunded));
@@ -435,7 +433,6 @@ class StatsController extends BaseController
             'tax paid' => 0.0,
             'finance paid' => 0.0,
             'total paid' => 0.0,
-            'refunded' => 0.0,
         ];
 
         $alreadyCalculatedPaymentIds = [];
@@ -523,7 +520,6 @@ class StatsController extends BaseController
 
                                 foreach ($orders as $order) {
                                     $dataRow = $rowDataTemplate;
-                                    $dataRow['type'] = 'order';
                                     $items = [];
                                     if ($orderItems->has($order->id)) {
                                         $items = $orderItems[$order->id];
@@ -621,6 +617,7 @@ class StatsController extends BaseController
                             ->keyBy('id');
                     $this->subscriptionRepository->query()
                         ->whereIn('id', $subscriptionRenewalPayments->pluck('subscription_id'))
+                        ->where(ConfigService::$tableSubscription . '.brand', $brand)
                         ->orderBy('created_on')
                         ->chunk(
                             100,
@@ -630,7 +627,8 @@ class StatsController extends BaseController
                                 &$rows,
                                 $rowDataTemplate,
                                 &$alreadyCalculatedPaymentIds,
-                                $paymentMethods
+                                $paymentMethods,
+                                $brand
                             ) {
                                 $customers =
                                     $this->customerRepository->query()
@@ -666,12 +664,13 @@ class StatsController extends BaseController
                                     if ($users->has("$subscription->user_id")) {
                                         $dataRow['email'] = $users[$subscription->user_id]['email'];
                                     } elseif ($customers->has("$subscription->customer_id")) {
-                                        $dataRow['email'] = $customers[$subscription->customer_id]['email'];
+                                        $dataRow['email'] = $customers[$subscription->customer_id]['email'] ?? '';
                                     } else {
                                         $dataRow['email'] = 'unknown';
                                     }
 
-                                    if ($subscription->type == ConfigService::$typeSubscription) {
+                                    if (($subscription->type == ConfigService::$typeSubscription) &&
+                                        ($subscription->product_id)) {
                                         $dataRow['products'] .= $products[$subscription->product_id]->name;
                                         if ($payment->refunded == 0) {
                                             $dataRow['tax paid'] = $subscription->tax_per_payment;
@@ -681,6 +680,7 @@ class StatsController extends BaseController
                                             $orderForPaymentPlansRenewed =
                                                 $this->orderRepository->query()
                                                     ->whereIn('id', [$subscription->order_id])
+                                                    ->where(ConfigService::$tableOrder . '.brand', $brand)
                                                     ->get()
                                                     ->keyBy('id');
                                             $itemsForPaymentPlans =
@@ -694,7 +694,8 @@ class StatsController extends BaseController
                                                     $item->quantity .
                                                     '<br>';
                                             }
-                                            if ($payment->refunded == 0) {
+                                            if (($payment->refunded == 0) &&
+                                                ($orderForPaymentPlansRenewed[$subscription->order_id]->due > 0)) {
                                                 $dataRow['tax paid'] =
                                                     $orderForPaymentPlansRenewed[$subscription->order_id]->tax *
                                                     $payment->paid /
