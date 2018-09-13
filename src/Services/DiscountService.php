@@ -24,31 +24,27 @@ class DiscountService
         foreach($discountsToApply as $discount)
         {
             // save raw in order item discounts
-            if($discount['discount_type'] == self::PRODUCT_AMOUNT_OFF_TYPE ||
-                $discount['discount_type'] == self::PRODUCT_PERCENT_OFF_TYPE ||
-                $discount['discount_type'] == self::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE ||
-                $discount['discount_type'] == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE
-            )
-            {
-                foreach($cartItems as $key => $cartItem)
-                {
-
-                    if($cartItem['options']['product-id'] == $discount['product_id'])
-                    {
-                        $cartItems[$key]['applyDiscount'] = $discount;
+            if ($discount['type'] == self::PRODUCT_AMOUNT_OFF_TYPE ||
+                $discount['type'] == self::PRODUCT_PERCENT_OFF_TYPE ||
+                $discount['type'] == self::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE ||
+                $discount['type'] == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
+                foreach ($cartItems as $key => $cartItem) {
+                    if (in_array(
+                        $cartItem['options']['product-id'],
+                        array_pluck($discount['criteria'], 'product_id')
+                    )) {
+                        $cartItems[$key]['applyDiscount'][] = $discount;
                     }
                 }
             }
 
             // Order/shipping total discounts
-            if($discount['discount_type'] == self::ORDER_TOTAL_AMOUNT_OFF_TYPE ||
-                $discount['discount_type'] == self::ORDER_TOTAL_PERCENT_OFF_TYPE ||
-                $discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE ||
-                $discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE ||
-                $discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE
-            )
-            {
-                $cartItems['applyDiscount'] = $discount;
+            if ($discount['type'] == self::ORDER_TOTAL_AMOUNT_OFF_TYPE ||
+                $discount['type'] == self::ORDER_TOTAL_PERCENT_OFF_TYPE ||
+                $discount['type'] == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE ||
+                $discount['type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE ||
+                $discount['type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
+                $cartItems['applyDiscount'][] = $discount;
             }
         }
 
@@ -65,33 +61,30 @@ class DiscountService
 
         $amountDiscounted = 0;
 
-        foreach($discountsToApply as $discount)
-        {
-            foreach($cartItems as $cartItem)
-            {
-                if($discount['discount_type'] == self::ORDER_TOTAL_AMOUNT_OFF_TYPE)
-                {
+        foreach ($discountsToApply as $discount) {
+            foreach ($cartItems as $cartItem) {
+                if ($discount['type'] == self::ORDER_TOTAL_AMOUNT_OFF_TYPE) {
                     $amountDiscounted += $discount['amount'];
                     break;
-                }
-                elseif($discount['discount_type'] == self::ORDER_TOTAL_PERCENT_OFF_TYPE)
-                {
+                } elseif ($discount['type'] == self::ORDER_TOTAL_PERCENT_OFF_TYPE) {
                     $amountDiscounted += $discount['amount'] / 100 * $cartItemsTotalDue;
                     break;
-                }
-                elseif($discount['discount_type'] == self::PRODUCT_AMOUNT_OFF_TYPE)
-                {
-
-                    if($cartItem['options']['product-id'] == $discount['product_id'])
-                    {
-                        $amountDiscounted += $discount['amount'] * $cartItem['quantity'];
+                } elseif ($discount['type'] == self::PRODUCT_AMOUNT_OFF_TYPE) {
+                    if (in_array(
+                        $cartItem['options']['product-id'],
+                        array_pluck($discount['criteria'], 'product_id')
+                    )) {
+                        //Check product price and discount amount.
+                        //IF discount amount it's greater that product price we use product price as discounted amount to avoid negative value
+                        $amountDiscounted += ($discount['amount'] > $cartItem['price']) ? $cartItem['price'] :
+                            $discount['amount'] * $cartItem['quantity'];
                     }
-                }
-                elseif($discount['discount_type'] == self::PRODUCT_PERCENT_OFF_TYPE)
-                {
+                } elseif ($discount['type'] == self::PRODUCT_PERCENT_OFF_TYPE) {
 
-                    if($cartItem['options']['product-id'] == $discount['product_id'])
-                    {
+                    if (in_array(
+                        $cartItem['options']['product-id'],
+                        array_pluck($discount['criteria'], 'product_id')
+                    )) {
                         $amountDiscounted += $discount['amount'] / 100 * $cartItem['price'] * $cartItem['quantity'];
                     }
                 }
@@ -114,15 +107,15 @@ class DiscountService
         {
             foreach($discountsToApply as $discount)
             {
-                if($discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE)
+                if($discount['type'] == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE)
                 {
                     $amountDiscounted += $discount['amount'];
                 }
-                elseif($discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE)
+                elseif($discount['type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE)
                 {
                     $amountDiscounted += $discount['amount'] / 100 * $initialShippingCosts;
                 }
-                elseif($discount['discount_type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE)
+                elseif($discount['type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE)
                 {
                     return $discount['amount'];
                 }

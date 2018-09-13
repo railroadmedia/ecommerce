@@ -2,17 +2,12 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\OrderRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
 
 class TaxService
 {
-    /**
-     * @var \Railroad\Ecommerce\Repositories\ProductRepository
-     */
-    private $productRepository;
-
     /**
      * @var \Railroad\Ecommerce\Repositories\OrderItemRepository
      */
@@ -34,35 +29,39 @@ class TaxService
     private $discountService;
 
     /**
+     * @var DiscountRepository
+     */
+    private $discountRepository;
+
+    /**
      * @var \Railroad\Ecommerce\Services\CartService
      */
     private $cartService;
 
     /**
-     *
-     * /**
      * TaxService constructor.
      *
-     * @param \Railroad\Ecommerce\Repositories\ProductRepository   $productRepository
-     * @param \Railroad\Ecommerce\Repositories\OrderItemRepository $orderItemRepository
-     * @param \Railroad\Ecommerce\Repositories\OrderRepository     $orderRepository
-     * @param \Railroad\Ecommerce\Services\DiscountCriteriaService $discountCriteriaService
-     * @param \Railroad\Ecommerce\Services\DiscountService         $discountService
+     * @param OrderItemRepository $orderItemRepository
+     * @param OrderRepository $orderRepository
+     * @param DiscountCriteriaService $discountCriteriaService
+     * @param DiscountService $discountService
+     * @param CartService $cartService
+     * @param DiscountRepository $discountRepository
      */
     public function __construct(
-        ProductRepository $productRepository,
         OrderItemRepository $orderItemRepository,
         OrderRepository $orderRepository,
         DiscountCriteriaService $discountCriteriaService,
         DiscountService $discountService,
-        CartService $cartService
+        CartService $cartService,
+        DiscountRepository $discountRepository
     ) {
-        $this->productRepository       = $productRepository;
-        $this->orderItemRepository     = $orderItemRepository;
-        $this->orderRepository         = $orderRepository;
+        $this->orderItemRepository = $orderItemRepository;
+        $this->orderRepository = $orderRepository;
         $this->discountCriteriaService = $discountCriteriaService;
-        $this->discountService         = $discountService;
-        $this->cartService             = $cartService;
+        $this->discountService = $discountService;
+        $this->cartService = $cartService;
+        $this->discountRepository = $discountRepository;
     }
 
     /** Calculate the tax rate based on country and region
@@ -113,24 +112,24 @@ class TaxService
         $taxRate = $this->getTaxRate($country, $region);
 
         $discountsToApply = [];
+        $activeDiscounts =
+            $this->discountRepository->query()
+                ->where('active', 1)
+                ->get();
 
         foreach($cartItems as $key => $item)
         {
             $cartItems[$key]['totalPrice'] =
                 ConfigService::$defaultCurrencyPairPriceOffsets[$currency][$item['totalPrice']] ?? $item['totalPrice'];
-            $product                       = $this->productRepository->read($cartItems[$key]['options']['product-id']);
-            if(!empty($product['discounts']))
-            {
-                //Check whether the discount criteria are met
+            foreach($activeDiscounts as $activeDiscount){
                 $meetCriteria = $this->discountCriteriaService->discountCriteriaMetForOrder(
-                    $product['discounts'],
+                    $activeDiscount->criteria,
                     $cartItems,
                     $shippingCosts,
                     $this->cartService->getPromoCode()
                 );
-                if($meetCriteria)
-                {
-                    $discountsToApply = array_merge($discountsToApply, $product['discounts']);
+                if ($meetCriteria) {
+                    $discountsToApply[$activeDiscount->id] =  $activeDiscount;
                 }
             }
         }
@@ -138,14 +137,15 @@ class TaxService
         $cartItems = $this->discountService->applyDiscounts($discountsToApply, $cartItems);
 
         $cartItemsTotalDue = array_sum(array_column($cartItems, 'totalPrice'));
-        $discount          = $this->discountService->getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cartItems);
+        $discount = $this->discountService->getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cartItems);
 
-        $shippingCostsWithDiscount   = $this->discountService->getShippingCostsDiscounted($discountsToApply, $shippingCosts);
+        $shippingCostsWithDiscount =
+            $this->discountService->getShippingCostsDiscounted($discountsToApply, $shippingCosts);
         $cartItemsTotalDueDiscounted = $cartItemsTotalDue - $discount;
 
         $productsTaxAmount = round($cartItemsTotalDueDiscounted * $taxRate, 2);
 
-        $shippingTaxAmount = round((float) $shippingCostsWithDiscount * $taxRate, 2);
+        $shippingTaxAmount = round((float)$shippingCostsWithDiscount * $taxRate, 2);
 
         $paymentPlan = $this->cartService->getPaymentPlanNumberOfPayments();
 

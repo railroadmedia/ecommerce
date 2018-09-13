@@ -872,15 +872,24 @@ class OrderFormController extends BaseController
 
         foreach($cartItemsWithTaxesAndCosts['cartItems'] as $item)
         {
-            if(array_key_exists('applyDiscount', $item))
-            {
-                //save order discount
-                $orderDiscount    = $this->orderDiscountRepository->create([
-                    'order_id'    => $order['id'],
-                    'discount_id' => $item['applyDiscount']['discount_id'],
-                    'created_on'  => Carbon::now()->toDateTimeString()
-                ]);
-                $amountDiscounted = array_sum(array_column($cartItems, 'totalPrice')) + $cartItemsWithTaxesAndCosts['shippingCosts'] - $cartItemsWithTaxesAndCosts['totalDue'];
+            if(array_key_exists('applyDiscount', $item)) {
+                foreach ($item['applyDiscount'] as $orderDiscount) {
+
+                    //save order discount
+                    $orderDiscount = $this->orderDiscountRepository->create(
+                        [
+                            'order_id' => $order['id'],
+                            'discount_id' => $orderDiscount['id'],
+                            'created_on' => Carbon::now()
+                                ->toDateTimeString()
+                        ]
+                    );
+                }
+                $amountDiscounted =
+                    array_sum(array_column($cartItems, 'totalPrice')) +
+                    $cartItemsWithTaxesAndCosts['shippingCosts'] -
+                    $cartItemsWithTaxesAndCosts['totalDue'];
+
             }
         }
 
@@ -900,12 +909,17 @@ class OrderFormController extends BaseController
         if(array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems'][$key]))
         {
             //save order item discount
-            $orderDiscount = $this->orderDiscountRepository->create([
-                'order_id'      => $order['id'],
-                'order_item_id' => $orderItem['id'],
-                'discount_id'   => $cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_id'],
-                'created_on'    => Carbon::now()->toDateTimeString()
-            ]);
+            foreach($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount'] as $itemDiscount) {
+                $orderDiscount = $this->orderDiscountRepository->create(
+                    [
+                        'order_id' => $order['id'],
+                        'order_item_id' => $orderItem['id'],
+                        'discount_id' => $itemDiscount['id'],
+                        'created_on' => Carbon::now()
+                            ->toDateTimeString()
+                    ]
+                );
+            }
 
             $itemAmountDiscounted = $this->discountService->getAmountDiscounted([$cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']], $cartItemsWithTaxesAndCosts['totalDue'], $cartItems);
 
