@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
+use Railroad\Ecommerce\Services\PaymentPlanService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Resora\Entities\Entity;
 
@@ -27,6 +28,11 @@ class ShoppingCartController extends BaseController
     private $cartAddressService;
 
     /**
+     * @var PaymentPlanService
+     */
+    private $paymentPlanService;
+
+    /**
      * @var TaxService
      */
     private $taxService;
@@ -43,6 +49,7 @@ class ShoppingCartController extends BaseController
         CartService $cartService,
         ProductRepository $productRepository,
         CartAddressService $cartAddressService,
+        PaymentPlanService $paymentPlanService,
         TaxService $taxService
     ) {
         parent::__construct();
@@ -50,6 +57,7 @@ class ShoppingCartController extends BaseController
         $this->cartService = $cartService;
         $this->productRepository = $productRepository;
         $this->cartAddressService = $cartAddressService;
+        $this->paymentPlanService = $paymentPlanService;
         $this->taxService = $taxService;
     }
 
@@ -228,14 +236,41 @@ class ShoppingCartController extends BaseController
             $errors[] = $message;
         }
 
-        $response = new Entity(
-            [
-                'success' => $success,
-                'addedProducts' => $this->cartService->getAllCartItems(),
-                'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
-                'notAvailableProducts' => $errors,
-            ]
-        );
+        $data = [
+            'success' => $success,
+            'addedProducts' => $this->cartService->getAllCartItems(),
+            'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
+            'notAvailableProducts' => $errors,
+            'tax' => 0,
+            'total' => 0
+        ];
+
+        if ($data['cartNumberOfItems']) {
+
+            $billingAddress = $this
+                ->cartAddressService
+                ->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+
+            $cartItemsPriceWithTax =
+                $this->taxService->calculateTaxesForCartItems(
+                    $this->cartService->getAllCartItems(),
+                    $billingAddress['country'],
+                    $billingAddress['region']
+                );
+
+            $isPaymentPlanEligible = $this->paymentPlanService
+                                        ->isPaymentPlanEligible();
+            $paymentPlanPricing = $this->paymentPlanService
+                                        ->getPaymentPlanPricingForCartItems();
+
+            $data['tax'] = $cartItemsPriceWithTax['totalTax'];
+            $data['total'] = $cartItemsPriceWithTax['totalDue'];
+            $data['cartItems'] = $cartItemsPriceWithTax['cartItems'];
+            $data['isPaymentPlanEligible'] = $isPaymentPlanEligible;
+            $data['paymentPlanPricing'] = $paymentPlanPricing;
+        }
+
+        $response = new Entity($data);
 
         return reply()->json(
             $response,
