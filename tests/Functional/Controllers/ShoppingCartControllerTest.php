@@ -292,7 +292,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             $this->faker->product(
                 [
                     'active' => 1,
-                    'stock' => $this->faker->numberBetween(6, 3000),
+                    'stock' => $this->faker->numberBetween(1001, 3000),
                 ]
             )
         );
@@ -314,11 +314,145 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $response = $this->call('PUT', '/remove-from-cart/' . $product['id']);
 
+        // assert cart data response
+        $this->assertEquals([
+            'data' => [
+                [
+                    'tax' => 0,
+                    'total' => 0,
+                    'cartItems' => []
+                ]
+            ]
+        ], $response->decodeResponseJson());
+
         // assert the session has the success message and the product was removed from the cart
         $response->assertSessionMissing('addedProducts');
 
         //assert response status code
-        $this->assertEquals(204, $response->getStatusCode());
+        $this->assertEquals(201, $response->getStatusCode());
+    }
+
+    public function test_remove_product_from_cart_cart_not_empty()
+    {
+        $productOne = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(1001, 3000),
+                ]
+            )
+        );
+        $productOneQuantity = $this->faker->numberBetween(1, 1000);
+
+        $cart = $this->cartService->addCartItem(
+            $productOne['name'],
+            $productOne['description'],
+            $productOneQuantity,
+            $productOne['price'],
+            $productOne['is_physical'],
+            $productOne['is_physical'],
+            $this->faker->word,
+            rand(),
+            0,
+            [
+                'product-id' => $productOne['id'],
+            ]
+        );
+
+        $productTwo = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(1001, 3000),
+                ]
+            )
+        );
+        $productTwoQuantity = $this->faker->numberBetween(1, 1000);
+
+        $cart = $this->cartService->addCartItem(
+            $productTwo['name'],
+            $productTwo['description'],
+            $productTwoQuantity,
+            $productTwo['price'],
+            $productTwo['is_physical'],
+            $productTwo['is_physical'],
+            $this->faker->word,
+            rand(),
+            0,
+            [
+                'product-id' => $productTwo['id'],
+            ]
+        );
+
+        $productThree = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(1001, 3000),
+                ]
+            )
+        );
+        $productThreeQuantity = $this->faker->numberBetween(1, 1000);
+
+        $cart = $this->cartService->addCartItem(
+            $productThree['name'],
+            $productThree['description'],
+            $productThreeQuantity,
+            $productThree['price'],
+            $productThree['is_physical'],
+            $productThree['is_physical'],
+            $this->faker->word,
+            rand(),
+            0,
+            [
+                'product-id' => $productThree['id'],
+            ]
+        );
+
+        $response = $this->call('PUT', '/remove-from-cart/' . $productOne['id']);
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert cart data response
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    [
+                        'cartItems' => [
+                            [
+                                'name' => $productTwo['name'],
+                                'description' => $productTwo['description'],
+                                'quantity' => $productTwoQuantity,
+                                'totalPrice' => $productTwo['price'] * $productTwoQuantity,
+                                'requiresShippingAddress' => $productTwo['is_physical'],
+                                'requiresBillinggAddress' => $productTwo['is_physical'],
+                                'options' => ['product-id' => $productTwo['id']]
+                            ],
+                            [
+                                'name' => $productThree['name'],
+                                'description' => $productThree['description'],
+                                'quantity' => $productThreeQuantity,
+                                'totalPrice' => $productThree['price'] * $productThreeQuantity,
+                                'requiresShippingAddress' => $productThree['is_physical'],
+                                'requiresBillinggAddress' => $productThree['is_physical'],
+                                'options' => ['product-id' => $productThree['id']]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            $decodedResponse
+        );
+
+        // assert cart data response hax tax and total information
+        $this->assertArrayHasKey('tax', $decodedResponse['data'][0]);
+        $this->assertArrayHasKey('total', $decodedResponse['data'][0]);
+
+        // assert the session has the success message and the product was removed from the cart
+        $response->assertSessionMissing('addedProducts');
+
+        //assert response status code
+        $this->assertEquals(201, $response->getStatusCode());
     }
 
     public function test_update_cart_item_quantity()

@@ -191,9 +191,9 @@ class ShoppingCartController extends BaseController
         }
 
         return reply()->json(
-            null,
+            new Entity($this->getCartData()),
             [
-                'code' => 204,
+                'code' => 201,
             ]
         );
     }
@@ -217,17 +217,26 @@ class ShoppingCartController extends BaseController
         $success = false;
 
         if (($product) && ($product['stock'] >= $quantity)) {
-            $success = true;
-            $cartItems = $this->cartService->getAllCartItems();
+            if ($quantity >= 0) {
+                $success = true;
+                $cartItems = $this->cartService->getAllCartItems();
 
-            foreach ($cartItems as $cartItem) {
-                if ($cartItem['options']['product-id'] == $productId) {
-                    $this->cartService->updateCartItemQuantity($cartItem['id'], $quantity);
+                foreach ($cartItems as $cartItem) {
+                    if ($cartItem['options']['product-id'] == $productId) {
+                        if ($quantity > 0) {
+                            $this->cartService->updateCartItemQuantity($cartItem['id'], $quantity);
+                        } else {
+                            $this->cartService->removeCartItem($cartItem['id']);
+                        }
+                    }
                 }
+            } else {
+                $errors = ['Invalid quantity value.'];
             }
         } else {
             $message = 'The quantity can not be updated.';
-            $message .= (is_array($product)) ?
+            $message .= (is_object($product) &&
+                get_class($product) == Entity::class) ?
                 ' The product stock(' .
                 $product['stock'] .
                 ') is smaller than the quantity you\'ve selected(' .
@@ -236,47 +245,58 @@ class ShoppingCartController extends BaseController
             $errors[] = $message;
         }
 
-        $data = [
-            'success' => $success,
-            'addedProducts' => $this->cartService->getAllCartItems(),
-            'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
-            'notAvailableProducts' => $errors,
+        $data = array_merge(
+            [
+                'success' => $success,
+                'addedProducts' => $this->cartService->getAllCartItems(),
+                'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
+                'notAvailableProducts' => $errors,
+            ],
+            $this->getCartData()
+        );
+
+        return reply()->json(
+            new Entity($data),
+            [
+                'code' => 201,
+            ]
+        );
+    }
+
+    protected function getCartData()
+    {
+        $cartData = [
             'tax' => 0,
-            'total' => 0
+            'total' => 0,
+            'cartItems' => []
         ];
 
-        if ($data['cartNumberOfItems']) {
+        $cartItems = $this->cartService->getAllCartItems();
 
-            $billingAddress = $this
-                ->cartAddressService
+        if (count($cartItems)) {
+            $billingAddress = $this->cartAddressService
                 ->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
 
-            $cartItemsPriceWithTax =
-                $this->taxService->calculateTaxesForCartItems(
-                    $this->cartService->getAllCartItems(),
+            $cartItemsPriceWithTax = $this->taxService
+                ->calculateTaxesForCartItems(
+                    $cartItems,
                     $billingAddress['country'],
                     $billingAddress['region']
                 );
 
             $isPaymentPlanEligible = $this->paymentPlanService
-                                        ->isPaymentPlanEligible();
-            $paymentPlanPricing = $this->paymentPlanService
-                                        ->getPaymentPlanPricingForCartItems();
+                ->isPaymentPlanEligible();
 
-            $data['tax'] = $cartItemsPriceWithTax['totalTax'];
-            $data['total'] = $cartItemsPriceWithTax['totalDue'];
-            $data['cartItems'] = $cartItemsPriceWithTax['cartItems'];
-            $data['isPaymentPlanEligible'] = $isPaymentPlanEligible;
-            $data['paymentPlanPricing'] = $paymentPlanPricing;
+            $paymentPlanPricing = $this->paymentPlanService
+                ->getPaymentPlanPricingForCartItems();
+
+            $cartData['tax'] = $cartItemsPriceWithTax['totalTax'];
+            $cartData['total'] = $cartItemsPriceWithTax['totalDue'];
+            $cartData['cartItems'] = $cartItemsPriceWithTax['cartItems'];
+            $cartData['isPaymentPlanEligible'] = $isPaymentPlanEligible;
+            $cartData['paymentPlanPricing'] = $paymentPlanPricing;
         }
 
-        $response = new Entity($data);
-
-        return reply()->json(
-            $response,
-            [
-                'code' => 201,
-            ]
-        );
+        return $cartData;
     }
 }
