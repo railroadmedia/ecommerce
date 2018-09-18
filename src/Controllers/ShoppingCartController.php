@@ -120,6 +120,7 @@ class ShoppingCartController extends BaseController
                             'product-id' => $product['id'],
                             'requires-shipping-address' => $product['is_physical'],
                             'thumbnail_url' => $product['thumbnail_url'],
+                            'is_physical' => $product['is_physical'],
                         ]
                     );
                 } else {
