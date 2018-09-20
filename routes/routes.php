@@ -3,6 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use Railroad\Ecommerce\Middleware\AdministratorMiddleware;
 
+//session
+Route::put(
+    '/session/address',
+    Railroad\Ecommerce\Controllers\SessionJsonController::class . '@storeAddress'
+)->name('session.store-address');
+
 //shopping cart
 Route::get(
     '/add-to-cart',

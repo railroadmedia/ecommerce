@@ -70,4 +70,23 @@ class CartAddressService
         return $this->getAddress($addressType);
     }
 
+    /**
+     * Update the address stored on the session and return it
+     *
+     * @param array $address
+     * @param string $addressType
+     * @return array
+     */
+    public function updateAddress($address, $addressType)
+    {
+        $this->session->put(
+            self::SESSION_KEY . $addressType,
+            array_merge(
+                $this->getAddress($addressType) ?? [],
+                $address
+            )
+        );
+
+        return $this->getAddress($addressType);
+    }
 }
