@@ -729,15 +729,20 @@ class OrderFormController extends BaseController
         //apply subscription discounts
         if(($applyDiscounts) && (array_key_exists('applyDiscount', $cartItemsWithTaxesAndCosts['cartItems'][$key])))
         {
-            if($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_type'] == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE)
-            {
-                //add the days from the discount to the subscription next bill date
-                $nextBillDate = $nextBillDate->addDays($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['amount']);
-            }
-            elseif($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['discount_type'] == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE)
-            {
-                //calculate subscription price per payment after discount
-                $subscriptionPricePerPayment = $cartItem['price'] - $cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']['amount'];
+            foreach($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount'] as $discount) {
+                if ($discount['type'] ==
+                    DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
+                    //add the days from the discount to the subscription next bill date
+                    $nextBillDate =
+                        $nextBillDate->addDays(
+                            $discount['amount']
+                        );
+                } elseif ($discount['type'] ==
+                    DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
+                    //calculate subscription price per payment after discount
+                    $subscriptionPricePerPayment =
+                        $cartItem['price'] - $discount['amount'];
+                }
             }
         }
 
@@ -921,7 +926,7 @@ class OrderFormController extends BaseController
                 );
             }
 
-            $itemAmountDiscounted = $this->discountService->getAmountDiscounted([$cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount']], $cartItemsWithTaxesAndCosts['totalDue'], $cartItems);
+            $itemAmountDiscounted = $this->discountService->getAmountDiscounted($cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount'], $cartItemsWithTaxesAndCosts['totalDue'], $cartItems);
 
             return $this->orderItemRepository->update($orderItem['id'], [
                 'order_id'    => $order['id'],
