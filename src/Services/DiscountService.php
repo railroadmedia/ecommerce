@@ -29,10 +29,10 @@ class DiscountService
                 $discount['type'] == self::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE ||
                 $discount['type'] == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
                 foreach ($cartItems as $key => $cartItem) {
-                    if (in_array(
-                        $cartItem['options']['product-id'],
-                        array_pluck($discount['criteria'], 'product_id')
-                    )) {
+                    if (
+                        $cartItem['options']['product-id'] ==
+                        $discount['product_id']
+                    ) {
                         $cartItems[$key]['applyDiscount'][] = $discount;
                     }
                 }
@@ -70,10 +70,10 @@ class DiscountService
                     $amountDiscounted += $discount['amount'] / 100 * $cartItemsTotalDue;
                     break;
                 } elseif ($discount['type'] == self::PRODUCT_AMOUNT_OFF_TYPE) {
-                    if (in_array(
-                        $cartItem['options']['product-id'],
-                        array_pluck($discount['criteria'], 'product_id')
-                    )) {
+                    if (
+                        $cartItem['options']['product-id'] ==
+                        $discount['product_id']
+                    ) {
                         //Check product price and discount amount.
                         //IF discount amount it's greater that product price we use product price as discounted amount to avoid negative value
                         $amountDiscounted += ($discount['amount'] > $cartItem['price']) ? $cartItem['price'] :
@@ -81,10 +81,10 @@ class DiscountService
                     }
                 } elseif ($discount['type'] == self::PRODUCT_PERCENT_OFF_TYPE) {
 
-                    if (in_array(
-                        $cartItem['options']['product-id'],
-                        array_pluck($discount['criteria'], 'product_id')
-                    )) {
+                    if (
+                        $cartItem['options']['product-id'] ==
+                        $discount['product_id']
+                    ) {
                         $amountDiscounted += $discount['amount'] / 100 * $cartItem['price'] * $cartItem['quantity'];
                     }
                 }

@@ -642,6 +642,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $discount         = $this->discountRepository->create($this->faker->discount([
             'active' => true,
+            'product_id'  => $product['id'],
             'type'   => 'product amount off',
             'amount' => 1.95
         ]));
@@ -752,6 +753,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $discount         = $this->discountRepository->create($this->faker->discount([
             'active' => true,
+            'product_id'  => $product['id'],
             'type'   => 'product amount off',
             'amount' => 1.95
         ]));
@@ -828,6 +830,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $discount         = $this->discountRepository->create($this->faker->discount([
             'active' => true,
+            'product_id'  => $product['id'],
             'type'   => DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE,
             'amount' => 10
         ]));
@@ -894,6 +897,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $discount         = $this->discountRepository->create($this->faker->discount([
             'active' => true,
+            'product_id'  => $product['id'],
             'type'   => DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE,
             'amount' => 10
         ]));
@@ -1096,6 +1100,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $discount         = $this->discountRepository->create($this->faker->discount([
             'active' => true,
+            'product_id'  => $product['id'],
             'type'   => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
             'amount' => 10
         ]));
@@ -1173,6 +1178,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $discount         = $this->discountRepository->create($this->faker->discount([
             'active' => true,
+            'product_id'  => $product['id'],
             'type'   => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
             'amount' => 10
         ]));
@@ -1970,6 +1976,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]));
         $discount          = $this->discountRepository->create($this->faker->discount([
             'active' => true,
+            'product_id'  => $product1['id'],
             'type'   => 'product amount off',
             'amount' => 20
         ]));
@@ -1982,6 +1989,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]));
         $discount2         = $this->discountRepository->create($this->faker->discount([
             'active' => true,
+            'product_id'  => $product2['id'],
             'type'   => 'product amount off',
             'amount' => 20
         ]));

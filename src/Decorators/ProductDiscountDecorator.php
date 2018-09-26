@@ -26,7 +26,7 @@ class ProductDiscountDecorator implements DecoratorInterface
             ->table(ConfigService::$tableDiscountCriteria)
             ->select(ConfigService::$tableDiscountCriteria.'.*', ConfigService::$tableDiscount.'.active', ConfigService::$tableDiscount.'.type as discount_type', ConfigService::$tableDiscount.'.amount')
             ->join(ConfigService::$tableDiscount, ConfigService::$tableDiscountCriteria.'.discount_id','=', ConfigService::$tableDiscount.'.id')
-            ->whereIn('product_id', $productIds)
+            ->whereIn(ConfigService::$tableDiscount.'.product_id', $productIds)
             ->where(ConfigService::$tableDiscount.'.active', true)
             ->get();
 

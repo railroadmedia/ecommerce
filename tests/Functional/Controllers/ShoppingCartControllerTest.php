@@ -542,7 +542,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             $this->faker->product(
                 [
                     'active' => 1,
-                    'stock' => $this->faker->numberBetween(1, 100),
+                    'stock' => $this->faker->numberBetween(3, 100),
                     'is_physical' => 0
                 ]
             )

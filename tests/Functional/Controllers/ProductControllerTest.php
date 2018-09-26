@@ -335,7 +335,8 @@ class ProductControllerTest extends EcommerceTestCase
 
         $product          = $this->productRepository->create($this->faker->product());
         $discount         = $this->discountRepository->create($this->faker->discount([
-            'active' => 1
+            'active' => 1,
+            'product_id'  => $product['id'],
         ]));
         $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
             'product_id'  => $product['id'],

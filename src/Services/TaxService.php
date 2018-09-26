@@ -122,13 +122,19 @@ class TaxService
             $cartItems[$key]['totalPrice'] =
                 ConfigService::$defaultCurrencyPairPriceOffsets[$currency][$item['totalPrice']] ?? $item['totalPrice'];
             foreach($activeDiscounts as $activeDiscount){
-                $meetCriteria = $this->discountCriteriaService->discountCriteriaMetForOrder(
-                    $activeDiscount->criteria,
-                    $cartItems,
-                    $shippingCosts,
-                    $this->cartService->getPromoCode()
-                );
-                if ($meetCriteria) {
+                $criteriaMet = true;
+                foreach ($activeDiscount->criteria as $discountCriteria) {
+                    if(!$this->discountCriteriaService->discountCriteriaMetForOrder(
+                        $discountCriteria,
+                        $cartItems,
+                        $shippingCosts,
+                        $this->cartService->getPromoCode()
+                    )){
+                        $criteriaMet = false;
+                    }
+                }
+
+                if ($criteriaMet) {
                     $discountsToApply[$activeDiscount->id] =  $activeDiscount;
 
                     $productDiscount = 0;

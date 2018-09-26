@@ -200,6 +200,7 @@ class Faker extends Generator
                 'description' => $this->text,
                 'type'        => $this->word,
                 'amount'      => $this->randomNumber(2),
+                'product_id'  => $this->randomNumber(2),
                 'active'      => $this->boolean,
                 'created_on'  => Carbon::now()->toDateTimeString()
             ], $override
@@ -297,6 +298,19 @@ class Faker extends Generator
                 'company' => null,
                 'tracking_number' => null,
                 'fulfilled_on' => null,
+                'created_on' => Carbon::now()->toDateTimeString()
+            ], $override
+        );
+    }
+
+    public function userProduct(array $override = [])
+    {
+        return array_merge(
+            [
+                'user_id' => $this->randomNumber(),
+                'product_id' => $this->randomNumber(),
+                'quantity' => $this->numberBetween(1,5),
+                'expiration_date' => null,
                 'created_on' => Carbon::now()->toDateTimeString()
             ], $override
         );
