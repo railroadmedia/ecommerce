@@ -34,22 +34,12 @@ class OrderFormSubmitRequest extends FormRequest
      */
     public function rules()
     {
-
-        $minMonth = (request()->get('credit-card-year-selector') == date('Y')) ? '|min:' . intval(date('n')) : '';
-
         $rules = [
             'payment_method_type' => 'required',
-
-            'billing-country'            => 'required|regex:/^(?!Country$)/',
-            'credit-card-month-selector' => 'required_if:payment_method_type,' .
-                PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE . '|numeric' . $minMonth,
-            'credit-card-year-selector'  => 'required_if:payment_method_type,' .
-                PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE . '|numeric|min:' . intval(date('Y')),
-            'credit-card-number'         => 'required_if:payment_method_type,' .
+            'billing-country'     => 'required|regex:/^(?!Country$)/',
+            'card-token'          => 'required_if:payment_method_type,' .
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'credit-card-cvv'            => 'numeric|digits_between:3,4|required_if:payment_method_type,' .
-                PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'gateway'                    => 'required'
+            'gateway'             => 'required'
         ];
 
         if(request()->get('billing-country') == 'Canada')

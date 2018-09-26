@@ -382,20 +382,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals([
             [
-                "source" => "credit-card-month-selector",
-                "detail" => "The credit-card-month-selector field is required when payment method type is credit-card.",
-            ],
-            [
-                "source" => "credit-card-year-selector",
-                "detail" => "The credit-card-year-selector field is required when payment method type is credit-card.",
-            ],
-            [
-                "source" => "credit-card-number",
-                "detail" => "The credit-card-number field is required when payment method type is credit-card.",
-            ],
-            [
-                "source" => "credit-card-cvv",
-                "detail" => "The credit-card-cvv field is required when payment method type is credit-card.",
+                "source" => "card-token",
+                "detail" => "The card-token field is required when payment method type is credit-card.",
             ]
         ], $results->decodeResponseJson('meta')['errors']);
     }
@@ -441,7 +429,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order()
     {
         $userId      = $this->createAndLogInNewUser();
-        $fingerPrint = '4242424242424242';
+        $fingerPrint = $this->faker->word;
         $this->stripeExternalHelperMock->method('getCustomersByEmail')->willReturn(['data' => '']);
         $fakerCustomer        = new Customer();
         $fakerCustomer->email = $this->faker->email;
@@ -545,12 +533,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country'            => 'Canada',
                 'company_name'               => $this->faker->creditCardType,
-                'credit-card-year-selector'  => $expirationDate->format('Y'),
-                'credit-card-month-selector' => $expirationDate->format('m'),
-                'credit-card-number'         => $fingerPrint,
-                'credit-card-cvv'            => $this->faker->randomNumber(4),
                 'gateway'                    => 'drumeo',
-                'card-token'                 => '4242424242424242',
+                'card-token'                 => $fingerPrint,
                 'shipping-first-name'        => $this->faker->firstName,
                 'shipping-last-name'         => $this->faker->lastName,
                 'shipping-address-line-1'    => $this->faker->address,
