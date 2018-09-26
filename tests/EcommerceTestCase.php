@@ -263,6 +263,9 @@ class EcommerceTestCase extends BaseTestCase
                     ['email' => $email]
                 );
 
+        Auth::shouldReceive('check')
+            ->andReturn(true);
+
         Auth::shouldReceive('id')
             ->andReturn($userId);
 

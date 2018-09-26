@@ -152,6 +152,11 @@ class ConfigService
     /**
      * @var string
      */
+    public static $tableUserProduct;
+
+    /**
+     * @var string
+     */
     public static $brand;
 
     /**
