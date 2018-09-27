@@ -59,16 +59,22 @@ Route::put(
     ]
 )->name('product.upload');
 
-//order form
+//order form json controller
 Route::get(
     '/order',
-    Railroad\Ecommerce\Controllers\OrderFormController::class . '@index'
+    Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@index'
 )->name('order.form');
 
 Route::put(
     '/order',
-    Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitOrder'
+    Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@submitOrder'
 )->name('order.submit');
+
+//order form controller with redirect responses
+Route::post(
+    '/submit-order',
+    Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitOrder'
+)->name('order.submit.form');
 
 //shipping option
 Route::get(
