@@ -23,12 +23,12 @@ class SessionStoreAddressRequest extends FormRequest
     {
         return [
             'billing-email'              => 'nullable|email',
-            'billing-country'            => 'nullable|regex:/^(?!Country$)/',
+            'billing-country'            => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
             'billing-region'             => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
             'billing-zip-or-postal-code' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
             'shipping-address-line-1'    => 'nullable',
             'shipping-city'              => 'nullable|regex:/^[a-zA-Z-_ ]+$/',
-            'shipping-country'           => 'nullable|regex:/^(?!Country$)/',
+            'shipping-country'           => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
             'shipping-first-name'        => 'nullable|regex:/^[a-zA-Z-_\' ]+$/',
             'shipping-last-name'         => 'nullable|regex:/^[a-zA-Z-_\' ]+$/',
             'shipping-region'            => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',

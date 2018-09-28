@@ -5,15 +5,16 @@ namespace Railroad\Ecommerce\Controllers;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Services\OrderFormService;
+use Railroad\Ecommerce\Services\CartService;
 
 class OrderFormController extends BaseController
 {
-	/**
+    /**
      * @var CartService
      */
     private $cartService;
 
-	/**
+    /**
      * @var \Railroad\Ecommerce\Services\OrderFormService
      */
     private $orderFormService;
@@ -25,11 +26,13 @@ class OrderFormController extends BaseController
      * @param \Railroad\Ecommerce\Services\OrderFormService $orderFormService
      */
     public function __construct(
-    	CartService $cartService,
-    	OrderFormService $orderFormService
+        CartService $cartService,
+        OrderFormService $orderFormService
     ) {
-    	$this->cartService = $cartService;
-    	$this->orderFormService = $orderFormService;
+        parent::__construct();
+
+        $this->cartService = $cartService;
+        $this->orderFormService = $orderFormService;
     }
 
     /** Submit an order
@@ -48,13 +51,13 @@ class OrderFormController extends BaseController
         );
 
         $result = $this->orderFormService
-        	->processOrderForm($request, $cartItems);
+            ->processOrderForm($request, $cartItems);
 
         return reply()->form(
-        	[(!isset($result['errors']) && isset($result['order']))]
+            [(!isset($result['errors']) && isset($result['order']))],
             $result['redirect'],
-            $result['errors'] ?? null,
-            isset($result['order']) ? ['order' => $result['order']] : null
+            $result['errors'] ?? [],
+            isset($result['order']) ? ['order' => $result['order']] : []
         );
     }
 }

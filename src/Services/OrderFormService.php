@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
+use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Mail\OrderInvoice;
@@ -366,6 +367,30 @@ class OrderFormService
                         'payment' => $paymentFailedException->getMessage()
                     ]
                 ];
+        } catch (\Stripe\Error\Card $exception) {
+            $exceptionData = $exception->getJsonBody();
+
+            // validate UI known error format
+            if (isset($exceptionData['error']) && isset($exceptionData['error']['code'])) {
+
+                if ($request->has('redirect')) {
+                    // assume request having redirect is aware and able to proccess stripe session errors
+                    return [
+                        'redirect' => $url,
+                        'errors' => [
+                            ['stripe' => $exceptionData['error']]
+                        ]
+                    ];
+                } else {
+                    // assume request not having redirect is json request
+                    throw new StripeCardException($exceptionData['error']);
+                }
+            }
+
+            // throw generic
+            throw new PaymentFailedException($exception->getMessage());
+        } catch(\Exception $paymentFailedException) {
+            throw new PaymentFailedException($paymentFailedException->getMessage());
         }
 
         //create Payment
