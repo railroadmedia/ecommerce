@@ -7,9 +7,12 @@ use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
+use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\RefundRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
@@ -53,11 +56,33 @@ class RefundJsonController extends BaseController
     private $orderItemFulfillmentRepository;
 
     /**
+     * @var OrderItemRepository
+     */
+    private $orderItemRepository;
+
+    /**
+     * @var SubscriptionPaymentRepository
+     */
+    private $subscriptionPaymentRepository;
+
+    /**
+     * @var SubscriptionRepository
+     */
+    private $subscriptionRepository;
+
+    /**
      * RefundJsonController constructor.
      *
-     * @param \Railroad\Ecommerce\Repositories\RefundRepository $refundRepository
-     * @param \Railroad\Ecommerce\Repositories\PaymentRepository $paymentRepository
-     * @param \Railroad\Permissions\Services\PermissionService $permissionService
+     * @param RefundRepository $refundRepository
+     * @param PaymentRepository $paymentRepository
+     * @param PermissionService $permissionService
+     * @param StripePaymentGateway $stripePaymentGateway
+     * @param PayPalPaymentGateway $payPalPaymentGateway
+     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param OrderItemFulfillmentRepository $orderItemFulfillmentRepository
+     * @param OrderItemRepository $orderItemRepository
+     * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
+     * @param SubscriptionRepository $subscriptionRepository
      */
     public function __construct(
         RefundRepository $refundRepository,
@@ -66,7 +91,10 @@ class RefundJsonController extends BaseController
         StripePaymentGateway $stripePaymentGateway,
         PayPalPaymentGateway $payPalPaymentGateway,
         OrderPaymentRepository $orderPaymentRepository,
-        OrderItemFulfillmentRepository $orderItemFulfillmentRepository
+        OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
+        OrderItemRepository $orderItemRepository,
+        SubscriptionPaymentRepository $subscriptionPaymentRepository,
+        SubscriptionRepository $subscriptionRepository
     ) {
         parent::__construct();
 
@@ -77,6 +105,9 @@ class RefundJsonController extends BaseController
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
+        $this->orderItemRepository = $orderItemRepository;
+        $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
+        $this->subscriptionRepository = $subscriptionRepository;
     }
 
     /** Call the refund method from the external payment helper and the method that save the refund in the database.
@@ -141,6 +172,26 @@ class RefundJsonController extends BaseController
             ->where('status', ConfigService::$fulfillmentStatusPending)
             ->whereNull('fulfilled_on')
             ->delete();
+        $orders[] = $orderPayment;
+        $subscriptionPayments =
+            $this->subscriptionPaymentRepository->query()
+                ->where('payment_id', $payment['id'])
+                ->get();
+        $paymentPlans =
+            $this->subscriptionRepository->query()
+                ->whereIn('id', $subscriptionPayments->pluck('subscription_id'))
+                ->whereNotNull('order_id')
+                ->get();
+        $orders[] = $paymentPlans;
+
+        //user products
+        foreach ($orders as $order) {
+            $orderItems =
+                $this->orderItemRepository->query()
+                    ->whereIn('order_id', $order->pluck('order_id'))
+                    ->get();
+            $products[] = $orderItems->pluck('product_id');
+        }
 
         return reply()->json($refund);
     }

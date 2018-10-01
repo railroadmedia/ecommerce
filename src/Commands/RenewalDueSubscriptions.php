@@ -7,11 +7,13 @@ use Exception;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
+use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Ecommerce\Services\UserProductService;
 
 class RenewalDueSubscriptions extends \Illuminate\Console\Command
 {
@@ -54,12 +56,24 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
      */
     private $subscriptionPaymentRepository;
 
+    /**
+     * @var OrderItemRepository
+     */
+    private $orderItemRepository;
+
+    /**
+     * @var UserProductService
+     */
+    private $userProductService;
+
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
         PaymentRepository $paymentRepository,
         StripePaymentGateway $stripePaymentGateway,
         PayPalPaymentGateway $payPalPaymentGateway,
-        SubscriptionPaymentRepository $subscriptionPaymentRepository
+        SubscriptionPaymentRepository $subscriptionPaymentRepository,
+        OrderItemRepository $orderItemRepository,
+        UserProductService $userProductService
     ) {
         parent::__construct();
 
@@ -68,6 +82,9 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         $this->stripePaymentGateway = $stripePaymentGateway;
         $this->paypalPaymentGateway = $payPalPaymentGateway;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
+        $this->orderItemRepository = $orderItemRepository;
+        $this->userProductService = $userProductService;
+
     }
 
     /**
@@ -81,15 +98,25 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         $this->info('------------------Renewal Due Subscriptions command------------------');
 
         $dueSubscriptions =
-            $this->subscriptionRepository->query()->select(ConfigService::$tableSubscription . '.*')->where(
+            $this->subscriptionRepository->query()
+                ->select(ConfigService::$tableSubscription . '.*')
+                ->where(
                     'paid_until',
                     '<=',
-                    Carbon::now()->toDateTimeString()
-                )->where(
+                    Carbon::now()
+                        ->toDateTimeString()
+                )
+                ->where(
                     'paid_until',
                     '>=',
-                    Carbon::now()->subDays(7)->toDateTimeString()
-                )->where('is_active', '=', true)->whereNull('canceled_on')->get()->toArray();
+                    Carbon::now()
+                        ->subDays(7)
+                        ->toDateTimeString()
+                )
+                ->where('is_active', '=', true)
+                ->whereNull('canceled_on')
+                ->get()
+                ->toArray();
 
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
 
@@ -100,7 +127,6 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                 ((int)$dueSubscription['total_cycles_paid'] >= (int)$dueSubscription['total_cycles_due'])) {
                 continue;
             }
-
 
             if ($dueSubscription['payment_method']['method_type'] ==
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
@@ -187,7 +213,8 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                         'due' => $dueSubscription['total_price_per_payment'],
                         'type' => ConfigService::$renewalPaymentType,
                         'payment_method_id' => $dueSubscription['payment_method']['id'],
-                        'created_on' => Carbon::now()->toDateTimeString(),
+                        'created_on' => Carbon::now()
+                            ->toDateTimeString(),
                     ]
                 )
             );
@@ -196,16 +223,41 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                 [
                     'subscription_id' => $dueSubscription['id'],
                     'payment_id' => $payment['id'],
-                    'created_on' => Carbon::now()->toDateTimeString(),
+                    'created_on' => Carbon::now()
+                        ->toDateTimeString(),
                 ]
             );
 
             if ($dueSubscription['interval_type'] == ConfigService::$intervalTypeMonthly) {
-                $nextBillDate = Carbon::now()->addMonths($dueSubscription['interval_count'])->startOfDay();
+                $nextBillDate =
+                    Carbon::now()
+                        ->addMonths($dueSubscription['interval_count'])
+                        ->startOfDay();
             } elseif ($dueSubscription['interval_type'] == ConfigService::$intervalTypeYearly) {
-                $nextBillDate = Carbon::now()->addYears($dueSubscription['interval_count'])->startOfDay();
+                $nextBillDate =
+                    Carbon::now()
+                        ->addYears($dueSubscription['interval_count'])
+                        ->startOfDay();
             } elseif ($dueSubscription['interval_type'] == ConfigService::$intervalTypeDaily) {
-                $nextBillDate = Carbon::now()->addDays($dueSubscription['interval_count'])->startOfDay();
+                $nextBillDate =
+                    Carbon::now()
+                        ->addDays($dueSubscription['interval_count'])
+                        ->startOfDay();
+            }
+
+            $subscriptionProducts = [];
+
+            //subscription products
+            if ($dueSubscription['user_id']) {
+                if ($dueSubscription['product_id']) {
+                    $subscriptionProducts[] = $dueSubscription['product_id'];
+                } elseif ($dueSubscription['order_id']) {
+                    $products =
+                        $this->orderItemRepository->query()
+                            ->where('order_id', $dueSubscription['order_id'])
+                            ->get();
+                    $subscriptionProducts[] = $products->pluck('id');
+                }
             }
 
             if ($paymentData['paid'] > 0) {
@@ -214,9 +266,31 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                     [
                         'total_cycles_paid' => $dueSubscription['total_cycles_paid'] + 1,
                         'paid_until' => $nextBillDate->toDateTimeString(),
-                        'updated_on' => Carbon::now()->toDateTimeString(),
+                        'updated_on' => Carbon::now()
+                            ->toDateTimeString(),
                     ]
                 );
+
+                foreach ($subscriptionProducts as $product) {
+                    $userProduct = $this->userProductService->getUserProductData(
+                        $dueSubscription['user_id'],
+                        $product
+                    );
+                    if (!$userProduct) {
+                        $this->userProductService->saveUserProduct(
+                            $dueSubscription['user_id'],
+                            $product,
+                            1,
+                            $nextBillDate->toDateTimeString()
+                        );
+                    } else {
+                        $this->userProductService->updateUserProduct(
+                            $userProduct['id'],
+                            $userProduct['quantity'],
+                            $nextBillDate->toDateTimeString()
+                        );
+                    }
+                }
 
                 event(new SubscriptionEvent($dueSubscription['id'], 'renewed'));
             } else {
@@ -224,9 +298,27 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                     $dueSubscription['id'],
                     [
                         'is_active' => false,
-                        'updated_on' => Carbon::now()->toDateTimeString(),
+                        'updated_on' => Carbon::now()
+                            ->toDateTimeString(),
                     ]
                 );
+
+                foreach ($subscriptionProducts as $product) {
+                    $userProduct = $this->userProductService->getUserProductData(
+                        $dueSubscription['user_id'],
+                        $product
+                    );
+
+                    if ($userProduct['quantity'] == 1) {
+                        $this->userProductService->deleteUserProduct($userProduct['id']);
+                    } else {
+                        $this->userProductService->updateUserProduct(
+                            $userProduct['id'],
+                            $userProduct['quantity'] - 1,
+                            $userProduct['expiration_date']
+                        );
+                    }
+                }
 
                 event(new SubscriptionEvent($dueSubscription['id'], 'deactivated'));
             }

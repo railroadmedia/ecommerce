@@ -133,6 +133,15 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'total_cycles_paid' => $initialSubscriptions[$i]['total_cycles_paid'] + 1,
                     'updated_on'        => Carbon::now()->toDateTimeString()
                 ]);
+
+            //assert user products assignation
+            $this->assertDatabaseHas(ConfigService::$tableUserProduct,
+                [
+                    'user_id' => $initialSubscriptions[$i]['user_id'],
+                    'product_id' => $initialSubscriptions[$i]['product_id'],
+                    'quantity' => 1,
+                    'expiration_date' => Carbon::now()->addMonth($initialSubscriptions[$i]['interval_count'])->startOfDay()->toDateTimeString()
+                ]);
         }
     }
 }
