@@ -16,6 +16,7 @@ use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
 
 class RefundJsonController extends BaseController
@@ -71,6 +72,11 @@ class RefundJsonController extends BaseController
     private $subscriptionRepository;
 
     /**
+     * @var UserProductService
+     */
+    private $userProductService;
+
+    /**
      * RefundJsonController constructor.
      *
      * @param RefundRepository $refundRepository
@@ -83,6 +89,7 @@ class RefundJsonController extends BaseController
      * @param OrderItemRepository $orderItemRepository
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
      * @param SubscriptionRepository $subscriptionRepository
+     * @param UserProductService $userProductService
      */
     public function __construct(
         RefundRepository $refundRepository,
@@ -94,7 +101,8 @@ class RefundJsonController extends BaseController
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         OrderItemRepository $orderItemRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
-        SubscriptionRepository $subscriptionRepository
+        SubscriptionRepository $subscriptionRepository,
+        UserProductService $userProductService
     ) {
         parent::__construct();
 
@@ -108,6 +116,7 @@ class RefundJsonController extends BaseController
         $this->orderItemRepository = $orderItemRepository;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->subscriptionRepository = $subscriptionRepository;
+        $this->userProductService = $userProductService;
     }
 
     /** Call the refund method from the external payment helper and the method that save the refund in the database.
@@ -161,10 +170,16 @@ class RefundJsonController extends BaseController
                 'refunded' => $payment['refunded'] + $refund['refunded_amount'],
             ]
         );
-
+        $orders = [];
         //cancel shipping fulfillment
         $orderPayment =
             $this->orderPaymentRepository->query()
+                ->join(
+                    ConfigService::$tableOrder,
+                    ConfigService::$tableOrderPayment . '.order_id',
+                    '=',
+                    ConfigService::$tableOrder . '.id'
+                )
                 ->where('payment_id', $payment['id'])
                 ->get();
         $this->orderItemFulfillmentRepository->query()
@@ -172,7 +187,9 @@ class RefundJsonController extends BaseController
             ->where('status', ConfigService::$fulfillmentStatusPending)
             ->whereNull('fulfilled_on')
             ->delete();
-        $orders[] = $orderPayment;
+        if ($orderPayment->isNotEmpty()) {
+            $orders = array_merge($orders, $orderPayment->toArray());
+        }
         $subscriptionPayments =
             $this->subscriptionPaymentRepository->query()
                 ->where('payment_id', $payment['id'])
@@ -182,15 +199,30 @@ class RefundJsonController extends BaseController
                 ->whereIn('id', $subscriptionPayments->pluck('subscription_id'))
                 ->whereNotNull('order_id')
                 ->get();
-        $orders[] = $paymentPlans;
+        if ($paymentPlans->isNotEmpty()) {
+            $orders = array_merge($orders, $paymentPlans->toArray());
+        }
 
-        //user products
+        //update user products data: if user own one product => delete user product row, otherwise decrement quantity
         foreach ($orders as $order) {
             $orderItems =
                 $this->orderItemRepository->query()
-                    ->whereIn('order_id', $order->pluck('order_id'))
+                    ->where('order_id', $order['order_id'])
                     ->get();
-            $products[] = $orderItems->pluck('product_id');
+            foreach ($orderItems as $orderItem) {
+                $userProduct =
+                    $this->userProductService->getUserProductData($order['user_id'], $orderItem['product_id']);
+                if (($userProduct) && ($userProduct['quantity'] == 1)) {
+                    $this->userProductService->deleteUserProduct($userProduct['id']);
+                } elseif ($userProduct) {
+                    $quantity = $userProduct['quantity'] - $orderItem['quantity'];
+                    $this->userProductService->updateUserProduct(
+                        $userProduct['id'],
+                        $quantity,
+                        $userProduct['expiration_date']
+                    );
+                }
+            }
         }
 
         return reply()->json($refund);

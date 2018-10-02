@@ -23,8 +23,10 @@ class UserProductService
     }
 
     /**
-     * @param $userId
-     * @param $productId
+     * Get user product based on user id and product id.
+     *
+     * @param int $userId
+     * @param int $productId
      * @return \Illuminate\Database\Eloquent\Model|null|object|UserProductRepository|\Railroad\Resora\Queries\BaseQuery
      */
     public function getUserProductData($userId, $productId)
@@ -40,10 +42,12 @@ class UserProductService
     }
 
     /**
-     * @param $userId
-     * @param $productId
-     * @param $quantity
-     * @param $expirationDate
+     * Save new record in user_product table.
+     *
+     * @param int $userId
+     * @param int $productId
+     * @param int $quantity
+     * @param string $expirationDate
      * @return null|\Railroad\Resora\Entities\Entity
      */
     public function saveUserProduct($userId, $productId, $quantity, $expirationDate)
@@ -62,9 +66,11 @@ class UserProductService
     }
 
     /**
-     * @param $userProductId
-     * @param $quantity
-     * @param $expirationDate
+     * Update user product: quantity, expiration date
+     *
+     * @param int $userProductId
+     * @param int $quantity
+     * @param string $expirationDate
      * @return int|null|\Railroad\Resora\Entities\Entity
      */
     public function updateUserProduct($userProductId, $quantity, $expirationDate)
@@ -80,11 +86,16 @@ class UserProductService
         );
     }
 
+    /**
+     * Delete user product based on row id
+     *
+     * @param int $userProductId
+     * @return int
+     */
     public function deleteUserProduct($userProductId)
     {
         return $this->userProductRepository->query()
             ->where('id', $userProductId)
             ->delete();
     }
-
 }
