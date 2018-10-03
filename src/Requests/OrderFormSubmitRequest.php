@@ -61,7 +61,7 @@ class OrderFormSubmitRequest extends FormRequest
                 'shipping-address-line-1' => 'required',
                 'shipping-city'           => 'required|regex:/^[a-zA-Z-_ ]+$/',
                 'shipping-region'         => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
-                'shipping-zip'            => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'shipping-zip-or-postal-code' => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
                 'shipping-country'        => 'required|regex:/^(?!Country$)/'
             ];
 

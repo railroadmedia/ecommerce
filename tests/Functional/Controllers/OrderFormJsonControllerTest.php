@@ -279,8 +279,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     "detail" => "The shipping-region field is required.",
                 ],
                 [
-                    "source" => "shipping-zip",
-                    "detail" => "The shipping-zip field is required.",
+                    "source" => "shipping-zip-or-postal-code",
+                    "detail" => "The shipping-zip-or-postal-code field is required.",
                 ],
                 [
                     "source" => "shipping-country",
@@ -398,8 +398,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     "detail" => "The shipping-region field is required.",
                 ],
                 [
-                    "source" => "shipping-zip",
-                    "detail" => "The shipping-zip field is required.",
+                    "source" => "shipping-zip-or-postal-code",
+                    "detail" => "The shipping-zip-or-postal-code field is required.",
                 ],
                 [
                     "source" => "shipping-country",
@@ -656,7 +656,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'ab',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
             ]
         );
@@ -873,7 +873,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'ab',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
             ]
         );
@@ -1018,7 +1018,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'bc',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
             ]
         );
@@ -1698,7 +1698,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'ab',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
             ]
         );
@@ -1823,7 +1823,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'ab',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
             ]
         );
@@ -1954,7 +1954,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'ab',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
             ]
         );
@@ -2140,7 +2140,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'ab',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
                 'billing-email' => $billingEmailAddress,
             ]
@@ -2222,7 +2222,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'ab',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
                 'account-creation-email' => $accountCreationMail,
                 'account-creation-password' => $accountCreationPassword,
@@ -2306,7 +2306,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'ab',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
             ]
         );
@@ -2456,7 +2456,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'british columbia',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
                 'payment-plan-selector' => $paymentPlanOption,
             ]
@@ -2658,7 +2658,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'british columbia',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
             ]
         );
@@ -2945,7 +2945,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-address-line-1' => $this->faker->address,
                 'shipping-city' => 'Canada',
                 'shipping-region' => 'british columbia',
-                'shipping-zip' => $this->faker->postcode,
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
                 'shipping-country' => 'Canada',
             ]
         );
