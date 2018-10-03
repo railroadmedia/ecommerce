@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
@@ -100,9 +101,10 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         $dueSubscriptions =
             $this->subscriptionRepository->query()
                 ->select(ConfigService::$tableSubscription . '.*')
+                ->where('brand', ConfigService::$brand)
                 ->where(
                     'paid_until',
-                    '<=',
+                    '<',
                     Carbon::now()
                         ->toDateTimeString()
                 )
@@ -110,24 +112,31 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                     'paid_until',
                     '>=',
                     Carbon::now()
-                        ->subDays(7)
+                        ->subMonths(1)
                         ->toDateTimeString()
                 )
                 ->where('is_active', '=', true)
                 ->whereNull('canceled_on')
+                ->where(
+                    function ($query) {
+                        /** @var $query \Eloquent */
+                        $query->whereNull(
+                            'total_cycles_due'
+                        )
+                            ->orWhere(
+                                'total_cycles_due',
+                                0
+                            )
+                            ->orWhere('total_cycles_paid', '<', DB::raw('`total_cycles_due`'));
+                    }
+                )
+                ->orderBy('start_date')
                 ->get()
                 ->toArray();
 
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
 
         foreach ($dueSubscriptions as $dueSubscription) {
-
-            //check for payment plan if the user have already paid all the cycles
-            if (($dueSubscription['type'] == ConfigService::$paymentPlanType) &&
-                ((int)$dueSubscription['total_cycles_paid'] >= (int)$dueSubscription['total_cycles_due'])) {
-                continue;
-            }
-
             if ($dueSubscription['payment_method']['method_type'] ==
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
 

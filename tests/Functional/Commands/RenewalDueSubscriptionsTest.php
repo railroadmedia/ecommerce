@@ -99,10 +99,11 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'paid_until' => Carbon::now()->subDay(1),
                 'product_id' => $product['id'],
                 'currency'    => 'CAD',
+                'brand' => ConfigService::$brand,
                 'interval_type' => ConfigService::$intervalTypeMonthly,
                 'interval_count' => 1,
                 'total_cycles_paid' => 1,
-                'total_cycles_due' => $this->faker->numberBetween(1,5),
+                'total_cycles_due' => $this->faker->numberBetween(2,5),
                 'total_price_per_payment' => $payment['due'],
                 'payment_method_id' => $paymentMethod['id']
             ]));
