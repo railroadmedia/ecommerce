@@ -209,20 +209,9 @@ class RefundJsonController extends BaseController
                 $this->orderItemRepository->query()
                     ->where('order_id', $order['order_id'])
                     ->get();
-            foreach ($orderItems as $orderItem) {
-                $userProduct =
-                    $this->userProductService->getUserProductData($order['user_id'], $orderItem['product_id']);
-                if (($userProduct) && ($userProduct['quantity'] == 1)) {
-                    $this->userProductService->deleteUserProduct($userProduct['id']);
-                } elseif ($userProduct) {
-                    $quantity = $userProduct['quantity'] - $orderItem['quantity'];
-                    $this->userProductService->updateUserProduct(
-                        $userProduct['id'],
-                        $quantity,
-                        $userProduct['expiration_date']
-                    );
-                }
-            }
+            $products = $orderItems->pluck('quantity', 'product_id');
+
+            $this->userProductService->removeUserProducts($order['user_id'], $products);
         }
 
         return reply()->json($refund);

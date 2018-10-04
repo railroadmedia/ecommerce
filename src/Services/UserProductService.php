@@ -98,4 +98,62 @@ class UserProductService
             ->where('id', $userProductId)
             ->delete();
     }
+
+    /**
+     * Assign new products to user or update product's quantity.
+     *
+     * @param int $userId
+     * @param int $productId
+     * @param string $expirationDate
+     * @param int $quantity
+     */
+    public function assignUserProduct($userId, $productId, $expirationDate, $quantity = 0)
+    {
+        $userProduct = $this->getUserProductData(
+            $userId,
+            $productId
+        );
+
+        if (!$userProduct) {
+            $productQuantity = ($quantity == 0) ? 1 : $quantity;
+            $this->saveUserProduct(
+                $userId,
+                $productId,
+                $productQuantity,
+                $expirationDate
+            );
+        } else {
+            $this->updateUserProduct(
+                $userProduct['id'],
+                ($userProduct['quantity'] + $quantity),
+                $expirationDate
+            );
+        }
+    }
+
+    /**
+     * Remove user products.
+     *
+     * @param int $userId
+     * @param array $products
+     */
+    public function removeUserProducts($userId, $products)
+    {
+        foreach ($products as $product => $quantity) {
+            $userProduct = $this->getUserProductData(
+                $userId,
+                $product
+            );
+
+            if (($userProduct['quantity'] == 1) || ($userProduct['quantity'] - $quantity <= 0)) {
+                $this->deleteUserProduct($userProduct['id']);
+            } else {
+                $this->updateUserProduct(
+                    $userProduct['id'],
+                    $userProduct['quantity'] - $quantity,
+                    $userProduct['expiration_date']
+                );
+            }
+        }
+    }
 }

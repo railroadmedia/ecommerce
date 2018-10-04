@@ -289,4 +289,14 @@ class ConfigService
      * @var string
      */
     public static $paypalAgreementFulfilledRoute;
+
+    /*
+     * @var int
+     */
+    public static $subscriptionRenewalDateCutoff;
+
+    /**
+     * @var int
+     */
+    public static $failedPaymentsBeforeDeactivation;
 }

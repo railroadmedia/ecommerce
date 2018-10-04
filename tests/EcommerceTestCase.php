@@ -145,6 +145,9 @@ class EcommerceTestCase extends BaseTestCase
             $defaultConfig['paypal']['agreementFulfilledRoute']
         );
 
+        $app['config']->set('ecommerce.subscription_renewal_date', $defaultConfig['subscription_renewal_date']);
+        $app['config']->set('ecommerce.failed_payments_before_de_activation', $defaultConfig['failed_payments_before_de_activation']);
+
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
         $app['config']->set('location.api', $locationConfig['api']);

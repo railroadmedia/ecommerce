@@ -287,6 +287,9 @@ class EcommerceServiceProvider extends ServiceProvider
         // paypal
         ConfigService::$paypalAgreementRoute = config('ecommerce.paypal.agreementRoute');
         ConfigService::$paypalAgreementFulfilledRoute = config('ecommerce.paypal.agreementFulfilledRoute');
+
+        ConfigService::$subscriptionRenewalDateCutoff = config('ecommerce.subscription_renewal_date');
+        ConfigService::$failedPaymentsBeforeDeactivation = config('ecommerce.failed_payments_before_de_activation');
     }
 
     /**

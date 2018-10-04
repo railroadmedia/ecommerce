@@ -214,15 +214,8 @@ class RenewalService
                     ->startOfDay();
         }
         if ($dueSubscription['user_id']) {
-            if ($dueSubscription['product_id']) {
-                $subscriptionProducts[] = $dueSubscription['product_id'];
-            } elseif ($dueSubscription['order_id']) {
-                $products =
-                    $this->orderItemRepository->query()
-                        ->where('order_id', $dueSubscription['order_id'])
-                        ->get();
-                $subscriptionProducts[] = $products->pluck('id');
-            }
+            $subscriptionProducts =
+                $this->getSubscriptionProducts($dueSubscription['order_id'], $dueSubscription['product_id']);
         }
         if ($paymentData['paid'] > 0) {
             $this->subscriptionRepository->update(
@@ -236,42 +229,72 @@ class RenewalService
                         ->toDateTimeString(),
                 ]
             );
-            foreach ($subscriptionProducts as $product) {
-                $userProduct = $this->userProductService->getUserProductData(
+            foreach ($subscriptionProducts as $product => $quantity) {
+                $this->userProductService->assignUserProduct(
                     $dueSubscription['user_id'],
-                    $product
+                    $product,
+                    $nextBillDate->toDateTimeString()
                 );
-                if (!$userProduct) {
-                    $this->userProductService->saveUserProduct(
-                        $dueSubscription['user_id'],
-                        $product,
-                        1,
-                        $nextBillDate->toDateTimeString()
-                    );
-                } else {
-                    $this->userProductService->updateUserProduct(
-                        $userProduct['id'],
-                        $userProduct['quantity'],
-                        $nextBillDate->toDateTimeString()
-                    );
-                }
             }
             event(new SubscriptionEvent($dueSubscription['id'], 'renewed'));
         } else {
-            $this->subscriptionRepository->update(
-                $dueSubscription['id'],
-                [
-                    'is_active' => false,
-                    'updated_on' => Carbon::now()
-                        ->toDateTimeString(),
-                ]
-            );
-
-            event(new SubscriptionEvent($dueSubscription['id'], 'deactivated'));
+            $subscriptionPayments =
+                $this->subscriptionPaymentRepository->query()
+                    ->where('subscription_id', $dueSubscription['id'])
+                    ->get();
+            $failedPayments =
+                $this->paymentRepository->query()
+                    ->whereIn('id', $subscriptionPayments->pluck('payment_id'))
+                    ->whereIn('status', [0, 'failed'])
+                    ->get();
+            if (count($failedPayments) >= ConfigService::$failedPaymentsBeforeDeactivation ?? 1) {
+                $this->subscriptionRepository->update(
+                    $dueSubscription['id'],
+                    [
+                        'is_active' => false,
+                        'note' => 'De-activated due to payments failing.',
+                        'updated_on' => Carbon::now()
+                            ->toDateTimeString(),
+                    ]
+                );
+                $subscriptionProducts = $this->getSubscriptionProducts(
+                    $dueSubscription['order_id'],
+                    $dueSubscription['product_id']
+                );
+                $this->userProductService->removeUserProducts(
+                    $dueSubscription['user_id'],
+                    $subscriptionProducts
+                );
+                event(new SubscriptionEvent($dueSubscription['id'], 'deactivated'));
+            }
 
             throw $paymentException;
         }
 
         return $this->subscriptionRepository->read($subscriptionId);
+    }
+
+    /**
+     * Return subscription's products.
+     *
+     * @param null|int $subscriptionOrderId
+     * @param null|int $subscriptionProductId
+     * @return array|\Illuminate\Support\Collection
+     */
+    public function getSubscriptionProducts($subscriptionOrderId = null, $subscriptionProductId = null)
+    {
+        $subscriptionProducts = [];
+
+        if ($subscriptionProductId) {
+            $subscriptionProducts[$subscriptionProductId] = 1;
+        } elseif ($subscriptionOrderId) {
+            $products =
+                $this->orderItemRepository->query()
+                    ->where('order_id', $subscriptionOrderId)
+                    ->get();
+            $subscriptionProducts = $products->pluck('quantity', 'product_id');
+        }
+
+        return $subscriptionProducts;
     }
 }

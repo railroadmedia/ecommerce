@@ -505,21 +505,12 @@ class OrderFormService
 
             //assign products to user
             if ($user) {
-                $userProduct = $this->userProductService->getUserProductData($user['id'], $product['id']);
-                if (!$userProduct) {
-                    $this->userProductService->saveUserProduct(
-                        $user['id'],
-                        $product['id'],
-                        $cartItem['quantity'],
-                        $expirationDate
-                    );
-                } else {
-                    $this->userProductService->updateUserProduct(
-                        $userProduct['id'],
-                        ($userProduct['quantity'] + $cartItem['quantity']),
-                        $expirationDate
-                    );
-                }
+                $this->userProductService->assignUserProduct(
+                    $user['id'],
+                    $product['id'],
+                    $expirationDate,
+                    $cartItem['quantity']
+                );
             }
 
             $orderItems[] = $orderItem;

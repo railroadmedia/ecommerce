@@ -166,5 +166,8 @@ return [
     'intervalTypeMonthly'         => 'month',
     'intervalTypeYearly'          => 'year',
     'fulfillmentStatusPending'    => 'pending',
-    'fulfillmentStatusFulfilled'  => 'fulfilled'
+    'fulfillmentStatusFulfilled'  => 'fulfilled',
+
+    'subscription_renewal_date' => 1,
+    'failed_payments_before_de_activation' => 1,
 ];
