@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
@@ -212,15 +213,22 @@ class OrderFormService
     /**
      * Submit an order
      *
-     * @param OrderFormSubmitRequest $request
+     * @param Request $request
      * @param array $cartItems
      * @return array
      */
     public function processOrderForm(
-        OrderFormSubmitRequest $request,
+        Request $request,
         $cartItems
     ) {
         $user = auth()->user() ?? null;
+
+        if (!empty($request->get('token'))) {
+            $orderFormInput = session()->get('order-form-input', []);
+            unset($orderFormInput['token']);
+            session()->forget('order-form-input');
+            $request->merge($orderFormInput);
+        }
 
         $currency = $request->get('currency', $this->currencyService->get());
 
@@ -241,13 +249,6 @@ class OrderFormService
                         ->toDateTimeString(),
                 ]
             );
-        }
-
-        if (!empty($request->get('validated-express-checkout-token'))) {
-            $orderFormInput = session()->get('order-form-input', []);
-            unset($orderFormInput['validated-express-checkout-token']);
-            session()->forget('order-form-input');
-            $request->merge($orderFormInput);
         }
 
         //set the shipping address on session
@@ -299,7 +300,7 @@ class OrderFormService
         // try to make the payment
         try {
             if ($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE &&
-                empty($request->get('validated-express-checkout-token'))) {
+                empty($request->get('token'))) {
 
                 list(
                     $charge, $paymentMethodId, $billingAddressDB
@@ -312,8 +313,8 @@ class OrderFormService
                 );
 
             } elseif ($request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE ||
-                !empty($request->get('validated-express-checkout-token'))) {
-                if (empty($request->get('validated-express-checkout-token'))) {
+                !empty($request->get('token'))) {
+                if (empty($request->get('token'))) {
 
                     $gateway = $request->get('gateway');
                     $config = ConfigService::$paymentGateways['paypal'];
@@ -330,8 +331,10 @@ class OrderFormService
                 }
 
                 list (
-                    $transactionId, $paymentMethodId, $billingAddressDB
-                    ) = $this->transactionAndCreatePaymentMethod(
+                    $transactionId,
+                    $paymentMethodId,
+                    $billingAddressDB
+                ) = $this->transactionAndCreatePaymentMethod(
                     $request,
                     $cartItemsWithTaxesAndCosts,
                     $currency,
@@ -360,6 +363,8 @@ class OrderFormService
             ];
         } catch (\Stripe\Error\Card $exception) {
             $exceptionData = $exception->getJsonBody();
+
+            $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
 
             // validate UI known error format
             if (isset($exceptionData['error']) && isset($exceptionData['error']['code'])) {
@@ -635,16 +640,16 @@ class OrderFormService
     }
 
     /**
-     * @param OrderFormSubmitRequest $request
-     * @param                        $cartItemsWithTaxesAndCosts
-     * @param                        $currency
-     * @param                        $user
-     * @param                        $billingAddressDB
+     * @param Request $request
+     * @param         $cartItemsWithTaxesAndCosts
+     * @param         $currency
+     * @param         $user
+     * @param         $billingAddressDB
      * @return array
      * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
      */
     private function transactionAndCreatePaymentMethod(
-        OrderFormSubmitRequest $request,
+        Request $request,
         $cartItemsWithTaxesAndCosts,
         $currency,
         $user
@@ -655,7 +660,7 @@ class OrderFormService
             $request->get('gateway'),
             $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
             $currency,
-            $request->get('validated-express-checkout-token')
+            $request->get('token')
         );
 
         $transactionId = $this->payPalPaymentGateway->chargeBillingAgreement(
@@ -824,7 +829,7 @@ class OrderFormService
     }
 
     /**
-     * @param OrderFormSubmitRequest $request
+     * @param Request $request
      * @param                        $cartItemsWithTaxesAndCosts
      * @param                        $user
      * @param                        $customer
@@ -833,7 +838,7 @@ class OrderFormService
      * @return null|\Railroad\Resora\Entities\Entity
      */
     private function createOrder(
-        OrderFormSubmitRequest $request,
+        Request $request,
         $cartItemsWithTaxesAndCosts,
         $user,
         $customer,

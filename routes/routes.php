@@ -76,6 +76,11 @@ Route::post(
     Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitOrder'
 )->name('order.submit.form');
 
+Route::get(
+    '/order-paypal',
+    Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitPaypalOrder'
+)->name('order.submit.paypal');
+
 //shipping option
 Route::get(
     '/shipping-options',

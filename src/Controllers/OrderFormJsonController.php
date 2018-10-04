@@ -11,6 +11,7 @@ use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\PaymentPlanService;
 use Railroad\Ecommerce\Services\TaxService;
+use Railroad\Resora\Entities\Entity;
 
 class OrderFormJsonController extends BaseController
 {
@@ -144,11 +145,18 @@ class OrderFormJsonController extends BaseController
                 'code' => 200
             ]);
         } else {
-            return reply()->form(
-                isset($result['errors']) ? [false] : [],
-                $result['redirect'],
-                $result['errors'] ?? null
-            );
+            $data = $options = [];
+
+            if (isset($result['errors'])) {
+                $options['errors'] = $result['errors'];
+                $options['code'] = 400;
+            }
+
+            if ($result['redirect'] && !isset($result['errors'])) {
+                $data = new Entity(['redirect' => $result['redirect']]);
+            }
+
+            return reply()->json($data, $options);
         }
     }
 }
