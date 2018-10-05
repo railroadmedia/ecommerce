@@ -507,7 +507,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_submit_order()
+    public function test_submit_order_credit_card_payment()
     {
         $userId = $this->createAndLogInNewUser();
         $fingerPrint = $this->faker->word;
@@ -683,11 +683,191 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_submit_order_paypal_payment()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $shippingOption = $this->shippingOptionRepository->create(
+            $this->faker->shippingOption(
+                [
+                    'country' => 'Canada',
+                    'active' => 1,
+                    'priority' => 1,
+                ]
+            )
+        );
+
+        $shippingCost = $this->shippingCostsRepository->create(
+            $this->faker->shippingCost(
+                [
+                    'shipping_option_id' => $shippingOption['id'],
+                    'min' => 0,
+                    'max' => 10,
+                    'price' => 5.50,
+                ]
+            )
+        );
+
+        $product1 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 12.95,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'description' => $this->faker->word,
+                    'is_physical' => 1,
+                    'weight' => 0.20,
+                    'subscription_interval_type' => '',
+                    'subscription_interval_count' => '',
+                ]
+            )
+        );
+
+        $product2 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 247,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'description' => $this->faker->word,
+                    'is_physical' => 0,
+                    'weight' => 0,
+                    'subscription_interval_type' => '',
+                    'subscription_interval_count' => '',
+                ]
+            )
+        );
+        $discount = $this->discountRepository->create(
+            $this->faker->discount(
+                [
+                    'active' => true,
+                    'type' => 'order total amount off',
+                ]
+            )
+        );
+        $discountCriteria = $this->discountCriteriaRepository->create(
+            $this->faker->discountCriteria(
+                [
+                    'discount_id' => $discount['id'],
+                    'product_id' => $product1['id'],
+                    'type' => 'order total requirement',
+                    'min' => '2',
+                    'max' => '2000000',
+                ]
+            )
+        );
+
+        $cart = $this->cartService->addCartItem(
+            $product1['name'],
+            $product1['description'],
+            1,
+            $product1['price'],
+            $product1['is_physical'],
+            $product1['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product1['weight'],
+            [
+                'product-id' => $product1['id'],
+            ]
+        );
+
+        $this->cartService->addCartItem(
+            $product2['name'],
+            $product2['description'],
+            1,
+            $product2['price'],
+            $product2['is_physical'],
+            $product2['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product2['weight'],
+            [
+                'product-id' => $product2['id'],
+            ]
+        );
+
+        $paypalToken = $this->faker->word;
+
+        $this->paypalExternalHelperMock->method('createBillingAgreementExpressCheckoutToken')
+            ->willReturn($paypalToken);
+
+        $orderRequestData = [
+            'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'billing-region' => $this->faker->word,
+            'billing-zip-or-postal-code' => $this->faker->postcode,
+            'billing-country' => 'Canada',
+            'company_name' => $this->faker->creditCardType,
+            'gateway' => 'drumeo',
+            'shipping-first-name' => $this->faker->firstName,
+            'shipping-last-name' => $this->faker->lastName,
+            'shipping-address-line-1' => $this->faker->address,
+            'shipping-city' => 'Canada',
+            'shipping-region' => 'ab',
+            'shipping-zip-or-postal-code' => $this->faker->postcode,
+            'shipping-country' => 'Canada',
+        ];
+
+        $results = $this->call(
+            'PUT',
+            '/order',
+            $orderRequestData
+        );
+
+        // assert order data was set in the session
+        $results->assertSessionHas('order-form-input', $orderRequestData);
+
+        // assert response has redirect information
+        $results->assertJsonStructure(['data' => [['redirect']]]);
+
+        // assert the redirect link contains the token
+        $this->assertContains(
+            'token=' . $paypalToken,
+            $results->decodeResponseJson()['data'][0]['redirect']
+        );
+
+        /*
+         * the paypal payment flow for an order requires
+         * the user to be redirected back from paypal site with an agreement token
+         * and this is a different action tested in OrderFormControllerTest
+         */
+    }
+
     public function test_submit_order_subscription()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
 
         $product = $this->productRepository->create(
             $this->faker->product(
@@ -723,7 +903,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Canada',
@@ -1039,8 +1220,38 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_subscription_with_discount_free_days()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
 
         $product = $this->productRepository->create(
             $this->faker->product(
@@ -1098,12 +1309,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Canada',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
             ]
         );
 
@@ -1143,8 +1354,38 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_subscription_with_discount_recurring_amount()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
 
         $product = $this->productRepository->create(
             $this->faker->product(
@@ -1202,12 +1443,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Canada',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
             ]
         );
 
@@ -1234,8 +1475,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_with_discount_order_total_amount()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
         $quantity = 2;
 
         $product = $this->productRepository->create(
@@ -1293,12 +1565,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Romanian',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
             ]
         );
 
@@ -1321,8 +1593,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_with_discount_order_total_percent()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
         $quantity = 2;
 
         $product = $this->productRepository->create(
@@ -1380,12 +1683,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Romanian',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
             ]
         );
 
@@ -1408,8 +1711,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_with_discount_product_amount()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
         $quantity = 2;
 
         $product = $this->productRepository->create(
@@ -1468,12 +1802,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Romanian',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
             ]
         );
 
@@ -1508,8 +1842,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_with_discount_product_percent()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
         $quantity = 2;
 
         $product = $this->productRepository->create(
@@ -1568,12 +1933,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Romanian',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
             ]
         );
 
@@ -1608,8 +1973,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_with_discount_shipping_costs_amount()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
         $quantity = 2;
 
         $shippingOption = $this->shippingOptionRepository->create(
@@ -1687,12 +2083,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Romanian',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
                 'shipping-first-name' => $this->faker->firstName,
                 'shipping-last-name' => $this->faker->lastName,
                 'shipping-address-line-1' => $this->faker->address,
@@ -1733,8 +2129,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_with_discount_shipping_costs_percent()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
         $quantity = 2;
 
         $shippingOption = $this->shippingOptionRepository->create(
@@ -1812,12 +2239,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Romanian',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
                 'shipping-first-name' => $this->faker->firstName,
                 'shipping-last-name' => $this->faker->lastName,
                 'shipping-address-line-1' => $this->faker->address,
@@ -1864,8 +2291,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_with_discount_shipping_costs_overwrite()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
         $quantity = 2;
 
         $shippingOption = $this->shippingOptionRepository->create(
@@ -1943,12 +2401,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Romanian',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
                 'shipping-first-name' => $this->faker->firstName,
                 'shipping-last-name' => $this->faker->lastName,
                 'shipping-address-line-1' => $this->faker->address,
@@ -2170,8 +2628,38 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_submit_order_new_user()
     {
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
         $quantity = 2;
 
         $product = $this->productRepository->create(
@@ -2211,12 +2699,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Romanian',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
                 'shipping-first-name' => $this->faker->firstName,
                 'shipping-last-name' => $this->faker->lastName,
                 'shipping-address-line-1' => $this->faker->address,
@@ -2243,6 +2731,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'paid' => $product['price'] * $quantity,
             ]
         );
+
         $this->assertDatabaseHas(
             ConfigService::$tableUserPaymentMethods,
             [
@@ -2258,8 +2747,38 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         Mail::fake();
 
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
 
         $product = $this->productRepository->create(
             $this->faker->product(
@@ -2295,12 +2814,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Canada',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
                 'shipping-first-name' => $this->faker->firstName,
                 'shipping-last-name' => $this->faker->lastName,
                 'shipping-address-line-1' => $this->faker->address,
@@ -2965,8 +3484,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_user_products_updated_after_order_submit()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn(rand());
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
         $quantity = 2;
 
         $product = $this->productRepository->create(
@@ -3010,12 +3560,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
                 'billing-country' => 'Romanian',
                 'gateway' => 'drumeo',
-                'validated-express-checkout-token' => $this->faker->word,
             ]
         );
 
