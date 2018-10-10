@@ -4,10 +4,16 @@ namespace Railroad\Ecommerce\Services;
 
 
 use Illuminate\Session\Store;
+use Railroad\Ecommerce\Repositories\ProductRepository;
 
 class CartService
 {
     private $session;
+
+    /**
+     * @var ProductRepository
+     */
+    private $productRepository;
 
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
@@ -17,11 +23,14 @@ class CartService
 
     /**
      * CartService constructor.
-     * @param $session
+     *
+     * @param Store $session
+     * @param ProductRepository $productRepository
      */
-    public function __construct(Store $session)
+    public function __construct(Store $session, ProductRepository $productRepository)
     {
         $this->session = $session;
+        $this->productRepository = $productRepository;
     }
 
     /** Add item to cart. If the item already exists, just increase the quantity.
@@ -51,11 +60,31 @@ class CartService
     {
         $cartItems = $this->getAllCartItems();
 
+        // if a product id is passed with any of the cart items, attach the entire product
+        $productIds = [];
+        $productsById = [];
+
+        foreach ($cartItems as $cartItem) {
+            if (!empty($cartItem['options']['product-id'])) {
+                $productIds[] = $cartItem['options']['product-id'];
+            }
+        }
+
+        if (!empty($options['product-id'])) {
+            $options['product'] = $this->productRepository->read($options['product-id']);
+        }
+
+        foreach ($cartItems as $cartItemIndex => $cartItem) {
+            if (!empty($cartItem['options']['product-id']) &&
+                !empty($productsById[$cartItem['options']['product-id']])) {
+                $cartItems[$cartItemIndex]['options']['product'] = $productsById[$cartItem['options']['product-id']];
+            }
+        }
+
         // If the item already exists, just increase the quantity
         foreach ($cartItems as $cartItem) {
             if (!empty($cartItem['options']['product-id']) &&
-                $cartItem['options']['product-id'] == $options['product-id']
-            ) {
+                $cartItem['options']['product-id'] == $options['product-id']) {
                 $cartItem['quantity'] = ($cartItem['quantity'] + $quantity);
                 $cartItem['totalPrice'] = $cartItem['quantity'] * $cartItem['price'];
                 $cartItem['weight'] = $cartItem['quantity'] * $weight;
