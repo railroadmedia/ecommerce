@@ -104,8 +104,17 @@ class TaxService
      */
     public function calculateTaxesForCartItems($cartItems, $country, $region, $shippingCosts = 0, $currency = null)
     {
-        if(is_null($currency))
-        {
+        $results = [
+            'cartItemsSubTotal' => 0,
+            'cartItems' => [],
+            'totalDue' => 0,
+            'totalTax' => 0,
+            'shippingCosts' => 0,
+            'pricePerPayment' => 0,
+            'initialPricePerPayment' => 0,
+        ];
+
+        if (is_null($currency)) {
             $currency = ConfigService::$defaultCurrency;
         }
 
@@ -121,7 +130,12 @@ class TaxService
         {
             $cartItems[$key]['totalPrice'] =
                 ConfigService::$defaultCurrencyPairPriceOffsets[$currency][$item['totalPrice']] ?? $item['totalPrice'];
-            foreach($activeDiscounts as $activeDiscount){
+
+            $results['cartItemsSubTotal'] += ConfigService::$defaultCurrencyPairPriceOffsets[$currency][$item['totalPrice']]
+                ??
+                $item['totalPrice'];
+
+            foreach ($activeDiscounts as $activeDiscount){
                 $criteriaMet = true;
                 foreach ($activeDiscount->criteria as $discountCriteria) {
                     if(!$this->discountCriteriaService->discountCriteriaMetForOrder(
