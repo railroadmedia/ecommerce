@@ -8,6 +8,7 @@ use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Requests\DiscountCreateRequest;
 use Railroad\Ecommerce\Requests\DiscountUpdateRequest;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 
 class DiscountJsonController extends BaseController
@@ -45,6 +46,16 @@ class DiscountJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'pull.discounts');
 
         $discounts = $this->discountRepository->query()
+            ->select(
+                ConfigService::$tableDiscount . '.*',
+                ConfigService::$tableProduct . '.name as productName'
+            )
+            ->join(
+                ConfigService::$tableProduct,
+                ConfigService::$tableDiscount . '.product_id',
+                '=',
+                ConfigService::$tableProduct . '.id'
+            )
             ->limit($request->get('limit', 100))
             ->skip(($request->get('page', 1) - 1) * $request->get('limit', 100))
             ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
@@ -54,6 +65,37 @@ class DiscountJsonController extends BaseController
         return reply()->json($discounts, [
             'totalResults' => $discountsCount
         ]);
+    }
+
+    /** Pull discount
+     * @param \Illuminate\Http\Request $request
+     * @param  int                     $discountId
+     * @return JsonResponse
+     */
+    public function show(Request $request, $discountId)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.discounts');
+
+        $discount = $this->discountRepository->query()
+            ->select(
+                ConfigService::$tableDiscount . '.*',
+                ConfigService::$tableProduct . '.name as productName'
+            )
+            ->join(
+                ConfigService::$tableProduct,
+                ConfigService::$tableDiscount . '.product_id',
+                '=',
+                ConfigService::$tableProduct . '.id'
+            )
+            ->where(ConfigService::$tableDiscount . '.id', $discountId)
+            ->first();
+
+        throw_if(
+            is_null($discount),
+            new NotFoundException('Update failed, discount not found with id: ' . $discountId)
+        );
+
+        return reply()->json($discount);
     }
 
     /**

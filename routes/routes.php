@@ -230,6 +230,12 @@ Route::get(
     '/discounts',
     Railroad\Ecommerce\Controllers\DiscountJsonController::class . '@index'
 )->name('discounts.index');
+
+Route::get(
+    '/discount/{discountId}',
+    Railroad\Ecommerce\Controllers\DiscountJsonController::class . '@show'
+)->name('discount.show');
+
 Route::put(
     '/discount',
     [

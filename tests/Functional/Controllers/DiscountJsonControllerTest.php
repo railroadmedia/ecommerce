@@ -156,8 +156,11 @@ class DiscountJsonControllerTest extends EcommerceTestCase
 
         for($i = 0; $i < $totalNumberOfDiscounts; $i++)
         {
+            $discountedProduct = $this->productRepository->create($this->faker->product());
             $product  = $this->productRepository->create($this->faker->product());
-            $discount = $this->discountRepository->create($this->faker->discount());
+            $discount = $this->discountRepository->create($this->faker->discount([
+                'product_id' => $discountedProduct['id']
+            ]));
             $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
                 'product_id' => $product['id'],
                 'discount_id' => $discount['id']
@@ -165,6 +168,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
             if($i < $limit)
             {
                 $discounts[$i]             = (array)$discount;
+                $discounts[$i]['productName'] = $discountedProduct['name'];
                 $discounts[$i]['criteria'][] = (array)$discountCriteria;
             }
         }
