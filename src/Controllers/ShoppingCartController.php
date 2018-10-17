@@ -103,7 +103,7 @@ class ShoppingCartController extends BaseController
                         ->where(['sku' => $productSku])
                         ->first();
 
-                if (($product) && ($product['stock'] >= $quantityToAdd)) {
+                if ($product && ($product['stock'] === null || $product['stock'] >= $quantityToAdd)) {
                     $success = true;
                     $addedProducts[] = $product;
                     $this->cartService->addCartItem(
@@ -124,7 +124,6 @@ class ShoppingCartController extends BaseController
                         ]
                     );
                 } else {
-
                     $message = 'Product with SKU:' . $productSku . ' could not be added to cart.';
                     $message .= (!is_null($product)) ?
                         ' The product stock(' .
