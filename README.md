@@ -132,7 +132,7 @@ Ecommerce
       - [Request Example](#request-example-31)
       - [Request Parameters](#request-parameters-31)
       - [Response Example](#response-example-31)
-    + [Update payment method - JSON controller](#update-payment-method---json-controller)
+    + [Update Credit card payment method - JSON controller](#update-credit-card-payment-method---json-controller)
       - [Request Example](#request-example-32)
       - [Request Parameters](#request-parameters-32)
       - [Response Example](#response-example-32)
@@ -213,7 +213,6 @@ Ecommerce
       - [Request Parameters](#request-parameters-51)
       - [Response Example](#response-example-51)
 
-
 <!-- ecotrust-canada.github.io/markdown-toc -->
 
 
@@ -228,6 +227,10 @@ With composer command
 ```
 GET /ecommerce/add-to-cart
 ```
+
+Add products to cart; if the products are active and available(the product stock > requested quantity).
+
+The success field from response it's set to false if at least one product it's not active or available.
 #### Request Example
 
 ```
@@ -275,6 +278,9 @@ On the session are flashed the following data:\
 ```
 PUT /ecommerce/remove-from-cart/{productId}
 ```
+
+Remove product from cart.
+     
 #### Request Example
 
 ```
@@ -318,6 +324,13 @@ $.ajax({
 ```
 PUT /ecommerce/update-product-quantity/{productId}/{newQuantity}
 ```
+
+ Update the cart item quantity.
+ 
+ If the product it's not active or it's not available(the product stock it's smaller that the quantity)
+ an error message it's returned in notAvailableProducts, success = false and the cart item quantity it's not
+     modified.
+     
 #### Request Example
 ```
 $.ajax({
@@ -343,12 +356,14 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
 
 ### Save shipping and billing addresses on the session - JSON controller
 
 ```
 PUT /ecommerce/session/address
 ```
+
 #### Request Example
 
 ```
@@ -385,13 +400,16 @@ $.ajax({
 
 #### Response Example
 
-
+```201 OK```
 
 ### Get all products - JSON controller
 
 ```
 GET /ecommerce/product
 ```
+
+Pull paginated products. For administrators all products(active/inactive) will be pulled. 
+
 #### Request Example
 ```js   
 
@@ -421,7 +439,7 @@ $.ajax({
 
 #### Response Example
 
-
+```200 OK```
 
 
 ### Add a new product - JSON controller
@@ -429,6 +447,9 @@ $.ajax({
 ```
 PUT /ecommerce/product
 ```
+
+Create a new product and return it in JSON format.
+
 #### Request Example
 
 ```js   
@@ -466,13 +487,18 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
 
+```403 Not allowed```
 
 ### Update product - JSON controller
 
 ```
 PATCH /ecommerce/product/{productId}
 ```
+
+Update a product based on product id and return it in JSON format.
+
 #### Request Example
 
 ```js   
@@ -511,13 +537,22 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
 
+```404 Not Found```
 
 ### Delete product - JSON controller
 
 ```
 DELETE /ecommerce/product/{productId}
 ```
+
+Delete a product that it's not connected to orders or discounts and return a JsonResponse.
+
+Throw  
+- NotFoundException if the product not exist or the user have not rights to delete the product
+- NotAllowedException if the product it's connected to orders or discounts
+     
 #### Request Example
 ```js   
 
@@ -544,13 +579,20 @@ $.ajax({
 
 #### Response Example
 
+```204 No Content```
 
+```404 Not Found```
 
 ### Upload product thumbnail - JSON controller
 
 ```
 PUT /ecommerce/product/upload/
 ```
+
+Upload product thumbnail on remote storage using remotestorage package.
+       
+Throw an error JSON response if the upload failed or return the uploaded thumbnail url.
+     
 #### Request Example
 ```js   
 
@@ -575,7 +617,9 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
 
+```400 Upload failed```
 
 
 ### Get all shipping options - JSON controller
@@ -583,6 +627,9 @@ $.ajax({
 ```
 GET /ecommerce/shipping-options
 ```
+
+Pull shipping options. 
+
 #### Request Example
 ```js   
 
@@ -611,13 +658,17 @@ $.ajax({
 
 
 #### Response Example
-
+```200 OK```
 
 ### Add a new shipping option - JSON controller
 
 ```
 PUT /ecommerce/shipping-options
 ```
+
+Create a new shipping option and return it in JSON format.
+
+
 #### Request Example
 
 ```js   
@@ -648,7 +699,7 @@ $.ajax({
 
 
 #### Response Example
-
+```200 OK```
 
 
 ### Update shipping option - JSON controller
@@ -656,6 +707,9 @@ $.ajax({
 ```
 PATCH /ecommerce/shipping-options/{shippingOptionId}
 ```
+
+Update a shipping option based on id and return it in JSON format or proper exception if the shipping option not exist.
+
 #### Request Example
 
 ```js   
@@ -688,12 +742,20 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
+
+```404 Not Found```
 
 ### Delete shipping option - JSON controller
 
 ```
 DELETE /ecommerce/shipping-options/{shippingOptionId}
 ```
+
+Delete a shipping option if exist in the database.
+ 
+Throw proper exception if the shipping option not exist in the database or a json response with status 204.
+     
 #### Request Example
 ```js   
 
@@ -721,7 +783,9 @@ $.ajax({
 
 #### Response Example
 
+```204 No Content```
 
+```404 Not Found```
 
 
 ### Add shipping costs weight range - JSON controller
@@ -729,6 +793,12 @@ $.ajax({
 ```
 PUT /ecommerce/shipping-cost
 ```
+
+Store a shipping cost weight range in the database and return it in JSON format if the shipping option exist.
+
+Return a JSON response with the shopping cost weight range or throw the proper exception.
+     
+     
 #### Request Example
 ```js   
 
@@ -758,13 +828,17 @@ $.ajax({
 
 
 #### Response Example
-
+```200 OK```
 
 ### Update a shipping costs weight range - JSON controller
 
 ```
 PATCH /ecommerce/shipping-cost/{shippingCostId}
 ```
+
+Update a shipping cost weight range based on id and return it in JSON format or proper exception if the shipping cost weight range not exist
+
+
 #### Request Example
 ```js   
 
@@ -795,6 +869,9 @@ $.ajax({
 
 
 #### Response Example
+```201 OK```
+
+```404 Not Found```
 
 
 ### Delete a shipping costs weight range - JSON controller
@@ -802,6 +879,12 @@ $.ajax({
 ```
 DELETE /ecommerce/shipping-cost/{shippingCostId}
 ```
+
+Delete a shipping cost weight range if exist in the database.
+
+Throw proper exception if the shipping cost weight range not exist in the database or a json response with status 204.
+     
+     
 #### Request Example
 ```js   
 
@@ -828,6 +911,9 @@ $.ajax({
 
 #### Response Example
 
+```204 No Content```
+
+```404 No Found```
 
 
 ### Get all discounts - JSON controller
@@ -835,6 +921,10 @@ $.ajax({
 ```
 GET /ecommerce/discounts
 ```
+
+Pull discounts.
+
+
 #### Request Example
 
 ```js   
@@ -864,11 +954,16 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
 ### Add a new discount - JSON controller
 
 ```
 PUT /ecommerce/discount
 ```
+
+Create a new discount. 
+
 #### Request Example
 ```js   
 
@@ -900,11 +995,19 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
+
 ### Update discount - JSON controller
 
 ```
 PATCH /ecommerce/discount/{discountId}
 ```
+
+Update discount with the data sent on the request. 
+
+Throw 404 Not Found Exception if the discount not exists in the database.
+
 #### Request Example
 ```js   
 
@@ -937,11 +1040,20 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
+
+```404 Not Found```
+
 ### Delete discount - JSON controller
 
 ```
 DELETE /ecommerce/discount/{discountId}
 ```
+
+Delete selected discount. 
+
+Throw 404 Not Found Exception if the discount not exists in the database.
+
 #### Request Example
 ```js   
 
@@ -967,11 +1079,21 @@ $.ajax({
 
 #### Response Example
 
+```204 No Content```
+
+```404 No Found```
+
+
 ### Define a discount criteria for discount - JSON controller
 
 ```
 PUT /ecommerce/discount-criteria/{discountId}
 ```
+
+Create a discount criteria for selected discount. 
+
+Throw 404 Not Found Exception if the discount not exists in the database.
+
 #### Request Example
 ```js   
 
@@ -1004,11 +1126,20 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
+```404 Not Found```
+
 ### Update discount criteria - JSON controller
 
 ```
 PATCH /ecommerce/discount-criteria/{discountCriteriaId}
 ```
+
+Update a discount criteria with the data sent on the request. 
+
+Throw 404 Not Found Exception if the discount criteria not exists in the database.
+
 #### Request Example
 ```js   
 
@@ -1042,11 +1173,22 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
+
+```404 Not Found```
+
 ### Delete discount criteria - JSON controller
 
 ```
 DELETE /ecommerce/discount-criteria/{discountCriteriaId}
 ```
+
+
+Delete a discount criteria. 
+
+Throw 404 Not Found Exception if the discount criteria not exists in the database.
+
+
 #### Request Example
 ```js   
 
@@ -1072,6 +1214,10 @@ $.ajax({
 
 #### Response Example
 
+```204 No Content```
+
+```404 Not Found```
+
 
 ### Prepare order form - JSON controller
 
@@ -1095,17 +1241,23 @@ $.ajax({
     }
 });
 ```
-#### Request Parameters
-
 
 #### Response Example
 
+```404 Not Found``` - cart it's empty
 
 ### Get payments - JSON controller
 
 ```
 GET /ecommerce/payment
 ```
+
+Pull paginated payments. 
+
+If order_id it's set on the request only the payments for selected order are pulled.
+
+If subscription_id it's set on the request only the payments for selected subscription are pulled.
+
 #### Request Example
 
 ```js   
@@ -1143,6 +1295,11 @@ $.ajax({
 ```
 PUT /ecommerce/payment
 ```
+
+Call the method that save a new payment and create the links with subscription or order if it's necessary.
+
+Return a JsonResponse with the new created payment record, in JSON format.
+     
 #### Request Example
 ```js   
 
@@ -1176,11 +1333,20 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
+```403 Not allowed```
+
 ### Delete a payment - JSON controller
 
 ```
 DELETE /ecommerce/payment/{paymentId}
 ```
+
+Soft delete a payment.
+
+Throw 404 Not Found Exception if the payment not exists in the database.
+
 #### Request Example
 ```js   
 
@@ -1200,17 +1366,27 @@ $.ajax({
 ```
 
 #### Request Parameters
+
 | path\|query\|body |  key |  required |  default |  description\|notes                            | 
 |-------------------|------|-----------|----------|------------------------------------------------| 
 | path              |  id  |  yes      |          |  Id of the payment you want to delete.| 
 
 #### Response Example
 
+```204 No Content```
+
+```404 Not Found```
+
 ### Refund a payment - JSON controller
 
 ```
 PUT /ecommerce/refund
 ```
+
+Call the refund method from the external payment helper and the method that save the refund in the database.
+
+Return the new created refund in JSON format
+     
 #### Request Example
 ```js   
 
@@ -1242,11 +1418,21 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
 ### Create a new payment method for user/customer - JSON controller
 
 ```
 PUT /ecommerce/payment-method
 ```
+
+Call the service method to create a new payment method based on request parameters.
+
+Return:
+- NotFoundException if the request method type parameter it's not defined (paypal or credit card)
+- JsonResponse with the new created payment method
+     
+     
 #### Request Example
 ```js   
 
@@ -1281,11 +1467,18 @@ $.ajax({
 
 #### Response Example
 
+```403 Not Allowed```
+
+```200 OK```
+
 ### Set default payment method for user/customer - JSON controller
 
 ```
 PATCH /ecommerce/payment-method/set-default
 ```
+
+Set selected payment method as default for authenticated user.
+
 #### Request Example
 ```js   
 
@@ -1314,6 +1507,9 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
+```404 Not Found```
 
 ### Get PayPal billing agreement express checkout url - JSON controller
 
@@ -1350,6 +1546,14 @@ GET /ecommerce/payment-method/paypal-agreement
 ```
 PATCH /ecommerce/payment-method/{paymentMethodId}
 ```
+
+Update a credit card payment method based on request data and payment method id.
+
+Return 
+- NotFoundException if the payment method doesn't exist or the user have not rights to access it
+- JsonResponse with the updated payment method
+     
+     
 #### Request Example
 ```js   
 
@@ -1383,11 +1587,20 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
+```404 Not Found```
+
 ### Delete payment method - JSON controller
 
 ```
 DELETE /ecommerce/payment-method/{paymentMethodId}
 ```
+
+Delete a payment method and return a JsonResponse.
+
+Throw  - NotFoundException if the payment method not exist
+
 #### Request Example
 
 ```js   
@@ -1414,12 +1627,21 @@ $.ajax({
 
 #### Response Example
 
+```204 No Content```
+
+```404 Not Found```
+
+```403 Not Allowed```
 
 ### Get all user's payment methods - JSON controller
 
 ```
 GET /ecommerce/user-payment-method/{userId}
 ```
+
+Get all user's payment methods with all the method details: credit card or paypal billing agreement
+
+
 #### Request Example
 ```js   
 
@@ -1446,12 +1668,16 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
 
 ### Get user addresses - JSON controller
 
 ```
 GET /ecommerce/address
 ```
+
+Pull user address. If the user_id it's not set on the request the method pull authenticated user addresses.
+
 #### Request Example
 
 ```js   
@@ -1480,11 +1706,18 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
 ### Create a new address for user/customer - JSON controller
 
 ```
 PUT /ecommerce/address
 ```
+
+Call the method to store a new address based on request parameters.
+
+Return a JsonResponse with the new created address.
+     
 #### Request Example
 ```js   
 
@@ -1523,11 +1756,22 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
 ### Update address - JSON controller
 
 ```
 PATCH /ecommerce/address/{addressId}
 ```
+
+Update an address based on address id and requests parameters.
+
+Return 
+- NotFoundException if the address not exists
+- NotAllowedException if the user have not rights to access it
+- JsonResponse with the updated address
+
+     
 #### Request Example
 ```js   
 
@@ -1567,11 +1811,25 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
+
+```404 Not Found```
+
+```403 Not Allowed```
+
 ### Delete address - JSON controller
 
 ```
 DELETE /ecommerce/address/{addressId}
 ```
+
+Delete an address based on the id.
+
+Return 
+- NotFoundException if the address not exists
+- NotAllowedException if the address it's in used (exists orders defined for the selected address)  or the user have not rights to access it
+- JsonResponse with code 204 otherwise
+     
 #### Request Example
 ```js   
 
@@ -1599,11 +1857,23 @@ $.ajax({
 
 #### Response Example
 
+```204 No Content```
+
+```404 Not Found```
+
+```403 Not Allowed```
+
 ### Pull subscriptions paginated - JSON controller
 
 ```
 GET /ecommerce/subscriptions
 ```
+
+Pull subscriptions paginated. 
+
+If the user_id it's set on the request only the user's subscriptions are pulled.
+
+
 #### Request Example
 ```js   
 
@@ -1634,6 +1904,8 @@ $.ajax({
 
 
 #### Response Example
+
+```200 OK```
 
 ### Create a new subscription - JSON controller
 
@@ -1687,11 +1959,17 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
+
 ### Update a subscription - JSON controller
 
 ```
 PATCH /ecommerce/subscription/{subscriptionId}
 ```
+
+Update a subscription and returned updated data in JSON format.
+
+
 #### Request Example
 ```js   
 
@@ -1712,6 +1990,7 @@ $.ajax({
 ```
 
 #### Request Parameters
+
 | path\|query\|body |  key                     |  required |  default                  |  description\|notes                               | 
 |-------------------|--------------------------|-----------|---------------------------|---------------------------------------------------| 
 | path              |  id                      |  yes      |                           |  Subscription id you want to edit                 | 
@@ -1737,11 +2016,20 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
+
+```404 Not Found```
+
+
 ### Delete a subscription - JSON controller
 
 ```
 DELETE /ecommerce/subscription/{subscriptionId}
 ```
+
+Soft delete a subscription if exists in the database
+
+
 #### Request Example
 ```js   
 
@@ -1767,11 +2055,18 @@ $.ajax({
 
 #### Response Example
 
+```204 No Content```
+
+```404 Not Found```
+
 ### Renew a subscription - JSON controller
 
 ```
 POST /ecommerce/subscription-renew/{subscriptionId}
 ```
+
+Renew selected subscription.
+
 #### Request Example
 ```js   
 
@@ -1797,11 +2092,22 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
+
+```422 ```
+
 ### Pull orders - JSON controller
 
 ```
 GET /ecommerce/orders
 ```
+
+Pull paginated orders. 
+
+If start-date and end-date are set on the request are pulled only the orders created in specified period. 
+
+If user_id it's set on the request pull only the user's orders.
+
 #### Request Example
 ```js   
 
@@ -1834,11 +2140,16 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
 ### Update order - JSON controller
 
 ```
 PATCH /ecommerce/order/{orderId}
 ```
+
+Update order if exists in db and the user have rights to update it.
+
 #### Request Example
 ```js   
 
@@ -1870,11 +2181,19 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
+
+```404 Not Found```
+
 ### Delete order - JSON controller
 
 ```
 DELETE /ecommerce/order/{orderId}
 ```
+
+Soft delete order
+
+
 #### Request Example
 ```js   
 
@@ -1901,12 +2220,21 @@ $.ajax({
 
 #### Response Example
 
+```204 No Content```
+
+```404 Not Found```
+
 
 ### Pull shipping fulfillments - JSON controller
 
 ```
 GET /ecommerce/fulfillment
 ```
+
+Pull paginated shipping fulfillments. 
+
+If the status it's set on the requests the results are filtered by status.
+
 #### Request Example
 ```js   
 
@@ -1936,11 +2264,18 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
 ### Fulfilled order or order item - JSON controller
 
 ```
 PATCH /ecommerce/fulfillment
 ```
+
+Fulfilled order or order item. 
+
+If the order_item_id it's set on the request only the order item it's fulfilled, otherwise entire order it's fulfilled.
+     
 #### Request Example
 ```js   
 
@@ -1971,11 +2306,19 @@ $.ajax({
 
 #### Response Example
 
+```201 OK```
+
+```404 Not Found```
+
 ### Delete shipping fulfillment  - JSON controller
 
 ```
 DELETE /ecommerce/fulfillment
 ```
+
+Delete order or order item fulfillment.
+
+
 #### Request Example
 ```js   
 
@@ -2005,11 +2348,18 @@ $.ajax({
 
 #### Response Example
 
+```204 No Content```
+
 ### Get products statistics  - JSON controller
 
 ```
 GET /ecommerce/stats/products
 ```
+
+Pull products statistics.
+
+If start-date and end-date are set on the request only the stats from specified period are pulled.
+ 
 #### Request Example
 ```js   
 
@@ -2038,12 +2388,19 @@ $.ajax({
 
 #### Response Example
 
+```200 OK```
+
 
 ### Get orders statistics  - JSON controller
 
 ```
 GET /ecommerce/stats/orders
 ```
+
+Pull orders statistics.
+
+If start-date and end-date are set on the request only the stats from specified period are pulled.
+ 
 #### Request Example
 ```js   
 
@@ -2071,4 +2428,6 @@ $.ajax({
 
 
 #### Response Example
+
+```200 OK```
 
