@@ -749,6 +749,12 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                |  required |  default |  description\|notes                            | 
+|-------------------|---------------------|-----------|----------|------------------------------------------------| 
+| body              |  shipping_option_id |  yes      |          |  Id of the shipping option for shipping costs. | 
+| body              |  min                |  yes      |          |  Min weight to apply the cost                  | 
+| body              |  max                |  yes      |          |  Max  weight to apply the cost                 | 
+| body              |  price              |  yes      |          |  Price                                         | 
 
 
 #### Response Example
@@ -779,6 +785,13 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                |  required |  default |  description\|notes                            | 
+|-------------------|---------------------|-----------|----------|------------------------------------------------| 
+| path              |  shippingCostId     |  yes      |          |  Id of the shipping costs you want to update.  | 
+| body              |  shipping_option_id |  no       |          |  Id of the shipping option for shipping costs. | 
+| body              |  min                |  no       |          |  Min weight to apply the cost                  | 
+| body              |  max                |  no       |          |  Max  weight to apply the cost                 | 
+| body              |  price              |  no       |          |  Price                                         | 
 
 
 #### Response Example
@@ -808,6 +821,9 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key |  required |  default |  description\|notes                            | 
+|-------------------|------|-----------|----------|------------------------------------------------| 
+| path              |  id  |  yes      |          |  Id of the shipping cost you want to delete.   | 
 
 
 #### Response Example
@@ -838,6 +854,12 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                |  required |  default    |  description\|notes                    | 
+|-------------------|---------------------|-----------|-------------|----------------------------------------| 
+| query             |  page               |  no       |  1          |  Pagination page.                      | 
+| query             |  limit              |  no       |  100        |  Amount of discounts to pull per page. | 
+| query             |  order_by_column    |  no       |  created_on |  Sort column name.                     | 
+| query             |  order_by_direction |  no       |  desc       |  Sort column direction.                | 
 
 
 #### Response Example
@@ -867,6 +889,13 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key         |  required |  default |  description\|notes               | 
+|-------------------|--------------|-----------|----------|-----------------------------------| 
+| body              |  name        |  yes      |          |  Discount name.                   | 
+| body              |  description |  yes      |          |  Discount description             | 
+| body              |  type        |  yes      |          |  Discount type                    | 
+| body              |  amount      |  yes      |          |  Discount amount                  | 
+| body              |  active      |  yes      |          |  Discount it's active or inactive | 
 
 
 #### Response Example
@@ -896,6 +925,14 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key         |  required |  default |  description\|notes               | 
+|-------------------|--------------|-----------|----------|-----------------------------------| 
+| payh              |  id          |  yes      |          |  Discount id you want to edit     | 
+| body              |  name        |  no       |          |  Discount name.                   | 
+| body              |  description |  no       |          |  Discount description             | 
+| body              |  type        |  no       |          |  Discount type                    | 
+| body              |  amount      |  no       |          |  Discount amount                  | 
+| body              |  active      |  no       |          |  Discount it's active or inactive | 
 
 
 #### Response Example
@@ -924,7 +961,9 @@ $.ajax({
 ```
 
 #### Request Parameters
-
+| path\|query\|body |  key |  required |  default |  description\|notes                            | 
+|-------------------|------|-----------|----------|------------------------------------------------| 
+| path              |  id  |  yes      |          |  Id of the discount you want to delete.        | 
 
 #### Response Example
 
@@ -953,6 +992,14 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key        |  required |  default |  description\|notes                           | 
+|-------------------|-------------|-----------|----------|-----------------------------------------------| 
+| path              |  id         |  yes      |          |  Id of discounts where criteria it's defined  | 
+| body              |  name       |  yes      |          |  Discount criteria name.                      | 
+| body              |  type       |  yes      |          |  Discount criteria type.                      | 
+| body              |  product_id |  yes      |          |  Product id that should met the criteria      | 
+| body              |  min        |  no       |          |  Min                                          | 
+| body              |  max        |  no       |          |  Max                                          | 
 
 
 #### Response Example
@@ -983,6 +1030,15 @@ $.ajax({
 
 #### Request Parameters
 
+| path\|query\|body |  key        |  required |  default |  description\|notes                         | 
+|-------------------|-------------|-----------|----------|---------------------------------------------| 
+| path              |  id         |  yes      |          |  Id of discount criteria you want to update | 
+| body              |  name       |  no       |          |  Discount criteria name.                    | 
+| body              |  type       |  no       |          |  Discount criteria type.                    | 
+| body              |  product_id |  no       |          |  Product id that should met the criteria    | 
+| body              |  min        |  no       |          |  Min                                        | 
+| body              |  max        |  no       |          |  Max                                        | 
+
 
 #### Response Example
 
@@ -1010,7 +1066,9 @@ $.ajax({
 ```
 
 #### Request Parameters
-
+| path\|query\|body |  key |  required |  default |  description\|notes                            | 
+|-------------------|------|-----------|----------|------------------------------------------------| 
+| path              |  id  |  yes      |          |  Id of the discount criteria you want to delete.| 
 
 #### Response Example
 
