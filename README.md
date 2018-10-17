@@ -8,11 +8,11 @@ Ecommerce
       - [Request Example](#request-example)
       - [Request Parameters](#request-parameters)
       - [Response Example](#response-example)
-    + [Remove a product from cart - forms controller](#remove-a-product-from-cart---forms-controller)
+    + [Remove a product from cart - JSON](#remove-a-product-from-cart---json)
       - [Request Example](#request-example-1)
       - [Request Parameters](#request-parameters-1)
       - [Response Example](#response-example-1)
-    + [Update product quantity on cart - forms controller](#update-product-quantity-on-cart---forms-controller)
+    + [Update product quantity on cart - JSON controller](#update-product-quantity-on-cart---json-controller)
       - [Request Example](#request-example-2)
       - [Request Parameters](#request-parameters-2)
       - [Response Example](#response-example-2)
@@ -273,27 +273,68 @@ On the session are flashed the following data:\
     * `notAvailableProducts` - array with the error messages for the products that could not be added to cart
 
 
-### Remove a product from cart - forms controller
+### Remove a product from cart - JSON 
 
 ```
 PUT /ecommerce/remove-from-cart/{productId}
 ```
 #### Request Example
 
+```
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/remove-from-cart/1',
+    type: 'put',
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
+| path|query|body |  key        |  required |  default |  description\|notes                           | 
+|-----------------|-------------|-----------|----------|-----------------------------------------------| 
+| path            |  productId  |  yes      |          |  The product id you want to remove from cart. | 
+
 
 
 #### Response Example
 
+```201 OK```
 
-### Update product quantity on cart - forms controller
+```json
+{
+ 	"tax":"0",
+        "total":"0",
+        "cartItems":[]
+}
 
 ```
-PUT /ecommerce/update-product-quantit/{productId}/{newQuantity}
+
+### Update product quantity on cart - JSON controller
+
+```
+PUT /ecommerce/update-product-quantity/{productId}/{newQuantity}
 ```
 #### Request Example
-
+```
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/update-product-quantity/1/2',
+    type: 'put',
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -308,6 +349,21 @@ PUT /ecommerce/session/address
 ```
 #### Request Example
 
+```
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/session/address',
+    type: 'put',
+    data: {billing-email: 'test@drumeo.com', billing-country: '', billing-region:'', billing-zip-or-postal-code:'', hipping-address-line-1:''} 
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -322,7 +378,21 @@ PUT /ecommerce/session/address
 GET /ecommerce/product
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/product?page=3&limit=25&brand=drumeo&order_by_column=created_on&order_by_direction=desc',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -339,6 +409,23 @@ PUT /ecommerce/product
 ```
 #### Request Example
 
+```js   
+
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/product',
+    type: 'put'
+  	data: {name: 'product name', sku: 'product sku' price: 127, type: 'product', active:1, brand:'drumeo'} 
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -354,6 +441,23 @@ PATCH /ecommerce/product/{productId}
 ```
 #### Request Example
 
+```js   
+
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/product/1',
+    type: 'patch'
+  	data: {description: 'new description for product'}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -368,7 +472,22 @@ PATCH /ecommerce/product/{productId}
 DELETE /ecommerce/product/{productId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/product/1',
+    type: 'delete'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -383,7 +502,23 @@ DELETE /ecommerce/product/{productId}
 PUT /ecommerce/product/upload/
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/product/upload',
+    type: 'put'
+  	data: {target: '', file: ''} 
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -399,7 +534,21 @@ PUT /ecommerce/product/upload/
 GET /ecommerce/shipping-options
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/shipping-options?page=3&limit=25&order_by_column=created_on&order_by_direction=desc',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -414,6 +563,24 @@ PUT /ecommerce/shipping-options
 ```
 #### Request Example
 
+```js   
+
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/shipping-options',
+    type: 'put'
+  	data: {country: 'En', priority: '1' active: '1'} 
+		// language, brand, will be set to internal defaults
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -429,6 +596,23 @@ PATCH /ecommerce/shipping-options/{shippingOptionId}
 ```
 #### Request Example
 
+```js   
+
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/shipping-options/1',
+    type: 'patch'
+  	data: {active: '0'}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -442,7 +626,22 @@ PATCH /ecommerce/shipping-options/{shippingOptionId}
 DELETE /ecommerce/shipping-options/{shippingOptionId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/shipping-option/1',
+    type: 'delete'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -458,7 +657,23 @@ DELETE /ecommerce/shipping-options/{shippingOptionId}
 PUT /ecommerce/shipping-cost
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/shipping-cost',
+    type: 'put'
+  	data: {shipping_option_id: '1', min: '0' max: '100', price: '15} 
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -472,7 +687,23 @@ PUT /ecommerce/shipping-cost
 PATCH /ecommerce/shipping-cost/{shippingCostId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/shipping-cost/1',
+    type: 'patch'
+  	data: {min: '3'}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -486,7 +717,22 @@ PATCH /ecommerce/shipping-cost/{shippingCostId}
 DELETE /ecommerce/shipping-cost/{shippingCostId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/shipping-cost/1',
+    type: 'delete'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -502,6 +748,21 @@ GET /ecommerce/discounts
 ```
 #### Request Example
 
+```js   
+
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/discounts?page=3&limit=25&order_by_column=created_on&order_by_direction=desc',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -514,7 +775,23 @@ GET /ecommerce/discounts
 PUT /ecommerce/discount
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/discount',
+    type: 'put'
+  	data: {name: 'test', description: 'discount description' type: 'product amount off', amount: '10', product_id:'1', active:'1'} 
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -527,7 +804,23 @@ PUT /ecommerce/discount
 PATCH /ecommerce/discount/{discountId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/discount/1',
+    type: 'patch'
+  	data: {amount: '30'}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -540,7 +833,22 @@ PATCH /ecommerce/discount/{discountId}
 DELETE /ecommerce/discount/{discountId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/discount/1',
+    type: 'delete'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -553,7 +861,23 @@ DELETE /ecommerce/discount/{discountId}
 PUT /ecommerce/discount-criteria/{discountId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/discount-criteria/1',
+    type: 'put'
+  	data: {name: 'discount criteria name', product_id:'1', type:'product quantity requirement',min:2, max:5} 
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -566,7 +890,23 @@ PUT /ecommerce/discount-criteria/{discountId}
 PATCH /ecommerce/discount-criteria/{discountCriteriaId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/discount-criteria/1',
+    type: 'patch'
+  	data: {max: '30'}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -579,7 +919,22 @@ PATCH /ecommerce/discount-criteria/{discountCriteriaId}
 DELETE /ecommerce/discount-criteria/{discountCriteriaId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/discount-criteria/1',
+    type: 'delete'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
