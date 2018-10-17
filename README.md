@@ -1126,6 +1126,15 @@ $.ajax({
 
 #### Request Parameters
 
+| path\|query\|body |  key                |  required                          |  default    |  description\|notes                    | 
+|-------------------|---------------------|------------------------------------|-------------|----------------------------------------| 
+| query             |  order_id           |  yes if subscription_id not exists |             |  Pull payments for order_id            | 
+| query             |  subscription_id    |  yes if order_id not exists        |             |  Pull payments for subscription_id     | 
+| query             |  page               |  no                                |  1          |  Pagination page.                      | 
+| query             |  limit              |  no                                |  100        |   Amount of payments to pull per page. | 
+| query             |  order_by_column    |  no                                |  created_on |  Sort column name.                     | 
+| query             |  order_by_direction |  no                                |  desc       |  Sort column direction.                | 
+
 
 #### Response Example
 
@@ -1154,6 +1163,15 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key               |  required |  default |  description\|notes                         | 
+|-------------------|--------------------|-----------|----------|---------------------------------------------| 
+| body              |  due               |  yes      |          |  Payment due.                               | 
+| body              |  paid              |  no       |          |  Paid Amount                                | 
+| body              |  refunded          |  no       |          |  Refunded amount                            | 
+| body              |  payment_method_id |  no       |          |  Associated payment method                  | 
+| body              |  currency          |  no       |          |  Currency                                   | 
+| body              |  order_id          |  no       |          |  Payment for order with specified id        | 
+| body              |  subscription_id   |  no       |          |  Payment for subscription with specified id | 
 
 
 #### Response Example
@@ -1182,7 +1200,9 @@ $.ajax({
 ```
 
 #### Request Parameters
-
+| path\|query\|body |  key |  required |  default |  description\|notes                            | 
+|-------------------|------|-----------|----------|------------------------------------------------| 
+| path              |  id  |  yes      |          |  Id of the payment you want to delete.| 
 
 #### Response Example
 
@@ -1212,6 +1232,13 @@ $.ajax({
 
 #### Request Parameters
 
+| path\|query\|body |  key           |  required |  default |  description\|notes          | 
+|-------------------|----------------|-----------|----------|------------------------------| 
+| body              |  refund_amount |  yes      |          |  Amount that will be refund. | 
+| body              |  note          |  no       |          |  Refund optional description | 
+| body              |  payment_id    |  yes      |          |  Payment that it's refund.   | 
+| body              |  gateway_name  |  yes      |          |  Gateway name                | 
+
 
 #### Response Example
 
@@ -1240,6 +1267,16 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key         |  required                            |  default |  description\|notes                          | 
+|-------------------|--------------|--------------------------------------|----------|----------------------------------------------| 
+| body              |  method_type |  yes                                 |          |  Payment method type: paypal or credit-card  | 
+| body              |  card_token  |  yes for credit-card type            |          |  Card token                                  | 
+| body              |  gateway     |  yes                                 |          |  Gateway name.                               | 
+| body              |  token       |  yes for paypal type                 |          |  Paypal token                                | 
+| body              |  address_id  |  yes for paypal type                 |          |  Address id                                  | 
+| body              |  user_id     |  yes if customer_id it's not defined |          |  User id                                     | 
+| body              |  user_email  |  yes if customer_id it's not defined |          |  User email address                          | 
+| body              |  customer_id |  yes if user_id it's not defined     |          |  Customer id                                 | 
 
 
 #### Response Example
@@ -1269,6 +1306,10 @@ $.ajax({
 ```
 
 #### Request Parameters
+
+| path\|query\|body |  key |  required |  default |  description\|notes                           | 
+|-------------------|------|-----------|----------|-----------------------------------------------| 
+| body              |  id  |  yes      |          |  Payment method id you want to set as default | 
 
 
 #### Response Example
@@ -1304,7 +1345,7 @@ GET /ecommerce/payment-method/paypal-agreement
 
 
 
-### Update payment method - JSON controller
+### Update Credit card payment method - JSON controller
 
 ```
 PATCH /ecommerce/payment-method/{paymentMethodId}
@@ -1316,7 +1357,7 @@ $.ajax({
     url: 'https://www.musora.com' +
         '/ecommerce/payment-method/1',
     type: 'patch'
-  	data: {address_id: 2}
+  	data: {year: '2022', month:'12'}
     dataType: 'json',
     success: function(response) {
         // handle success
@@ -1329,6 +1370,15 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key         |  required |  default |  description\|notes                    | 
+|-------------------|--------------|-----------|----------|----------------------------------------| 
+| path              |  id          |  yes      |          |  Payment method id you want to edit    | 
+| body              |  gateway     |  yes      |          |  Gateway name                          | 
+| body              |  year        |  yes      |          |  Credit card expiration year           | 
+| body              |  month       |  yes      |          |  Credit card expiration month          | 
+| body              |  country     |  no       |          |  Country                               | 
+| body              |  state       |  no       |          |  State                                 | 
+| body              |  set_default |  no       |          |  Flag to set payment method as default | 
 
 
 #### Response Example
@@ -1358,7 +1408,9 @@ $.ajax({
 ```
 
 #### Request Parameters
-
+| path\|query\|body |  key |  required |  default |  description\|notes                           | 
+|-------------------|------|-----------|----------|-----------------------------------------------| 
+| body              |  id  |  yes      |          |  Payment method id you want to delete         | 
 
 #### Response Example
 
@@ -1386,6 +1438,10 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key |  required |  default |  description\|notes                       | 
+|-------------------|------|-----------|----------|-------------------------------------------| 
+| path              |  id  |  yes      |          |  User id you want to pull payment methods | 
+
 
 
 #### Response Example
@@ -1416,6 +1472,11 @@ $.ajax({
 
 #### Request Parameters
 
+| path\|query\|body |  key     |  required |  default               |  description\|notes                 | 
+|-------------------|----------|-----------|------------------------|-------------------------------------| 
+| body              |  user_id |  no       |  authenticated user id |  User id you want to pull addresses | 
+
+
 
 #### Response Example
 
@@ -1444,6 +1505,20 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key           |  required |  default                |  description\|notes                | 
+|-------------------|----------------|-----------|-------------------------|------------------------------------| 
+| body              |  type          |  yes      |                         |  Address type: billing or shipping | 
+| body              |  first_name    |  no       |                         |  First name                        | 
+| body              |  last_name     |  no       |                         |  Last name                         | 
+| body              |  street_line_1 |  no       |                         |  Street line 1                     | 
+| body              |  street_line_2 |  no       |                         |  Street line 2                     | 
+| body              |  city          |  no       |                         |  City                              | 
+| body              |  zip           |  no       |                         |  Zip code                          | 
+| body              |  state         |  no       |                         |  State                             | 
+| body              |  country       |  yes      |                         |  Country                           | 
+| body              |  user_id       |  no       |                         |  User id                           | 
+| body              |  customer_id   |  no       |                         |  Customer id                       | 
+| body              |  brand         |  no       |  brand from config file |  Brand                             | 
 
 
 #### Response Example
@@ -1473,6 +1548,21 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key           |  required |  default                |  description\|notes                | 
+|-------------------|----------------|-----------|-------------------------|------------------------------------| 
+| path              |  id            |  yes      |                         |  Address id you want to edit       | 
+| body              |  type          |  no       |                         |  Address type: billing or shipping | 
+| body              |  first_name    |  no       |                         |  First name                        | 
+| body              |  last_name     |  no       |                         |  Last name                         | 
+| body              |  street_line_1 |  no       |                         |  Street line 1                     | 
+| body              |  street_line_2 |  no       |                         |  Street line 2                     | 
+| body              |  city          |  no       |                         |  City                              | 
+| body              |  zip           |  no       |                         |  Zip code                          | 
+| body              |  state         |  no       |                         |  State                             | 
+| body              |  country       |  no       |                         |  Country                           | 
+| body              |  user_id       |  no       |                         |  User id                           | 
+| body              |  customer_id   |  no       |                         |  Customer id                       | 
+| body              |  brand         |  no       |  brand from config file |  Brand                             | 
 
 
 #### Response Example
@@ -1501,6 +1591,10 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key         |  required |  default |  description\|notes            | 
+|-------------------|--------------|-----------|----------|--------------------------------| 
+| path              |  id          |  yes      |          |  Address id you want to delete | 
+| body              |  customer_id |  no       |          |  Customer id                   | 
 
 
 #### Response Example
@@ -1528,6 +1622,15 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                |  required |  default    |  description\|notes                        | 
+|-------------------|---------------------|-----------|-------------|--------------------------------------------| 
+| query             |  user_id            |  no       |             |  Pull only user's subscriptions            | 
+| query             |  page               |  no       |  1          |  Pagination page.                          | 
+| query             |  limit              |  no       |  100        |  Amount of subscriptions to pull per page. | 
+| query             |  order_by_column    |  no       |  created_on |  Sort column name.                         | 
+| query             |  order_by_direction |  no       |  desc       |  Sort column direction.                    | 
+| query             |  brand              |  no       |             |  Brand                                     | 
+
 
 
 #### Response Example
@@ -1560,6 +1663,26 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                     |  required |  default                  |  description\|notes                               |  | 
+|-------------------|--------------------------|-----------|---------------------------|---------------------------------------------------|--| 
+| body              |  brand                   |  no       |  Value set in config file |  Brand                                            |  | 
+| body              |  currency                |  no       |                           |  Currency                                         |  | 
+| body              |  type                    |  yes      |                           |  Subscription type: payment plan or subscription. |  | 
+| body              |  order_id                |  no       |                           |  Associated order id                              |  | 
+| body              |  product_id              |  no       |                           |  Associated product id                            |  | 
+| body              |  is_active               |  no       |                           |  Subscription it's active or inactive             |  | 
+| body              |  start_date              |  no       |                           |  Membership start date                            |  | 
+| body              |  paid_until              |  no       |                           |  End of membership                                |  | 
+| body              |  canceled_on             |  no       |                           |  Date when the subscription was canceled          |  | 
+| body              |  note                    |  no       |                           |  Optional note                                    |  | 
+| body              |  total_price_per_payment |  no       |                           |  Amount that should be paid                       |  | 
+| body              |  interval_type           |  no       |                           |  Subscription interval type                       |  | 
+| body              |  interval_count          |  no       |                           |  Subscription interval count                      |  | 
+| body              |  total_cycles_due        |  no       |                           |  Total cycles due for payment plan                |  | 
+| body              |  total_cycles_paid       |  no       |                           |  Total cycles paid for payment plan               |  | 
+| body              |  payment_method_id       |  no       |                           |  Associated payment method                        |  | 
+| body              |  user_id                 |  no       |                           |  User id                                          |  | 
+| body              |  customer_id             |  no       |                           |  Customer id                                      |  | 
 
 
 #### Response Example
