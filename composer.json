@@ -27,7 +27,7 @@
     "railroad/location": "^1.0",
     "railroad/permissions": "^1.0",
     "railroad/remotestorage": "^1.0",
-    "railroad/resora": "^1.0",
+    "railroad/resora": ">=1.0.10 <1.1",
     "railroad/response": "^1.0",
     "railroad/usora": "^1.0"
   },
