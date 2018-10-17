@@ -1820,6 +1820,16 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                |  required |  default                  |  description\|notes                                                  | 
+|-------------------|---------------------|-----------|---------------------------|----------------------------------------------------------------------| 
+| query             |  brand              |  no       |  Value set in config file |  Brand                                                               | 
+| query             |  start_date         |  no       |                           |  If it's defined will be pulled only orders created after start_date | 
+| query             |  end_date           |  no       |                           |  f it's defined will be pulled only orders created before end_date   | 
+| query             |  user_id            |  no       |                           |  If it's defined only user's orders will be pulled                   | 
+| query             |  page               |  no       |  1                        |  Pagination page.                                                    | 
+| query             |  limit              |  no       |  100                      |   Amount of orders to pull per page.                                 | 
+| query             |  order_by_column    |  no       |  created_on               |  Sort column name.                                                   | 
+| query             |  order_by_direction |  no       |  desc                     |  Sort column direction.                                              | 
 
 
 #### Response Example
@@ -1849,6 +1859,13 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key            |  required |  default |  description\|notes        | 
+|-------------------|-----------------|-----------|----------|----------------------------| 
+| path              |  id             |  yes      |          |  Order id you want to edit | 
+| body              |  due            |  no       |          |  Order due                 | 
+| body              |  tax            |  no       |          |  Order tax                 | 
+| body              |  shipping_costs |  no       |          |  Order shipping costs      | 
+| body              |  paid           |  no       |          |  Order paid value          | 
 
 
 #### Response Example
@@ -1878,6 +1895,9 @@ $.ajax({
 
 #### Request Parameters
 
+| path\|query\|body |  key     |  required |  default               |  description\|notes                 | 
+|-------------------|----------|-----------|------------------------|-------------------------------------| 
+| path              |  id      |  yes      |                        |  Order id you want to delete        | 
 
 #### Response Example
 
@@ -1905,6 +1925,13 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                |  required |  default                 |  description\|notes                                            | 
+|-------------------|---------------------|-----------|--------------------------|----------------------------------------------------------------| 
+| query             |  status             |  no       |  ['pending' 'fulfilled'] |  Only shipping fulfillment with selected status will be pulled | 
+| query             |  page               |  no       |  1                       |  Pagination page.                                              | 
+| query             |  limit              |  no       |  100                     |   Amount of shipping fulfillments to pull per page.            | 
+| query             |  order_by_column    |  no       |  created_on              |  Sort column name.                                             | 
+| query             |  order_by_direction |  no       |  desc                    |  Sort column direction.                                        | 
 
 
 #### Response Example
@@ -1934,6 +1961,12 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key               |  required |  default |  description\|notes                     | 
+|-------------------|--------------------|-----------|----------|-----------------------------------------| 
+| body              |  tracking_number   |  yes      |          |  Shipping fulfillment tracking number   | 
+| body              |  shipping_company  |  yes      |          |  Company name                           | 
+| body              |  order_id          |  yes      |          |  Mark fulfilled order with specified id | 
+| body              |  order_item_id     |  no       |          |  Mark fulfilled only an item from order | 
 
 
 #### Response Example
@@ -1964,6 +1997,11 @@ $.ajax({
 
 #### Request Parameters
 
+| path\|query\|body |  key           |  required |  default |  description\|notes                                  | 
+|-------------------|----------------|-----------|----------|------------------------------------------------------| 
+| body              |  order_id      |  yes      |          |  Delete fulfillment for order with specified id      | 
+| body              |  order_item_id |  no       |          |  Delete fulfillment for order item with specified id | 
+
 
 #### Response Example
 
@@ -1990,6 +2028,12 @@ $.ajax({
 ```
 
 #### Request Parameters
+
+| path\|query\|body |  key        |  required |  default                   |  description\|notes        | 
+|-------------------|-------------|-----------|----------------------------|----------------------------| 
+| body              |  brand      |  no       |  Value set in config file  |  Brand                     | 
+| body              |  start_date |  no       |  today                     |  Start of period for stats | 
+| body              |  end_date   |  no       |  today                     |  End of period for stats   | 
 
 
 #### Response Example
@@ -2018,6 +2062,12 @@ $.ajax({
 ```
 
 #### Request Parameters
+
+| path\|query\|body |  key        |  required |  default                   |  description\|notes        | 
+|-------------------|-------------|-----------|----------------------------|----------------------------| 
+| body              |  brand      |  no       |  Value set in config file  |  Brand                     | 
+| body              |  start_date |  no       |  today                     |  Start of period for stats | 
+| body              |  end_date   |  no       |  today                     |  End of period for stats   | 
 
 
 #### Response Example
