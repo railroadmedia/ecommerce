@@ -168,7 +168,7 @@ class CartService
      */
     public function unlockCart()
     {
-        $this->removeAllItems();
+        $this->removeAllCartItems();
         $this->unlockPaymentPlan();
 
         $this->session->put(ConfigService::$brand . '-' . self::LOCKED_SESSION_KEY, false);
