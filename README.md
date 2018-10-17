@@ -663,7 +663,7 @@ $.ajax({
     url: 'https://www.musora.com' +
         '/ecommerce/shipping-cost',
     type: 'put'
-  	data: {shipping_option_id: '1', min: '0' max: '100', price: '15} 
+  	data: {shipping_option_id: '1', min: '0' max: '100', price: '15'} 
     dataType: 'json',
     success: function(response) {
         // handle success
