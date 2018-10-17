@@ -293,9 +293,10 @@ $.ajax({
 ```
 
 #### Request Parameters
-| path|query|body |  key        |  required |  default |  description\|notes                           | 
+| path\|query\|body |  key        |  required |  default |  description\|notes                           | 
 |-----------------|-------------|-----------|----------|-----------------------------------------------| 
 | path            |  productId  |  yes      |          |  The product id you want to remove from cart. | 
+
 
 
 
@@ -334,6 +335,10 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key          |  required |  default |  description\|notes                                  | 
+|-------------------|---------------|-----------|----------|------------------------------------------------------| 
+| path              |  productId    |  yes      |          |  The product id you want to modify quantity on cart. | 
+| path              |  newQuantity  |  yes      |          |  The new quantity for the product.                   | 
 
 
 #### Response Example
@@ -363,6 +368,19 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                         |  required |  default |  description\|notes                   | 
+|-------------------|------------------------------|-----------|----------|---------------------------------------| 
+| body              |  billing-email               |  no       |          |  The billing email address.           | 
+| body              |  billing-country             |  no       |          |  The billing country.                 | 
+| body              |  billing-region              |  no       |          |  The billing region.                  | 
+| body              |  billing-zip-or-postal-code  |  no       |          |  The billing zip code.                | 
+| body              |  shipping-address-line-1     |  no       |          |  The shipping address line 1.         | 
+| body              |  shipping-city               |  no       |          |  The shipping city.                   | 
+| body              |  shipping-country            |  no       |          |  The shipping country.                | 
+| body              |  shipping-first-name         |  no       |          |  The first name for shipping address. | 
+| body              |  shipping-last-name          |  no       |          |  The last name for shipping address.  | 
+| body              |  shipping-region             |  no       |          |  The region for shipping address.     | 
+| body              |  shipping-zip                |  no       |          |  The zip code for shipping address.   | 
 
 
 #### Response Example
@@ -392,6 +410,13 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                |  required |  default                  |  description\|notes                        | 
+|-------------------|---------------------|-----------|---------------------------|--------------------------------------------| 
+| body              |  brand              |  no       |  value set in config file |  The brand where the product it's defined. | 
+| query             |  page               |  no       |  1                        |  Pagination page.                          | 
+| query             |  limit              |  no       |  10                       |  Amount of products to pull per page.      | 
+| query             |  order_by_column    |  no       |  created_on               |  Sort column name.                         | 
+| query             |  order_by_direction |  no       |  desc                     |  Sort column direction                     | 
 
 
 #### Response Example
@@ -425,6 +450,18 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                         |  required                   |  default |  description\|notes                                            | 
+|-------------------|------------------------------|-----------------------------|----------|----------------------------------------------------------------| 
+| body              |  name                        |  yes                        |          |  Product name.                                                 | 
+| body              |  sku                         |  yes                        |          |  Product sku.                                                  | 
+| body              |  price                       |  yes                        |          |  Product price.                                                | 
+| body              |  type                        |  yes                        |          |  Product type; available options:product and subscription.     | 
+| body              |  active                      |  yes                        |          |  Product it's active or inactive                               | 
+| body              |  is_physical                 |  yes                        |          |  Flag that determines whether the Product it's physical or not | 
+| body              |  weight                      |  yes if is_physical = true  |          |  Product weight                                                | 
+| body              |  stock                       |  yes                        |          |  Product stock quantity                                        | 
+| body              |  subscription_interval_type  |  yes if type = subscription |          | Subscription interval type                                     | 
+| body              |  subscription_interval_count |  yes if type = subscription |          | Subscription interval period                                   | 
 
 
 #### Response Example
@@ -457,6 +494,19 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                         |  required                   |  default |  description\|notes                                            | 
+|-------------------|------------------------------|-----------------------------|----------|----------------------------------------------------------------| 
+| path              |  productId                   |  yes                        |          |  Id of the product you want to edit.                           | 
+| body              |  name                        |  no                         |          |  New product name.                                             | 
+| body              |  sku                         |  no                         |          |  New product sku.                                              | 
+| body              |  price                       |  no                         |          |  New product price.                                            | 
+| body              |  type                        |  no                         |          |  New product type; available options:product and subscription. | 
+| body              |  active                      |  no                         |          |  Product it's active or inactive                               | 
+| body              |  is_physical                 |  no                         |          |  Flag that determines whether the Product it's physical or not | 
+| body              |  weight                      |  yes if is_physical = true  |          |  Product weight                                                | 
+| body              |  stock                       |  no                         |          |  New product stock quantity                                    | 
+| body              |  subscription_interval_type  |  yes if type = subscription |          | Subscription interval type                                     | 
+| body              |  subscription_interval_count |  yes if type = subscription |          | Subscription interval period                                   | 
 
 
 #### Response Example
@@ -487,6 +537,9 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key        |  required |  default |  description\|notes                    | 
+|-------------------|-------------|-----------|----------|----------------------------------------| 
+| path              |  productId  |  yes      |          |  Id of the product you want to delete. | 
 
 
 #### Response Example
@@ -549,6 +602,13 @@ $.ajax({
 
 #### Request Parameters
 
+| path\|query\|body |  key                |  required |  default    |  description\|notes                            | 
+|-------------------|---------------------|-----------|-------------|------------------------------------------------| 
+| query             |  page               |  no       |  1          |  Pagination page.                              | 
+| query             |  limit              |  no       |  100        |   Amount of shipping options to pull per page. | 
+| query             |  order_by_column    |  no       |  created_on |  Sort column name.                             | 
+| query             |  order_by_direction |  no       |  desc       |  Sort column direction.                        | 
+
 
 #### Response Example
 
@@ -580,6 +640,11 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key       |  required |  default |  description\|notes                       | 
+|-------------------|------------|-----------|----------|-------------------------------------------| 
+| body              |  country   |  yes      |          |  Country for shipping option.             | 
+| body              |  priority  |  yes      |          |   Shipping option priority.               | 
+| body              |  active    |  yes      |          |  Shipping option it's active or inactive. | 
 
 
 #### Response Example
@@ -613,6 +678,13 @@ $.ajax({
 
 #### Request Parameters
 
+| path\|query\|body |  key       |  required |  default |  description\|notes                          | 
+|-------------------|------------|-----------|----------|----------------------------------------------| 
+| path              |  id        |  yes      |          |  Id of the shipping option you want to edit. | 
+| body              |  country   |  yes      |          |  New country for shipping option.            | 
+| body              |  priority  |  yes      |          |   New shipping option priority.              | 
+| body              |  active    |  yes      |          |  Shipping option it's active or inactive.    | 
+
 
 #### Response Example
 
@@ -641,6 +713,10 @@ $.ajax({
 ```
 
 #### Request Parameters
+
+| path\|query\|body |  key |  required |  default |  description\|notes                            | 
+|-------------------|------|-----------|----------|------------------------------------------------| 
+| path              |  id  |  yes      |          |  Id of the shipping option you want to delete. | 
 
 
 #### Response Example
