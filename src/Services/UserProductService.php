@@ -52,8 +52,7 @@ class UserProductService
      */
     public function saveUserProduct($userId, $productId, $quantity, $expirationDate)
     {
-        return $this->userProductRepository->query()
-            ->create(
+        return $this->userProductRepository->create(
                 [
                     'user_id' => $userId,
                     'product_id' => $productId,
@@ -94,9 +93,7 @@ class UserProductService
      */
     public function deleteUserProduct($userProductId)
     {
-        return $this->userProductRepository->query()
-            ->where('id', $userProductId)
-            ->delete();
+        return $this->userProductRepository->destroy($userProductId);
     }
 
     /**
