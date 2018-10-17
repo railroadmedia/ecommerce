@@ -100,122 +100,119 @@ Ecommerce
       - [Request Example](#request-example-23)
       - [Request Parameters](#request-parameters-23)
       - [Response Example](#response-example-23)
-    + [Submit order - JSON controller](#submit-order---json-controller)
+    + [Get payments - JSON controller](#get-payments---json-controller)
       - [Request Example](#request-example-24)
       - [Request Parameters](#request-parameters-24)
       - [Response Example](#response-example-24)
-    + [Get payments - JSON controller](#get-payments---json-controller)
+    + [Add a new payment - JSON controller](#add-a-new-payment---json-controller)
       - [Request Example](#request-example-25)
       - [Request Parameters](#request-parameters-25)
       - [Response Example](#response-example-25)
-    + [Add a new payment - JSON controller](#add-a-new-payment---json-controller)
+    + [Delete a payment - JSON controller](#delete-a-payment---json-controller)
       - [Request Example](#request-example-26)
       - [Request Parameters](#request-parameters-26)
       - [Response Example](#response-example-26)
-    + [Delete a payment - JSON controller](#delete-a-payment---json-controller)
+    + [Refund a payment - JSON controller](#refund-a-payment---json-controller)
       - [Request Example](#request-example-27)
       - [Request Parameters](#request-parameters-27)
       - [Response Example](#response-example-27)
-    + [Refund a payment - JSON controller](#refund-a-payment---json-controller)
+    + [Create a new payment method for user/customer - JSON controller](#create-a-new-payment-method-for-user-customer---json-controller)
       - [Request Example](#request-example-28)
       - [Request Parameters](#request-parameters-28)
       - [Response Example](#response-example-28)
-    + [Create a new payment method for user/customer - JSON controller](#create-a-new-payment-method-for-user-customer---json-controller)
+    + [Set default payment method for user/customer - JSON controller](#set-default-payment-method-for-user-customer---json-controller)
       - [Request Example](#request-example-29)
       - [Request Parameters](#request-parameters-29)
       - [Response Example](#response-example-29)
-    + [Set default payment method for user/customer - JSON controller](#set-default-payment-method-for-user-customer---json-controller)
+    + [Get PayPal billing agreement express checkout url - JSON controller](#get-paypal-billing-agreement-express-checkout-url---json-controller)
       - [Request Example](#request-example-30)
       - [Request Parameters](#request-parameters-30)
       - [Response Example](#response-example-30)
-    + [Get PayPal billing agreement express checkout url - JSON controller](#get-paypal-billing-agreement-express-checkout-url---json-controller)
+    + [Create PayPal billing agreement - JSON controller](#create-paypal-billing-agreement---json-controller)
       - [Request Example](#request-example-31)
       - [Request Parameters](#request-parameters-31)
       - [Response Example](#response-example-31)
-    + [Create PayPal billing agreement - JSON controller](#create-paypal-billing-agreement---json-controller)
+    + [Update payment method - JSON controller](#update-payment-method---json-controller)
       - [Request Example](#request-example-32)
       - [Request Parameters](#request-parameters-32)
       - [Response Example](#response-example-32)
-    + [Update payment method - JSON controller](#update-payment-method---json-controller)
+    + [Delete payment method - JSON controller](#delete-payment-method---json-controller)
       - [Request Example](#request-example-33)
       - [Request Parameters](#request-parameters-33)
       - [Response Example](#response-example-33)
-    + [Delete payment method - JSON controller](#delete-payment-method---json-controller)
+    + [Get all user's payment methods - JSON controller](#get-all-user-s-payment-methods---json-controller)
       - [Request Example](#request-example-34)
       - [Request Parameters](#request-parameters-34)
       - [Response Example](#response-example-34)
-    + [Get all user's payment methods - JSON controller](#get-all-user-s-payment-methods---json-controller)
+    + [Get user addresses - JSON controller](#get-user-addresses---json-controller)
       - [Request Example](#request-example-35)
       - [Request Parameters](#request-parameters-35)
       - [Response Example](#response-example-35)
-    + [Get user addresses - JSON controller](#get-user-addresses---json-controller)
+    + [Create a new address for user/customer - JSON controller](#create-a-new-address-for-user-customer---json-controller)
       - [Request Example](#request-example-36)
       - [Request Parameters](#request-parameters-36)
       - [Response Example](#response-example-36)
-    + [Create a new address for user/customer - JSON controller](#create-a-new-address-for-user-customer---json-controller)
+    + [Update address - JSON controller](#update-address---json-controller)
       - [Request Example](#request-example-37)
       - [Request Parameters](#request-parameters-37)
       - [Response Example](#response-example-37)
-    + [Update address - JSON controller](#update-address---json-controller)
+    + [Delete address - JSON controller](#delete-address---json-controller)
       - [Request Example](#request-example-38)
       - [Request Parameters](#request-parameters-38)
       - [Response Example](#response-example-38)
-    + [Delete address - JSON controller](#delete-address---json-controller)
+    + [Pull subscriptions paginated - JSON controller](#pull-subscriptions-paginated---json-controller)
       - [Request Example](#request-example-39)
       - [Request Parameters](#request-parameters-39)
       - [Response Example](#response-example-39)
-    + [Pull subscriptions paginated - JSON controller](#pull-subscriptions-paginated---json-controller)
+    + [Create a new subscription - JSON controller](#create-a-new-subscription---json-controller)
       - [Request Example](#request-example-40)
       - [Request Parameters](#request-parameters-40)
       - [Response Example](#response-example-40)
-    + [Create a new subscription - JSON controller](#create-a-new-subscription---json-controller)
+    + [Update a subscription - JSON controller](#update-a-subscription---json-controller)
       - [Request Example](#request-example-41)
       - [Request Parameters](#request-parameters-41)
       - [Response Example](#response-example-41)
-    + [Update a subscription - JSON controller](#update-a-subscription---json-controller)
+    + [Delete a subscription - JSON controller](#delete-a-subscription---json-controller)
       - [Request Example](#request-example-42)
       - [Request Parameters](#request-parameters-42)
       - [Response Example](#response-example-42)
-    + [Delete a subscription - JSON controller](#delete-a-subscription---json-controller)
+    + [Renew a subscription - JSON controller](#renew-a-subscription---json-controller)
       - [Request Example](#request-example-43)
       - [Request Parameters](#request-parameters-43)
       - [Response Example](#response-example-43)
-    + [Renew a subscription - JSON controller](#renew-a-subscription---json-controller)
+    + [Pull orders - JSON controller](#pull-orders---json-controller)
       - [Request Example](#request-example-44)
       - [Request Parameters](#request-parameters-44)
       - [Response Example](#response-example-44)
-    + [Pull orders - JSON controller](#pull-orders---json-controller)
+    + [Update order - JSON controller](#update-order---json-controller)
       - [Request Example](#request-example-45)
       - [Request Parameters](#request-parameters-45)
       - [Response Example](#response-example-45)
-    + [Update order - JSON controller](#update-order---json-controller)
+    + [Delete order - JSON controller](#delete-order---json-controller)
       - [Request Example](#request-example-46)
       - [Request Parameters](#request-parameters-46)
       - [Response Example](#response-example-46)
-    + [Delete order - JSON controller](#delete-order---json-controller)
+    + [Pull shipping fulfillments - JSON controller](#pull-shipping-fulfillments---json-controller)
       - [Request Example](#request-example-47)
       - [Request Parameters](#request-parameters-47)
       - [Response Example](#response-example-47)
-    + [Pull shipping fulfillments - JSON controller](#pull-shipping-fulfillments---json-controller)
+    + [Fulfilled order or order item - JSON controller](#fulfilled-order-or-order-item---json-controller)
       - [Request Example](#request-example-48)
       - [Request Parameters](#request-parameters-48)
       - [Response Example](#response-example-48)
-    + [Fulfilled order or order item - JSON controller](#fulfilled-order-or-order-item---json-controller)
+    + [Delete shipping fulfillment  - JSON controller](#delete-shipping-fulfillment----json-controller)
       - [Request Example](#request-example-49)
       - [Request Parameters](#request-parameters-49)
       - [Response Example](#response-example-49)
-    + [Delete shipping fulfillment  - JSON controller](#delete-shipping-fulfillment----json-controller)
+    + [Get products statistics  - JSON controller](#get-products-statistics----json-controller)
       - [Request Example](#request-example-50)
       - [Request Parameters](#request-parameters-50)
       - [Response Example](#response-example-50)
-    + [Get products statistics  - JSON controller](#get-products-statistics----json-controller)
+    + [Get orders statistics  - JSON controller](#get-orders-statistics----json-controller)
       - [Request Example](#request-example-51)
       - [Request Parameters](#request-parameters-51)
       - [Response Example](#response-example-51)
-    + [Get orders statistics  - JSON controller](#get-orders-statistics----json-controller)
-      - [Request Example](#request-example-52)
-      - [Request Parameters](#request-parameters-52)
-      - [Response Example](#response-example-52)
+
 
 <!-- ecotrust-canada.github.io/markdown-toc -->
 
@@ -354,7 +351,7 @@ $.ajax({
     url: 'https://www.musora.com' +
         '/ecommerce/session/address',
     type: 'put',
-    data: {billing-email: 'test@drumeo.com', billing-country: '', billing-region:'', billing-zip-or-postal-code:'', hipping-address-line-1:''} 
+    data: {billing-email: 'test@drumeo.com', billing-country: '', billing-region:'', billing-zip-or-postal-code:'', bipping-address-line-1:''} 
     dataType: 'json',
     success: function(response) {
         // handle success
@@ -949,25 +946,26 @@ GET /ecommerce/order
 ```
 #### Request Example
 
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/order',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 #### Request Parameters
 
 
 #### Response Example
 
-
-### Submit order - JSON controller
-
-```
-PUT /ecommerce/order
-```
-#### Request Example
-
-
-#### Request Parameters
-
-
-#### Response Example
 
 ### Get payments - JSON controller
 
@@ -976,6 +974,21 @@ GET /ecommerce/payment
 ```
 #### Request Example
 
+```js   
+
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/payment?page=3&limit=25&order_by_column=created_on&order_by_direction=desc&order_id=1',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -988,7 +1001,23 @@ GET /ecommerce/payment
 PUT /ecommerce/payment
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/payment',
+    type: 'put'
+  	data: {payment_method_id: '1', due:100, paid:100, order_id:2} 
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1001,7 +1030,22 @@ PUT /ecommerce/payment
 DELETE /ecommerce/payment/{paymentId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/payment/1',
+    type: 'delete'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1014,7 +1058,23 @@ DELETE /ecommerce/payment/{paymentId}
 PUT /ecommerce/refund
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/refund',
+    type: 'put'
+  	data: {payment_id: '1', refund_amount:100, note:'Requested by customer', gateway_name:'drumeo'} 
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1027,7 +1087,23 @@ PUT /ecommerce/refund
 PUT /ecommerce/payment-method
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/payment-method',
+    type: 'put'
+  	data: {method_type: 'paypal', gateway:'drumeo', token:'SDcd54345', address_id:1, user_id:1, user_email:'test@drumeo.com'} 
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1040,7 +1116,23 @@ PUT /ecommerce/payment-method
 PATCH /ecommerce/payment-method/set-default
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/payment-method/set-default',
+    type: 'patch'
+  	data: {id: '30'}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1084,7 +1176,23 @@ GET /ecommerce/payment-method/paypal-agreement
 PATCH /ecommerce/payment-method/{paymentMethodId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/payment-method/1',
+    type: 'patch'
+  	data: {address_id: 2}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1098,6 +1206,22 @@ DELETE /ecommerce/payment-method/{paymentMethodId}
 ```
 #### Request Example
 
+```js   
+
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/payment-method/1',
+    type: 'delete'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1111,7 +1235,21 @@ DELETE /ecommerce/payment-method/{paymentMethodId}
 GET /ecommerce/user-payment-method/{userId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/user-payment-method/1',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -1126,6 +1264,21 @@ GET /ecommerce/address
 ```
 #### Request Example
 
+```js   
+
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/address',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -1138,7 +1291,23 @@ GET /ecommerce/address
 PUT /ecommerce/address
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/address',
+    type: 'put'
+  	data: {type: 'billing', first_name:'First', last_name:'Naama', street_line_1:'asa dsd', street_line_2:'dsds 4', city:'BlaTest', zip:'545400',country:'Canada',user_id:1} 
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1151,7 +1320,23 @@ PUT /ecommerce/address
 PATCH /ecommerce/address/{addressId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/address/1',
+    type: 'patch'
+  	data: {street_line_2: 'Lorem ipsum'}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1164,7 +1349,22 @@ PATCH /ecommerce/address/{addressId}
 DELETE /ecommerce/address/{addressId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/address/1',
+    type: 'delete'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1177,7 +1377,21 @@ DELETE /ecommerce/address/{addressId}
 GET /ecommerce/subscriptions
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/subscriptions?limit=10&page=1&user_id=52',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -1190,7 +1404,26 @@ GET /ecommerce/subscriptions
 PUT /ecommerce/subscription
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/subscription',
+    type: 'put'
+  	data: {type: 'subscription', order_id:'1', product_id:'12', is_active:'true',
+  	 start_date:'2016-11-28 22:06:43', paid_until:'2018-12-01 00:00:00', total_price_per_payment:120,
+  	 interval_type:'month', interval_count:'1',payment_method_id:1212
+  	 } 
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1203,7 +1436,23 @@ PUT /ecommerce/subscription
 PATCH /ecommerce/subscription/{subscriptionId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/subscription/1',
+    type: 'patch'
+  	data: {paid_until: '2019-04-09 00:00:00'}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1216,7 +1465,22 @@ PATCH /ecommerce/subscription/{subscriptionId}
 DELETE /ecommerce/subscription/{subscriptionId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/subscription/1',
+    type: 'delete'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1229,7 +1493,22 @@ DELETE /ecommerce/subscription/{subscriptionId}
 POST /ecommerce/subscription-renew/{subscriptionId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/subscription-renew/1',
+    type: 'put'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1242,7 +1521,21 @@ POST /ecommerce/subscription-renew/{subscriptionId}
 GET /ecommerce/orders
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/orders?page=3&limit=25&brand=drumeo&order_by_column=created_on&order_by_direction=desc&user_id=12',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -1255,7 +1548,23 @@ GET /ecommerce/orders
 PATCH /ecommerce/order/{orderId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/order/1',
+    type: 'patch'
+  	data: {due: 100}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1268,7 +1577,22 @@ PATCH /ecommerce/order/{orderId}
 DELETE /ecommerce/order/{orderId}
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/order/1',
+    type: 'delete'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1282,7 +1606,21 @@ DELETE /ecommerce/order/{orderId}
 GET /ecommerce/fulfillment
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/fulfillment?page=3&limit=25&brand=drumeo&order_by_column=created_on&order_by_direction=desc&status=pending',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -1295,7 +1633,23 @@ GET /ecommerce/fulfillment
 PATCH /ecommerce/fulfillment
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/fulfillment',
+    type: 'patch'
+  	data: {tracking_number: '43100', shipping_company:'Lorem ipsum', order_id:2}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1308,7 +1662,23 @@ PATCH /ecommerce/fulfillment
 DELETE /ecommerce/fulfillment
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/fulfillment',
+    type: 'delete',
+    data: {order_id: 2}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
 
 #### Request Parameters
 
@@ -1321,7 +1691,21 @@ DELETE /ecommerce/fulfillment
 GET /ecommerce/stats/products
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/stats/products',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
@@ -1335,7 +1719,21 @@ GET /ecommerce/stats/products
 GET /ecommerce/stats/orders
 ```
 #### Request Example
+```js   
 
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/stats/orders',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
 
 #### Request Parameters
 
