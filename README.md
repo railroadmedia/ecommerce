@@ -1663,26 +1663,26 @@ $.ajax({
 ```
 
 #### Request Parameters
-| path\|query\|body |  key                     |  required |  default                  |  description\|notes                               |  | 
-|-------------------|--------------------------|-----------|---------------------------|---------------------------------------------------|--| 
-| body              |  brand                   |  no       |  Value set in config file |  Brand                                            |  | 
-| body              |  currency                |  no       |                           |  Currency                                         |  | 
-| body              |  type                    |  yes      |                           |  Subscription type: payment plan or subscription. |  | 
-| body              |  order_id                |  no       |                           |  Associated order id                              |  | 
-| body              |  product_id              |  no       |                           |  Associated product id                            |  | 
-| body              |  is_active               |  no       |                           |  Subscription it's active or inactive             |  | 
-| body              |  start_date              |  no       |                           |  Membership start date                            |  | 
-| body              |  paid_until              |  no       |                           |  End of membership                                |  | 
-| body              |  canceled_on             |  no       |                           |  Date when the subscription was canceled          |  | 
-| body              |  note                    |  no       |                           |  Optional note                                    |  | 
-| body              |  total_price_per_payment |  no       |                           |  Amount that should be paid                       |  | 
-| body              |  interval_type           |  no       |                           |  Subscription interval type                       |  | 
-| body              |  interval_count          |  no       |                           |  Subscription interval count                      |  | 
-| body              |  total_cycles_due        |  no       |                           |  Total cycles due for payment plan                |  | 
-| body              |  total_cycles_paid       |  no       |                           |  Total cycles paid for payment plan               |  | 
-| body              |  payment_method_id       |  no       |                           |  Associated payment method                        |  | 
-| body              |  user_id                 |  no       |                           |  User id                                          |  | 
-| body              |  customer_id             |  no       |                           |  Customer id                                      |  | 
+| path\|query\|body |  key                     |  required |  default                  |  description\|notes                               | 
+|-------------------|--------------------------|-----------|---------------------------|---------------------------------------------------| 
+| body              |  brand                   |  no       |  Value set in config file |  Brand                                            | 
+| body              |  currency                |  no       |                           |  Currency                                         | 
+| body              |  type                    |  yes      |                           |  Subscription type: payment plan or subscription. | 
+| body              |  order_id                |  no       |                           |  Associated order id                              | 
+| body              |  product_id              |  no       |                           |  Associated product id                            | 
+| body              |  is_active               |  no       |                           |  Subscription it's active or inactive             | 
+| body              |  start_date              |  no       |                           |  Membership start date                            | 
+| body              |  paid_until              |  no       |                           |  End of membership                                | 
+| body              |  canceled_on             |  no       |                           |  Date when the subscription was canceled          | 
+| body              |  note                    |  no       |                           |  Optional note                                    | 
+| body              |  total_price_per_payment |  no       |                           |  Amount that should be paid                       | 
+| body              |  interval_type           |  no       |                           |  Subscription interval type                       | 
+| body              |  interval_count          |  no       |                           |  Subscription interval count                      | 
+| body              |  total_cycles_due        |  no       |                           |  Total cycles due for payment plan                | 
+| body              |  total_cycles_paid       |  no       |                           |  Total cycles paid for payment plan               | 
+| body              |  payment_method_id       |  no       |                           |  Associated payment method                        | 
+| body              |  user_id                 |  no       |                           |  User id                                          | 
+| body              |  customer_id             |  no       |                           |  Customer id                                      | 
 
 
 #### Response Example
@@ -1712,6 +1712,27 @@ $.ajax({
 ```
 
 #### Request Parameters
+| path\|query\|body |  key                     |  required |  default                  |  description\|notes                               | 
+|-------------------|--------------------------|-----------|---------------------------|---------------------------------------------------| 
+| path              |  id                      |  yes      |                           |  Subscription id you want to edit                 | 
+| body              |  brand                   |  no       |  Value set in config file |  Brand                                            | 
+| body              |  currency                |  no       |                           |  Currency                                         | 
+| body              |  type                    |  no       |                           |  Subscription type: payment plan or subscription. | 
+| body              |  order_id                |  no       |                           |  Associated order id                              | 
+| body              |  product_id              |  no       |                           |  Associated product id                            | 
+| body              |  is_active               |  no       |                           |  Subscription it's active or inactive             | 
+| body              |  start_date              |  no       |                           |  Membership start date                            | 
+| body              |  paid_until              |  no       |                           |  End of membership                                | 
+| body              |  canceled_on             |  no       |                           |  Date when the subscription was canceled          | 
+| body              |  note                    |  no       |                           |  Optional note                                    | 
+| body              |  total_price_per_payment |  no       |                           |  Amount that should be paid                       | 
+| body              |  interval_type           |  no       |                           |  Subscription interval type                       | 
+| body              |  interval_count          |  no       |                           |  Subscription interval count                      | 
+| body              |  total_cycles_due        |  no       |                           |  Total cycles due for payment plan                | 
+| body              |  total_cycles_paid       |  no       |                           |  Total cycles paid for payment plan               | 
+| body              |  payment_method_id       |  no       |                           |  Associated payment method                        | 
+| body              |  user_id                 |  no       |                           |  User id                                          | 
+| body              |  customer_id             |  no       |                           |  Customer id                                      | 
 
 
 #### Response Example
@@ -1740,7 +1761,9 @@ $.ajax({
 ```
 
 #### Request Parameters
-
+| path\|query\|body |  key     |  required |  default               |  description\|notes                 | 
+|-------------------|----------|-----------|------------------------|-------------------------------------| 
+| path              |  id      |  yes      |                        |  Subscription id you want to delete | 
 
 #### Response Example
 
@@ -1768,7 +1791,9 @@ $.ajax({
 ```
 
 #### Request Parameters
-
+| path\|query\|body |  key     |  required |  default               |  description\|notes                 | 
+|-------------------|----------|-----------|------------------------|-------------------------------------| 
+| path              |  id      |  yes      |                        |  Subscription id you want to renew  | 
 
 #### Response Example
 
