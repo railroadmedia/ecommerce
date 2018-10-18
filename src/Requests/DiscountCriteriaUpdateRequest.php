@@ -24,11 +24,11 @@ class DiscountCriteriaUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'max:255',
-            'type' => 'max:255',
-            'product_id' => 'exists:'.ConfigService::$tableProduct.',id',
-            'min' => 'numeric',
-            'max' => 'numeric',
+            'name' => 'required|max:255',
+            'type' => 'required|max:255',
+            'product_id' => 'nullable|exists:'.ConfigService::$tableProduct.',id',
+            'min' => 'required',
+            'max' => 'required'
         ];
     }
 }

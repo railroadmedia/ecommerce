@@ -53,8 +53,12 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                 "detail" => "The type field is required.",
             ],
             [
-                "source" => "product_id",
-                "detail" => "The product id field is required."
+                "source" => "min",
+                "detail" => "The min field is required."
+            ],
+            [
+                "source" => "max",
+                "detail" => "The max field is required."
             ]
         ], $results->decodeResponseJson('meta')['errors']);
     }
@@ -107,7 +111,12 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
     {
         $randomId = $this->faker->numberBetween();
 
-        $results = $this->call('PATCH', '/discount-criteria/' . $randomId);
+        $results = $this->call('PATCH', '/discount-criteria/' . $randomId, [
+            'name' => $this->faker->word,
+            'type' => $this->faker->word,
+            'min' => $this->faker->word,
+            'max' => $this->faker->word
+        ]);
 
         //assert the response status code
         $this->assertEquals(404, $results->getStatusCode());
@@ -132,7 +141,10 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         $newName          = $this->faker->word;
 
         $results = $this->call('PATCH', '/discount-criteria/' . $discountCriteria['id'], [
-            'name' => $newName
+            'name' => $newName,
+            'type' => $discountCriteria['type'],
+            'min' => $discountCriteria['min'],
+            'max' => $discountCriteria['max']
         ]);
 
         //assert response status code

@@ -26,9 +26,9 @@ class DiscountCriteriaCreateRequest extends FormRequest
         return [
             'name' => 'required|max:255',
             'type' => 'required|max:255',
-            'product_id' => 'required|exists:'.ConfigService::$tableProduct.',id',
-            'min' => 'numeric',
-            'max' => 'numeric',
+            'product_id' => 'nullable|exists:'.ConfigService::$tableProduct.',id',
+            'min' => 'required',
+            'max' => 'required',
         ];
     }
 }
