@@ -924,6 +924,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'expiration_date' => Carbon::now()
                     ->addYear(1)
                     ->toDateTimeString(),
+                'created_on' => Carbon::now()->toDateTimeString(),
             ]
         );
     }

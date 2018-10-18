@@ -138,6 +138,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $payment = $this->paymentRepository->create(
             $this->faker->payment(
                 [
+                    'due' => 100,
                     'payment_method_id' => $paymentMethod['id'],
                     'external_id' => 'ch_1CQFAJE2yPYKc9YRFZUa5ACI',
                 ]
@@ -164,7 +165,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 'order_id' => $orderId['id']
             ])
         );
-        $refundAmount = $this->faker->numberBetween(0, 100);
+        $refundAmount = 100;
 
         $this->permissionServiceMock->method('canOrThrow');
         $results = $this->call(

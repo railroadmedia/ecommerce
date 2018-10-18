@@ -14,7 +14,10 @@ use Railroad\Ecommerce\Decorators\OrderOrderItemsDecorators;
 use Railroad\Ecommerce\Decorators\PaymentMethodBillingAddressDecorator;
 use Railroad\Ecommerce\Decorators\PaymentMethodEntityDecorator;
 use Railroad\Ecommerce\Decorators\PaymentMethodOwnerDecorator;
+use Railroad\Ecommerce\Decorators\PaymentOrderDecorator;
 use Railroad\Ecommerce\Decorators\PaymentPaymentMethodDecorator;
+use Railroad\Ecommerce\Decorators\PaymentSubscriptionDecorator;
+use Railroad\Ecommerce\Decorators\PaymentSubscriptionDecoratorDecorator;
 use Railroad\Ecommerce\Decorators\PaymentUserDecorator;
 use Railroad\Ecommerce\Decorators\ProductDecorator;
 use Railroad\Ecommerce\Decorators\ProductDiscountDecorator;
@@ -25,8 +28,11 @@ use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
 use Railroad\Ecommerce\Listeners\UserDefaultPaymentMethodListener;
+use Railroad\Ecommerce\Listeners\UserProductListener;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CustomValidationRules;
+use Railroad\Resora\Events\Created;
+use Railroad\Resora\Events\Updated;
 
 class EcommerceServiceProvider extends ServiceProvider
 {
@@ -40,6 +46,8 @@ class EcommerceServiceProvider extends ServiceProvider
         $this->listen = [
             GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
             UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class],
+            Created::class => [UserProductListener::class.'@handleCreated'],
+            Updated::class => [UserProductListener::class.'@handleUpdated']
         ];
 
         parent::boot();
@@ -105,6 +113,8 @@ class EcommerceServiceProvider extends ServiceProvider
                 [
                     PaymentPaymentMethodDecorator::class,
                     PaymentUserDecorator::class,
+                    PaymentOrderDecorator::class,
+                    PaymentSubscriptionDecorator::class
                 ]
             )
         );

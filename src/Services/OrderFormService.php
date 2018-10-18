@@ -24,7 +24,9 @@ use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
+use Railroad\Usora\Repositories\UserRepository;
 
 class OrderFormService
 {
@@ -411,23 +413,6 @@ class OrderFormService
         //create payment plan
         $paymentPlanNumbersOfPayments = $this->cartService->getPaymentPlanNumberOfPayments();
 
-        if ($paymentPlanNumbersOfPayments > 1) {
-            $this->createSubscription(
-                $request->get('brand', ConfigService::$brand),
-                null,
-                $order,
-                $cartItemsWithTaxesAndCosts,
-                0,
-                [],
-                $user,
-                $currency,
-                $paymentMethodId,
-                $payment,
-                false,
-                $paymentPlanNumbersOfPayments
-            );
-        }
-
         //apply order discounts
         $amountDiscounted = $this->applyOrderDiscounts(
             $cartItemsWithTaxesAndCosts,
@@ -508,17 +493,25 @@ class OrderFormService
                 );
             }
 
-            //assign products to user
-            if ($user) {
-                $this->userProductService->assignUserProduct(
-                    $user['id'],
-                    $product['id'],
-                    $expirationDate,
-                    $cartItem['quantity']
-                );
-            }
 
             $orderItems[] = $orderItem;
+        }
+
+        if ($paymentPlanNumbersOfPayments > 1) {
+            $this->createSubscription(
+                $request->get('brand', ConfigService::$brand),
+                null,
+                $order,
+                $cartItemsWithTaxesAndCosts,
+                0,
+                [],
+                $user,
+                $currency,
+                $paymentMethodId,
+                $payment,
+                false,
+                $paymentPlanNumbersOfPayments
+            );
         }
 
         //if the order failed; we throw the proper exception
