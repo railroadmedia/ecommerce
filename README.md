@@ -358,6 +358,195 @@ $.ajax({
 
 ```201 OK```
 
+```json
+{
+	"success":true,
+	"addedProducts"[
+		{
+		"id":"83e531fbbe7b8bcbe25c67426d86c98fe791215c546f74a02b0f1b2cc24c1d7c",
+		"name":"quae",
+		"description":"Dicta tenetur odio quisquam nostrum velit. Vel nesciunt ducimus sed. Cumque officiis quis debitis est id et maxime ut. Maxime porro neque beatae optio.",
+		"quantity":"7",
+		"price":"149",
+		"totalPrice":1043,
+		"requiresShippingAddress":"1",
+		"requiresBillinggAddress":"1",
+		"subscriptionIntervalType":"qui",
+		"subscriptionIntervalCount":1820561976,
+		"weight":0,
+		"options":{
+			"product-id":"1",
+			"product":{
+				"id":"1",
+				"brand":"drumeo",
+				"name":"quae",
+				"sku":"deleniti",
+				"price":"149",
+				"type":"subscription",
+				"active":"1",
+				"description":"Dicta tenetur odio quisquam nostrum velit. Vel nesciunt ducimus sed. Cumque officiis quis debitis est id et maxime ut. Maxime porro neque beatae optio.",
+				"thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?25629",
+				"is_physical":"1",
+				"weight":"42",
+				"subscription_interval_type":"day",
+				"subscription_interval_count":"6",
+				"stock":"1834",
+				"created_on":"2018-10-18 06:13:53",
+				"updated_on":null,
+				"discounts":[]
+			}
+		}
+	}],
+	"cartNumberOfItems":1,
+	"notAvailableProducts":[],
+	"tax":125.16,
+	"total":1168.16,
+	"cartItems":[{
+		"id":"83e531fbbe7b8bcbe25c67426d86c98fe791215c546f74a02b0f1b2cc24c1d7c",
+		"name":"quae",
+		"description":"Dicta tenetur odio quisquam nostrum velit. Vel nesciunt ducimus sed. Cumque officiis quis debitis est id et maxime ut. Maxime porro neque beatae optio.",
+		"quantity":"7",
+		"price":"149",
+		"totalPrice":1043,
+		"requiresShippingAddress":"1",
+		"requiresBillinggAddress":"1",
+		"subscriptionIntervalType":"qui",
+		"subscriptionIntervalCount":1820561976,
+		"weight":0,
+		"options":{
+			"product-id":"1",
+			"product":{
+				"id":"1",
+				"brand":"drumeo",
+				"name":"quae",
+				"sku":"deleniti",
+				"price":"149",
+				"type":"subscription",
+				"active":"1",
+				"description":"Dicta tenetur odio quisquam nostrum velit. Vel nesciunt ducimus sed. Cumque officiis quis debitis est id et maxime ut. Maxime porro neque beatae optio.",
+				"thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?25629",
+				"is_physical":"1",
+				"weight":"42",
+				"subscription_interval_type":"day",
+				"subscription_interval_count":"6",
+				"stock":"1834",
+				"created_on":"2018-10-18 06:13:53",
+				"updated_on":null,
+				"discounts":[]
+			}
+		},
+		"itemTax":125.16,
+		"itemShippingCosts":0
+		}],
+	"isPaymentPlanEligible":false,
+	"paymentPlanPricing":[]
+	}]
+}
+   
+```
+
+```201 Insuficient stock```
+
+```json
+[
+   {
+      "success":false,
+      "addedProducts":[
+         {
+            "id":"75be891df24aecfd3bebdee8656493eec5ca13ca783e8154506f6c345ff5ffda",
+            "name":"delectus",
+            "description":"Enim asperiores cum velit est et. Accusamus quia eius qui numquam enim consequatur minima eius. Et enim quae autem eum ut. Non perferendis quia maxime ea est assumenda cupiditate.",
+            "quantity":1,
+            "price":"170",
+            "totalPrice":170,
+            "requiresShippingAddress":"0",
+            "requiresBillinggAddress":"0",
+            "subscriptionIntervalType":"et",
+            "subscriptionIntervalCount":0,
+            "weight":1667156608,
+            "options":{
+               "product-id":"1",
+               "product":{
+                  "id":"1",
+                  "brand":"drumeo",
+                  "name":"delectus",
+                  "sku":"impedit",
+                  "price":"170",
+                  "type":"product",
+                  "active":"1",
+                  "description":"Enim asperiores cum velit est et. Accusamus quia eius qui numquam enim consequatur minima eius. Et enim quae autem eum ut. Non perferendis quia maxime ea est assumenda cupiditate.",
+                  "thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?59203",
+                  "is_physical":"0",
+                  "weight":"64",
+                  "subscription_interval_type":"day",
+                  "subscription_interval_count":"3",
+                  "stock":"2",
+                  "created_on":"2018-10-18 06:20:39",
+                  "updated_on":null,
+                  "discounts":[
+
+                  ]
+               }
+            }
+         }
+      ],
+      "cartNumberOfItems":1,
+      "notAvailableProducts":[
+         "The quantity can not be updated. The product stock(2) is smaller than the quantity you've selected(9)"
+      ],
+      "tax":20.4,
+      "total":190.4,
+      "cartItems":[
+         {
+            "id":"75be891df24aecfd3bebdee8656493eec5ca13ca783e8154506f6c345ff5ffda",
+            "name":"delectus",
+            "description":"Enim asperiores cum velit est et. Accusamus quia eius qui numquam enim consequatur minima eius. Et enim quae autem eum ut. Non perferendis quia maxime ea est assumenda cupiditate.",
+            "quantity":1,
+            "price":"170",
+            "totalPrice":170,
+            "requiresShippingAddress":"0",
+            "requiresBillinggAddress":"0",
+            "subscriptionIntervalType":"et",
+            "subscriptionIntervalCount":0,
+            "weight":1667156608,
+            "options":{
+               "product-id":"1",
+               "product":{
+                  "id":"1",
+                  "brand":"drumeo",
+                  "name":"delectus",
+                  "sku":"impedit",
+                  "price":"170",
+                  "type":"product",
+                  "active":"1",
+                  "description":"Enim asperiores cum velit est et. Accusamus quia eius qui numquam enim consequatur minima eius. Et enim quae autem eum ut. Non perferendis quia maxime ea est assumenda cupiditate.",
+                  "thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?59203",
+                  "is_physical":"0",
+                  "weight":"64",
+                  "subscription_interval_type":"day",
+                  "subscription_interval_count":"3",
+                  "stock":"2",
+                  "created_on":"2018-10-18 06:20:39",
+                  "updated_on":null,
+                  "discounts":[
+
+                  ]
+               }
+            },
+            "itemTax":20.4,
+            "itemShippingCosts":0
+         }
+      ],
+      "isPaymentPlanEligible":true,
+      "paymentPlanPricing":{
+         "1":190.4,
+         "2":95.7,
+         "5":38.28
+      }
+   }
+]
+```
+
 ### Save shipping and billing addresses on the session - JSON controller
 
 ```
@@ -402,6 +591,20 @@ $.ajax({
 
 ```201 OK```
 
+```json
+{
+   "shipping":{
+      "streetLineOne":"70066 Sigmund Cliff Apt. 635\nGerholdview, KY 65090-9411",
+      "city":"Mariamton",
+      "firstName":"et"
+   },
+   "billing":{
+      "country":"Canada",
+      "region":"British Columbia"
+   }
+}
+```
+
 ### Get all products - JSON controller
 
 ```
@@ -440,7 +643,52 @@ $.ajax({
 #### Response Example
 
 ```200 OK```
+```json
+{
+   "id":"1",
+   "brand":"drumeo",
+   "name":"commodi",
+   "sku":"tempora",
+   "price":"288",
+   "type":"product",
+   "active":"0",
+   "description":"Qui omnis rerum dignissimos qui soluta. Sunt dolores at et quam eos. Ut ea cupiditate et rerum doloremque.",
+   "thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?80575",
+   "is_physical":"1",
+   "weight":"88",
+   "subscription_interval_type":"day",
+   "subscription_interval_count":"1",
+   "stock":"16",
+   "created_on":"2018-10-18 06:26:11",
+   "updated_on":null,
+   "discounts":[
 
+   ]
+},
+...
+{
+   "id":"10",
+   "brand":"drumeo",
+   "name":"vero",
+   "sku":"eveniet",
+   "price":"877",
+   "type":"product",
+   "active":"0",
+   "description":"Suscipit non nulla nulla aut. In provident dolores distinctio quae ut. Quis dolor ut dolorem nobis qui. Alias ut aut sit ea dicta.",
+   "thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?98967",
+   "is_physical":"1",
+   "weight":"64",
+   "subscription_interval_type":"day",
+   "subscription_interval_count":"9",
+   "stock":"886",
+   "created_on":"2018-10-18 06:26:11",
+   "updated_on":null,
+   "discounts":[
+
+   ]
+}
+
+```
 
 ### Add a new product - JSON controller
 
@@ -488,8 +736,46 @@ $.ajax({
 #### Response Example
 
 ```200 OK```
+```json
+{
+   "id":"1",
+   "brand":"drumeo",
+   "name":"et",
+   "sku":"non",
+   "price":"712",
+   "type":"subscription",
+   "active":"0",
+   "description":"Dolorum reiciendis sunt et rerum aut ut molestiae. Est sunt aspernatur deserunt ab non est at. Expedita qui qui nisi. Omnis assumenda necessitatibus dolor et asperiores impedit.",
+   "thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?96853",
+   "is_physical":"0",
+   "weight":"61",
+   "subscription_interval_type":"year",
+   "subscription_interval_count":"6",
+   "stock":"484",
+   "created_on":"2018-10-18 06:28:44",
+   "updated_on":null,
+   "discounts":[
 
+   ]
+}
+```
 ```403 Not allowed```
+```422 Unprocessable Entity```
+```json
+"data":[
+],
+"meta":{
+   "totalResults":0,
+   "page":1,
+   "limit":10,
+   "errors":[
+      {
+         "source":"weight",
+         "detail":"The weight field is required when is physical is 1."
+      }
+   ]
+}
+```
 
 ### Update product - JSON controller
 
@@ -538,8 +824,65 @@ $.ajax({
 #### Response Example
 
 ```201 OK```
+```json
+"data":[
+   {
+      "id":"1",
+      "brand":"drumeo",
+      "name":"facilis",
+      "sku":"impedit",
+      "price":"178",
+      "type":"subscription",
+      "active":"1",
+      "description":"Magnam velit molestiae minima excepturi numquam. Ex explicabo architecto dolorem. Quia fugit ea sunt qui. Atque nostrum voluptatibus quia et soluta.",
+      "thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?70810",
+      "is_physical":"0",
+      "weight":"57",
+      "subscription_interval_type":"day",
+      "subscription_interval_count":"9",
+      "stock":"352",
+      "created_on":"2018-10-18 06:34:20",
+      "updated_on":"2018-10-18 06:34:20",
+      "discounts":[
 
+      ]
+   }
+]
+```
+```422 Unprocessable Entity```
+```json
+{
+   "data":[
+
+   ],
+   "meta":{
+      "totalResults":0,
+      "page":1,
+      "limit":10,
+      "errors":[
+         {
+            "source":"subscription_interval_type",
+            "detail":"The subscription interval type field is required when type is subscription."
+         },
+         {
+            "source":"subscription_interval_count",
+            "detail":"The subscription interval count field is required when type is subscription."
+         }
+      ]
+   }
+}
+```
 ```404 Not Found```
+```json
+"data":[
+],
+"meta":{
+   "errors":{
+      "title":"Not found.",
+      "detail":"Update failed, product not found with id: 366148449"
+   }
+}
+```
 
 ### Delete product - JSON controller
 
@@ -582,7 +925,19 @@ $.ajax({
 ```204 No Content```
 
 ```404 Not Found```
+```json
+{
+   "data":[
 
+   ],
+   "meta":{
+      "errors":{
+         "title":"Not found.",
+         "detail":"Delete failed, product not found with id: 1676493580"
+      }
+   }
+}
+```
 ### Upload product thumbnail - JSON controller
 
 ```
