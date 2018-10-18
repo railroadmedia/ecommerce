@@ -1262,6 +1262,18 @@ $.ajax({
 
 ```404 Not Found``` - cart it's empty
 
+```
+	{
+	"data":[],
+	"meta":{
+		"errors":{
+			"title":"Not found.",
+			"detail":"The cart it's empty"
+			}
+		}
+	}
+```
+
 ```200 OK```
 ```
 	{
@@ -1304,7 +1316,9 @@ $.ajax({
 				"is_physical":"0",
 				"weight":"0",
 				"subscription_interval_type":"",
-				"subscription_interval_count":"","stock":"10","created_on":"2018-10-18 05:41:02",
+				"subscription_interval_count":"",
+				"stock":"10",
+				"created_on":"2018-10-18 05:41:02",
 				"updated_on":null,
 				"discounts":[]
 			}
