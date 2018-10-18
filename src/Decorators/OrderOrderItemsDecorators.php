@@ -27,18 +27,17 @@ class OrderOrderItemsDecorators implements DecoratorInterface
     public function decorate($data)
     {
         $orderIds = $data->pluck('id');
-
-        $orderItems = $this->orderItemRepository->query()
-            ->whereIn(ConfigService::$tableOrderItem . '.order_id', $orderIds)
-            ->get()
-            ->keyBy('order_id');
-
-        foreach ($data as $index => $orderItem) {
-            if (isset($orderItems[$orderItem['id']])) {
-                $data[$index]['items'] = (array)$orderItems[$orderItem['id']];
+        $orderItems =
+            $this->orderItemRepository->query()
+                ->whereIn(ConfigService::$tableOrderItem . '.order_id', $orderIds)
+                ->get();
+        foreach ($data as $index => $order) {
+            foreach ($orderItems as $orderItemIndex => $orderItem) {
+                if ($orderItem['order_id'] == $order['id']) {
+                    $data[$index]['items'][$orderItem['id']] = $orderItem;
+                }
             }
         }
-
         return $data;
     }
 }
