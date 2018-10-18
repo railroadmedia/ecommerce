@@ -1224,6 +1224,22 @@ $.ajax({
 ```
 GET /ecommerce/order
 ```
+Prepare order form based on authenticated user and items from cart. 
+
+Calculate taxes and shipping costs for each item and total, apply discounts and calculate payment plan options and initial price per payment.
+
+Return:
+- shippingAddress
+- billingAddress
+- paymentPlanOptions
+- cartItemsSubTotal
+- cartItems
+- totalDue
+- totalTax
+- shippingCosts
+- pricePerPayment
+- initialPricePerPayment
+
 #### Request Example
 
 ```js   
@@ -1245,6 +1261,101 @@ $.ajax({
 #### Response Example
 
 ```404 Not Found``` - cart it's empty
+
+```200 OK```
+```
+	{
+	"shippingAddress":null,
+	"billingAddress":{
+		"country":"Canada",
+		"region":"British Columbia"
+	},
+	"paymentPlanOptions":{
+		"1":253.12,
+		"2":127.06,
+		"5":50.82
+	},
+	"cartItemsSubTotal":226,
+	"cartItems":[
+	{
+		"id":"224cd3d7e5ece096cb2e7d7c7dae008929ba219d802f678d6de228f3b50d550f",
+		"name":"dolorum",
+		"description":"alias",
+		"quantity":1,
+		"price":"147",
+		"totalPrice":147,
+		"requiresShippingAddress":"0",
+		"requiresBillinggAddress":"0",
+		"subscriptionIntervalType":"",
+		"subscriptionIntervalCount":"",
+		"weight":0,
+		"options":{
+			"product-id":"1",
+			"product":{
+				"id":"1",
+				"brand":"drumeo",
+				"name":"dolorum",
+				"sku":"expedita",
+				"price":"147",
+				"type":"product",
+				"active":"1",
+				"description":"alias",
+				"thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?92381",
+				"is_physical":"0",
+				"weight":"0",
+				"subscription_interval_type":"",
+				"subscription_interval_count":"","stock":"10","created_on":"2018-10-18 05:41:02",
+				"updated_on":null,
+				"discounts":[]
+			}
+		},
+		"itemTax":17.64,
+		"itemShippingCosts":0
+	},{
+		"id":"0a720528eb3816a3a67f72b44103077e890b1c1032684ff61996aa167cba3d26",
+		"name":"ut",
+		"description":"quis",
+		"quantity":1,
+		"price":"79",
+		"totalPrice":79,
+		"requiresShippingAddress":"1",
+		"requiresBillinggAddress":"1",
+		"subscriptionIntervalType":"",
+		"subscriptionIntervalCount":"",
+		"weight":5.1,
+		"options":{
+			"product-id":"2",
+			"product":{
+				"id":"2",
+				"brand":"drumeo",
+				"name":"ut",
+				"sku":"id",
+				"price":"79",
+				"type":"product",
+				"active":"1",
+				"description":"quis",
+				"thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?49161",
+				"is_physical":"1",
+				"weight":"5.1",
+				"subscription_interval_type":"",
+				"subscription_interval_count":"",
+				"stock":"237",
+				"created_on":"2018-10-18 05:41:02",
+				"updated_on":null,
+				"discounts":[]
+			}
+		},
+		"itemTax":9.48,
+		"itemShippingCosts":0
+	}		
+	],
+	"totalDue":253.12,
+	"totalTax":27.12,
+	"shippingCosts":0,
+	"pricePerPayment":253.12,
+	"initialPricePerPayment":253.12
+	}
+```
 
 ### Get payments - JSON controller
 
