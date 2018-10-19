@@ -229,13 +229,6 @@ class RenewalService
                         ->toDateTimeString(),
                 ]
             );
-            foreach ($subscriptionProducts as $product => $quantity) {
-                $this->userProductService->assignUserProduct(
-                    $dueSubscription['user_id'],
-                    $product,
-                    $nextBillDate->toDateTimeString()
-                );
-            }
             event(new SubscriptionEvent($dueSubscription['id'], 'renewed'));
         } else {
             $subscriptionPayments =
@@ -260,10 +253,6 @@ class RenewalService
                 $subscriptionProducts = $this->getSubscriptionProducts(
                     $dueSubscription['order_id'],
                     $dueSubscription['product_id']
-                );
-                $this->userProductService->removeUserProducts(
-                    $dueSubscription['user_id'],
-                    $subscriptionProducts
                 );
                 event(new SubscriptionEvent($dueSubscription['id'], 'deactivated'));
             }

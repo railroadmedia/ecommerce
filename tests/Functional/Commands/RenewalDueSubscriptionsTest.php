@@ -3,6 +3,9 @@ namespace Railroad\Ecommerce\Tests\Functional\Commands;
 
 use Carbon\Carbon;
 
+use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Repositories\OrderItemRepository;
+use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
@@ -48,6 +51,16 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
      */
     protected $productRepository;
 
+    /**
+     * @var OrderRepository
+     */
+    protected $orderRepository;
+
+    /**
+     * @var OrderItemRepository
+     */
+    protected $orderItemRepository;
+
     public function setUp()
     {
         parent::setUp();
@@ -58,6 +71,8 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         $this->subscriptionRepository = $this->app->make(SubscriptionRepository::class);
         $this->subscriptionPaymentRepository = $this->app->make(SubscriptionPaymentRepository::class);
         $this->productRepository = $this->app->make(ProductRepository::class);
+        $this->orderRepository = $this->app->make(OrderRepository::class);
+        $this->orderItemRepository = $this->app->make(OrderItemRepository::class);
     }
 
     public function test_command()
@@ -106,6 +121,12 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     ]
                 )
             );
+            $order = $this->orderRepository->create($this->faker->order());
+            $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+                'order_id' => $order['id'],
+                'product_id' => $product['id'],
+                'quantity' => 1
+            ]));
             $subscription = $this->subscriptionRepository->create(
                 $this->faker->subscription(
                     [
@@ -119,6 +140,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                             ->subDay(1),
                         'product_id' => $product['id'],
                         'currency' => 'CAD',
+                        'order_id' => $order['id'],
                         'brand' => ConfigService::$brand,
                         'interval_type' => ConfigService::$intervalTypeMonthly,
                         'interval_count' => 1,
@@ -227,6 +249,12 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     ]
                 )
             );
+            $order = $this->orderRepository->create($this->faker->order());
+            $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+                'order_id' => $order['id'],
+                'product_id' => $product['id'],
+                'quantity' => 1
+            ]));
             $oldSubscriptions[] = $this->subscriptionRepository->create(
                 $this->faker->subscription(
                     [
@@ -239,6 +267,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                         'paid_until' => Carbon::now()
                             ->subMonths(ConfigService::$subscriptionRenewalDateCutoff + 1),
                         'product_id' => $product['id'],
+                        'order_id' => $order['id'],
                         'currency' => 'CAD',
                         'brand' => ConfigService::$brand,
                         'interval_type' => ConfigService::$intervalTypeMonthly,
@@ -282,6 +311,12 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     ]
                 )
             );
+            $order = $this->orderRepository->create($this->faker->order());
+            $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+                'order_id' => $order['id'],
+                'product_id' => $product['id'],
+                'quantity' => 1
+            ]));
             $subscription = $this->subscriptionRepository->create(
                 $this->faker->subscription(
                     [
@@ -294,6 +329,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                         'paid_until' => Carbon::now()
                             ->subDay(1),
                         'product_id' => $product['id'],
+                        'order_id' => $order['id'],
                         'currency' => 'CAD',
                         'brand' => ConfigService::$brand,
                         'interval_type' => ConfigService::$intervalTypeMonthly,

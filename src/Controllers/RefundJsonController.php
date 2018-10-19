@@ -170,7 +170,7 @@ class RefundJsonController extends BaseController
                 'refunded' => $payment['refunded'] + $refund['refunded_amount'],
             ]
         );
-        $orders = [];
+
         //cancel shipping fulfillment
         $orderPayment =
             $this->orderPaymentRepository->query()
@@ -187,32 +187,6 @@ class RefundJsonController extends BaseController
             ->where('status', ConfigService::$fulfillmentStatusPending)
             ->whereNull('fulfilled_on')
             ->delete();
-        if ($orderPayment->isNotEmpty()) {
-            $orders = array_merge($orders, $orderPayment->toArray());
-        }
-        $subscriptionPayments =
-            $this->subscriptionPaymentRepository->query()
-                ->where('payment_id', $payment['id'])
-                ->get();
-        $paymentPlans =
-            $this->subscriptionRepository->query()
-                ->whereIn('id', $subscriptionPayments->pluck('subscription_id'))
-                ->whereNotNull('order_id')
-                ->get();
-        if ($paymentPlans->isNotEmpty()) {
-            $orders = array_merge($orders, $paymentPlans->toArray());
-        }
-
-        //update user products data: if user own one product => delete user product row, otherwise decrement quantity
-        foreach ($orders as $order) {
-            $orderItems =
-                $this->orderItemRepository->query()
-                    ->where('order_id', $order['order_id'])
-                    ->get();
-            $products = $orderItems->pluck('quantity', 'product_id');
-
-            $this->userProductService->removeUserProducts($order['user_id'], $products);
-        }
 
         return reply()->json($refund);
     }

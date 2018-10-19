@@ -86,7 +86,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'order_id'   => $order['id']
             ]));
 
-            $orders[] = $this->orderRepository->read($order['id'])->getArrayCopy();
+            $orders[] = $this->orderRepository->read($order['id']);
         }
 
         $results = $this->call('GET', '/orders',
@@ -95,7 +95,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'limit' => $limit,
             ]);
 
-        $this->assertArraySubset($orders, $results->decodeResponseJson('data'));
+        $this->assertEquals(array_pluck($orders, 'id'), array_pluck($results->decodeResponseJson('data'), 'id'));
     }
 
     public function test_update_not_existing_order()

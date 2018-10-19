@@ -33,6 +33,8 @@ class UserProductListener
      * UserProductListener constructor.
      *
      * @param UserProductService $userProductService
+     * @param OrderRepository $orderRepository
+     * @param PaymentRepository $paymentRepository
      */
     public function __construct(
         UserProductService $userProductService,
@@ -44,12 +46,15 @@ class UserProductListener
         $this->paymentRepository = $paymentRepository;
     }
 
+    /**
+     * @param Created $event
+     */
     public function handleCreated(Created $event)
     {
-        if ($event->class == OrderItemRepository::class) {
+        if ($event->class === OrderItemRepository::class) {
             $order = $this->orderRepository->read($event->attributes['order_id']);
             if ($order['user_id'] && $event->entity['product']['type'] == ConfigService::$typeProduct) {
-                $this->userProductService->assignUserProduct(
+                $this->assignUserProduct(
                     $order['user_id'],
                     $event->attributes['product_id'],
                     null,
@@ -57,20 +62,12 @@ class UserProductListener
                 );
             }
         }
-        if ($event->class == SubscriptionRepository::class) {
-            $products = [];
-            if ($event->entity['type'] == ConfigService::$paymentPlanType) {
-                $order = $this->orderRepository->read($event->entity['order_id']);
-                $products = $order['items'];
-            } else {
-                $products[] = [
-                    'product_id' => $event->entity['product_id'],
-                    'quantity' => 1,
-                ];
-            }
 
+        if ($event->class === SubscriptionRepository::class) {
+            $products =
+                $this->getProducts($event->entity['type'], $event->entity['order_id'], $event->entity['product_id']);
             foreach ($products as $product) {
-                $this->userProductService->assignUserProduct(
+                $this->assignUserProduct(
                     $event->attributes['user_id'],
                     $product['product_id'],
                     $event->attributes['paid_until'],
@@ -78,60 +75,96 @@ class UserProductListener
                 );
             }
         }
-        if ($event->class == RefundRepository::class) {
+
+        if ($event->class === RefundRepository::class) {
             //the payment it's fully refunded
             if ($event->attributes['payment_amount'] == $event->attributes['refunded_amount']) {
                 $payment = $this->paymentRepository->read($event->attributes['payment_id']);
                 $products = [];
                 if ($payment['order']) {
-                    $products = $payment['order']['items'];
+                    $products = $payment['order']['items'] ?? [];
                 } else {
                     if ($payment['subscription']) {
-                        if ($payment['subscription']['type'] == ConfigService::$paymentPlanType) {
-                            $order = $this->orderRepository->read($payment['subscription']['order_id']);
-                            $products = $order['items'];
-                        } else {
-                            $products[] = [
-                                'product_id' => $payment['subscription']['product_id'],
-                            ];
-                        }
+                        $products = $this->getProducts(
+                            $payment['subscription']['type'],
+                            $payment['subscription']['order_id'],
+                            $payment['subscription']['product_id']
+                        );
                     }
                 }
-                $products = array_pluck($payment['order']['items'], 'quantity', 'product_id');
-                $this->userProductService->removeUserProducts($payment['user']->user_id, $products);
+                $this->removeUserProducts($payment['user']->user_id, $products);
             }
         }
     }
 
+    /**
+     * @param Updated $event
+     */
     public function handleUpdated(Updated $event)
     {
-        if ($event->class == SubscriptionRepository::class) {
-            $products = [];
-            if ($event->entity['type'] == ConfigService::$paymentPlanType) {
-                $order = $this->orderRepository->read($event->entity['order_id']);
-                $products = $order['items'];
-            } else {
-                $products[] = [
-                    'product_id' => $event->entity['product_id'],
-                ];
-            }
+        if ($event->class === SubscriptionRepository::class) {
+
+            $products =
+                $this->getProducts($event->entity['type'], $event->entity['order_id'], $event->entity['product_id']);
+
             if (!$event->attributes['canceled_on'] && $event->entity['is_active']) {
                 foreach ($products as $product) {
-                    $userProduct = ($this->userProductService->getUserProductData(
+                    $this->assignUserProduct(
                         $event->entity['user_id'],
-                        $product['product_id']
-                    ));
-
-                    $this->userProductService->updateUserProduct(
-                        $userProduct['id'],
-                        $userProduct['quantity'],
+                        $product['product_id'],
                         $event->attributes['paid_until']
                     );
                 }
             } else {
-                $products = array_pluck($products, 'quantity', 'product_id');
-                $this->userProductService->removeUserProducts($event->entity['user_id'], $products);
+                $this->removeUserProducts($event->entity['user_id'], $products);
             }
         }
+    }
+
+    /**
+     * @param $subscriptionType
+     * @param $orderId
+     * @param $productId
+     * @return array|mixed
+     */
+    private function getProducts($subscriptionType, $orderId, $productId)
+    {
+        $products = [];
+        if ($subscriptionType == ConfigService::$paymentPlanType) {
+            $order = $this->orderRepository->read($orderId);
+            $products = $order['items'] ?? [];
+        } else {
+            $products[] = [
+                'product_id' => $productId,
+                'quantity' => 1,
+            ];
+        }
+        return $products;
+    }
+
+    /**
+     * @param $userId
+     * @param $productId
+     * @param $expirationDate
+     * @param int $quantity
+     */
+    private function assignUserProduct($userId, $productId, $expirationDate, $quantity = 0)
+    {
+        $this->userProductService->assignUserProduct(
+            $userId,
+            $productId,
+            $expirationDate,
+            $quantity
+        );
+    }
+
+    /**
+     * @param $userId
+     * @param $products
+     */
+    private function removeUserProducts($userId, $products)
+    {
+        $products = array_pluck($products, 'quantity', 'product_id');
+        $this->userProductService->removeUserProducts($userId, $products);
     }
 }

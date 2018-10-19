@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\DB;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\RenewalService;
-use Railroad\Ecommerce\Services\UserProductService;
 
 class RenewalDueSubscriptions extends \Illuminate\Console\Command
 {
@@ -36,26 +35,18 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     private $renewalService;
 
     /**
-     * @var UserProductService
-     */
-    private $userProductService;
-
-    /**
      * RenewalDueSubscriptions constructor.
      *
      * @param SubscriptionRepository $subscriptionRepository
-     * @param UserProductService $userProductService
      * @param RenewalService $renewalService
      */
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
-        UserProductService $userProductService,
         RenewalService $renewalService
     ) {
         parent::__construct();
 
         $this->subscriptionRepository = $subscriptionRepository;
-        $this->userProductService = $userProductService;
         $this->renewalService = $renewalService;
     }
 
@@ -167,16 +158,6 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                         ->toDateTimeString(),
                 ]
             );
-        foreach ($ancientSubscriptions as $ancientSubscription) {
-            $this->userProductService->removeUserProducts(
-                $ancientSubscription['user_id'],
-                $this->renewalService->getSubscriptionProducts(
-                    $ancientSubscription['order_id'],
-                    $ancientSubscription['product_id']
-                )
-
-            );
-        }
     }
 
 }
