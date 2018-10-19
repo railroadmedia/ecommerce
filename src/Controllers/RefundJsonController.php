@@ -16,7 +16,6 @@ use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
-use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
 
 class RefundJsonController extends BaseController
@@ -72,11 +71,6 @@ class RefundJsonController extends BaseController
     private $subscriptionRepository;
 
     /**
-     * @var UserProductService
-     */
-    private $userProductService;
-
-    /**
      * RefundJsonController constructor.
      *
      * @param RefundRepository $refundRepository
@@ -89,7 +83,6 @@ class RefundJsonController extends BaseController
      * @param OrderItemRepository $orderItemRepository
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
      * @param SubscriptionRepository $subscriptionRepository
-     * @param UserProductService $userProductService
      */
     public function __construct(
         RefundRepository $refundRepository,
@@ -101,8 +94,7 @@ class RefundJsonController extends BaseController
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         OrderItemRepository $orderItemRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
-        SubscriptionRepository $subscriptionRepository,
-        UserProductService $userProductService
+        SubscriptionRepository $subscriptionRepository
     ) {
         parent::__construct();
 
@@ -116,7 +108,6 @@ class RefundJsonController extends BaseController
         $this->orderItemRepository = $orderItemRepository;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->subscriptionRepository = $subscriptionRepository;
-        $this->userProductService = $userProductService;
     }
 
     /** Call the refund method from the external payment helper and the method that save the refund in the database.

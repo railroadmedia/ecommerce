@@ -45,11 +45,6 @@ class RenewalService
     private $orderItemRepository;
 
     /**
-     * @var UserProductService
-     */
-    private $userProductService;
-
-    /**
      * RenewalService constructor.
      *
      * @param SubscriptionRepository $subscriptionRepository
@@ -58,7 +53,6 @@ class RenewalService
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
      * @param OrderItemRepository $orderItemRepository
-     * @param UserProductService $userProductService
      */
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
@@ -66,8 +60,7 @@ class RenewalService
         StripePaymentGateway $stripePaymentGateway,
         PayPalPaymentGateway $payPalPaymentGateway,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
-        OrderItemRepository $orderItemRepository,
-        UserProductService $userProductService
+        OrderItemRepository $orderItemRepository
     ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->paymentRepository = $paymentRepository;
@@ -75,7 +68,6 @@ class RenewalService
         $this->paypalPaymentGateway = $payPalPaymentGateway;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->orderItemRepository = $orderItemRepository;
-        $this->userProductService = $userProductService;
     }
 
     /**
