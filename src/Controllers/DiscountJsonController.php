@@ -50,7 +50,7 @@ class DiscountJsonController extends BaseController
                 ConfigService::$tableDiscount . '.*',
                 ConfigService::$tableProduct . '.name as productName'
             )
-            ->join(
+            ->leftJoin(
                 ConfigService::$tableProduct,
                 ConfigService::$tableDiscount . '.product_id',
                 '=',
@@ -81,7 +81,7 @@ class DiscountJsonController extends BaseController
                 ConfigService::$tableDiscount . '.*',
                 ConfigService::$tableProduct . '.name as productName'
             )
-            ->join(
+            ->leftJoin(
                 ConfigService::$tableProduct,
                 ConfigService::$tableDiscount . '.product_id',
                 '=',
@@ -92,7 +92,7 @@ class DiscountJsonController extends BaseController
 
         throw_if(
             is_null($discount),
-            new NotFoundException('Update failed, discount not found with id: ' . $discountId)
+            new NotFoundException('Pull failed, discount not found with id: ' . $discountId)
         );
 
         return reply()->json($discount);
