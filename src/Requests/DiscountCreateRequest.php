@@ -26,7 +26,8 @@ class DiscountCreateRequest extends FormRequest
             'description' => 'required|max:255',
             'type' => 'required|max:255',
             'amount' => 'required|numeric',
-            'active' => 'required|boolean'
+            'active' => 'required|boolean',
+            'visible' => 'required|boolean',
         ];
     }
 }

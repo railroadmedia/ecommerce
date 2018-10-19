@@ -202,6 +202,7 @@ class Faker extends Generator
                 'amount'      => $this->randomNumber(2),
                 'product_id'  => $this->randomNumber(2),
                 'active'      => $this->boolean,
+                'visible'     => $this->boolean,
                 'created_on'  => Carbon::now()->toDateTimeString()
             ], $override
         );

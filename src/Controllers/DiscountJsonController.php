@@ -116,6 +116,7 @@ class DiscountJsonController extends BaseController
                         'amount',
                         'product_id',
                         'active',
+                        'visible',
                     ]
                 ),
                 [
@@ -156,6 +157,7 @@ class DiscountJsonController extends BaseController
                         'amount',
                         'product_id',
                         'active',
+                        'visible',
                     ]
                 ),
                 [

@@ -26,7 +26,8 @@ class DiscountUpdateRequest extends FormRequest
             'description' => 'max:255',
             'type' => 'max:255',
             'amount' => 'numeric',
-            'active' => 'boolean'
+            'active' => 'boolean',
+            'visible' => 'boolean',
         ];
     }
 }

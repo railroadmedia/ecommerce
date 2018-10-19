@@ -62,6 +62,10 @@ class DiscountJsonControllerTest extends EcommerceTestCase
             [
                 "source" => "active",
                 "detail" => "The active field is required."
+            ],
+            [
+                "source" => "visible",
+                "detail" => "The visible field is required."
             ]
         ], $results->decodeResponseJson('meta')['errors']);
     }
