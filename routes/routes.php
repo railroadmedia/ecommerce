@@ -31,6 +31,11 @@ Route::get(
     Railroad\Ecommerce\Controllers\ProductJsonController::class . '@index'
 )->name('product.index');
 
+Route::get(
+    '/product/{productId}',
+    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@show'
+)->name('product.show');
+
 Route::put(
     '/product',
     [

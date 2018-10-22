@@ -526,6 +526,69 @@ class ProductControllerTest extends EcommerceTestCase
             ]
         ];
         $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
+    }
 
+    public function test_pull_product_not_exist()
+    {
+        $randomId  = rand();
+        $results = $this->call('GET','/product/'.$randomId);
+
+        //assert response status code
+        $this->assertEquals(404, $results->getStatusCode());
+
+        //assert that the proper error messages are received
+        $errors = [
+                'title' => "Not found.",
+                "detail" => "Pull failed, product not found with id: ".$randomId
+        ];
+        $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
+    }
+
+    public function test_pull_product()
+    {
+        $product  = $this->productRepository->create($this->faker->product([
+            'active' => 1
+        ]));
+
+        $results = $this->call('GET','/product/'.$product['id']);
+
+        //assert response status code
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertArraySubset($product, $results->decodeResponseJson('data')[0]);
+    }
+
+    public function test_admin_pull_inactive_product()
+    {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
+        $product  = $this->productRepository->create($this->faker->product([
+            'active' => 0
+        ]));
+
+        $results = $this->call('GET','/product/'.$product['id']);
+
+        //assert response status code
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertArraySubset($product, $results->decodeResponseJson('data')[0]);
+    }
+
+    public function test_user_can_not_pull_inative_product()
+    {
+        $product  = $this->productRepository->create($this->faker->product([
+            'active' => 0
+        ]));
+        $results = $this->call('GET','/product/'.$product['id']);
+        dd($results);
+        //assert response status code
+        $this->assertEquals(404, $results->getStatusCode());
+
+        //assert that the proper error messages are received
+        $errors = [
+            'title' => "Not found.",
+            "detail" => "Pull failed, product not found with id: ".$product['id']
+        ];
+        $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
     }
 }

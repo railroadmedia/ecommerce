@@ -24,194 +24,197 @@ Ecommerce
       - [Request Example](#request-example-4)
       - [Request Parameters](#request-parameters-4)
       - [Response Example](#response-example-4)
-    + [Add a new product - JSON controller](#add-a-new-product---json-controller)
+    + [Pull product - JSON controller](#pull-product---json-controller)
       - [Request Example](#request-example-5)
       - [Request Parameters](#request-parameters-5)
       - [Response Example](#response-example-5)
-    + [Update product - JSON controller](#update-product---json-controller)
+    + [Add a new product - JSON controller](#add-a-new-product---json-controller)
       - [Request Example](#request-example-6)
       - [Request Parameters](#request-parameters-6)
       - [Response Example](#response-example-6)
-    + [Delete product - JSON controller](#delete-product---json-controller)
+    + [Update product - JSON controller](#update-product---json-controller)
       - [Request Example](#request-example-7)
       - [Request Parameters](#request-parameters-7)
       - [Response Example](#response-example-7)
-    + [Upload product thumbnail - JSON controller](#upload-product-thumbnail---json-controller)
+    + [Delete product - JSON controller](#delete-product---json-controller)
       - [Request Example](#request-example-8)
       - [Request Parameters](#request-parameters-8)
       - [Response Example](#response-example-8)
-    + [Get all shipping options - JSON controller](#get-all-shipping-options---json-controller)
+    + [Upload product thumbnail - JSON controller](#upload-product-thumbnail---json-controller)
       - [Request Example](#request-example-9)
       - [Request Parameters](#request-parameters-9)
       - [Response Example](#response-example-9)
-    + [Add a new shipping option - JSON controller](#add-a-new-shipping-option---json-controller)
+    + [Get all shipping options - JSON controller](#get-all-shipping-options---json-controller)
       - [Request Example](#request-example-10)
       - [Request Parameters](#request-parameters-10)
       - [Response Example](#response-example-10)
-    + [Update shipping option - JSON controller](#update-shipping-option---json-controller)
+    + [Add a new shipping option - JSON controller](#add-a-new-shipping-option---json-controller)
       - [Request Example](#request-example-11)
       - [Request Parameters](#request-parameters-11)
       - [Response Example](#response-example-11)
-    + [Delete shipping option - JSON controller](#delete-shipping-option---json-controller)
+    + [Update shipping option - JSON controller](#update-shipping-option---json-controller)
       - [Request Example](#request-example-12)
       - [Request Parameters](#request-parameters-12)
       - [Response Example](#response-example-12)
-    + [Add shipping costs weight range - JSON controller](#add-shipping-costs-weight-range---json-controller)
+    + [Delete shipping option - JSON controller](#delete-shipping-option---json-controller)
       - [Request Example](#request-example-13)
       - [Request Parameters](#request-parameters-13)
       - [Response Example](#response-example-13)
-    + [Update a shipping costs weight range - JSON controller](#update-a-shipping-costs-weight-range---json-controller)
+    + [Add shipping costs weight range - JSON controller](#add-shipping-costs-weight-range---json-controller)
       - [Request Example](#request-example-14)
       - [Request Parameters](#request-parameters-14)
       - [Response Example](#response-example-14)
-    + [Delete a shipping costs weight range - JSON controller](#delete-a-shipping-costs-weight-range---json-controller)
+    + [Update a shipping costs weight range - JSON controller](#update-a-shipping-costs-weight-range---json-controller)
       - [Request Example](#request-example-15)
       - [Request Parameters](#request-parameters-15)
       - [Response Example](#response-example-15)
-    + [Get all discounts - JSON controller](#get-all-discounts---json-controller)
+    + [Delete a shipping costs weight range - JSON controller](#delete-a-shipping-costs-weight-range---json-controller)
       - [Request Example](#request-example-16)
       - [Request Parameters](#request-parameters-16)
       - [Response Example](#response-example-16)
-    + [Add a new discount - JSON controller](#add-a-new-discount---json-controller)
+    + [Get all discounts - JSON controller](#get-all-discounts---json-controller)
       - [Request Example](#request-example-17)
       - [Request Parameters](#request-parameters-17)
       - [Response Example](#response-example-17)
-    + [Update discount - JSON controller](#update-discount---json-controller)
+    + [Add a new discount - JSON controller](#add-a-new-discount---json-controller)
       - [Request Example](#request-example-18)
       - [Request Parameters](#request-parameters-18)
       - [Response Example](#response-example-18)
-    + [Delete discount - JSON controller](#delete-discount---json-controller)
+    + [Update discount - JSON controller](#update-discount---json-controller)
       - [Request Example](#request-example-19)
       - [Request Parameters](#request-parameters-19)
       - [Response Example](#response-example-19)
-    + [Define a discount criteria for discount - JSON controller](#define-a-discount-criteria-for-discount---json-controller)
+    + [Delete discount - JSON controller](#delete-discount---json-controller)
       - [Request Example](#request-example-20)
       - [Request Parameters](#request-parameters-20)
       - [Response Example](#response-example-20)
-    + [Update discount criteria - JSON controller](#update-discount-criteria---json-controller)
+    + [Define a discount criteria for discount - JSON controller](#define-a-discount-criteria-for-discount---json-controller)
       - [Request Example](#request-example-21)
       - [Request Parameters](#request-parameters-21)
       - [Response Example](#response-example-21)
-    + [Delete discount criteria - JSON controller](#delete-discount-criteria---json-controller)
+    + [Update discount criteria - JSON controller](#update-discount-criteria---json-controller)
       - [Request Example](#request-example-22)
       - [Request Parameters](#request-parameters-22)
       - [Response Example](#response-example-22)
-    + [Prepare order form - JSON controller](#prepare-order-form---json-controller)
+    + [Delete discount criteria - JSON controller](#delete-discount-criteria---json-controller)
       - [Request Example](#request-example-23)
       - [Request Parameters](#request-parameters-23)
       - [Response Example](#response-example-23)
-    + [Get payments - JSON controller](#get-payments---json-controller)
+    + [Prepare order form - JSON controller](#prepare-order-form---json-controller)
       - [Request Example](#request-example-24)
-      - [Request Parameters](#request-parameters-24)
       - [Response Example](#response-example-24)
-    + [Add a new payment - JSON controller](#add-a-new-payment---json-controller)
+    + [Get payments - JSON controller](#get-payments---json-controller)
       - [Request Example](#request-example-25)
-      - [Request Parameters](#request-parameters-25)
+      - [Request Parameters](#request-parameters-24)
       - [Response Example](#response-example-25)
-    + [Delete a payment - JSON controller](#delete-a-payment---json-controller)
+    + [Add a new payment - JSON controller](#add-a-new-payment---json-controller)
       - [Request Example](#request-example-26)
-      - [Request Parameters](#request-parameters-26)
+      - [Request Parameters](#request-parameters-25)
       - [Response Example](#response-example-26)
-    + [Refund a payment - JSON controller](#refund-a-payment---json-controller)
+    + [Delete a payment - JSON controller](#delete-a-payment---json-controller)
       - [Request Example](#request-example-27)
-      - [Request Parameters](#request-parameters-27)
+      - [Request Parameters](#request-parameters-26)
       - [Response Example](#response-example-27)
-    + [Create a new payment method for user/customer - JSON controller](#create-a-new-payment-method-for-user-customer---json-controller)
+    + [Refund a payment - JSON controller](#refund-a-payment---json-controller)
       - [Request Example](#request-example-28)
-      - [Request Parameters](#request-parameters-28)
+      - [Request Parameters](#request-parameters-27)
       - [Response Example](#response-example-28)
-    + [Set default payment method for user/customer - JSON controller](#set-default-payment-method-for-user-customer---json-controller)
+    + [Create a new payment method for user/customer - JSON controller](#create-a-new-payment-method-for-user-customer---json-controller)
       - [Request Example](#request-example-29)
-      - [Request Parameters](#request-parameters-29)
+      - [Request Parameters](#request-parameters-28)
       - [Response Example](#response-example-29)
-    + [Get PayPal billing agreement express checkout url - JSON controller](#get-paypal-billing-agreement-express-checkout-url---json-controller)
+    + [Set default payment method for user/customer - JSON controller](#set-default-payment-method-for-user-customer---json-controller)
       - [Request Example](#request-example-30)
-      - [Request Parameters](#request-parameters-30)
+      - [Request Parameters](#request-parameters-29)
       - [Response Example](#response-example-30)
-    + [Create PayPal billing agreement - JSON controller](#create-paypal-billing-agreement---json-controller)
+    + [Get PayPal billing agreement express checkout url - JSON controller](#get-paypal-billing-agreement-express-checkout-url---json-controller)
       - [Request Example](#request-example-31)
-      - [Request Parameters](#request-parameters-31)
+      - [Request Parameters](#request-parameters-30)
       - [Response Example](#response-example-31)
-    + [Update Credit card payment method - JSON controller](#update-credit-card-payment-method---json-controller)
+    + [Create PayPal billing agreement - JSON controller](#create-paypal-billing-agreement---json-controller)
       - [Request Example](#request-example-32)
-      - [Request Parameters](#request-parameters-32)
+      - [Request Parameters](#request-parameters-31)
       - [Response Example](#response-example-32)
-    + [Delete payment method - JSON controller](#delete-payment-method---json-controller)
+    + [Update Credit card payment method - JSON controller](#update-credit-card-payment-method---json-controller)
       - [Request Example](#request-example-33)
-      - [Request Parameters](#request-parameters-33)
+      - [Request Parameters](#request-parameters-32)
       - [Response Example](#response-example-33)
-    + [Get all user's payment methods - JSON controller](#get-all-user-s-payment-methods---json-controller)
+    + [Delete payment method - JSON controller](#delete-payment-method---json-controller)
       - [Request Example](#request-example-34)
-      - [Request Parameters](#request-parameters-34)
+      - [Request Parameters](#request-parameters-33)
       - [Response Example](#response-example-34)
-    + [Get user addresses - JSON controller](#get-user-addresses---json-controller)
+    + [Get all user's payment methods - JSON controller](#get-all-user-s-payment-methods---json-controller)
       - [Request Example](#request-example-35)
-      - [Request Parameters](#request-parameters-35)
+      - [Request Parameters](#request-parameters-34)
       - [Response Example](#response-example-35)
-    + [Create a new address for user/customer - JSON controller](#create-a-new-address-for-user-customer---json-controller)
+    + [Get user addresses - JSON controller](#get-user-addresses---json-controller)
       - [Request Example](#request-example-36)
-      - [Request Parameters](#request-parameters-36)
+      - [Request Parameters](#request-parameters-35)
       - [Response Example](#response-example-36)
-    + [Update address - JSON controller](#update-address---json-controller)
+    + [Create a new address for user/customer - JSON controller](#create-a-new-address-for-user-customer---json-controller)
       - [Request Example](#request-example-37)
-      - [Request Parameters](#request-parameters-37)
+      - [Request Parameters](#request-parameters-36)
       - [Response Example](#response-example-37)
-    + [Delete address - JSON controller](#delete-address---json-controller)
+    + [Update address - JSON controller](#update-address---json-controller)
       - [Request Example](#request-example-38)
-      - [Request Parameters](#request-parameters-38)
+      - [Request Parameters](#request-parameters-37)
       - [Response Example](#response-example-38)
-    + [Pull subscriptions paginated - JSON controller](#pull-subscriptions-paginated---json-controller)
+    + [Delete address - JSON controller](#delete-address---json-controller)
       - [Request Example](#request-example-39)
-      - [Request Parameters](#request-parameters-39)
+      - [Request Parameters](#request-parameters-38)
       - [Response Example](#response-example-39)
-    + [Create a new subscription - JSON controller](#create-a-new-subscription---json-controller)
+    + [Pull subscriptions paginated - JSON controller](#pull-subscriptions-paginated---json-controller)
       - [Request Example](#request-example-40)
-      - [Request Parameters](#request-parameters-40)
+      - [Request Parameters](#request-parameters-39)
       - [Response Example](#response-example-40)
-    + [Update a subscription - JSON controller](#update-a-subscription---json-controller)
+    + [Create a new subscription - JSON controller](#create-a-new-subscription---json-controller)
       - [Request Example](#request-example-41)
-      - [Request Parameters](#request-parameters-41)
+      - [Request Parameters](#request-parameters-40)
       - [Response Example](#response-example-41)
-    + [Delete a subscription - JSON controller](#delete-a-subscription---json-controller)
+    + [Update a subscription - JSON controller](#update-a-subscription---json-controller)
       - [Request Example](#request-example-42)
-      - [Request Parameters](#request-parameters-42)
+      - [Request Parameters](#request-parameters-41)
       - [Response Example](#response-example-42)
-    + [Renew a subscription - JSON controller](#renew-a-subscription---json-controller)
+    + [Delete a subscription - JSON controller](#delete-a-subscription---json-controller)
       - [Request Example](#request-example-43)
-      - [Request Parameters](#request-parameters-43)
+      - [Request Parameters](#request-parameters-42)
       - [Response Example](#response-example-43)
-    + [Pull orders - JSON controller](#pull-orders---json-controller)
+    + [Renew a subscription - JSON controller](#renew-a-subscription---json-controller)
       - [Request Example](#request-example-44)
-      - [Request Parameters](#request-parameters-44)
+      - [Request Parameters](#request-parameters-43)
       - [Response Example](#response-example-44)
-    + [Update order - JSON controller](#update-order---json-controller)
+    + [Pull orders - JSON controller](#pull-orders---json-controller)
       - [Request Example](#request-example-45)
-      - [Request Parameters](#request-parameters-45)
+      - [Request Parameters](#request-parameters-44)
       - [Response Example](#response-example-45)
-    + [Delete order - JSON controller](#delete-order---json-controller)
+    + [Update order - JSON controller](#update-order---json-controller)
       - [Request Example](#request-example-46)
-      - [Request Parameters](#request-parameters-46)
+      - [Request Parameters](#request-parameters-45)
       - [Response Example](#response-example-46)
-    + [Pull shipping fulfillments - JSON controller](#pull-shipping-fulfillments---json-controller)
+    + [Delete order - JSON controller](#delete-order---json-controller)
       - [Request Example](#request-example-47)
-      - [Request Parameters](#request-parameters-47)
+      - [Request Parameters](#request-parameters-46)
       - [Response Example](#response-example-47)
-    + [Fulfilled order or order item - JSON controller](#fulfilled-order-or-order-item---json-controller)
+    + [Pull shipping fulfillments - JSON controller](#pull-shipping-fulfillments---json-controller)
       - [Request Example](#request-example-48)
-      - [Request Parameters](#request-parameters-48)
+      - [Request Parameters](#request-parameters-47)
       - [Response Example](#response-example-48)
-    + [Delete shipping fulfillment  - JSON controller](#delete-shipping-fulfillment----json-controller)
+    + [Fulfilled order or order item - JSON controller](#fulfilled-order-or-order-item---json-controller)
       - [Request Example](#request-example-49)
-      - [Request Parameters](#request-parameters-49)
+      - [Request Parameters](#request-parameters-48)
       - [Response Example](#response-example-49)
-    + [Get products statistics  - JSON controller](#get-products-statistics----json-controller)
+    + [Delete shipping fulfillment  - JSON controller](#delete-shipping-fulfillment----json-controller)
       - [Request Example](#request-example-50)
-      - [Request Parameters](#request-parameters-50)
+      - [Request Parameters](#request-parameters-49)
       - [Response Example](#response-example-50)
-    + [Get orders statistics  - JSON controller](#get-orders-statistics----json-controller)
+    + [Get products statistics  - JSON controller](#get-products-statistics----json-controller)
       - [Request Example](#request-example-51)
-      - [Request Parameters](#request-parameters-51)
+      - [Request Parameters](#request-parameters-50)
       - [Response Example](#response-example-51)
+    + [Get orders statistics  - JSON controller](#get-orders-statistics----json-controller)
+      - [Request Example](#request-example-52)
+      - [Request Parameters](#request-parameters-51)
+      - [Response Example](#response-example-52)
 
 <!-- ecotrust-canada.github.io/markdown-toc -->
 
@@ -689,6 +692,77 @@ $.ajax({
 }
 
 ```
+### Pull product - JSON controller
+```
+GET /ecommerce/product/{productId}
+```
+
+Pull specific product. Only administrators can pull inactive product. 
+
+#### Request Example
+```js   
+
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/product/1',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
+
+#### Request Parameters
+| path\|query\|body |  key                |  required |  default                  |  description\|notes                        | 
+|-------------------|---------------------|-----------|---------------------------|--------------------------------------------| 
+| path              |  productId          |  yes      |                           |  The product id you want to pull.          |
+
+
+#### Response Example
+
+```200 OK```
+```json
+{
+   "id":"1",
+   "brand":"drumeo",
+   "name":"commodi",
+   "sku":"tempora",
+   "price":"288",
+   "type":"product",
+   "active":"0",
+   "description":"Qui omnis rerum dignissimos qui soluta. Sunt dolores at et quam eos. Ut ea cupiditate et rerum doloremque.",
+   "thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?80575",
+   "is_physical":"1",
+   "weight":"88",
+   "subscription_interval_type":"day",
+   "subscription_interval_count":"1",
+   "stock":"16",
+   "created_on":"2018-10-18 06:26:11",
+   "updated_on":null,
+   "discounts":[
+   ]
+}
+
+```
+
+```404 Not Found```
+```json
+{
+"data":{},
+"meta":{
+  "errors":{  
+      "title":"Not found.",
+      "detail":"Pull failed, product not found with id: 1"
+      }
+  }
+}
+
+```
+
 
 ### Add a new product - JSON controller
 
