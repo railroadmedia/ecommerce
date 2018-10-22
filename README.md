@@ -364,7 +364,7 @@ $.ajax({
 ```json
 {
 	"success":true,
-	"addedProducts"[
+	"addedProducts":[
 		{
 		"id":"83e531fbbe7b8bcbe25c67426d86c98fe791215c546f74a02b0f1b2cc24c1d7c",
 		"name":"quae",
@@ -621,7 +621,7 @@ Pull paginated products. For administrators all products(active/inactive) will b
 
 $.ajax({
     url: 'https://www.musora.com' +
-        '/ecommerce/product?page=3&limit=25&brand=drumeo&order_by_column=created_on&order_by_direction=desc',
+        '/ecommerce/product?page=3&limit=25&brands[]=drumeo&order_by_column=created_on&order_by_direction=desc',
     type: 'get'
     dataType: 'json',
     success: function(response) {
@@ -634,13 +634,13 @@ $.ajax({
 ```
 
 #### Request Parameters
-| path\|query\|body |  key                |  required |  default                  |  description\|notes                        | 
-|-------------------|---------------------|-----------|---------------------------|--------------------------------------------| 
-| body              |  brand              |  no       |  value set in config file |  The brand where the product it's defined. | 
-| query             |  page               |  no       |  1                        |  Pagination page.                          | 
-| query             |  limit              |  no       |  10                       |  Amount of products to pull per page.      | 
-| query             |  order_by_column    |  no       |  created_on               |  Sort column name.                         | 
-| query             |  order_by_direction |  no       |  desc                     |  Sort column direction                     | 
+| path\|query\|body |  key                |  required |  default                   |  description\|notes                                  | 
+|-------------------|---------------------|-----------|----------------------------|------------------------------------------------------| 
+| body              |  brands             |  no       | [value set in config file] |  Only products from specified brands will be pulled. | 
+| query             |  page               |  no       |  1                         |  Pagination page.                                    | 
+| query             |  limit              |  no       |  10                        |  Amount of products to pull per page.                | 
+| query             |  order_by_column    |  no       |  created_on                |  Sort column name.                                   | 
+| query             |  order_by_direction |  no       |  desc                      |  Sort column direction                               | 
 
 
 #### Response Example
@@ -2446,14 +2446,14 @@ $.ajax({
 ```
 
 #### Request Parameters
-| path\|query\|body |  key                |  required |  default    |  description\|notes                        | 
-|-------------------|---------------------|-----------|-------------|--------------------------------------------| 
-| query             |  user_id            |  no       |             |  Pull only user's subscriptions            | 
-| query             |  page               |  no       |  1          |  Pagination page.                          | 
-| query             |  limit              |  no       |  100        |  Amount of subscriptions to pull per page. | 
-| query             |  order_by_column    |  no       |  created_on |  Sort column name.                         | 
-| query             |  order_by_direction |  no       |  desc       |  Sort column direction.                    | 
-| query             |  brand              |  no       |             |  Brand                                     | 
+| path\|query\|body |  key                |  required |  default                 |  description\|notes                                           | 
+|-------------------|---------------------|-----------|--------------------------|---------------------------------------------------------------| 
+| query             |  user_id            |  no       |                          |  Pull only user's subscriptions                               | 
+| query             |  page               |  no       |  1                       |  Pagination page.                                             | 
+| query             |  limit              |  no       |  100                     |  Amount of subscriptions to pull per page.                    | 
+| query             |  order_by_column    |  no       |  created_on              |  Sort column name.                                            | 
+| query             |  order_by_direction |  no       |  desc                    |  Sort column direction.                                       | 
+| query             |  brands             |  no       |  [brand from config file]|  Only subscriptions defined on selected brands will be pulled | 
 
 
 
@@ -2667,7 +2667,7 @@ If user_id it's set on the request pull only the user's orders.
 
 $.ajax({
     url: 'https://www.musora.com' +
-        '/ecommerce/orders?page=3&limit=25&brand=drumeo&order_by_column=created_on&order_by_direction=desc&user_id=12',
+        '/ecommerce/orders?page=3&limit=25&brands[]=drumeo&order_by_column=created_on&order_by_direction=desc&user_id=12',
     type: 'get'
     dataType: 'json',
     success: function(response) {
@@ -2682,12 +2682,12 @@ $.ajax({
 #### Request Parameters
 | path\|query\|body |  key                |  required |  default                  |  description\|notes                                                  | 
 |-------------------|---------------------|-----------|---------------------------|----------------------------------------------------------------------| 
-| query             |  brand              |  no       |  Value set in config file |  Brand                                                               | 
+| query             |  brands             |  no       | [Value set in config file]|  Order defined on brands                                             | 
 | query             |  start_date         |  no       |                           |  If it's defined will be pulled only orders created after start_date | 
 | query             |  end_date           |  no       |                           |  f it's defined will be pulled only orders created before end_date   | 
 | query             |  user_id            |  no       |                           |  If it's defined only user's orders will be pulled                   | 
 | query             |  page               |  no       |  1                        |  Pagination page.                                                    | 
-| query             |  limit              |  no       |  100                      |   Amount of orders to pull per page.                                 | 
+| query             |  limit              |  no       |  100                      |  Amount of orders to pull per page.                                  | 
 | query             |  order_by_column    |  no       |  created_on               |  Sort column name.                                                   | 
 | query             |  order_by_direction |  no       |  desc                     |  Sort column direction.                                              | 
 
@@ -2794,7 +2794,7 @@ If the status it's set on the requests the results are filtered by status.
 
 $.ajax({
     url: 'https://www.musora.com' +
-        '/ecommerce/fulfillment?page=3&limit=25&brand=drumeo&order_by_column=created_on&order_by_direction=desc&status=pending',
+        '/ecommerce/fulfillment?page=3&limit=25&order_by_column=created_on&order_by_direction=desc&status=pending',
     type: 'get'
     dataType: 'json',
     success: function(response) {
@@ -2935,7 +2935,7 @@ $.ajax({
 
 | path\|query\|body |  key        |  required |  default                   |  description\|notes        | 
 |-------------------|-------------|-----------|----------------------------|----------------------------| 
-| body              |  brand      |  no       |  Value set in config file  |  Brand                     | 
+| body              |  brands     |  no       | [Value set in config file] |  Brands                    | 
 | body              |  start_date |  no       |  today                     |  Start of period for stats | 
 | body              |  end_date   |  no       |  today                     |  End of period for stats   | 
 
@@ -2976,7 +2976,7 @@ $.ajax({
 
 | path\|query\|body |  key        |  required |  default                   |  description\|notes        | 
 |-------------------|-------------|-----------|----------------------------|----------------------------| 
-| body              |  brand      |  no       |  Value set in config file  |  Brand                     | 
+| body              |  brands     |  no       | [Value set in config file] |  Brands                    | 
 | body              |  start_date |  no       |  today                     |  Start of period for stats | 
 | body              |  end_date   |  no       |  today                     |  End of period for stats   | 
 

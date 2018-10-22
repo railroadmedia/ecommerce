@@ -114,9 +114,9 @@ class StatsController extends BaseController
                 ->selectRaw(
                     '0 as paid, 0 as shippingCosts, 0 as finance, 0 as tax, 0 as refunded, 0 as quantity, 0 as totalNet'
                 )
-                ->where(
+                ->whereIn(
                     ConfigService::$tableProduct . '.brand',
-                    $request->get('brand', ConfigService::$brand)
+                    $request->get('brands', [ConfigService::$brand])
                 )
                 ->get()
                 ->keyBy('id');
@@ -154,9 +154,9 @@ class StatsController extends BaseController
             $orders =
                 $this->orderRepository->query()
                     ->whereIn('id', $orderPayments->pluck('order_id'))
-                    ->where(
+                    ->whereIn(
                         ConfigService::$tableOrder . '.brand',
-                        $request->get('brand', ConfigService::$brand)
+                        $request->get('brands', [ConfigService::$brand])
                     )
                     ->orderBy('created_on')
                     ->chunk(
@@ -242,7 +242,7 @@ class StatsController extends BaseController
             $subscriptions =
                 $this->subscriptionRepository->query()
                     ->whereIn('id', $subscriptionRenewalPayments->pluck('subscription_id'))
-                    ->where('brand',  $request->get('brand', ConfigService::$brand))
+                    ->whereIn('brand',  $request->get('brands', [ConfigService::$brand]))
                     ->orderBy('created_on')
                     ->chunk(
                         250,
@@ -421,7 +421,7 @@ class StatsController extends BaseController
 
     public function statsOrder(Request $request)
     {
-        $brand = $request->get('brand', ConfigService::$brand);
+        $brand = $request->get('brands', [ConfigService::$brand]);
         $rows = [];
         $rowDataTemplate = [
             'email' => '',
@@ -480,7 +480,7 @@ class StatsController extends BaseController
                     //order stats
                     $this->orderRepository->query()
                         ->whereIn('id', $orderPayments->pluck('order_id'))
-                        ->where(ConfigService::$tableOrder . '.brand', $brand)
+                        ->whereIn(ConfigService::$tableOrder . '.brand', $brand)
                         ->orderBy('created_on')
                         ->chunk(
                             100,
@@ -617,7 +617,7 @@ class StatsController extends BaseController
                             ->keyBy('id');
                     $this->subscriptionRepository->query()
                         ->whereIn('id', $subscriptionRenewalPayments->pluck('subscription_id'))
-                        ->where(ConfigService::$tableSubscription . '.brand', $brand)
+                        ->whereIn(ConfigService::$tableSubscription . '.brand', $brand)
                         ->orderBy('created_on')
                         ->chunk(
                             100,
@@ -680,7 +680,7 @@ class StatsController extends BaseController
                                             $orderForPaymentPlansRenewed =
                                                 $this->orderRepository->query()
                                                     ->whereIn('id', [$subscription->order_id])
-                                                    ->where(ConfigService::$tableOrder . '.brand', $brand)
+                                                    ->whereIn(ConfigService::$tableOrder . '.brand', $brand)
                                                     ->get()
                                                     ->keyBy('id');
                                             $itemsForPaymentPlans =

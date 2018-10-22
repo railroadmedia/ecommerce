@@ -334,7 +334,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 [
                     'type' => ConfigService::$typeSubscription,
                     'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                    'subscription_interval_count' => 1
+                    'subscription_interval_count' => 1,
                 ]
             )
         );
@@ -353,35 +353,110 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'product_id' => $product['id'],
                     'payment_method_id' => $paymentMethod['id'],
                     'user_id' => $userId,
-                    'paid_until' => Carbon::now()->subDay(1)->toDateTimeString(),
+                    'paid_until' => Carbon::now()
+                        ->subDay(1)
+                        ->toDateTimeString(),
                     'is_active' => 1,
                     'interval_count' => 1,
-                    'interval_type' => ConfigService::$intervalTypeYearly
+                    'interval_type' => ConfigService::$intervalTypeYearly,
                 ]
             )
         );
 
-        $userProduct = $this->userProductRepository->create($this->faker->userProduct([
-            'user_id' => $userId,
-            'product_id' => $product['id'],
-            'quantity' => 1,
+        $userProduct = $this->userProductRepository->create(
+            $this->faker->userProduct(
+                [
+                    'user_id' => $userId,
+                    'product_id' => $product['id'],
+                    'quantity' => 1,
 
-        ]));
+                ]
+            )
+        );
         $results = $this->call('POST', '/subscription-renew/' . $subscription['id']);
 
         $this->assertEquals(201, $results->getStatusCode());
 
-        $this->assertDatabaseHas(ConfigService::$tableUserProduct,[
-            'user_id' => $userId,
-            'product_id' => $product['id'],
-            'quantity' => 1,
-            'expiration_date' => Carbon::now()->addYear(1)->startOfDay()->toDateTimeString()
-        ]);
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => Carbon::now()
+                    ->addYear(1)
+                    ->startOfDay()
+                    ->toDateTimeString(),
+            ]
+        );
 
-        $this->assertDatabaseHas(ConfigService::$tableSubscription,[
-            'id' => $subscription['id'],
-            'is_active' => 1,
-            'paid_until' => Carbon::now()->addYear(1)->startOfDay()->toDateTimeString()
-        ]);
+        $this->assertDatabaseHas(
+            ConfigService::$tableSubscription,
+            [
+                'id' => $subscription['id'],
+                'is_active' => 1,
+                'paid_until' => Carbon::now()
+                    ->addYear(1)
+                    ->startOfDay()
+                    ->toDateTimeString(),
+            ]
+        );
+    }
+
+    public function test_pull_subscription_from_specific_brand()
+    {
+        $page = 1;
+        $limit = 10;
+        $nrSubscriptions = 3;
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'type' => ConfigService::$typeSubscription,
+                ]
+            )
+        );
+        unset($product['discounts']);
+        $subscriptionBrands = [$this->faker->word, $this->faker->word];
+        for ($i = 0; $i < $nrSubscriptions; $i++) {
+            $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod());
+            $subscription = $this->subscriptionRepository->create(
+                $this->faker->subscription(
+                    [
+                        'product_id' => $product['id'],
+                        'payment_method_id' => $paymentMethod['id'],
+                        'brand' => $this->faker->randomElement($subscriptionBrands),
+                    ]
+                )
+            );
+            $subscriptions[$i] = $subscription->getArrayCopy();
+            $subscriptions[$i]['payment_method'] = (array)$paymentMethod;
+            $subscriptions[$i]['product'] = (array)$product;
+        }
+
+        //subscription on default brand
+        for ($i = 0; $i < 5; $i++) {
+            $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod());
+            $subscription = $this->subscriptionRepository->create(
+                $this->faker->subscription(
+                    [
+                        'product_id' => $product['id'],
+                        'payment_method_id' => $paymentMethod['id'],
+                    ]
+                )
+            );
+        }
+
+        $results = $this->call(
+            'GET',
+            '/subscriptions',
+            [
+                'page' => $page,
+                'limit' => $limit,
+                'brands' => $subscriptionBrands
+            ]
+        );
+
+        //only subscriptions defined on specified brands are pulled
+        $this->assertEquals($subscriptions, $results->decodeResponseJson('data'));
     }
 }

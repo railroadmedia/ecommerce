@@ -580,7 +580,7 @@ class ProductControllerTest extends EcommerceTestCase
             'active' => 0
         ]));
         $results = $this->call('GET','/product/'.$product['id']);
-        dd($results);
+
         //assert response status code
         $this->assertEquals(404, $results->getStatusCode());
 
@@ -590,5 +590,43 @@ class ProductControllerTest extends EcommerceTestCase
             "detail" => "Pull failed, product not found with id: ".$product['id']
         ];
         $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
+    }
+
+    public function test_pull_products_multiple_brands()
+    {
+        $productFirstBrand  = $this->productRepository->create($this->faker->product([
+            'active' => 1,
+            'brand' => $this->faker->word
+        ]));
+        $productSecondBrand  = $this->productRepository->create($this->faker->product([
+            'active' => 1,
+            'brand' => $this->faker->word
+        ]));
+        $results = $this->call('GET','/product?brands[]='.$productFirstBrand['brand'].'&brands[]='.$productSecondBrand['brand']);
+
+        //assert response status code
+        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals([$productFirstBrand->getArrayCopy(), $productSecondBrand->getArrayCopy()], $results->decodeResponseJson('data'));
+    }
+
+    public function test_pull_products_brands_not_set_on_request()
+    {
+        $productFirstBrand  = $this->productRepository->create($this->faker->product([
+            'active' => 1,
+            'brand' => ConfigService::$brand
+        ]));
+
+        $productSecondBrand  = $this->productRepository->create($this->faker->product([
+            'active' => 1,
+            'brand' => $this->faker->word
+        ]));
+        $results = $this->call('GET','/product');
+
+        //assert response status code
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //only products defined on config brand are pulled
+        $this->assertEquals([$productFirstBrand->getArrayCopy()], $results->decodeResponseJson('data'));
+
     }
 }

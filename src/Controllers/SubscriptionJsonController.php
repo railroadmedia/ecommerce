@@ -57,7 +57,7 @@ class SubscriptionJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.subscriptions');
         $subscriptions = $this->subscriptionRepository->query()
-            ->whereIn('brand', $request->get('brand', [ConfigService::$brand]));
+            ->whereIn('brand', $request->get('brands', [ConfigService::$brand]));
 
         if ($request->has('user_id')) {
             $subscriptions = $subscriptions->where('user_id', $request->get('user_id'));

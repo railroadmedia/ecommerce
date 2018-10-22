@@ -62,7 +62,7 @@ class ProductJsonController extends BaseController
         $products =
             $this->productRepository->query()
                 ->whereIn('active', $active)
-                ->whereIn('brand', $request->get('brand', [ConfigService::$brand]))
+                ->whereIn('brand', $request->get('brands', [ConfigService::$brand]))
                 ->limit($request->get('limit', 10))
                 ->skip(($request->get('page', 1) - 1) * $request->get('limit', 10))
                 ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))

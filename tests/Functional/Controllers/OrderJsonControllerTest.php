@@ -188,4 +188,90 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         $this->assertArraySubset($orders, $results->decodeResponseJson('data'));
     }
+
+
+    public function test_pull_orders_multiple_brands()
+    {
+        $page     = 1;
+        $limit    = 10;
+        $nrOrders = 5;
+        $product  = $this->productRepository->create($this->faker->product([
+            'type' => ConfigService::$typeSubscription
+        ]));
+        $brands = [$this->faker->word, $this->faker->word];
+
+        for($i = 0; $i < $nrOrders; $i++)
+        {
+            $order     = $this->orderRepository->create($this->faker->order([
+                'brand' => $this->faker->randomElement($brands)
+            ]));
+            $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+                'product_id' => $product['id'],
+                'order_id'   => $order['id']
+            ]));
+
+            $orders[] = $this->orderRepository->read($order['id']);
+        }
+        for($i = 0; $i < 3; $i++)
+        {
+            $order     = $this->orderRepository->create($this->faker->order([
+                'brand' => $this->faker->word
+            ]));
+            $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+                'product_id' => $product['id'],
+                'order_id'   => $order['id']
+            ]));
+        }
+
+        $results = $this->call('GET', '/orders',
+            [
+                'page'  => $page,
+                'limit' => $limit,
+                'brands' => $brands
+            ]);
+
+        $this->assertEquals(array_pluck($orders, 'id'), array_pluck($results->decodeResponseJson('data'), 'id'));
+    }
+
+    public function test_pull_orders_default_brand()
+    {
+        $page     = 1;
+        $limit    = 10;
+        $nrOrders = 5;
+        $product  = $this->productRepository->create($this->faker->product([
+            'type' => ConfigService::$typeSubscription
+        ]));
+        $brands = [$this->faker->word, $this->faker->word];
+
+        for($i = 0; $i < $nrOrders; $i++)
+        {
+            $order     = $this->orderRepository->create($this->faker->order([
+                'brand' => $this->faker->randomElement($brands)
+            ]));
+            $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+                'product_id' => $product['id'],
+                'order_id'   => $order['id']
+            ]));
+
+
+        }
+        for($i = 0; $i < 3; $i++)
+        {
+            $order     = $this->orderRepository->create($this->faker->order());
+            $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+                'product_id' => $product['id'],
+                'order_id'   => $order['id']
+            ]));
+
+            $orders[] = $this->orderRepository->read($order['id']);
+        }
+
+        $results = $this->call('GET', '/orders',
+            [
+                'page'  => $page,
+                'limit' => $limit,
+            ]);
+
+        $this->assertEquals(array_pluck($orders, 'id'), array_pluck($results->decodeResponseJson('data'), 'id'));
+    }
 }
