@@ -151,17 +151,19 @@ class TaxService
                 if ($criteriaMet) {
                     $discountsToApply[$activeDiscount->id] =  $activeDiscount;
 
-                    $productDiscount = 0;
+                    if ($activeDiscount['product_id'] == $item['options']['product-id']) {
+                        $productDiscount = 0;
 
-                    if ($activeDiscount->type == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
-                        $productDiscount = $activeDiscount->amount * $item['quantity'];
+                        if ($activeDiscount->type == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
+                            $productDiscount = $activeDiscount->amount * $item['quantity'];
+                        }
+
+                        if ($activeDiscount->type == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+                            $productDiscount = $activeDiscount->amount / 100 * $item['price'] * $item['quantity'];
+                        }
+
+                        $cartItems[$key]['discountedPrice'] = $cartItems[$key]['totalPrice'] - $productDiscount;
                     }
-
-                    if ($activeDiscount->type == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
-                        $productDiscount = $activeDiscount->amount / 100 * $item['price'] * $item['quantity'];
-                    }
-
-                    $cartItems[$key]['discountedPrice'] = $cartItems[$key]['totalPrice'] - $productDiscount;
                 }
             }
         }
