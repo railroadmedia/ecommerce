@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Requests;
 
 
+use Illuminate\Support\Facades\Request;
 use Railroad\Ecommerce\Services\ConfigService;
 
 class ProductUpdateRequest extends FormRequest
@@ -26,7 +27,7 @@ class ProductUpdateRequest extends FormRequest
     {
         return [
             'name' => 'max:255',
-            'sku' => 'unique:'.ConfigService::$tableProduct.'|max:255',
+            'sku' => 'unique:'.ConfigService::$tableProduct.',sku,'.Request::route('productId').'|max:255',
             'price' => 'numeric|min:0',
             'type' => 'max:255|in:' .
                 implode(

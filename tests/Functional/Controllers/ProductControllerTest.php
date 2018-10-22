@@ -471,4 +471,61 @@ class ProductControllerTest extends EcommerceTestCase
         $responseContent = $results->decodeResponseJson();
         $this->assertEquals($expectedContent, $responseContent);
     }
+
+    public function test_update_product_same_SKU_pass_validation()
+    {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
+        $product = $this->productRepository->create($this->faker->product());
+
+        $newDescription = $this->faker->text;
+
+        $results = $this->call('PATCH', '/product/' . $product['id'], [
+            'description' => $newDescription, 'sku' => $product['sku']
+        ]);
+
+        $jsonResponse = $results->decodeResponseJson();
+
+        //assert response status code
+        $this->assertEquals(201, $results->getStatusCode());
+
+        unset($product['discounts']);
+
+        //assert product with the new description subset of response
+        $product['description'] = $newDescription;
+        $product['updated_on']  = Carbon::now()->toDateTimeString();
+        $this->assertArraySubset($product, $jsonResponse['data'][0]);
+
+        //assert product updated in the db
+        $this->assertDatabaseHas(
+            ConfigService::$tableProduct,
+            iterator_to_array($product)
+        );
+    }
+
+    public function test_update_product_different_SKU_unique_validation()
+    {
+        $this->permissionServiceMock->method('is')->willReturn(true);
+
+        $product1 = $this->productRepository->create($this->faker->product());
+        $product2 = $this->productRepository->create($this->faker->product());
+        $results = $this->call('PATCH', '/product/' . $product2['id'], [
+            'sku' => $product1['sku']
+        ]);
+
+        $jsonResponse = $results->decodeResponseJson();
+
+        //assert response status code
+        $this->assertEquals(422, $results->getStatusCode());
+
+        //assert that the proper error messages are received
+        $errors = [
+            [
+                'source' => "sku",
+                "detail" => "The sku has already been taken."
+            ]
+        ];
+        $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
+
+    }
 }
