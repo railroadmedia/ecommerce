@@ -115,7 +115,7 @@ class AddressJsonController extends BaseController
 
         throw_if(
             (
-                (!$this->permissionService->is(auth()->id(), 'admin'))
+                (!$this->permissionService->is(auth()->id(), 'administrator'))
                 && (auth()->id() !== intval($address['user_id']))
                 && ($request->get('customer_id', 0) !== $address['customer_id'])
             ),
@@ -173,7 +173,7 @@ class AddressJsonController extends BaseController
 
         throw_if(
             (
-                (!$this->permissionService->is(auth()->id(), 'admin'))
+                (!$this->permissionService->is(auth()->id(), 'administrator'))
                 && (auth()->id() !== intval($address['user_id']))
                 && ($request->get('customer_id', 0) !== $address['customer_id'])
             ),

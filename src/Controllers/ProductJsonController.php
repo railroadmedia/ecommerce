@@ -57,7 +57,7 @@ class ProductJsonController extends BaseController
      */
     public function index(Request $request)
     {
-        $active = $this->permissionService->is(auth()->id(), 'admin') ? [0, 1] : [1];
+        $active = $this->permissionService->is(auth()->id(), 'administrator') ? [0, 1] : [1];
 
         $products =
             $this->productRepository->query()
@@ -88,7 +88,7 @@ class ProductJsonController extends BaseController
      */
     public function store(ProductCreateRequest $request)
     {
-        if (!$this->permissionService->is(auth()->id(), 'admin')) {
+        if (!$this->permissionService->is(auth()->id(), 'administrator')) {
             throw new NotAllowedException('This action is unauthorized.');
         }
 
@@ -131,7 +131,7 @@ class ProductJsonController extends BaseController
     {
         $product = $this->productRepository->read($productId);
 
-        if (!$this->permissionService->is(auth()->id(), 'admin') || (is_null($product))) {
+        if (!$this->permissionService->is(auth()->id(), 'administrator') || (is_null($product))) {
             throw new NotFoundException('Update failed, product not found with id: ' . $productId);
         }
 
@@ -182,7 +182,7 @@ class ProductJsonController extends BaseController
     {
         $product = $this->productRepository->read($productId);
 
-        if (!$this->permissionService->is(auth()->id(), 'admin') || (is_null($product))) {
+        if (!$this->permissionService->is(auth()->id(), 'administrator') || (is_null($product))) {
             throw new NotFoundException('Delete failed, product not found with id: ' . $productId);
         }
 
@@ -243,7 +243,7 @@ class ProductJsonController extends BaseController
      */
     public function show(Request $request, $productId)
     {
-        $active = $this->permissionService->is(auth()->id(), 'admin') ? [0, 1] : [1];
+        $active = $this->permissionService->is(auth()->id(), 'administrator') ? [0, 1] : [1];
 
         $product =
             $this->productRepository->query()
