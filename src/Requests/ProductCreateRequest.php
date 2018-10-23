@@ -39,7 +39,7 @@ class ProductCreateRequest extends FormRequest
             'active' => 'required|boolean',
             'is_physical' => 'required|boolean',
             'weight' => 'required_if:is_physical,true',
-            'stock' => 'required|numeric',
+            'stock' => 'nullable|numeric',
             'subscription_interval_type' => 'required_if:type,' . ConfigService::$typeSubscription,
             'subscription_interval_count' => 'required_if:type,' . ConfigService::$typeSubscription
         ];
