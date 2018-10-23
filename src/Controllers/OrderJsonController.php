@@ -71,7 +71,7 @@ class OrderJsonController extends BaseController
             ->get();
 
         $ordersCount = $this->orderRepository->query()
-            ->whereIn('brand', $request->get('brand', [ConfigService::$brand]));
+            ->whereIn('brand', $request->get('brands', [ConfigService::$brand]));
         if($request->has('user_id'))
         {
             $ordersCount = $ordersCount->where('user_id', $request->get('user_id'));
