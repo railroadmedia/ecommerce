@@ -51,6 +51,7 @@ class AddressJsonController extends BaseController
         }
 
         $addresses = $this->addressRepository->query()
+            ->whereIn('brand', $request->get('brands', [ConfigService::$brand]))
             ->where('user_id', $request->get('user_id', auth()->id()))
             ->get();
 
