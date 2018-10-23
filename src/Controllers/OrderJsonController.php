@@ -5,17 +5,36 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\OrderRepository;
+use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
+use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Requests\OrderUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 
+
 class OrderJsonController extends BaseController
 {
+    /**
+     * @var AddressRepository
+     */
+    private $addressRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\OrderPaymentRepository
+     */
+    private $orderPaymentRepository;
+
     /**
      * @var \Railroad\Ecommerce\Repositories\OrderRepository
      */
     private $orderRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\PaymentRepository
+     */
+    private $paymentRepository;
 
     /**
      * @var \Railroad\Permissions\Services\PermissionService
@@ -25,14 +44,25 @@ class OrderJsonController extends BaseController
     /**
      * OrderJsonController constructor.
      *
+     * @param \Railroad\Ecommerce\Repositories\AddressRepository $addressRepository
+     * @param \Railroad\Ecommerce\Repositories\OrderPaymentRepository $orderPaymentRepository
      * @param \Railroad\Ecommerce\Repositories\OrderRepository $orderRepository
+     * @param \Railroad\Ecommerce\Repositories\PaymentRepository $paymentRepository
      * @param \Railroad\Permissions\Services\PermissionService $permissionService
      */
-    public function __construct(OrderRepository $orderRepository, PermissionService $permissionService)
-    {
+    public function __construct(
+        AddressRepository $addressRepository,
+        OrderPaymentRepository $orderPaymentRepository,
+        OrderRepository $orderRepository,
+        PaymentRepository $paymentRepository,
+        PermissionService $permissionService
+    ) {
         parent::__construct();
 
+        $this->addressRepository = $addressRepository;
+        $this->orderPaymentRepository = $orderPaymentRepository;
         $this->orderRepository   = $orderRepository;
+        $this->paymentRepository = $paymentRepository;
         $this->permissionService = $permissionService;
     }
 
@@ -81,6 +111,52 @@ class OrderJsonController extends BaseController
         return reply()->json($orders, [
             'totalResults' => $ordersCount
         ]);
+    }
+
+    /** Show order
+     *
+     * @param int $orderId
+     * @return JsonResponse
+     */
+    public function show($orderId)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.orders');
+
+        $order = $this->orderRepository->read($orderId);
+
+        throw_if(
+            is_null($order),
+            new NotFoundException('Pull failed, order not found with id: ' . $orderId)
+        );
+
+        $order['items'] = array_values($order['items']);
+
+        $order['addresses'] = $this->addressRepository
+            ->query()
+            ->whereIn(
+                'id',
+                [
+                    $order['shipping_address_id'],
+                    $order['billing_address_id']
+                ]
+            )
+            ->get()
+            ->all();
+
+        $orderPayments = $this->orderPaymentRepository
+            ->query()
+            ->where('order_id', $orderId)
+            ->get()
+            ->pluck('payment_id')
+            ->all();
+
+        $order['payments'] = $this->paymentRepository
+            ->query()
+            ->whereIn('id', $orderPayments)
+            ->get()
+            ->all();
+
+        return reply()->json([$order]);
     }
 
     /** Soft delete order

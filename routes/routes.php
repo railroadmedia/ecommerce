@@ -316,6 +316,10 @@ Route::get(
     '/orders',
     Railroad\Ecommerce\Controllers\OrderJsonController::class . '@index'
 )->name('orders.index');
+Route::get(
+    '/order/{orderId}',
+    Railroad\Ecommerce\Controllers\OrderJsonController::class . '@show'
+)->name('order.read');
 Route::patch(
     '/order/{orderId}',
     Railroad\Ecommerce\Controllers\OrderJsonController::class . '@update'
