@@ -9,6 +9,8 @@ use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
+use Railroad\Ecommerce\Repositories\RefundRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\OrderUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
@@ -42,6 +44,16 @@ class OrderJsonController extends BaseController
     private $permissionService;
 
     /**
+     * @var \Railroad\Permissions\Services\RefundRepository
+     */
+    private $refundRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\SubscriptionRepository
+     */
+    private $subscriptionRepository;
+
+    /**
      * OrderJsonController constructor.
      *
      * @param \Railroad\Ecommerce\Repositories\AddressRepository $addressRepository
@@ -49,13 +61,17 @@ class OrderJsonController extends BaseController
      * @param \Railroad\Ecommerce\Repositories\OrderRepository $orderRepository
      * @param \Railroad\Ecommerce\Repositories\PaymentRepository $paymentRepository
      * @param \Railroad\Permissions\Services\PermissionService $permissionService
+     * @param \Railroad\Permissions\Services\RefundRepository $refundRepository
+     * @param \Railroad\Permissions\Services\SubscriptionRepository $subscriptionRepository
      */
     public function __construct(
         AddressRepository $addressRepository,
         OrderPaymentRepository $orderPaymentRepository,
         OrderRepository $orderRepository,
         PaymentRepository $paymentRepository,
-        PermissionService $permissionService
+        PermissionService $permissionService,
+        RefundRepository $refundRepository,
+        SubscriptionRepository $subscriptionRepository
     ) {
         parent::__construct();
 
@@ -64,6 +80,8 @@ class OrderJsonController extends BaseController
         $this->orderRepository   = $orderRepository;
         $this->paymentRepository = $paymentRepository;
         $this->permissionService = $permissionService;
+        $this->refundRepository = $refundRepository;
+        $this->subscriptionRepository = $subscriptionRepository;
     }
 
     /** Pull orders between two dates
@@ -156,6 +174,29 @@ class OrderJsonController extends BaseController
             ->get()
             ->all();
 
+        $order['refunds'] = $this->refundRepository
+            ->query()
+            ->whereIn('payment_id', $orderPayments)
+            ->get()
+            ->all();
+
+        $subscriptions = $this->subscriptionRepository
+            ->query()
+            ->where('order_id', $orderId)
+            ->get();
+
+        $order['subscriptions'] = $subscriptions
+            ->filter(function($subscription, $key) {
+                return $subscription->type == ConfigService::$typeSubscription;
+            })
+            ->all();
+
+        $order['paymentPlans'] = $subscriptions
+            ->filter(function($subscription, $key) {
+                return $subscription->type == ConfigService::$paymentPlanType;
+            })
+            ->all();
+
         return reply()->json([$order]);
     }
 
@@ -206,7 +247,9 @@ class OrderJsonController extends BaseController
                         'due',
                         'tax',
                         'shipping_costs',
-                        'paid'
+                        'paid',
+                        'shipping_address_id',
+                        'billing_address_id'
                     ]
                 ), [
                 'updated_on' => Carbon::now()->toDateTimeString()
