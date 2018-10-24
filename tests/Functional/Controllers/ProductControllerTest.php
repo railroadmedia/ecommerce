@@ -45,7 +45,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_store_product()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $product = $this->faker->product();
 
@@ -66,7 +66,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_store_subscription()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $subscription = $this->faker->product(['type' => ConfigService::$typeSubscription]);
         $results      = $this->call('PUT', '/product/', $subscription);
@@ -88,7 +88,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_on_store_product()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $results = $this->call('PUT', '/product/');
 
@@ -119,10 +119,6 @@ class ProductControllerTest extends EcommerceTestCase
             [
                 'source' => "is_physical",
                 "detail" => "The is physical field is required."
-            ],
-            [
-                'source' => "stock",
-                "detail" => "The stock field is required."
             ]
         ];
 
@@ -131,7 +127,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_for_new_subscription()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $results = $this->call('PUT', '/product/', [
             'name'        => $this->faker->word,
@@ -162,7 +158,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_sku_unique()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $product = $this->productRepository->create($this->faker->product());
 
@@ -193,7 +189,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_weight_for_physical_products()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $results = $this->call('PUT', '/product/', [
             'name'        => $this->faker->word,
@@ -220,7 +216,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_update_product_inexistent()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $randomProductId = rand();
         $results         = $this->call('PATCH', '/product/' . $randomProductId);
@@ -238,7 +234,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_update_product()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $product = $this->productRepository->create($this->faker->product());
 
@@ -269,7 +265,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_validation_on_update_product()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+
         $product = $this->productRepository->create($this->faker->product());
 
         $results = $this->call('PATCH', '/product/' . $product['id'], [
@@ -303,7 +300,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_missing_product()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $randomId = rand();
         $results  = $this->call('DELETE', '/product/' . $randomId);
@@ -315,7 +312,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product_when_exists_product_order()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+
         $userId = $this->createAndLogInNewUser();
 
         $product   = $this->productRepository->create($this->faker->product());
@@ -330,7 +328,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product_when_exists_product_discounts()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+
         $userId = $this->createAndLogInNewUser();
 
         $product          = $this->productRepository->create($this->faker->product());
@@ -351,7 +350,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_delete_product()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+
         $product = $this->productRepository->create($this->faker->product());
 
         $results = $this->call('DELETE', '/product/' . $product['id']);
@@ -365,7 +365,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_get_all_products_paginated_when_empty()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
         $results         = $this->call('GET', '/product');
         $expectedResults = [
             'data' => [],
@@ -382,7 +383,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_admin_get_all_paginated_products()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('can')->willReturn(true);
 
         $page       = 1;
         $limit      = 30;
@@ -409,7 +410,6 @@ class ProductControllerTest extends EcommerceTestCase
     public function test_upload_thumb()
     {
         $userId = $this->createAndLogInNewUser();
-        $this->permissionServiceMock->method('is')->willReturn(true);
 
         $filenameAbsolute = $this->faker->image(sys_get_temp_dir());
         $filenameRelative = $this->getFilenameRelativeFromAbsolute($filenameAbsolute);
@@ -474,7 +474,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_update_product_same_SKU_pass_validation()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $product = $this->productRepository->create($this->faker->product());
 
@@ -505,7 +505,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_update_product_different_SKU_unique_validation()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $product1 = $this->productRepository->create($this->faker->product());
         $product2 = $this->productRepository->create($this->faker->product());
@@ -530,6 +530,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_pull_product_not_exist()
     {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
         $randomId  = rand();
         $results = $this->call('GET','/product/'.$randomId);
 
@@ -546,6 +548,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_pull_product()
     {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(false);
+
         $product  = $this->productRepository->create($this->faker->product([
             'active' => 1
         ]));
@@ -560,7 +564,7 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_admin_pull_inactive_product()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('can')->willReturn(true);
 
         $product  = $this->productRepository->create($this->faker->product([
             'active' => 0
@@ -576,6 +580,8 @@ class ProductControllerTest extends EcommerceTestCase
 
     public function test_user_can_not_pull_inative_product()
     {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(false);
+
         $product  = $this->productRepository->create($this->faker->product([
             'active' => 0
         ]));

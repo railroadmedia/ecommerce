@@ -15,6 +15,7 @@ use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Permissions\Services\PermissionService;
 use Railroad\Resora\Decorators\Decorator;
 use Railroad\Resora\Entities\Entity;
 use Railroad\Usora\Repositories\UserRepository;
@@ -76,6 +77,11 @@ class StatsController extends BaseController
     private $paymentMethodRepository;
 
     /**
+     * @var PermissionService
+     */
+    private $permissionService;
+
+    /**
      * StatsController constructor.
      *
      * @param ProductRepository $productRepository
@@ -91,7 +97,8 @@ class StatsController extends BaseController
         CustomerRepository $customerRepository,
         UserRepository $userRepository,
         AddressRepository $addressRepository,
-        PaymentMethodRepository $paymentMethodRepository
+        PaymentMethodRepository $paymentMethodRepository,
+        PermissionService $permissionService
     ) {
         $this->paymentRepository = $paymentRepository;
         $this->productRepository = $productRepository;
@@ -104,10 +111,13 @@ class StatsController extends BaseController
         $this->userRepository = $userRepository;
         $this->addressRepository = $addressRepository;
         $this->paymentMethodRepository = $paymentMethodRepository;
+        $this->permissionService = $permissionService;
     }
 
     public function statsProduct(Request $request)
     {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.stats');
+
         $products =
             $this->productRepository->query()
                 ->select('id', 'sku', 'name', 'type', 'is_physical', 'weight')
@@ -242,7 +252,7 @@ class StatsController extends BaseController
             $subscriptions =
                 $this->subscriptionRepository->query()
                     ->whereIn('id', $subscriptionRenewalPayments->pluck('subscription_id'))
-                    ->whereIn('brand',  $request->get('brands', [ConfigService::$brand]))
+                    ->whereIn('brand', $request->get('brands', [ConfigService::$brand]))
                     ->orderBy('created_on')
                     ->chunk(
                         250,
@@ -421,6 +431,8 @@ class StatsController extends BaseController
 
     public function statsOrder(Request $request)
     {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.stats');
+
         $brand = $request->get('brands', [ConfigService::$brand]);
         $rows = [];
         $rowDataTemplate = [

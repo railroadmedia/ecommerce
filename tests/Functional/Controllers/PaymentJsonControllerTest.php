@@ -167,7 +167,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     {
         $due = $this->faker->numberBetween(0, 1000);
 
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
         $this->stripeExternalHelperMock->method('retrieveCard')->willReturn(new Card());
         $fakerCharge           = new Charge();
@@ -254,7 +256,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_store_manual_payment()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $paymentMethod = null;
         $due           = $this->faker->numberBetween(0, 1000);

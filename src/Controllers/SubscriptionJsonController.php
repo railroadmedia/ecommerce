@@ -202,6 +202,8 @@ class SubscriptionJsonController extends BaseController
      */
     public function renew(Request $request, $subscriptionId)
     {
+        $this->permissionService->canOrThrow(auth()->id(), 'renew.subscription');
+
         try {
             $updatedSubscription = $this->renewalService->renew($subscriptionId);
 

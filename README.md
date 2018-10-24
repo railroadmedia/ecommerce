@@ -3,6 +3,7 @@ Ecommerce
 
 - [Ecommerce](#ecommerce)
   * [Install](#install)
+  * [Required abilities](#required-abilities)
   * [API Reference](#api-reference)
     + [Add item to cart - forms controller](#add-item-to-cart---forms-controller)
       - [Request Example](#request-example)
@@ -222,6 +223,54 @@ Ecommerce
 ## Install
 With composer command
 ``` composer require railroad/ecommerce:1.0.43 ```
+## Required abilities 
+
+| Endpoint                                      |  Route                                                    |  Required ability           |  Observation                                                              | 
+|-----------------------------------------------|-----------------------------------------------------------|-----------------------------|---------------------------------------------------------------------------| 
+| Get all products                              |  GET /ecommerce/product                                   |                             |  'pull.inactive.products' - to pull inactive products also                | 
+| Pull product                                  |  GET /ecommerce/product/{productId}                       |                             |  'pull.inactive.products' - to pull an inactive product                   | 
+| Add a new product                             |  PUT /ecommerce/product                                   |  'create.product'           |                                                                           | 
+| Update product                                |  PATCH /ecommerce/product/{productId}                     |  'update.product'           |                                                                           | 
+| Delete product                                |  DELETE /ecommerce/product/{productId}                    |  'delete.product'           |                                                                           | 
+| Get all shipping options                      |  GET /ecommerce/shipping-options                          |  'pull.shipping.options'    |                                                                           | 
+| Add a new shipping option                     |  PUT /ecommerce/shipping-options                          | 'create.shipping.option'    |                                                                           | 
+| Update shipping option                        |  PATCH /ecommerce/shipping-options/{shippingOptionId}     |  'edit.shipping.option'     |                                                                           | 
+| Delete shipping option                        |  DELETE /ecommerce/shipping-options/{shippingOptionId}    |  'delete.shipping.option'   |                                                                           | 
+| Add shipping costs weight range               |  PUT /ecommerce/shipping-cost                             |  'create.shipping_cost'     |                                                                           | 
+| Update a shipping costs weight range          |  PATCH /ecommerce/shipping-cost/{shippingCostId}          |  'edit.shipping_cost'       |                                                                           | 
+| Delete a shipping costs weight range          |  DELETE /ecommerce/shipping-cost/{shippingCostId}         |  'delete.shipping_cost'     |                                                                           | 
+| Get all discounts                             |  GET /ecommerce/discounts                                 |  'pull.discounts'           |                                                                           | 
+| Add a new discount                            |  PUT /ecommerce/discount                                  |  'create.discount'          |                                                                           | 
+| Update discount                               |  PATCH /ecommerce/discount/{discountId}                   |  'update.discount'          |                                                                           | 
+| Delete discount                               |  DELETE /ecommerce/discount/{discountId}                  |  'delete.discount'          |                                                                           | 
+| Define a discount criteria for discount       |  PUT /ecommerce/discount-criteria/{discountId}            |  'create.discount.criteria' |                                                                           | 
+| Update discount criteria                      |  PATCH /ecommerce/discount-criteria/{discountCriteriaId}  |  'update.discount.criteria' |                                                                           | 
+| Delete discount criteria                      |  DELETE /ecommerce/discount-criteria/{discountCriteriaId} |  'delete.discount.criteria' |                                                                           | 
+| Get payments                                  |  GET /ecommerce/payment                                   |  'list.payment'             |                                                                           | 
+| Add a new payment                             |  PUT /ecommerce/payment                                   |  'create.payment'           |                                                                           | 
+| Delete a payment                              |  DELETE /ecommerce/payment/{paymentId}                    |  'delete.payment'           |                                                                           | 
+| Refund a payment                              |  PUT /ecommerce/refund                                    |  'store.refund'             |                                                                           | 
+| Create a new payment method for user/customer |  PUT /ecommerce/payment-method                            |  'create.payment.method'    |                                                                           | 
+| Set default payment method for user/customer  |  PATCH /ecommerce/payment-method/set-default              |                             |  'update.payment.method' ability to set as default a method you don't own | 
+| Update Credit card payment method             |  PATCH /ecommerce/payment-method/{paymentMethodId}        |  'update.payment.method'    |                                                                           | 
+| Delete payment method                         |  DELETE /ecommerce/payment-method/{paymentMethodId}       |                             |  'delete.payment.method' - to delete methods you don't own                | 
+| Get all user's payment methods                |  GET /ecommerce/user-payment-method/{userId}              |  'pull.user.payment.method' |                                                                           | 
+| Get user addresses                            |  GET /ecommerce/address                                   |                             |  'pull.user.payment.method' to pull address for other users               | 
+| Update user's address                         |  PATCH /ecommerce/address/{addressId}                     |                             |  'update.address' - to update other user address                          | 
+| Delete address                                |  DELETE /ecommerce/address/{addressId}                    |                             | 'delete.address' - to delete other user's address                         | 
+| Pull subscriptions paginated                  |  GET /ecommerce/subscriptions                             |  'pull.subscriptions'       |                                                                           | 
+| Create a new subscription                     |  PUT /ecommerce/subscription                              |  'create.subscription'      |                                                                           | 
+| Update a subscription                         |  PATCH /ecommerce/subscription/{subscriptionId}           |  'edit.subscription'        |                                                                           | 
+| Delete a subscription                         |  DELETE /ecommerce/subscription/{subscriptionId}          |  'delete.subscription'      |                                                                           | 
+| Renew a subscription                          |  POST /ecommerce/subscription-renew/{subscriptionId}      |  'renew.subscription'       |                                                                           | 
+| Pull orders                                   |  GET /ecommerce/orders                                    |  'pull.orders'              |                                                                           | 
+| Update order                                  |  PATCH /ecommerce/order/{orderId}                         |  'edit.order'               |                                                                           | 
+| Delete order                                  |  DELETE /ecommerce/order/{orderId}                        |  'delete.order'             |                                                                           | 
+| Pull shipping fulfillments                    |  GET /ecommerce/fulfillment                               |  'pull.fulfillments'        |                                                                           | 
+| Fulfilled order or order item                 |  PATCH /ecommerce/fulfillment                             |  'fulfilled.fulfillment'    |                                                                           | 
+| Delete shipping fulfillment                   |  DELETE /ecommerce/fulfillment                            |  'delete.fulfillment'       |                                                                           | 
+| Get products statistics                       |  GET /ecommerce/stats/products                            |  'pull.stats'               |                                                                           | 
+| Get orders statistics                         |  GET /ecommerce/stats/orders                              |  'pull.stats'               |                                                                           | 
 
 ## API Reference
 
@@ -614,7 +663,9 @@ $.ajax({
 GET /ecommerce/product
 ```
 
-Pull paginated products. For administrators all products(active/inactive) will be pulled. 
+Pull paginated products. 
+
+For user with 'pull.inactive.products' ability all products(active/inactive) will be pulled. 
 
 #### Request Example
 ```js   
@@ -697,7 +748,9 @@ $.ajax({
 GET /ecommerce/product/{productId}
 ```
 
-Pull specific product. Only administrators can pull inactive product. 
+Pull specific product. 
+
+Only users with 'pull.inactive.products' ability  can pull inactive product. 
 
 #### Request Example
 ```js   
@@ -770,7 +823,9 @@ $.ajax({
 PUT /ecommerce/product
 ```
 
-Create a new product and return it in JSON format.
+Users with 'create.product' ability can create a new product. 
+
+The method return new created product in JSON format.
 
 #### Request Example
 
@@ -857,7 +912,7 @@ $.ajax({
 PATCH /ecommerce/product/{productId}
 ```
 
-Update a product based on product id and return it in JSON format.
+Users with 'update.product' ability can update a product based on product id. Will return updated product in JSON format.
 
 #### Request Example
 
@@ -966,6 +1021,8 @@ DELETE /ecommerce/product/{productId}
 
 Delete a product that it's not connected to orders or discounts and return a JsonResponse.
 
+Only users with 'delete.product' ability can delete products.
+
 Throw  
 - NotFoundException if the product not exist or the user have not rights to delete the product
 - NotAllowedException if the product it's connected to orders or discounts
@@ -1059,6 +1116,8 @@ GET /ecommerce/shipping-options
 
 Pull shipping options. 
 
+Only users with 'pull.shipping.options' ability can pull shipping options.
+
 #### Request Example
 ```js   
 
@@ -1096,6 +1155,8 @@ PUT /ecommerce/shipping-options
 ```
 
 Create a new shipping option and return it in JSON format.
+
+Only users with 'create.shipping.option' ability can create shipping options.
 
 
 #### Request Example
@@ -1138,6 +1199,8 @@ PATCH /ecommerce/shipping-options/{shippingOptionId}
 ```
 
 Update a shipping option based on id and return it in JSON format or proper exception if the shipping option not exist.
+
+Only users with 'edit.shipping.option' ability can update shipping options.
 
 #### Request Example
 
@@ -1183,6 +1246,8 @@ DELETE /ecommerce/shipping-options/{shippingOptionId}
 
 Delete a shipping option if exist in the database.
  
+Only users with 'delete.shipping.option' ability can delete shipping option.
+  
 Throw proper exception if the shipping option not exist in the database or a json response with status 204.
      
 #### Request Example
@@ -1224,6 +1289,8 @@ PUT /ecommerce/shipping-cost
 ```
 
 Store a shipping cost weight range in the database and return it in JSON format if the shipping option exist.
+
+Only users with 'create.shipping_cost' ability can create shipping costs weight range.
 
 Return a JSON response with the shopping cost weight range or throw the proper exception.
      
@@ -1267,6 +1334,7 @@ PATCH /ecommerce/shipping-cost/{shippingCostId}
 
 Update a shipping cost weight range based on id and return it in JSON format or proper exception if the shipping cost weight range not exist
 
+Only users with 'edit.shipping_cost' ability can update shipping costs weight range.
 
 #### Request Example
 ```js   
@@ -1311,6 +1379,8 @@ DELETE /ecommerce/shipping-cost/{shippingCostId}
 
 Delete a shipping cost weight range if exist in the database.
 
+Only users with 'delete.shipping_cost' ability can delete shipping costs weight range.
+
 Throw proper exception if the shipping cost weight range not exist in the database or a json response with status 204.
      
      
@@ -1353,6 +1423,8 @@ GET /ecommerce/discounts
 
 Pull discounts.
 
+Only users with 'pull.discounts' ability can pull discounts.
+
 
 #### Request Example
 
@@ -1391,7 +1463,9 @@ $.ajax({
 PUT /ecommerce/discount
 ```
 
-Create a new discount. 
+Create a new discount.
+
+Only users with 'create.discount' ability can create discounts. 
 
 #### Request Example
 ```js   
@@ -1434,6 +1508,8 @@ PATCH /ecommerce/discount/{discountId}
 ```
 
 Update discount with the data sent on the request. 
+
+Only users with 'update.discount' ability can update discounts.
 
 Throw 404 Not Found Exception if the discount not exists in the database.
 
@@ -1481,6 +1557,8 @@ DELETE /ecommerce/discount/{discountId}
 
 Delete selected discount. 
 
+Only users with 'delete.discount' ability can delete discounts.
+
 Throw 404 Not Found Exception if the discount not exists in the database.
 
 #### Request Example
@@ -1520,6 +1598,8 @@ PUT /ecommerce/discount-criteria/{discountId}
 ```
 
 Create a discount criteria for selected discount. 
+
+Only users with 'create.discount.criteria' ability can create discount criteria.
 
 Throw 404 Not Found Exception if the discount not exists in the database.
 
@@ -1566,6 +1646,8 @@ PATCH /ecommerce/discount-criteria/{discountCriteriaId}
 ```
 
 Update a discount criteria with the data sent on the request. 
+
+Only users with 'update.discount.criteria' ability can update discount criteria. 
 
 Throw 404 Not Found Exception if the discount criteria not exists in the database.
 
@@ -1614,6 +1696,8 @@ DELETE /ecommerce/discount-criteria/{discountCriteriaId}
 
 
 Delete a discount criteria. 
+
+Only users with 'delete.discount.criteria' ability can delete discount criteria. 
 
 Throw 404 Not Found Exception if the discount criteria not exists in the database.
 
@@ -1806,7 +1890,7 @@ $.ajax({
 GET /ecommerce/payment
 ```
 
-Pull paginated payments. 
+Users with 'list.payment' ability can pull paginated payments. 
 
 If order_id it's set on the request only the payments for selected order are pulled.
 
@@ -1849,6 +1933,7 @@ $.ajax({
 ```
 PUT /ecommerce/payment
 ```
+Users with 'create.payment' ability can create new payments. If the user add a new payment using a payment method he does not own 'create.payment.method' ability it's required.
 
 Call the method that save a new payment and create the links with subscription or order if it's necessary.
 
@@ -1899,6 +1984,8 @@ DELETE /ecommerce/payment/{paymentId}
 
 Soft delete a payment.
 
+Only users with 'delete.payment' ability can delete payments.
+
 Throw 404 Not Found Exception if the payment not exists in the database.
 
 #### Request Example
@@ -1938,6 +2025,8 @@ PUT /ecommerce/refund
 ```
 
 Call the refund method from the external payment helper and the method that save the refund in the database.
+
+Only users with 'store.refund' ability can refund payments.
 
 Return the new created refund in JSON format
      
@@ -1981,6 +2070,8 @@ PUT /ecommerce/payment-method
 ```
 
 Call the service method to create a new payment method based on request parameters.
+
+Only users with 'create.payment.method' ability can create new payment methods.
 
 Return:
 - NotFoundException if the request method type parameter it's not defined (paypal or credit card)
@@ -2032,6 +2123,8 @@ PATCH /ecommerce/payment-method/set-default
 ```
 
 Set selected payment method as default for authenticated user.
+
+If the users have not the 'update.payment.method' ability, can set default only the payment method they own.
 
 #### Request Example
 ```js   
@@ -2103,6 +2196,8 @@ PATCH /ecommerce/payment-method/{paymentMethodId}
 
 Update a credit card payment method based on request data and payment method id.
 
+If the users have not the 'update.payment.method' ability, can update only the payment method they own.
+
 Return 
 - NotFoundException if the payment method doesn't exist or the user have not rights to access it
 - JsonResponse with the updated payment method
@@ -2153,6 +2248,8 @@ DELETE /ecommerce/payment-method/{paymentMethodId}
 
 Delete a payment method and return a JsonResponse.
 
+If the users have not the 'delete.payment.method' ability, can delete only the payment method they own.
+
 Throw  - NotFoundException if the payment method not exist
 
 #### Request Example
@@ -2195,6 +2292,7 @@ GET /ecommerce/user-payment-method/{userId}
 
 Get all user's payment methods with all the method details: credit card or paypal billing agreement
 
+Only users with 'pull.user.payment.method' ability can pull user's payment methods.
 
 #### Request Example
 ```js   
@@ -2231,6 +2329,8 @@ GET /ecommerce/address
 ```
 
 Pull user address. If the user_id it's not set on the request the method pull authenticated user addresses.
+
+Only users with 'pull.user.payment.method' can pull address for other users. Each user can pull his own address.
 
 #### Request Example
 
@@ -2320,6 +2420,8 @@ PATCH /ecommerce/address/{addressId}
 
 Update an address based on address id and requests parameters.
 
+Each user can update his own address. In other to update other user's address the authenticated user should have the 'update.address' ability.
+
 Return 
 - NotFoundException if the address not exists
 - NotAllowedException if the user have not rights to access it
@@ -2379,6 +2481,8 @@ DELETE /ecommerce/address/{addressId}
 
 Delete an address based on the id.
 
+Each user can delete his own address. In order to delete other user's address, the authenticated user should have the 'delete.address' ability.
+
 Return 
 - NotFoundException if the address not exists
 - NotAllowedException if the address it's in used (exists orders defined for the selected address)  or the user have not rights to access it
@@ -2425,6 +2529,8 @@ GET /ecommerce/subscriptions
 
 Pull subscriptions paginated. 
 
+Only users with 'pull.subscriptions' ability can pull subscriptions.
+
 If the user_id it's set on the request only the user's subscriptions are pulled.
 
 
@@ -2466,6 +2572,9 @@ $.ajax({
 ```
 PUT /ecommerce/subscription
 ```
+
+Only users with 'create.subscription' ability can create subscriptions.
+
 #### Request Example
 ```js   
 
@@ -2522,6 +2631,8 @@ PATCH /ecommerce/subscription/{subscriptionId}
 ```
 
 Update a subscription and returned updated data in JSON format.
+
+Only users with 'edit.subscription' ability can update subscriptions.
 
 
 #### Request Example
@@ -2581,7 +2692,9 @@ $.ajax({
 DELETE /ecommerce/subscription/{subscriptionId}
 ```
 
-Soft delete a subscription if exists in the database
+Soft delete a subscription if exists in the database.
+
+Only users with 'delete.subscription' ability can delete subscriptions.
 
 
 #### Request Example
@@ -2621,6 +2734,8 @@ POST /ecommerce/subscription-renew/{subscriptionId}
 
 Renew selected subscription.
 
+Only users with 'renew.subscription' ability can renew subscriptions.
+
 #### Request Example
 ```js   
 
@@ -2657,6 +2772,8 @@ GET /ecommerce/orders
 ```
 
 Pull paginated orders. 
+
+Only users with 'pull.orders' ability can pull orders.
 
 If start-date and end-date are set on the request are pulled only the orders created in specified period. 
 
@@ -2704,6 +2821,8 @@ PATCH /ecommerce/order/{orderId}
 
 Update order if exists in db and the user have rights to update it.
 
+Only users with 'edit.order' ability can update order.
+
 #### Request Example
 ```js   
 
@@ -2745,7 +2864,7 @@ $.ajax({
 DELETE /ecommerce/order/{orderId}
 ```
 
-Soft delete order
+Soft delete order. Only users with 'delete.order' ability can delete orders.
 
 
 #### Request Example
@@ -2789,6 +2908,8 @@ Pull paginated shipping fulfillments.
 
 If the status it's set on the requests the results are filtered by status.
 
+Only users with 'pull.fulfillments' ability can pull shipping fulfillments.
+
 #### Request Example
 ```js   
 
@@ -2829,6 +2950,8 @@ PATCH /ecommerce/fulfillment
 Fulfilled order or order item. 
 
 If the order_item_id it's set on the request only the order item it's fulfilled, otherwise entire order it's fulfilled.
+
+Only users with 'fulfilled.fulfillment' ability can fulfilled order or order items.
      
 #### Request Example
 ```js   
@@ -2870,7 +2993,9 @@ $.ajax({
 DELETE /ecommerce/fulfillment
 ```
 
-Delete order or order item fulfillment.
+Delete order or order item fulfillment. 
+
+Only users with 'delete.fulfillment' ability can delete fulfillments.
 
 
 #### Request Example
@@ -2913,6 +3038,8 @@ GET /ecommerce/stats/products
 Pull products statistics.
 
 If start-date and end-date are set on the request only the stats from specified period are pulled.
+
+Only users with 'pull.stats' ability can pull statistics.
  
 #### Request Example
 ```js   
@@ -2954,6 +3081,8 @@ GET /ecommerce/stats/orders
 Pull orders statistics.
 
 If start-date and end-date are set on the request only the stats from specified period are pulled.
+
+Only users with 'pull.stats' ability can pull statistics.
  
 #### Request Example
 ```js   

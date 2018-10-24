@@ -434,7 +434,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_update_user_address()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $address = (array)$this->addressRepository->query()->create($this->faker->address());
 
@@ -489,7 +489,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_delete_user_address()
     {
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $address = $this->addressRepository->create($this->faker->address());
 
