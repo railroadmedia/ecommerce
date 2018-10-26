@@ -245,7 +245,7 @@ class ProductJsonController extends BaseController
      */
     public function show(Request $request, $productId)
     {
-        $active = $this->permissionService->can(auth()->id(), 'pull.inactive.product') ? [0, 1] : [1];
+        $active = $this->permissionService->can(auth()->id(), 'pull.inactive.products') ? [0, 1] : [1];
 
         $product =
             $this->productRepository->query()
