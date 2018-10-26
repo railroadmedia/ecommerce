@@ -234,6 +234,7 @@ class TaxService
                 ($cartItemsWeight != 0) ? ($shippingCostsWithDiscount * ($cartItems[$key]['weight'] / $cartItemsWeight)) : 0;
         }
         $results['cartItems']              = $cartItems;
+        $results['cartItemsSubTotalAfterDiscounts'] = $cartItemsTotalDueDiscounted;
         $results['totalDue']               = $totalDue;
         $results['totalTax']               = $taxAmount;
         $results['shippingCosts']          = (float) $shippingCostsWithDiscount;
