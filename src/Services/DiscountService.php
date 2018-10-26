@@ -69,7 +69,8 @@ class DiscountService
                 } elseif ($discount['type'] == self::ORDER_TOTAL_PERCENT_OFF_TYPE) {
                     $amountDiscounted += $discount['amount'] / 100 * $cartItemsTotalDue;
                     break;
-                } elseif ($discount['type'] == self::PRODUCT_AMOUNT_OFF_TYPE) {
+                } elseif ($discount['type'] == self::PRODUCT_AMOUNT_OFF_TYPE ||
+                    $discount['type'] == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
                     if (
                         $cartItem['options']['product-id'] ==
                         $discount['product_id']

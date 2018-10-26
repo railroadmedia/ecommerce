@@ -162,6 +162,10 @@ class TaxService
                             $productDiscount = $activeDiscount->amount / 100 * $item['price'] * $item['quantity'];
                         }
 
+                        if ($activeDiscount->type == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
+                            $productDiscount = $activeDiscount->amount * $item['quantity'];
+                        }
+
                         $cartItems[$key]['discountedPrice'] = $cartItems[$key]['totalPrice'] - $productDiscount;
                     }
                 }
