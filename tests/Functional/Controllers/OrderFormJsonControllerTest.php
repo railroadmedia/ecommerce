@@ -240,6 +240,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product-id' => $product2['id'],
             ]
         );
+
         $results = $this->call('PUT', '/order');
 
         $this->assertEquals(422, $results->getStatusCode());
@@ -259,32 +260,36 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     "detail" => "The gateway field is required.",
                 ],
                 [
+                    "source" => "shipping-address-id",
+                    "detail" => "The shipping-address-id field is required when none of shipping-first-name / shipping-last-name / shipping-address-line-1 / shipping-city / shipping-region / shipping-zip-or-postal-code / shipping-country are present.",
+                ],
+                [
                     "source" => "shipping-first-name",
-                    "detail" => "The shipping-first-name field is required.",
+                    "detail" => "The shipping-first-name field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-last-name",
-                    "detail" => "The shipping-last-name field is required.",
+                    "detail" => "The shipping-last-name field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-address-line-1",
-                    "detail" => "The shipping-address-line-1 field is required.",
+                    "detail" => "The shipping-address-line-1 field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-city",
-                    "detail" => "The shipping-city field is required.",
+                    "detail" => "The shipping-city field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-region",
-                    "detail" => "The shipping-region field is required.",
+                    "detail" => "The shipping-region field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-zip-or-postal-code",
-                    "detail" => "The shipping-zip-or-postal-code field is required.",
+                    "detail" => "The shipping-zip-or-postal-code field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-country",
-                    "detail" => "The shipping-country field is required.",
+                    "detail" => "The shipping-country field is required when shipping-address-id is not present.",
                 ],
                 [
 
@@ -378,32 +383,36 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     "detail" => "The gateway field is required.",
                 ],
                 [
+                    "source" => "shipping-address-id",
+                    "detail" => "The shipping-address-id field is required when none of shipping-first-name / shipping-last-name / shipping-address-line-1 / shipping-city / shipping-region / shipping-zip-or-postal-code / shipping-country are present.",
+                ],
+                [
                     "source" => "shipping-first-name",
-                    "detail" => "The shipping-first-name field is required.",
+                    "detail" => "The shipping-first-name field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-last-name",
-                    "detail" => "The shipping-last-name field is required.",
+                    "detail" => "The shipping-last-name field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-address-line-1",
-                    "detail" => "The shipping-address-line-1 field is required.",
+                    "detail" => "The shipping-address-line-1 field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-city",
-                    "detail" => "The shipping-city field is required.",
+                    "detail" => "The shipping-city field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-region",
-                    "detail" => "The shipping-region field is required.",
+                    "detail" => "The shipping-region field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-zip-or-postal-code",
-                    "detail" => "The shipping-zip-or-postal-code field is required.",
+                    "detail" => "The shipping-zip-or-postal-code field is required when shipping-address-id is not present.",
                 ],
                 [
                     "source" => "shipping-country",
-                    "detail" => "The shipping-country field is required.",
+                    "detail" => "The shipping-country field is required when shipping-address-id is not present.",
                 ],
             ],
             $results->decodeResponseJson('meta')['errors']

@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Requests;
 
 use Railroad\Ecommerce\Services\CartService;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 
 class OrderFormSubmitRequest extends FormRequest
@@ -56,13 +57,14 @@ class OrderFormSubmitRequest extends FormRequest
         if($requiresShippingAddess)
         {
             $rules += [
-                'shipping-first-name'     => 'required|regex:/^[a-zA-Z-_\' ]+$/',
-                'shipping-last-name'      => 'required|regex:/^[a-zA-Z-_\' ]+$/',
-                'shipping-address-line-1' => 'required',
-                'shipping-city'           => 'required|regex:/^[a-zA-Z-_ ]+$/',
-                'shipping-region'         => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
-                'shipping-zip-or-postal-code' => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
-                'shipping-country'        => 'required|regex:/^(?!Country$)/'
+                'shipping-address-id'     => 'required_without_all:shipping-first-name,shipping-last-name,shipping-address-line-1,shipping-city,shipping-region,shipping-zip-or-postal-code,shipping-country', // exists:'.ConfigService::$tableAddress.',id'
+                'shipping-first-name'     => 'required_without:shipping-address-id|regex:/^[a-zA-Z-_\' ]+$/',
+                'shipping-last-name'      => 'required_without:shipping-address-id|regex:/^[a-zA-Z-_\' ]+$/',
+                'shipping-address-line-1' => 'required_without:shipping-address-id',
+                'shipping-city'           => 'required_without:shipping-address-id|regex:/^[a-zA-Z-_ ]+$/',
+                'shipping-region'         => 'required_without:shipping-address-id|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'shipping-zip-or-postal-code' => 'required_without:shipping-address-id|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'shipping-country'        => 'required_without:shipping-address-id|regex:/^(?!Country$)/'
             ];
 
             if(!auth()->user())

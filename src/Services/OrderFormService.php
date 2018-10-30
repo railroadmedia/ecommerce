@@ -838,25 +838,41 @@ class OrderFormService
         $billingAddressDB,
         $payment
     ) {
-        //save the shipping address
-        $shippingAddressDB = $this->addressRepository->create(
-            [
-                'type' => ConfigService::$shippingAddressType,
-                'brand' => ConfigService::$brand,
-                'user_id' => $user['id'] ?? null,
-                'customer_id' => $customer['id'] ?? null,
-                'first_name' => $request->get('shipping-first-name'),
-                'last_name' => $request->get('shipping-last-name'),
-                'street_line_1' => $request->get('shipping-address-line-1'),
-                'street_line_2' => $request->get('shipping-address-line-2'),
-                'city' => $request->get('shipping-city'),
-                'zip' => $request->get('shipping-zip-or-postal-code'),
-                'state' => $request->get('shipping-region'),
-                'country' => $request->get('shipping-country'),
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
-            ]
-        );
+        $shippingAddressDB = null;
+
+        if ($request->get('shipping-address-id')) {
+
+            $shippingAddressDB = $this->addressRepository
+                ->read($request->get('shipping-address-id'));
+
+            $message = 'Order failed. Error message: could not find shipping address id: '
+                . $request->get('shipping-address-id');
+
+            throw_if(
+                !($shippingAddressDB),
+                new UnprocessableEntityException($message)
+            );
+        } else {
+            //save the shipping address
+            $shippingAddressDB = $this->addressRepository->create(
+                [
+                    'type' => ConfigService::$shippingAddressType,
+                    'brand' => ConfigService::$brand,
+                    'user_id' => $user['id'] ?? null,
+                    'customer_id' => $customer['id'] ?? null,
+                    'first_name' => $request->get('shipping-first-name'),
+                    'last_name' => $request->get('shipping-last-name'),
+                    'street_line_1' => $request->get('shipping-address-line-1'),
+                    'street_line_2' => $request->get('shipping-address-line-2'),
+                    'city' => $request->get('shipping-city'),
+                    'zip' => $request->get('shipping-zip-or-postal-code'),
+                    'state' => $request->get('shipping-region'),
+                    'country' => $request->get('shipping-country'),
+                    'created_on' => Carbon::now()
+                        ->toDateTimeString(),
+                ]
+            );
+        }
 
         $paid = $cartItemsWithTaxesAndCosts['initialPricePerPayment'];
         $shipping = $cartItemsWithTaxesAndCosts['shippingCosts'];
