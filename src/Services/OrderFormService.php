@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
@@ -20,6 +21,7 @@ use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
 use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
@@ -89,6 +91,11 @@ class OrderFormService
      * @var \Railroad\Ecommerce\Repositories\PaymentRepository
      */
     private $paymentRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\PaymentMethodRepository
+     */
+    private $paymentMethodRepository;
 
     /**
      * @var \Railroad\Ecommerce\Repositories\OrderPaymentRepository
@@ -178,6 +185,7 @@ class OrderFormService
         StripePaymentGateway $stripePaymentGateway,
         PayPalPaymentGateway $payPalPaymentGateway,
         PaymentRepository $paymentRepository,
+        PaymentMethodRepository $paymentMethodRepository,
         OrderPaymentRepository $orderPaymentRepository,
         ProductRepository $productRepository,
         OrderItemRepository $orderItemRepository,
@@ -200,6 +208,7 @@ class OrderFormService
         $this->stripePaymentGateway = $stripePaymentGateway;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->paymentRepository = $paymentRepository;
+        $this->paymentMethodRepository = $paymentMethodRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->productRepository = $productRepository;
         $this->orderItemRepository = $orderItemRepository;
@@ -301,12 +310,68 @@ class OrderFormService
 
         // try to make the payment
         try {
-            if ($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE &&
+            if ($request->get('payment-method-id')) {
+
+                $paymentMethod = $this->paymentMethodRepository
+                    ->read($request->get('payment-method-id'));
+
+                if (
+                    !$paymentMethod || !$paymentMethod['user']['user_id'] ||
+                    $paymentMethod['user']['user_id'] != $user['id']
+                ) {
+                    $url = $request->get('redirect') ??
+                                strtok(app('url')->previous(), '?');
+
+                    return [
+                        'redirect' => $url,
+                        'errors' => [
+                            'payment' => 'Invalid Payment Method',
+                        ],
+                    ];
+                }
+
+                $charge = $transactionId = null;
+
+                if ($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+                    $charge = $this->rechargeCreditCard(
+                        $request,
+                        $paymentMethod,
+                        $cartItemsWithTaxesAndCosts,
+                        $currency
+                    );
+                } else {
+                    $transactionId = $this->rechargeAgreement(
+                        $request,
+                        $paymentMethod,
+                        $cartItemsWithTaxesAndCosts,
+                        $currency
+                    );
+                }
+
+                if (!$charge && !$transactionId) {
+
+                    $url = $request->get('redirect') ??
+                                strtok(app('url')->previous(), '?');
+
+                    return [
+                        'redirect' => $url,
+                        'errors' => [
+                            'payment' => 'Could not recharge existing payment method',
+                        ],
+                    ];
+                }
+
+                $paymentMethodId = $paymentMethod['id'];
+                $billingAddressDB = $paymentMethod['billing_address'];
+
+            } else if ($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE &&
                 empty($request->get('token'))) {
 
                 list(
-                    $charge, $paymentMethodId, $billingAddressDB
-                    ) = $this->chargeAndCreatePaymentMethod(
+                    $charge,
+                    $paymentMethodId,
+                    $billingAddressDB
+                ) = $this->chargeAndCreatePaymentMethod(
                     $request,
                     $user,
                     $customer ?? null,
@@ -687,6 +752,81 @@ class OrderFormService
         );
 
         return [$transactionId, $paymentMethodId, $billingAddressDB];
+    }
+
+    /**
+     * Re-charge an existing credit card payment method
+     *
+     * @param OrderFormSubmitRequest $request
+     * @param PaymentMethod $paymentMethod
+     * @param $cartItemsWithTaxesAndCosts
+     * @param $currency
+     *
+     * @return mixed
+     *
+     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     */
+    private function rechargeCreditCard(
+        OrderFormSubmitRequest $request,
+        PaymentMethod $paymentMethod,
+        $cartItemsWithTaxesAndCosts,
+        $currency
+    ) {
+
+        $customer = $this->stripePaymentGateway->getCustomer(
+            $request->get('gateway'),
+            $paymentMethod['method']['external_customer_id']
+        );
+
+        if (!$customer) {
+            return null;
+        }
+
+        $card = $this->stripePaymentGateway->getCard(
+            $customer,
+            $paymentMethod['method']['external_id'],
+            $request->get('gateway')
+        );
+
+        if (!$card) {
+            return null;
+        }
+
+        $charge = $this->stripePaymentGateway->chargeCustomerCard(
+            $request->get('gateway'),
+            $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
+            $currency,
+            $card,
+            $customer
+        );
+
+        return $charge;
+    }
+
+    /**
+     * Re-charge an existing paypal agreement payment method
+     *
+     * @param OrderFormSubmitRequest $request
+     * @param PaymentMethod $paymentMethod
+     * @param $cartItemsWithTaxesAndCosts
+     * @param $currency
+     *
+     * @return mixed
+     *
+     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     */
+    private function rechargeAgreement(
+        OrderFormSubmitRequest $request,
+        PaymentMethod $paymentMethod,
+        $cartItemsWithTaxesAndCosts,
+        $currency
+    ) {
+        return $this->payPalPaymentGateway->chargeBillingAgreement(
+            $request->get('gateway'),
+            $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
+            $currency,
+            $paymentMethod['method']['external_id']
+        );
     }
 
     /**
