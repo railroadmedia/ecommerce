@@ -7,13 +7,19 @@ use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
+use Railroad\Ecommerce\Repositories\AddressRepository;
+use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
+use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingCostsRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
+use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Services\CartService;
+use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
@@ -27,6 +33,22 @@ use Stripe\Token;
 class OrderFormJsonControllerTest extends EcommerceTestCase
 {
     use WithoutMiddleware;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\AddressRepository
+     */
+    protected $addressRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\CreditCardRepository
+     */
+    protected $creditCardRepository;
+
+    /**
+     * @var \Railroad\Ecommerce\Repositories\PaymentMethodRepository
+     */
+    protected $paymentMethodRepository;
+
     /**
      * @var \Railroad\Ecommerce\Repositories\ProductRepository
      */
@@ -53,6 +75,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     protected $discountCriteriaRepository;
 
     /**
+     * @var \Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository
+     */
+    protected $userPaymentMethodsRepository;
+
+    /**
+     * @var PaypalBillingAgreementRepository
+     */
+    protected $paypalBillingAgreementRepository;
+
+    /**
      * @var UserProductRepository
      */
     protected $userProductRepository;
@@ -65,6 +97,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     protected function setUp()
     {
         parent::setUp();
+        $this->addressRepository = $this->app->make(AddressRepository::class);
         $this->productRepository = $this->app->make(ProductRepository::class);
         $this->shippingOptionRepository = $this->app->make(ShippingOptionRepository::class);
         $this->shippingCostsRepository = $this->app->make(ShippingCostsRepository::class);
@@ -72,6 +105,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->discountCriteriaRepository = $this->app->make(DiscountCriteriaRepository::class);
         $this->discountRepository = $this->app->make(DiscountRepository::class);
         $this->userProductRepository = $this->app->make(UserProductRepository::class);
+        $this->creditCardRepository = $this->app->make(CreditCardRepository::class);
+        $this->paymentMethodRepository = $this->app->make(PaymentMethodRepository::class);
+        $this->userPaymentMethodsRepository = $this->app->make(UserPaymentMethodsRepository::class);
+        $this->paypalBillingAgreementRepository = $this->app->make(PaypalBillingAgreementRepository::class);
     }
 
     public function test_submit_order_validation_not_physical_products()
@@ -163,7 +200,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 [
                     "source" => "payment_method_type",
-                    "detail" => "The payment method type field is required.",
+                    "detail" => "The payment method type field is required when payment-method-id is not present.",
+                ],
+                [
+                    "source" => "payment-method-id",
+                    "detail" => "The payment-method-id field is required when payment method type is not present.",
                 ],
                 [
                     "source" => "billing-country",
@@ -249,7 +290,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 [
                     "source" => "payment_method_type",
-                    "detail" => "The payment method type field is required.",
+                    "detail" => "The payment method type field is required when payment-method-id is not present.",
+                ],
+                [
+                    "source" => "payment-method-id",
+                    "detail" => "The payment-method-id field is required when payment method type is not present.",
                 ],
                 [
                     "source" => "billing-country",
@@ -372,7 +417,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 [
                     "source" => "payment_method_type",
-                    "detail" => "The payment method type field is required.",
+                    "detail" => "The payment method type field is required when payment-method-id is not present.",
+                ],
+                [
+                    "source" => "payment-method-id",
+                    "detail" => "The payment-method-id field is required when payment method type is not present.",
                 ],
                 [
                     "source" => "billing-country",
@@ -840,6 +889,612 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
          * the user to be redirected back from paypal site with an agreement token
          * and this is a different action tested in OrderFormControllerTest
          */
+    }
+
+    public function test_submit_order_existing_payment_method_credit_card()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $fingerPrint = $this->faker->word;
+
+        $shippingOption = $this->shippingOptionRepository->create(
+            $this->faker->shippingOption(
+                [
+                    'country' => 'Canada',
+                    'active' => 1,
+                    'priority' => 1,
+                ]
+            )
+        );
+        $shippingCost = $this->shippingCostsRepository->create(
+            $this->faker->shippingCost(
+                [
+                    'shipping_option_id' => $shippingOption['id'],
+                    'min' => 0,
+                    'max' => 10,
+                    'price' => 5.50,
+                ]
+            )
+        );
+
+        $externalId = 'card_' . $this->faker->password;
+        $externalCustomerId = 'cus_' . $this->faker->password;
+        $cardExpirationYear = 2019;
+        $cardExpirationMonth = 12;
+
+        $creditCardData = [
+            'fingerprint'          => $fingerPrint,
+            'last_four_digits'     => $this->faker->randomNumber(4),
+            'cardholder_name'      => $this->faker->name,
+            'company_name'         => $this->faker->creditCardType,
+            'expiration_date'      => Carbon::createFromDate($cardExpirationYear, $cardExpirationMonth)->toDateTimeString(),
+            'external_id'          => $externalId,
+            'external_customer_id' => $externalCustomerId,
+            'payment_gateway_name' => 'drumeo',
+            'created_on'           => Carbon::now()->toDateTimeString(),
+        ];
+
+        $creditCard = $this->creditCardRepository->create($creditCardData);
+
+        $billingAddressData = [
+            'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+            'brand' => 'drumeo',
+            'user_id' => $userId,
+            'customer_id' => null,
+            'zip' => $this->faker->postcode,
+            'state' => 'AB',
+            'country' => 'Canada',
+            'created_on' => Carbon::now()
+                ->toDateTimeString(),
+        ];
+
+        $billingAddress = $this->addressRepository->create($billingAddressData);
+
+        $currency = 'cad';
+
+        $paymentMethodData = [
+            'method_id'          => $creditCard['id'],
+            'method_type'        => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'currency'           => $currency,
+            'billing_address_id' => $billingAddress['id'],
+            'created_on'         => Carbon::now()->toDateTimeString(),
+        ];
+
+        $paymentMethod = $this->paymentMethodRepository->create($paymentMethodData);
+
+        $userPaymentMethodData = [
+            'user_id'           => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary'        => true,
+            'created_on'        => Carbon::now()->toDateTimeString(),
+        ];
+
+        $userPaymentMethod = $this->userPaymentMethodsRepository->create($userPaymentMethodData);
+
+        $fakerCustomer = new Customer();
+        $fakerCustomer->email = $this->faker->email;
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn($fakerCustomer);
+
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $fingerPrint;
+        $fakerCard->brand = $creditCardData['company_name'];
+        $fakerCard->last4 = $creditCardData['last_four_digits'];
+        $fakerCard->exp_year = $cardExpirationYear;
+        $fakerCard->exp_month = $cardExpirationMonth;
+        $fakerCard->id = $externalId;
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn($fakerCard);
+
+        $chargeAmount = $this->faker->numberBetween(100, 200);
+
+        $fakerCharge = new Charge();
+        $fakerCharge->id = $this->faker->word;
+        $fakerCharge->currency = $currency;
+        $fakerCharge->amount = $chargeAmount;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $product1 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 12.95,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'description' => $this->faker->word,
+                    'is_physical' => 1,
+                    'weight' => 0.20,
+                    'subscription_interval_type' => '',
+                    'subscription_interval_count' => '',
+                ]
+            )
+        );
+
+        $product2 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 247,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'description' => $this->faker->word,
+                    'is_physical' => 0,
+                    'weight' => 0,
+                    'subscription_interval_type' => '',
+                    'subscription_interval_count' => '',
+                ]
+            )
+        );
+        $discount = $this->discountRepository->create(
+            $this->faker->discount(
+                [
+                    'active' => true,
+                    'type' => 'order total amount off',
+                ]
+            )
+        );
+        $discountCriteria = $this->discountCriteriaRepository->create(
+            $this->faker->discountCriteria(
+                [
+                    'discount_id' => $discount['id'],
+                    'product_id' => $product1['id'],
+                    'type' => 'order total requirement',
+                    'min' => '2',
+                    'max' => '2000000',
+                ]
+            )
+        );
+
+        $cart = $this->cartService->addCartItem(
+            $product1['name'],
+            $product1['description'],
+            1,
+            $product1['price'],
+            $product1['is_physical'],
+            $product1['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product1['weight'],
+            [
+                'product-id' => $product1['id'],
+            ]
+        );
+
+        $this->cartService->addCartItem(
+            $product2['name'],
+            $product2['description'],
+            1,
+            $product2['price'],
+            $product2['is_physical'],
+            $product2['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product2['weight'],
+            [
+                'product-id' => $product2['id'],
+            ]
+        );
+
+        $results = $this->call(
+            'PUT',
+            '/order',
+            [
+                'payment-method-id' => $paymentMethod['id'],
+                'billing-region' => $this->faker->word,
+                'billing-zip-or-postal-code' => $this->faker->postcode,
+                'billing-country' => 'Canada',
+                'gateway' => 'drumeo',
+                'shipping-first-name' => $this->faker->firstName,
+                'shipping-last-name' => $this->faker->lastName,
+                'shipping-address-line-1' => $this->faker->address,
+                'shipping-city' => 'Canada',
+                'shipping-region' => 'ab',
+                'shipping-zip-or-postal-code' => $this->faker->postcode,
+                'shipping-country' => 'Canada',
+            ]
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product1['id'],
+                'quantity' => 1,
+                'expiration_date' => null,
+            ]
+        );
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product2['id'],
+                'quantity' => 1,
+                'expiration_date' => null,
+            ]
+        );
+    }
+
+    public function test_submit_order_existing_payment_method_paypal()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $billingAddressData = [
+            'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+            'brand' => 'drumeo',
+            'user_id' => $userId,
+            'customer_id' => null,
+            'zip' => $this->faker->postcode,
+            'state' => 'AB',
+            'country' => 'Canada',
+            'created_on' => Carbon::now()
+                ->toDateTimeString(),
+        ];
+
+        $billingAddress = $this->addressRepository->create($billingAddressData);
+
+        $currency = 'cad';
+        $billingAgreementExternalId = 'B-' . $this->faker->password;
+
+        $billingAgreement = $this->paypalBillingAgreementRepository->create([
+            'external_id'          => $billingAgreementExternalId,
+            'payment_gateway_name' => 'drumeo',
+            'created_on'           => Carbon::now()->toDateTimeString(),
+        ]);
+
+        $paymentMethod = $this->paymentMethodRepository->create([
+            'method_id'          => $billingAgreement['id'],
+            'method_type'        => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'currency'           => $currency,
+            'billing_address_id' => $billingAddress['id'],
+            'created_on'         => Carbon::now()->toDateTimeString(),
+        ]);
+
+        $userPaymentMethod = $this->userPaymentMethodsRepository->create([
+            'user_id'           => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary'        => true,
+            'created_on'        => Carbon::now()->toDateTimeString(),
+        ]);
+
+        $shippingOption = $this->shippingOptionRepository->create(
+            $this->faker->shippingOption(
+                [
+                    'country' => 'Canada',
+                    'active' => 1,
+                    'priority' => 1,
+                ]
+            )
+        );
+
+        $shippingCost = $this->shippingCostsRepository->create(
+            $this->faker->shippingCost(
+                [
+                    'shipping_option_id' => $shippingOption['id'],
+                    'min' => 0,
+                    'max' => 10,
+                    'price' => 5.50,
+                ]
+            )
+        );
+
+        $product1 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 12.95,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'description' => $this->faker->word,
+                    'is_physical' => 1,
+                    'weight' => 0.20,
+                    'subscription_interval_type' => '',
+                    'subscription_interval_count' => '',
+                ]
+            )
+        );
+
+        $product2 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 247,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'description' => $this->faker->word,
+                    'is_physical' => 0,
+                    'weight' => 0,
+                    'subscription_interval_type' => '',
+                    'subscription_interval_count' => '',
+                ]
+            )
+        );
+
+        $discount = $this->discountRepository->create(
+            $this->faker->discount(
+                [
+                    'active' => true,
+                    'type' => 'order total amount off',
+                ]
+            )
+        );
+
+        $discountCriteria = $this->discountCriteriaRepository->create(
+            $this->faker->discountCriteria(
+                [
+                    'discount_id' => $discount['id'],
+                    'product_id' => $product1['id'],
+                    'type' => 'order total requirement',
+                    'min' => '2',
+                    'max' => '2000000',
+                ]
+            )
+        );
+
+        $cart = $this->cartService->addCartItem(
+            $product1['name'],
+            $product1['description'],
+            1,
+            $product1['price'],
+            $product1['is_physical'],
+            $product1['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product1['weight'],
+            [
+                'product-id' => $product1['id'],
+            ]
+        );
+
+        $this->cartService->addCartItem(
+            $product2['name'],
+            $product2['description'],
+            1,
+            $product2['price'],
+            $product2['is_physical'],
+            $product2['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product2['weight'],
+            [
+                'product-id' => $product2['id'],
+            ]
+        );
+
+        $transactionId = rand(1,100);
+
+        $this->paypalExternalHelperMock->method('createReferenceTransaction')
+            ->willReturn($transactionId);
+
+        $orderRequestData = [
+            'payment-method-id' => $paymentMethod['id'],
+            'billing-region' => $this->faker->word,
+            'billing-zip-or-postal-code' => $this->faker->postcode,
+            'billing-country' => 'Canada',
+            'company_name' => $this->faker->creditCardType,
+            'gateway' => 'drumeo',
+            'shipping-first-name' => $this->faker->firstName,
+            'shipping-last-name' => $this->faker->lastName,
+            'shipping-address-line-1' => $this->faker->address,
+            'shipping-city' => 'Canada',
+            'shipping-region' => 'ab',
+            'shipping-zip-or-postal-code' => $this->faker->postcode,
+            'shipping-country' => 'Canada',
+        ];
+
+        $results = $this->call(
+            'PUT',
+            '/order',
+            $orderRequestData
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product1['id'],
+                'quantity' => 1,
+                'expiration_date' => null,
+            ]
+        );
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product2['id'],
+                'quantity' => 1,
+                'expiration_date' => null,
+            ]
+        );
+    }
+
+    public function test_submit_order_existing_shipping_address()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $fingerPrint = $this->faker->word;
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+        $fakerCustomer = new Customer();
+        $fakerCustomer->email = $this->faker->email;
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $fingerPrint;
+        $fakerCard->brand = $this->faker->word;
+        $fakerCard->last4 = $this->faker->randomNumber(3);
+        $fakerCard->exp_year = 2020;
+        $fakerCard->exp_month = 12;
+        $fakerCard->id = $this->faker->word;
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+        $fakerCharge->id = $this->faker->word;
+        $fakerCharge->currency = 'cad';
+        $fakerCharge->amount = 100;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $shippingAddressData = [
+            'type' => ConfigService::$shippingAddressType,
+            'brand' => 'drumeo',
+            'user_id' => $userId,
+            'customer_id' => null,
+            'first_name' => $this->faker->firstName,
+            'last_name' => $this->faker->lastName,
+            'street_line_1' => $this->faker->address,
+            'street_line_2' => null,
+            'city' => $this->faker->city,
+            'zip' => $this->faker->postcode,
+            'state' => 'AB',
+            'country' => 'Canada',
+            'created_on' => Carbon::now()
+                ->toDateTimeString(),
+        ];
+
+        $shippingAddress = $this->addressRepository->create($shippingAddressData);
+
+        $shippingOption = $this->shippingOptionRepository->create(
+            $this->faker->shippingOption(
+                [
+                    'country' => 'Canada',
+                    'active' => 1,
+                    'priority' => 1,
+                ]
+            )
+        );
+        $shippingCost = $this->shippingCostsRepository->create(
+            $this->faker->shippingCost(
+                [
+                    'shipping_option_id' => $shippingOption['id'],
+                    'min' => 0,
+                    'max' => 10,
+                    'price' => 5.50,
+                ]
+            )
+        );
+
+        $product1 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 12.95,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'description' => $this->faker->word,
+                    'is_physical' => 1,
+                    'weight' => 0.20,
+                    'subscription_interval_type' => '',
+                    'subscription_interval_count' => '',
+                ]
+            )
+        );
+
+        $product2 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 247,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'description' => $this->faker->word,
+                    'is_physical' => 0,
+                    'weight' => 0,
+                    'subscription_interval_type' => '',
+                    'subscription_interval_count' => '',
+                ]
+            )
+        );
+        $discount = $this->discountRepository->create(
+            $this->faker->discount(
+                [
+                    'active' => true,
+                    'type' => 'order total amount off',
+                ]
+            )
+        );
+        $discountCriteria = $this->discountCriteriaRepository->create(
+            $this->faker->discountCriteria(
+                [
+                    'discount_id' => $discount['id'],
+                    'product_id' => $product1['id'],
+                    'type' => 'order total requirement',
+                    'min' => '2',
+                    'max' => '2000000',
+                ]
+            )
+        );
+
+        $cart = $this->cartService->addCartItem(
+            $product1['name'],
+            $product1['description'],
+            1,
+            $product1['price'],
+            $product1['is_physical'],
+            $product1['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product1['weight'],
+            [
+                'product-id' => $product1['id'],
+            ]
+        );
+
+        $this->cartService->addCartItem(
+            $product2['name'],
+            $product2['description'],
+            1,
+            $product2['price'],
+            $product2['is_physical'],
+            $product2['is_physical'],
+            $this->faker->word,
+            rand(),
+            $product2['weight'],
+            [
+                'product-id' => $product2['id'],
+            ]
+        );
+
+        $expirationDate = $this->faker->creditCardExpirationDate;
+        $results = $this->call(
+            'PUT',
+            '/order',
+            [
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'billing-region' => $this->faker->word,
+                'billing-zip-or-postal-code' => $this->faker->postcode,
+                'billing-country' => 'Canada',
+                'company_name' => $this->faker->creditCardType,
+                'gateway' => 'drumeo',
+                'card-token' => $fingerPrint,
+                'shipping-address-id' => $shippingAddress['id']
+            ]
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product1['id'],
+                'quantity' => 1,
+                'expiration_date' => null,
+            ]
+        );
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product2['id'],
+                'quantity' => 1,
+                'expiration_date' => null,
+            ]
+        );
     }
 
     public function test_submit_order_subscription()
