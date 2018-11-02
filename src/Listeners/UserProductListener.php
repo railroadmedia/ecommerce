@@ -53,6 +53,7 @@ class UserProductListener
     {
         if ($event->class === OrderItemRepository::class) {
             $order = $this->orderRepository->read($event->attributes['order_id']);
+
             if ($order['user_id'] && $event->entity['product']['type'] == ConfigService::$typeProduct) {
                 $this->assignUserProduct(
                     $order['user_id'],
@@ -64,23 +65,31 @@ class UserProductListener
         }
 
         if ($event->class === SubscriptionRepository::class) {
-            $products =
-                $this->getProducts($event->entity['type'], $event->entity['order_id'], $event->entity['product_id']);
-            foreach ($products as $product) {
-                $this->assignUserProduct(
-                    $event->attributes['user_id'],
-                    $product['product_id'],
-                    $event->attributes['paid_until'],
-                    $product['quantity']
+            if ($event->entity['type'] == ConfigService::$tableSubscription) {
+                $products = $this->getProducts(
+                    $event->entity['type'],
+                    $event->entity['order_id'],
+                    $event->entity['product_id']
                 );
+
+                foreach ($products as $product) {
+                    $this->assignUserProduct(
+                        $event->attributes['user_id'],
+                        $product['product_id'],
+                        $event->attributes['paid_until'],
+                        $product['quantity']
+                    );
+                }
             }
         }
 
         if ($event->class === RefundRepository::class) {
+
             //the payment it's fully refunded
             if ($event->attributes['payment_amount'] == $event->attributes['refunded_amount']) {
                 $payment = $this->paymentRepository->read($event->attributes['payment_id']);
                 $products = [];
+
                 if ($payment['order']) {
                     $products = $payment['order']['items'] ?? [];
                 } else {
@@ -107,7 +116,10 @@ class UserProductListener
             $products =
                 $this->getProducts($event->entity['type'], $event->entity['order_id'], $event->entity['product_id']);
 
-            if (!$event->attributes['canceled_on'] && $event->entity['is_active']) {
+            if (!$event->attributes['canceled_on'] &&
+                $event->entity['is_active'] &&
+                $event->entity['type'] == ConfigService::$tableSubscription) {
+
                 foreach ($products as $product) {
                     $this->assignUserProduct(
                         $event->entity['user_id'],
