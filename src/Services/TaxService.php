@@ -72,19 +72,13 @@ class TaxService
      */
     public function getTaxRate($country, $region)
     {
-        if(array_key_exists(strtolower($country), ConfigService::$taxRate))
-        {
-            if(array_key_exists(strtolower($region), ConfigService::$taxRate[strtolower($country)]))
-            {
+        if (array_key_exists(strtolower($country), ConfigService::$taxRate)) {
+            if (array_key_exists(strtolower($region), ConfigService::$taxRate[strtolower($country)])) {
                 return ConfigService::$taxRate[strtolower($country)][strtolower($region)];
-            }
-            else
-            {
+            } else {
                 return 0.05;
             }
-        }
-        else
-        {
+        } else {
             return 0;
         }
     }
@@ -95,11 +89,11 @@ class TaxService
      *      'totalTax' => float
      *      'shippingCosts' => float
      *
-     * @param array  $cartItems
+     * @param array $cartItems
      * @param string $country
      * @param string $region
-     * @param int    $shippingCosts
-     * @param null   $currency
+     * @param int $shippingCosts
+     * @param null $currency
      * @return array
      */
     public function calculateTaxesForCartItems($cartItems, $country, $region, $shippingCosts = 0, $currency = null)
@@ -121,35 +115,28 @@ class TaxService
         $taxRate = $this->getTaxRate($country, $region);
 
         $discountsToApply = [];
-        $activeDiscounts =
-            $this->discountRepository->query()
-                ->where('active', 1)
-                ->get();
+        $activeDiscounts = $this->discountRepository->query()
+            ->where('active', 1)
+            ->get();
 
-        foreach($cartItems as $key => $item)
-        {
-            $cartItems[$key]['totalPrice'] =
-                ConfigService::$defaultCurrencyPairPriceOffsets[$currency][$item['totalPrice']] ?? $item['totalPrice'];
+        foreach ($cartItems as $key => $item) {
+            $results['cartItemsSubTotal'] += $item['totalPrice'];
 
-            $results['cartItemsSubTotal'] += ConfigService::$defaultCurrencyPairPriceOffsets[$currency][$item['totalPrice']]
-                ??
-                $item['totalPrice'];
-
-            foreach ($activeDiscounts as $activeDiscount){
+            foreach ($activeDiscounts as $activeDiscount) {
                 $criteriaMet = true;
                 foreach ($activeDiscount->criteria as $discountCriteria) {
-                    if(!$this->discountCriteriaService->discountCriteriaMetForOrder(
+                    if (!$this->discountCriteriaService->discountCriteriaMetForOrder(
                         $discountCriteria,
                         $cartItems,
                         $shippingCosts,
                         $this->cartService->getPromoCode()
-                    )){
+                    )) {
                         $criteriaMet = false;
                     }
                 }
 
                 if ($criteriaMet) {
-                    $discountsToApply[$activeDiscount->id] =  $activeDiscount;
+                    $discountsToApply[$activeDiscount->id] = $activeDiscount;
 
                     if ($activeDiscount['product_id'] == $item['options']['product-id']) {
                         $productDiscount = 0;
@@ -192,15 +179,29 @@ class TaxService
         $taxAmount = $productsTaxAmount + $shippingTaxAmount;
 
         $totalDue = $pricePerPayment = $initialPricePerPayment = round(
-            $cartItemsTotalDueDiscounted +
-            $taxAmount +
-            (float) $shippingCostsWithDiscount +
-            $financeCharge,
+            $cartItemsTotalDueDiscounted + $taxAmount + (float)$shippingCostsWithDiscount + $financeCharge,
             2
         );
 
-        if(!empty($paymentPlan) && $paymentPlan > 1)
-        {
+        $cartItemsWeight = array_sum(array_column($cartItems, 'weight'));
+
+        // calculate tax and shipping per item
+        foreach ($cartItems as $key => $item) {
+            if ($key === 'applyDiscount') {
+                break;
+            }
+            if ($item['totalPrice'] > 0) {
+                $cartItems[$key]['itemTax'] = $item['totalPrice'] / ($totalDue - $taxAmount) * $taxAmount;
+            }
+            $cartItems[$key]['itemShippingCosts'] = ($cartItemsWeight != 0) ?
+                ($shippingCostsWithDiscount * ($cartItems[$key]['weight'] / $cartItemsWeight)) : 0;
+        }
+
+        // convert fx
+        $totalDue = ($totalDue * (ConfigService::$currencyExchangeRates['USD'][strtoupper($currency)] ?? 1.0));
+
+        // calculate payment plan values
+        if (!empty($paymentPlan) && $paymentPlan > 1) {
 
             $pricePerPayment = round(
                 ($totalDue - $shippingCostsWithDiscount) / $paymentPlan,
@@ -210,7 +211,8 @@ class TaxService
             /*
              * We need to make sure we add any rounded off $$ back to the first payment.
              */
-            $roundingFirstPaymentAdjustment = ($pricePerPayment * $paymentPlan) - ($totalDue - $shippingCostsWithDiscount);
+            $roundingFirstPaymentAdjustment =
+                ($pricePerPayment * $paymentPlan) - ($totalDue - $shippingCostsWithDiscount);
 
             $initialPricePerPayment = round(
                 $pricePerPayment - $roundingFirstPaymentAdjustment + $shippingCostsWithDiscount,
@@ -218,27 +220,12 @@ class TaxService
             );
         }
 
-        $cartItemsWeight = array_sum(array_column($cartItems, 'weight'));
-
-        foreach($cartItems as $key => $item)
-        {
-            if($key === 'applyDiscount')
-            {
-                break;
-            }
-            if($item['totalPrice'] > 0)
-            {
-                $cartItems[$key]['itemTax'] = $item['totalPrice'] / ($totalDue - $taxAmount) * $taxAmount;
-            }
-            $cartItems[$key]['itemShippingCosts'] =
-                ($cartItemsWeight != 0) ? ($shippingCostsWithDiscount * ($cartItems[$key]['weight'] / $cartItemsWeight)) : 0;
-        }
-        $results['cartItems']              = $cartItems;
+        $results['cartItems'] = $cartItems;
         $results['cartItemsSubTotalAfterDiscounts'] = $cartItemsTotalDueDiscounted;
-        $results['totalDue']               = $totalDue;
-        $results['totalTax']               = $taxAmount;
-        $results['shippingCosts']          = (float) $shippingCostsWithDiscount;
-        $results['pricePerPayment']        = $pricePerPayment;
+        $results['totalDue'] = $totalDue;
+        $results['totalTax'] = $taxAmount;
+        $results['shippingCosts'] = (float)$shippingCostsWithDiscount;
+        $results['pricePerPayment'] = $pricePerPayment;
         $results['initialPricePerPayment'] = $initialPricePerPayment;
 
         return $results;

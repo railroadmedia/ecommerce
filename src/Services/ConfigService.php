@@ -218,7 +218,7 @@ class ConfigService
     /**
      * @var array
      */
-    public static $defaultCurrencyPairPriceOffsets;
+    public static $currencyExchangeRates;
 
     /**
      * @var string

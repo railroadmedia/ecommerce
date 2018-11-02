@@ -65,7 +65,7 @@ class UserProductListener
         }
 
         if ($event->class === SubscriptionRepository::class) {
-            if ($event->entity['type'] == ConfigService::$tableSubscription) {
+            if ($event->entity['type'] == ConfigService::$typeSubscription) {
                 $products = $this->getProducts(
                     $event->entity['type'],
                     $event->entity['order_id'],
@@ -116,9 +116,9 @@ class UserProductListener
             $products =
                 $this->getProducts($event->entity['type'], $event->entity['order_id'], $event->entity['product_id']);
 
-            if (!$event->attributes['canceled_on'] &&
+            if (empty($event->attributes['canceled_on']) &&
                 $event->entity['is_active'] &&
-                $event->entity['type'] == ConfigService::$tableSubscription) {
+                $event->entity['type'] == ConfigService::$typeSubscription) {
 
                 foreach ($products as $product) {
                     $this->assignUserProduct(

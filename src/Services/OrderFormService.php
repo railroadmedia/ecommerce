@@ -458,7 +458,7 @@ class OrderFormService
 
         //create Payment
         $payment = $this->createPayment(
-            $cartItemsWithTaxesAndCosts,
+            $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
             $charge ?? null,
             $transactionId ?? null,
             $paymentMethodId,
@@ -922,7 +922,7 @@ class OrderFormService
     }
 
     /**
-     * @param $cartItemsWithTaxesAndCosts
+     * @param $paid
      * @param $charge
      * @param $transactionId
      * @param $paymentMethodId
@@ -930,20 +930,17 @@ class OrderFormService
      * @return null|\Railroad\Resora\Entities\Entity
      */
     private function createPayment(
-        $cartItemsWithTaxesAndCosts,
+        $paid,
         $charge,
         $transactionId,
         $paymentMethodId,
         $currency
     ) {
-
-        $paid = $cartItemsWithTaxesAndCosts['initialPricePerPayment'];
-
         $externalProvider = isset($charge['id']) ? 'stripe' : 'paypal';
 
         $payment = $this->paymentRepository->create(
             [
-                'due' => $cartItemsWithTaxesAndCosts['totalDue'],
+                'due' => $paid,
                 'paid' => $paid,
                 'refunded' => 0,
                 'type' => 'order',
