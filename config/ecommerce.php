@@ -141,7 +141,9 @@ return [
 
             'pull.fulfillments',
             'fulfilled.fulfillment',
-            'delete.fulfillment'
+            'delete.fulfillment',
+
+            'pull.access_codes'
         ],
     ],
 

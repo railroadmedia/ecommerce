@@ -3,6 +3,17 @@
 use Illuminate\Support\Facades\Route;
 use Railroad\Ecommerce\Middleware\AdministratorMiddleware;
 
+// access codes
+Route::get(
+    '/access-codes',
+    Railroad\Ecommerce\Controllers\AccessCodeJsonController::class . '@index'
+)->name('access-codes.index');
+
+Route::get(
+    '/access-codes/search',
+    Railroad\Ecommerce\Controllers\AccessCodeJsonController::class . '@search'
+)->name('access-codes.search');
+
 //session
 Route::put(
     '/session/address',
