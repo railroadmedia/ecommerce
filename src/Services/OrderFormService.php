@@ -5,6 +5,8 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Cart;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
@@ -15,6 +17,7 @@ use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
+use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Repositories\OrderDiscountRepository;
 use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
 use Railroad\Ecommerce\Repositories\OrderItemRepository;
@@ -144,6 +147,10 @@ class OrderFormService
      * @var mixed UserProviderInterface
      */
     private $userProvider;
+    /**
+     * @var DiscountRepository
+     */
+    private $discountRepository;
 
     /**
      * OrderFormService constructor.
@@ -192,7 +199,8 @@ class OrderFormService
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         OrderDiscountRepository $orderDiscountRepository,
         UserProductService $userProductService,
-        DiscountService $discountService
+        DiscountService $discountService,
+        DiscountRepository $discountRepository
     ) {
         $this->cartService = $cartService;
         $this->orderRepository = $orderRepository;
@@ -216,6 +224,7 @@ class OrderFormService
         $this->orderDiscountRepository = $orderDiscountRepository;
         $this->userProductService = $userProductService;
         $this->discountService = $discountService;
+        $this->discountRepository = $discountRepository;
         $this->userProvider = app()->make('UserProviderInterface');
     }
 
@@ -232,24 +241,27 @@ class OrderFormService
     ) {
         $user = auth()->user() ?? null;
 
+        // merge in previous form input if we are responding to a post paypal redirect
         if (!empty($request->get('token'))) {
             $orderFormInput = session()->get('order-form-input', []);
+
             unset($orderFormInput['token']);
             session()->forget('order-form-input');
+
             $request->merge($orderFormInput);
         }
 
-        $currency = $request->get('currency', $this->currencyService->get());
+        // set the currency
+        Cart::setCurrency($request->get('currency', $this->currencyService->get()));
 
+        // create user account
         if ($request->has('account-creation-email')) {
             $user = $this->userProvider->create(
                 $request->get('account-creation-email'),
                 $request->get('account-creation-password')
             );
-        }
-
-        //save customer if billing email exists on request
-        if ($request->has('billing-email')) {
+        } // save customer if billing email exists on request
+        elseif ($request->has('billing-email')) {
             $customer = $this->customerRepository->create(
                 [
                     'email' => $request->get('billing-email'),
@@ -260,51 +272,48 @@ class OrderFormService
             );
         }
 
-        //set the shipping address on session
-        $shippingAddress = $this->cartAddressService->setAddress(
-            [
-                'firstName' => $request->get('shipping-first-name'),
-                'lastName' => $request->get('shipping-last-name'),
-                'streetLineOne' => $request->get('shipping-address-line-1'),
-                'streetLineTwo' => $request->get('shipping-address-line-2'),
-                'zipOrPostalCode' => $request->get('shipping-zip-or-postal-code'),
-                'city' => $request->get('shipping-city'),
-                'region' => $request->get('shipping-region'),
-                'country' => $request->get('shipping-country'),
-            ],
-            ConfigService::$shippingAddressType
+        // set the shipping address
+        Cart::setShippingAddress(
+            new Address(
+                [
+                    'first_name' => $request->get('shipping-first-name'),
+                    'last_name' => $request->get('shipping-last-name'),
+                    'street_line_1' => $request->get('shipping-address-line-1'),
+                    'street_line_2' => $request->get('shipping-address-line-2'),
+                    'zip' => $request->get('shipping-zip-or-postal-code'),
+                    'city' => $request->get('shipping-city'),
+                    'state' => $request->get('shipping-region'),
+                    'country' => $request->get('shipping-country'),
+                ]
+            )
         );
 
-        //calculate shipping costs
+        // calculate shipping costs
         $shippingCosts = $this->shippingOptionsRepository->getShippingCosts(
                 $request->get('shipping-country'),
                 array_sum(array_column($cartItems, 'weight'))
             )['price'] ?? 0;
 
-        //set the billing address on session
-        $billingAddress = $this->cartAddressService->setAddress(
-            [
-                'country' => $request->get('billing-country'),
-                'region' => $request->get('billing-region'),
-                'zip' => $request->get('billing-zip-or-postal-code'),
-            ],
-            CartAddressService::BILLING_ADDRESS_TYPE
+        // set the billing address on session
+        Cart::setBillingAddress(
+            new Address(
+                [
+                    'country' => $request->get('billing-country'),
+                    'state' => $request->get('billing-region'),
+                ]
+            )
         );
 
-        $this->cartService->setPaymentPlanNumberOfPayments(
-            $request->get('payment-plan-selector')
-        );
+        // set payment plan number of payments
+        Cart::setNumberOfPayments($request->get('payment-plan-selector'));
 
-        $cartItemsWithTaxesAndCosts = $this->taxService->calculateTaxesForCartItems(
-            $cartItems,
-            $billingAddress['country'],
-            $billingAddress['region'],
-            $shippingCosts,
-            $currency,
-            $this->cartService->getPromoCode()
+        // set discounts
+        Cart::setDiscounts(
+            $this->discountRepository->query()
+                ->where('active', 1)
+                ->get()
+                ->toArray()
         );
-
-        $billingAddressDB = null;
 
         // try to make the payment
         try {
@@ -1113,9 +1122,8 @@ class OrderFormService
 
                 } elseif ($discount['type'] == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
                     //calculate subscription price per payment after discount
-                    $subscriptionPricePerPayment =
-                        (($cartItem['price'] - $discount['amount']) *
-                            (ConfigService::$currencyExchangeRates['USD'][strtoupper($currency)] ?? 1.0));
+                    $subscriptionPricePerPayment = (($cartItem['price'] - $discount['amount']) *
+                        (ConfigService::$currencyExchangeRates['USD'][strtoupper($currency)] ?? 1.0));
                 }
             }
         }

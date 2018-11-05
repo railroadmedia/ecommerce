@@ -7,6 +7,7 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use PDO;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Decorators\AccessCodeDecorator;
+use Railroad\Ecommerce\Decorators\AddressEntityDecorator;
 use Railroad\Ecommerce\Decorators\DiscountDiscountCriteriaDecorator;
 use Railroad\Ecommerce\Decorators\MethodDecorator;
 use Railroad\Ecommerce\Decorators\OrderItemFulfillmentAddressDecorator;
@@ -22,9 +23,11 @@ use Railroad\Ecommerce\Decorators\PaymentSubscriptionDecoratorDecorator;
 use Railroad\Ecommerce\Decorators\PaymentUserDecorator;
 use Railroad\Ecommerce\Decorators\ProductDecorator;
 use Railroad\Ecommerce\Decorators\ProductDiscountDecorator;
+use Railroad\Ecommerce\Decorators\ProductEntityDecorator;
 use Railroad\Ecommerce\Decorators\ShippingOptionsCostsDecorator;
 use Railroad\Ecommerce\Decorators\SubscriptionPaymentMethodDecorator;
 use Railroad\Ecommerce\Decorators\SubscriptionProductDecorator;
+use Railroad\Ecommerce\Entities\Cart;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
@@ -84,11 +87,21 @@ class EcommerceServiceProvider extends ServiceProvider
         );
 
         config()->set(
+            'resora.decorators.address',
+            array_merge(
+                config()->get('resora.decorators.address', []),
+                [
+                    AddressEntityDecorator::class,
+                ]
+            )
+        );
+
+        config()->set(
             'resora.decorators.product',
             array_merge(
                 config()->get('resora.decorators.product', []),
                 [
-                    ProductDecorator::class,
+                    ProductEntityDecorator::class,
                     ProductDiscountDecorator::class,
                 ]
             )

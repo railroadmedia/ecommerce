@@ -2,12 +2,10 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
-use Railroad\Ecommerce\Factories\CartFactory;
+use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Cart;
 use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShoppingCartControllerTest extends EcommerceTestCase
@@ -15,26 +13,52 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     use WithoutMiddleware;
 
     /**
-     * @var CartService
-     */
-    protected $classBeingTested;
-
-    /**
-     * @var CartService
-     */
-    protected $cartService;
-
-    /**
      * @var \Railroad\Ecommerce\Repositories\ProductRepository
      */
     protected $productRepository;
 
+    /**
+     * @var Cart
+     */
+    private $cart;
+
     protected function setUp()
     {
         parent::setUp();
-        $this->classBeingTested = $this->app->make(CartService::class);
-        $this->cartService = $this->app->make(CartService::class);
+
         $this->productRepository = $this->app->make(ProductRepository::class);
+
+        $this->cart = app()->make(Cart::class);
+
+        $this->cart->clear();
+    }
+
+    public function test_cart_session_integrity()
+    {
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'active' => 1,
+                    'stock' => $this->faker->numberBetween(15, 100),
+                ]
+            )
+        );
+
+        $this->cart->addItem($product, 1);
+        $this->cart->setNumberOfPayments(3);
+        $this->cart->setPromoCode('code');
+        $this->cart->setCurrency('CAD');
+        $this->cart->setShippingAddress(new Address(['country' => 'Canada']));
+        $this->cart->setBillingAddress(new Address(['country' => 'Canada']));
+
+        $this->cart->toSession();
+
+        $cartFromSession = app()->make(Cart::class);
+
+        $cartFromSession->fromSession();
+
+        $this->assertEquals($this->cart->toArray(), $cartFromSession->toArray());
+        $this->assertNotEquals(spl_object_id($this->cart), spl_object_id($cartFromSession));
     }
 
     public function test_add_to_cart()
@@ -48,16 +72,14 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             )
         );
 
-        $initialQuantity = 2;
         $this->call(
             'PUT',
             '/add-to-cart/',
             [
-                'products' => [$product['sku'] => $initialQuantity],
+                'products' => [$product['sku'] => 1],
             ]
         );
 
-        $newQuantity = 10;
         $response = $this->call(
             'GET',
             '/add-to-cart?products[' . $product['sku'] . ']=1'
@@ -68,6 +90,8 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         // assert the product was added to the cart
         $response->assertSessionHas('addedProducts', [0 => $product]);
+
+        $this->cart->fromSession();
     }
 
     public function test_add_product_with_stock_empty_to_cart()
@@ -102,16 +126,15 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             'notAvailableProducts',
             [
                 [
-                    'message' =>
-                        'Product with SKU:' .
+                    'message' => 'Product with SKU:' .
                         $product['sku'] .
                         ' could not be added to cart. The product stock(' .
                         $product['stock'] .
                         ') is smaller than the quantity you\'ve selected(' .
                         $quantity .
                         ')',
-                    'product' => $product
-                ]
+                    'product' => $product,
+                ],
             ]
         );
     }
@@ -140,8 +163,8 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             [
                 [
                     'message' => 'Product with SKU:' . $randomSku . ' could not be added to cart.',
-                    'product' => null
-                ]
+                    'product' => null,
+                ],
             ]
         );
     }
@@ -223,8 +246,8 @@ class ShoppingCartControllerTest extends EcommerceTestCase
                         ') is smaller than the quantity you\'ve selected(' .
                         $quantity .
                         ')',
-                    'product' => $product
-                ]
+                    'product' => $product,
+                ],
             ]
         );
     }
@@ -281,7 +304,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
                 [
                     'message' => 'Product with SKU:' . $randomSku2 . ' could not be added to cart.',
                     'product' => null,
-                ]
+                ],
             ]
         );
     }
@@ -297,33 +320,20 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             )
         );
 
-        $cart = $this->cartService->addCartItem(
-            $product['name'],
-            $product['description'],
-            $this->faker->numberBetween(1, 1000),
-            $product['price'],
-            $product['is_physical'],
-            $product['is_physical'],
-            $this->faker->word,
-            rand(),
-            0,
-            [
-                'product-id' => $product['id'],
-            ]
-        );
+        $this->cart->addItem($product, $this->faker->numberBetween(1, 1000));
 
         $response = $this->call('PUT', '/remove-from-cart/' . $product['id']);
+        $this->cart->clear();
 
         // assert cart data response
-        $this->assertEquals([
-            'data' => [
-                [
-                    'tax' => 0,
-                    'total' => 0,
-                    'cartItems' => []
-                ]
-            ]
-        ], $response->decodeResponseJson());
+        $this->assertEquals(
+            [
+                'data' => [
+                    $this->cart->toArray(),
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
 
         // assert the session has the success message and the product was removed from the cart
         $response->assertSessionMissing('addedProducts');
@@ -344,20 +354,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         );
         $productOneQuantity = $this->faker->numberBetween(1, 1000);
 
-        $cart = $this->cartService->addCartItem(
-            $productOne['name'],
-            $productOne['description'],
-            $productOneQuantity,
-            $productOne['price'],
-            $productOne['is_physical'],
-            $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
-            0,
-            [
-                'product-id' => $productOne['id'],
-            ]
-        );
+        $this->cart->addItem($productOne, $productOneQuantity);
 
         $productTwo = $this->productRepository->create(
             $this->faker->product(
@@ -369,20 +366,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         );
         $productTwoQuantity = $this->faker->numberBetween(1, 1000);
 
-        $cart = $this->cartService->addCartItem(
-            $productTwo['name'],
-            $productTwo['description'],
-            $productTwoQuantity,
-            $productTwo['price'],
-            $productTwo['is_physical'],
-            $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
-            0,
-            [
-                'product-id' => $productTwo['id'],
-            ]
-        );
+        $this->cart->addItem($productTwo, $productTwoQuantity);
 
         $productThree = $this->productRepository->create(
             $this->faker->product(
@@ -394,59 +378,15 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         );
         $productThreeQuantity = $this->faker->numberBetween(1, 1000);
 
-        $cart = $this->cartService->addCartItem(
-            $productThree['name'],
-            $productThree['description'],
-            $productThreeQuantity,
-            $productThree['price'],
-            $productThree['is_physical'],
-            $productThree['is_physical'],
-            $this->faker->word,
-            rand(),
-            0,
-            [
-                'product-id' => $productThree['id'],
-            ]
-        );
+        $this->cart->addItem($productThree, $productThreeQuantity);
+
+        $this->cart->toSession();
 
         $response = $this->call('PUT', '/remove-from-cart/' . $productOne['id']);
 
-        $decodedResponse = $response->decodeResponseJson();
+        $this->cart->fromSession();
 
-        // assert cart data response
-        $this->assertArraySubset(
-            [
-                'data' => [
-                    [
-                        'cartItems' => [
-                            [
-                                'name' => $productTwo['name'],
-                                'description' => $productTwo['description'],
-                                'quantity' => $productTwoQuantity,
-                                'totalPrice' => $productTwo['price'] * $productTwoQuantity,
-                                'requiresShippingAddress' => $productTwo['is_physical'],
-                                'requiresBillinggAddress' => $productTwo['is_physical'],
-                                'options' => ['product-id' => $productTwo['id']]
-                            ],
-                            [
-                                'name' => $productThree['name'],
-                                'description' => $productThree['description'],
-                                'quantity' => $productThreeQuantity,
-                                'totalPrice' => $productThree['price'] * $productThreeQuantity,
-                                'requiresShippingAddress' => $productThree['is_physical'],
-                                'requiresBillinggAddress' => $productThree['is_physical'],
-                                'options' => ['product-id' => $productThree['id']]
-                            ]
-                        ]
-                    ]
-                ]
-            ],
-            $decodedResponse
-        );
-
-        // assert cart data response hax tax and total information
-        $this->assertArrayHasKey('tax', $decodedResponse['data'][0]);
-        $this->assertArrayHasKey('total', $decodedResponse['data'][0]);
+        $this->assertEquals(2, count($this->cart->getItems()));
 
         // assert the session has the success message and the product was removed from the cart
         $response->assertSessionMissing('addedProducts');
@@ -468,31 +408,21 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         );
 
         $firstQuantity = $this->faker->numberBetween(1, 5);
-        $cart = $this->cartService->addCartItem(
-            $product['name'],
-            $product['description'],
-            $firstQuantity,
-            $product['price'],
-            $product['is_physical'],
-            $product['is_physical'],
-            $this->faker->word,
-            rand(),
-            0,
-            [
-                'product-id' => $product['id'],
-            ]
-        );
+
+        $this->cart->addItem($product, $firstQuantity);
+
         $newQuantity = $this->faker->numberBetween(6, 10);
+
+        $this->cart->toSession();
+
         $response = $this->call('PUT', '/update-product-quantity/' . $product['id'] . '/' . $newQuantity);
 
-        $decodedResponse = $response->decodeResponseJson('data');
+        $this->cart->fromSession();
 
-        //assert response code status
+        $this->assertEquals($newQuantity, $this->cart->getItem($product['id'])->quantity);
+
+        //assert response status code
         $this->assertEquals(201, $response->getStatusCode());
-        $this->assertTrue($decodedResponse[0]['success']);
-
-        //assert updated cart item returned in response
-        $this->assertEquals($newQuantity, $decodedResponse[0]['addedProducts'][0]['quantity']);
 
     }
 
@@ -509,30 +439,19 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $firstQuantity = $this->faker->numberBetween(1, 2);
 
-        $this->cartService->addCartItem(
-            $product['name'],
-            $product['description'],
-            $firstQuantity,
-            $product['price'],
-            $product['is_physical'],
-            $product['is_physical'],
-            $this->faker->word,
-            0,
-            rand(),
-            [
-                'product-id' => $product['id'],
-            ]
-        );
+        $this->cart->addItem($product, $firstQuantity);
+
+        $this->cart->toSession();
 
         $newQuantity = $this->faker->numberBetween(6, 10);
         $response = $this->call('PUT', '/update-product-quantity/' . $product['id'] . '/' . $newQuantity);
 
-        $decodedResponse = $response->decodeResponseJson('data');
+        $this->cart->fromSession();
 
-        //assert response
+        $this->assertEquals($firstQuantity, $this->cart->getItem($product['id'])->quantity);
+
+        //assert response status code
         $this->assertEquals(201, $response->getStatusCode());
-        $this->assertFalse($decodedResponse[0]['success']);
-        $this->assertEquals($firstQuantity, $decodedResponse[0]['addedProducts'][0]['quantity']);
 
     }
 
@@ -543,7 +462,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
                 [
                     'active' => 1,
                     'stock' => $this->faker->numberBetween(3, 100),
-                    'is_physical' => 0
+                    'is_physical' => 0,
                 ]
             )
         );
@@ -623,7 +542,9 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             ]
         );
 
-        $response->assertSessionHas('promo-code', $promoCode);
+        $this->cart->fromSession();
+
+        $this->assertEquals($promoCode, $this->cart->getPromoCode());
     }
 
     public function test_lock_cart()
@@ -652,7 +573,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             '/add-to-cart/',
             [
                 'products' => [$product['sku'] => $initialQuantity],
-                'locked' => true
+                'locked' => true,
             ]
         );
 
@@ -661,6 +582,10 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             'GET',
             '/add-to-cart?products[DLM]=1,year,1'
         );
+
+        $this->cart->fromSession();
+
+        $this->assertEquals(1, count($this->cart->getItems()));
 
         // assert the session has the success message
         $response->assertSessionHas('success', true);
@@ -697,16 +622,20 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             'GET',
             '/add-to-cart/',
             [
-                'products' => [$product['sku'] => $initialQuantity]
+                'products' => [$product['sku'] => $initialQuantity],
             ]
         );
 
         $newQuantity = 10;
         $response = $this->withSession($this->app['session.store']->all())
             ->call(
-            'GET',
-            '/add-to-cart?products[DLM]=1,year,1'
-        );
+                'GET',
+                '/add-to-cart?products[DLM]=1,year,1'
+            );
+
+        $this->cart->fromSession();
+
+        $this->assertEquals(2, count($this->cart->getItems()));
 
         // assert the session has the success message
         $response->assertSessionHas('success', true);
@@ -715,6 +644,6 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas('cartNumberOfItems', 2);
 
         // assert that the added product exists on session
-        $response->assertSessionHas('addedProducts', [0  => $product2]);
+        $response->assertSessionHas('addedProducts', [0 => $product2]);
     }
 }

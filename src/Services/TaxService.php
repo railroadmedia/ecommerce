@@ -230,14 +230,4 @@ class TaxService
 
         return $results;
     }
-
-    /** Calculate total taxes based on billing address and the amount that should be paid.
-     *
-     * @param integer $costs
-     * @return float|int
-     */
-    public function getTaxTotal($costs, $country, $region)
-    {
-        return $costs * $this->getTaxRate($country, $region);
-    }
 }
