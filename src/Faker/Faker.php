@@ -10,6 +10,24 @@ use Webpatser\Countries\Countries;
 
 class Faker extends Generator
 {
+    public function accessCode(array $override = [])
+    {
+        $claimed = $this->boolean;
+
+        return array_merge(
+            [
+                'code'       => $this->shuffleString($this->bothify('???###???###???###???###')),
+                'product_ids' => [$this->randomNumber(), $this->randomNumber(), $this->randomNumber()],
+                'is_claimed' => $claimed,
+                'claimer_id' => null,
+                'claimed_on' => $claimed ? Carbon::now()->toDateTimeString() : null,
+                'brand'      => ConfigService::$brand,
+                'created_on' => Carbon::now()->toDateTimeString(),
+            ],
+            $override
+        );
+    }
+
     public function product(array $override = [])
     {
         return array_merge(

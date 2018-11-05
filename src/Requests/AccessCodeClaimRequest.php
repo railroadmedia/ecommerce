@@ -1,0 +1,42 @@
+<?php
+
+namespace Railroad\Ecommerce\Requests;
+
+
+use Railroad\Ecommerce\Services\ConfigService;
+
+class AccessCodeClaimRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
+    public function authorize()
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
+    public function rules()
+    {
+        $rules = [
+            'access_code' => 'required|max:24|exists:'
+            . ConfigService::$databaseConnectionName . '.'
+            . ConfigService::$tableAccessCode . ',code,is_claimed,0'
+        ];
+
+        if (!auth()->user()) {
+            $rules += [
+                'email' => 'required|email',
+                'password' => 'required|confirmed'
+            ];
+        }
+
+        return $rules;
+    }
+}

@@ -6,6 +6,7 @@ use Illuminate\Database\Events\StatementPrepared;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use PDO;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
+use Railroad\Ecommerce\Decorators\AccessCodeDecorator;
 use Railroad\Ecommerce\Decorators\DiscountDiscountCriteriaDecorator;
 use Railroad\Ecommerce\Decorators\MethodDecorator;
 use Railroad\Ecommerce\Decorators\OrderItemFulfillmentAddressDecorator;
@@ -200,6 +201,16 @@ class EcommerceServiceProvider extends ServiceProvider
                 ]
             )
         );
+
+        config()->set(
+            'resora.decorators.accessCode',
+            array_merge(
+                config()->get('resora.decorators.accessCode', []),
+                [
+                    AccessCodeDecorator::class,
+                ]
+            )
+        );
     }
 
     private function setupConfig()
@@ -240,6 +251,7 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$tableUserStripeCustomer = ConfigService::$tablePrefix . 'user_stripe_customer';
         ConfigService::$tablePaymentGateway = ConfigService::$tablePrefix . 'payment_gateway';
         ConfigService::$tableUserProduct = ConfigService::$tablePrefix . 'user_product';
+        ConfigService::$tableAccessCode = ConfigService::$tablePrefix . 'access_code';
 
         // brand
         ConfigService::$brand = config('ecommerce.brand');
