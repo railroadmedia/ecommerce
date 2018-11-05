@@ -14,6 +14,16 @@ Route::get(
     Railroad\Ecommerce\Controllers\AccessCodeJsonController::class . '@search'
 )->name('access-codes.search');
 
+Route::post(
+    '/access-codes/redeem',
+    Railroad\Ecommerce\Controllers\AccessCodeController::class . '@claim'
+)->name('access-codes.claim');
+
+Route::post(
+    '/access-codes/release',
+    Railroad\Ecommerce\Controllers\AccessCodeController::class . '@release'
+)->name('access-codes.release');
+
 //session
 Route::put(
     '/session/address',

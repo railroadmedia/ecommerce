@@ -16,7 +16,7 @@ class Faker extends Generator
 
         return array_merge(
             [
-                'code'       => $this->password(24, 24),
+                'code'       => $this->shuffleString($this->bothify('???###???###???###???###')),
                 'product_ids' => [$this->randomNumber(), $this->randomNumber(), $this->randomNumber()],
                 'is_claimed' => $claimed,
                 'claimer_id' => null,

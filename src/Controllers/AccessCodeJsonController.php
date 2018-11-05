@@ -70,34 +70,6 @@ class AccessCodeJsonController extends BaseController
     }
 
     /**
-     * Claim an access code
-     *
-     * @param Request $request
-     *
-     * @return JsonResponse
-     *
-     * @throws Throwable
-     */
-    public function claim(Request $request)
-    {
-        throw new \BadMethodCallException('Not implemented');
-    }
-
-    /**
-     * Release an access code
-     *
-     * @param Request $request
-     *
-     * @return JsonResponse
-     *
-     * @throws Throwable
-     */
-    public function release(Request $request)
-    {
-        throw new \BadMethodCallException('Not implemented');
-    }
-
-    /**
      * Search for access codes, for admins only
      *
      * @param Request $request
@@ -112,7 +84,8 @@ class AccessCodeJsonController extends BaseController
 
         $accessCodes = $this->accessCodeRepository->query()
             ->whereIn('brand', $request->get('brands',[ConfigService::$brand]))
-            ->where('code', 'like', '%' . $request->get('term') . '%');
+            ->where('code', 'like', '%' . $request->get('term') . '%')
+            ->get();
 
         return reply()->json($accessCodes);
     }
