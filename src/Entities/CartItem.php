@@ -35,26 +35,36 @@ class CartItem extends Entity
      */
     public function getPriceAfterDiscounts(array $applicableDiscounts = [])
     {
+        return $this->getPriceBeforeDiscounts() - $this->getAmountDiscountedByProductDiscounts($applicableDiscounts);
+    }
+
+    /**
+     * @param array $applicableDiscounts
+     * @return float|int
+     */
+    public function getAmountDiscountedByProductDiscounts(array $applicableDiscounts = [])
+    {
+        $amountDiscounted = 0;
+
         foreach ($applicableDiscounts as $discount) {
 
             if ($this->product['id'] == $discount['product_id']) {
                 if ($discount['type'] == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
                     $discount['type'] == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
 
-                    return max($this->getPriceBeforeDiscounts() - $discount['amount'], 0);
+                    $amountDiscounted += $discount['amount'];
 
                 } elseif ($discount['type'] == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
 
-                    return round($this->getPriceBeforeDiscounts() * $discount['amount'] / 100, 2);
+                    $amountDiscounted += round($this->getPriceBeforeDiscounts() * $discount['amount'] / 100, 2);
                 } elseif ($discount['type'] == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
 
-                    return 0;
+                    return $this->getPriceBeforeDiscounts();
                 }
             }
-
         }
 
-        return $this->getPriceBeforeDiscounts();
+        return $amountDiscounted;
     }
 
     /**
@@ -63,6 +73,46 @@ class CartItem extends Entity
     public function getPriceBeforeDiscounts()
     {
         return $this->quantity * $this->product['price'];
+    }
+
+    /**
+     * @param Cart $cart
+     * @return float
+     */
+    public function calculateCutOfOrderTotal(Cart $cart)
+    {
+        $discountRatio = $cart->getDiscountRatio();
+
+        return round($this->getPriceAfterDiscounts($cart->getApplicableDiscounts()) * $discountRatio, 2);
+    }
+
+    /**
+     * @param Cart $cart
+     * @return float
+     */
+    public function calculateTotalDiscounted(Cart $cart)
+    {
+        $discountRatio = $cart->getDiscountRatio();
+
+        return round($this->getAmountDiscountedByProductDiscounts() * $discountRatio, 2);
+    }
+
+    /**
+     * @param Cart $cart
+     */
+    public function calculateCutOfTaxTotal(Cart $cart)
+    {
+        $discountRatio = $cart->getDiscountRatio();
+
+        return round($this->getPriceAfterDiscounts($cart->getApplicableDiscounts()) * $discountRatio, 2);
+    }
+
+    /**
+     * @param Cart $cart
+     */
+    public function calculateCutOfShippingTotal(Cart $cart)
+    {
+
     }
 
     /**

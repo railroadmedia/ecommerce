@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\ShippingService;
 use Railroad\Ecommerce\Services\TaxService;
@@ -117,12 +118,16 @@ class Cart
      */
     public function getOrderTotalDue()
     {
-        $taxableSubTotal = $this->getTaxableSubTotal();
+        $totalBeforeOrderDiscounts = $this->getSubTotalAfterTaxes();
 
-        $taxTotal = $this->getTaxTotal($taxableSubTotal);
+        return max(round(($totalBeforeOrderDiscounts - $this->getTotalDiscountedByOrderDiscounts()), 2), 0);
+    }
 
-        $totalBeforeOrderDiscounts = $taxableSubTotal + $taxTotal;
-
+    /**
+     * @return mixed
+     */
+    public function getTotalDiscountedByOrderDiscounts()
+    {
         $amountDiscounted = 0;
 
         foreach ($this->discountService->getApplicableDiscounts($this) as $discount) {
@@ -130,12 +135,32 @@ class Cart
                 $amountDiscounted += $discount['amount'];
                 break;
             } elseif ($discount['type'] == DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE) {
-                $amountDiscounted += $discount['amount'] / 100 * $totalBeforeOrderDiscounts;
+                $amountDiscounted += $discount['amount'] / 100 * $this->getSubTotalAfterTaxes();
                 break;
             }
         }
 
-        return max(round(($totalBeforeOrderDiscounts - $amountDiscounted), 2), 0);
+        return max(round($amountDiscounted, 2), 0);
+    }
+
+    /**
+     * @return float|int
+     */
+    public function getDiscountRatio()
+    {
+        return $this->getTotalDiscountedByOrderDiscounts() / $this->getSubTotalAfterTaxes();
+    }
+
+    /**
+     * @return float
+     */
+    public function getSubTotalAfterTaxes()
+    {
+        $taxableSubTotal = $this->getTaxableSubTotal();
+
+        $taxTotal = $this->getTaxTotal($taxableSubTotal);
+
+        return $taxableSubTotal + $taxTotal;
     }
 
     /**
@@ -236,6 +261,14 @@ class Cart
     }
 
     /**
+     * @return Discount[]
+     */
+    public function getApplicableDiscounts()
+    {
+        return $this->discountService->getApplicableDiscounts($this);
+    }
+
+    /**
      * @return int|mixed
      */
     public function getTotalWeight()
@@ -267,7 +300,7 @@ class Cart
             $this->toSession();
         }
 
-        return $this->billingAddress;
+        return $this->billingAddress ?? new Address();
     }
 
     /**
@@ -275,7 +308,7 @@ class Cart
      */
     public function getShippingAddress()
     {
-        return $this->shippingAddress;
+        return $this->shippingAddress ?? new Address();
     }
 
     /**
@@ -432,7 +465,7 @@ class Cart
      */
     public function getCurrency()
     {
-        return $this->currency;
+        return $this->currency ?? ConfigService::$defaultCurrency;
     }
 
     /**
@@ -527,8 +560,10 @@ class Cart
             'items' => $items,
             'locked' => $this->locked,
             'numberOfPayments' => $this->numberOfPayments,
-            'billingAddress' => $this->billingAddress->getArrayCopy(),
-            'shippingAddress' => $this->shippingAddress->getArrayCopy(),
+            'billingAddress' => $this->getBillingAddress()
+                ->getArrayCopy(),
+            'shippingAddress' => $this->getShippingAddress()
+                ->getArrayCopy(),
             'promoCode' => $this->promoCode,
             'currency' => $this->currency,
         ];
