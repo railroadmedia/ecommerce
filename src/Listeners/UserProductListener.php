@@ -65,7 +65,7 @@ class UserProductListener
         }
 
         if ($event->class === SubscriptionRepository::class) {
-            if ($event->entity['type'] == ConfigService::$tableSubscription) {
+            if ($event->entity['type'] == ConfigService::$typeSubscription) {
                 $products = $this->getProducts(
                     $event->entity['type'],
                     $event->entity['order_id'],
