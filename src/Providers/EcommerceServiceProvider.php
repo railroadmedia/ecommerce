@@ -252,6 +252,7 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$tablePaymentGateway = ConfigService::$tablePrefix . 'payment_gateway';
         ConfigService::$tableUserProduct = ConfigService::$tablePrefix . 'user_product';
         ConfigService::$tableAccessCode = ConfigService::$tablePrefix . 'access_code';
+        ConfigService::$tableSubscriptionAccessCode = ConfigService::$tablePrefix . 'subscription_access_code';
 
         // brand
         ConfigService::$brand = config('ecommerce.brand');

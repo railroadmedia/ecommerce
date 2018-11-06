@@ -143,7 +143,9 @@ return [
             'fulfilled.fulfillment',
             'delete.fulfillment',
 
-            'pull.access_codes'
+            'pull.access_codes',
+            'claim.access_codes',
+            'release.access_codes'
         ],
     ],
 

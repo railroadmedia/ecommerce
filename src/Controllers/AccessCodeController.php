@@ -4,14 +4,18 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Railroad\Ecommerce\Events\SubscriptionEvent;
+use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\AccessCodeRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionAccessCodeRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\AccessCodeClaimRequest;
+use Railroad\Ecommerce\Requests\AccessCodeReleaseRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
+use Railroad\Usora\Repositories\UserRepository;
 use Throwable;
 
 class AccessCodeController extends BaseController
@@ -37,9 +41,19 @@ class AccessCodeController extends BaseController
     private $productRepository;
 
     /**
+     * @var SubscriptionAccessCodeRepository
+     */
+    private $subscriptionAccessCodeRepository;
+
+    /**
      * @var SubscriptionRepository
      */
     private $subscriptionRepository;
+
+    /**
+     * @var mixed UserProductService
+     */
+    private $userProductService;
 
     /**
      * @var mixed UserProviderInterface
@@ -50,16 +64,23 @@ class AccessCodeController extends BaseController
      * AccessCodeController constructor.
      *
      * @param AccessCodeRepository $accessCodeRepository
+     * @param CurrencyService $currencyService
      * @param PermissionService $permissionService
      * @param ProductRepository $productRepository
+     * @param SubscriptionAccessCodeRepository $subscriptionAccessCodeRepository
      * @param SubscriptionRepository $subscriptionRepository
+     * @param UserProductService $userProductService
+     * @param UserRepository $userRepository
      */
     public function __construct(
         AccessCodeRepository $accessCodeRepository,
         CurrencyService $currencyService,
         PermissionService $permissionService,
         ProductRepository $productRepository,
-        SubscriptionRepository $subscriptionRepository
+        SubscriptionAccessCodeRepository $subscriptionAccessCodeRepository,
+        SubscriptionRepository $subscriptionRepository,
+        UserProductService $userProductService,
+        UserRepository $userRepository
     ) {
         parent::__construct();
 
@@ -67,8 +88,11 @@ class AccessCodeController extends BaseController
         $this->currencyService = $currencyService;
         $this->permissionService = $permissionService;
         $this->productRepository = $productRepository;
+        $this->subscriptionAccessCodeRepository = $subscriptionAccessCodeRepository;
         $this->subscriptionRepository = $subscriptionRepository;
+        $this->userProductService = $userProductService;
         $this->userProvider = app()->make('UserProviderInterface');
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -84,11 +108,31 @@ class AccessCodeController extends BaseController
     {
         $user = auth()->user() ?? null;
 
-        // add new users
         if ($request->has('email')) {
+            // add new user
             $user = $this->userProvider->create(
                 $request->get('email'),
                 $request->get('password')
+            );
+
+        } else if ($request->get('claim_for_user_email')) {
+            // admin claims code for users
+            $this->permissionService->canOrThrow(
+                auth()->id(),
+                'claim.access_codes'
+            );
+
+            $user = $this->userRepository
+                ->query()
+                ->where('email', '=', $request->get('claim_for_user_email'))
+                ->first();
+
+            throw_if(
+                is_null($user),
+                new NotFoundException(
+                    'Claim failed, user not found with email: '
+                    . $request->get('claim_for_user_email')
+                )
             );
         }
 
@@ -122,28 +166,29 @@ class AccessCodeController extends BaseController
         // extend existing subscriptions
         foreach ($existingSubscriptions as $subscription) {
 
-            $subscriptionCurrentEndDate = Carbon::parse(
+            $subscriptionEndDate = Carbon::parse(
                     $subscription['paid_until']
                 );
 
-            // if subscription is expired, the extension is calculated from current date
-            $extensionStartDate = $subscriptionCurrentEndDate->isPast() ?
-                Carbon::now() : $subscriptionCurrentEndDate;
+            // if subscription is expired, the access code will create a user_product
+            if ($subscriptionEndDate->isPast()) {
+                continue;
+            }
 
             $product = $subscription['product'];
             $intervalCount = $product['subscription_interval_count'];
 
             switch ($product['subscription_interval_type']) {
                 case ConfigService::$intervalTypeMonthly:
-                    $endDate = $extensionStartDate->addMonths($intervalCount);
+                    $endDate = $subscriptionEndDate->addMonths($intervalCount);
                 break;
 
                 case ConfigService::$intervalTypeYearly:
-                    $endDate = $extensionStartDate->addYears($intervalCount);
+                    $endDate = $subscriptionEndDate->addYears($intervalCount);
                 break;
 
                 case ConfigService::$intervalTypeDaily:
-                    $endDate = $extensionStartDate->addDays($intervalCount);
+                    $endDate = $subscriptionEndDate->addDays($intervalCount);
                 break;
 
                 default:
@@ -169,7 +214,11 @@ class AccessCodeController extends BaseController
                 ]
             );
 
-            event(new SubscriptionEvent($subscription['id'], 'extended')); // TO-DO: confirm
+            $this->subscriptionAccessCodeRepository->create([
+                'subscription_id' => $subscription['id'],
+                'access_code_id' => $accessCode['id'],
+                'created_on' => Carbon::now()->toDateTimeString()
+            ]);
 
             $processedProducts[$product['id']] = true;
         }
@@ -187,15 +236,15 @@ class AccessCodeController extends BaseController
 
             switch ($product['subscription_interval_type']) {
                 case ConfigService::$intervalTypeMonthly:
-                    $endDate = Carbon::now()->addMonths($intervalCount);
+                    $expirationDate = Carbon::now()->addMonths($intervalCount);
                 break;
 
                 case ConfigService::$intervalTypeYearly:
-                    $endDate = Carbon::now()->addYears($intervalCount);
+                    $expirationDate = Carbon::now()->addYears($intervalCount);
                 break;
 
                 case ConfigService::$intervalTypeDaily:
-                    $endDate = Carbon::now()->addDays($intervalCount);
+                    $expirationDate = Carbon::now()->addDays($intervalCount);
                 break;
 
                 default:
@@ -210,29 +259,24 @@ class AccessCodeController extends BaseController
                 break;
             }
 
-            $endDate = $endDate->startOfDay()->toDateTimeString();
+            $expirationDate = $expirationDate->startOfDay();
 
-            $subscription = $this->subscriptionRepository->create([
-                'brand' => $product['brand'],
-                'type' => ConfigService::$typeSubscription,
-                'user_id' => $user['id'],
-                'order_id' => null,
-                'product_id' => $product['id'],
-                'is_active' => true,
-                'start_date' => Carbon::now()->toDateTimeString(),
-                'paid_until' => $endDate,
-                'total_price_per_payment' => 0, // TO-DO: confirm
-                'tax_per_payment' =>  null, // TO-DO: confirm
-                'shipping_per_payment' => 0,
-                'currency' => $currency,
-                'interval_type' => $product['subscription_interval_type'],
-                'interval_count' => $intervalCount,
-                'total_cycles_paid' => 1,
-                'total_cycles_due' => null,
-                'payment_method_id' => null,
-                'created_on' => Carbon::now()->toDateTimeString(),
-            ]);
+            $this->userProductService->saveUserProduct(
+                $user['id'],
+                $product['id'],
+                1,
+                $expirationDate->toDateTimeString()
+            );
         }
+
+        $this->accessCodeRepository->update(
+            $accessCode['id'],
+            [
+                'is_claimed' => true,
+                'claimer_id' => $user['id'],
+                'claimed_on' => Carbon::now()->toDateTimeString()
+            ]
+        );
 
         return reply()->form();
     }
@@ -240,14 +284,25 @@ class AccessCodeController extends BaseController
     /**
      * Release an access code
      *
-     * @param Request $request
+     * @param AccessCodeReleaseRequest $request
      *
      * @return JsonResponse
      *
      * @throws Throwable
      */
-    public function release(Request $request)
+    public function release(AccessCodeReleaseRequest $request)
     {
-        throw new \BadMethodCallException('Not implemented');
+        $this->permissionService->canOrThrow(auth()->id(), 'release.access_codes');
+
+        $stuff = $this->accessCodeRepository->update(
+            $request->get('access_code_id'),
+            [
+                'is_claimed' => false,
+                'claimer_id' => null,
+                'claimed_on' => null
+            ]
+        );
+
+        return reply()->form();
     }
 }

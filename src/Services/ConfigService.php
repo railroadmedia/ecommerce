@@ -162,6 +162,11 @@ class ConfigService
     /**
      * @var string
      */
+    public static $tableSubscriptionAccessCode;
+
+    /**
+     * @var string
+     */
     public static $brand;
 
     /**
