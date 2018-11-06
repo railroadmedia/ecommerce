@@ -243,7 +243,7 @@ class OrderFormService
 
         $currency = $request->get('currency', $this->currencyService->get());
 
-        if ($request->has('account-creation-email')) {
+        if (!empty($request->get('account-creation-email')) && empty($user)) {
             $user = $this->userProvider->create(
                 $request->get('account-creation-email'),
                 $request->get('account-creation-password')
