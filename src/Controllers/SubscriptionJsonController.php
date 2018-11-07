@@ -57,7 +57,7 @@ class SubscriptionJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.subscriptions');
         $subscriptions = $this->subscriptionRepository->query()
-            ->whereIn('brand', $request->get('brands', [ConfigService::$brand]));
+            ->whereIn('brand', $request->get('brands', [ConfigService::$availableBrands]));
 
         if ($request->has('user_id')) {
             $subscriptions = $subscriptions->where('user_id', $request->get('user_id'));
@@ -68,7 +68,7 @@ class SubscriptionJsonController extends BaseController
             ->get();
 
         $subscriptionsCount = $this->subscriptionRepository->query()
-            ->whereIn('brand', $request->get('brand', [ConfigService::$brand]));
+            ->whereIn('brand', $request->get('brand', [ConfigService::$availableBrands]));
         if ($request->has('user_id')) {
             $subscriptionsCount = $subscriptionsCount->where('user_id', $request->get('user_id'));
         }

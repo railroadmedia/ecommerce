@@ -126,7 +126,7 @@ class StatsController extends BaseController
                 )
                 ->whereIn(
                     ConfigService::$tableProduct . '.brand',
-                    $request->get('brands', [ConfigService::$brand])
+                    $request->get('brands', [ConfigService::$availableBrands])
                 )
                 ->get()
                 ->keyBy('id');
@@ -166,7 +166,7 @@ class StatsController extends BaseController
                     ->whereIn('id', $orderPayments->pluck('order_id'))
                     ->whereIn(
                         ConfigService::$tableOrder . '.brand',
-                        $request->get('brands', [ConfigService::$brand])
+                        $request->get('brands', [ConfigService::$availableBrands])
                     )
                     ->orderBy('created_on')
                     ->chunk(
@@ -252,7 +252,7 @@ class StatsController extends BaseController
             $subscriptions =
                 $this->subscriptionRepository->query()
                     ->whereIn('id', $subscriptionRenewalPayments->pluck('subscription_id'))
-                    ->whereIn('brand', $request->get('brands', [ConfigService::$brand]))
+                    ->whereIn('brand', $request->get('brands', [ConfigService::$availableBrands]))
                     ->orderBy('created_on')
                     ->chunk(
                         250,
@@ -433,7 +433,7 @@ class StatsController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.stats');
 
-        $brand = $request->get('brands', [ConfigService::$brand]);
+        $brand = $request->get('brands', [ConfigService::$availableBrands]);
         $rows = [];
         $rowDataTemplate = [
             'email' => '',

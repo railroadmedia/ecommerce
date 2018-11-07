@@ -94,7 +94,7 @@ class OrderJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'pull.orders');
 
         $orders = $this->orderRepository->query()
-            ->whereIn('brand', $request->get('brands', [ConfigService::$brand]));
+            ->whereIn('brand', $request->get('brands', [ConfigService::$availableBrands]));
 
         if ($request->has('start-date')) {
             $startDate = Carbon::parse($request->get('start-date'));
@@ -119,7 +119,7 @@ class OrderJsonController extends BaseController
             ->get();
 
         $ordersCount = $this->orderRepository->query()
-            ->whereIn('brand', $request->get('brands', [ConfigService::$brand]));
+            ->whereIn('brand', $request->get('brands', [ConfigService::$availableBrands]));
         if($request->has('user_id'))
         {
             $ordersCount = $ordersCount->where('user_id', $request->get('user_id'));

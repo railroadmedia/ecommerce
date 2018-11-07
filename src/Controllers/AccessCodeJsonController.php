@@ -50,7 +50,7 @@ class AccessCodeJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
         $accessCodes = $this->accessCodeRepository->query()
-            ->whereIn('brand', $request->get('brands',[ConfigService::$brand]))
+            ->whereIn('brand', $request->get('brands',[ConfigService::$availableBrands]))
             ->limit($request->get('limit', 10))
             ->skip(($request->get('page', 1) - 1) * $request->get('limit', 10))
             ->orderBy(
@@ -83,7 +83,7 @@ class AccessCodeJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
         $accessCodes = $this->accessCodeRepository->query()
-            ->whereIn('brand', $request->get('brands',[ConfigService::$brand]))
+            ->whereIn('brand', $request->get('brands',[ConfigService::$availableBrands]))
             ->where('code', 'like', '%' . $request->get('term') . '%')
             ->get();
 

@@ -7,7 +7,8 @@ return [
     'data_mode'                => 'host',
 
     'table_prefix' => 'ecommerce_',
-    'brand'        => 'drumeo',
+    'brand'        => 'brand',
+    'available_brands'        => ['brand'],
 
     //the countries and the region names should be lowercase
     'tax_rate'     => [

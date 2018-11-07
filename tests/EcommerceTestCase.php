@@ -113,6 +113,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.table_prefix', $defaultConfig['table_prefix']);
         $app['config']->set('ecommerce.data_mode', $defaultConfig['data_mode']);
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
+        $app['config']->set('ecommerce.available_brands', $defaultConfig['available_brands']);
         $app['config']->set('ecommerce.tax_rate', $defaultConfig['tax_rate']);
         $app['config']->set('ecommerce.paypal', $defaultConfig['payment_gateways']['paypal']);
         $app['config']->set('ecommerce.stripe', $defaultConfig['payment_gateways']['stripe']);

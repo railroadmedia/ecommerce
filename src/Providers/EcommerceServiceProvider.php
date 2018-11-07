@@ -255,6 +255,7 @@ class EcommerceServiceProvider extends ServiceProvider
 
         // brand
         ConfigService::$brand = config('ecommerce.brand');
+        ConfigService::$availableBrands = config('ecommerce.available_brands');
 
         //tax rated
         ConfigService::$taxRate = config('ecommerce.tax_rate');
