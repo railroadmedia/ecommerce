@@ -2,7 +2,7 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-
+use Illuminate\Foundation\Http\FormRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 
 class AccessCodeClaimRequest extends FormRequest

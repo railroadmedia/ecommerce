@@ -46,24 +46,9 @@ class AccessCodeControllerTest extends EcommerceTestCase
     {
         $response = $this->call('POST', '/access-codes/redeem', []);
 
-        //assert the response status code
-        $this->assertEquals(422, $response->getStatusCode());
-
-        //assert that all the validation errors are returned
-        $this->assertEquals([
-            [
-                'source' => 'access_code',
-                'detail' => 'The access code field is required.',
-            ],
-            [
-                'source' => 'email',
-                'detail' => 'The email field is required.',
-            ],
-            [
-                'source' => 'password',
-                'detail' => 'The password field is required.',
-            ],
-        ], $response->decodeResponseJson('meta')['errors']);
+        $response->assertSessionHasErrors(
+            ['access_code', 'email', 'password']
+        );
     }
 
     public function test_claim_create_user_product_with_expiration()

@@ -115,6 +115,8 @@ class AccessCodeController extends BaseController
                 $request->get('password')
             );
 
+            auth()->loginUsingId($user['id'], true); // TO-DO: raise event and handle login in drumeo app
+
         } else if ($request->get('claim_for_user_email')) {
             // admin claims code for users
             $this->permissionService->canOrThrow(
@@ -269,7 +271,12 @@ class AccessCodeController extends BaseController
             ]
         );
 
-        return reply()->form();
+        return reply()->form(
+            [true],
+            null,
+            [],
+            ['access_code' => true]
+        );
     }
 
     /**
