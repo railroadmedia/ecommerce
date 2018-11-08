@@ -148,23 +148,17 @@ class AccessCodeController extends BaseController
             ->whereIn('id', $accessCode['product_ids'])
             ->get();
 
-        // filter products of subscription type
-        $subscriptionProducts = $accessCodeProducts
-            ->filter(function ($product, $key) {
-                return $product['type'] == ConfigService::$typeSubscription;
-            });
-
-        // get existing subscriptions
-        $existingSubscriptions = $this->subscriptionRepository
+        // get subscriptions
+        $subscriptions = $this->subscriptionRepository
             ->query()
             ->where('user_id', $user['id'])
-            ->whereIn('product_id', $subscriptionProducts->pluck('id')->all())
+            ->whereIn('product_id', $accessCodeProducts->pluck('id')->all())
             ->get();
 
         $processedProducts = [];
 
-        // extend existing subscriptions
-        foreach ($existingSubscriptions as $subscription) {
+        // extend subscriptions
+        foreach ($subscriptions as $subscription) {
 
             $subscriptionEndDate = Carbon::parse(
                     $subscription['paid_until']
@@ -225,47 +219,44 @@ class AccessCodeController extends BaseController
 
         $currency = $this->currencyService->get();
 
-        // add new subscriptions
-        foreach ($subscriptionProducts as $product) {
+        // add user products
+        foreach ($accessCodeProducts as $product) {
 
             if (isset($processedProducts[$product['id']])) {
                 continue;
             }
 
-            $intervalCount = $product['subscription_interval_count'];
+            $intervalCount = $product['subscription_interval_count'] ?? null;
+            $expirationDate = null;
 
             switch ($product['subscription_interval_type']) {
                 case ConfigService::$intervalTypeMonthly:
-                    $expirationDate = Carbon::now()->addMonths($intervalCount);
+                    $expirationDate = Carbon::now()
+                        ->addMonths($intervalCount)
+                        ->startOfDay()
+                        ->toDateTimeString();
                 break;
 
                 case ConfigService::$intervalTypeYearly:
-                    $expirationDate = Carbon::now()->addYears($intervalCount);
+                    $expirationDate = Carbon::now()
+                        ->addYears($intervalCount)
+                        ->startOfDay()
+                        ->toDateTimeString();
                 break;
 
                 case ConfigService::$intervalTypeDaily:
-                    $expirationDate = Carbon::now()->addDays($intervalCount);
-                break;
-
-                default:
-                    $format = 'Unknown subscription interval type for product id %s: %s';
-                    $message = sprintf(
-                        $format,
-                        $product['id'],
-                        $product['subscription_interval_type']
-                    );
-
-                    throw new UnprocessableEntityException($message);
+                    $expirationDate = Carbon::now()
+                        ->addDays($intervalCount)
+                        ->startOfDay()
+                        ->toDateTimeString();
                 break;
             }
-
-            $expirationDate = $expirationDate->startOfDay();
 
             $this->userProductService->saveUserProduct(
                 $user['id'],
                 $product['id'],
                 1,
-                $expirationDate->toDateTimeString()
+                $expirationDate
             );
         }
 

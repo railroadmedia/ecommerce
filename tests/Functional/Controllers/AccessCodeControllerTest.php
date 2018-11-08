@@ -66,7 +66,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         ], $response->decodeResponseJson('meta')['errors']);
     }
 
-    public function test_claim_create_user_product()
+    public function test_claim_create_user_product_with_expiration()
     {
         $userId  = $this->createAndLogInNewUser();
 
@@ -105,6 +105,57 @@ class AccessCodeControllerTest extends EcommerceTestCase
                     ->addYear(1)
                     ->startOfDay()
                     ->toDateTimeString()
+            ]
+        );
+
+        // assert access code was set as claimed
+        $this->assertDatabaseHas(
+            ConfigService::$tableAccessCode,
+            [
+                'id' => $accessCode['id'],
+                'is_claimed' => true,
+                'claimer_id' => $userId,
+                'claimed_on' => Carbon::now()->toDateTimeString()
+            ]
+        );
+    }
+
+    public function test_claim_create_user_product_without_expiration()
+    {
+        $userId  = $this->createAndLogInNewUser();
+
+        $product = $this->productRepository->create(
+            $this->faker->product([
+                'type' => ConfigService::$typeSubscription,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
+            ])
+        );
+
+        $accessCode = $this->accessCodeRepository->create(
+            $this->faker->accessCode([
+                'product_ids' => [$product['id']],
+                'is_claimed' => 0,
+                'claimed_on' => null
+            ])
+        );
+
+        $response = $this->call('POST', '/access-codes/redeem', [
+            'access_code' => $accessCode['code']
+        ]);
+
+        $this->assertEquals(302, $response->getStatusCode());
+
+        // assert the session has the success message
+        $response->assertSessionHas('success', true);
+
+        // assert the user product data was saved in the db
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'expiration_date' => null
             ]
         );
 
