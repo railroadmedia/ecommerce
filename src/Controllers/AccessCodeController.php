@@ -115,7 +115,7 @@ class AccessCodeController extends BaseController
                 $request->get('password')
             );
 
-            auth()->loginUsingId($user['id'], true); // TO-DO: raise event and handle login in drumeo app
+            auth()->loginUsingId($user['id'], true);
 
         } else if ($request->get('claim_for_user_email')) {
             // admin claims code for users
@@ -267,7 +267,8 @@ class AccessCodeController extends BaseController
             [
                 'is_claimed' => true,
                 'claimer_id' => $user['id'],
-                'claimed_on' => Carbon::now()->toDateTimeString()
+                'claimed_on' => Carbon::now()->toDateTimeString(),
+                'updated_at' => Carbon::now()->toDateTimeString()
             ]
         );
 
