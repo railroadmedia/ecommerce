@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\AccessCodeRepository;
@@ -10,7 +11,6 @@ use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionAccessCodeRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\AccessCodeClaimRequest;
-use Railroad\Ecommerce\Requests\AccessCodeReleaseRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\UserProductService;
@@ -29,6 +29,11 @@ class AccessCodeController extends BaseController
      * @var CurrencyService
      */
     private $currencyService;
+
+     /**
+     * @var Hasher
+     */
+    private $hasher;
 
     /**
      * @var PermissionService
@@ -56,11 +61,6 @@ class AccessCodeController extends BaseController
     private $userProductService;
 
     /**
-     * @var mixed UserProviderInterface
-     */
-    private $userProvider;
-
-    /**
      * AccessCodeController constructor.
      *
      * @param AccessCodeRepository $accessCodeRepository
@@ -75,6 +75,7 @@ class AccessCodeController extends BaseController
     public function __construct(
         AccessCodeRepository $accessCodeRepository,
         CurrencyService $currencyService,
+        Hasher $hasher,
         PermissionService $permissionService,
         ProductRepository $productRepository,
         SubscriptionAccessCodeRepository $subscriptionAccessCodeRepository,
@@ -86,12 +87,12 @@ class AccessCodeController extends BaseController
 
         $this->accessCodeRepository = $accessCodeRepository;
         $this->currencyService = $currencyService;
+        $this->hasher = $hasher;
         $this->permissionService = $permissionService;
         $this->productRepository = $productRepository;
         $this->subscriptionAccessCodeRepository = $subscriptionAccessCodeRepository;
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
-        $this->userProvider = app()->make('UserProviderInterface');
         $this->userRepository = $userRepository;
     }
 
@@ -110,9 +111,16 @@ class AccessCodeController extends BaseController
 
         if ($request->has('email')) {
             // add new user
-            $user = $this->userProvider->create(
-                $request->get('email'),
-                $request->get('password')
+
+            $password = $this->hasher->make($request->get('password'));
+
+            $user = $this->userRepository->create(
+                [
+                    'email' => $request->get('email'),
+                    'password' => $password,
+                    'display_name' => $request->get('email'),
+                    'created_at' => Carbon::now()->toDateTimeString()
+                ]
             );
 
             auth()->loginUsingId($user['id'], true);
@@ -268,40 +276,22 @@ class AccessCodeController extends BaseController
                 'is_claimed' => true,
                 'claimer_id' => $user['id'],
                 'claimed_on' => Carbon::now()->toDateTimeString(),
-                'updated_at' => Carbon::now()->toDateTimeString()
+                'updated_on' => Carbon::now()->toDateTimeString()
             ]
         );
 
-        return reply()->form(
-            [true],
-            null,
-            [],
-            ['access_code' => true]
-        );
-    }
+        if ($request->get('claim_for_user_email')) {
 
-    /**
-     * Release an access code
-     *
-     * @param AccessCodeReleaseRequest $request
-     *
-     * @return JsonResponse
-     *
-     * @throws Throwable
-     */
-    public function release(AccessCodeReleaseRequest $request)
-    {
-        $this->permissionService->canOrThrow(auth()->id(), 'release.access_codes');
+            return reply()->json($accessCode);
 
-        $stuff = $this->accessCodeRepository->update(
-            $request->get('access_code_id'),
-            [
-                'is_claimed' => false,
-                'claimer_id' => null,
-                'claimed_on' => null
-            ]
-        );
+        } else {
 
-        return reply()->form();
+            return reply()->form(
+                [true],
+                null,
+                [],
+                ['access_code' => true]
+            );
+        }
     }
 }

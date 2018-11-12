@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Repositories\AccessCodeRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Ecommerce\Requests\AccessCodeReleaseRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Usora\Services\ConfigService as UsoraConfigService;
 use Railroad\Permissions\Services\PermissionService;
@@ -124,5 +125,30 @@ class AccessCodeJsonController extends BaseController
             ->get();
 
         return reply()->json($accessCodes);
+    }
+
+    /**
+     * Release an access code
+     *
+     * @param AccessCodeReleaseRequest $request
+     *
+     * @return JsonResponse
+     *
+     * @throws Throwable
+     */
+    public function release(AccessCodeReleaseRequest $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'release.access_codes');
+
+        $accessCode = $this->accessCodeRepository->update(
+            $request->get('access_code_id'),
+            [
+                'is_claimed' => false,
+                'claimer_id' => null,
+                'claimed_on' => null
+            ]
+        );
+
+        return reply()->json($accessCode);
     }
 }

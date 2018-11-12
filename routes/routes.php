@@ -21,7 +21,7 @@ Route::post(
 
 Route::post(
     '/access-codes/release',
-    Railroad\Ecommerce\Controllers\AccessCodeController::class . '@release'
+    Railroad\Ecommerce\Controllers\AccessCodeJsonController::class . '@release'
 )->name('access-codes.release');
 
 //session

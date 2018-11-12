@@ -378,10 +378,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claim_for_user_email' => $email
         ]);
 
-        $this->assertEquals(302, $response->getStatusCode());
-
-        // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        $this->assertEquals(200, $response->getStatusCode());
 
         // assert the user product data was saved in the db
         $this->assertDatabaseHas(
@@ -404,99 +401,6 @@ class AccessCodeControllerTest extends EcommerceTestCase
                 'is_claimed' => true,
                 'claimer_id' => $user['id'],
                 'claimed_on' => Carbon::now()->toDateTimeString()
-            ]
-        );
-    }
-
-    public function test_release_validation()
-    {
-        $response = $this->call('POST', '/access-codes/release', []);
-
-        //assert the response status code
-        $this->assertEquals(422, $response->getStatusCode());
-
-        // assert that all the validation errors are returned
-        $this->assertEquals([
-            [
-                'source' => 'access_code_id',
-                'detail' => 'The access code id field is required.',
-            ]
-        ], $response->decodeResponseJson('meta')['errors']);
-    }
-
-    public function test_release_validation_unclaimed()
-    {
-        $userId  = $this->createAndLogInNewUser();
-
-        $product = $this->productRepository->create(
-            $this->faker->product([
-                'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                'subscription_interval_count' => 1,
-            ])
-        );
-
-        $accessCode = $this->accessCodeRepository->create(
-            $this->faker->accessCode([
-                'product_ids' => [$product['id']],
-                'is_claimed' => 0,
-                'claimed_on' => null
-            ])
-        );
-
-        $response = $this->call('POST', '/access-codes/release', [
-            'access_code_id' => $accessCode['id']
-        ]);
-
-        //assert the response status code
-        $this->assertEquals(422, $response->getStatusCode());
-
-        // assert that all the validation errors are returned
-        $this->assertEquals([
-            [
-                'source' => 'access_code_id',
-                'detail' => 'The selected access code id is invalid.',
-            ]
-        ], $response->decodeResponseJson('meta')['errors']);
-    }
-
-    public function test_release()
-    {
-        $userId  = $this->createAndLogInNewUser();
-
-        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
-
-        $product = $this->productRepository->create(
-            $this->faker->product([
-                'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                'subscription_interval_count' => 1,
-            ])
-        );
-
-        $accessCode = $this->accessCodeRepository->create(
-            $this->faker->accessCode([
-                'product_ids' => [$product['id']],
-                'is_claimed' => 1,
-                'claimed_on' => Carbon::now()->toDateTimeString()
-            ])
-        );
-
-        $response = $this->call('POST', '/access-codes/release', [
-            'access_code_id' => $accessCode['id']
-        ]);
-
-        //assert the response status code
-        $this->assertEquals(302, $response->getStatusCode());
-
-        // assert access code was set as claimed
-        $this->assertDatabaseHas(
-            ConfigService::$tableAccessCode,
-            [
-                'id' => $accessCode['id'],
-                'is_claimed' => false,
-                'claimer_id' => null,
-                'claimed_on' => null
             ]
         );
     }
