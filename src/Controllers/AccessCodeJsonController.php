@@ -3,12 +3,16 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
+use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\AccessCodeRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Ecommerce\Requests\AccessCodeJsonClaimRequest;
 use Railroad\Ecommerce\Requests\AccessCodeReleaseRequest;
+use Railroad\Ecommerce\Services\AccessCodeService;
 use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Usora\Services\ConfigService as UsoraConfigService;
 use Railroad\Permissions\Services\PermissionService;
+use Railroad\Usora\Services\ConfigService as UsoraConfigService;
+use Railroad\Usora\Repositories\UserRepository;
 use Throwable;
 
 class AccessCodeJsonController extends BaseController
@@ -17,6 +21,11 @@ class AccessCodeJsonController extends BaseController
      * @var AccessCodeRepository
      */
     private $accessCodeRepository;
+
+    /**
+     * @var AccessCodeService
+     */
+    private $accessCodeService;
 
     /**
      * @var PermissionService
@@ -29,21 +38,33 @@ class AccessCodeJsonController extends BaseController
     private $productRepository;
 
     /**
+     * @var UserRepository
+     */
+    private $userRepository;
+
+    /**
      * AccessCodeJsonController constructor.
      *
+     * @param AccessCodeService $accessCodeService
      * @param AccessCodeRepository $accessCodeRepository
      * @param PermissionService $permissionService
+     * @param ProductRepository $productRepository
+     * @param UserRepository $userRepository
      */
     public function __construct(
+        AccessCodeService $accessCodeService,
         AccessCodeRepository $accessCodeRepository,
         PermissionService $permissionService,
-        ProductRepository $productRepository
+        ProductRepository $productRepository,
+        UserRepository $userRepository
     ) {
         parent::__construct();
 
+        $this->accessCodeService = $accessCodeService;
         $this->accessCodeRepository = $accessCodeRepository;
         $this->permissionService = $permissionService;
         $this->productRepository = $productRepository;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -125,6 +146,41 @@ class AccessCodeJsonController extends BaseController
             ->get();
 
         return reply()->json($accessCodes);
+    }
+
+    /**
+     * Claim an access code
+     *
+     * @param AccessCodeJsonClaimRequest $request
+     *
+     * @return JsonResponse
+     *
+     * @throws Throwable
+     */
+    public function claim(AccessCodeJsonClaimRequest $request)
+    {
+        $this->permissionService->canOrThrow(
+            auth()->id(),
+            'claim.access_codes'
+        );
+
+        $user = $this->userRepository
+            ->query()
+            ->where('email', '=', $request->get('claim_for_user_email'))
+            ->first();
+
+        throw_if(
+            is_null($user),
+            new NotFoundException(
+                'Claim failed, user not found with email: '
+                . $request->get('claim_for_user_email')
+            )
+        );
+
+        $accessCode = $this->accessCodeService
+            ->claim($request->get('access_code'), $user);
+
+        return reply()->json($accessCode);
     }
 
     /**

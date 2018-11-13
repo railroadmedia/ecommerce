@@ -4,6 +4,11 @@ use Illuminate\Support\Facades\Route;
 use Railroad\Ecommerce\Middleware\AdministratorMiddleware;
 
 // access codes
+Route::post(
+    '/access-codes/redeem',
+    Railroad\Ecommerce\Controllers\AccessCodeController::class . '@claim'
+)->name('access-codes.claim');
+
 Route::get(
     '/access-codes',
     Railroad\Ecommerce\Controllers\AccessCodeJsonController::class . '@index'
@@ -15,8 +20,8 @@ Route::get(
 )->name('access-codes.search');
 
 Route::post(
-    '/access-codes/redeem',
-    Railroad\Ecommerce\Controllers\AccessCodeController::class . '@claim'
+    '/access-codes/claim',
+    Railroad\Ecommerce\Controllers\AccessCodeJsonController::class . '@claim'
 )->name('access-codes.claim');
 
 Route::post(
