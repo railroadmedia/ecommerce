@@ -95,7 +95,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         }
 
         $selectedAccessCodeIndex = $this->faker->numberBetween(0, $nrAccessCodes - 1);
-        $selectedAccessCode = $accessCodes[$selectedAccessCodeIndex];
+        $selectedAccessCode = $accessCodes[$selectedAccessCodeIndex] + ['claimer' => null];
         $selectedCodeLength = strlen($selectedAccessCode['code']);
         $codeFragment = substr(
             $selectedAccessCode['code'],

@@ -141,11 +141,40 @@ class AccessCodeJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
         $accessCodes = $this->accessCodeRepository->query()
-            ->whereIn('brand', $request->get('brands',[ConfigService::$availableBrands]))
+            ->select(
+                ConfigService::$tableAccessCode . '.*',
+                UsoraConfigService::$tableUsers . '.email as claimer'
+            )
+            ->leftJoin(
+                UsoraConfigService::$tableUsers,
+                ConfigService::$tableAccessCode . '.claimer_id',
+                '=',
+                UsoraConfigService::$tableUsers . '.id'
+            )
+            ->whereIn(
+                'brand',
+                $request->get('brands', [ConfigService::$availableBrands])
+            )
             ->where('code', 'like', '%' . $request->get('term') . '%')
             ->get();
 
-        return reply()->json($accessCodes);
+        $productIds = [];
+
+        foreach ($accessCodes as $accessCode) {
+            $accessCodeProductIds = array_flip($accessCode['product_ids']);
+
+            $productIds += $accessCodeProductIds;
+        }
+
+        $products = $this->productRepository
+                        ->query()
+                        ->whereIn('id', array_keys($productIds))
+                        ->get();
+
+        return reply()->json(
+            $accessCodes,
+            ['meta' => ['products' => $products]]
+        );
     }
 
     /**
