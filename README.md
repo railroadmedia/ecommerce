@@ -1,6 +1,5 @@
 Ecommerce
 ========================================================================================================================
-
 - [Ecommerce](#ecommerce)
   * [Install](#install)
   * [Required abilities](#required-abilities)
@@ -216,6 +215,26 @@ Ecommerce
       - [Request Example](#request-example-52)
       - [Request Parameters](#request-parameters-51)
       - [Response Example](#response-example-52)
+    + [Get all access codes](#get-all-access-codes)
+      - [Request Example](#request-example-53)
+      - [Request Parameters](#request-parameters-52)
+      - [Response Example](#response-example-53)
+    + [Search access codes](#search-access-codes)
+      - [Request Example](#request-example-54)
+      - [Request Parameters](#request-parameters-53)
+      - [Response Example](#response-example-54)
+    + [Claim access code - JSON controller](#claim-access-code---json-controller)
+      - [Request Example](#request-example-55)
+      - [Request Parameters](#request-parameters-54)
+      - [Response Example](#response-example-55)
+    + [Release access code - JSON controller](#release-access-code---json-controller)
+      - [Request Example](#request-example-56)
+      - [Request Parameters](#request-parameters-55)
+      - [Response Example](#response-example-56)
+    + [Claim access code - FORM controller](#claim-access-code---form-controller)
+      - [Request Example](#request-example-57)
+      - [Request Parameters](#request-parameters-56)
+      - [Response Example](#response-example-57)
 
 <!-- ecotrust-canada.github.io/markdown-toc -->
 
@@ -271,8 +290,14 @@ With composer command
 | Delete shipping fulfillment                   |  DELETE /ecommerce/fulfillment                            |  'delete.fulfillment'       |                                                                           | 
 | Get products statistics                       |  GET /ecommerce/stats/products                            |  'pull.stats'               |                                                                           | 
 | Get orders statistics                         |  GET /ecommerce/stats/orders                              |  'pull.stats'               |                                                                           | 
+| Get all access codes                          |  GET /access-codes                                        |  'pull.access_codes'        |                                                                           | 
+| Search access codes                           |  GET /access-codes/search                                 |  'pull.access_codes'        |                                                                           |
+| Claim access code                             |  POST /access-codes/claim                                 |  'claim.access_codes'       | Endpoint for admins to claim access code for user                         |
+| Release access code                           |  POST /access-codes/release                               |  'release.access_codes'     |                                                                           |
+| Redeem access code                            |  POST /access-codes/redeem                                |                             | Endpoint for users to claim access code                                   |
 
 ## API Reference
+
 
 ### Add item to cart - forms controller
 
@@ -3113,4 +3138,455 @@ $.ajax({
 #### Response Example
 
 ```200 OK```
+
+
+### Get all access codes
+
+```
+GET /access-codes
+```
+
+Pull paginated access codes.
+
+The products associated with the access codes are included in meta.products key of the response
+#### Request Example
+
+```js
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/access-codes?page=3&limit=25&brands[]=drumeo&order_by_column=created_on&order_by_direction=desc',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
+
+#### Request Parameters
+| path\|query\|body |  key                |  required |  default                   |  description\|notes                                  | 
+|-------------------|---------------------|-----------|----------------------------|------------------------------------------------------| 
+| query             |  brands             |  no       | [value set in config file] |  Only access codes from specified brands will be pulled. | 
+| query             |  page               |  no       |  1                         |  Pagination page.                                    | 
+| query             |  limit              |  no       |  10                        |  Amount of access codes to pull per page.            | 
+| query             |  order_by_column    |  no       |  created_on                |  Sort column name.                                   | 
+| query             |  order_by_direction |  no       |  desc                      |  Sort column direction                               |
+
+#### Response Example
+
+```200 OK```
+```json
+{
+  "data": [
+    {
+      "id": 8,
+      "code": "aaaabbbbccccddddeeeeffff",
+      "product_ids": [
+        1,
+        2
+      ],
+      "is_claimed": 1,
+      "claimer_id": 12345,
+      "claimed_on": "2018-11-09 13:49:54",
+      "brand": "recordeo",
+      "created_on": "2018-11-09 13:49:54",
+      "updated_on": "2018-11-09 13:49:54",
+      "claimer": "bob@example.com"
+    },
+    ...
+    {
+      "id": 9,
+      "code": "aa12bbbbccccddddeeeeffff",
+      "product_ids": [
+        9,
+        12,
+        14
+      ],
+      "is_claimed": 0,
+      "claimer_id": null,
+      "claimed_on": null,
+      "brand": "recordeo",
+      "created_on": "2018-11-09 13:49:54",
+      "updated_on": null,
+      "claimer": null
+    }
+  ],
+  "meta": {
+    "products": [
+      {
+        "id": 1,
+        "brand": "recordeo",
+        "name": "Recordeo Membership - Annual",
+        "sku": "MEMBERSHIP-1-YEAR",
+        "price": "97.00",
+        "type": "product",
+        "active": 1,
+        "description": "The Ultimate Guide To Recording Drums",
+        "thumbnail_url": "https://d1y4o0cjx5s9r3.cloudfront.net/assets/recordeo-checkout-image.svg",
+        "is_physical": 0,
+        "weight": "0.00",
+        "subscription_interval_type": "yearly",
+        "subscription_interval_count": 1,
+        "stock": null,
+        "created_on": "2018-05-30 18:08:30",
+        "updated_on": null,
+        "discounts": []
+      },
+      ...
+      {
+        "id": 2,
+        "brand": "recordeo",
+        "name": "Recordeo Membership - Monthly",
+        "sku": "MEMBERSHIP-1-MONTH",
+        "price": "12.00",
+        "type": "product",
+        "active": 1,
+        "description": "The Ultimate Guide To Recording Drums",
+        "thumbnail_url": "https://d1y4o0cjx5s9r3.cloudfront.net/assets/recordeo-checkout-image.svg",
+        "is_physical": 0,
+        "weight": "0.00",
+        "subscription_interval_type": "monthly",
+        "subscription_interval_count": 1,
+        "stock": null,
+        "created_on": "2018-05-30 18:08:30",
+        "updated_on": null,
+        "discounts": []
+      }
+    ],
+    "totalResults": 6,
+    "page": "1",
+    "limit": "20"
+  }
+}
+
+```
+
+### Search access codes
+
+```
+GET /access-codes/search
+```
+
+Search access codes.
+
+The products associated with the access codes are included in meta.products key of the response
+#### Request Example
+
+```js
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/access-codes/search?brands[]=drumeo&term=aa1',
+    type: 'get'
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+```
+
+#### Request Parameters
+| path\|query\|body |  key                |  required |  default                   |  description\|notes                                  | 
+|-------------------|---------------------|-----------|----------------------------|------------------------------------------------------| 
+| query             |  brands             |  no       | [value set in config file] |  Only access codes from specified brands will be pulled. | 
+| query             |  term               |  yes      |                            |  The search term                                     |
+
+#### Response Example
+
+```200 OK```
+```json
+{
+  "data": [
+    {
+      "id": 9,
+      "code": "aa12bbbbccccddddeeeeffff",
+      "product_ids": [
+        9,
+        12,
+        14
+      ],
+      "is_claimed": 0,
+      "claimer_id": null,
+      "claimed_on": null,
+      "brand": "recordeo",
+      "created_on": "2018-11-09 13:49:54",
+      "updated_on": null,
+      "claimer": null
+    },
+    ...
+    {
+      "id": 10,
+      "code": "aa14bbbbccccddddeeeeffff",
+      "product_ids": [
+        9,
+        15,
+        16
+      ],
+      "is_claimed": 1,
+      "claimer_id": 102905,
+      "claimed_on": "2018-11-13 15:03:50",
+      "brand": "recordeo",
+      "created_on": "2018-11-09 13:49:54",
+      "updated_on": "2018-11-13 15:03:50",
+      "claimer": "reuben@drumeo.com"
+    }
+  ],
+  "meta": {
+    "products": [
+      {
+        "id": 9,
+        "brand": "drumeo",
+        "name": "Drum Play-Along System (Online Edition)",
+        "sku": "DPAS-DIGI",
+        "price": "77.00",
+        "type": "product",
+        "active": 1,
+        "description": "Instant Online Access",
+        "thumbnail_url": "/laravel/public/assets/order-form/images/product-images/DPAS-DIGI.png",
+        "is_physical": 0,
+        "weight": "0.00",
+        "subscription_interval_type": null,
+        "subscription_interval_count": null,
+        "stock": 50,
+        "created_on": "2015-10-21 02:51:00",
+        "updated_on": "2016-08-02 17:03:45",
+        "discounts": []
+      },
+      ...
+      {
+        "id": 12,
+        "brand": "drumeo",
+        "name": "Drum Rudiment System (Online Edition)",
+        "sku": "DRUDSYS-DIGI",
+        "price": "147.00",
+        "type": "product",
+        "active": 1,
+        "description": "Instant Online Access",
+        "thumbnail_url": "/laravel/public/assets/order-form/images/product-images/DRUDSYS-DIGI.png",
+        "is_physical": 0,
+        "weight": "0.00",
+        "subscription_interval_type": null,
+        "subscription_interval_count": null,
+        "stock": 50,
+        "created_on": "2015-10-21 02:51:00",
+        "updated_on": "2016-08-02 17:03:45",
+        "discounts": []
+      }
+    ]
+  }
+}
+
+```
+
+### Claim access code - JSON controller
+
+```
+POST /access-codes/claim
+```
+
+Admin action to claim an access code for an existing user.
+
+#### Request Example
+```js
+
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/access-codes/claim',
+    type: 'post'
+    data: {'access_code': 'aa14bbbbccccddddeeeeffff', 'claim_for_user_email': 'bob@example.com'}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
+
+#### Request Parameters
+
+| path\|query\|body |  key                   |  required |  default |  description\|notes                            | 
+|-------------------|------------------------|-----------|----------|------------------------------------------------| 
+| body              |  access_code           |  yes      |          |  The access code to be claimed                 | 
+| body              |  claim_for_user_email  |  yes      |          |  The user email the access code is claimed for | 
+
+
+#### Response Example
+
+```200 OK```
+```json
+{
+  "data": [
+    {
+      "id": 10,
+      "code": "aa14bbbbccccddddeeeeffff",
+      "product_ids": [
+        9,
+        15,
+        16
+      ],
+      "is_claimed": 1,
+      "claimer_id": 102905,
+      "claimed_on": "2018-11-14 09:47:27",
+      "brand": "recordeo",
+      "created_on": "2018-11-09 13:49:54",
+      "updated_on": "2018-11-14 09:47:27"
+    }
+  ]
+}
+```
+
+```422 Unprocessable Entity```
+```json
+{
+  "data": [],
+  "meta": {
+    "totalResults": 0,
+    "page": 1,
+    "limit": 10,
+    "errors": [
+      {
+        "source": "access_code",
+        "detail": "The selected access code is invalid."
+      },
+      {
+        "source": "claim_for_user_email",
+        "detail": "The claim for user email must be a valid email address."
+      }
+    ]
+  }
+}
+```
+
+
+### Release access code - JSON controller
+
+```
+POST /access-codes/release
+```
+
+Admin action to release an access code.
+
+#### Request Example
+```js
+
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/access-codes/release',
+    type: 'post'
+    data: {'access_code_id': 123}
+    dataType: 'json',
+    success: function(response) {
+        // handle success
+    },
+    error: function(response) {
+        // handle error
+    }
+});
+
+```
+
+#### Request Parameters
+
+| path\|query\|body |  key            | required | default | description\|notes                | 
+|-------------------|-----------------|----------|---------|-----------------------------------| 
+| body              |  access_code_id | yes      |         | The access code id to be released | 
+
+
+#### Response Example
+
+```200 OK```
+```json
+{
+  "data": [
+    {
+      "id": 123,
+      "code": "aa14bbbbccccddddeeeeffff",
+      "product_ids": [
+        9,
+        15,
+        16
+      ],
+      "is_claimed": 0,
+      "claimer_id": null,
+      "claimed_on": null,
+      "brand": "recordeo",
+      "created_on": "2018-11-09 13:49:54",
+      "updated_on": "2018-11-14 10:09:59"
+    }
+  ]
+}
+```
+
+```422 Unprocessable Entity```
+```json
+{
+  "data": [],
+  "meta": {
+    "totalResults": 0,
+    "page": 1,
+    "limit": 10,
+    "errors": [
+      {
+        "source": "access_code_id",
+        "detail": "The selected access code id is invalid."
+      }
+    ]
+  }
+}
+```
+
+### Claim access code - FORM controller
+
+```
+POST /access-codes/redeem
+```
+
+User action to claim an access code.
+
+#### Request Example
+```
+<form method="POST" action="/ecommerce/redeem">
+    <input type="text" name="access_code" value="aa14bbbbccccddddeeeeffff">
+
+    <button type="submit">Submit</button>
+</form>
+```
+or
+```
+<form method="POST" action="/ecommerce/redeem">
+    <input type="text" name="access_code" value="aa14bbbbccccddddeeeeffff">
+    <input type="text" name="email" value="new_user@example.com">
+    <input type="text" name="password" value="asdafdfasdfsdf">
+    <input type="text" name="password_confirmation" value="asdafdfasdfsdf">
+
+    <button type="submit">Submit</button>
+</form>
+```
+
+#### Request Parameters
+
+| path\|query\|body |  key                      | required | default            |  description\|notes                | 
+|-------------------|---------------------------|----------|--------------------|------------------------------------| 
+| body              |  access_code              | yes      |                    |  The access code to be claimed     | 
+| body              |  redirect                 | no       | redirect()->back() |  If this is set the request will redirect to this url; otherwise will be redirect back | 
+| body              |  email                    | no       |                    |  The email for the new account     | 
+| body              |  password                 | no       |                    |  When email field is specified, this field is required. Password for new account | 
+| body              |  password_confirmation    | no       |                    |  When email field is specified, this field is required. Password confirmation |
+
+#### Response Example
+
+``` 302 ```
+Redirects to previous url or to path passed in with redirect param.
+
+On the session are flashed the following data:\
+    * `success` - boolean value\
+    * `access_code` - boolean value, set to true on success, for displaying specific success message to user\
 

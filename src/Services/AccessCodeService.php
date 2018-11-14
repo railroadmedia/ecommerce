@@ -196,7 +196,7 @@ class AccessCodeService
             );
         }
 
-        $this->accessCodeRepository->update(
+        $accessCode = $this->accessCodeRepository->update(
             $accessCode['id'],
             [
                 'is_claimed' => true,
