@@ -3553,7 +3553,7 @@ User action to claim an access code.
 
 #### Request Example
 ```
-<form method="POST" action="/ecommerce/redeem">
+<form method="POST" action="/access-codes/redeem">
     <input type="text" name="access_code" value="aa14bbbbccccddddeeeeffff">
 
     <button type="submit">Submit</button>
@@ -3561,7 +3561,7 @@ User action to claim an access code.
 ```
 or
 ```
-<form method="POST" action="/ecommerce/redeem">
+<form method="POST" action="/access-codes/redeem">
     <input type="text" name="access_code" value="aa14bbbbccccddddeeeeffff">
     <input type="text" name="email" value="new_user@example.com">
     <input type="text" name="password" value="asdafdfasdfsdf">
