@@ -211,6 +211,16 @@ class EcommerceServiceProvider extends ServiceProvider
                 ]
             )
         );
+
+        config()->set(
+            'resora.decorators.userProduct',
+            array_merge(
+                config()->get('resora.decorators.userProduct', []),
+                [
+                    SubscriptionProductDecorator::class,
+                ]
+            )
+        );
     }
 
     private function setupConfig()

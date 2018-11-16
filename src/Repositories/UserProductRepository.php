@@ -22,4 +22,9 @@ class UserProductRepository extends RepositoryBase
     {
         return app('db')->connection(ConfigService::$databaseConnectionName);
     }
+
+    protected function decorate($results)
+    {
+        return Decorator::decorate($results, 'userProduct');
+    }
 }
