@@ -167,7 +167,7 @@ class TaxService
                             $productDiscount = $activeDiscount->amount * $item['quantity'];
                         }
 
-                        $cartItems[$key]['discountedPrice'] = $cartItems[$key]['totalPrice'] - $productDiscount;
+                        $cartItems[$key]['discountedPrice'] = (($cartItems[$key]['totalPrice'] - $productDiscount) > 0)?$cartItems[$key]['totalPrice'] - $productDiscount : '0.0';
                     }
                 }
             }
