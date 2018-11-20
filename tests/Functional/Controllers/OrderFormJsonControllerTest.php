@@ -4247,4 +4247,180 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
+
+    public function test_submit_order_with_discount_product_category()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $quantity = 2;
+        $productCategory = $this->faker->word;
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 25,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'category' => $this->faker->word,
+                    'description' => $this->faker->word,
+                    'is_physical' => 0,
+                    'weight' => 0,
+                    'subscription_interval_type' => '',
+                    'subscription_interval_count' => '',
+                ]
+            )
+        );
+        $product2 = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 15,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'category' => $productCategory,
+                    'description' => $this->faker->word,
+                    'is_physical' => 0,
+                    'weight' => 0,
+                    'subscription_interval_type' => '',
+                    'subscription_interval_count' => '',
+                ]
+            )
+        );
+
+        $discount = $this->discountRepository->create(
+            $this->faker->discount(
+                [
+                    'active' => true,
+                    'product_id' => $product['id'],
+                    'product_category' => $productCategory,
+                    'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
+                    'amount' => 10,
+                ]
+            )
+        );
+        $discountCriteria = $this->discountCriteriaRepository->create(
+            $this->faker->discountCriteria(
+                [
+                    'discount_id' => $discount['id'],
+                    'product_id' => $product['id'],
+                    'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+                    'min' => 5,
+                    'max' => 500,
+                ]
+            )
+        );
+
+        $cart = $this->cartService->addCartItem(
+            $product['name'],
+            $product['description'],
+            $quantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            $product['weight'],
+            [
+                'product-id' => $product['id'],
+            ]
+        );
+        $this->cartService->addCartItem(
+            $product2['name'],
+            $product2['description'],
+            $quantity,
+            $product2['price'],
+            $product2['is_physical'],
+            $product2['is_physical'],
+            $product2['subscription_interval_type'],
+            $product2['subscription_interval_count'],
+            $product2['weight'],
+            [
+                'product-id' => $product2['id'],
+            ]
+        );
+
+        $results = $this->call(
+            'PUT',
+            '/order',
+            [
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
+                'billing-region' => $this->faker->word,
+                'billing-zip-or-postal-code' => $this->faker->postcode,
+                'billing-country' => 'Romanian',
+                'gateway' => 'drumeo',
+            ]
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount amount it's included in order due
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrder,
+            [
+                'brand' => ConfigService::$brand,
+                'user_id' => $userId,
+                'due' => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity +
+                    $product2['price'] * $quantity - $discount['amount'] / 100 * $product2['price'] * $quantity,
+                'tax' => 0,
+                'shipping_costs' => 0,
+                'paid' => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity +
+                    $product2['price'] * $quantity - $discount['amount'] / 100 * $product2['price'] * $quantity,
+            ]
+        );
+
+        //assert the discount amount it's saved in order item data
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrderItem,
+            [
+                'product_id' => $product['id'],
+                'quantity' => $quantity,
+                'initial_price' => $product['price'] * $quantity,
+                'discount' => $product['price'] * $quantity * $discount['amount'] / 100,
+                'total_price' => ($product['price'] - $product['price'] * $discount['amount'] / 100) * $quantity,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrderItem,
+            [
+                'product_id' => $product2['id'],
+                'quantity' => $quantity,
+                'initial_price' => $product2['price'] * $quantity,
+                'discount' => $product2['price'] * $quantity * $discount['amount'] / 100,
+                'total_price' => ($product2['price'] - $product2['price'] * $discount['amount'] / 100) * $quantity,
+            ]
+        );
+    }
+
 }

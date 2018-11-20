@@ -169,7 +169,7 @@ class EcommerceTestCase extends BaseTestCase
                 'driver' => 'mysql',
                 'host' => 'mysql',
                 'port' => env('MYSQL_PORT', '3306'),
-                'database' => env('MYSQL_DB', 'musora_laravel'),
+                'database' => env('MYSQL_DB', 'ecommerce'),
                 'username' => 'root',
                 'password' => 'root',
                 'charset' => 'utf8',

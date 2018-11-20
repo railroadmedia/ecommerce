@@ -151,7 +151,8 @@ class TaxService
                 if ($criteriaMet) {
                     $discountsToApply[$activeDiscount->id] =  $activeDiscount;
 
-                    if ($activeDiscount['product_id'] == $item['options']['product-id']) {
+                    if (($activeDiscount['product_id'] == $item['options']['product-id']) ||
+                        ($activeDiscount['product_category'] == $item['options']['product']['category'])) {
                         $productDiscount = 0;
 
                         if ($activeDiscount->type == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {

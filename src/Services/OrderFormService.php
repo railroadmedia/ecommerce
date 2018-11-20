@@ -312,15 +312,12 @@ class OrderFormService
         try {
             if ($request->get('payment-method-id')) {
 
-                $paymentMethod = $this->paymentMethodRepository
-                    ->read($request->get('payment-method-id'));
+                $paymentMethod = $this->paymentMethodRepository->read($request->get('payment-method-id'));
 
-                if (
-                    !$paymentMethod || !$paymentMethod['user']['user_id'] ||
-                    $paymentMethod['user']['user_id'] != $user['id']
-                ) {
-                    $url = $request->get('redirect') ??
-                                strtok(app('url')->previous(), '?');
+                if (!$paymentMethod ||
+                    !$paymentMethod['user']['user_id'] ||
+                    $paymentMethod['user']['user_id'] != $user['id']) {
+                    $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
 
                     return [
                         'redirect' => $url,
@@ -350,8 +347,7 @@ class OrderFormService
 
                 if (!$charge && !$transactionId) {
 
-                    $url = $request->get('redirect') ??
-                                strtok(app('url')->previous(), '?');
+                    $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
 
                     return [
                         'redirect' => $url,
@@ -364,59 +360,57 @@ class OrderFormService
                 $paymentMethodId = $paymentMethod['id'];
                 $billingAddressDB = $paymentMethod['billing_address'];
 
-            } else if ($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE &&
-                empty($request->get('token'))) {
+            } else {
+                if ($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE &&
+                    empty($request->get('token'))) {
 
-                list(
-                    $charge,
-                    $paymentMethodId,
-                    $billingAddressDB
-                ) = $this->chargeAndCreatePaymentMethod(
-                    $request,
-                    $user,
-                    $customer ?? null,
-                    $cartItemsWithTaxesAndCosts,
-                    $currency
-                );
-
-            } elseif ($request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE ||
-                !empty($request->get('token'))) {
-                if (empty($request->get('token'))) {
-
-                    $gateway = $request->get('gateway');
-                    $config = ConfigService::$paymentGateways['paypal'];
-                    $url = $config[$gateway]['paypal_api_checkout_return_url'];
-
-                    $checkoutUrl = $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl(
-                        $gateway,
-                        $url
+                    list(
+                        $charge, $paymentMethodId, $billingAddressDB
+                        ) = $this->chargeAndCreatePaymentMethod(
+                        $request,
+                        $user,
+                        $customer ?? null,
+                        $cartItemsWithTaxesAndCosts,
+                        $currency
                     );
 
-                    session()->put('order-form-input', $request->all());
+                } elseif ($request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE ||
+                    !empty($request->get('token'))) {
+                    if (empty($request->get('token'))) {
 
-                    return ['redirect' => $checkoutUrl];
+                        $gateway = $request->get('gateway');
+                        $config = ConfigService::$paymentGateways['paypal'];
+                        $url = $config[$gateway]['paypal_api_checkout_return_url'];
+
+                        $checkoutUrl = $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl(
+                            $gateway,
+                            $url
+                        );
+
+                        session()->put('order-form-input', $request->all());
+
+                        return ['redirect' => $checkoutUrl];
+                    }
+
+                    list (
+                        $transactionId, $paymentMethodId, $billingAddressDB
+                        ) = $this->transactionAndCreatePaymentMethod(
+                        $request,
+                        $cartItemsWithTaxesAndCosts,
+                        $currency,
+                        $user
+                    );
+
+                } else {
+                    $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
+
+                    return [
+                        'redirect' => $url,
+                        'errors' => [
+                            'payment' => 'Payment method not supported.',
+                        ],
+                    ];
                 }
-
-                list (
-                    $transactionId,
-                    $paymentMethodId,
-                    $billingAddressDB
-                ) = $this->transactionAndCreatePaymentMethod(
-                    $request,
-                    $cartItemsWithTaxesAndCosts,
-                    $currency,
-                    $user
-                );
-
-            } else {
-                $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
-
-                return [
-                    'redirect' => $url,
-                    'errors' => [
-                        'payment' => 'Payment method not supported.',
-                    ],
-                ];
             }
         } catch (PaymentFailedException $paymentFailedException) {
 
@@ -557,7 +551,6 @@ class OrderFormService
                     ]
                 );
             }
-
 
             $orderItems[] = $orderItem;
         }
@@ -900,11 +893,9 @@ class OrderFormService
                 );
             }
 
-            $itemAmountDiscounted = $this->discountService->getAmountDiscounted(
-                $cartItemsWithTaxesAndCosts['cartItems'][$key]['applyDiscount'],
-                $cartItemsWithTaxesAndCosts['totalDue'],
-                $cartItems
-            );
+            $itemAmountDiscounted =
+                $cartItemsWithTaxesAndCosts['cartItems'][$key]['totalPrice'] -
+                $cartItemsWithTaxesAndCosts['cartItems'][$key]['discountedPrice'];
 
             $totalPrice = max((float)($orderItem['initial_price'] - $itemAmountDiscounted), 0);
 
@@ -916,6 +907,7 @@ class OrderFormService
                     'total_price' => $totalPrice,
                 ]
             );
+
         }
 
         return $orderItem;
@@ -982,11 +974,11 @@ class OrderFormService
 
         if ($request->get('shipping-address-id')) {
 
-            $shippingAddressDB = $this->addressRepository
-                ->read($request->get('shipping-address-id'));
+            $shippingAddressDB = $this->addressRepository->read($request->get('shipping-address-id'));
 
-            $message = 'Order failed. Error message: could not find shipping address id: '
-                . $request->get('shipping-address-id');
+            $message =
+                'Order failed. Error message: could not find shipping address id: ' .
+                $request->get('shipping-address-id');
 
             throw_if(
                 !($shippingAddressDB),

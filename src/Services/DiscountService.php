@@ -4,15 +4,15 @@ namespace Railroad\Ecommerce\Services;
 
 class DiscountService
 {
-    const PRODUCT_AMOUNT_OFF_TYPE                      = 'product amount off';
-    const PRODUCT_PERCENT_OFF_TYPE                     = 'product percent off';
-    const SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE            = 'subscription free trial days';
+    const PRODUCT_AMOUNT_OFF_TYPE = 'product amount off';
+    const PRODUCT_PERCENT_OFF_TYPE = 'product percent off';
+    const SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE = 'subscription free trial days';
     const SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE = 'subscription recurring price amount off';
-    const ORDER_TOTAL_AMOUNT_OFF_TYPE                  = 'order total amount off';
-    const ORDER_TOTAL_PERCENT_OFF_TYPE                 = 'order total percent off';
-    const ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE         = 'order total shipping amount off';
-    const ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE        = 'order total shipping percent off';
-    const ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE          = 'order total shipping overwrite';
+    const ORDER_TOTAL_AMOUNT_OFF_TYPE = 'order total amount off';
+    const ORDER_TOTAL_PERCENT_OFF_TYPE = 'order total percent off';
+    const ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE = 'order total shipping amount off';
+    const ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE = 'order total shipping percent off';
+    const ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE = 'order total shipping overwrite';
 
     /**
      * @param $discountsToApply
@@ -21,18 +21,16 @@ class DiscountService
      */
     public function applyDiscounts($discountsToApply, $cartItems)
     {
-        foreach($discountsToApply as $discount)
-        {
+        foreach ($discountsToApply as $discount) {
             // save raw in order item discounts
             if ($discount['type'] == self::PRODUCT_AMOUNT_OFF_TYPE ||
                 $discount['type'] == self::PRODUCT_PERCENT_OFF_TYPE ||
                 $discount['type'] == self::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE ||
                 $discount['type'] == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
+
                 foreach ($cartItems as $key => $cartItem) {
-                    if (
-                        $cartItem['options']['product-id'] ==
-                        $discount['product_id']
-                    ) {
+                    if (($cartItem['options']['product-id'] == $discount['product_id']) ||
+                        ($cartItem['options']['product']['category'] == $discount['product_category'])) {
                         $cartItems[$key]['applyDiscount'][] = $discount;
                     }
                 }
@@ -58,7 +56,6 @@ class DiscountService
      */
     public function getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cartItems)
     {
-
         $amountDiscounted = 0;
 
         foreach ($discountsToApply as $discount) {
@@ -71,10 +68,8 @@ class DiscountService
                     break;
                 } elseif ($discount['type'] == self::PRODUCT_AMOUNT_OFF_TYPE ||
                     $discount['type'] == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
-                    if (
-                        $cartItem['options']['product-id'] ==
-                        $discount['product_id']
-                    ) {
+                    if (($cartItem['options']['product-id'] == $discount['product_id']) ||
+                        ($cartItem['options']['product']['category'] == $discount['product_category'])) {
                         //Check product price and discount amount.
                         //IF discount amount it's greater that product price we use product price as discounted amount to avoid negative value
                         $amountDiscounted += ($discount['amount'] > $cartItem['price']) ? $cartItem['price'] :
@@ -82,10 +77,8 @@ class DiscountService
                     }
                 } elseif ($discount['type'] == self::PRODUCT_PERCENT_OFF_TYPE) {
 
-                    if (
-                        $cartItem['options']['product-id'] ==
-                        $discount['product_id']
-                    ) {
+                    if (($cartItem['options']['product-id'] == $discount['product_id']) ||
+                        ($cartItem['options']['product']['category'] == $discount['product_category'])) {
                         $amountDiscounted += $discount['amount'] / 100 * $cartItem['price'] * $cartItem['quantity'];
                     }
                 }
@@ -104,25 +97,18 @@ class DiscountService
     {
         $amountDiscounted = 0;
 
-        if($discountsToApply)
-        {
-            foreach($discountsToApply as $discount)
-            {
-                if($discount['type'] == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE)
-                {
+        if ($discountsToApply) {
+            foreach ($discountsToApply as $discount) {
+                if ($discount['type'] == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
                     $amountDiscounted += $discount['amount'];
-                }
-                elseif($discount['type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE)
-                {
+                } elseif ($discount['type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE) {
                     $amountDiscounted += $discount['amount'] / 100 * $initialShippingCosts;
-                }
-                elseif($discount['type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE)
-                {
+                } elseif ($discount['type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
                     return $discount['amount'];
                 }
             }
         }
 
-        return max((float) ($initialShippingCosts - $amountDiscounted), 0);
+        return max((float)($initialShippingCosts - $amountDiscounted), 0);
     }
 }
