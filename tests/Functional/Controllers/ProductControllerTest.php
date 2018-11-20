@@ -633,6 +633,36 @@ class ProductControllerTest extends EcommerceTestCase
 
         //only products defined on config brand are pulled
         $this->assertEquals([$productFirstBrand->getArrayCopy()], $results->decodeResponseJson('data'));
+    }
 
+    public function test_update_product_category()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+
+        $product = $this->productRepository->create($this->faker->product());
+
+        $newCategory = $this->faker->text;
+
+        $results = $this->call('PATCH', '/product/' . $product['id'], [
+            'category' => $newCategory, 'sku' => $product['sku']
+        ]);
+
+        $jsonResponse = $results->decodeResponseJson();
+
+        //assert response status code
+        $this->assertEquals(201, $results->getStatusCode());
+
+        unset($product['discounts']);
+
+        //assert product with the new category subset of response
+        $product['category'] = $newCategory;
+        $product['updated_on']  = Carbon::now()->toDateTimeString();
+        $this->assertArraySubset($product, $jsonResponse['data'][0]);
+
+        //assert product updated in the db
+        $this->assertDatabaseHas(
+            ConfigService::$tableProduct,
+            iterator_to_array($product)
+        );
     }
 }
