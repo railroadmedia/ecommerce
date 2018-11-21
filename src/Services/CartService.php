@@ -2,8 +2,9 @@
 
 namespace Railroad\Ecommerce\Services;
 
-
 use Illuminate\Session\Store;
+use Railroad\Ecommerce\Entities\Cart;
+use Railroad\Ecommerce\Entities\CartItem;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 
 class CartService
@@ -21,6 +22,8 @@ class CartService
     const PAYMENT_PLAN_LOCKED_SESSION_KEY = 'order-form-payment-plan-locked';
     const PROMO_CODE_KEY = 'promo-code';
 
+    private $cart;
+
     /**
      * CartService constructor.
      *
@@ -31,9 +34,11 @@ class CartService
     {
         $this->session = $session;
         $this->productRepository = $productRepository;
+        $this->cart = new Cart();
     }
 
     /** Add item to cart. If the item already exists, just increase the quantity.
+     *
      * @param string $name
      * @param string $description
      * @param int $quantity
@@ -56,8 +61,7 @@ class CartService
         $subscriptionIntervalCount = null,
         $weight,
         $options = []
-    )
-    {
+    ) {
         $cartItems = $this->getAllCartItems();
 
         // if a product id is passed with any of the cart items, attach the entire product
@@ -95,20 +99,20 @@ class CartService
             }
         }
 
-       $cartItem = [
-           'id' => (bin2hex(openssl_random_pseudo_bytes(32))),
-           'name' => $name,
-           'description' => $description,
-           'quantity' => $quantity,
-           'price' => $price,
-           'totalPrice' => $quantity * $price,
-           'requiresShippingAddress' => $requiresShippingAddress,
-           'requiresBillinggAddress' => $requiresBillingAddress,
-           'subscriptionIntervalType' => $subscriptionIntervalType,
-           'subscriptionIntervalCount' => $subscriptionIntervalCount,
-           'weight' => $quantity * $weight,
-           'options' => $options
-       ];
+        $cartItem = [
+            'id' => (bin2hex(openssl_random_pseudo_bytes(32))),
+            'name' => $name,
+            'description' => $description,
+            'quantity' => $quantity,
+            'price' => $price,
+            'totalPrice' => $quantity * $price,
+            'requiresShippingAddress' => $requiresShippingAddress,
+            'requiresBillinggAddress' => $requiresBillingAddress,
+            'subscriptionIntervalType' => $subscriptionIntervalType,
+            'subscriptionIntervalCount' => $subscriptionIntervalCount,
+            'weight' => $quantity * $weight,
+            'options' => $options,
+        ];
 
         $this->session->put(ConfigService::$brand . '-' . self::SESSION_KEY . $cartItem['id'], $cartItem);
 
@@ -116,6 +120,7 @@ class CartService
     }
 
     /** Return an array with the cart items.
+     *
      * @return array
      */
     public function getAllCartItems()
@@ -123,7 +128,8 @@ class CartService
         $cartItems = [];
 
         foreach ($this->session->all() as $sessionKey => $sessionValue) {
-            if (substr($sessionKey, 0, strlen(ConfigService::$brand . '-' . self::SESSION_KEY)) == ConfigService::$brand . '-' . self::SESSION_KEY) {
+            if (substr($sessionKey, 0, strlen(ConfigService::$brand . '-' . self::SESSION_KEY)) ==
+                ConfigService::$brand . '-' . self::SESSION_KEY) {
                 $cartItem = $sessionValue;
 
                 if (!empty($cartItem['id'])) {
@@ -140,7 +146,8 @@ class CartService
     public function removeAllCartItems()
     {
         foreach ($this->session->all() as $sessionKey => $sessionValue) {
-            if (substr($sessionKey, 0, strlen(ConfigService::$brand . '-' . self::SESSION_KEY)) == ConfigService::$brand . '-' . self::SESSION_KEY) {
+            if (substr($sessionKey, 0, strlen(ConfigService::$brand . '-' . self::SESSION_KEY)) ==
+                ConfigService::$brand . '-' . self::SESSION_KEY) {
                 $this->session->remove($sessionKey);
             }
         }
@@ -156,6 +163,7 @@ class CartService
     }
 
     /** Check if the cart it's in locked state
+     *
      * @return bool
      */
     public function isLocked()
@@ -175,6 +183,7 @@ class CartService
     }
 
     /** Remove the cart item
+     *
      * @param $id
      */
     public function removeCartItem($id)
@@ -185,6 +194,7 @@ class CartService
     }
 
     /** Update cart item quantity and total price.
+     *
      * @param $cartItemId
      * @param $quantity
      */
@@ -198,6 +208,7 @@ class CartService
     }
 
     /** Get a cart item from the session based on cart item id
+     *
      * @param $id
      * @return mixed|null
      */
@@ -214,6 +225,7 @@ class CartService
     }
 
     /** Set on the session the number of payments
+     *
      * @param $numberOfPayments
      */
     public function setPaymentPlanNumberOfPayments($numberOfPayments)
@@ -226,13 +238,13 @@ class CartService
     }
 
     /** Get the number of payments
+     *
      * @return mixed|integer
      */
     public function getPaymentPlanNumberOfPayments()
     {
         if ($this->session->has(self::PAYMENT_PLAN_LOCKED_SESSION_KEY) &&
-            $this->session->get(self::PAYMENT_PLAN_LOCKED_SESSION_KEY) > 0
-        ) {
+            $this->session->get(self::PAYMENT_PLAN_LOCKED_SESSION_KEY) > 0) {
             return $this->session->get(self::PAYMENT_PLAN_LOCKED_SESSION_KEY, 1);
         }
 
@@ -240,6 +252,7 @@ class CartService
     }
 
     /** Lock payment plan
+     *
      * @param $numberOfPaymentsToForce
      */
     public function lockPaymentPlan($numberOfPaymentsToForce)
@@ -255,7 +268,8 @@ class CartService
         $this->session->remove(self::PAYMENT_PLAN_LOCKED_SESSION_KEY);
     }
 
-   /** Set promo code on the session
+    /** Set promo code on the session
+     *
      * @param string $promoCode
      */
     public function setPromoCode($promoCode)
@@ -264,6 +278,7 @@ class CartService
     }
 
     /** Get promo code from the session
+     *
      * @return mixed
      */
     public function getPromoCode()
@@ -271,4 +286,62 @@ class CartService
         return $this->session->get(self::PROMO_CODE_KEY);
     }
 
+    public function addItemToCart(
+        $name,
+        $description,
+        $quantity,
+        $price,
+        $requiresShippingAddress,
+        $requiresBillingAddress,
+        $subscriptionIntervalType = null,
+        $subscriptionIntervalCount = null,
+        $weight,
+        $options = []
+    ) {
+        $cartItems = $this->cart->getItems();
+
+        // If the item already exists, just increase the quantity
+        foreach ($cartItems as $cartItem) {
+            if (!empty($cartItem->getOptions()['product-id']) &&
+                $cartItem->getOptions()['product-id'] == $options['product-id']) {
+                $cartItem->setQuantity($cartItem->getQuantity() + $quantity);
+                $cartItem->setTotalPrice($cartItem->getTotalPrice() + $quantity * $cartItem->getPrice());
+                $this->session->put(self::SESSION_KEY, $cart);
+
+                return $cart->getItems();
+            }
+        }
+
+        $cartItem = new CartItem();
+        $cartItem->setId(bin2hex(openssl_random_pseudo_bytes(32)));
+        $cartItem->setName($name);
+        $cartItem->setDescription($description);
+        $cartItem->setQuantity($quantity);
+        $cartItem->setPrice($price);
+        $cartItem->setTotalPrice($quantity * $price);
+        $cartItem->setRequiresShippingAddress($requiresShippingAddress);
+        $cartItem->setRequiresBillingAddress($requiresBillingAddress);
+        $cartItem->setSubscriptionIntervalType($subscriptionIntervalType);
+        $cartItem->setSubscriptionIntervalCount($subscriptionIntervalCount);
+        $cartItem->setOptions($options);
+
+        $this->cart->addCartItem($cartItem);
+
+        return $this->cart->getItems();
+    }
+
+    public function calculateShippingDue()
+    {
+        return $this->cart->calculateShippingDue();
+    }
+
+    public function getCart()
+    {
+        return $this->cart->getCart();
+    }
+
+    public function getTotalDue()
+    {
+        return $this->cart->getTotalDue();
+    }
 }

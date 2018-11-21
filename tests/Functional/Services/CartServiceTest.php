@@ -41,4 +41,41 @@ class CartServiceTest extends EcommerceTestCase
     }
 
 
+    public function test_update_item_quantity_to_cart()
+    {
+        $this->classBeingTested->addItemToCart('product 1','description', 2, 10, true,
+            true,
+            null,
+            null,
+            0,
+            ['product-id' => 1]);
+        $cart = $this->classBeingTested->addItemToCart('product 1','description', 10, 10, true,
+            true,
+            null,
+            null,
+            0,
+            ['product-id' => 1]);
+
+        $this->assertEquals($cart[0]->quantity, 12);
+        $this->assertEquals($cart[0]->totalPrice, 120);
+    }
+
+    public function test_add_items_to_cart()
+    {
+        $this->classBeingTested->addItemToCart('product 1','description', 2, 10, true,
+            true,
+            null,
+            null,
+            0,
+            ['product-id' => 1]);
+
+        $cart = $this->classBeingTested->addItemToCart('product 2','description', 10, 10, true,
+            true,
+            null,
+            null,
+            0,
+            ['product-id' => 2]);
+
+        $this->assertEquals(2, count($cart));
+    }
 }
