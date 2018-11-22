@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Entities;
 
 use Illuminate\Support\Facades\Session;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Railcontent\Support\Collection;
 
 class Cart
@@ -14,10 +15,14 @@ class Cart
     const PAYMENT_PLAN_LOCKED_SESSION_KEY = 'order-form-payment-plan-locked';
     const PROMO_CODE_KEY = 'promo-code';
 
-    private $items;
+    public $items;
     private $shippingCosts;
     private $totalTax;
     private $totalDue;
+    private $paymentPlanNumberOfPayments;
+    private $discounts;
+    private $pricePerPayment;
+    private $cartItemsSubTotalAfterDiscounts;
 
     public function getItems()
     {
@@ -43,6 +48,13 @@ class Cart
         $cart = $this->getCart();
 
         $cart->items[] = $cartItem;
+        $cart->totalDue = $this->getTotalDue();
+        $cart->shippingCosts = $this->calculateShippingDue();
+        $cart->paymentPlanNumberOfPayments = $this->getPaymentPlanNumberOfPayments();
+        $cart->pricePerPayment = $this->calculatePricePerPayment();
+        $cart->discounts = $this->getDiscounts();
+        $cart->totalTax = $this->calculateTaxesDue();
+        $cart->cartItemsSubTotalAfterDiscounts = $this->getCartItemsSubTotalAfterDiscounts();
 
         Session::put(ConfigService::$brand . '-' . self::SESSION_KEY, $cart);
 
@@ -56,14 +68,14 @@ class Cart
 
     public function calculateTaxesDue()
     {
-        return $this->totalTax;
+        return $this->totalTax ?? 0;
     }
 
-    public function calculateShippingDue()
-    {
-        return $this->shippingCosts;
-
-    }
+    //    public function calculateShippingDue()
+    //    {
+    //        return $this->shippingCosts;
+    //
+    //    }
 
     public function getFirstPaymentDue()
     {
@@ -90,7 +102,7 @@ class Cart
         }
 
         $totalDueFromItems = 0;
-        $financeCharge = 0;
+        $financeCharge = ($this->getPaymentPlanNumberOfPayments() > 1) ? 1 : 0;
 
         foreach (
             $this->getCart()
@@ -98,16 +110,124 @@ class Cart
         ) {
             $totalDueFromItems += $cartItem->getTotalPrice();
         }
-        return $totalDueFromItems;
-        //        $financeCharge = 0;
-        //        return round(
-        //            $totalDueFromItems -
-        //            $this->getAmountDiscounted($totalDueFromItems) +
-        //            $this->getTax() +
-        //            $this->getShipping() +
-        //            $financeCharge,
-        //            2
-        //        );
+
+        return round(
+            $totalDueFromItems + //            $this->getAmountDiscounted($totalDueFromItems) +
+            //            $this->getTax() +
+            $this->calculateShippingDue() + $financeCharge,
+            2
+        );
     }
 
+    public function calculatePricePerPayment()
+    {
+        if ($this->getPaymentPlanNumberOfPayments() > 1) {
+            /*
+             * All shipping should always be paid in the first payment.
+             */
+            return round(
+                (($this->getTotalDue() - $this->calculateShippingDue()) / $this->getPaymentPlanNumberOfPayments()),
+                2
+            );
+        }
+
+        return $this->getTotalDue();
+    }
+
+    public function getPaymentPlanNumberOfPayments()
+    {
+        return $this->paymentPlanNumberOfPayments ?? 1;
+    }
+
+    public function setShippingCosts($shipping)
+    {
+        $this->shippingCosts = $shipping;
+    }
+
+    /**
+     * @param bool $applyDiscounts
+     * @return float
+     */
+    public function calculateShippingDue($applyDiscounts = true)
+    {
+        $amountDiscounted = 0;
+
+        if ($applyDiscounts) {
+            foreach ($this->getDiscounts() as $discount) {
+                if ($discount->type == DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
+                    $amountDiscounted += $discount->amount;
+                } elseif ($discount->type == DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE) {
+                    $amountDiscounted += $discount->amount / 100 * $this->shippingCosts;
+                } elseif ($discount->type == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
+                    return $discount->amount;
+                }
+            }
+        }
+
+        return max((float)($this->shippingCosts - $amountDiscounted), 0);
+    }
+
+    /**
+     * @return Discount[]
+     */
+    public function getDiscounts()
+    {
+        return $this->discounts ?? [];
+    }
+
+    /**
+     * @param Discount $discount
+     */
+    public function addDiscount($discount)
+    {
+        $this->discounts = $discount;
+    }
+
+    public function getTotalWeight()
+    {
+        $weight = 0.0;
+
+        foreach (
+            $this->getCart()
+                ->getItems() as $cartItem
+        ) {
+            $weight += $cartItem->getProduct()->weight * $cartItem->getQuantity();
+        }
+
+        return $weight;
+    }
+
+    public function getAmountDiscounted()
+    {
+
+    }
+
+    public function calculateInitialPricePerPayment()
+    {
+        if ($this->getPaymentPlanNumberOfPayments() > 1) {
+            /*
+             * We need to make sure we add any rounded off $$ back to the first payment.
+             */
+            $roundingFirstPaymentAdjustment =
+                ($this->calculatePricePerPayment() * $this->getPaymentPlanNumberOfPayments()) -
+                ($this->getTotalDue() - $this->calculateShippingDue());
+
+            return round(
+                $this->calculatePricePerPayment() - $roundingFirstPaymentAdjustment + $this->calculateShippingDue(),
+                2
+            );
+        }
+
+        return $this->calculatePricePerPayment();
+    }
+
+    public function setCartItemsSubTotalAfterDiscounts($cartItemsSubTotalAfterDiscounts)
+    {
+        $this->cartItemsSubTotalAfterDiscounts = $cartItemsSubTotalAfterDiscounts;
+    }
+
+    public function getCartItemsSubTotalAfterDiscounts()
+    {
+        return $this->cartItemsSubTotalAfterDiscounts;
+    }
 }

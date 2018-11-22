@@ -124,13 +124,41 @@ class OrderFormControllerTest extends EcommerceTestCase
                     'discount_id' => $discount['id'],
                     'product_id' => $product1['id'],
                     'type' => 'order total requirement',
-                    'min' => '2',
+                    'min' => '1',
                     'max' => '2000000',
                 ]
             )
         );
-
-        $cart = $this->cartService->addCartItem(
+//        $cart = $this->cartService->addCartItem(
+//            $product1['name'],
+//            $product1['description'],
+//            1,
+//            $product1['price'],
+//            $product1['is_physical'],
+//            $product1['is_physical'],
+//            $this->faker->word,
+//            rand(),
+//            $product1['weight'],
+//            [
+//                'product-id' => $product1['id'],
+//            ]
+//        );
+//
+//        $this->cartService->addCartItem(
+//            $product2['name'],
+//            $product2['description'],
+//            1,
+//            $product2['price'],
+//            $product2['is_physical'],
+//            $product2['is_physical'],
+//            $this->faker->word,
+//            rand(),
+//            $product2['weight'],
+//            [
+//                'product-id' => $product2['id'],
+//            ]
+//        );
+        $cart = $this->cartService->addItemToCart(
             $product1['name'],
             $product1['description'],
             1,
@@ -145,7 +173,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->cartService->addCartItem(
+        $this->cartService->addItemToCart(
             $product2['name'],
             $product2['description'],
             1,
@@ -191,13 +219,13 @@ class OrderFormControllerTest extends EcommerceTestCase
         ConfigService::$paypalAgreementFulfilledRoute = 'order.submit.paypal';
 
         $paypalToken = $this->faker->word;
-
+dd($this->cartService->getCart());
         $response = $this->call(
             'GET',
             '/order-paypal',
             ['token' => $paypalToken]
         );
-
+dd($response);
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());
 

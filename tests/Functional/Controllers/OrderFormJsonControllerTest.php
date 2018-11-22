@@ -3194,6 +3194,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $this->faker->discount(
                 [
                     'active' => true,
+                   'amount' => 5,
                     'type' => 'order total amount off',
                 ]
             )
@@ -3210,7 +3211,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             )
         );
 
-        $cart = $this->cartService->addCartItem(
+        $cart = $this->cartService->addItemToCart(
             $product1['name'],
             $product1['description'],
             1,
@@ -3225,7 +3226,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->cartService->addCartItem(
+        $this->cartService->addItemToCart(
             $product2['name'],
             $product2['description'],
             1,
@@ -3268,6 +3269,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'billing-email' => $billingEmailAddress,
             ]
         );
+        dd($results);
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertDatabaseHas(

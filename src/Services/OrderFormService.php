@@ -228,7 +228,7 @@ class OrderFormService
      * @param array $cartItems
      * @return array
      */
-    public function processOrderForm(
+    public function processOrderForm_old(
         Request $request,
         $cartItems
     ) {
@@ -632,7 +632,7 @@ class OrderFormService
         OrderFormSubmitRequest $request,
         $user,
         $customer,
-        $cartItemsWithTaxesAndCosts,
+        $initialPrice,
         $currency
     )
     : array {
@@ -650,7 +650,7 @@ class OrderFormService
 
         $charge = $this->stripePaymentGateway->chargeCustomerCard(
             $request->get('gateway'),
-            $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
+            $initialPrice,
             $currency,
             $card,
             $customerCreditCard
@@ -701,7 +701,7 @@ class OrderFormService
      */
     private function transactionAndCreatePaymentMethod(
         Request $request,
-        $cartItemsWithTaxesAndCosts,
+        $price,
         $currency,
         $user
     )
@@ -709,14 +709,14 @@ class OrderFormService
 
         $billingAgreementId = $this->payPalPaymentGateway->createBillingAgreement(
             $request->get('gateway'),
-            $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
+            $price,
             $currency,
             $request->get('token')
         );
 
         $transactionId = $this->payPalPaymentGateway->chargeBillingAgreement(
             $request->get('gateway'),
-            $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
+            $price,
             $currency,
             $billingAgreementId
         );
@@ -762,7 +762,7 @@ class OrderFormService
     private function rechargeCreditCard(
         OrderFormSubmitRequest $request,
         PaymentMethod $paymentMethod,
-        $cartItemsWithTaxesAndCosts,
+        $initialPrice,
         $currency
     ) {
 
@@ -787,7 +787,7 @@ class OrderFormService
 
         $charge = $this->stripePaymentGateway->chargeCustomerCard(
             $request->get('gateway'),
-            $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
+            $initialPrice,
             $currency,
             $card,
             $customer
@@ -811,12 +811,12 @@ class OrderFormService
     private function rechargeAgreement(
         OrderFormSubmitRequest $request,
         PaymentMethod $paymentMethod,
-        $cartItemsWithTaxesAndCosts,
+        $initialPrice,
         $currency
     ) {
         return $this->payPalPaymentGateway->chargeBillingAgreement(
             $request->get('gateway'),
-            $cartItemsWithTaxesAndCosts['initialPricePerPayment'],
+            $initialPrice,
             $currency,
             $paymentMethod['method']['external_id']
         );
@@ -922,20 +922,22 @@ class OrderFormService
      * @return null|\Railroad\Resora\Entities\Entity
      */
     private function createPayment(
-        $cartItemsWithTaxesAndCosts,
+       // $cartItemsWithTaxesAndCosts,
+        $paid,
+        $due,
         $charge,
         $transactionId,
         $paymentMethodId,
         $currency
     ) {
 
-        $paid = $cartItemsWithTaxesAndCosts['initialPricePerPayment'];
+       // $paid = $cartItemsWithTaxesAndCosts['initialPricePerPayment'];
 
         $externalProvider = isset($charge['id']) ? 'stripe' : 'paypal';
 
         $payment = $this->paymentRepository->create(
             [
-                'due' => $cartItemsWithTaxesAndCosts['totalDue'],
+                'due' => $due,
                 'paid' => $paid,
                 'refunded' => 0,
                 'type' => 'order',
@@ -964,7 +966,7 @@ class OrderFormService
      */
     private function createOrder(
         Request $request,
-        $cartItemsWithTaxesAndCosts,
+        $paid, $shipping,$totalDue, $totalTax,
         $user,
         $customer,
         $billingAddressDB,
@@ -1006,13 +1008,10 @@ class OrderFormService
             );
         }
 
-        $paid = $cartItemsWithTaxesAndCosts['initialPricePerPayment'];
-        $shipping = $cartItemsWithTaxesAndCosts['shippingCosts'];
-
         $order = $this->orderRepository->create(
             [
-                'due' => $cartItemsWithTaxesAndCosts['totalDue'],
-                'tax' => $cartItemsWithTaxesAndCosts['totalTax'],
+                'due' => $totalDue,
+                'tax' => $totalTax,
                 'paid' => $paid,
                 'brand' => $request->input('brand', ConfigService::$brand),
                 'user_id' => $user['id'] ?? null,
@@ -1164,5 +1163,409 @@ class OrderFormService
         );
 
         return $subscription;
+    }
+
+    /**
+     * Submit an order
+     *
+     * @param Request $request
+     * @param array $cartItems
+     * @return array
+     */
+    public function processOrderForm(
+        Request $request,
+        $cartItems
+    ) {
+        $user = auth()->user() ?? null;
+
+        if (!empty($request->get('token'))) {
+            $orderFormInput = session()->get('order-form-input', []);
+            unset($orderFormInput['token']);
+            session()->forget('order-form-input');
+            $request->merge($orderFormInput);
+        }
+
+        $currency = $request->get('currency', $this->currencyService->get());
+
+        if (!empty($request->get('account-creation-email')) && empty($user)) {
+            $user = $this->userProvider->create(
+                $request->get('account-creation-email'),
+                $request->get('account-creation-password')
+            );
+        }
+
+        //save customer if billing email exists on request
+        if ($request->has('billing-email')) {
+            $customer = $this->customerRepository->create(
+                [
+                    'email' => $request->get('billing-email'),
+                    'brand' => ConfigService::$brand,
+                    'created_on' => Carbon::now()
+                        ->toDateTimeString(),
+                ]
+            );
+        }
+
+        //set the shipping address on session
+        $shippingAddress = $this->cartAddressService->setAddress(
+            [
+                'firstName' => $request->get('shipping-first-name'),
+                'lastName' => $request->get('shipping-last-name'),
+                'streetLineOne' => $request->get('shipping-address-line-1'),
+                'streetLineTwo' => $request->get('shipping-address-line-2'),
+                'zipOrPostalCode' => $request->get('shipping-zip-or-postal-code'),
+                'city' => $request->get('shipping-city'),
+                'region' => $request->get('shipping-region'),
+                'country' => $request->get('shipping-country'),
+            ],
+            ConfigService::$shippingAddressType
+        );
+       // $shippingCosts  = $cartItems->calculateShippingDue();
+        //calculate shipping costs
+//        $shippingCosts = $this->shippingOptionsRepository->getShippingCosts(
+//                $request->get('shipping-country'),
+//                array_sum(array_column($cartItems, 'weight'))
+//            )['price'] ?? 0;
+
+        //set the billing address on session
+        $billingAddress = $this->cartAddressService->setAddress(
+            [
+                'country' => $request->get('billing-country'),
+                'region' => $request->get('billing-region'),
+                'zip' => $request->get('billing-zip-or-postal-code'),
+            ],
+            CartAddressService::BILLING_ADDRESS_TYPE
+        );
+
+        $this->cartService->setPaymentPlanNumberOfPayments(
+            $request->get('payment-plan-selector')
+        );
+        //dd($this->cartService->getCart()->getTotalDue());
+//        $cartItemsWithTaxesAndCosts = $this->taxService->calculateTaxesForCartItems(
+//            $cartItems,
+//            $billingAddress['country'],
+//            $billingAddress['region'],
+//            $shippingCosts,
+//            $currency,
+//            $this->cartService->getPromoCode()
+//        );
+//        dd($cartItemsWithTaxesAndCosts);
+        $billingAddressDB = null;
+
+        // try to make the payment
+        try {
+            if ($request->get('payment-method-id')) {
+
+                $paymentMethod = $this->paymentMethodRepository->read($request->get('payment-method-id'));
+
+                if (!$paymentMethod ||
+                    !$paymentMethod['user']['user_id'] ||
+                    $paymentMethod['user']['user_id'] != $user['id']) {
+                    $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
+
+                    return [
+                        'redirect' => $url,
+                        'errors' => [
+                            'payment' => 'Invalid Payment Method',
+                        ],
+                    ];
+                }
+
+                $charge = $transactionId = null;
+
+                if ($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+                    $charge = $this->rechargeCreditCard(
+                        $request,
+                        $paymentMethod,
+                        $this->cartService->getCart()->calculateInitialPricePerPayment(),
+                        $currency
+                    );
+                } else {
+                    $transactionId = $this->rechargeAgreement(
+                        $request,
+                        $paymentMethod,
+                        $this->cartService->getCart()->calculateInitialPricePerPayment(),
+                        $currency
+                    );
+                }
+
+                if (!$charge && !$transactionId) {
+
+                    $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
+
+                    return [
+                        'redirect' => $url,
+                        'errors' => [
+                            'payment' => 'Could not recharge existing payment method',
+                        ],
+                    ];
+                }
+
+                $paymentMethodId = $paymentMethod['id'];
+                $billingAddressDB = $paymentMethod['billing_address'];
+
+            } else {
+                if ($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE &&
+                    empty($request->get('token'))) {
+
+                    list(
+                        $charge, $paymentMethodId, $billingAddressDB
+                        ) = $this->chargeAndCreatePaymentMethod(
+                        $request,
+                        $user,
+                        $customer ?? null,
+                        $this->cartService->getCart()->calculateInitialPricePerPayment(),
+                        $currency
+                    );
+
+                } elseif ($request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE ||
+                    !empty($request->get('token'))) {
+                    if (empty($request->get('token'))) {
+
+                        $gateway = $request->get('gateway');
+                        $config = ConfigService::$paymentGateways['paypal'];
+                        $url = $config[$gateway]['paypal_api_checkout_return_url'];
+
+                        $checkoutUrl = $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl(
+                            $gateway,
+                            $url
+                        );
+
+                        session()->put('order-form-input', $request->all());
+
+                        return ['redirect' => $checkoutUrl];
+                    }
+
+                    list (
+                        $transactionId, $paymentMethodId, $billingAddressDB
+                        ) = $this->transactionAndCreatePaymentMethod(
+                        $request,
+                        $this->cartService->getCart()->calculateInitialPricePerPayment(),
+                        $currency,
+                        $user
+                    );
+
+                } else {
+                    $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
+
+                    return [
+                        'redirect' => $url,
+                        'errors' => [
+                            'payment' => 'Payment method not supported.',
+                        ],
+                    ];
+                }
+            }
+        } catch (PaymentFailedException $paymentFailedException) {
+
+            $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
+
+            return [
+                'redirect' => $url,
+                'errors' => [
+                    'payment' => $paymentFailedException->getMessage(),
+                ],
+            ];
+        } catch (\Stripe\Error\Card $exception) {
+            $exceptionData = $exception->getJsonBody();
+
+            $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
+
+            // validate UI known error format
+            if (isset($exceptionData['error']) && isset($exceptionData['error']['code'])) {
+
+                if ($request->has('redirect')) {
+                    // assume request having redirect is aware and able to proccess stripe session errors
+                    return [
+                        'redirect' => $url,
+                        'errors' => [
+                            ['stripe' => $exceptionData['error']],
+                        ],
+                    ];
+                } else {
+                    // assume request not having redirect is json request
+                    throw new StripeCardException($exceptionData['error']);
+                }
+            }
+
+            // throw generic
+            throw new PaymentFailedException($exception->getMessage());
+        } catch (\Exception $paymentFailedException) {
+            throw new PaymentFailedException($paymentFailedException->getMessage());
+        }
+
+        //create Payment
+        $payment = $this->createPayment(
+            $this->cartService->getCart()->calculateInitialPricePerPayment(),
+            $this->cartService->getCart()->getTotalDue(),
+            $charge ?? null,
+            $transactionId ?? null,
+            $paymentMethodId,
+            $currency
+        );
+
+        $this->taxService->calculateTaxesForCartItems($this->cartService->getCart(), $billingAddress['country'] ,$billingAddress['region']);
+
+        //create order
+        $order = $this->createOrder(
+            $request,
+            $this->cartService->getCart()->calculateInitialPricePerPayment(),
+            $this->cartService->getCart()->calculateShippingDue(),
+            $this->cartService->getCart()->getTotalDue(),
+            $this->cartService->getCart()->calculateTaxesDue(),
+            $user ?? null,
+            $customer ?? null,
+            $billingAddressDB,
+            $payment
+        );
+        dd($this->cartService->getCart());
+        //create payment plan
+        $paymentPlanNumbersOfPayments = $this->cartService->getPaymentPlanNumberOfPayments();
+
+        //apply order discounts
+        $amountDiscounted = $this->applyOrderDiscounts(
+            $cartItemsWithTaxesAndCosts,
+            $order,
+            $cartItems
+        );
+
+        // order items
+        $orderItems = [];
+
+        foreach ($cartItems as $key => $cartItem) {
+            $expirationDate = null;
+            $product = $this->productRepository->read($cartItem['options']['product-id']);
+
+            if (!$product['active']) {
+                continue;
+            }
+
+            $totalPrice = max(
+                (float)($cartItem['totalPrice'] + $cartItemsWithTaxesAndCosts['shippingCosts'] - $amountDiscounted),
+                0
+            );
+
+            $orderItem =
+                $this->orderItemRepository->query()
+                    ->create(
+                        [
+                            'order_id' => $order['id'],
+                            'product_id' => $product['id'],
+                            'quantity' => $cartItem['quantity'],
+                            'initial_price' => $cartItem['price'] * $cartItem['quantity'],
+                            'discount' => $amountDiscounted,
+                            'tax' => $cartItemsWithTaxesAndCosts['totalTax'],
+                            'shipping_costs' => $cartItemsWithTaxesAndCosts['shippingCosts'],
+                            'total_price' => $totalPrice,
+                            'created_on' => Carbon::now()
+                                ->toDateTimeString(),
+                        ]
+                    );
+
+            //apply order items discounts
+            $orderItem = $this->applyOrderItemDiscounts(
+                $cartItemsWithTaxesAndCosts,
+                $key,
+                $order,
+                $orderItem,
+                $cartItems
+            );
+
+            //create subscription
+            if ($product['type'] == ConfigService::$typeSubscription) {
+                $subscription = $this->createSubscription(
+                    $request->get('brand', ConfigService::$brand),
+                    $product,
+                    $order,
+                    $cartItemsWithTaxesAndCosts,
+                    $key,
+                    $cartItem,
+                    $user,
+                    $currency,
+                    $paymentMethodId,
+                    $payment,
+                    true
+                );
+                $expirationDate = $subscription['paid_until'];
+            }
+
+            //product fulfillment
+            if ($product['is_physical'] == 1) {
+                $this->orderItemFulfillmentRepository->create(
+                    [
+                        'order_id' => $order['id'],
+                        'order_item_id' => $orderItem['id'],
+                        'status' => 'pending',
+                        'created_on' => Carbon::now()
+                            ->toDateTimeString(),
+                    ]
+                );
+            }
+
+            $orderItems[] = $orderItem;
+        }
+
+        if ($paymentPlanNumbersOfPayments > 1) {
+            $this->createSubscription(
+                $request->get('brand', ConfigService::$brand),
+                null,
+                $order,
+                $cartItemsWithTaxesAndCosts,
+                0,
+                [],
+                $user,
+                $currency,
+                $paymentMethodId,
+                $payment,
+                false,
+                $paymentPlanNumbersOfPayments
+            );
+        }
+
+        //if the order failed; we throw the proper exception
+        throw_if(
+            !($order),
+            new UnprocessableEntityException('Order failed. Error message: ')
+        );
+
+        //prepare currency symbol for order invoice
+        switch ($currency) {
+            case 'USD':
+            case 'CAD':
+            default:
+                $currencySymbol = '$';
+                break;
+            case 'GBP':
+                $currencySymbol = '£';
+                break;
+            case 'EUR':
+                $currencySymbol = '€';
+                break;
+        }
+
+        try {
+            //prepare the order invoice
+            $orderInvoiceEmail = new OrderInvoice(
+                [
+                    'order' => $order,
+                    'orderItems' => $orderItems,
+                    'payment' => $payment,
+                    'currencySymbol' => $currencySymbol,
+                ]
+            );
+            $emailAddress = $user['email'] ?? $customer['email'];
+
+            Mail::to($emailAddress)
+                ->send($orderInvoiceEmail);
+        } catch (\Exception $e) {
+            error_log('Failed to send invoice for order: ' . $order['id']);
+        }
+
+        event(new GiveContentAccess($order));
+
+        //remove all items from the cart
+        $this->cartService->removeAllCartItems();
+
+        return ['order' => $order];
     }
 }

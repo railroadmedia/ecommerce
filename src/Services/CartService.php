@@ -5,7 +5,9 @@ namespace Railroad\Ecommerce\Services;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Cart;
 use Railroad\Ecommerce\Entities\CartItem;
+use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 
 class CartService
 {
@@ -15,6 +17,30 @@ class CartService
      * @var ProductRepository
      */
     private $productRepository;
+    /**
+     * @var CartAddressService
+     */
+    private $cartAddressService;
+
+    /**
+     * @var DiscountRepository
+     */
+    private $discountRepository;
+
+    /**
+     * @var ShippingOptionRepository
+     */
+    private $shippingOptionsRepository;
+
+    /**
+     * @var DiscountCriteriaService
+     */
+    private $discountCriteriaService;
+
+    /**
+     * @var DiscountService
+     */
+    private $discountService;
 
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
@@ -30,10 +56,22 @@ class CartService
      * @param Store $session
      * @param ProductRepository $productRepository
      */
-    public function __construct(Store $session, ProductRepository $productRepository)
-    {
+    public function __construct(
+        Store $session,
+        ProductRepository $productRepository,
+        DiscountRepository $discountRepository,
+        CartAddressService $cartAddressService,
+        DiscountCriteriaService $discountCriteriaService,
+        DiscountService $discountService,
+        ShippingOptionRepository $shippingOptionRepository
+    ) {
         $this->session = $session;
         $this->productRepository = $productRepository;
+        $this->discountRepository = $discountRepository;
+        $this->cartAddressService = $cartAddressService;
+        $this->discountCriteriaService = $discountCriteriaService;
+        $this->discountService = $discountService;
+        $this->shippingOptionsRepository = $shippingOptionRepository;
         $this->cart = new Cart();
     }
 
@@ -126,13 +164,13 @@ class CartService
     public function getAllCartItems()
     {
         $cartItems = [];
-
+        return $this->cart->getItems();
         foreach ($this->session->all() as $sessionKey => $sessionValue) {
             if (substr($sessionKey, 0, strlen(ConfigService::$brand . '-' . self::SESSION_KEY)) ==
                 ConfigService::$brand . '-' . self::SESSION_KEY) {
                 $cartItem = $sessionValue;
 
-                if (!empty($cartItem['id'])) {
+                if (!empty($cartItem)) {
                     $cartItems[] = $cartItem;
                 }
             }
@@ -298,17 +336,25 @@ class CartService
         $weight,
         $options = []
     ) {
-        $cartItems = $this->cart->getItems();
+        $product = $this->productRepository->read($options['product-id']);
+
+        $shippingCosts = $this->shippingOptionsRepository->getShippingCosts(
+                $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE)['country'],
+                $this->cart->getTotalWeight() + $product->weight * $quantity
+            )['price'] ?? 0;
+        $this->cart->setShippingCosts($shippingCosts);
+        $this->cart->addDiscount($this->getDiscountsToApply());
 
         // If the item already exists, just increase the quantity
-        foreach ($cartItems as $cartItem) {
+        foreach ($this->cart->getItems() as $cartItem) {
             if (!empty($cartItem->getOptions()['product-id']) &&
                 $cartItem->getOptions()['product-id'] == $options['product-id']) {
                 $cartItem->setQuantity($cartItem->getQuantity() + $quantity);
                 $cartItem->setTotalPrice($cartItem->getTotalPrice() + $quantity * $cartItem->getPrice());
-                $this->session->put(self::SESSION_KEY, $cart);
 
-                return $cart->getItems();
+                $this->session->put(self::SESSION_KEY, $this->cart);
+                $this->applyDiscounts();
+                return $this->cart->getItems();
             }
         }
 
@@ -323,9 +369,12 @@ class CartService
         $cartItem->setRequiresBillingAddress($requiresBillingAddress);
         $cartItem->setSubscriptionIntervalType($subscriptionIntervalType);
         $cartItem->setSubscriptionIntervalCount($subscriptionIntervalCount);
+        $cartItem->setProduct($product);
         $cartItem->setOptions($options);
 
         $this->cart->addCartItem($cartItem);
+
+        $this->applyDiscounts();
 
         return $this->cart->getItems();
     }
@@ -344,4 +393,75 @@ class CartService
     {
         return $this->cart->getTotalDue();
     }
+
+    public function getDiscountsToApply()
+    {
+        $discountsToApply = [];
+        $activeDiscounts =
+            $this->discountRepository->query()
+                ->where('active', 1)
+                ->get();
+
+        foreach ($activeDiscounts as $activeDiscount) {
+            $criteriaMet = true;
+            foreach ($activeDiscount->criteria as $discountCriteria) {
+                if (!$this->discountCriteriaService->discountCriteriaMetForOrder(
+                    $discountCriteria,
+                    $this->cart,
+                    $this->getPromoCode()
+                )) {
+                    $criteriaMet = false;
+                }
+            }
+
+            if ($criteriaMet) {
+                $discountsToApply[$activeDiscount->id] = $activeDiscount;
+            }
+        }
+
+        return $discountsToApply;
+    }
+
+    public function applyDiscounts()
+    {
+
+        foreach ($this->cart->getCart()->getDiscounts() as $discount) {
+            foreach ($this->cart->getCart()->getItems() as $item) {
+                if (($discount['product_id'] == $item->getOptions()['product-id']) ||
+                    ($discount['product_category'] == $item->getProduct()['category'])) {
+                    $productDiscount = 0;
+                    if ($discount->type == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
+                        $productDiscount = $discount->amount * $item['quantity'];
+                    }
+
+                    if ($discount->type == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+                        $productDiscount = $discount->amount / 100 * $item['price'] * $item['quantity'];
+                    }
+
+                    if ($discount->type == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
+                        $productDiscount = $discount->amount * $item['quantity'];
+                    }
+                    $item->setDiscountedPrice(
+                        (($item->getTotalPrice() - $productDiscount) > 0) ? $item->getTotalPrice() - $productDiscount :
+                            0
+                    );
+
+                }
+            }
+        }
+
+        $discountedAmount =
+            $this->discountService->getAmountDiscounted(
+                $this->cart->getDiscounts(),
+                $this->cart->getTotalDue(),
+                $this->cart->getItems()
+            );
+
+        $totalAfterDiscount = $this->cart->getTotalDue() - $discountedAmount;
+
+        $this->cart->getCart()->setCartItemsSubTotalAfterDiscounts($totalAfterDiscount > 0 ? $totalAfterDiscount : 0);
+
+        return $this->cart->getCart();
+    }
+
 }

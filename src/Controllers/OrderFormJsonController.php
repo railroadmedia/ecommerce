@@ -129,7 +129,8 @@ class OrderFormJsonController extends BaseController
      */
     public function submitOrder(OrderFormSubmitRequest $request)
     {
-        $cartItems = $this->cartService->getAllCartItems();
+        //$cartItems = $this->cartService->getAllCartItems();
+        $cartItems = $this->cartService->getCart();
 
         //if the cart it's empty; we throw an exception
         throw_if(

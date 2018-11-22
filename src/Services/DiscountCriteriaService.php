@@ -48,19 +48,18 @@ class DiscountCriteriaService
      */
     public function discountCriteriaMetForOrder(
         $criteria = [],
-        $cartItems = [],
-        $shippingCosts = 0,
+        $cart,
         $promoCode = ''
     ) {
             switch ($criteria['type']) {
                 case self::PRODUCT_QUANTITY_REQUIREMENT_TYPE:
-                    return $this->productQuantityRequirementMet($cartItems, $criteria);
+                    return $this->productQuantityRequirementMet($cart->getItems(), $criteria);
                 case self::DATE_REQUIREMENT_TYPE:
                     return $this->orderDateRequirement($criteria);
                 case self::ORDER_TOTAL_REQUIREMENT_TYPE:
-                    return $this->orderTotalRequirement($cartItems, $criteria);
+                    return $this->orderTotalRequirement($cart, $criteria);
                 case self::SHIPPING_TOTAL_REQUIREMENT_TYPE:
-                    return $this->orderShippingTotalRequirement($shippingCosts, $criteria);
+                    return $this->orderShippingTotalRequirement($cart->calculateShippingDue(false), $criteria);
                 case self::SHIPPING_COUNTRY_REQUIREMENT_TYPE:
                     return $this->orderShippingCountryRequirement($criteria);
                 case self::PROMO_CODE_REQUIREMENT_TYPE:
@@ -120,9 +119,9 @@ class DiscountCriteriaService
      * @param array $discountCriteria
      * @return bool
      */
-    public function orderTotalRequirement(array $cartItems, array $discountCriteria)
+    public function orderTotalRequirement($cart, array $discountCriteria)
     {
-        $cartItemsTotalWithoutTaxAndShipping = array_sum(array_column($cartItems, 'totalPrice'));
+        $cartItemsTotalWithoutTaxAndShipping = $cart->getTotalDue();
 
         if ($cartItemsTotalWithoutTaxAndShipping >= (float)$discountCriteria['min'] &&
             $cartItemsTotalWithoutTaxAndShipping <= (float)$discountCriteria['max']) {

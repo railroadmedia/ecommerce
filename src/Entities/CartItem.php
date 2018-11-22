@@ -14,6 +14,8 @@ class CartItem
     public $requiresBillingAddress;
     public $subscriptionIntervalType;
     public $subscriptionIntervalCount;
+    public $discountedPrice;
+    public $product;
     public $options = [];
 
     /**
@@ -191,4 +193,32 @@ class CartItem
     {
         $this->totalPrice = $totalPrice;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getProduct()
+    {
+        return $this->product;
+    }
+
+    /**
+     * @param mixed $quantity
+     */
+    public function setProduct($product)
+    {
+        $this->product = $product;
+    }
+
+    public function setDiscountedPrice($price)
+    {
+        $this->discountedPrice = $price;
+    }
+
+    public function getDiscountedPrice()
+    {
+        return $this->discountedPrice;
+    }
+
+
 }
