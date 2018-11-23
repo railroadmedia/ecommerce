@@ -15,6 +15,7 @@ class CartItem
     public $subscriptionIntervalType;
     public $subscriptionIntervalCount;
     public $discountedPrice;
+    public $appliedDiscounts;
     public $product;
     public $options = [];
 
@@ -219,6 +220,23 @@ class CartItem
     {
         return $this->discountedPrice;
     }
+
+    /**
+     * @return Discount[]
+     */
+    public function getAppliedDiscounts()
+    {
+        return $this->appliedDiscounts ?? [];
+    }
+
+    /**
+     * @param Discount $discount
+     */
+    public function addAppliedDiscount($discount)
+    {
+        $this->appliedDiscounts = $discount;
+    }
+
 
 
 }

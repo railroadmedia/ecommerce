@@ -53,7 +53,7 @@ class DiscountCriteriaService
     ) {
             switch ($criteria['type']) {
                 case self::PRODUCT_QUANTITY_REQUIREMENT_TYPE:
-                    return $this->productQuantityRequirementMet($cart->getItems(), $criteria);
+                    return $this->productQuantityRequirementMet($cart, $criteria);
                 case self::DATE_REQUIREMENT_TYPE:
                     return $this->orderDateRequirement($criteria);
                 case self::ORDER_TOTAL_REQUIREMENT_TYPE:
@@ -76,13 +76,13 @@ class DiscountCriteriaService
      * @param array $discountCriteria
      * @return bool
      */
-    public function productQuantityRequirementMet(array $cartItems, array $discountCriteria)
+    public function productQuantityRequirementMet($cart, array $discountCriteria)
     {
 
-        foreach ($cartItems as $cartItem) {
-            if (($cartItem['options']['product-id'] == $discountCriteria['product_id']) &&
-                ($cartItem['quantity'] >= (integer)$discountCriteria['min']) &&
-                ($cartItem['quantity'] <= (integer)$discountCriteria['max'])) {
+        foreach ($cart->getItems() as $cartItem) {
+            if (($cartItem->getOptions()['product-id'] == $discountCriteria['product_id']) &&
+                ($cartItem->getQuantity() >= (integer)$discountCriteria['min']) &&
+                ($cartItem->getQuantity() <= (integer)$discountCriteria['max'])) {
                 return true;
             }
         }

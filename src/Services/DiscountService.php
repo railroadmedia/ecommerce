@@ -19,7 +19,7 @@ class DiscountService
      * @param $cartItems
      * @return mixed
      */
-    public function applyDiscounts($discountsToApply, $cartItems)
+    public function applyDiscounts($discountsToApply, $cart)
     {
         foreach ($discountsToApply as $discount) {
             // save raw in order item discounts
@@ -28,10 +28,10 @@ class DiscountService
                 $discount['type'] == self::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE ||
                 $discount['type'] == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
 
-                foreach ($cartItems as $key => $cartItem) {
-                    if (($cartItem['options']['product-id'] == $discount['product_id']) ||
-                        ($cartItem['options']['product']['category'] == $discount['product_category'])) {
-                        $cartItems[$key]['applyDiscount'][] = $discount;
+                foreach ($cart->getItems() as $key => $cartItem) {
+                     if (($cartItem->getProduct()['id'] == $discount['product_id']) ||
+                        ($cartItem->getProduct()['category'] == $discount['product_category'])) {
+                        $cartItem->addAppliedDiscount($discount);
                     }
                 }
             }
@@ -42,11 +42,13 @@ class DiscountService
                 $discount['type'] == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE ||
                 $discount['type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE ||
                 $discount['type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
-                $cartItems['applyDiscount'][] = $discount;
+
+                //$cart->addDiscount($discount);
+
             }
         }
 
-        return $cartItems;
+        return $cart->getItems();
     }
 
     /**
@@ -68,18 +70,20 @@ class DiscountService
                     break;
                 } elseif ($discount['type'] == self::PRODUCT_AMOUNT_OFF_TYPE ||
                     $discount['type'] == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
-                    if (($cartItem['options']['product-id'] == $discount['product_id']) ||
-                        ($cartItem['options']['product']['category'] == $discount['product_category'])) {
+                    if (($cartItem->getProduct()['id'] == $discount['product_id']) ||
+                        ($cartItem->getProduct()['category'] == $discount['product_category'])) {
                         //Check product price and discount amount.
                         //IF discount amount it's greater that product price we use product price as discounted amount to avoid negative value
-                        $amountDiscounted += ($discount['amount'] > $cartItem['price']) ? $cartItem['price'] :
-                            $discount['amount'] * $cartItem['quantity'];
+                        $amountDiscounted += ($discount['amount'] > $cartItem->getPrice()) ? $cartItem->getPrice() :
+                            $discount['amount'] * $cartItem->getQuantity();
+                       // $cartItem->addDiscount($discount);
                     }
                 } elseif ($discount['type'] == self::PRODUCT_PERCENT_OFF_TYPE) {
 
-                    if (($cartItem['options']['product-id'] == $discount['product_id']) ||
-                        ($cartItem['options']['product']['category'] == $discount['product_category'])) {
-                        $amountDiscounted += $discount['amount'] / 100 * $cartItem['price'] * $cartItem['quantity'];
+                    if (($cartItem->getProduct()['id'] == $discount['product_id']) ||
+                        ($cartItem->getProduct()['category'] == $discount['product_category'])) {
+                        $amountDiscounted += $discount['amount'] / 100 * $cartItem->getPrice() * $cartItem->getQuantity();
+                        //$cartItem->addDiscount($discount);
                     }
                 }
             }

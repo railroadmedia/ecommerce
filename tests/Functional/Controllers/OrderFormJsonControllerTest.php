@@ -3211,7 +3211,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             )
         );
 
-        $cart = $this->cartService->addItemToCart(
+        $cart = $this->cartService->addCartItem(
             $product1['name'],
             $product1['description'],
             1,
@@ -3226,7 +3226,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->cartService->addItemToCart(
+        $this->cartService->addCartItem(
             $product2['name'],
             $product2['description'],
             1,
@@ -3269,7 +3269,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'billing-email' => $billingEmailAddress,
             ]
         );
-        dd($results);
+
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertDatabaseHas(

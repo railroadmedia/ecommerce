@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Railroad\Ecommerce\Entities\Cart;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\OrderRepository;
@@ -36,7 +37,12 @@ class TaxService
     /**
      * @var \Railroad\Ecommerce\Services\CartService
      */
-    private $cartService;
+    private $cart;
+
+    /**
+     * @var CartAddressService
+     */
+    private $cartAddressService;
 
     /**
      * TaxService constructor.
@@ -53,15 +59,16 @@ class TaxService
         OrderRepository $orderRepository,
         DiscountCriteriaService $discountCriteriaService,
         DiscountService $discountService,
-        CartService $cartService,
-        DiscountRepository $discountRepository
+        DiscountRepository $discountRepository,
+        CartAddressService $cartAddressService
     ) {
         $this->orderItemRepository = $orderItemRepository;
         $this->orderRepository = $orderRepository;
         $this->discountCriteriaService = $discountCriteriaService;
         $this->discountService = $discountService;
-        $this->cartService = $cartService;
+        $this->cart = new Cart();
         $this->discountRepository = $discountRepository;
+        $this->cartAddressService = $cartAddressService;
     }
 
     /** Calculate the tax rate based on country and region
@@ -120,7 +127,9 @@ class TaxService
                 ->where('active', 1)
                 ->get();
 
-        foreach ($cartItems as $key => $item) {
+        foreach ($cartItems as $key => $item1) {
+            $item = (array)$item1;
+            //dd($item['totalPrice']);
             $cartItems[$key]['totalPrice'] =
                 ConfigService::$defaultCurrencyPairPriceOffsets[$currency][$item['totalPrice']] ?? $item['totalPrice'];
 
@@ -245,29 +254,39 @@ class TaxService
         return $costs * $this->getTaxRate($country, $region);
     }
 
-    public function calculateTaxesForCartItems($cart, $country, $region, $shippingCosts = 0, $currency = null)
+    public function calculateTaxesForCartItems($shippingCosts = 0, $currency = null)
     {
-        $taxRate = $this->getTaxRate($country, $region);
-
-        $discountsToApply = $cart->getDiscounts();
-
-        $this->discountService->applyDiscounts($discountsToApply, $cart->getItems());
-
+        $taxAmount = 0;
+        $cart = $this->cart->getCart();
         $cartItemsTotalDue = $cart->getTotalDue();
-        $discount = $this->discountService->getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cart->getItems());
+        if ($cartItemsTotalDue > 0) {
+            $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
 
-        $shippingCostsWithDiscount =
-            $this->discountService->getShippingCostsDiscounted($discountsToApply, $cart->calculateShippingDue(true));
-        $cartItemsTotalDueDiscounted = $cartItemsTotalDue - $discount;
+            $taxRate = $this->getTaxRate($billingAddress['country'], $billingAddress['region']);
 
+           $discountsToApply = $cart->getDiscounts();
+//
+           $this->discountService->applyDiscounts($discountsToApply, $cart);
+//
+            $discount =
+                $this->discountService->getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cart->getItems());
 
-        $productsTaxAmount = round($cartItemsTotalDueDiscounted * $taxRate, 2);
+            $shippingCostsWithDiscount = $this->discountService->getShippingCostsDiscounted(
+                $discountsToApply,
+                $cart->calculateShippingDue(true)
+            );
 
-        $shippingTaxAmount = round((float)$shippingCostsWithDiscount * $taxRate, 2);
+            $cartItemsTotalDueDiscounted = $cartItemsTotalDue - $discount;
 
-        $taxAmount = $productsTaxAmount + $shippingTaxAmount;
+            $productsTaxAmount = max(round($cartItemsTotalDueDiscounted * $taxRate, 2),0);
 
-        $this->cartService->getCart()->setTaxesDue($taxAmount);
+            $shippingTaxAmount = max(round((float)$shippingCostsWithDiscount * $taxRate, 2),0);
+
+            $taxAmount = $productsTaxAmount + $shippingTaxAmount;
+        }
+
+        $this->cart->getCart()
+            ->setTaxesDue($taxAmount);
 
         return $taxAmount;
     }

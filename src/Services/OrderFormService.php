@@ -828,37 +828,21 @@ class OrderFormService
      * @param $cartItems
      * @return float|int
      */
-    private function applyOrderDiscounts(
-        $cartItemsWithTaxesAndCosts,
-        $order,
-        $cartItems
-    ) {
-        $amountDiscounted = 0;
-
-        foreach ($cartItemsWithTaxesAndCosts['cartItems'] as $item) {
-            if (array_key_exists('applyDiscount', $item)) {
-                foreach ($item['applyDiscount'] as $orderDiscount) {
-
-                    //save order discount
-                    $orderDiscount = $this->orderDiscountRepository->create(
-                        [
-                            'order_id' => $order['id'],
-                            'discount_id' => $orderDiscount['id'],
-                            'created_on' => Carbon::now()
-                                ->toDateTimeString(),
-                        ]
-                    );
-                }
-
-                $amountDiscounted =
-                    array_sum(array_column($cartItems, 'totalPrice')) +
-                    $cartItemsWithTaxesAndCosts['shippingCosts'] -
-                    $cartItemsWithTaxesAndCosts['totalDue'];
-
-            }
+    private function applyOrderDiscounts($order)
+    {
+        foreach ($this->cartService->getDiscountsToApply() as $discount) {
+            //save order discount
+            $orderDiscount = $this->orderDiscountRepository->create(
+                [
+                    'order_id' => $order['id'],
+                    'discount_id' => $discount['id'],
+                    'created_on' => Carbon::now()
+                        ->toDateTimeString(),
+                ]
+            );
         }
+        return true;
 
-        return $amountDiscounted;
     }
 
     /**
@@ -922,7 +906,7 @@ class OrderFormService
      * @return null|\Railroad\Resora\Entities\Entity
      */
     private function createPayment(
-       // $cartItemsWithTaxesAndCosts,
+        // $cartItemsWithTaxesAndCosts,
         $paid,
         $due,
         $charge,
@@ -931,7 +915,7 @@ class OrderFormService
         $currency
     ) {
 
-       // $paid = $cartItemsWithTaxesAndCosts['initialPricePerPayment'];
+        // $paid = $cartItemsWithTaxesAndCosts['initialPricePerPayment'];
 
         $externalProvider = isset($charge['id']) ? 'stripe' : 'paypal';
 
@@ -966,7 +950,10 @@ class OrderFormService
      */
     private function createOrder(
         Request $request,
-        $paid, $shipping,$totalDue, $totalTax,
+        $paid,
+        $shipping,
+        $totalDue,
+        $totalTax,
         $user,
         $customer,
         $billingAddressDB,
@@ -1220,12 +1207,6 @@ class OrderFormService
             ],
             ConfigService::$shippingAddressType
         );
-       // $shippingCosts  = $cartItems->calculateShippingDue();
-        //calculate shipping costs
-//        $shippingCosts = $this->shippingOptionsRepository->getShippingCosts(
-//                $request->get('shipping-country'),
-//                array_sum(array_column($cartItems, 'weight'))
-//            )['price'] ?? 0;
 
         //set the billing address on session
         $billingAddress = $this->cartAddressService->setAddress(
@@ -1240,16 +1221,7 @@ class OrderFormService
         $this->cartService->setPaymentPlanNumberOfPayments(
             $request->get('payment-plan-selector')
         );
-        //dd($this->cartService->getCart()->getTotalDue());
-//        $cartItemsWithTaxesAndCosts = $this->taxService->calculateTaxesForCartItems(
-//            $cartItems,
-//            $billingAddress['country'],
-//            $billingAddress['region'],
-//            $shippingCosts,
-//            $currency,
-//            $this->cartService->getPromoCode()
-//        );
-//        dd($cartItemsWithTaxesAndCosts);
+
         $billingAddressDB = null;
 
         // try to make the payment
@@ -1277,14 +1249,16 @@ class OrderFormService
                     $charge = $this->rechargeCreditCard(
                         $request,
                         $paymentMethod,
-                        $this->cartService->getCart()->calculateInitialPricePerPayment(),
+                        $this->cartService->getCart()
+                            ->calculateInitialPricePerPayment(),
                         $currency
                     );
                 } else {
                     $transactionId = $this->rechargeAgreement(
                         $request,
                         $paymentMethod,
-                        $this->cartService->getCart()->calculateInitialPricePerPayment(),
+                        $this->cartService->getCart()
+                            ->calculateInitialPricePerPayment(),
                         $currency
                     );
                 }
@@ -1314,7 +1288,8 @@ class OrderFormService
                         $request,
                         $user,
                         $customer ?? null,
-                        $this->cartService->getCart()->calculateInitialPricePerPayment(),
+                        $this->cartService->getCart()
+                            ->calculateInitialPricePerPayment(),
                         $currency
                     );
 
@@ -1340,7 +1315,8 @@ class OrderFormService
                         $transactionId, $paymentMethodId, $billingAddressDB
                         ) = $this->transactionAndCreatePaymentMethod(
                         $request,
-                        $this->cartService->getCart()->calculateInitialPricePerPayment(),
+                        $this->cartService->getCart()
+                            ->calculateInitialPricePerPayment(),
                         $currency,
                         $user
                     );
@@ -1396,101 +1372,106 @@ class OrderFormService
 
         //create Payment
         $payment = $this->createPayment(
-            $this->cartService->getCart()->calculateInitialPricePerPayment(),
-            $this->cartService->getCart()->getTotalDue(),
+            $this->cartService->getCart()
+                ->calculateInitialPricePerPayment(),
+            $this->cartService->getCart()
+                ->getTotalDue(),
             $charge ?? null,
             $transactionId ?? null,
             $paymentMethodId,
             $currency
         );
 
-        $this->taxService->calculateTaxesForCartItems($this->cartService->getCart(), $billingAddress['country'] ,$billingAddress['region']);
-
         //create order
         $order = $this->createOrder(
             $request,
-            $this->cartService->getCart()->calculateInitialPricePerPayment(),
-            $this->cartService->getCart()->calculateShippingDue(),
-            $this->cartService->getCart()->getTotalDue(),
-            $this->cartService->getCart()->calculateTaxesDue(),
+            $this->cartService->getCart()
+                ->calculateInitialPricePerPayment(),
+            $this->cartService->getCart()
+                ->calculateShippingDue(),
+            $this->cartService->getCart()
+                ->getTotalDue(),
+            $this->cartService->getCart()
+                ->calculateTaxesDue(),
             $user ?? null,
             $customer ?? null,
             $billingAddressDB,
             $payment
         );
-        dd($this->cartService->getCart());
+
         //create payment plan
         $paymentPlanNumbersOfPayments = $this->cartService->getPaymentPlanNumberOfPayments();
 
         //apply order discounts
-        $amountDiscounted = $this->applyOrderDiscounts(
-            $cartItemsWithTaxesAndCosts,
-            $order,
-            $cartItems
-        );
+        $this->applyOrderDiscounts($order);
 
         // order items
         $orderItems = [];
 
-        foreach ($cartItems as $key => $cartItem) {
+        foreach (
+            $this->cartService->getCart()
+                ->getItems() as $key => $cartItem
+        ) {
             $expirationDate = null;
-            $product = $this->productRepository->read($cartItem['options']['product-id']);
+            //$product = $this->productRepository->read($cartItem['options']['product-id']);
 
-            if (!$product['active']) {
+            if (!$cartItem->getProduct()['active']) {
                 continue;
             }
 
-            $totalPrice = max(
-                (float)($cartItem['totalPrice'] + $cartItemsWithTaxesAndCosts['shippingCosts'] - $amountDiscounted),
-                0
-            );
+            //            $totalPrice = max(
+            //                (float)($cartItem['totalPrice'] + $cartItemsWithTaxesAndCosts['shippingCosts'] - $amountDiscounted),
+            //                0
+            //            );
 
             $orderItem =
                 $this->orderItemRepository->query()
                     ->create(
                         [
                             'order_id' => $order['id'],
-                            'product_id' => $product['id'],
-                            'quantity' => $cartItem['quantity'],
-                            'initial_price' => $cartItem['price'] * $cartItem['quantity'],
-                            'discount' => $amountDiscounted,
-                            'tax' => $cartItemsWithTaxesAndCosts['totalTax'],
-                            'shipping_costs' => $cartItemsWithTaxesAndCosts['shippingCosts'],
-                            'total_price' => $totalPrice,
+                            'product_id' => $cartItem->getProduct()['id'],
+                            'quantity' => $cartItem->getQuantity(),
+                            'initial_price' => $cartItem->getPrice(),
+                            'discount' => 0,
+                            'tax' => $this->cartService->getCart()
+                                ->calculateTaxesDue(),
+                            'shipping_costs' => $this->cartService->getCart()
+                                ->calculateShippingDue(),
+                            'total_price' => $cartItem->getTotalPrice(),
                             'created_on' => Carbon::now()
                                 ->toDateTimeString(),
                         ]
                     );
-
+dd($this->cartService->getCart());
             //apply order items discounts
-            $orderItem = $this->applyOrderItemDiscounts(
-                $cartItemsWithTaxesAndCosts,
-                $key,
-                $order,
-                $orderItem,
-                $cartItems
-            );
+                        $orderItem = $this->applyOrderItemDiscounts(
+                            $cartItemsWithTaxesAndCosts,
+                            $key,
+                            $order,
+                            $orderItem,
+                            $cartItems
+                        );
 
             //create subscription
-            if ($product['type'] == ConfigService::$typeSubscription) {
-                $subscription = $this->createSubscription(
-                    $request->get('brand', ConfigService::$brand),
-                    $product,
-                    $order,
-                    $cartItemsWithTaxesAndCosts,
-                    $key,
-                    $cartItem,
-                    $user,
-                    $currency,
-                    $paymentMethodId,
-                    $payment,
-                    true
-                );
-                $expirationDate = $subscription['paid_until'];
-            }
+            //            if ($product['type'] == ConfigService::$typeSubscription) {
+            //                $subscription = $this->createSubscription(
+            //                    $request->get('brand', ConfigService::$brand),
+            //                    $product,
+            //                    $order,
+            //                    $cartItemsWithTaxesAndCosts,
+            //                    $key,
+            //                    $cartItem,
+            //                    $user,
+            //                    $currency,
+            //                    $paymentMethodId,
+            //                    $payment,
+            //                    true
+            //                );
+            //                $expirationDate = $subscription['paid_until'];
+            //            }
 
             //product fulfillment
-            if ($product['is_physical'] == 1) {
+            if ($cartItem->getProduct()['is_physical'] == 1) {
                 $this->orderItemFulfillmentRepository->create(
                     [
                         'order_id' => $order['id'],
@@ -1504,23 +1485,23 @@ class OrderFormService
 
             $orderItems[] = $orderItem;
         }
-
-        if ($paymentPlanNumbersOfPayments > 1) {
-            $this->createSubscription(
-                $request->get('brand', ConfigService::$brand),
-                null,
-                $order,
-                $cartItemsWithTaxesAndCosts,
-                0,
-                [],
-                $user,
-                $currency,
-                $paymentMethodId,
-                $payment,
-                false,
-                $paymentPlanNumbersOfPayments
-            );
-        }
+        //dd('out');
+        //        if ($paymentPlanNumbersOfPayments > 1) {
+        //            $this->createSubscription(
+        //                $request->get('brand', ConfigService::$brand),
+        //                null,
+        //                $order,
+        //                $cartItemsWithTaxesAndCosts,
+        //                0,
+        //                [],
+        //                $user,
+        //                $currency,
+        //                $paymentMethodId,
+        //                $payment,
+        //                false,
+        //                $paymentPlanNumbersOfPayments
+        //            );
+        //        }
 
         //if the order failed; we throw the proper exception
         throw_if(

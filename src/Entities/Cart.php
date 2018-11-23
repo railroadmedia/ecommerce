@@ -19,10 +19,9 @@ class Cart
     private $shippingCosts;
     private $totalTax;
     private $totalDue;
-    private $paymentPlanNumberOfPayments;
+    //private $paymentPlanNumberOfPayments;
     private $discounts;
-    private $pricePerPayment;
-    private $cartItemsSubTotalAfterDiscounts;
+    private $totalDiscountAmount;
 
     public function getItems()
     {
@@ -46,15 +45,12 @@ class Cart
     public function addCartItem($cartItem)
     {
         $cart = $this->getCart();
-
         $cart->items[] = $cartItem;
         $cart->totalDue = $this->getTotalDue();
-        $cart->shippingCosts = $this->calculateShippingDue();
-        $cart->paymentPlanNumberOfPayments = $this->getPaymentPlanNumberOfPayments();
-        $cart->pricePerPayment = $this->calculatePricePerPayment();
         $cart->discounts = $this->getDiscounts();
+        $cart->shippingCosts = $this->calculateShippingDue();
         $cart->totalTax = $this->calculateTaxesDue();
-        $cart->cartItemsSubTotalAfterDiscounts = $this->getCartItemsSubTotalAfterDiscounts();
+        // $cart->paymentPlanNumberOfPayments = $this->getPaymentPlanNumberOfPayments();
 
         Session::put(ConfigService::$brand . '-' . self::SESSION_KEY, $cart);
 
@@ -68,7 +64,7 @@ class Cart
 
     public function calculateTaxesDue()
     {
-        return $this->totalTax ?? 0;
+        return max((float)($this->totalTax), 0);
     }
 
     //    public function calculateShippingDue()
@@ -97,10 +93,6 @@ class Cart
 
     public function getTotalDue()
     {
-        if (!is_null($this->totalDue)) {
-            return $this->totalDue;
-        }
-
         $totalDueFromItems = 0;
         $financeCharge = ($this->getPaymentPlanNumberOfPayments() > 1) ? 1 : 0;
 
@@ -110,9 +102,8 @@ class Cart
         ) {
             $totalDueFromItems += $cartItem->getTotalPrice();
         }
-
         return round(
-            $totalDueFromItems + //            $this->getAmountDiscounted($totalDueFromItems) +
+            $totalDueFromItems +
             //            $this->getTax() +
             $this->calculateShippingDue() + $financeCharge,
             2
@@ -136,8 +127,21 @@ class Cart
 
     public function getPaymentPlanNumberOfPayments()
     {
-        return $this->paymentPlanNumberOfPayments ?? 1;
+        if (Session::has(self::PAYMENT_PLAN_LOCKED_SESSION_KEY) &&
+            Session::get(self::PAYMENT_PLAN_LOCKED_SESSION_KEY) > 0) {
+            return Session::get(self::PAYMENT_PLAN_LOCKED_SESSION_KEY, 1);
+        }
+
+        return Session::get(self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY, 1);
     }
+
+    //    public function setPaymentPlanNumberOfPayments($paymentPlanNumberOfPayments)
+    //    {
+    //
+    //        $this->paymentPlanNumberOfPayments = $paymentPlanNumberOfPayments;
+    //        var_dump($paymentPlanNumberOfPayments.'======setPaymentPlanNumberOfPayments==================='.$this->getPaymentPlanNumberOfPayments());
+    //        return $this;
+    //    }
 
     public function setShippingCosts($shipping)
     {
@@ -153,6 +157,7 @@ class Cart
         $amountDiscounted = 0;
 
         if ($applyDiscounts) {
+
             foreach ($this->getDiscounts() as $discount) {
                 if ($discount->type == DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
                     $amountDiscounted += $discount->amount;
@@ -221,13 +226,23 @@ class Cart
         return $this->calculatePricePerPayment();
     }
 
-    public function setCartItemsSubTotalAfterDiscounts($cartItemsSubTotalAfterDiscounts)
+    //    public function setCartItemsSubTotalAfterDiscounts($cartItemsSubTotalAfterDiscounts)
+    //    {
+    //        $this->cartItemsSubTotalAfterDiscounts = $cartItemsSubTotalAfterDiscounts;
+    //    }
+
+    public function calculateCartItemsSubTotalAfterDiscounts()
     {
-        $this->cartItemsSubTotalAfterDiscounts = $cartItemsSubTotalAfterDiscounts;
+        return max((float)($this->totalDue - $this->totalDiscountAmount + $this->shippingCosts + $this->totalTax), 0);
     }
 
-    public function getCartItemsSubTotalAfterDiscounts()
+    public function setTotalDiscountAmount($discount)
     {
-        return $this->cartItemsSubTotalAfterDiscounts;
+        $this->totalDiscountAmount = $discount;
+    }
+
+    public function getTotalDiscountAmount()
+    {
+        return $this->totalDiscountAmount;
     }
 }

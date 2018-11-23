@@ -114,7 +114,9 @@ class OrderFormControllerTest extends EcommerceTestCase
             $this->faker->discount(
                 [
                     'active' => true,
-                    'type' => 'order total amount off',
+                    'amount' => 49,
+                    'type' => 'product amount off',
+                    'product_id' => 1,
                 ]
             )
         );
@@ -123,7 +125,7 @@ class OrderFormControllerTest extends EcommerceTestCase
                 [
                     'discount_id' => $discount['id'],
                     'product_id' => $product1['id'],
-                    'type' => 'order total requirement',
+                    'type' => 'product quantity requirement',
                     'min' => '1',
                     'max' => '2000000',
                 ]
@@ -158,7 +160,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 //                'product-id' => $product2['id'],
 //            ]
 //        );
-        $cart = $this->cartService->addItemToCart(
+        $cart = $this->cartService->addCartItem(
             $product1['name'],
             $product1['description'],
             1,
@@ -173,7 +175,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->cartService->addItemToCart(
+        $this->cartService->addCartItem(
             $product2['name'],
             $product2['description'],
             1,
@@ -219,13 +221,13 @@ class OrderFormControllerTest extends EcommerceTestCase
         ConfigService::$paypalAgreementFulfilledRoute = 'order.submit.paypal';
 
         $paypalToken = $this->faker->word;
-dd($this->cartService->getCart());
+
         $response = $this->call(
             'GET',
             '/order-paypal',
             ['token' => $paypalToken]
         );
-dd($response);
+
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());
 
