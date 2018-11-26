@@ -256,38 +256,41 @@ class TaxService
 
     public function calculateTaxesForCartItems($shippingCosts = 0, $currency = null)
     {
-        $taxAmount = 0;
-        $cart = $this->cart->getCart();
-        $cartItemsTotalDue = $cart->getTotalDue();
-        if ($cartItemsTotalDue > 0) {
-            $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
-
-            $taxRate = $this->getTaxRate($billingAddress['country'], $billingAddress['region']);
-
-           $discountsToApply = $cart->getDiscounts();
+//        $taxAmount = 0;
+//        $cart = $this->cart->getCart();
+//        $cartItemsTotalDue = $cart->getTotalDue();
 //
-           $this->discountService->applyDiscounts($discountsToApply, $cart);
+//        if ($cartItemsTotalDue > 0) {
+//            //var_dump('calculez taxe .... ');
 //
-            $discount =
-                $this->discountService->getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cart->getItems());
-
-            $shippingCostsWithDiscount = $this->discountService->getShippingCostsDiscounted(
-                $discountsToApply,
-                $cart->calculateShippingDue(true)
-            );
-
-            $cartItemsTotalDueDiscounted = $cartItemsTotalDue - $discount;
-
-            $productsTaxAmount = max(round($cartItemsTotalDueDiscounted * $taxRate, 2),0);
-
-            $shippingTaxAmount = max(round((float)$shippingCostsWithDiscount * $taxRate, 2),0);
-
-            $taxAmount = $productsTaxAmount + $shippingTaxAmount;
-        }
-
-        $this->cart->getCart()
-            ->setTaxesDue($taxAmount);
-
-        return $taxAmount;
+//            $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+//            $taxRate = $this->getTaxRate($billingAddress['country'], $billingAddress['region']);
+//            //var_dump('taxRate------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.'.$taxRate);
+//            $discountsToApply = $cart->getDiscounts();
+//           // dd($discountsToApply);
+//            $this->discountService->applyDiscounts($discountsToApply, $cart);
+//            $discount =
+//                $this->discountService->getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cart->getItems());
+//            $shippingCostsWithDiscount = $this->discountService->getShippingCostsDiscounted(
+//                $discountsToApply,
+//                $cart->calculateShippingDue(true)
+//            );
+//
+//            $cartItemsTotalDueDiscounted = $cartItemsTotalDue - $discount;
+//
+//            $productsTaxAmount = max(round($cartItemsTotalDueDiscounted * $taxRate, 2), 0);
+//
+//            $shippingTaxAmount = max(round((float)$shippingCostsWithDiscount * $taxRate, 2), 0);
+//
+//            $taxAmount = $productsTaxAmount + $shippingTaxAmount;
+//
+//            var_dump('taxAmount------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.');
+//            var_dump($cartItemsTotalDueDiscounted);
+//        }
+//
+//        $this->cart->getCart()
+//            ->setTaxesDue($taxAmount);
+//
+//        return $taxAmount;
     }
 }

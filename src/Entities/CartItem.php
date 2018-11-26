@@ -234,7 +234,7 @@ class CartItem
      */
     public function addAppliedDiscount($discount)
     {
-        $this->appliedDiscounts = $discount;
+        $this->appliedDiscounts[] = $discount;
     }
 
 

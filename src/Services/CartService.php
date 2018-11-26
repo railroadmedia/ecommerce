@@ -381,9 +381,10 @@ class CartService
         $cartItem->setOptions($options);
 
         $this->cart->addCartItem($cartItem);
+        $this->applyDiscounts();
         $this->taxService->calculateTaxesForCartItems();
 
-        $this->applyDiscounts();
+
 
         return $this->cart->getItems();
     }
@@ -416,7 +417,7 @@ class CartService
             foreach ($activeDiscount->criteria as $discountCriteria) {
                 if (!$this->discountCriteriaService->discountCriteriaMetForOrder(
                     $discountCriteria,
-                    $this->cart,
+                    $this->cart->getCart(),
                     $this->getPromoCode()
                 )) {
                     $criteriaMet = false;

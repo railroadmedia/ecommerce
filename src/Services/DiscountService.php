@@ -43,7 +43,7 @@ class DiscountService
                 $discount['type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE ||
                 $discount['type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
 
-                //$cart->addDiscount($discount);
+                $cart->addAppliedDiscount($discount);
 
             }
         }

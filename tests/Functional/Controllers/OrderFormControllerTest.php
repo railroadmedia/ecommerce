@@ -105,8 +105,8 @@ class OrderFormControllerTest extends EcommerceTestCase
                     'description' => $this->faker->word,
                     'is_physical' => 0,
                     'weight' => 0,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
+                    'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                    'subscription_interval_count' => 1,
                 ]
             )
         );
@@ -114,7 +114,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             $this->faker->discount(
                 [
                     'active' => true,
-                    'amount' => 49,
+                    'amount' => 10,
                     'type' => 'product amount off',
                     'product_id' => 1,
                 ]
