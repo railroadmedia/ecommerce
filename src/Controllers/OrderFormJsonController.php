@@ -102,23 +102,15 @@ class OrderFormJsonController extends BaseController
                 array_sum(array_column($cartItems, 'weight'))
             )['price'] ?? 0;
 
-        $cartItemsWithTaxesAndCosts =
-            $this->taxService->calculateTaxesForCartItems(
-                $cartItems,
-                $billingAddress['country'],
-                $billingAddress['region'],
-                $shippingCosts,
-                $currency,
-                $this->cartService->getPromoCode()
-            );
-        return array_merge(
+        return
             [
                 'shippingAddress' => $shippingAddress,
                 'billingAddress'  => $billingAddress,
-                'paymentPlanOptions' => $this->paymentPlanService->getPaymentPlanPricingForCartItems()
-            ],
-            $cartItemsWithTaxesAndCosts
-        );
+                'paymentPlanOptions' => $this->paymentPlanService->getPaymentPlanPricingForCartItems(),
+                'cartItems' => $this->cartService->getCart()->getItems(),
+                'totalDue' => $this->cartService->getCart()->getTotalDue()
+            ];
+
 
     }
 

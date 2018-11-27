@@ -2,48 +2,22 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Railroad\Ecommerce\Repositories\ProductRepository;
-
 class PaymentPlanService
 {
-    /**
-     * @var \Railroad\Ecommerce\Repositories\ProductRepository
-     */
-    private $productRepository;
-
     /**
      * @var \Railroad\Ecommerce\Services\CartService
      */
     private $cartService;
 
     /**
-     * @var \Railroad\Ecommerce\Services\TaxService
-     */
-    private $taxService;
-
-    /**
-     * @var \Railroad\Ecommerce\Services\CartAddressService
-     */
-    private $cartAddressService;
-
-    /**
      * PaymentPlanService constructor.
      *
-     * @param \Railroad\Ecommerce\Repositories\ProductRepository $productRepository
-     * @param \Railroad\Ecommerce\Services\CartService           $cartService
-     * @param \Railroad\Ecommerce\Services\CartAddressService    $cartAddressService
-     * @param \Railroad\Ecommerce\Services\TaxService            $taxService
+     * @param CartService $cartService
      */
     public function __construct(
-        ProductRepository $productRepository,
-        CartService $cartService,
-        CartAddressService $cartAddressService,
-        TaxService $taxService
+        CartService $cartService
     ) {
-        $this->productRepository  = $productRepository;
-        $this->cartService        = $cartService;
-        $this->cartAddressService = $cartAddressService;
-        $this->taxService         = $taxService;
+        $this->cartService = $cartService;
     }
 
     /** Check if payment plan it's eligible: the order should not contain subscription product and
@@ -54,17 +28,11 @@ class PaymentPlanService
      */
     public function isPaymentPlanEligible()
     {
-        $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
-        $cartItems      = $this->taxService->calculateTaxesForCartItems(
-            $this->cartService->getAllCartItems(),
-            $billingAddress['country'],
-            $billingAddress['region'],
-            $this->cartService->getPromoCode()
-        );
+        $cart = $this->cartService->getCart();
 
-        if((!$this->hasSubscriptionItems($cartItems)) &&
-            (($cartItems['totalDue'] - $cartItems['totalTax'] - $cartItems['shippingCosts']) > config('ecommerce.paymentPlanMinimumPrice')))
-        {
+        if ((!$this->hasSubscriptionItems($cart->getItems())) &&
+            (($cart->getTotalDue() - $cart->calculateTaxesDue() - $cart->calculateShippingDue()) >
+                config('ecommerce.paymentPlanMinimumPrice'))) {
             return true;
         }
 
@@ -76,13 +44,10 @@ class PaymentPlanService
      * @param array $cartItems
      * @return bool
      */
-    public function hasSubscriptionItems(array $cartItems)
+    public function hasSubscriptionItems($cartItems)
     {
-        foreach($cartItems['cartItems'] as $cartItem)
-        {
-            $product = $this->productRepository->read($cartItem['options']['product-id']);
-            if($product['type'] == ConfigService::$typeSubscription)
-            {
+        foreach ($cartItems as $cartItem) {
+            if ($cartItem->getProduct()['type'] == ConfigService::$typeSubscription) {
                 return true;
             }
         }
@@ -96,21 +61,18 @@ class PaymentPlanService
     public function getPaymentPlanPricingForCartItems()
     {
         $paymentPlanPricing = [];
-        if($this->isPaymentPlanEligible())
-        {
-            $cartItems      = $this->cartService->getAllCartItems();
-            $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
-            foreach(config('ecommerce.paymentPlanOptions') as $paymentPlan)
-            {
+        if ($this->isPaymentPlanEligible()) {
+            $initialPaymentPlanOption =
+                $this->cartService->getCart()
+                    ->getPaymentPlanNumberOfPayments();
+            foreach (config('ecommerce.paymentPlanOptions') as $paymentPlan) {
                 $this->cartService->setPaymentPlanNumberOfPayments($paymentPlan);
-                $costsAndTaxes                    = $this->taxService->calculateTaxesForCartItems(
-                    $cartItems,
-                    $billingAddress['country'],
-                    $billingAddress['region'],
-                    $this->cartService->getPromoCode()
-                );
-                $paymentPlanPricing[$paymentPlan] = $costsAndTaxes['pricePerPayment'];
+
+                $paymentPlanPricing[$paymentPlan] =
+                    $this->cartService->getCart()
+                        ->calculatePricePerPayment();
             }
+            $this->cartService->setPaymentPlanNumberOfPayments($initialPaymentPlanOption);
         }
 
         return $paymentPlanPricing;

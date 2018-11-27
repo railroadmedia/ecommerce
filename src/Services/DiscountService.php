@@ -76,43 +76,16 @@ class DiscountService
                         //IF discount amount it's greater that product price we use product price as discounted amount to avoid negative value
                         $amountDiscounted += ($discount['amount'] > $cartItem->getPrice()) ? $cartItem->getPrice() :
                             $discount['amount'] * $cartItem->getQuantity();
-                       // $cartItem->addDiscount($discount);
                     }
                 } elseif ($discount['type'] == self::PRODUCT_PERCENT_OFF_TYPE) {
 
                     if (($cartItem->getProduct()['id'] == $discount['product_id']) ||
                         ($cartItem->getProduct()['category'] == $discount['product_category'])) {
-                        $amountDiscounted += $discount['amount'] / 100 * $cartItem->getPrice() * $cartItem->getQuantity();
-                        //$cartItem->addDiscount($discount);
+                           $amountDiscounted += $discount['amount'] / 100 * $cartItem->getTotalPrice() ;
                     }
                 }
             }
         }
-
         return $amountDiscounted;
-    }
-
-    /**
-     * @param $discountsToApply
-     * @param $initialShippingCosts
-     * @return mixed
-     */
-    public function getShippingCostsDiscounted($discountsToApply, $initialShippingCosts)
-    {
-        $amountDiscounted = 0;
-
-        if ($discountsToApply) {
-            foreach ($discountsToApply as $discount) {
-                if ($discount['type'] == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
-                    $amountDiscounted += $discount['amount'];
-                } elseif ($discount['type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE) {
-                    $amountDiscounted += $discount['amount'] / 100 * $initialShippingCosts;
-                } elseif ($discount['type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
-                    return $discount['amount'];
-                }
-            }
-        }
-
-        return max((float)($initialShippingCosts - $amountDiscounted), 0);
     }
 }

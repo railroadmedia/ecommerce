@@ -145,15 +145,10 @@ class ShoppingCartController extends BaseController
             $this->cartService->setPromoCode(null);
         }
 
-        $cartItemsPriceWithTax = $this->taxService->calculateTaxesForCartItems(
-            $this->cartService->getAllCartItems(),
-            $billingAddress['country'],
-            $billingAddress['region']
-        );
 
         $response = [
             'addedProducts' => $addedProducts,
-            'cartSubTotal' => $cartItemsPriceWithTax['totalDue'],
+            'cartSubTotal' => $this->cartService->getCart()->getTotalDue(),
             'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
             'notAvailableProducts' => $errors,
         ];
@@ -182,11 +177,11 @@ class ShoppingCartController extends BaseController
      */
     public function removeCartItem($productId)
     {
-        $cartItems = $this->cartService->getAllCartItems();
+        $cartItems = $this->cartService->getCart()->getItems();
 
         foreach ($cartItems as $cartItem) {
-            if ($cartItem['options']['product-id'] == $productId) {
-                $this->cartService->removeCartItem($cartItem['id']);
+            if ($cartItem->getOptions()['product-id'] == $productId) {
+                $this->cartService->removeCartItem($cartItem->id);
             }
         }
 
@@ -222,11 +217,11 @@ class ShoppingCartController extends BaseController
                 $cartItems = $this->cartService->getAllCartItems();
 
                 foreach ($cartItems as $cartItem) {
-                    if ($cartItem['options']['product-id'] == $productId) {
+                    if ($cartItem->getOptions()['product-id'] == $productId) {
                         if ($quantity > 0) {
-                            $this->cartService->updateCartItemQuantity($cartItem['id'], $quantity);
+                            $this->cartService->updateCartItemQuantity($cartItem->getId(), $quantity);
                         } else {
-                            $this->cartService->removeCartItem($cartItem['id']);
+                            $this->cartService->removeCartItem($cartItem->getId());
                         }
                     }
                 }
@@ -274,25 +269,15 @@ class ShoppingCartController extends BaseController
         $cartItems = $this->cartService->getAllCartItems();
 
         if (count($cartItems)) {
-            $billingAddress = $this->cartAddressService
-                ->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
-
-            $cartItemsPriceWithTax = $this->taxService
-                ->calculateTaxesForCartItems(
-                    $cartItems,
-                    $billingAddress['country'],
-                    $billingAddress['region']
-                );
-
             $isPaymentPlanEligible = $this->paymentPlanService
                 ->isPaymentPlanEligible();
 
             $paymentPlanPricing = $this->paymentPlanService
                 ->getPaymentPlanPricingForCartItems();
 
-            $cartData['tax'] = $cartItemsPriceWithTax['totalTax'];
-            $cartData['total'] = $cartItemsPriceWithTax['totalDue'];
-            $cartData['cartItems'] = $cartItemsPriceWithTax['cartItems'];
+            $cartData['tax'] = $this->cartService->getCart()->calculateTaxesDue();
+            $cartData['total'] = $this->cartService->getCart()->getTotalDue();
+            $cartData['cartItems'] = $this->cartService->getCart()->getItems();
             $cartData['isPaymentPlanEligible'] = $isPaymentPlanEligible;
             $cartData['paymentPlanPricing'] = $paymentPlanPricing;
         }

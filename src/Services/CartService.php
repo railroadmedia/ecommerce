@@ -82,108 +82,13 @@ class CartService
         $this->cart = new Cart();
     }
 
-    /** Add item to cart. If the item already exists, just increase the quantity.
-     *
-     * @param string $name
-     * @param string $description
-     * @param int $quantity
-     * @param int $price
-     * @param boolean $requiresShippingAddress
-     * @param boolean $requiresBillingAddress
-     * @param null $subscriptionIntervalType
-     * @param null $subscriptionIntervalCount
-     * @param array $options
-     * @return array
-     */
-    public function addItemCard(
-        $name,
-        $description,
-        $quantity,
-        $price,
-        $requiresShippingAddress,
-        $requiresBillingAddress,
-        $subscriptionIntervalType = null,
-        $subscriptionIntervalCount = null,
-        $weight,
-        $options = []
-    ) {
-        $cartItems = $this->getAllCartItems();
-
-        // if a product id is passed with any of the cart items, attach the entire product
-        $productIds = [];
-        $productsById = [];
-
-        foreach ($cartItems as $cartItem) {
-            if (!empty($cartItem['options']['product-id'])) {
-                $productIds[] = $cartItem['options']['product-id'];
-            }
-        }
-
-        if (!empty($options['product-id'])) {
-            $options['product'] = $this->productRepository->read($options['product-id']);
-        }
-
-        foreach ($cartItems as $cartItemIndex => $cartItem) {
-            if (!empty($cartItem['options']['product-id']) &&
-                !empty($productsById[$cartItem['options']['product-id']])) {
-                $cartItems[$cartItemIndex]['options']['product'] = $productsById[$cartItem['options']['product-id']];
-            }
-        }
-
-        // If the item already exists, just increase the quantity
-        foreach ($cartItems as $cartItem) {
-            if (!empty($cartItem['options']['product-id']) &&
-                $cartItem['options']['product-id'] == $options['product-id']) {
-                $cartItem['quantity'] = ($cartItem['quantity'] + $quantity);
-                $cartItem['totalPrice'] = $cartItem['quantity'] * $cartItem['price'];
-                $cartItem['weight'] = $cartItem['quantity'] * $weight;
-
-                $this->session->put(ConfigService::$brand . '-' . self::SESSION_KEY . $cartItem['id'], $cartItem);
-
-                return $this->getAllCartItems();
-            }
-        }
-
-        $cartItem = [
-            'id' => (bin2hex(openssl_random_pseudo_bytes(32))),
-            'name' => $name,
-            'description' => $description,
-            'quantity' => $quantity,
-            'price' => $price,
-            'totalPrice' => $quantity * $price,
-            'requiresShippingAddress' => $requiresShippingAddress,
-            'requiresBillinggAddress' => $requiresBillingAddress,
-            'subscriptionIntervalType' => $subscriptionIntervalType,
-            'subscriptionIntervalCount' => $subscriptionIntervalCount,
-            'weight' => $quantity * $weight,
-            'options' => $options,
-        ];
-
-        $this->session->put(ConfigService::$brand . '-' . self::SESSION_KEY . $cartItem['id'], $cartItem);
-
-        return $this->getAllCartItems();
-    }
-
     /** Return an array with the cart items.
      *
      * @return array
      */
     public function getAllCartItems()
     {
-        $cartItems = [];
         return $this->cart->getItems();
-        foreach ($this->session->all() as $sessionKey => $sessionValue) {
-            if (substr($sessionKey, 0, strlen(ConfigService::$brand . '-' . self::SESSION_KEY)) ==
-                ConfigService::$brand . '-' . self::SESSION_KEY) {
-                $cartItem = $sessionValue;
-
-                if (!empty($cartItem)) {
-                    $cartItems[] = $cartItem;
-                }
-            }
-        }
-
-        return $cartItems;
     }
 
     /** Clear the cart items
@@ -233,9 +138,18 @@ class CartService
      */
     public function removeCartItem($id)
     {
-        if ($this->session->has(ConfigService::$brand . '-' . self::SESSION_KEY . $id)) {
-            $this->session->remove(ConfigService::$brand . '-' . self::SESSION_KEY . $id);
+        $items =
+            $this->getCart()
+                ->getItems();
+        $index = array_search($id, array_pluck($items, 'id'));
+        unset($items[$index]);
+        $this->removeAllCartItems();
+
+        foreach ($items as $item) {
+            $this->cart->addCartItem($item);
         }
+
+        return $this->cart->getItems();
     }
 
     /** Update cart item quantity and total price.
@@ -245,11 +159,23 @@ class CartService
      */
     public function updateCartItemQuantity($cartItemId, $quantity)
     {
+        $items =
+            $this->getCart()
+                ->getItems();
+        $index = array_search($cartItemId, array_pluck($items, 'id'));
+        unset($items[$index]);
         $cartItem = $this->getCartItem($cartItemId);
-        $cartItem['quantity'] = $quantity;
-        $cartItem['totalPrice'] = $quantity * $cartItem['price'];
 
-        $this->session->put(ConfigService::$brand . '-' . self::SESSION_KEY . $cartItemId, $cartItem);
+        $cartItem->setQuantity($quantity);
+        $cartItem->setTotalPrice($quantity * $cartItem->getPrice());
+
+        $this->removeAllCartItems();
+        $this->cart->addCartItem($cartItem);
+        foreach ($items as $item) {
+            $this->cart->addCartItem($item);
+        }
+
+        return $this->cart->getItems();
     }
 
     /** Get a cart item from the session based on cart item id
@@ -259,14 +185,12 @@ class CartService
      */
     public function getCartItem($id)
     {
-        if ($this->session->has(ConfigService::$brand . '-' . self::SESSION_KEY . $id)) {
-            $cartItem = $this->session->get(ConfigService::$brand . '-' . self::SESSION_KEY . $id);
+        $items =
+            $this->getCart()
+                ->getItems();
+        $index = array_search($id, array_pluck($items, 'id'));
 
-            if (!empty($cartItem)) {
-                return $cartItem;
-            }
-        }
-        return null;
+        return $items[$index];
     }
 
     /** Set on the session the number of payments
@@ -280,20 +204,6 @@ class CartService
         } else {
             $this->session->put(self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY, $numberOfPayments);
         }
-    }
-
-    /** Get the number of payments
-     *
-     * @return mixed|integer
-     */
-    public function getPaymentPlanNumberOfPayments()
-    {
-        if ($this->session->has(self::PAYMENT_PLAN_LOCKED_SESSION_KEY) &&
-            $this->session->get(self::PAYMENT_PLAN_LOCKED_SESSION_KEY) > 0) {
-            return $this->session->get(self::PAYMENT_PLAN_LOCKED_SESSION_KEY, 1);
-        }
-
-        return $this->session->get(self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY, 1);
     }
 
     /** Lock payment plan
@@ -360,7 +270,6 @@ class CartService
                 $cartItem->setTotalPrice($cartItem->getTotalPrice() + $quantity * $cartItem->getPrice());
 
                 $this->session->put(self::SESSION_KEY, $this->cart);
-                $this->taxService->calculateTaxesForCartItems();
                 $this->applyDiscounts();
                 return $this->cart->getItems();
             }
@@ -382,16 +291,8 @@ class CartService
 
         $this->cart->addCartItem($cartItem);
         $this->applyDiscounts();
-        $this->taxService->calculateTaxesForCartItems();
-
-
 
         return $this->cart->getItems();
-    }
-
-    public function calculateShippingDue()
-    {
-        return $this->cart->calculateShippingDue();
     }
 
     public function getCart()
@@ -399,10 +300,6 @@ class CartService
         return $this->cart->getCart();
     }
 
-    public function getTotalDue()
-    {
-        return $this->cart->getTotalDue();
-    }
 
     public function getDiscountsToApply()
     {
@@ -473,7 +370,7 @@ class CartService
                 ->getItems()
         );
 
-         $this->cart->getCart()
+        $this->cart->getCart()
             ->setTotalDiscountAmount($discountedAmount);
 
         return $this->cart->getCart();

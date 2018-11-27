@@ -118,8 +118,7 @@ class UserProductListener
 
             if (!$event->attributes['canceled_on'] &&
                 $event->entity['is_active'] &&
-                $event->entity['type'] == ConfigService::$tableSubscription) {
-
+                $event->entity['type'] == ConfigService::$typeSubscription) {
                 foreach ($products as $product) {
                     $this->assignUserProduct(
                         $event->entity['user_id'],

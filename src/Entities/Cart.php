@@ -5,7 +5,7 @@ namespace Railroad\Ecommerce\Entities;
 use Illuminate\Support\Facades\Session;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountService;
-use Railroad\Railcontent\Support\Collection;
+
 
 class Cart
 {
@@ -19,7 +19,6 @@ class Cart
     private $shippingCosts;
     private $totalTax;
     private $totalDue;
-    //private $paymentPlanNumberOfPayments;
     private $discounts;
     private $totalDiscountAmount;
     public $appliedDiscounts;
@@ -51,7 +50,6 @@ class Cart
         $cart->discounts = $this->getDiscounts();
         $cart->shippingCosts = $this->calculateShippingDue();
         $cart->totalTax = $this->calculateTaxesDue();
-        // $cart->paymentPlanNumberOfPayments = $this->getPaymentPlanNumberOfPayments();
 
         Session::put(ConfigService::$brand . '-' . self::SESSION_KEY, $cart);
 
@@ -69,15 +67,10 @@ class Cart
             $billingAddress = Session::get('cart-address-billing');
             $taxRate = $this->getTaxRate($billingAddress['country'], $billingAddress['region']);
             $this->totalTax =
-                max(round($this->getTotalDueForItems() * $taxRate, 2), 0) +
+                max(round(($this->getTotalDueForItems() - $this->getTotalDiscountAmount()) * $taxRate, 2), 0) +
                 max(round($this->shippingCosts * $taxRate, 2), 0);
         }
         return max((float)($this->totalTax), 0);
-    }
-
-    public function getFirstPaymentDue()
-    {
-
     }
 
     public function getCart()
@@ -95,11 +88,8 @@ class Cart
 
     public function getTotalDue()
     {
-
         $financeCharge = ($this->getPaymentPlanNumberOfPayments() > 1) ? 1 : 0;
-
         $totalDueFromItems = $this->getTotalDueForItems();
-
         return round(
             $totalDueFromItems + $this->calculateTaxesDue() + $this->calculateShippingDue() + $financeCharge,
             2
@@ -192,44 +182,6 @@ class Cart
         return $weight;
     }
 
-    public function getAmountDiscounted()
-    {
-        if ($this->amountDiscounted === null) {
-            $discountTotal = 0.0;
-
-            if (!empty($this->getProduct()) && $this->getProduct()->getType() == Product::PRODUCT_TYPE) {
-                foreach ($this->getDiscounts() as $discount) {
-                    if ($discount->getType() == Discount::PRODUCT_AMOUNT_OFF_TYPE) {
-                        $discountTotal += $discount->getAmount() * $this->getQuantity();
-                    } elseif ($discount->getType() == Discount::PRODUCT_PERCENT_OFF_TYPE) {
-                        // Get initial price already multiplies by the quantity
-                        $discountTotal += $discount->getAmount() / 100 * $this->getInitialPrice();
-                    }
-                }
-
-                return $discountTotal;
-
-            } elseif (!empty($this->getProduct()) &&
-                $this->getProduct()->getType() == Product::SUBSCRIPTION_TYPE
-            ) {
-                foreach ($this->getDiscounts() as $discount) {
-                    if ($discount->getType() == Discount::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
-                        $discountTotal += $this->getInitialPrice();
-                    } elseif ($discount->getType() ==
-                        Discount::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE
-                    ) {
-                        $discountTotal += $discount->getAmount();
-                    }
-                }
-
-                return $discountTotal;
-            }
-
-        }
-
-        return (float)$this->amountDiscounted;
-    }
-
     public function calculateInitialPricePerPayment()
     {
         if ($this->getPaymentPlanNumberOfPayments() > 1) {
@@ -248,7 +200,6 @@ class Cart
 
         return $this->calculatePricePerPayment();
     }
-
 
     public function calculateCartItemsSubTotalAfterDiscounts()
     {
@@ -302,9 +253,10 @@ class Cart
             $this->getCart()
                 ->getItems() as $cartItem
         ) {
-            $totalDueFromItems += $cartItem->getDiscountedPrice() ?? $cartItem->getPrice();
+            $totalDueFromItems += $cartItem->getTotalPrice();
         }
 
         return $totalDueFromItems;
     }
+
 }

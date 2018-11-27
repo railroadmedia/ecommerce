@@ -90,6 +90,18 @@ return [
                 'paypal_api_checkout_cancel_url'       => '',
                 'paypal_api_test_billing_agreement_id' => '',
             ],
+            'brand' => [
+                'paypal_api_username'                  => '',
+                'paypal_api_password'                  => '',
+                'paypal_api_signature'                 => '',
+                'paypal_api_currency_code'             => '',
+                'paypal_api_version'                   => '',
+                'paypal_api_nvp_curl_url'              => '',
+                'paypal_api_checkout_redirect_url'     => '',
+                'paypal_api_checkout_return_url'       => '',
+                'paypal_api_checkout_cancel_url'       => '',
+                'paypal_api_test_billing_agreement_id' => '',
+            ]
         ],
 
         'stripe' => [
