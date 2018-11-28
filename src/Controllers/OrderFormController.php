@@ -5,34 +5,25 @@ namespace Railroad\Ecommerce\Controllers;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Services\OrderFormService;
-use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
 
 class OrderFormController extends BaseController
 {
-    /**
-     * @var CartService
-     */
-    private $cartService;
-
     /**
      * @var \Railroad\Ecommerce\Services\OrderFormService
      */
     private $orderFormService;
 
     /**
-     * OrderFormJsonController constructor.
+     * OrderFormController constructor.
      *
-     * @param \Railroad\Ecommerce\Services\CartService      $cartService
-     * @param \Railroad\Ecommerce\Services\OrderFormService $orderFormService
+     * @param OrderFormService $orderFormService
      */
     public function __construct(
-        CartService $cartService,
         OrderFormService $orderFormService
     ) {
         parent::__construct();
 
-        $this->cartService = $cartService;
         $this->orderFormService = $orderFormService;
     }
 
@@ -44,7 +35,6 @@ class OrderFormController extends BaseController
      */
     public function submitPaypalOrder(Request $request)
     {
-        $cartItems = $this->cartService->getAllCartItems();
 
         //if the cart it's empty; we throw an exception
         throw_if(
@@ -53,7 +43,7 @@ class OrderFormController extends BaseController
         );
 
         $result = $this->orderFormService
-            ->processOrderForm($request, $cartItems);
+            ->processOrderForm($request);
 
         return reply()->form(
             [(!isset($result['errors']) && isset($result['order']))],

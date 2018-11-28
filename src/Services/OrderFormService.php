@@ -431,8 +431,7 @@ class OrderFormService
         $cartItem,
         $order,
         $orderItem
-    )
-    {
+    ) {
         if (!empty($cartItem->getAppliedDiscounts())) {
             foreach ($cartItem->getAppliedDiscounts() as $discount) {
                 $orderDiscount = $this->orderDiscountRepository->create(
@@ -709,8 +708,7 @@ class OrderFormService
      * @return array
      */
     public function processOrderForm(
-        Request $request,
-        $cartItems
+        Request $request
     ) {
         $user = auth()->user() ?? null;
 
@@ -765,14 +763,12 @@ class OrderFormService
 
         $this->cartService->getCart()
             ->setShippingCosts($shippingCosts);
-
         $this->cartService->getCart()
-            ->addDiscount($this->cartService->getDiscountsToApply());
+            ->removeAppliedDiscount();
 
-        $this->discountService->applyDiscounts(
-            $this->cartService->getDiscountsToApply(),
-            $this->cartService->getCart()
-        );
+        $discountsToApply = $this->cartService->getDiscountsToApply();
+        $this->cartService->getCart()
+            ->addDiscount($discountsToApply);
 
         $this->cartService->applyDiscounts();
 
@@ -944,7 +940,9 @@ class OrderFormService
             $this->cartService->getCart()
                 ->calculateInitialPricePerPayment(),
             $this->cartService->getCart()
-                ->getTotalDue()- $this->cartService->getCart()->getTotalDiscountAmount(),
+                ->getTotalDue() -
+            $this->cartService->getCart()
+                ->getTotalDiscountAmount(),
             $charge ?? null,
             $transactionId ?? null,
             $paymentMethodId,
@@ -954,12 +952,11 @@ class OrderFormService
         //create order
         $order = $this->createOrder(
             $request,
-            $this->cartService->getCart()
-                ->getTotalDue() - $this->cartService->getCart()->getTotalDiscountAmount(),
+            $payment['paid'],
             $this->cartService->getCart()
                 ->calculateShippingDue(),
             $this->cartService->getCart()
-                ->getTotalDue() - $this->cartService->getCart()->getTotalDiscountAmount(),
+                ->getTotalDue(),
             $this->cartService->getCart()
                 ->calculateTaxesDue(),
             $user ?? null,
@@ -969,7 +966,9 @@ class OrderFormService
         );
 
         //create payment plan
-        $paymentPlanNumbersOfPayments = $this->cartService->getCart()->getPaymentPlanNumberOfPayments();
+        $paymentPlanNumbersOfPayments =
+            $this->cartService->getCart()
+                ->getPaymentPlanNumberOfPayments();
 
         //apply order discounts
         $this->createOrderDiscounts($order);
@@ -987,7 +986,7 @@ class OrderFormService
                 continue;
             }
 
-            $orderItem =
+                $orderItem =
                 $this->orderItemRepository->query()
                     ->create(
                         [
@@ -995,14 +994,14 @@ class OrderFormService
                             'product_id' => $cartItem->getProduct()['id'],
                             'quantity' => $cartItem->getQuantity(),
                             'initial_price' => $cartItem->getPrice(),
-                            'discount' => $cartItem->getTotalPrice() - $cartItem->getDiscountedPrice(),
+                            'discount' => ($cartItem->getDiscountedPrice()) ?
+                                ($cartItem->getTotalPrice() - $cartItem->getDiscountedPrice()) : 0,
                             'tax' => $this->cartService->getCart()
                                 ->calculateTaxesDue(),
                             'shipping_costs' => $this->cartService->getCart()
                                 ->calculateShippingDue(),
-                            'total_price' => ($cartItem->getDiscountedPrice())?($cartItem->getDiscountedPrice() + $this->cartService->getCart()
-                                    ->calculateShippingDue()):$cartItem->getTotalPrice() + $this->cartService->getCart()
-                                    ->calculateShippingDue(),
+                            'total_price' => ($cartItem->getDiscountedPrice()) ? ($cartItem->getDiscountedPrice()) :
+                                $cartItem->getTotalPrice(),
                             'created_on' => Carbon::now()
                                 ->toDateTimeString(),
                         ]
@@ -1013,7 +1012,7 @@ class OrderFormService
                 $cartItem,
                 $order,
                 $orderItem
-             );
+            );
 
             //create subscription
             if ($cartItem->getProduct()['type'] == ConfigService::$typeSubscription) {

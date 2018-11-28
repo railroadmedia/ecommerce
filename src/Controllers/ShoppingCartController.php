@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\PaymentPlanService;
@@ -38,6 +39,11 @@ class ShoppingCartController extends BaseController
     private $taxService;
 
     /**
+     * @var ShippingOptionRepository
+     */
+    private $shippingOptionsRepository;
+
+    /**
      * ShoppingCartController constructor.
      *
      * @param \Railroad\Ecommerce\Services\CartService $cartService
@@ -50,7 +56,8 @@ class ShoppingCartController extends BaseController
         ProductRepository $productRepository,
         CartAddressService $cartAddressService,
         PaymentPlanService $paymentPlanService,
-        TaxService $taxService
+        TaxService $taxService,
+        ShippingOptionRepository $shippingOptionRepository
     ) {
         parent::__construct();
 
@@ -59,6 +66,7 @@ class ShoppingCartController extends BaseController
         $this->cartAddressService = $cartAddressService;
         $this->paymentPlanService = $paymentPlanService;
         $this->taxService = $taxService;
+        $this->shippingOptionsRepository = $shippingOptionRepository;
     }
 
     /** Add products to cart; if the products are active and available(the product stock > requested quantity).
@@ -85,8 +93,16 @@ class ShoppingCartController extends BaseController
             $redirect = $input['redirect'];
         }
 
+        //if the promo code exists on the requests, set it on the session
+        if (!empty($input['promo-code'])) {
+            $this->cartService->setPromoCode($input['promo-code']);
+        } else {
+            $this->cartService->setPromoCode(null);
+        }
+
         if (!empty($input['products'])) {
             $products = $input['products'];
+            $cart = $this->cartService->getCart();
 
             foreach ($products as $productSku => $productInfo) {
                 $productInfo = explode(',', $productInfo);
@@ -106,7 +122,7 @@ class ShoppingCartController extends BaseController
                 if ($product && ($product['stock'] === null || $product['stock'] >= $quantityToAdd)) {
                     $success = true;
                     $addedProducts[] = $product;
-                    $this->cartService->addCartItem(
+                    $cart = $this->cartService->addCartItem(
                         $product['name'],
                         $product['description'],
                         $quantityToAdd,
@@ -138,18 +154,14 @@ class ShoppingCartController extends BaseController
 
         $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
 
-        //if the promo code exists on the requests, set it on the session
-        if (!empty($input['promo-code'])) {
-            $this->cartService->setPromoCode($input['promo-code']);
-        } else {
-            $this->cartService->setPromoCode(null);
-        }
-
-
         $response = [
             'addedProducts' => $addedProducts,
-            'cartSubTotal' => $this->cartService->getCart()->getTotalDue(),
-            'cartNumberOfItems' => count($this->cartService->getAllCartItems()),
+            'cartSubTotal' => $cart
+                ->getTotalDue(),
+            'cartNumberOfItems' => count(
+                $cart
+                    ->getItems()
+            ),
             'notAvailableProducts' => $errors,
         ];
 
@@ -177,11 +189,21 @@ class ShoppingCartController extends BaseController
      */
     public function removeCartItem($productId)
     {
-        $cartItems = $this->cartService->getCart()->getItems();
+        $cartItems =
+            $this->cartService->getCart()
+                ->getItems();
 
         foreach ($cartItems as $cartItem) {
             if ($cartItem->getOptions()['product-id'] == $productId) {
                 $this->cartService->removeCartItem($cartItem->id);
+                $shippingCosts = $this->shippingOptionsRepository->getShippingCosts(
+                        $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE)['country'],
+                        $this->cartService->getCart()
+                            ->getTotalWeight()
+                    )['price'] ?? 0;
+
+                $this->cartService->getCart()
+                    ->setShippingCosts($shippingCosts);
             }
         }
 
@@ -220,6 +242,16 @@ class ShoppingCartController extends BaseController
                     if ($cartItem->getOptions()['product-id'] == $productId) {
                         if ($quantity > 0) {
                             $this->cartService->updateCartItemQuantity($cartItem->getId(), $quantity);
+                            $shippingCosts = $this->shippingOptionsRepository->getShippingCosts(
+                                    $this->cartAddressService->getAddress(
+                                        CartAddressService::SHIPPING_ADDRESS_TYPE
+                                    )['country'],
+                                    $this->cartService->getCart()
+                                        ->getTotalWeight()
+                                )['price'] ?? 0;
+
+                            $this->cartService->getCart()
+                                ->setShippingCosts($shippingCosts);
                         } else {
                             $this->cartService->removeCartItem($cartItem->getId());
                         }
@@ -230,8 +262,7 @@ class ShoppingCartController extends BaseController
             }
         } else {
             $message = 'The quantity can not be updated.';
-            $message .= (is_object($product) &&
-                get_class($product) == Entity::class) ?
+            $message .= (is_object($product) && get_class($product) == Entity::class) ?
                 ' The product stock(' .
                 $product['stock'] .
                 ') is smaller than the quantity you\'ve selected(' .
@@ -263,21 +294,25 @@ class ShoppingCartController extends BaseController
         $cartData = [
             'tax' => 0,
             'total' => 0,
-            'cartItems' => []
+            'cartItems' => [],
         ];
 
         $cartItems = $this->cartService->getAllCartItems();
 
         if (count($cartItems)) {
-            $isPaymentPlanEligible = $this->paymentPlanService
-                ->isPaymentPlanEligible();
+            $isPaymentPlanEligible = $this->paymentPlanService->isPaymentPlanEligible();
 
-            $paymentPlanPricing = $this->paymentPlanService
-                ->getPaymentPlanPricingForCartItems();
+            $paymentPlanPricing = $this->paymentPlanService->getPaymentPlanPricingForCartItems();
 
-            $cartData['tax'] = $this->cartService->getCart()->calculateTaxesDue();
-            $cartData['total'] = $this->cartService->getCart()->getTotalDue();
-            $cartData['cartItems'] = $this->cartService->getCart()->getItems();
+            $cartData['tax'] =
+                $this->cartService->getCart()
+                    ->calculateTaxesDue();
+            $cartData['total'] =
+                $this->cartService->getCart()
+                    ->getTotalDue();
+            $cartData['cartItems'] =
+                $this->cartService->getCart()
+                    ->getItems();
             $cartData['isPaymentPlanEligible'] = $isPaymentPlanEligible;
             $cartData['paymentPlanPricing'] = $paymentPlanPricing;
         }

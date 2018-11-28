@@ -68,21 +68,6 @@ class DiscountService
                 } elseif ($discount['type'] == self::ORDER_TOTAL_PERCENT_OFF_TYPE) {
                     $amountDiscounted += $discount['amount'] / 100 * $cartItemsTotalDue;
                     break;
-                } elseif ($discount['type'] == self::PRODUCT_AMOUNT_OFF_TYPE ||
-                    $discount['type'] == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
-                    if (($cartItem->getProduct()['id'] == $discount['product_id']) ||
-                        ($cartItem->getProduct()['category'] == $discount['product_category'])) {
-                        //Check product price and discount amount.
-                        //IF discount amount it's greater that product price we use product price as discounted amount to avoid negative value
-                        $amountDiscounted += ($discount['amount'] > $cartItem->getPrice()) ? $cartItem->getPrice() :
-                            $discount['amount'] * $cartItem->getQuantity();
-                    }
-                } elseif ($discount['type'] == self::PRODUCT_PERCENT_OFF_TYPE) {
-
-                    if (($cartItem->getProduct()['id'] == $discount['product_id']) ||
-                        ($cartItem->getProduct()['category'] == $discount['product_category'])) {
-                           $amountDiscounted += $discount['amount'] / 100 * $cartItem->getTotalPrice() ;
-                    }
                 }
             }
         }

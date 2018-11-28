@@ -2787,7 +2787,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => $quantity,
                 'initial_price' => $product['price'],
-                'total_price' => $product['price'] * $quantity + $shippingCosts['price'] - $discount['amount'],
+                'total_price' => $product['price'] * $quantity,
             ]
         );
     }
@@ -2947,9 +2947,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => $quantity,
                 'initial_price' => $product['price'],
-                'total_price' => $product['price'] * $quantity +
-                    $shippingCosts['price'] -
-                    $discount['amount'] / 100 * $shippingCosts['price'],
+                'total_price' => $product['price'] * $quantity,
             ]
         );
     }
@@ -3105,7 +3103,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => $quantity,
                 'initial_price' => $product['price'] ,
-                'total_price' => $product['price'] * $quantity + $discount['amount'],
+                'total_price' => $product['price'] * $quantity,
             ]
         );
     }

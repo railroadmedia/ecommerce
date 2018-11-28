@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Session;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountService;
 
-
 class Cart
 {
     const SESSION_KEY = 'shopping-cart-';
@@ -46,6 +45,8 @@ class Cart
     {
         $cart = $this->getCart();
         $cart->items[] = $cartItem;
+        Session::put(ConfigService::$brand . '-' . self::SESSION_KEY, $cart);
+
         $cart->totalDue = $this->getTotalDue();
         $cart->discounts = $this->getDiscounts();
         $cart->shippingCosts = $this->calculateShippingDue();
@@ -65,9 +66,10 @@ class Cart
     {
         if (Session::has('cart-address-billing')) {
             $billingAddress = Session::get('cart-address-billing');
+
             $taxRate = $this->getTaxRate($billingAddress['country'], $billingAddress['region']);
             $this->totalTax =
-                max(round(($this->getTotalDueForItems() - $this->getTotalDiscountAmount()) * $taxRate, 2), 0) +
+                max(round(($this->getTotalDueForItems()) * $taxRate, 2), 0) +
                 max(round($this->shippingCosts * $taxRate, 2), 0);
         }
         return max((float)($this->totalTax), 0);
@@ -89,9 +91,15 @@ class Cart
     public function getTotalDue()
     {
         $financeCharge = ($this->getPaymentPlanNumberOfPayments() > 1) ? 1 : 0;
+
         $totalDueFromItems = $this->getTotalDueForItems();
+
         return round(
-            $totalDueFromItems + $this->calculateTaxesDue() + $this->calculateShippingDue() + $financeCharge,
+            $totalDueFromItems -
+            $this->getTotalDiscountAmount() +
+            $this->calculateTaxesDue() +
+            $this->calculateShippingDue() +
+            $financeCharge,
             2
         );
     }
@@ -103,13 +111,12 @@ class Cart
              * All shipping should always be paid in the first payment.
              */
             return round(
-                (($this->getTotalDue() - $this->getTotalDiscountAmount() - $this->calculateShippingDue()) /
-                    $this->getPaymentPlanNumberOfPayments()),
+                (($this->getTotalDue() - $this->calculateShippingDue()) / $this->getPaymentPlanNumberOfPayments()),
                 2
             );
         }
 
-        return $this->getTotalDue() - $this->getTotalDiscountAmount();
+        return $this->getTotalDue();
     }
 
     public function getPaymentPlanNumberOfPayments()
@@ -250,13 +257,19 @@ class Cart
         $totalDueFromItems = 0;
 
         foreach (
-            $this->getCart()
-                ->getItems() as $cartItem
+            $this->getItems() as $cartItem
         ) {
-            $totalDueFromItems += $cartItem->getTotalPrice();
+            $totalDueFromItems += ($cartItem->getDiscountedPrice()) ? $cartItem->getDiscountedPrice() :
+                $cartItem->getTotalPrice();
         }
 
         return $totalDueFromItems;
+    }
+
+    public function removeAppliedDiscount()
+    {
+        $this->appliedDiscounts = [];
+        $this->discounts = [];
     }
 
 }

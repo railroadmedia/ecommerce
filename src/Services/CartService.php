@@ -146,7 +146,17 @@ class CartService
         $this->removeAllCartItems();
 
         foreach ($items as $item) {
-            $this->cart->addCartItem($item);
+            $this->addCartItem(
+                $item->getName(),
+                $item->getDescription(),
+                $item->getQuantity(),
+                $item->getPrice(),
+                $item->getRequiresShippingAddress(),
+                $item->getRequiresBillingAddress(),
+                $item->getSubscriptionIntervalType(),
+                $item->getSubscriptionIntervalCount(),
+                $item->getProduct()['weight'],
+                $item->getOptions());
         }
 
         return $this->cart->getItems();
@@ -163,16 +173,26 @@ class CartService
             $this->getCart()
                 ->getItems();
         $index = array_search($cartItemId, array_pluck($items, 'id'));
-        unset($items[$index]);
+
         $cartItem = $this->getCartItem($cartItemId);
 
         $cartItem->setQuantity($quantity);
         $cartItem->setTotalPrice($quantity * $cartItem->getPrice());
-
+        $items[$index] = $cartItem;
         $this->removeAllCartItems();
-        $this->cart->addCartItem($cartItem);
+
         foreach ($items as $item) {
-            $this->cart->addCartItem($item);
+            $this->addCartItem(
+                $item->getName(),
+                $item->getDescription(),
+                $item->getQuantity(),
+                $item->getPrice(),
+                $item->getRequiresShippingAddress(),
+                $item->getRequiresBillingAddress(),
+                $item->getSubscriptionIntervalType(),
+                $item->getSubscriptionIntervalCount(),
+                $item->getProduct()['weight'],
+                $item->getOptions());
         }
 
         return $this->cart->getItems();
@@ -259,8 +279,7 @@ class CartService
                 $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE)['country'],
                 $this->cart->getTotalWeight() + $product->weight * $quantity
             )['price'] ?? 0;
-        $this->cart->setShippingCosts($shippingCosts);
-        $this->cart->addDiscount($this->getDiscountsToApply());
+        $this->cart->getCart()->setShippingCosts($shippingCosts);
 
         // If the item already exists, just increase the quantity
         foreach ($this->cart->getItems() as $cartItem) {
@@ -269,9 +288,13 @@ class CartService
                 $cartItem->setQuantity($cartItem->getQuantity() + $quantity);
                 $cartItem->setTotalPrice($cartItem->getTotalPrice() + $quantity * $cartItem->getPrice());
 
-                $this->session->put(self::SESSION_KEY, $this->cart);
-                $this->applyDiscounts();
-                return $this->cart->getItems();
+                $discountsToApply = $this->getDiscountsToApply();
+                $this->discountService->applyDiscounts(
+                    $discountsToApply,
+                    $this->getCart()
+                );
+
+                return $this->cart->getCart()->addDiscount($discountsToApply);
             }
         }
 
@@ -290,16 +313,23 @@ class CartService
         $cartItem->setOptions($options);
 
         $this->cart->addCartItem($cartItem);
-        $this->applyDiscounts();
 
-        return $this->cart->getItems();
+        $discountsToApply = $this->getDiscountsToApply();
+
+        $this->discountService->applyDiscounts(
+            $discountsToApply,
+            $this->getCart()
+        );
+
+        $this->cart->getCart()->addDiscount($discountsToApply);
+
+        return $this->applyDiscounts();
     }
 
     public function getCart()
     {
         return $this->cart->getCart();
     }
-
 
     public function getDiscountsToApply()
     {
@@ -325,22 +355,19 @@ class CartService
                 $discountsToApply[$activeDiscount->id] = $activeDiscount;
             }
         }
-
         return $discountsToApply;
     }
 
     public function applyDiscounts()
     {
-        foreach (
-            $this->cart->getCart()
-                ->getDiscounts() as $discount
-        ) {
+        foreach ($this->cart->getCart()->getDiscounts() as $discount) {
+
             foreach (
-                $this->cart->getCart()
-                    ->getItems() as $item
+                $this->cart->getCart()->getItems() as $item
             ) {
+
                 if (($discount['product_id'] == $item->getOptions()['product-id']) ||
-                    ($discount['product_category'] == $item->getProduct()['category'])) {
+                    (($discount['product_category'])&&($discount['product_category'] == $item->getProduct()['category']))) {
                     $productDiscount = 0;
                     if ($discount->type == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
                         $productDiscount = $discount->amount * $item->getQuantity();
@@ -362,16 +389,14 @@ class CartService
         }
 
         $discountedAmount = $this->discountService->getAmountDiscounted(
-            $this->cart->getCart()
-                ->getDiscounts(),
-            $this->cart->getCart()
-                ->getTotalDue(),
-            $this->cart->getCart()
-                ->getItems()
+            $this->cart->getCart()->getDiscounts(),
+            $this->cart->getCart()->getTotalDue(),
+            $this->cart->getCart()->getItems()
         );
 
-        $this->cart->getCart()
-            ->setTotalDiscountAmount($discountedAmount);
+        $this->cart->getCart()->setTotalDiscountAmount($discountedAmount);
+
+        $this->cart->getTotalDue();
 
         return $this->cart->getCart();
     }
