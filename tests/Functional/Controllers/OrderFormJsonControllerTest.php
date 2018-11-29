@@ -911,15 +911,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $cardExpirationMonth = 12;
 
         $creditCardData = [
-            'fingerprint'          => $fingerPrint,
-            'last_four_digits'     => $this->faker->randomNumber(4),
-            'cardholder_name'      => $this->faker->name,
-            'company_name'         => $this->faker->creditCardType,
-            'expiration_date'      => Carbon::createFromDate($cardExpirationYear, $cardExpirationMonth)->toDateTimeString(),
-            'external_id'          => $externalId,
+            'fingerprint' => $fingerPrint,
+            'last_four_digits' => $this->faker->randomNumber(4),
+            'cardholder_name' => $this->faker->name,
+            'company_name' => $this->faker->creditCardType,
+            'expiration_date' => Carbon::createFromDate($cardExpirationYear, $cardExpirationMonth)
+                ->toDateTimeString(),
+            'external_id' => $externalId,
             'external_customer_id' => $externalCustomerId,
             'payment_gateway_name' => 'drumeo',
-            'created_on'           => Carbon::now()->toDateTimeString(),
+            'created_on' => Carbon::now()
+                ->toDateTimeString(),
         ];
 
         $creditCard = $this->creditCardRepository->create($creditCardData);
@@ -941,20 +943,22 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $currency = 'cad';
 
         $paymentMethodData = [
-            'method_id'          => $creditCard['id'],
-            'method_type'        => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'currency'           => $currency,
+            'method_id' => $creditCard['id'],
+            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'currency' => $currency,
             'billing_address_id' => $billingAddress['id'],
-            'created_on'         => Carbon::now()->toDateTimeString(),
+            'created_on' => Carbon::now()
+                ->toDateTimeString(),
         ];
 
         $paymentMethod = $this->paymentMethodRepository->create($paymentMethodData);
 
         $userPaymentMethodData = [
-            'user_id'           => $userId,
+            'user_id' => $userId,
             'payment_method_id' => $paymentMethod['id'],
-            'is_primary'        => true,
-            'created_on'        => Carbon::now()->toDateTimeString(),
+            'is_primary' => true,
+            'created_on' => Carbon::now()
+                ->toDateTimeString(),
         ];
 
         $userPaymentMethod = $this->userPaymentMethodsRepository->create($userPaymentMethodData);
@@ -1123,26 +1127,35 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $currency = 'cad';
         $billingAgreementExternalId = 'B-' . $this->faker->password;
 
-        $billingAgreement = $this->paypalBillingAgreementRepository->create([
-            'external_id'          => $billingAgreementExternalId,
-            'payment_gateway_name' => 'drumeo',
-            'created_on'           => Carbon::now()->toDateTimeString(),
-        ]);
+        $billingAgreement = $this->paypalBillingAgreementRepository->create(
+            [
+                'external_id' => $billingAgreementExternalId,
+                'payment_gateway_name' => 'drumeo',
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
 
-        $paymentMethod = $this->paymentMethodRepository->create([
-            'method_id'          => $billingAgreement['id'],
-            'method_type'        => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'currency'           => $currency,
-            'billing_address_id' => $billingAddress['id'],
-            'created_on'         => Carbon::now()->toDateTimeString(),
-        ]);
+        $paymentMethod = $this->paymentMethodRepository->create(
+            [
+                'method_id' => $billingAgreement['id'],
+                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'currency' => $currency,
+                'billing_address_id' => $billingAddress['id'],
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
 
-        $userPaymentMethod = $this->userPaymentMethodsRepository->create([
-            'user_id'           => $userId,
-            'payment_method_id' => $paymentMethod['id'],
-            'is_primary'        => true,
-            'created_on'        => Carbon::now()->toDateTimeString(),
-        ]);
+        $userPaymentMethod = $this->userPaymentMethodsRepository->create(
+            [
+                'user_id' => $userId,
+                'payment_method_id' => $paymentMethod['id'],
+                'is_primary' => true,
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
 
         $shippingOption = $this->shippingOptionRepository->create(
             $this->faker->shippingOption(
@@ -1244,7 +1257,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $transactionId = rand(1,100);
+        $transactionId = rand(1, 100);
 
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($transactionId);
@@ -1454,7 +1467,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'company_name' => $this->faker->creditCardType,
                 'gateway' => 'drumeo',
                 'card-token' => $fingerPrint,
-                'shipping-address-id' => $shippingAddress['id']
+                'shipping-address-id' => $shippingAddress['id'],
             ]
         );
 
@@ -1570,7 +1583,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'expiration_date' => Carbon::now()
                     ->addYear(1)
                     ->toDateTimeString(),
-                'created_on' => Carbon::now()->toDateTimeString(),
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }
@@ -1850,7 +1864,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $tax = round(0.05 * ($product['price'] - $discount['amount']) * $quantity,2) + round(0.05 * $shippingCost['price'], 2);
+        $tax =
+            round(0.05 * ($product['price'] - $discount['amount']) * $quantity, 2) +
+            round(0.05 * $shippingCost['price'], 2);
         $this->assertEquals(200, $results->getStatusCode());
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
@@ -3073,7 +3089,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'product_id' => $product['id'],
                 'quantity' => $quantity,
-                'initial_price' => $product['price'] ,
+                'initial_price' => $product['price'],
                 'total_price' => $product['price'] * $quantity,
             ]
         );
@@ -3164,7 +3180,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $this->faker->discount(
                 [
                     'active' => true,
-                   'amount' => 5,
+                    'amount' => 5,
                     'type' => 'order total amount off',
                 ]
             )
@@ -3951,8 +3967,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset(
-            [[
-                 'name' => $product1['name'],
+            [
+                [
+                    'name' => $product1['name'],
                     'description' => $product1['description'],
                     'price' => $product1['price'],
                     'totalPrice' => $product1['price'],
@@ -3964,17 +3981,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
                 ],
                 [
-                     'name' => $product2['name'],
+                    'name' => $product2['name'],
                     'description' => $product2['description'],
                     'price' => $product2['price'],
                     'totalPrice' => $product2['price'],
                     'requiresShippingAddress' => $product2['is_physical'] ?? 0,
-                   // 'requiresBillinggAddress' => $product2['is_physical'] ?? 0,
+                    // 'requiresBillinggAddress' => $product2['is_physical'] ?? 0,
                     'options' => [
                         'product-id' => $product2['id'],
                     ],
 
-               ]
+                ],
             ],
             $results->decodeResponseJson('cartItems')
         );
@@ -3982,14 +3999,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $tax = 27.12;
         $financeCharge = 1;
         $this->assertEquals($product1['price'] + $product2['price'] + $tax, $results->decodeResponseJson('totalDue'));
-//        $this->assertEquals(
-//            [
-//                1 => $product1['price'] + $product2['price'] + $tax,
-//                2 => round(($product1['price'] + $product2['price'] + $tax + $financeCharge) / 2, 2),
-//                5 => round(($product1['price'] + $product2['price'] + $tax + $financeCharge) / 5, 2),
-//            ],
-//            $results->decodeResponseJson('paymentPlanOptions')
-//        );
+
     }
 
     public function test_order_with_promo_code()
@@ -4163,12 +4173,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             )
         );
 
-        $userExistingProducts = $this->userProductRepository->query()->create([
-            'user_id' => $userId,
-            'product_id' => $product['id'],
-            'quantity' => 1,
-            'created_on' => Carbon::now()->toDateTimeString()
-        ]);
+        $userExistingProducts =
+            $this->userProductRepository->query()
+                ->create(
+                    [
+                        'user_id' => $userId,
+                        'product_id' => $product['id'],
+                        'quantity' => 1,
+                        'created_on' => Carbon::now()
+                            ->toDateTimeString(),
+                    ]
+                );
 
         $cart = $this->cartService->addCartItem(
             $product['name'],
@@ -4205,8 +4220,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
-                'quantity' => $userExistingProducts['quantity']+ $quantity,
-                'expiration_date' => null
+                'quantity' => $userExistingProducts['quantity'] + $quantity,
+                'expiration_date' => null,
             ]
         );
     }
@@ -4351,12 +4366,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId,
-                'due' => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity +
-                    $product2['price'] * $quantity - $discount['amount'] / 100 * $product2['price'] * $quantity,
+                'due' => $product['price'] * $quantity -
+                    $discount['amount'] / 100 * $product['price'] * $quantity +
+                    $product2['price'] * $quantity -
+                    $discount['amount'] / 100 * $product2['price'] * $quantity,
                 'tax' => 0,
                 'shipping_costs' => 0,
-                'paid' => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity +
-                    $product2['price'] * $quantity - $discount['amount'] / 100 * $product2['price'] * $quantity,
+                'paid' => $product['price'] * $quantity -
+                    $discount['amount'] / 100 * $product['price'] * $quantity +
+                    $product2['price'] * $quantity -
+                    $discount['amount'] / 100 * $product2['price'] * $quantity,
             ]
         );
 
@@ -4366,7 +4385,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'product_id' => $product['id'],
                 'quantity' => $quantity,
-                'initial_price' => $product['price'] ,
+                'initial_price' => $product['price'],
                 'discount' => $product['price'] * $quantity * $discount['amount'] / 100,
                 'total_price' => ($product['price'] - $product['price'] * $discount['amount'] / 100) * $quantity,
             ]
@@ -4377,9 +4396,141 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'product_id' => $product2['id'],
                 'quantity' => $quantity,
-                'initial_price' => $product2['price'] ,
+                'initial_price' => $product2['price'],
                 'discount' => $product2['price'] * $quantity * $discount['amount'] / 100,
                 'total_price' => ($product2['price'] - $product2['price'] * $discount['amount'] / 100) * $quantity,
+            ]
+        );
+    }
+
+    public function test_admin_submit_order_for_other_user()
+    {
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
+        $randomUser = $this->faker->randomNumber();
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $quantity = 2;
+
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 25,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'description' => $this->faker->word,
+                    'is_physical' => 0,
+                    'weight' => 0,
+                    'subscription_interval_type' => '',
+                    'subscription_interval_count' => '',
+                ]
+            )
+        );
+
+        $cart = $this->cartService->addCartItem(
+            $product['name'],
+            $product['description'],
+            $quantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            [
+                'product-id' => $product['id'],
+            ]
+        );
+        $shipping = $this->faker->address(['type' => ConfigService::$shippingAddressType]);
+
+        $results = $this->call(
+            'PUT',
+            '/order',
+            [
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
+                'billing-region' => $this->faker->word,
+                'billing-zip-or-postal-code' => $this->faker->postcode,
+                'billing-country' => 'Romanian',
+                'gateway' => 'drumeo',
+                'shipping-first-name' => $shipping['first_name'],
+                'shipping-last-name' => $shipping['last_name'],
+                'shipping-address-line-1' => $shipping['street_line_1'],
+                'shipping-city' => $shipping['city'],
+                'shipping-region' => $shipping['city'],
+                'shipping-zip-or-postal-code' => $shipping['zip'],
+                'shipping-country' => $shipping['country'],
+                'user_id' => $randomUser,
+            ]
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount amount it's included in order due
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrder,
+            [
+                'brand' => ConfigService::$brand,
+                'user_id' => $randomUser,
+                'due' => $product['price'] * $quantity,
+                'tax' => 0,
+                'shipping_costs' => 0,
+                'paid' => $product['price'] * $quantity,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserPaymentMethods,
+            [
+                'user_id' => $randomUser,
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            [
+                'user_id' => $randomUser,
+                'type' => ConfigService::$shippingAddressType,
+                'first_name' => $shipping['first_name'],
+                'last_name' => $shipping['last_name'],
+                'street_line_1' => $shipping['street_line_1'],
+                'city' => $shipping['city'],
+                'zip' => $shipping['zip'],
+                'country' => $shipping['country'],
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }

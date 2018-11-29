@@ -26,6 +26,7 @@ use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
+use Railroad\Permissions\Services\PermissionService;
 
 class OrderFormService
 {
@@ -130,6 +131,11 @@ class OrderFormService
     private $userProvider;
 
     /**
+     * @var PermissionService
+     */
+    private $permissionService;
+
+    /**
      * OrderFormService constructor.
      *
      * @param CartService $cartService
@@ -143,6 +149,7 @@ class OrderFormService
      * @param StripePaymentGateway $stripePaymentGateway
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PaymentRepository $paymentRepository
+     * @param PaymentMethodRepository $paymentMethodRepository
      * @param OrderPaymentRepository $orderPaymentRepository
      * @param OrderItemRepository $orderItemRepository
      * @param SubscriptionRepository $subscriptionRepository
@@ -150,6 +157,7 @@ class OrderFormService
      * @param OrderItemFulfillmentRepository $orderItemFulfillmentRepository
      * @param OrderDiscountRepository $orderDiscountRepository
      * @param DiscountService $discountService
+     * @param PermissionService $permissionService
      */
     public function __construct(
         CartService $cartService,
@@ -170,7 +178,8 @@ class OrderFormService
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         OrderDiscountRepository $orderDiscountRepository,
-        DiscountService $discountService
+        DiscountService $discountService,
+        PermissionService $permissionService
     ) {
         $this->cartService = $cartService;
         $this->orderRepository = $orderRepository;
@@ -191,6 +200,7 @@ class OrderFormService
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->orderDiscountRepository = $orderDiscountRepository;
         $this->discountService = $discountService;
+        $this->permissionService = $permissionService;
         $this->userProvider = app()->make('UserProviderInterface');
     }
 
@@ -710,6 +720,12 @@ class OrderFormService
         Request $request
     ) {
         $user = auth()->user() ?? null;
+        $brand = ConfigService::$brand;
+
+        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
+            $user = ['id' => $request->get('user_id')];
+            $brand = $request->get('brand', ConfigService::$brand);
+        }
 
         if (!empty($request->get('token'))) {
             $orderFormInput = session()->get('order-form-input', []);
@@ -732,7 +748,7 @@ class OrderFormService
             $customer = $this->customerRepository->create(
                 [
                     'email' => $request->get('billing-email'),
-                    'brand' => ConfigService::$brand,
+                    'brand' => $brand,
                     'created_on' => Carbon::now()
                         ->toDateTimeString(),
                 ]
@@ -987,7 +1003,7 @@ class OrderFormService
                 continue;
             }
 
-                $orderItem =
+            $orderItem =
                 $this->orderItemRepository->query()
                     ->create(
                         [
@@ -1019,7 +1035,7 @@ class OrderFormService
             if ($cartItem->getProduct()['type'] == ConfigService::$typeSubscription) {
 
                 $subscription = $this->createSubscription(
-                    $request->get('brand', ConfigService::$brand),
+                    $brand,
                     $cartItem->getProduct(),
                     $order,
                     $cartItem,
@@ -1050,7 +1066,7 @@ class OrderFormService
 
         if ($paymentPlanNumbersOfPayments > 1) {
             $this->createSubscription(
-                $request->get('brand', ConfigService::$brand),
+                $brand,
                 null,
                 $order,
                 null,
