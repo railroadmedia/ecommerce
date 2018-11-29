@@ -131,7 +131,6 @@ class ShoppingCartController extends BaseController
                         $product['is_physical'],
                         $product['subscription_interval_type'],
                         $product['subscription_interval_count'],
-                        $product['weight'],
                         [
                             'product-id' => $product['id'],
                             'requires-shipping-address' => $product['is_physical'],
@@ -289,6 +288,9 @@ class ShoppingCartController extends BaseController
         );
     }
 
+    /**
+     * @return array
+     */
     protected function getCartData()
     {
         $cartData = [

@@ -704,7 +704,6 @@ class OrderFormService
      * Submit an order
      *
      * @param Request $request
-     * @param array $cartItems
      * @return array
      */
     public function processOrderForm(
@@ -769,6 +768,8 @@ class OrderFormService
         $discountsToApply = $this->cartService->getDiscountsToApply();
         $this->cartService->getCart()
             ->addDiscount($discountsToApply);
+        $this->cartService->getCart()
+            ->addAppliedDiscount($discountsToApply);
 
         $this->cartService->applyDiscounts();
 
@@ -1046,7 +1047,7 @@ class OrderFormService
 
             $orderItems[] = $orderItem;
         }
-        //dd('out');
+
         if ($paymentPlanNumbersOfPayments > 1) {
             $this->createSubscription(
                 $request->get('brand', ConfigService::$brand),

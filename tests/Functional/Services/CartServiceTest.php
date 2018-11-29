@@ -41,7 +41,6 @@ class CartServiceTest extends EcommerceTestCase
             true,
             null,
             null,
-            0,
             ['product-id' => $product['id']]
         );
         $cart = $this->classBeingTested->addCartItem(
@@ -53,12 +52,11 @@ class CartServiceTest extends EcommerceTestCase
             true,
             null,
             null,
-            0,
             ['product-id' => $product['id']]
         );
 
-        $this->assertEquals($cart[0]->getQuantity(), 12);
-        $this->assertEquals($cart[0]->getTotalPrice(), 12 * $product['price']);
+        $this->assertEquals($cart->getItems()[0]->getQuantity(), 12);
+        $this->assertEquals($cart->getItems()[0]->getTotalPrice(), 12 * $product['price']);
     }
 
     public function test_update_item_quantity_to_cart()
@@ -74,7 +72,6 @@ class CartServiceTest extends EcommerceTestCase
             true,
             null,
             null,
-            0,
             ['product-id' => $product['id']]
         );
         $cart = $this->classBeingTested->addCartItem(
@@ -86,12 +83,11 @@ class CartServiceTest extends EcommerceTestCase
             true,
             null,
             null,
-            0,
             ['product-id' => $product['id']]
         );
 
-        $this->assertEquals($cart[0]->quantity, 12);
-        $this->assertEquals($cart[0]->totalPrice, 12*$product['price']);
+        $this->assertEquals($cart->getItems()[0]->quantity, 12);
+        $this->assertEquals($cart->getItems()[0]->totalPrice, 12*$product['price']);
     }
 
     public function test_add_items_to_cart()
@@ -108,7 +104,6 @@ class CartServiceTest extends EcommerceTestCase
             true,
             null,
             null,
-            0,
             ['product-id' => $product['id']]
         );
 
@@ -121,10 +116,10 @@ class CartServiceTest extends EcommerceTestCase
             true,
             null,
             null,
-            0,
             ['product-id' => $product2['id']]
         );
 
-        $this->assertEquals(2, count($cart));
+        $this->assertEquals(1, count($cart));
+        $this->assertEquals(2, count($cart->getItems()));
     }
 }

@@ -306,7 +306,6 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $this->faker->word,
             rand(),
-            0,
             [
                 'product-id' => $product['id'],
             ]
@@ -353,7 +352,6 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             $productOne['is_physical'],
             $this->faker->word,
             rand(),
-            0,
             [
                 'product-id' => $productOne['id'],
             ]
@@ -378,7 +376,6 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             $productTwo['is_physical'],
             $this->faker->word,
             rand(),
-            0,
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -403,7 +400,6 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             $productThree['is_physical'],
             $this->faker->word,
             rand(),
-            0,
             [
                 'product-id' => $productThree['id'],
             ]
@@ -477,7 +473,6 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $this->faker->word,
             rand(),
-            0,
             [
                 'product-id' => $product['id'],
             ]
@@ -518,7 +513,6 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $this->faker->word,
             0,
-            rand(),
             [
                 'product-id' => $product['id'],
             ]

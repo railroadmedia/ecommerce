@@ -23,7 +23,6 @@ class CartFactory extends CartService
                                 $requiresBillingAddress = false,
                                 $subscriptionIntervalType = null,
                                 $subscriptionIntervalCount = null,
-                                $weight = 0,
                                 $options = [])
     {
         $this->faker = app(Generator::class);
@@ -38,7 +37,6 @@ class CartFactory extends CartService
                 $this->faker->boolean,
                 $this->faker->word,
                 0,
-                rand(),
                 [
                     'product-id' => rand()
                 ]

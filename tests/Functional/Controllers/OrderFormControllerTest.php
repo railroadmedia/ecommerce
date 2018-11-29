@@ -131,35 +131,7 @@ class OrderFormControllerTest extends EcommerceTestCase
                 ]
             )
         );
-//        $cart = $this->cartService->addCartItem(
-//            $product1['name'],
-//            $product1['description'],
-//            1,
-//            $product1['price'],
-//            $product1['is_physical'],
-//            $product1['is_physical'],
-//            $this->faker->word,
-//            rand(),
-//            $product1['weight'],
-//            [
-//                'product-id' => $product1['id'],
-//            ]
-//        );
-//
-//        $this->cartService->addCartItem(
-//            $product2['name'],
-//            $product2['description'],
-//            1,
-//            $product2['price'],
-//            $product2['is_physical'],
-//            $product2['is_physical'],
-//            $this->faker->word,
-//            rand(),
-//            $product2['weight'],
-//            [
-//                'product-id' => $product2['id'],
-//            ]
-//        );
+
         $cart = $this->cartService->addCartItem(
             $product1['name'],
             $product1['description'],
@@ -169,7 +141,6 @@ class OrderFormControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -184,7 +155,6 @@ class OrderFormControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $this->faker->word,
             rand(),
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]

@@ -22,6 +22,10 @@ class Cart
     private $totalDiscountAmount;
     public $appliedDiscounts;
 
+    /** Get cart items
+     *
+     * @return array
+     */
     public function getItems()
     {
         $cartItems = [];
@@ -41,6 +45,11 @@ class Cart
         return $cartItems;
     }
 
+    /** Add cart on session
+     *
+     * @param $cartItem
+     * @return Cart
+     */
     public function addCartItem($cartItem)
     {
         $cart = $this->getCart();
@@ -57,11 +66,18 @@ class Cart
         return $cart;
     }
 
+    /**
+     * @param $taxesDue
+     */
     public function setTaxesDue($taxesDue)
     {
         $this->totalTax = $taxesDue;
     }
 
+    /** Calculate taxes based on items, shipping costs and tax rate
+     *
+     * @return mixed
+     */
     public function calculateTaxesDue()
     {
         if (Session::has('cart-address-billing')) {
@@ -75,6 +91,10 @@ class Cart
         return max((float)($this->totalTax), 0);
     }
 
+    /** If the cart exists on the session return the cart, otherwise return an empty cart
+     *
+     * @return Cart
+     */
     public function getCart()
     {
         $session = Session::all();
@@ -88,6 +108,10 @@ class Cart
         return new Cart();
     }
 
+    /** Calculate total due
+     *
+     * @return float
+     */
     public function getTotalDue()
     {
         $financeCharge = ($this->getPaymentPlanNumberOfPayments() > 1) ? 1 : 0;
@@ -104,6 +128,10 @@ class Cart
         );
     }
 
+    /** Calculate price per payment
+     *
+     * @return float
+     */
     public function calculatePricePerPayment()
     {
         if ($this->getPaymentPlanNumberOfPayments() > 1) {
@@ -119,6 +147,10 @@ class Cart
         return $this->getTotalDue();
     }
 
+    /**Get payment plan selected option from the session
+     *
+     * @return mixed
+     */
     public function getPaymentPlanNumberOfPayments()
     {
         if (Session::has(self::PAYMENT_PLAN_LOCKED_SESSION_KEY) &&
@@ -129,6 +161,10 @@ class Cart
         return Session::get(self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY, 1);
     }
 
+    /**
+     * @param $shipping
+     * @return $this
+     */
     public function setShippingCosts($shipping)
     {
         $this->shippingCosts = $shipping;
@@ -175,6 +211,9 @@ class Cart
         $this->discounts = $discount;
     }
 
+    /**
+     * @return float|int
+     */
     public function getTotalWeight()
     {
         $weight = 0.0;
@@ -189,6 +228,9 @@ class Cart
         return $weight;
     }
 
+    /**
+     * @return float
+     */
     public function calculateInitialPricePerPayment()
     {
         if ($this->getPaymentPlanNumberOfPayments() > 1) {
@@ -208,16 +250,25 @@ class Cart
         return $this->calculatePricePerPayment();
     }
 
+    /**
+     * @return mixed
+     */
     public function calculateCartItemsSubTotalAfterDiscounts()
     {
         return max((float)($this->totalDue - $this->totalDiscountAmount + $this->shippingCosts + $this->totalTax), 0);
     }
 
+    /**
+     * @param $discount
+     */
     public function setTotalDiscountAmount($discount)
     {
         $this->totalDiscountAmount = $discount;
     }
 
+    /**
+     * @return mixed
+     */
     public function getTotalDiscountAmount()
     {
         return $this->totalDiscountAmount;
@@ -236,9 +287,14 @@ class Cart
      */
     public function addAppliedDiscount($discount)
     {
-        $this->appliedDiscounts[] = $discount;
+        $this->appliedDiscounts = $discount;
     }
 
+    /**
+     * @param $country
+     * @param $region
+     * @return float|int
+     */
     public function getTaxRate($country, $region)
     {
         if (array_key_exists(strtolower($country), ConfigService::$taxRate)) {
@@ -252,6 +308,9 @@ class Cart
         }
     }
 
+    /**
+     * @return int
+     */
     public function getTotalDueForItems()
     {
         $totalDueFromItems = 0;
@@ -266,10 +325,14 @@ class Cart
         return $totalDueFromItems;
     }
 
+    /**
+     * Remove discounts from the session and reset the total discount amount
+     */
     public function removeAppliedDiscount()
     {
         $this->appliedDiscounts = [];
         $this->discounts = [];
+        $this->totalDiscountAmount = 0;
     }
 
 }

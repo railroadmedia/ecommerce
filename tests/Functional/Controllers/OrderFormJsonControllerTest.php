@@ -173,7 +173,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -188,7 +187,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $this->faker->word,
             rand(),
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]
@@ -262,7 +260,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -277,7 +274,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $this->faker->word,
             rand(),
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]
@@ -390,7 +386,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -405,7 +400,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $this->faker->word,
             rand(),
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]
@@ -489,7 +483,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -533,7 +526,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -677,7 +669,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -692,7 +683,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $this->faker->word,
             rand(),
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]
@@ -825,7 +815,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -840,7 +829,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $this->faker->word,
             rand(),
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]
@@ -1054,7 +1042,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -1069,7 +1056,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $this->faker->word,
             rand(),
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]
@@ -1239,7 +1225,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -1254,7 +1239,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $this->faker->word,
             rand(),
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]
@@ -1439,7 +1423,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -1454,7 +1437,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $this->faker->word,
             rand(),
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]
@@ -1558,7 +1540,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $this->faker->word,
             rand(),
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -1693,13 +1674,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $this->faker->word,
             rand(),
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
         );
 
         $expirationDate = $this->faker->creditCardExpirationDate;
+
         $results = $this->call(
             'PUT',
             '/order',
@@ -1838,7 +1819,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -1965,7 +1945,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2099,7 +2078,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2221,7 +2199,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2339,7 +2316,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2458,7 +2434,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2589,7 +2564,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2739,7 +2713,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2895,7 +2868,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -3055,7 +3027,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -3219,7 +3190,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $this->faker->word,
             rand(),
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -3234,7 +3204,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $this->faker->word,
             rand(),
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]
@@ -3352,7 +3321,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -3470,7 +3438,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -3613,7 +3580,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -3801,7 +3767,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $product1['subscription_interval_type'],
             $product1['subscription_interval_count'],
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -3815,7 +3780,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $product2['subscription_interval_type'],
             $product2['subscription_interval_count'],
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]
@@ -3964,7 +3928,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product1['is_physical'],
             $product1['subscription_interval_type'],
             $product1['subscription_interval_count'],
-            $product1['weight'],
             [
                 'product-id' => $product1['id'],
             ]
@@ -3978,7 +3941,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $product2['subscription_interval_type'],
             $product2['subscription_interval_count'],
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]
@@ -4217,7 +4179,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -4351,7 +4312,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['is_physical'],
             $product['subscription_interval_type'],
             $product['subscription_interval_count'],
-            $product['weight'],
             [
                 'product-id' => $product['id'],
             ]
@@ -4365,7 +4325,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product2['is_physical'],
             $product2['subscription_interval_type'],
             $product2['subscription_interval_count'],
-            $product2['weight'],
             [
                 'product-id' => $product2['id'],
             ]

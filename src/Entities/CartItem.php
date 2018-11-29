@@ -211,11 +211,17 @@ class CartItem
         $this->product = $product;
     }
 
+    /**
+     * @param $price
+     */
     public function setDiscountedPrice($price)
     {
         $this->discountedPrice = $price;
     }
 
+    /**
+     * @return mixed
+     */
     public function getDiscountedPrice()
     {
         return $this->discountedPrice;
@@ -236,7 +242,4 @@ class CartItem
     {
         $this->appliedDiscounts[] = $discount;
     }
-
-
-
 }

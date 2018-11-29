@@ -38,11 +38,6 @@ class CartService
     private $discountCriteriaService;
 
     /**
-     * @var TaxService
-     */
-    private $taxService;
-
-    /**
      * @var DiscountService
      */
     private $discountService;
@@ -68,8 +63,7 @@ class CartService
         CartAddressService $cartAddressService,
         DiscountCriteriaService $discountCriteriaService,
         DiscountService $discountService,
-        ShippingOptionRepository $shippingOptionRepository,
-        TaxService $taxService
+        ShippingOptionRepository $shippingOptionRepository
     ) {
         $this->session = $session;
         $this->productRepository = $productRepository;
@@ -78,7 +72,6 @@ class CartService
         $this->discountCriteriaService = $discountCriteriaService;
         $this->discountService = $discountService;
         $this->shippingOptionsRepository = $shippingOptionRepository;
-        $this->taxService = $taxService;
         $this->cart = new Cart();
     }
 
@@ -155,8 +148,8 @@ class CartService
                 $item->getRequiresBillingAddress(),
                 $item->getSubscriptionIntervalType(),
                 $item->getSubscriptionIntervalCount(),
-                $item->getProduct()['weight'],
-                $item->getOptions());
+                $item->getOptions()
+            );
         }
 
         return $this->cart->getItems();
@@ -191,8 +184,8 @@ class CartService
                 $item->getRequiresBillingAddress(),
                 $item->getSubscriptionIntervalType(),
                 $item->getSubscriptionIntervalCount(),
-                $item->getProduct()['weight'],
-                $item->getOptions());
+                $item->getOptions()
+            );
         }
 
         return $this->cart->getItems();
@@ -261,6 +254,18 @@ class CartService
         return $this->session->get(self::PROMO_CODE_KEY);
     }
 
+    /** Add item to cart, calculate the shipping costs based on cart's products, apply discounts on cart items
+     * @param $name
+     * @param $description
+     * @param $quantity
+     * @param $price
+     * @param $requiresShippingAddress
+     * @param $requiresBillingAddress
+     * @param null $subscriptionIntervalType
+     * @param null $subscriptionIntervalCount
+     * @param array $options
+     * @return Cart
+     */
     public function addCartItem(
         $name,
         $description,
@@ -270,7 +275,6 @@ class CartService
         $requiresBillingAddress,
         $subscriptionIntervalType = null,
         $subscriptionIntervalCount = null,
-        $weight,
         $options = []
     ) {
         $product = $this->productRepository->read($options['product-id']);
@@ -279,7 +283,8 @@ class CartService
                 $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE)['country'],
                 $this->cart->getTotalWeight() + $product->weight * $quantity
             )['price'] ?? 0;
-        $this->cart->getCart()->setShippingCosts($shippingCosts);
+        $this->cart->getCart()
+            ->setShippingCosts($shippingCosts);
 
         // If the item already exists, just increase the quantity
         foreach ($this->cart->getItems() as $cartItem) {
@@ -293,8 +298,9 @@ class CartService
                     $discountsToApply,
                     $this->getCart()
                 );
-
-                return $this->cart->getCart()->addDiscount($discountsToApply);
+                $this->cart->getCart()
+                    ->addDiscount($discountsToApply);
+                return $this->applyDiscounts();
             }
         }
 
@@ -321,16 +327,27 @@ class CartService
             $this->getCart()
         );
 
-        $this->cart->getCart()->addDiscount($discountsToApply);
+        $this->cart->getCart()
+            ->addDiscount($discountsToApply);
 
         return $this->applyDiscounts();
     }
 
+    /**
+     * Get the cart entity from the session. If the cart it's not set on the session an empty cart it's returned.
+     *
+     * @return Cart
+     */
     public function getCart()
     {
         return $this->cart->getCart();
     }
 
+    /**
+     * Return an array with the discounts that should be applied, the discounts criteria are met
+     *
+     * @return array
+     */
     public function getDiscountsToApply()
     {
         $discountsToApply = [];
@@ -358,17 +375,30 @@ class CartService
         return $discountsToApply;
     }
 
+    /** Calculate the discounted price on items and the discounted amount on cart(discounts that should be applied on order)
+     *  and set the discounted price on order item and the total discount amount on cart.
+     *
+     * Return the cart with the discounts applied.
+     *
+     * @return Cart
+     */
     public function applyDiscounts()
     {
-        foreach ($this->cart->getCart()->getDiscounts() as $discount) {
+        foreach (
+            $this->cart->getCart()
+                ->getDiscounts() as $discount
+        ) {
 
             foreach (
-                $this->cart->getCart()->getItems() as $item
+                $this->cart->getCart()
+                    ->getItems() as $index => $item
             ) {
 
                 if (($discount['product_id'] == $item->getOptions()['product-id']) ||
-                    (($discount['product_category'])&&($discount['product_category'] == $item->getProduct()['category']))) {
+                    (($discount['product_category']) &&
+                        ($discount['product_category'] == $item->getProduct()['category']))) {
                     $productDiscount = 0;
+
                     if ($discount->type == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
                         $productDiscount = $discount->amount * $item->getQuantity();
                     }
@@ -380,23 +410,23 @@ class CartService
                     if ($discount->type == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
                         $productDiscount = $discount->amount * $item->getQuantity();
                     }
-                    $item->setDiscountedPrice(
-                        (($item->getTotalPrice() - $productDiscount) > 0) ? $item->getTotalPrice() - $productDiscount :
-                            0
-                    );
+                    $this->cart->getCart()
+                        ->getItems()[$index]->setDiscountedPrice(max(($item->getTotalPrice() - $productDiscount), 0));
                 }
             }
         }
 
         $discountedAmount = $this->discountService->getAmountDiscounted(
-            $this->cart->getCart()->getDiscounts(),
-            $this->cart->getCart()->getTotalDue(),
-            $this->cart->getCart()->getItems()
+            $this->cart->getCart()
+                ->getDiscounts(),
+            $this->cart->getCart()
+                ->getTotalDue(),
+            $this->cart->getCart()
+                ->getItems()
         );
 
-        $this->cart->getCart()->setTotalDiscountAmount($discountedAmount);
-
-        $this->cart->getTotalDue();
+        $this->cart->getCart()
+            ->setTotalDiscountAmount($discountedAmount);
 
         return $this->cart->getCart();
     }
