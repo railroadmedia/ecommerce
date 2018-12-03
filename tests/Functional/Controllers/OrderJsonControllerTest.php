@@ -215,7 +215,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         for($i = 0; $i < 3; $i++)
         {
             $order     = $this->orderRepository->create($this->faker->order([
-                'brand' => $this->faker->word
+                'brand' => $this->faker->word().$this->faker->word()
             ]));
             $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
                 'product_id' => $product['id'],

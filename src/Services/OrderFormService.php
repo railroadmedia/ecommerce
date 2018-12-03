@@ -515,7 +515,8 @@ class OrderFormService
         $user,
         $customer,
         $billingAddressDB,
-        $payment
+        $payment,
+        $brand
     ) {
         $shippingAddressDB = null;
 
@@ -536,7 +537,7 @@ class OrderFormService
             $shippingAddressDB = $this->addressRepository->create(
                 [
                     'type' => ConfigService::$shippingAddressType,
-                    'brand' => ConfigService::$brand,
+                    'brand' => $brand,
                     'user_id' => $user['id'] ?? null,
                     'customer_id' => $customer['id'] ?? null,
                     'first_name' => $request->get('shipping-first-name'),
@@ -558,7 +559,7 @@ class OrderFormService
                 'due' => $totalDue,
                 'tax' => $totalTax,
                 'paid' => $paid,
-                'brand' => $request->input('brand', ConfigService::$brand),
+                'brand' => $brand,
                 'user_id' => $user['id'] ?? null,
                 'customer_id' => $customer['id'] ?? null,
                 'shipping_costs' => $shipping,
@@ -721,11 +722,11 @@ class OrderFormService
     ) {
         $user = auth()->user() ?? null;
         $brand = ConfigService::$brand;
-
         if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
             $user = ['id' => $request->get('user_id')];
             $brand = $request->get('brand', ConfigService::$brand);
         }
+        $this->cartService->setBrand($brand ?? ConfigService::$brand);
 
         if (!empty($request->get('token'))) {
             $orderFormInput = session()->get('order-form-input', []);
@@ -979,7 +980,8 @@ class OrderFormService
             $user ?? null,
             $customer ?? null,
             $billingAddressDB,
-            $payment
+            $payment,
+            $brand
         );
 
         //create payment plan
@@ -1066,7 +1068,8 @@ class OrderFormService
 
         if ($paymentPlanNumbersOfPayments > 1) {
             $this->createSubscription(
-                $brand,
+                $this->cartService->getCart()
+                    ->getBrand(),
                 null,
                 $order,
                 null,

@@ -4403,11 +4403,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_admin_submit_order_for_other_user()
+    public function test_admin_submit_subscription_for_other_user()
     {
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
-        $randomUser = $this->faker->randomNumber();
+        $randomUser = $this->faker->randomNumber(2);
+        $brand = $this->faker->word;
 
         $cardToken = $this->faker->word;
 
@@ -4441,7 +4442,174 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $quantity = 2;
+        $quantity = 1;
+
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 25,
+                    'type' => ConfigService::$typeSubscription,
+                    'active' => 1,
+                    'description' => $this->faker->word,
+                    'is_physical' => 0,
+                    'weight' => 0,
+                    'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                    'subscription_interval_count' => 1,
+                ]
+            )
+        );
+
+        $cart = $this->cartService->addCartItem(
+            $product['name'],
+            $product['description'],
+            $quantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            [
+                'product-id' => $product['id'],
+            ],
+            $brand
+        );
+        $shipping = $this->faker->address(['type' => ConfigService::$shippingAddressType]);
+
+        $results = $this->call(
+            'PUT',
+            '/order',
+            [
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
+                'billing-region' => $this->faker->word,
+                'billing-zip-or-postal-code' => $this->faker->postcode,
+                'billing-country' => 'Romanian',
+                'gateway' => 'drumeo',
+                'shipping-first-name' => $shipping['first_name'],
+                'shipping-last-name' => $shipping['last_name'],
+                'shipping-address-line-1' => $shipping['street_line_1'],
+                'shipping-city' => $shipping['city'],
+                'shipping-region' => $shipping['city'],
+                'shipping-zip-or-postal-code' => $shipping['zip'],
+                'shipping-country' => $shipping['country'],
+                'user_id' => $randomUser,
+                'brand' => $brand
+            ]
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount amount it's included in order due
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrder,
+            [
+                'brand' => $brand,
+                'user_id' => $randomUser,
+                'due' => $product['price'] * $quantity,
+                'tax' => 0,
+                'shipping_costs' => 0,
+                'paid' => $product['price'] * $quantity,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserPaymentMethods,
+            [
+                'user_id' => $randomUser,
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            [
+                'user_id' => $randomUser,
+                'brand' => $brand,
+                'type' => ConfigService::$shippingAddressType,
+                'first_name' => $shipping['first_name'],
+                'last_name' => $shipping['last_name'],
+                'street_line_1' => $shipping['street_line_1'],
+                'street_line_2' => $shipping['street_line_2'],
+                'city' => $shipping['city'],
+                'zip' => $shipping['zip'],
+                'country' => $shipping['country'],
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $randomUser,
+                'product_id' => $product['id'],
+                'quantity' => $quantity,
+                'expiration_date' => Carbon::now()->addYear(1)->toDateTimeString(),
+                'created_on' => Carbon::now()->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableSubscription,
+            [
+                'user_id' => $randomUser,
+                'brand' => $brand,
+                'type' => ConfigService::$typeSubscription,
+                'product_id' => $product['id'],
+                'is_active' => 1,
+                'start_date' => Carbon::now()->toDateTimeString(),
+                'paid_until' => Carbon::now()->addYear(1)->toDateTimeString(),
+                'created_on' => Carbon::now()->toDateTimeString(),
+                'total_cycles_paid' => 1,
+                'interval_type' => $product['subscription_interval_type'],
+                'interval_count' => $product['subscription_interval_count'],
+                'total_price_per_payment' => $product['price'],
+                'canceled_on' => null
+            ]
+        );
+    }
+
+    public function test_admin_submit_product_for_other_user()
+    {
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
+        $randomUser = $this->faker->randomNumber(2);
+        $brand = $this->faker->word;
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $quantity = 1;
 
         $product = $this->productRepository->create(
             $this->faker->product(
@@ -4452,8 +4620,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'description' => $this->faker->word,
                     'is_physical' => 0,
                     'weight' => 0,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
+                    'subscription_interval_type' => null,
+                    'subscription_interval_count' => null,
                 ]
             )
         );
@@ -4490,7 +4658,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping-region' => $shipping['city'],
                 'shipping-zip-or-postal-code' => $shipping['zip'],
                 'shipping-country' => $shipping['country'],
-                'user_id' => $randomUser,
+                'user_id' => $randomUser
             ]
         );
 
@@ -4522,10 +4690,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ConfigService::$tableAddress,
             [
                 'user_id' => $randomUser,
+                'brand' => ConfigService::$brand,
                 'type' => ConfigService::$shippingAddressType,
                 'first_name' => $shipping['first_name'],
                 'last_name' => $shipping['last_name'],
                 'street_line_1' => $shipping['street_line_1'],
+                'street_line_2' => $shipping['street_line_2'],
                 'city' => $shipping['city'],
                 'zip' => $shipping['zip'],
                 'country' => $shipping['country'],
@@ -4533,6 +4703,164 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ->toDateTimeString(),
             ]
         );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $randomUser,
+                'product_id' => $product['id'],
+                'quantity' => $quantity,
+                'expiration_date' => null,
+                'created_on' => Carbon::now()->toDateTimeString()
+            ]
+        );
     }
 
+    public function test_admin_submit_order_on_different_branch()
+    {
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
+        $randomUser = $this->faker->randomNumber(2);
+        $brand = $this->faker->word;
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $quantity = 1;
+
+        $product = $this->productRepository->create(
+            $this->faker->product(
+                [
+                    'price' => 25,
+                    'type' => ConfigService::$typeProduct,
+                    'active' => 1,
+                    'description' => $this->faker->word,
+                    'is_physical' => 0,
+                    'weight' => 0,
+                    'subscription_interval_type' => null,
+                    'subscription_interval_count' => null,
+                ]
+            )
+        );
+
+        $cart = $this->cartService->addCartItem(
+            $product['name'],
+            $product['description'],
+            $quantity,
+            $product['price'],
+            $product['is_physical'],
+            $product['is_physical'],
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
+            [
+                'product-id' => $product['id'],
+            ],
+            $brand
+        );
+        $shipping = $this->faker->address(['type' => ConfigService::$shippingAddressType]);
+
+        $results = $this->call(
+            'PUT',
+            '/order',
+            [
+                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'card-token' => $cardToken,
+                'billing-region' => $this->faker->word,
+                'billing-zip-or-postal-code' => $this->faker->postcode,
+                'billing-country' => 'Romanian',
+                'gateway' => 'drumeo',
+                'shipping-first-name' => $shipping['first_name'],
+                'shipping-last-name' => $shipping['last_name'],
+                'shipping-address-line-1' => $shipping['street_line_1'],
+                'shipping-city' => $shipping['city'],
+                'shipping-region' => $shipping['city'],
+                'shipping-zip-or-postal-code' => $shipping['zip'],
+                'shipping-country' => $shipping['country'],
+                'user_id' => $randomUser,
+                'brand' => $brand
+            ]
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        //assert the discount amount it's included in order due
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrder,
+            [
+                'brand' => $brand,
+                'user_id' => $randomUser,
+                'due' => $product['price'] * $quantity,
+                'tax' => 0,
+                'shipping_costs' => 0,
+                'paid' => $product['price'] * $quantity,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserPaymentMethods,
+            [
+                'user_id' => $randomUser,
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            [
+                'user_id' => $randomUser,
+                'brand' => $brand,
+                'type' => ConfigService::$shippingAddressType,
+                'first_name' => $shipping['first_name'],
+                'last_name' => $shipping['last_name'],
+                'street_line_1' => $shipping['street_line_1'],
+                'street_line_2' => $shipping['street_line_2'],
+                'city' => $shipping['city'],
+                'zip' => $shipping['zip'],
+                'country' => $shipping['country'],
+                'created_on' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $randomUser,
+                'product_id' => $product['id'],
+                'quantity' => $quantity,
+                'expiration_date' => null,
+                'created_on' => Carbon::now()->toDateTimeString()
+            ]
+        );
+    }
 }

@@ -12,7 +12,6 @@ class Cart
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
     const PAYMENT_PLAN_LOCKED_SESSION_KEY = 'order-form-payment-plan-locked';
-    const PROMO_CODE_KEY = 'promo-code';
 
     public $items;
     private $shippingCosts;
@@ -21,6 +20,7 @@ class Cart
     private $discounts;
     private $totalDiscountAmount;
     public $appliedDiscounts;
+    private $brand;
 
     /** Get cart items
      *
@@ -28,21 +28,7 @@ class Cart
      */
     public function getItems()
     {
-        $cartItems = [];
-        $session = Session::all();
-
-        foreach ($session as $sessionKey => $sessionValue) {
-            if (substr($sessionKey, 0, strlen(ConfigService::$brand . '-' . self::SESSION_KEY)) ==
-                ConfigService::$brand . '-' . self::SESSION_KEY) {
-                $cartItem = $sessionValue;
-
-                if (!empty($cartItem)) {
-                    $cartItems = $cartItem->items;
-                }
-            }
-        }
-
-        return $cartItems;
+        return $this->items ?? [];
     }
 
     /** Add cart on session
@@ -52,18 +38,16 @@ class Cart
      */
     public function addCartItem($cartItem)
     {
-        $cart = $this->getCart();
-        $cart->items[] = $cartItem;
-        Session::put(ConfigService::$brand . '-' . self::SESSION_KEY, $cart);
+        $this->items[] = $cartItem;
+        $this->totalDue = $this->getTotalDue();
+        $this->discounts = $this->getDiscounts();
+        $this->shippingCosts = $this->calculateShippingDue();
+        $this->totalTax = $this->calculateTaxesDue();
+        $this->brand = $this->getBrand();
 
-        $cart->totalDue = $this->getTotalDue();
-        $cart->discounts = $this->getDiscounts();
-        $cart->shippingCosts = $this->calculateShippingDue();
-        $cart->totalTax = $this->calculateTaxesDue();
+        Session::put($this->getBrand() . '-' . self::SESSION_KEY, $this);
 
-        Session::put(ConfigService::$brand . '-' . self::SESSION_KEY, $cart);
-
-        return $cart;
+        return $this;
     }
 
     /**
@@ -91,24 +75,7 @@ class Cart
         return max((float)($this->totalTax), 0);
     }
 
-    /** If the cart exists on the session return the cart, otherwise return an empty cart
-     *
-     * @return Cart
-     */
-    public function getCart()
-    {
-        $session = Session::all();
-
-        foreach ($session as $sessionKey => $sessionValue) {
-            if (substr($sessionKey, 0, strlen(ConfigService::$brand . '-' . self::SESSION_KEY)) ==
-                ConfigService::$brand . '-' . self::SESSION_KEY) {
-                return $sessionValue;
-            }
-        }
-        return new Cart();
-    }
-
-    /** Calculate total due
+     /** Calculate total due
      *
      * @return float
      */
@@ -219,7 +186,7 @@ class Cart
         $weight = 0.0;
 
         foreach (
-            $this->getCart()
+            $this
                 ->getItems() as $cartItem
         ) {
             $weight += $cartItem->getProduct()->weight * $cartItem->getQuantity();
@@ -335,4 +302,22 @@ class Cart
         $this->totalDiscountAmount = 0;
     }
 
+    /** Set brand on the cart
+     * @param $brand
+     * @return $this
+     */
+    public function setBrand($brand)
+    {
+        $this->brand = $brand;
+
+        return $this;
+    }
+
+    /** Get brand
+     * @return string
+     */
+    public function getBrand()
+    {
+        return $this->brand ?? ConfigService::$brand;
+    }
 }

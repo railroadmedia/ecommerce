@@ -8,6 +8,7 @@ use Railroad\Ecommerce\Entities\CartItem;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
+use Railroad\Permissions\Services\PermissionService;
 
 class CartService
 {
@@ -42,6 +43,11 @@ class CartService
      */
     private $discountService;
 
+    /**
+     * @var PermissionService
+     */
+    private $permissionService;
+
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
@@ -63,7 +69,8 @@ class CartService
         CartAddressService $cartAddressService,
         DiscountCriteriaService $discountCriteriaService,
         DiscountService $discountService,
-        ShippingOptionRepository $shippingOptionRepository
+        ShippingOptionRepository $shippingOptionRepository,
+        PermissionService $permissionService
     ) {
         $this->session = $session;
         $this->productRepository = $productRepository;
@@ -72,6 +79,7 @@ class CartService
         $this->discountCriteriaService = $discountCriteriaService;
         $this->discountService = $discountService;
         $this->shippingOptionsRepository = $shippingOptionRepository;
+        $this->permissionService = $permissionService;
         $this->cart = new Cart();
     }
 
@@ -81,7 +89,8 @@ class CartService
      */
     public function getAllCartItems()
     {
-        return $this->cart->getItems();
+        return $this->getCart()
+            ->getItems();
     }
 
     /** Clear the cart items
@@ -255,6 +264,7 @@ class CartService
     }
 
     /** Add item to cart, calculate the shipping costs based on cart's products, apply discounts on cart items
+     *
      * @param $name
      * @param $description
      * @param $quantity
@@ -275,19 +285,30 @@ class CartService
         $requiresBillingAddress,
         $subscriptionIntervalType = null,
         $subscriptionIntervalCount = null,
-        $options = []
+        $options = [],
+        $customBrand = null
     ) {
+        $brand = ConfigService::$brand;
+
+        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
+            $brand = $customBrand ?? ConfigService::$brand;
+        }
+
+        $this->getCart()->setBrand($brand);
+        $cart = $this->getCart();
         $product = $this->productRepository->read($options['product-id']);
 
         $shippingCosts = $this->shippingOptionsRepository->getShippingCosts(
                 $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE)['country'],
-                $this->cart->getTotalWeight() + $product->weight * $quantity
+                $cart->getTotalWeight() + $product->weight * $quantity
             )['price'] ?? 0;
-        $this->cart->getCart()
-            ->setShippingCosts($shippingCosts);
+
+        $cart->setShippingCosts($shippingCosts);
 
         // If the item already exists, just increase the quantity
-        foreach ($this->cart->getItems() as $cartItem) {
+        foreach (
+            $cart->getItems() as $cartItem
+        ) {
             if (!empty($cartItem->getOptions()['product-id']) &&
                 $cartItem->getOptions()['product-id'] == $options['product-id']) {
                 $cartItem->setQuantity($cartItem->getQuantity() + $quantity);
@@ -296,11 +317,13 @@ class CartService
                 $discountsToApply = $this->getDiscountsToApply();
                 $this->discountService->applyDiscounts(
                     $discountsToApply,
-                    $this->getCart()
+                    $cart
                 );
-                $this->cart->getCart()
-                    ->addDiscount($discountsToApply);
-                return $this->applyDiscounts();
+                $cart->addDiscount($discountsToApply);
+                $cartDiscounted = $this->applyDiscounts();
+
+                $this->session->put($brand . '-' . self::SESSION_KEY, $cartDiscounted);
+                return $cartDiscounted;
             }
         }
 
@@ -318,19 +341,22 @@ class CartService
         $cartItem->setProduct($product);
         $cartItem->setOptions($options);
 
-        $this->cart->addCartItem($cartItem);
+        $cart->addCartItem($cartItem);
 
         $discountsToApply = $this->getDiscountsToApply();
 
         $this->discountService->applyDiscounts(
             $discountsToApply,
-            $this->getCart()
+            $cart
         );
 
-        $this->cart->getCart()
-            ->addDiscount($discountsToApply);
+        $cart->addDiscount($discountsToApply);
 
-        return $this->applyDiscounts();
+        $cartDiscounted = $this->applyDiscounts();
+
+        $this->session->put($brand . '-' . self::SESSION_KEY, $cartDiscounted);
+
+        return $cartDiscounted;
     }
 
     /**
@@ -340,7 +366,14 @@ class CartService
      */
     public function getCart()
     {
-        return $this->cart->getCart();
+        foreach ($this->session->all() as $sessionKey => $sessionValue) {
+            if (substr($sessionKey, 0, strlen($this->cart->getBrand() . '-' . self::SESSION_KEY)) ==
+                $this->cart->getBrand() . '-' . self::SESSION_KEY) {
+                return $sessionValue;
+            }
+        }
+
+        return new Cart();
     }
 
     /**
@@ -361,7 +394,7 @@ class CartService
             foreach ($activeDiscount->criteria as $discountCriteria) {
                 if (!$this->discountCriteriaService->discountCriteriaMetForOrder(
                     $discountCriteria,
-                    $this->cart->getCart(),
+                    $this->getCart(),
                     $this->getPromoCode()
                 )) {
                     $criteriaMet = false;
@@ -385,12 +418,12 @@ class CartService
     public function applyDiscounts()
     {
         foreach (
-            $this->cart->getCart()
+            $this->getCart()
                 ->getDiscounts() as $discount
         ) {
 
             foreach (
-                $this->cart->getCart()
+                $this->getCart()
                     ->getItems() as $index => $item
             ) {
 
@@ -410,25 +443,29 @@ class CartService
                     if ($discount->type == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
                         $productDiscount = $discount->amount * $item->getQuantity();
                     }
-                    $this->cart->getCart()
+                    $this->getCart()
                         ->getItems()[$index]->setDiscountedPrice(max(($item->getTotalPrice() - $productDiscount), 0));
                 }
             }
         }
 
         $discountedAmount = $this->discountService->getAmountDiscounted(
-            $this->cart->getCart()
+            $this->getCart()
                 ->getDiscounts(),
-            $this->cart->getCart()
+            $this->getCart()
                 ->getTotalDue(),
-            $this->cart->getCart()
+            $this->getCart()
                 ->getItems()
         );
 
-        $this->cart->getCart()
+        $this->getCart()
             ->setTotalDiscountAmount($discountedAmount);
 
-        return $this->cart->getCart();
+        return $this->getCart();
     }
 
+    public function setBrand($brand)
+    {
+        $this->cart->setBrand($brand);
+    }
 }
