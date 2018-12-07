@@ -88,6 +88,7 @@ class UserProductListener
             //the payment it's fully refunded
             if ($event->attributes['payment_amount'] == $event->attributes['refunded_amount']) {
                 $payment = $this->paymentRepository->read($event->attributes['payment_id']);
+
                 $products = [];
 
                 if ($payment['order']) {
@@ -101,7 +102,8 @@ class UserProductListener
                         );
                     }
                 }
-                $this->removeUserProducts($payment['user']->user_id, $products);
+
+                $this->removeUserProducts($payment['payment_method']['user_id'], $products);
             }
         }
     }
