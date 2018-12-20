@@ -2,6 +2,13 @@
 
 namespace Railroad\Ecommerce\Providers;
 
+use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Cache\RedisCache;
+use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
+use Doctrine\ORM\Configuration;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Illuminate\Database\Events\StatementPrepared;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use PDO;
@@ -34,6 +41,7 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CustomValidationRules;
 use Railroad\Resora\Events\Created;
 use Railroad\Resora\Events\Updated;
+use Redis;
 
 class EcommerceServiceProvider extends ServiceProvider
 {
@@ -83,144 +91,144 @@ class EcommerceServiceProvider extends ServiceProvider
             }
         );
 
-        config()->set(
-            'resora.decorators.product',
-            array_merge(
-                config()->get('resora.decorators.product', []),
-                [
-                    ProductDecorator::class,
-                    ProductDiscountDecorator::class,
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.product',
+        //     array_merge(
+        //         config()->get('resora.decorators.product', []),
+        //         [
+        //             ProductDecorator::class,
+        //             ProductDiscountDecorator::class,
+        //         ]
+        //     )
+        // );
 
-        config()->set(
-            'resora.decorators.paymentMethod',
-            array_merge(
-                config()->get('resora.decorators.paymentMethod', []),
-                [
-                    MethodDecorator::class,
-                    PaymentMethodOwnerDecorator::class,
-                    PaymentMethodEntityDecorator::class,
-                    PaymentMethodBillingAddressDecorator::class,
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.paymentMethod',
+        //     array_merge(
+        //         config()->get('resora.decorators.paymentMethod', []),
+        //         [
+        //             MethodDecorator::class,
+        //             PaymentMethodOwnerDecorator::class,
+        //             PaymentMethodEntityDecorator::class,
+        //             PaymentMethodBillingAddressDecorator::class,
+        //         ]
+        //     )
+        // );
 
-        config()->set(
-            'resora.decorators.payment',
-            array_merge(
-                config()->get('resora.decorators.payment', []),
-                [
-                    PaymentPaymentMethodDecorator::class,
-                    PaymentUserDecorator::class,
-                    PaymentOrderDecorator::class,
-                    PaymentSubscriptionDecorator::class
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.payment',
+        //     array_merge(
+        //         config()->get('resora.decorators.payment', []),
+        //         [
+        //             PaymentPaymentMethodDecorator::class,
+        //             PaymentUserDecorator::class,
+        //             PaymentOrderDecorator::class,
+        //             PaymentSubscriptionDecorator::class
+        //         ]
+        //     )
+        // );
 
-        config()->set(
-            'resora.decorators.subscription',
-            array_merge(
-                config()->get('resora.decorators.subscription', []),
-                [
-                    SubscriptionPaymentMethodDecorator::class,
-                    SubscriptionProductDecorator::class,
-                ]
-            )
-        );
-        config()->set(
-            'resora.decorators.order',
-            array_merge(
-                config()->get('resora.decorators.order', []),
-                [
-                    OrderOrderItemsDecorators::class,
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.subscription',
+        //     array_merge(
+        //         config()->get('resora.decorators.subscription', []),
+        //         [
+        //             SubscriptionPaymentMethodDecorator::class,
+        //             SubscriptionProductDecorator::class,
+        //         ]
+        //     )
+        // );
+        // config()->set(
+        //     'resora.decorators.order',
+        //     array_merge(
+        //         config()->get('resora.decorators.order', []),
+        //         [
+        //             OrderOrderItemsDecorators::class,
+        //         ]
+        //     )
+        // );
 
-        config()->set(
-            'resora.decorators.orderItem',
-            array_merge(
-                config()->get('resora.decorators.orderItem', []),
-                [
-                    OrderItemProductDecorator::class,
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.orderItem',
+        //     array_merge(
+        //         config()->get('resora.decorators.orderItem', []),
+        //         [
+        //             OrderItemProductDecorator::class,
+        //         ]
+        //     )
+        // );
 
 
-        config()->set(
-            'resora.decorators.discount',
-            array_merge(
-                config()->get('resora.decorators.discount', []),
-                [
-                    DiscountDiscountCriteriaDecorator::class,
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.discount',
+        //     array_merge(
+        //         config()->get('resora.decorators.discount', []),
+        //         [
+        //             DiscountDiscountCriteriaDecorator::class,
+        //         ]
+        //     )
+        // );
 
-        config()->set(
-            'resora.decorators.discountCriteria',
-            array_merge(
-                config()->get('resora.decorators.discountCriteria', []),
-                [
-                    SubscriptionProductDecorator::class,
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.discountCriteria',
+        //     array_merge(
+        //         config()->get('resora.decorators.discountCriteria', []),
+        //         [
+        //             SubscriptionProductDecorator::class,
+        //         ]
+        //     )
+        // );
 
-        config()->set(
-            'resora.decorators.shippingOptions',
-            array_merge(
-                config()->get('resora.decorators.shippingOptions', []),
-                [
-                    ShippingOptionsCostsDecorator::class,
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.shippingOptions',
+        //     array_merge(
+        //         config()->get('resora.decorators.shippingOptions', []),
+        //         [
+        //             ShippingOptionsCostsDecorator::class,
+        //         ]
+        //     )
+        // );
 
-        config()->set(
-            'resora.decorators.orderItemFulfillment',
-            array_merge(
-                config()->get('resora.decorators.orderItemFulfillment', []),
-                [
-                    OrderItemFulfillmentAddressDecorator::class,
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.orderItemFulfillment',
+        //     array_merge(
+        //         config()->get('resora.decorators.orderItemFulfillment', []),
+        //         [
+        //             OrderItemFulfillmentAddressDecorator::class,
+        //         ]
+        //     )
+        // );
 
-        config()->set(
-            'resora.decorators.userPaymentMethods',
-            array_merge(
-                config()->get('resora.decorators.userPaymentMethods', []),
-                [
-                    PaymentPaymentMethodDecorator::class,
-                    PaymentMethodEntityDecorator::class,
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.userPaymentMethods',
+        //     array_merge(
+        //         config()->get('resora.decorators.userPaymentMethods', []),
+        //         [
+        //             PaymentPaymentMethodDecorator::class,
+        //             PaymentMethodEntityDecorator::class,
+        //         ]
+        //     )
+        // );
 
-        config()->set(
-            'resora.decorators.accessCode',
-            array_merge(
-                config()->get('resora.decorators.accessCode', []),
-                [
-                    AccessCodeDecorator::class,
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.accessCode',
+        //     array_merge(
+        //         config()->get('resora.decorators.accessCode', []),
+        //         [
+        //             AccessCodeDecorator::class,
+        //         ]
+        //     )
+        // );
 
-        config()->set(
-            'resora.decorators.userProduct',
-            array_merge(
-                config()->get('resora.decorators.userProduct', []),
-                [
-                    SubscriptionProductDecorator::class,
-                ]
-            )
-        );
+        // config()->set(
+        //     'resora.decorators.userProduct',
+        //     array_merge(
+        //         config()->get('resora.decorators.userProduct', []),
+        //         [
+        //             SubscriptionProductDecorator::class,
+        //         ]
+        //     )
+        // );
     }
 
     private function setupConfig()
@@ -330,9 +338,69 @@ class EcommerceServiceProvider extends ServiceProvider
      * Register the application services.
      *
      * @return void
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\Common\Annotations\AnnotationException
      */
     public function register()
     {
+        $proxyDir = sys_get_temp_dir();
 
+        $redis = new Redis();
+        $redis->connect(config('ecommerce.redis_host'), config('ecommerce.redis_port'));
+        $redisCache = new RedisCache();
+        $redisCache->setRedis($redis);
+        \Doctrine\Common\Annotations\AnnotationRegistry::registerFile(
+            __DIR__ . '/../../vendor/doctrine/orm/lib/Doctrine/ORM/Mapping/Driver/DoctrineAnnotations.php'
+        );
+        \Doctrine\Common\Annotations\AnnotationRegistry::registerLoader('class_exists');
+        $annotationReader = new AnnotationReader();
+        $cachedAnnotationReader = new CachedReader(
+            $annotationReader, $redisCache
+        );
+        $driverChain = new MappingDriverChain();
+        \Gedmo\DoctrineExtensions::registerAbstractMappingIntoDriverChainORM(
+            $driverChain,
+            $cachedAnnotationReader
+        );
+        $annotationDriver = new AnnotationDriver(
+            $cachedAnnotationReader, [__DIR__ . '/../Entities']
+        );
+        $driverChain->addDriver($annotationDriver, 'Railroad\Ecommerce\Entities');
+        $timestampableListener = new \Gedmo\Timestampable\TimestampableListener();
+        $timestampableListener->setAnnotationReader($cachedAnnotationReader);
+        $eventManager = new \Doctrine\Common\EventManager();
+        $eventManager->addEventSubscriber($timestampableListener);
+        $ormConfiguration = new Configuration();
+        $ormConfiguration->setMetadataCacheImpl($redisCache);
+        $ormConfiguration->setQueryCacheImpl($redisCache);
+        $ormConfiguration->setResultCacheImpl($redisCache);
+        $ormConfiguration->setProxyDir($proxyDir);
+        $ormConfiguration->setProxyNamespace('DoctrineProxies');
+        $ormConfiguration->setAutoGenerateProxyClasses(config('ecommerce.development_mode'));
+        $ormConfiguration->setMetadataDriverImpl($driverChain);
+        $ormConfiguration->setNamingStrategy(new \Doctrine\ORM\Mapping\UnderscoreNamingStrategy(CASE_LOWER));
+        if (config('ecommerce.database_in_memory') === true) {
+            $databaseOptions = [
+                'driver' => config('ecommerce.database_driver'),
+                'dbname' => config('ecommerce.database_name'),
+                'user' => config('ecommerce.database_user'),
+                'password' => config('ecommerce.database_password'),
+                'host' => config('ecommerce.database_host'),
+            ];
+        } else {
+            $databaseOptions = [
+                'driver' => config('ecommerce.database_driver'),
+                'user' => config('ecommerce.database_user'),
+                'password' => config('ecommerce.database_password'),
+                'memory' => true,
+            ];
+        }
+        $entityManager = EntityManager::create(
+            $databaseOptions,
+            $ormConfiguration,
+            $eventManager
+        );
+        app()->instance(EntityManager::class, $entityManager);
     }
 }

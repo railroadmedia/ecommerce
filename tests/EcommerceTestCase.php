@@ -110,6 +110,8 @@ class EcommerceTestCase extends BaseTestCase
 
         $app['config']->set('ecommerce.database_connection_name', 'testbench');
         $app['config']->set('ecommerce.cache_duration', 60);
+        $app['config']->set('ecommerce.redis_host', $defaultConfig['redis_host']);
+        $app['config']->set('ecommerce.redis_port', $defaultConfig['redis_port']);
         $app['config']->set('ecommerce.table_prefix', $defaultConfig['table_prefix']);
         $app['config']->set('ecommerce.data_mode', $defaultConfig['data_mode']);
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
