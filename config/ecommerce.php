@@ -13,6 +13,13 @@ return [
     'redis_host' => 'redis',
     'redis_port' => 6379,
 
+    'database_name' => 'mydb',
+    'database_user' => 'root',
+    'database_password' => 'root',
+    'database_host' => 'mysql',
+    'database_driver' => 'pdo_mysql',
+    'database_in_memory' => false,
+
     //the countries and the region names should be lowercase
     'tax_rate'     => [
         'canada' => [

@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
+use Railroad\Ecommerce\Entities\AccessCode;
+use Doctrine\Common\Persistence\ManagerRegistry;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\AccessCodeRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
@@ -43,6 +45,11 @@ class AccessCodeJsonController extends BaseController
     private $userRepository;
 
     /**
+     * @var ManagerRegistry
+     */
+    private $doctrine;
+
+    /**
      * AccessCodeJsonController constructor.
      *
      * @param AccessCodeService $accessCodeService
@@ -56,7 +63,8 @@ class AccessCodeJsonController extends BaseController
         AccessCodeRepository $accessCodeRepository,
         PermissionService $permissionService,
         ProductRepository $productRepository,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        ManagerRegistry $doctrine
     ) {
         parent::__construct();
 
@@ -65,6 +73,7 @@ class AccessCodeJsonController extends BaseController
         $this->permissionService = $permissionService;
         $this->productRepository = $productRepository;
         $this->userRepository = $userRepository;
+        $this->doctrine = $doctrine;
     }
 
     /**
@@ -192,6 +201,8 @@ class AccessCodeJsonController extends BaseController
             auth()->id(),
             'claim.access_codes'
         );
+
+        $entityManager = $this->doctrine->getManagerForClass(AccessCode::class);
 
         $user = $this->userRepository
             ->query()

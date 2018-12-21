@@ -350,9 +350,6 @@ class EcommerceServiceProvider extends ServiceProvider
         $redis->connect(config('ecommerce.redis_host'), config('ecommerce.redis_port'));
         $redisCache = new RedisCache();
         $redisCache->setRedis($redis);
-        \Doctrine\Common\Annotations\AnnotationRegistry::registerFile(
-            __DIR__ . '/../../vendor/doctrine/orm/lib/Doctrine/ORM/Mapping/Driver/DoctrineAnnotations.php'
-        );
         \Doctrine\Common\Annotations\AnnotationRegistry::registerLoader('class_exists');
         $annotationReader = new AnnotationReader();
         $cachedAnnotationReader = new CachedReader(

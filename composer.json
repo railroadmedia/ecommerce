@@ -29,7 +29,7 @@
     "railroad/remotestorage": "^1.0",
     "railroad/resora": ">=1.0.10 <1.1",
     "railroad/response": "^1.0",
-    "railroad/usora": "^1.0",
+    "railroad/usora": "^2.0",
     "ext-redis": "*",
     "doctrine/orm": "^2.6",
     "doctrine/data-fixtures": "^1.3",
@@ -42,7 +42,8 @@
     "orchestra/database": "3.6.x@dev",
     "orchestra/testbench": "~3.6",
     "filp/whoops": "~2.1",
-    "mockery/mockery": "^1.0"
+    "mockery/mockery": "^1.0",
+    "tymon/jwt-auth": "1.0.0-rc.2"
   },
   "autoload": {
     "psr-4": {

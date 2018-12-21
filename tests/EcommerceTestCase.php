@@ -89,7 +89,7 @@ class EcommerceTestCase extends BaseTestCase
 
         Carbon::setTestNow(Carbon::now());
 
-        $this->artisan('countries:migration');
+        // $this->artisan('countries:migration');
         $this->artisan('migrate');
         $this->artisan('cache:clear');
     }
@@ -163,41 +163,34 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('usora.table_prefix', $usoraConfig['table_prefix']);
         $app['config']->set('usora.tables', $usoraConfig['tables']);
 
-        // setup default database to use sqlite :memory:
-        $app['config']->set('database.default', 'testbench');
-        $app['config']->set(
-            'database.connections.mysql',
-            [
-                'driver' => 'mysql',
-                'host' => 'mysql',
-                'port' => env('MYSQL_PORT', '3306'),
-                'database' => env('MYSQL_DB', 'ecommerce'),
-                'username' => 'root',
-                'password' => 'root',
-                'charset' => 'utf8',
-                'collation' => 'utf8_general_ci',
-                'prefix' => '',
-                'options' => [
-                    \PDO::ATTR_PERSISTENT => true,
-                ],
-            ]
-        );
+        $app['config']->set('usora.redis_host', $defaultConfig['redis_host']);
+        $app['config']->set('usora.redis_port', $defaultConfig['redis_port']);
 
-        $app['config']->set(
-            'database.connections.testbench',
+        config()->set('ecommerce.database_connection_name', config('ecommerce.connection_mask_prefix') . 'sqlite');
+        config()->set('database.default', config('ecommerce.connection_mask_prefix') . 'sqlite');
+        config()->set(
+            'database.connections.' . config('ecommerce.connection_mask_prefix') . 'sqlite',
             [
                 'driver' => 'sqlite',
                 'database' => ':memory:',
                 'prefix' => '',
             ]
         );
+        config()->set('ecommerce.database_user', 'root');
+        config()->set('ecommerce.database_password', 'root');
+        config()->set('ecommerce.database_driver', 'pdo_sqlite');
+        config()->set('ecommerce.database_in_memory', true);
+
+        config()->set('usora.database_user', 'root');
+        config()->set('usora.database_password', 'root');
+        config()->set('usora.database_driver', 'pdo_sqlite');
+        config()->set('usora.database_in_memory', true);
 
         // allows access to built in user auth
         $app['config']->set('auth.providers.users.model', User::class);
 
         // allows access to built in user auth
         $app['config']->set('auth.providers.users.model', User::class);
-
         if (!$app['db']->connection()
             ->getSchemaBuilder()
             ->hasTable('users')) {
