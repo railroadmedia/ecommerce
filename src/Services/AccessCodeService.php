@@ -10,6 +10,7 @@ use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\UserProductService;
+use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Usora\Entities\User;
 
 class AccessCodeService
@@ -70,7 +71,13 @@ class AccessCodeService
         $this->userProductService = $userProductService;
     }
 
-    public function claim($accessCode, $user)
+    public function claim(AccessCode $accessCode, User $user)
+    {
+        // TO-DO: replicate the logic below, using entites and doctrine entity manager
+        return $accessCode;
+    }
+
+    public function deprecated_claim($accessCode, $user)
     {
         // get the access code data
         $accessCode = $this->accessCodeRepository

@@ -13,7 +13,7 @@ return [
     'redis_host' => 'redis',
     'redis_port' => 6379,
 
-    'database_name' => 'mydb',
+    'database_name' => 'tests_ecommerce',
     'database_user' => 'root',
     'database_password' => 'root',
     'database_host' => 'mysql',

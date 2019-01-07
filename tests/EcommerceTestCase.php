@@ -166,31 +166,55 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('usora.redis_host', $defaultConfig['redis_host']);
         $app['config']->set('usora.redis_port', $defaultConfig['redis_port']);
 
-        config()->set('ecommerce.database_connection_name', config('ecommerce.connection_mask_prefix') . 'sqlite');
-        config()->set('database.default', config('ecommerce.connection_mask_prefix') . 'sqlite');
+        $app['config']->set('ecommerce.database_driver', $defaultConfig['database_driver']);
+        $app['config']->set('ecommerce.database_name', $defaultConfig['database_name']);
+        $app['config']->set('ecommerce.database_user', $defaultConfig['database_user']);
+        $app['config']->set('ecommerce.database_password', $defaultConfig['database_password']);
+        $app['config']->set('ecommerce.database_host', $defaultConfig['database_host']);
+
+        $app['config']->set('usora.database_driver', $defaultConfig['database_driver']);
+        $app['config']->set('usora.database_name', $defaultConfig['database_name']);
+        $app['config']->set('usora.database_user', $defaultConfig['database_user']);
+        $app['config']->set('usora.database_password', $defaultConfig['database_password']);
+        $app['config']->set('usora.database_host', $defaultConfig['database_host']);
+
+        // config()->set('ecommerce.database_connection_name', config('ecommerce.connection_mask_prefix') . 'sqlite');
+        // config()->set('database.default', config('ecommerce.connection_mask_prefix') . 'sqlite');
+        // config()->set(
+        //     'database.connections.' . config('ecommerce.connection_mask_prefix') . 'sqlite',
+        //     [
+        //         'driver' => 'sqlite',
+        //         'database' => ':memory:',
+        //         'prefix' => '',
+        //     ]
+        // );
+
+        config()->set('ecommerce.database_connection_name', $defaultConfig['database_connection_name'] . 'mysql');
+        config()->set('database.default', $defaultConfig['database_connection_name'] . 'mysql');
         config()->set(
-            'database.connections.' . config('ecommerce.connection_mask_prefix') . 'sqlite',
+            'database.connections.' . $defaultConfig['database_connection_name'] . 'mysql',
             [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
+                'driver' => 'mysql',
+                'database' => $defaultConfig['database_name'],
+                'username' => $defaultConfig['database_user'],
+                'password' => $defaultConfig['database_password'],
+                'host' => $defaultConfig['database_host'],
             ]
         );
-        config()->set('ecommerce.database_user', 'root');
-        config()->set('ecommerce.database_password', 'root');
-        config()->set('ecommerce.database_driver', 'pdo_sqlite');
-        config()->set('ecommerce.database_in_memory', true);
 
-        config()->set('usora.database_user', 'root');
-        config()->set('usora.database_password', 'root');
-        config()->set('usora.database_driver', 'pdo_sqlite');
-        config()->set('usora.database_in_memory', true);
+        // config()->set('ecommerce.database_user', 'root');
+        // config()->set('ecommerce.database_password', 'root');
+        // config()->set('ecommerce.database_driver', 'pdo_sqlite');
+        // config()->set('ecommerce.database_in_memory', true);
 
-        // allows access to built in user auth
-        $app['config']->set('auth.providers.users.model', User::class);
+        // config()->set('usora.database_user', 'root');
+        // config()->set('usora.database_password', 'root');
+        // config()->set('usora.database_driver', 'pdo_sqlite');
+        // config()->set('usora.database_in_memory', true);
 
         // allows access to built in user auth
         $app['config']->set('auth.providers.users.model', User::class);
+
         if (!$app['db']->connection()
             ->getSchemaBuilder()
             ->hasTable('users')) {

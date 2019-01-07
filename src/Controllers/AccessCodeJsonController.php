@@ -3,18 +3,19 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
+use Doctrine\ORM\EntityManager;
 use Railroad\Ecommerce\Entities\AccessCode;
-use Doctrine\Common\Persistence\ManagerRegistry;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
-use Railroad\Ecommerce\Repositories\AccessCodeRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
+// use Railroad\Ecommerce\Repositories\AccessCodeRepository;
+// use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\AccessCodeJsonClaimRequest;
 use Railroad\Ecommerce\Requests\AccessCodeReleaseRequest;
 use Railroad\Ecommerce\Services\AccessCodeService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
+use Railroad\Usora\Entities\User;
 use Railroad\Usora\Services\ConfigService as UsoraConfigService;
-use Railroad\Usora\Repositories\UserRepository;
+// use Railroad\Usora\Repositories\UserRepository;
 use Throwable;
 
 class AccessCodeJsonController extends BaseController
@@ -22,12 +23,17 @@ class AccessCodeJsonController extends BaseController
     /**
      * @var AccessCodeRepository
      */
-    private $accessCodeRepository;
+    // private $accessCodeRepository;
 
     /**
      * @var AccessCodeService
      */
     private $accessCodeService;
+
+    /**
+     * @var EntityManager
+     */
+    private $entityManager;
 
     /**
      * @var PermissionService
@@ -37,43 +43,39 @@ class AccessCodeJsonController extends BaseController
     /**
      * @var ProductRepository
      */
-    private $productRepository;
+    // private $productRepository;
 
     /**
      * @var UserRepository
      */
-    private $userRepository;
-
-    /**
-     * @var ManagerRegistry
-     */
-    private $doctrine;
+    // private $userRepository;
 
     /**
      * AccessCodeJsonController constructor.
      *
      * @param AccessCodeService $accessCodeService
      * @param AccessCodeRepository $accessCodeRepository
+     * @param EntityManager $entityManager
      * @param PermissionService $permissionService
      * @param ProductRepository $productRepository
      * @param UserRepository $userRepository
      */
     public function __construct(
         AccessCodeService $accessCodeService,
-        AccessCodeRepository $accessCodeRepository,
-        PermissionService $permissionService,
-        ProductRepository $productRepository,
-        UserRepository $userRepository,
-        ManagerRegistry $doctrine
+        // AccessCodeRepository $accessCodeRepository,
+        EntityManager $entityManager,
+        PermissionService $permissionService //,
+        // ProductRepository $productRepository,
+        // UserRepository $userRepository
     ) {
         parent::__construct();
 
         $this->accessCodeService = $accessCodeService;
-        $this->accessCodeRepository = $accessCodeRepository;
+        // $this->accessCodeRepository = $accessCodeRepository;
+        $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
-        $this->productRepository = $productRepository;
-        $this->userRepository = $userRepository;
-        $this->doctrine = $doctrine;
+        // $this->productRepository = $productRepository;
+        // $this->userRepository = $userRepository;
     }
 
     /**
@@ -89,51 +91,51 @@ class AccessCodeJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
-        $accessCodes = $this->accessCodeRepository->query()
-            ->select(
-                ConfigService::$tableAccessCode . '.*',
-                UsoraConfigService::$tableUsers . '.email as claimer'
-            )
-            ->leftJoin(
-                UsoraConfigService::$tableUsers,
-                ConfigService::$tableAccessCode . '.claimer_id',
-                '=',
-                UsoraConfigService::$tableUsers . '.id'
-            )
-            ->whereIn(
-                'brand',
-                $request->get('brands', [ConfigService::$availableBrands])
-            )
-            ->limit($request->get('limit', 10))
-            ->skip(($request->get('page', 1) - 1) * $request->get('limit', 10))
-            ->orderBy(
-                $request->get('order_by_column', 'created_on'),
-                $request->get('order_by_direction', 'desc')
-            )
-            ->get();
+        // $accessCodes = $this->accessCodeRepository->query()
+        //     ->select(
+        //         ConfigService::$tableAccessCode . '.*',
+        //         UsoraConfigService::$tableUsers . '.email as claimer'
+        //     )
+        //     ->leftJoin(
+        //         UsoraConfigService::$tableUsers,
+        //         ConfigService::$tableAccessCode . '.claimer_id',
+        //         '=',
+        //         UsoraConfigService::$tableUsers . '.id'
+        //     )
+        //     ->whereIn(
+        //         'brand',
+        //         $request->get('brands', [ConfigService::$availableBrands])
+        //     )
+        //     ->limit($request->get('limit', 10))
+        //     ->skip(($request->get('page', 1) - 1) * $request->get('limit', 10))
+        //     ->orderBy(
+        //         $request->get('order_by_column', 'created_on'),
+        //         $request->get('order_by_direction', 'desc')
+        //     )
+        //     ->get();
 
-        $accessCodesCount = $this->accessCodeRepository->query()->count();
+        // $accessCodesCount = $this->accessCodeRepository->query()->count();
 
-        $productIds = [];
+        // $productIds = [];
 
-        foreach ($accessCodes as $accessCode) {
-            $accessCodeProductIds = array_flip($accessCode['product_ids']);
+        // foreach ($accessCodes as $accessCode) {
+        //     $accessCodeProductIds = array_flip($accessCode['product_ids']);
 
-            $productIds += $accessCodeProductIds;
-        }
+        //     $productIds += $accessCodeProductIds;
+        // }
 
-        $products = $this->productRepository
-                        ->query()
-                        ->whereIn('id', array_keys($productIds))
-                        ->get();
+        // $products = $this->productRepository
+        //                 ->query()
+        //                 ->whereIn('id', array_keys($productIds))
+        //                 ->get();
 
-        return reply()->json(
-            $accessCodes,
-            [
-                'totalResults' => $accessCodesCount,
-                'meta' => ['products' => $products]
-            ]
-        );
+        // return reply()->json(
+        //     $accessCodes,
+        //     [
+        //         'totalResults' => $accessCodesCount,
+        //         'meta' => ['products' => $products]
+        //     ]
+        // );
     }
 
     /**
@@ -149,41 +151,41 @@ class AccessCodeJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
-        $accessCodes = $this->accessCodeRepository->query()
-            ->select(
-                ConfigService::$tableAccessCode . '.*',
-                UsoraConfigService::$tableUsers . '.email as claimer'
-            )
-            ->leftJoin(
-                UsoraConfigService::$tableUsers,
-                ConfigService::$tableAccessCode . '.claimer_id',
-                '=',
-                UsoraConfigService::$tableUsers . '.id'
-            )
-            ->whereIn(
-                'brand',
-                $request->get('brands', [ConfigService::$availableBrands])
-            )
-            ->where('code', 'like', '%' . $request->get('term') . '%')
-            ->get();
+        // $accessCodes = $this->accessCodeRepository->query()
+        //     ->select(
+        //         ConfigService::$tableAccessCode . '.*',
+        //         UsoraConfigService::$tableUsers . '.email as claimer'
+        //     )
+        //     ->leftJoin(
+        //         UsoraConfigService::$tableUsers,
+        //         ConfigService::$tableAccessCode . '.claimer_id',
+        //         '=',
+        //         UsoraConfigService::$tableUsers . '.id'
+        //     )
+        //     ->whereIn(
+        //         'brand',
+        //         $request->get('brands', [ConfigService::$availableBrands])
+        //     )
+        //     ->where('code', 'like', '%' . $request->get('term') . '%')
+        //     ->get();
 
-        $productIds = [];
+        // $productIds = [];
 
-        foreach ($accessCodes as $accessCode) {
-            $accessCodeProductIds = array_flip($accessCode['product_ids']);
+        // foreach ($accessCodes as $accessCode) {
+        //     $accessCodeProductIds = array_flip($accessCode['product_ids']);
 
-            $productIds += $accessCodeProductIds;
-        }
+        //     $productIds += $accessCodeProductIds;
+        // }
 
-        $products = $this->productRepository
-                        ->query()
-                        ->whereIn('id', array_keys($productIds))
-                        ->get();
+        // $products = $this->productRepository
+        //                 ->query()
+        //                 ->whereIn('id', array_keys($productIds))
+        //                 ->get();
 
-        return reply()->json(
-            $accessCodes,
-            ['meta' => ['products' => $products]]
-        );
+        // return reply()->json(
+        //     $accessCodes,
+        //     ['meta' => ['products' => $products]]
+        // );
     }
 
     /**
@@ -202,12 +204,17 @@ class AccessCodeJsonController extends BaseController
             'claim.access_codes'
         );
 
-        $entityManager = $this->doctrine->getManagerForClass(AccessCode::class);
+        echo "\n\n AccessCode::claim user class meta: " . var_export($this->entityManager->getClassMetadata(User::class), true) . "\n\n";
+
+        echo "\n\n AccessCode::claim access code class meta: " . var_export($this->entityManager->getClassMetadata(AccessCode::class), true) . "\n\n";
+
+        die();
+
+        $userRepository = $this->entityManager->getRepository(User::class);
+        $accessCodeRepository = $this->entityManager->getRepository(AccessCode::class);
 
         $user = $this->userRepository
-            ->query()
-            ->where('email', '=', $request->get('claim_for_user_email'))
-            ->first();
+            ->findOneBy(['email' => $request->get('claim_for_user_email')]);
 
         throw_if(
             is_null($user),
@@ -217,10 +224,13 @@ class AccessCodeJsonController extends BaseController
             )
         );
 
-        $accessCode = $this->accessCodeService
-            ->claim($request->get('access_code'), $user);
+        $accessCode = $this->accessCodeRepository
+            ->findOneBy(['code' => $request->get('access_code')]);
 
-        return reply()->json($accessCode);
+        $claimedAccessCode = $this->accessCodeService
+            ->claim($accessCode, $user);
+
+        return json_encode($claimedAccessCode);
     }
 
     /**

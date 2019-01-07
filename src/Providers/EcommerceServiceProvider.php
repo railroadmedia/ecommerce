@@ -361,9 +361,11 @@ class EcommerceServiceProvider extends ServiceProvider
             $cachedAnnotationReader
         );
         $annotationDriver = new AnnotationDriver(
-            $cachedAnnotationReader, [__DIR__ . '/../Entities']
+            $cachedAnnotationReader, [__DIR__ . '/../Entities'] // /app/ecommerce/src/Providers/../Entities
         );
+        // echo "\n\n EcommerceServiceProvider::register driver chain before: " . var_export($driverChain, true) . "\n\n";
         $driverChain->addDriver($annotationDriver, 'Railroad\Ecommerce\Entities');
+        // echo "\n\n EcommerceServiceProvider::register driver chain after: " . var_export($driverChain, true) . "\n\n";
         $timestampableListener = new \Gedmo\Timestampable\TimestampableListener();
         $timestampableListener->setAnnotationReader($cachedAnnotationReader);
         $eventManager = new \Doctrine\Common\EventManager();
@@ -377,7 +379,7 @@ class EcommerceServiceProvider extends ServiceProvider
         $ormConfiguration->setAutoGenerateProxyClasses(config('ecommerce.development_mode'));
         $ormConfiguration->setMetadataDriverImpl($driverChain);
         $ormConfiguration->setNamingStrategy(new \Doctrine\ORM\Mapping\UnderscoreNamingStrategy(CASE_LOWER));
-        if (config('ecommerce.database_in_memory') === true) {
+        if (config('ecommerce.database_in_memory') !== true) {
             $databaseOptions = [
                 'driver' => config('ecommerce.database_driver'),
                 'dbname' => config('ecommerce.database_name'),
