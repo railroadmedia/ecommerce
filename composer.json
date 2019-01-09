@@ -30,11 +30,8 @@
     "railroad/resora": ">=1.0.10 <1.1",
     "railroad/response": "^1.0",
     "railroad/usora": "^2.0",
-    "ext-redis": "*",
-    "doctrine/orm": "^2.6",
-    "doctrine/data-fixtures": "^1.3",
-    "gedmo/doctrine-extensions": "^2.4",
-    "jms/serializer": "1.*"
+    "railroad/doctrine": "^0.0",
+    "ext-redis": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "~7.0",

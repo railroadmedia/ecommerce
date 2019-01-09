@@ -22,6 +22,7 @@ use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
 use Railroad\Response\Providers\ResponseServiceProvider;
 use Railroad\Usora\Providers\UsoraServiceProvider;
+use Railroad\Doctrine\Providers\DoctrineServiceProvider;
 use Webpatser\Countries\CountriesServiceProvider;
 
 class EcommerceTestCase extends BaseTestCase
@@ -189,6 +190,23 @@ class EcommerceTestCase extends BaseTestCase
         //     ]
         // );
 
+        $app['config']->set('doctrine.redis_host', $defaultConfig['redis_host']);
+        $app['config']->set('doctrine.redis_port', $defaultConfig['redis_port']);
+        // if new packages entities are required for testing, their entity directory/namespace config should be merged here
+        $app['config']->set(
+            'doctrine.entities',
+            array_merge(
+                $defaultConfig['entities'],
+                $usoraConfig['entities']
+            )
+        );
+        $app['config']->set('doctrine.development_mode', $defaultConfig['development_mode'] ?? true);
+        $app['config']->set('doctrine.database_driver', $defaultConfig['database_driver']);
+        $app['config']->set('doctrine.database_name', $defaultConfig['database_name']);
+        $app['config']->set('doctrine.database_user', $defaultConfig['database_user']);
+        $app['config']->set('doctrine.database_password', $defaultConfig['database_password']);
+        $app['config']->set('doctrine.database_host', $defaultConfig['database_host']);
+
         config()->set('ecommerce.database_connection_name', $defaultConfig['database_connection_name'] . 'mysql');
         config()->set('database.default', $defaultConfig['database_connection_name'] . 'mysql');
         config()->set(
@@ -240,6 +258,7 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(PermissionsServiceProvider::class);
         $app->register(ResponseServiceProvider::class);
         $app->register(UsoraServiceProvider::class);
+        $app->register(DoctrineServiceProvider::class);
 
         $app->bind(
             'UserProviderInterface',

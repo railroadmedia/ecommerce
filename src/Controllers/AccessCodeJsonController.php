@@ -4,10 +4,9 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
 use Doctrine\ORM\EntityManager;
+use JMS\Serializer\SerializerBuilder;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
-// use Railroad\Ecommerce\Repositories\AccessCodeRepository;
-// use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\AccessCodeJsonClaimRequest;
 use Railroad\Ecommerce\Requests\AccessCodeReleaseRequest;
 use Railroad\Ecommerce\Services\AccessCodeService;
@@ -15,16 +14,10 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\Usora\Entities\User;
 use Railroad\Usora\Services\ConfigService as UsoraConfigService;
-// use Railroad\Usora\Repositories\UserRepository;
 use Throwable;
 
 class AccessCodeJsonController extends BaseController
 {
-    /**
-     * @var AccessCodeRepository
-     */
-    // private $accessCodeRepository;
-
     /**
      * @var AccessCodeService
      */
@@ -41,41 +34,28 @@ class AccessCodeJsonController extends BaseController
     private $permissionService;
 
     /**
-     * @var ProductRepository
+     * @var \JMS\Serializer\Serializer
      */
-    // private $productRepository;
-
-    /**
-     * @var UserRepository
-     */
-    // private $userRepository;
+    private $serializer;
 
     /**
      * AccessCodeJsonController constructor.
      *
      * @param AccessCodeService $accessCodeService
-     * @param AccessCodeRepository $accessCodeRepository
      * @param EntityManager $entityManager
      * @param PermissionService $permissionService
-     * @param ProductRepository $productRepository
-     * @param UserRepository $userRepository
      */
     public function __construct(
         AccessCodeService $accessCodeService,
-        // AccessCodeRepository $accessCodeRepository,
         EntityManager $entityManager,
-        PermissionService $permissionService //,
-        // ProductRepository $productRepository,
-        // UserRepository $userRepository
+        PermissionService $permissionService
     ) {
         parent::__construct();
 
         $this->accessCodeService = $accessCodeService;
-        // $this->accessCodeRepository = $accessCodeRepository;
         $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
-        // $this->productRepository = $productRepository;
-        // $this->userRepository = $userRepository;
+        $this->serializer = SerializerBuilder::create()->build();
     }
 
     /**
@@ -204,17 +184,12 @@ class AccessCodeJsonController extends BaseController
             'claim.access_codes'
         );
 
-        echo "\n\n AccessCode::claim user class meta: " . var_export($this->entityManager->getClassMetadata(User::class), true) . "\n\n";
-
-        echo "\n\n AccessCode::claim access code class meta: " . var_export($this->entityManager->getClassMetadata(AccessCode::class), true) . "\n\n";
-
-        die();
-
         $userRepository = $this->entityManager->getRepository(User::class);
         $accessCodeRepository = $this->entityManager->getRepository(AccessCode::class);
 
-        $user = $this->userRepository
-            ->findOneBy(['email' => $request->get('claim_for_user_email')]);
+        $user = $userRepository->findOneBy(
+            ['email' => $request->get('claim_for_user_email')]
+        );
 
         throw_if(
             is_null($user),
@@ -230,7 +205,7 @@ class AccessCodeJsonController extends BaseController
         $claimedAccessCode = $this->accessCodeService
             ->claim($accessCode, $user);
 
-        return json_encode($claimedAccessCode);
+        return response($this->serializer->serialize($claimedAccessCode, 'json'));
     }
 
     /**
@@ -246,15 +221,15 @@ class AccessCodeJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'release.access_codes');
 
-        $accessCode = $this->accessCodeRepository->update(
-            $request->get('access_code_id'),
-            [
-                'is_claimed' => false,
-                'claimer_id' => null,
-                'claimed_on' => null
-            ]
-        );
+        // $accessCode = $this->accessCodeRepository->update(
+        //     $request->get('access_code_id'),
+        //     [
+        //         'is_claimed' => false,
+        //         'claimer_id' => null,
+        //         'claimed_on' => null
+        //     ]
+        // );
 
-        return reply()->json($accessCode);
+        // return reply()->json($accessCode);
     }
 }

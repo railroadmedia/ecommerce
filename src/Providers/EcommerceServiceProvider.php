@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Providers;
 
+// TO-DO: clean-up the deprecated imports
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Cache\RedisCache;
@@ -332,74 +333,5 @@ class EcommerceServiceProvider extends ServiceProvider
 
         ConfigService::$subscriptionRenewalDateCutoff = config('ecommerce.subscription_renewal_date');
         ConfigService::$failedPaymentsBeforeDeactivation = config('ecommerce.failed_payments_before_de_activation');
-    }
-
-    /**
-     * Register the application services.
-     *
-     * @return void
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\DBAL\DBALException
-     * @throws \Doctrine\Common\Annotations\AnnotationException
-     */
-    public function register()
-    {
-        $proxyDir = sys_get_temp_dir();
-
-        $redis = new Redis();
-        $redis->connect(config('ecommerce.redis_host'), config('ecommerce.redis_port'));
-        $redisCache = new RedisCache();
-        $redisCache->setRedis($redis);
-        \Doctrine\Common\Annotations\AnnotationRegistry::registerLoader('class_exists');
-        $annotationReader = new AnnotationReader();
-        $cachedAnnotationReader = new CachedReader(
-            $annotationReader, $redisCache
-        );
-        $driverChain = new MappingDriverChain();
-        \Gedmo\DoctrineExtensions::registerAbstractMappingIntoDriverChainORM(
-            $driverChain,
-            $cachedAnnotationReader
-        );
-        $annotationDriver = new AnnotationDriver(
-            $cachedAnnotationReader, [__DIR__ . '/../Entities'] // /app/ecommerce/src/Providers/../Entities
-        );
-        // echo "\n\n EcommerceServiceProvider::register driver chain before: " . var_export($driverChain, true) . "\n\n";
-        $driverChain->addDriver($annotationDriver, 'Railroad\Ecommerce\Entities');
-        // echo "\n\n EcommerceServiceProvider::register driver chain after: " . var_export($driverChain, true) . "\n\n";
-        $timestampableListener = new \Gedmo\Timestampable\TimestampableListener();
-        $timestampableListener->setAnnotationReader($cachedAnnotationReader);
-        $eventManager = new \Doctrine\Common\EventManager();
-        $eventManager->addEventSubscriber($timestampableListener);
-        $ormConfiguration = new Configuration();
-        $ormConfiguration->setMetadataCacheImpl($redisCache);
-        $ormConfiguration->setQueryCacheImpl($redisCache);
-        $ormConfiguration->setResultCacheImpl($redisCache);
-        $ormConfiguration->setProxyDir($proxyDir);
-        $ormConfiguration->setProxyNamespace('DoctrineProxies');
-        $ormConfiguration->setAutoGenerateProxyClasses(config('ecommerce.development_mode'));
-        $ormConfiguration->setMetadataDriverImpl($driverChain);
-        $ormConfiguration->setNamingStrategy(new \Doctrine\ORM\Mapping\UnderscoreNamingStrategy(CASE_LOWER));
-        if (config('ecommerce.database_in_memory') !== true) {
-            $databaseOptions = [
-                'driver' => config('ecommerce.database_driver'),
-                'dbname' => config('ecommerce.database_name'),
-                'user' => config('ecommerce.database_user'),
-                'password' => config('ecommerce.database_password'),
-                'host' => config('ecommerce.database_host'),
-            ];
-        } else {
-            $databaseOptions = [
-                'driver' => config('ecommerce.database_driver'),
-                'user' => config('ecommerce.database_user'),
-                'password' => config('ecommerce.database_password'),
-                'memory' => true,
-            ];
-        }
-        $entityManager = EntityManager::create(
-            $databaseOptions,
-            $ormConfiguration,
-            $eventManager
-        );
-        app()->instance(EntityManager::class, $entityManager);
     }
 }

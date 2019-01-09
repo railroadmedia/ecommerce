@@ -20,6 +20,13 @@ return [
     'database_driver' => 'pdo_mysql',
     'database_in_memory' => false,
 
+    'entities' => [
+        [
+            'path' => __DIR__ . '/../src/Entities',
+            'namespace' => 'Railroad\Ecommerce\Entities'
+        ]
+    ],
+
     //the countries and the region names should be lowercase
     'tax_rate'     => [
         'canada' => [

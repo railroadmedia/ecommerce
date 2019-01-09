@@ -3,10 +3,7 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Repositories\AccessCodeRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionAccessCodeRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Doctrine\ORM\EntityManager;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\UserProductService;
@@ -16,29 +13,9 @@ use Railroad\Usora\Entities\User;
 class AccessCodeService
 {
     /**
-     * @var AccessCodeRepository
-     */
-    private $accessCodeRepository;
-
-    /**
      * @var CurrencyService
      */
     private $currencyService;
-
-    /**
-     * @var ProductRepository
-     */
-    private $productRepository;
-
-    /**
-     * @var SubscriptionAccessCodeRepository
-     */
-    private $subscriptionAccessCodeRepository;
-
-    /**
-     * @var SubscriptionRepository
-     */
-    private $subscriptionRepository;
 
     /**
      * @var mixed UserProductService
@@ -46,28 +23,24 @@ class AccessCodeService
     private $userProductService;
 
     /**
+     * @var EntityManager
+     */
+    private $entityManager;
+
+    /**
      * AccessCodeService constructor.
      *
-     * @param AccessCodeRepository $accessCodeRepository
      * @param CurrencyService $currencyService
-     * @param ProductRepository $productRepository
-     * @param SubscriptionAccessCodeRepository $subscriptionAccessCodeRepository
-     * @param SubscriptionRepository $subscriptionRepository
+     * @param EntityManager $entityManager
      * @param UserProductService $userProductService
      */
     public function __construct(
-        AccessCodeRepository $accessCodeRepository,
         CurrencyService $currencyService,
-        ProductRepository $productRepository,
-        SubscriptionAccessCodeRepository $subscriptionAccessCodeRepository,
-        SubscriptionRepository $subscriptionRepository,
+        EntityManager $entityManager,
         UserProductService $userProductService
     ) {
-        $this->accessCodeRepository = $accessCodeRepository;
         $this->currencyService = $currencyService;
-        $this->productRepository = $productRepository;
-        $this->subscriptionAccessCodeRepository = $subscriptionAccessCodeRepository;
-        $this->subscriptionRepository = $subscriptionRepository;
+        $this->entityManager = $entityManager;
         $this->userProductService = $userProductService;
     }
 
@@ -79,6 +52,7 @@ class AccessCodeService
 
     public function deprecated_claim($accessCode, $user)
     {
+        /*
         // get the access code data
         $accessCode = $this->accessCodeRepository
             ->query()
@@ -214,5 +188,7 @@ class AccessCodeService
         );
 
         return $accessCode;
+
+        */
     }
 }
