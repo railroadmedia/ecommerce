@@ -2,29 +2,32 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Resora\Decorators\Decorator;
-use Railroad\Resora\Queries\CachedQuery;
-use Railroad\Resora\Repositories\RepositoryBase;
+use Doctrine\ORM\EntityRepository;
+use Railroad\Ecommerce\Entities\AccessCode;
 
-class ProductRepository extends RepositoryBase
+class ProductRepository extends EntityRepository
 {
-    /**
-     * @return CachedQuery|$this
-     */
-    protected function newQuery()
+    public function getAccessCodeProducts(AccessCode $accessCode)
     {
-        return (new CachedQuery($this->connection()))->from(ConfigService::$tableProduct);
-    }
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this
+            ->getEntityManager()
+            ->createQueryBuilder();
 
-    protected function decorate($results)
-    {
-        return Decorator::decorate($results, 'product');
-    }
+        $qb
+            ->select('p')
+            ->from($this->getClassName(), 'p')
+            ->where($qb->expr()->in('p.id', ':ids'));
 
-    protected function connection()
-    {
-        return app('db')->connection(ConfigService::$databaseConnectionName);
+        /**
+         * @var $q \Doctrine\ORM\Query
+         */
+        $q = $qb->getQuery();
+
+        $q->setParameter('ids', $accessCode->getProductIds());
+
+        return $q->getResult();
     }
 }

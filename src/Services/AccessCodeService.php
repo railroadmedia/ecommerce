@@ -8,6 +8,7 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Usora\Entities\User;
 
 class AccessCodeService
@@ -46,6 +47,11 @@ class AccessCodeService
 
     public function claim(AccessCode $accessCode, User $user)
     {
+        $productRepository = $this->entityManager->getRepository(Product::class);
+        $accessCodeProducts = $productRepository
+            ->getAccessCodeProducts($accessCode);
+
+
         // TO-DO: replicate the logic below, using entites and doctrine entity manager
         return $accessCode;
     }

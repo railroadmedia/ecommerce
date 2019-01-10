@@ -199,7 +199,7 @@ class AccessCodeJsonController extends BaseController
             )
         );
 
-        $accessCode = $this->accessCodeRepository
+        $accessCode = $accessCodeRepository
             ->findOneBy(['code' => $request->get('access_code')]);
 
         $claimedAccessCode = $this->accessCodeService

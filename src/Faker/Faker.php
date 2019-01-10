@@ -24,7 +24,7 @@ class Faker extends Generator
                     Carbon::now()
                         ->toDateTimeString() : null,
                 'brand' => ConfigService::$brand,
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
@@ -60,7 +60,7 @@ class Faker extends Generator
                 'subscription_interval_count' => $this->numberBetween(0, 12),
                 'stock' => $this->numberBetween(1, 1000),
                 'brand' => ConfigService::$brand,
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override

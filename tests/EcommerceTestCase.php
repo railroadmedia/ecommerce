@@ -3,13 +3,16 @@
 namespace Railroad\Ecommerce\Tests;
 
 use Carbon\Carbon;
+use Doctrine\ORM\EntityManager;
 use Faker\Generator;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Orchestra\Testbench\TestCase as BaseTestCase;
+use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Faker\Factory;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Providers\UserProviderInterface;
@@ -27,6 +30,11 @@ use Webpatser\Countries\CountriesServiceProvider;
 
 class EcommerceTestCase extends BaseTestCase
 {
+    const TABLES = [
+        'products' => 'ecommerce_product',
+        'accessCodes' => 'ecommerce_access_code'
+    ];
+
     /**
      * @var \Railroad\Ecommerce\Faker\Faker
      */
@@ -36,6 +44,11 @@ class EcommerceTestCase extends BaseTestCase
      * @var DatabaseManager
      */
     protected $databaseManager;
+
+    /**
+     * @var EntityManager
+     */
+    protected $entityManager;
 
     /**
      * @var AuthManager
@@ -161,37 +174,11 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
         $app['config']->set('usora.data_mode', $usoraConfig['data_mode']);
-        $app['config']->set('usora.table_prefix', $usoraConfig['table_prefix']);
         $app['config']->set('usora.tables', $usoraConfig['tables']);
 
         $app['config']->set('usora.redis_host', $defaultConfig['redis_host']);
         $app['config']->set('usora.redis_port', $defaultConfig['redis_port']);
 
-        $app['config']->set('ecommerce.database_driver', $defaultConfig['database_driver']);
-        $app['config']->set('ecommerce.database_name', $defaultConfig['database_name']);
-        $app['config']->set('ecommerce.database_user', $defaultConfig['database_user']);
-        $app['config']->set('ecommerce.database_password', $defaultConfig['database_password']);
-        $app['config']->set('ecommerce.database_host', $defaultConfig['database_host']);
-
-        $app['config']->set('usora.database_driver', $defaultConfig['database_driver']);
-        $app['config']->set('usora.database_name', $defaultConfig['database_name']);
-        $app['config']->set('usora.database_user', $defaultConfig['database_user']);
-        $app['config']->set('usora.database_password', $defaultConfig['database_password']);
-        $app['config']->set('usora.database_host', $defaultConfig['database_host']);
-
-        // config()->set('ecommerce.database_connection_name', config('ecommerce.connection_mask_prefix') . 'sqlite');
-        // config()->set('database.default', config('ecommerce.connection_mask_prefix') . 'sqlite');
-        // config()->set(
-        //     'database.connections.' . config('ecommerce.connection_mask_prefix') . 'sqlite',
-        //     [
-        //         'driver' => 'sqlite',
-        //         'database' => ':memory:',
-        //         'prefix' => '',
-        //     ]
-        // );
-
-        $app['config']->set('doctrine.redis_host', $defaultConfig['redis_host']);
-        $app['config']->set('doctrine.redis_port', $defaultConfig['redis_port']);
         // if new packages entities are required for testing, their entity directory/namespace config should be merged here
         $app['config']->set(
             'doctrine.entities',
@@ -200,6 +187,27 @@ class EcommerceTestCase extends BaseTestCase
                 $usoraConfig['entities']
             )
         );
+        $app['config']->set('doctrine.redis_host', $defaultConfig['redis_host']);
+        $app['config']->set('doctrine.redis_port', $defaultConfig['redis_port']);
+
+        // sqlite
+        // $app['config']->set('doctrine.development_mode', $defaultConfig['development_mode'] ?? true);
+        // $app['config']->set('doctrine.database_driver', 'pdo_sqlite');
+        // $app['config']->set('doctrine.database_user', 'root');
+        // $app['config']->set('doctrine.database_password', 'root');
+        // $app['config']->set('doctrine.database_in_memory', true);
+
+        // $app['config']->set('database.default', 'testbench');
+        // $app['config']->set(
+        //     'database.connections.testbench',
+        //     [
+        //         'driver' => 'sqlite',
+        //         'database' => ':memory:',
+        //         'prefix' => '',
+        //     ]
+        // );
+
+        // mysql
         $app['config']->set('doctrine.development_mode', $defaultConfig['development_mode'] ?? true);
         $app['config']->set('doctrine.database_driver', $defaultConfig['database_driver']);
         $app['config']->set('doctrine.database_name', $defaultConfig['database_name']);
@@ -207,10 +215,10 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('doctrine.database_password', $defaultConfig['database_password']);
         $app['config']->set('doctrine.database_host', $defaultConfig['database_host']);
 
-        config()->set('ecommerce.database_connection_name', $defaultConfig['database_connection_name'] . 'mysql');
-        config()->set('database.default', $defaultConfig['database_connection_name'] . 'mysql');
-        config()->set(
-            'database.connections.' . $defaultConfig['database_connection_name'] . 'mysql',
+        $app['config']->set('ecommerce.database_connection_name', $defaultConfig['database_connection_name']);
+        $app['config']->set('database.default', $defaultConfig['database_connection_name']);
+        $app['config']->set(
+            'database.connections.' . $defaultConfig['database_connection_name'],
             [
                 'driver' => 'mysql',
                 'database' => $defaultConfig['database_name'],
@@ -220,33 +228,23 @@ class EcommerceTestCase extends BaseTestCase
             ]
         );
 
-        // config()->set('ecommerce.database_user', 'root');
-        // config()->set('ecommerce.database_password', 'root');
-        // config()->set('ecommerce.database_driver', 'pdo_sqlite');
-        // config()->set('ecommerce.database_in_memory', true);
-
-        // config()->set('usora.database_user', 'root');
-        // config()->set('usora.database_password', 'root');
-        // config()->set('usora.database_driver', 'pdo_sqlite');
-        // config()->set('usora.database_in_memory', true);
+        $app->register(DoctrineServiceProvider::class);
 
         // allows access to built in user auth
         $app['config']->set('auth.providers.users.model', User::class);
 
-        if (!$app['db']->connection()
-            ->getSchemaBuilder()
-            ->hasTable('users')) {
+        $this->entityManager = $app->make(EntityManager::class);
 
-            $app['db']->connection()
-                ->getSchemaBuilder()
-                ->create(
-                    'users',
-                    function (Blueprint $table) {
-                        $table->increments('id');
-                        $table->string('email');
-                    }
-                );
-        }
+        $this->entityManager->getMetadataFactory()
+            ->getCacheDriver()
+            ->deleteAll();
+
+        DB::connection()->setPdo(
+            $this->entityManager->getConnection()->getWrappedConnection()
+        );
+        DB::connection()->setReadPdo(
+            $this->entityManager->getConnection()->getWrappedConnection()
+        );
 
         // countries
 
@@ -258,7 +256,6 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(PermissionsServiceProvider::class);
         $app->register(ResponseServiceProvider::class);
         $app->register(UsoraServiceProvider::class);
-        $app->register(DoctrineServiceProvider::class);
 
         $app->bind(
             'UserProviderInterface',
@@ -298,11 +295,14 @@ class EcommerceTestCase extends BaseTestCase
     {
         $email = $this->faker->email;
         $userId =
-            $this->databaseManager->connection()
-                ->query()
-                ->from('users')
+            $this->databaseManager
+                ->table('usora_users')
                 ->insertGetId(
-                    ['email' => $email]
+                    [
+                        'email' => $email,
+                        'password' => $this->faker->password,
+                        'display_name' => $this->faker->name
+                    ]
                 );
 
         Auth::shouldReceive('check')
@@ -316,6 +316,66 @@ class EcommerceTestCase extends BaseTestCase
             ->andReturn($userMockResults);
 
         return $userId;
+    }
+
+    /**
+     * Helper method to seed a test user
+     * this method does not log in the newly created user
+     *
+     * @return array
+     */
+    public function fakeUser($userData = [])
+    {
+        $userData += [
+            'email' => $this->faker->email,
+            'password' => $this->faker->password,
+            'display_name' => $this->faker->name
+        ];
+
+        $userId = $this->databaseManager
+            ->table('usora_users')
+            ->insertGetId($userData);
+
+        $userData['id'] = $userId;
+
+        return $userData;
+    }
+
+    /**
+     * Helper method to seed a test product
+     *
+     * @return array
+     */
+    public function fakeProduct($productStub = []): array
+    {
+        $product = $this->faker->product($productStub);
+
+        $productId = $this->databaseManager
+            ->table(self::TABLES['products'])
+            ->insertGetId($product);
+
+        $product['id'] = $productId;
+
+        return $product;
+    }
+
+    /**
+     * Helper method to seed a test access code
+     *
+     * @return array
+     */
+    public function fakeAccessCode($accessCodeStub = []): array
+    {
+        $accessCode = $this->faker->accessCode($accessCodeStub);
+        $accessCode['product_ids'] = serialize($accessCode['product_ids']);
+
+        $accessCodeId = $this->databaseManager
+            ->table(self::TABLES['accessCodes'])
+            ->insertGetId($accessCode);
+
+        $accessCode['id'] = $accessCodeId;
+
+        return $accessCode;
     }
 
     protected function tearDown()

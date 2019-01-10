@@ -110,88 +110,67 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
     //     $this->assertContains($selectedAccessCode, $response->decodeResponseJson()['data']);
     // }
 
-    public function test_claim_validation()
-    {
-        $request = new \Railroad\Ecommerce\Requests\AccessCodeJsonClaimRequest;
-        $request = $request->createFromBase(
-            \Symfony\Component\HttpFoundation\Request::create(
-                '', // uri
-                'GET', // method
-                [], // parameters
-                [], // cookies
-                [], // files
-                [], // server
-                '' // content
-            )
-        );
-        $ctrl = $this->app->make(\Railroad\Ecommerce\Controllers\AccessCodeJsonController::class);
-        $response = $ctrl->claim($request);
-        $testResponse = new \Illuminate\Foundation\Testing\TestResponse($response);
-        echo "\n### response: " . var_export($response->decodeResponseJson(), true) . "\n";
-        $this->assertTrue(true);
-
-        // $response = $this->call('POST', '/access-codes/claim', []);
-
-        // //assert the response status code
-        // $this->assertEquals(422, $response->getStatusCode());
-
-        // // assert that all the validation errors are returned
-        // $this->assertEquals([
-        //     [
-        //         'source' => 'access_code',
-        //         'detail' => 'The access code field is required.',
-        //     ],
-        //     [
-        //         'source' => 'claim_for_user_email',
-        //         'detail' => 'The claim for user email field is required.',
-        //     ]
-        // ], $response->decodeResponseJson('meta')['errors']);
-    }
-
-    // public function test_claim_for_user_email_not_found()
+    // public function test_claim_validation() // ok
     // {
-        // $userId  = $this->createAndLogInNewUser();
+    //     $response = $this->call('POST', '/access-codes/claim', []);
 
-        // $product = $this->productRepository->create(
-        //     $this->faker->product([
-        //         'type' => ConfigService::$typeSubscription,
-        //         'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-        //         'subscription_interval_count' => 1,
-        //     ])
-        // );
+    //     //assert the response status code
+    //     $this->assertEquals(422, $response->getStatusCode());
 
-        // $accessCode = $this->accessCodeRepository->create(
-        //     $this->faker->accessCode([
-        //         'product_ids' => [$product['id']],
-        //         'is_claimed' => 0,
-        //         'claimed_on' => null
-        //     ])
-        // );
-
-        // $email = $this->faker->email;
-
-        // $response = $this->call('POST', '/access-codes/claim', [
-        //     'access_code' => $accessCode['code'],
-        //     'claim_for_user_email' => $email
-        // ]);
-
-        // //assert the response status code
-        // $this->assertEquals(404, $response->getStatusCode());
-
-        // //assert that all the validation errors are returned
-        // $this->assertEquals(
-        //     [
-        //         'title' => 'Not found.',
-        //         'detail' => 'Claim failed, user not found with email: ' . $email,
-        //     ],
-        //     $response->decodeResponseJson('meta')['errors']
-        // );
-        // $this->assertTrue(true);
+    //     // assert that all the validation errors are returned
+    //     $this->assertEquals([
+    //         [
+    //             'source' => 'access_code',
+    //             'detail' => 'The access code field is required.',
+    //         ],
+    //         [
+    //             'source' => 'claim_for_user_email',
+    //             'detail' => 'The claim for user email field is required.',
+    //         ]
+    //     ], $response->decodeResponseJson('meta')['errors']);
     // }
 
-    // public function test_claim()
+    // public function test_claim_for_user_email_not_found() // ok
     // {
-        // $adminId  = $this->createAndLogInNewUser();
+    //     $userId  = $this->createAndLogInNewUser();
+
+    //     $product = $this->fakeProduct([
+    //         'type' => ConfigService::$typeSubscription,
+    //         'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+    //         'subscription_interval_count' => 1,
+    //     ]);
+
+    //     $accessCode = $this->fakeAccessCode([
+    //         'product_ids' => [$product['id']],
+    //         'is_claimed' => 0,
+    //         'claimed_on' => null
+    //     ]);
+
+    //     $email = $this->faker->email;
+
+    //     $response = $this->call('POST', '/access-codes/claim', [
+    //         'access_code' => $accessCode['code'],
+    //         'claim_for_user_email' => $email
+    //     ]);
+
+    //     //assert the response status code
+    //     $this->assertEquals(404, $response->getStatusCode());
+
+    //     //assert that all the validation errors are returned
+    //     $this->assertEquals(
+    //         [
+    //             'title' => 'Not found.',
+    //             'detail' => 'Claim failed, user not found with email: ' . $email,
+    //         ],
+    //         $response->decodeResponseJson('meta')['errors']
+    //     );
+    // }
+
+    public function test_claim()
+    {
+        $adminId  = $this->createAndLogInNewUser();
+
+        $user = $this->fakeUser();
 
         // $email = $this->faker->email;
 
@@ -217,14 +196,47 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         //     ])
         // );
 
-        // $response = $this->call('POST', '/access-codes/claim', [
-        //     'access_code' => $accessCode['code'],
-        //     'claim_for_user_email' => $email
-        // ]);
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription,
+            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_count' => 1,
+        ]);
+
+        $accessCode = $this->fakeAccessCode([
+            'product_ids' => [$product['id']],
+            'is_claimed' => 0,
+            'claimed_on' => null
+        ]);
+
+        // $request = new \Railroad\Ecommerce\Requests\AccessCodeJsonClaimRequest;
+        // $request = $request->createFromBase(
+        //     \Symfony\Component\HttpFoundation\Request::create(
+        //         '', // uri
+        //         'GET', // method
+        //         [
+        //             'access_code' => $accessCode['code'],
+        //             'claim_for_user_email' => $user['email']
+        //         ], // parameters
+        //         [], // cookies
+        //         [], // files
+        //         [], // server
+        //         '' // content
+        //     )
+        // );
+        // $ctrl = $this->app->make(\Railroad\Ecommerce\Controllers\AccessCodeJsonController::class);
+        // $response = $ctrl->claim($request);
+        // $testResponse = new \Illuminate\Foundation\Testing\TestResponse($response);
+        // echo "\n### response: " . var_export($response->decodeResponseJson(), true) . "\n";
+        // $this->assertTrue(true);
+
+        $response = $this->call('POST', '/access-codes/claim', [
+            'access_code' => $accessCode['code'],
+            'claim_for_user_email' => $user['email']
+        ]);
 
         // $this->assertEquals(200, $response->getStatusCode());
 
-        // // assert the user product data was saved in the db
+        // assert the user product data was saved in the db
         // $this->assertDatabaseHas(
         //     ConfigService::$tableUserProduct,
         //     [
@@ -237,7 +249,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         //     ]
         // );
 
-        // // assert access code was set as claimed
+        // assert access code was set as claimed
         // $this->assertDatabaseHas(
         //     ConfigService::$tableAccessCode,
         //     [
@@ -248,8 +260,10 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         //     ]
         // );
 
-    //     $this->assertTrue(true);
-    // }
+        echo "\n### response: " . var_export($response->decodeResponseJson(), true) . "\n";
+
+        $this->assertTrue(true);
+    }
 
     // public function test_release()
     // {
