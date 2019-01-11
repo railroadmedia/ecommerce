@@ -2,8 +2,9 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
+use Illuminate\Http\Request;
 use JMS\Serializer\SerializerBuilder;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -221,15 +222,17 @@ class AccessCodeJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'release.access_codes');
 
-        // $accessCode = $this->accessCodeRepository->update(
-        //     $request->get('access_code_id'),
-        //     [
-        //         'is_claimed' => false,
-        //         'claimer_id' => null,
-        //         'claimed_on' => null
-        //     ]
-        // );
+        $accessCode = $this->entityManager
+                        ->getRepository(AccessCode::class)
+                        ->find($request->get('access_code_id'));
+        $accessCode
+            ->setIsClaimed(false)
+            ->setClaimer(null)
+            ->setClaimedOn(null)
+            ->setUpdatedAt(Carbon::now());
 
-        // return reply()->json($accessCode);
+        $this->entityManager->flush();
+
+        return response($this->serializer->serialize($accessCode, 'json'));
     }
 }

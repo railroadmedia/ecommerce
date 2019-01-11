@@ -32,7 +32,8 @@ class EcommerceTestCase extends BaseTestCase
 {
     const TABLES = [
         'products' => 'ecommerce_product',
-        'accessCodes' => 'ecommerce_access_code'
+        'accessCodes' => 'ecommerce_access_code',
+        'subscriptions' => 'ecommerce_subscription'
     ];
 
     /**
@@ -376,6 +377,24 @@ class EcommerceTestCase extends BaseTestCase
         $accessCode['id'] = $accessCodeId;
 
         return $accessCode;
+    }
+
+    /**
+     * Helper method to seed a test subscription
+     *
+     * @return array
+     */
+    public function fakeSubscription($subscriptionStub = []): array
+    {
+        $subscription = $this->faker->subscription($subscriptionStub);
+
+        $subscriptionId = $this->databaseManager
+            ->table(self::TABLES['subscriptions'])
+            ->insertGetId($subscription);
+
+        $subscription['id'] = $subscriptionId;
+
+        return $subscription;
     }
 
     protected function tearDown()

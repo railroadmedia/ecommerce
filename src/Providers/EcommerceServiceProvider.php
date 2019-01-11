@@ -80,11 +80,11 @@ class EcommerceServiceProvider extends ServiceProvider
         //load package routes file
         $this->loadRoutesFrom(__DIR__ . '/../../routes/routes.php');
 
-        $this->commands(
-            [
-                RenewalDueSubscriptions::class,
-            ]
-        );
+        // $this->commands(
+        //     [
+        //         RenewalDueSubscriptions::class,
+        //     ]
+        // );
 
         $this->app->validator->resolver(
             function ($translator, $data, $rules, $messages) {

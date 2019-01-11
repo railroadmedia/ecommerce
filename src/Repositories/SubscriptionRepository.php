@@ -2,36 +2,38 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Carbon\Carbon;
-use Railroad\Ecommerce\Repositories\Queries\SubscriptionQuery;
-use Railroad\Ecommerce\Repositories\Traits\SoftDelete;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Resora\Decorators\Decorator;
-use Railroad\Resora\Entities\Entity;
-use Railroad\Resora\Queries\CachedQuery;
-use Railroad\Resora\Repositories\RepositoryBase;
+use Doctrine\ORM\EntityRepository;
 
-class SubscriptionRepository extends RepositoryBase
+class SubscriptionRepository extends EntityRepository
 {
-    use SoftDelete;
-
     /**
-     * @return CachedQuery|$this
+     * Gets subscriptions that are related to the specified products
+     *
+     * @param array $products - array of product entities
+     *
+     * @return array
      */
-    protected function newQuery()
+    public function getProductsSubscriptions(array $products): array
     {
-        return (new SubscriptionQuery($this->connection()))
-            ->from(ConfigService::$tableSubscription)
-            ->whereNull(ConfigService::$tableSubscription . '.deleted_on');
-    }
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this
+            ->getEntityManager()
+            ->createQueryBuilder();
 
-    protected function decorate($results)
-    {
-        return Decorator::decorate($results, 'subscription');
-    }
+        $qb
+            ->select('s')
+            ->from($this->getClassName(), 's')
+            ->where($qb->expr()->in('s.product', ':products'));
 
-    protected function connection()
-    {
-        return app('db')->connection(ConfigService::$databaseConnectionName);
+        /**
+         * @var $q \Doctrine\ORM\Query
+         */
+        $q = $qb->getQuery();
+
+        $q->setParameter('products', $products);
+
+        return $q->getResult();
     }
 }
