@@ -11,7 +11,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  *     name="ecommerce_customer",
  *     indexes={
  *         @ORM\Index(name="ecommerce_customer_brand_index", columns={"brand"}),
- *         @ORM\Index(name="ecommerce_access_code_created_at_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_customer_created_on_index", columns={"created_at"}),
  *         @ORM\Index(name="ecommerce_customer_updated_on_index", columns={"updated_at"})
  *     }
  * )

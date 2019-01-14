@@ -7,7 +7,22 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\ProductRepository")
- * @ORM\Table(name="ecommerce_product")
+ * @ORM\Table(
+ *     name="ecommerce_product",
+ *     indexes={
+ *         @ORM\Index(name="ecommerce_product_brand_index", columns={"brand"}),
+ *         @ORM\Index(name="ecommerce_product_name_index", columns={"name"}),
+ *         @ORM\Index(name="ecommerce_product_sku_index", columns={"sku"}),
+ *         @ORM\Index(name="ecommerce_product_type_index", columns={"type"}),
+ *         @ORM\Index(name="ecommerce_product_active_index", columns={"active"}),
+ *         @ORM\Index(name="ecommerce_product_subscription_interval_type_index", columns={"subscription_interval_type"}),
+ *         @ORM\Index(name="ecommerce_product_subscription_interval_count_index", columns={"subscription_interval_count"}),
+ *         @ORM\Index(name="ecommerce_product_stock_index", columns={"stock"}),
+ *         @ORM\Index(name="ecommerce_product_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_product_updated_on_index", columns={"updated_at"}),
+ *         @ORM\Index(name="ecommerce_product_category_index", columns={"category"})
+ *     }
+ * )
  */
 class Product
 {
@@ -46,7 +61,7 @@ class Product
     /**
      * @ORM\Column(type="decimal", precision=8, scale=2)
      *
-     * @var string
+     * @var float
      */
     protected $price;
 
@@ -65,21 +80,21 @@ class Product
     protected $active;
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", nullable=true)
      *
      * @var string
      */
     protected $category;
 
     /**
-     * @ORM\Column(type="text")
+     * @ORM\Column(type="text", nullable=true)
      *
      * @var string
      */
     protected $description;
 
     /**
-     * @ORM\Column(type="text", name="thumbnail_url")
+     * @ORM\Column(type="text", name="thumbnail_url", nullable=true)
      *
      * @var string
      */
@@ -93,43 +108,54 @@ class Product
     protected $isPhysical;
 
     /**
-     * @ORM\Column(type="boolean")
+     * @ORM\Column(type="decimal", precision=8, scale=2, nullable=true)
      *
-     * @var bool
+     * @var float
      */
     protected $weight;
 
     /**
-     * @ORM\Column(type="string", name="subscription_interval_type")
+     * @ORM\Column(type="string", name="subscription_interval_type", nullable=true)
      *
      * @var string
      */
     protected $subscriptionIntervalType;
 
     /**
-     * @ORM\Column(type="integer", name="subscription_interval_count")
+     * @ORM\Column(type="integer", name="subscription_interval_count", nullable=true)
      *
      * @var int
      */
     protected $subscriptionIntervalCount;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="integer", nullable=true)
      *
      * @var int
      */
     protected $stock;
 
+    /**
+     * @return int|null
+     */
     public function getId(): ?int
     {
         return $this->id;
     }
 
+    /**
+     * @return string|null
+     */
     public function getBrand(): ?string
     {
         return $this->brand;
     }
 
+    /**
+     * @param string $brand
+     *
+     * @return Product
+     */
     public function setBrand(string $brand): self
     {
         $this->brand = $brand;
@@ -137,11 +163,19 @@ class Product
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getName(): ?string
     {
         return $this->name;
     }
 
+    /**
+     * @param string $name
+     *
+     * @return Product
+     */
     public function setName(string $name): self
     {
         $this->name = $name;
@@ -149,11 +183,19 @@ class Product
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getSku(): ?string
     {
         return $this->sku;
     }
 
+    /**
+     * @param string $sku
+     *
+     * @return Product
+     */
     public function setSku(string $sku): self
     {
         $this->sku = $sku;
@@ -161,23 +203,39 @@ class Product
         return $this;
     }
 
-    public function getPrice()
+    /**
+     * @return float|null
+     */
+    public function getPrice(): ?float
     {
         return $this->price;
     }
 
-    public function setPrice($price): self
+    /**
+     * @param float $price
+     *
+     * @return Product
+     */
+    public function setPrice(float $price): self
     {
         $this->price = $price;
 
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getType(): ?string
     {
         return $this->type;
     }
 
+    /**
+     * @param string $type
+     *
+     * @return Product
+     */
     public function setType(string $type): self
     {
         $this->type = $type;
@@ -185,11 +243,19 @@ class Product
         return $this;
     }
 
+    /**
+     * @return bool|null
+     */
     public function getActive(): ?bool
     {
         return $this->active;
     }
 
+    /**
+     * @param bool $active
+     *
+     * @return Product
+     */
     public function setActive(bool $active): self
     {
         $this->active = $active;
@@ -197,47 +263,79 @@ class Product
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getCategory(): ?string
     {
         return $this->category;
     }
 
-    public function setCategory(string $category): self
+    /**
+     * @param string $category
+     *
+     * @return Product
+     */
+    public function setCategory(?string $category): self
     {
         $this->category = $category;
 
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    public function setDescription(string $description): self
+    /**
+     * @param string $description
+     *
+     * @return Product
+     */
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
 
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getThumbnailUrl(): ?string
     {
         return $this->thumbnailUrl;
     }
 
-    public function setThumbnailUrl(string $thumbnailUrl): self
+    /**
+     * @param string $thumbnailUrl
+     *
+     * @return Product
+     */
+    public function setThumbnailUrl(?string $thumbnailUrl): self
     {
         $this->thumbnailUrl = $thumbnailUrl;
 
         return $this;
     }
 
+    /**
+     * @return bool|null
+     */
     public function getIsPhysical(): ?bool
     {
         return $this->isPhysical;
     }
 
+    /**
+     * @param bool $isPhysical
+     *
+     * @return Product
+     */
     public function setIsPhysical(bool $isPhysical): self
     {
         $this->isPhysical = $isPhysical;
@@ -245,52 +343,82 @@ class Product
         return $this;
     }
 
-    public function getWeight(): ?bool
+    /**
+     * @return float|null
+     */
+    public function getWeight(): ?float
     {
         return $this->weight;
     }
 
-    public function setWeight(bool $weight): self
+    /**
+     * @param float $weight
+     *
+     * @return Product
+     */
+    public function setWeight(?float $weight): self
     {
         $this->weight = $weight;
 
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getSubscriptionIntervalType(): ?string
     {
         return $this->subscriptionIntervalType;
     }
 
+    /**
+     * @param string $subscriptionIntervalType
+     *
+     * @return Product
+     */
     public function setSubscriptionIntervalType(
-        string $subscriptionIntervalType
+        ?string $subscriptionIntervalType
     ): self {
-
         $this->subscriptionIntervalType = $subscriptionIntervalType;
 
         return $this;
     }
 
+    /**
+     * @return int|null
+     */
     public function getSubscriptionIntervalCount(): ?int
     {
         return $this->subscriptionIntervalCount;
     }
 
+    /**
+     * @param int $subscriptionIntervalCount
+     *
+     * @return Product
+     */
     public function setSubscriptionIntervalCount(
-        int $subscriptionIntervalCount
+        ?int $subscriptionIntervalCount
     ): self {
-
         $this->subscriptionIntervalCount = $subscriptionIntervalCount;
 
         return $this;
     }
 
+    /**
+     * @return int|null
+     */
     public function getStock(): ?int
     {
         return $this->stock;
     }
 
-    public function setStock(int $stock): self
+    /**
+     * @param int $stock
+     *
+     * @return Product
+     */
+    public function setStock(?int $stock): self
     {
         $this->stock = $stock;
 

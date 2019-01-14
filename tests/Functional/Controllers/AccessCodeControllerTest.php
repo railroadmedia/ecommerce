@@ -3,36 +3,14 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Repositories\AccessCodeRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class AccessCodeControllerTest extends EcommerceTestCase
 {
-    /**
-     * @var AccessCodeRepository
-     */
-    protected $accessCodeRepository;
-
-    /**
-     * @var ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * @var SubscriptionRepository
-     */
-    protected $subscriptionRepository;
-
     protected function setUp()
     {
         parent::setUp();
-
-        $this->accessCodeRepository = $this->app->make(AccessCodeRepository::class);
-        $this->productRepository = $this->app->make(ProductRepository::class);
-        $this->subscriptionRepository = $this->app->make(SubscriptionRepository::class);
     }
 
     public function test_claim_validation()
@@ -48,21 +26,17 @@ class AccessCodeControllerTest extends EcommerceTestCase
     {
         $userId  = $this->createAndLogInNewUser();
 
-        $product = $this->productRepository->create(
-            $this->faker->product([
-                'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                'subscription_interval_count' => 1,
-            ])
-        );
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription,
+            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_count' => 1,
+        ]);
 
-        $accessCode = $this->accessCodeRepository->create(
-            $this->faker->accessCode([
-                'product_ids' => [$product['id']],
-                'is_claimed' => 0,
-                'claimed_on' => null
-            ])
-        );
+        $accessCode = $this->fakeAccessCode([
+            'product_ids' => [$product['id']],
+            'is_claimed' => 0,
+            'claimed_on' => null
+        ]);
 
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code']
@@ -102,21 +76,17 @@ class AccessCodeControllerTest extends EcommerceTestCase
     {
         $userId  = $this->createAndLogInNewUser();
 
-        $product = $this->productRepository->create(
-            $this->faker->product([
-                'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => null,
-                'subscription_interval_count' => null,
-            ])
-        );
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+        ]);
 
-        $accessCode = $this->accessCodeRepository->create(
-            $this->faker->accessCode([
-                'product_ids' => [$product['id']],
-                'is_claimed' => 0,
-                'claimed_on' => null
-            ])
-        );
+        $accessCode = $this->fakeAccessCode([
+            'product_ids' => [$product['id']],
+            'is_claimed' => 0,
+            'claimed_on' => null
+        ]);
 
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code']
@@ -153,36 +123,30 @@ class AccessCodeControllerTest extends EcommerceTestCase
     {
         $userId  = $this->createAndLogInNewUser();
 
-        $product = $this->productRepository->create(
-            $this->faker->product([
-                'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                'subscription_interval_count' => 1,
-            ])
-        );
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription,
+            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_count' => 1,
+        ]);
 
-        $subscription = $this->subscriptionRepository->create(
-            $this->faker->subscription([
-                'product_id' => $product['id'],
-                'payment_method_id' => null,
-                'user_id' => $userId,
-                'paid_until' => Carbon::now()
-                    ->addMonths(2)
-                    ->startOfDay()
-                    ->toDateTimeString(),
-                'is_active' => 1,
-                'interval_count' => 1,
-                'interval_type' => ConfigService::$intervalTypeYearly,
-            ])
-        );
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => null,
+            'user_id' => $userId,
+            'paid_until' => Carbon::now()
+                ->addMonths(2)
+                ->startOfDay()
+                ->toDateTimeString(),
+            'is_active' => 1,
+            'interval_count' => 1,
+            'interval_type' => ConfigService::$intervalTypeYearly,
+        ]);
 
-        $accessCode = $this->accessCodeRepository->create(
-            $this->faker->accessCode([
-                'product_ids' => [$product['id']],
-                'is_claimed' => 0,
-                'claimed_on' => null
-            ])
-        );
+        $accessCode = $this->fakeAccessCode([
+            'product_ids' => [$product['id']],
+            'is_claimed' => 0,
+            'claimed_on' => null
+        ]);
 
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code']
@@ -224,7 +188,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
             [
                 'subscription_id' => $subscription['id'],
                 'access_code_id' => $accessCode['id'],
-                'created_on' => Carbon::now()->toDateTimeString()
+                'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
     }
@@ -233,36 +197,30 @@ class AccessCodeControllerTest extends EcommerceTestCase
     {
         $userId  = $this->createAndLogInNewUser();
 
-        $product = $this->productRepository->create(
-            $this->faker->product([
-                'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                'subscription_interval_count' => 1,
-            ])
-        );
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription,
+            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_count' => 1,
+        ]);
 
-        $subscription = $this->subscriptionRepository->create(
-            $this->faker->subscription([
-                'product_id' => $product['id'],
-                'payment_method_id' => null,
-                'user_id' => $userId,
-                'paid_until' => Carbon::now()
-                    ->subMonths(2)
-                    ->startOfDay()
-                    ->toDateTimeString(),
-                'is_active' => 1,
-                'interval_count' => 1,
-                'interval_type' => ConfigService::$intervalTypeYearly,
-            ])
-        );
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => null,
+            'user_id' => $userId,
+            'paid_until' => Carbon::now()
+                ->subMonths(2)
+                ->startOfDay()
+                ->toDateTimeString(),
+            'is_active' => 1,
+            'interval_count' => 1,
+            'interval_type' => ConfigService::$intervalTypeYearly,
+        ]);
 
-        $accessCode = $this->accessCodeRepository->create(
-            $this->faker->accessCode([
-                'product_ids' => [$product['id']],
-                'is_claimed' => 0,
-                'claimed_on' => null
-            ])
-        );
+        $accessCode = $this->fakeAccessCode([
+            'product_ids' => [$product['id']],
+            'is_claimed' => 0,
+            'claimed_on' => null
+        ]);
 
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code']

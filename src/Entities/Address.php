@@ -17,8 +17,8 @@ use Railroad\Usora\Entities\User;
  *         @ORM\Index(name="ecommerce_address_customer_id_index", columns={"customer_id"}),
  *         @ORM\Index(name="ecommerce_address_first_name_index", columns={"first_name"}),
  *         @ORM\Index(name="ecommerce_address_last_name_index", columns={"last_name"}),
- *         @ORM\Index(name="ecommerce_address_created_at_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_address_updated_at_index", columns={"updated_at"})
+ *         @ORM\Index(name="ecommerce_address_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_address_updated_on_index", columns={"updated_at"})
  *     }
  * )
  */
@@ -56,7 +56,7 @@ class Address
     protected $user;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Railroad\Usora\Entities\Customer")
+     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Customer")
      * @ORM\JoinColumn(name="customer_id", referencedColumnName="id")
      */
     protected $customer;

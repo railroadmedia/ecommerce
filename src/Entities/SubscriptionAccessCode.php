@@ -7,7 +7,15 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 /**
  * @ORM\Entity()
- * @ORM\Table(name="ecommerce_subscription_access_code")
+ * @ORM\Table(
+ *     name="ecommerce_subscription_access_code",
+ *     indexes={
+ *         @ORM\Index(name="ecommerce_subscription_access_code_subscription_id_index", columns={"subscription_id"}),
+ *         @ORM\Index(name="ecommerce_subscription_access_code_access_code_id_index", columns={"access_code_id"}),
+ *         @ORM\Index(name="ecommerce_subscription_access_code_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_subscription_access_code_updated_on_index", columns={"updated_at"})
+ *     }
+ * )
  */
 class SubscriptionAccessCode
 {
@@ -34,16 +42,27 @@ class SubscriptionAccessCode
      */
     protected $accessCode;
 
+    /**
+     * @return int|null
+     */
     public function getId(): ?int
     {
         return $this->id;
     }
 
+    /**
+     * @return Subscription|null
+     */
     public function getSubscription(): ?Subscription
     {
         return $this->subscription;
     }
 
+    /**
+     * @param Subscription $subscription
+     *
+     * @return SubscriptionAccessCode
+     */
     public function setSubscription(?Subscription $subscription): self
     {
         $this->subscription = $subscription;
@@ -51,11 +70,19 @@ class SubscriptionAccessCode
         return $this;
     }
 
+    /**
+     * @return AccessCode|null
+     */
     public function getAccessCode(): ?AccessCode
     {
         return $this->accessCode;
     }
 
+    /**
+     * @param AccessCode $accessCode
+     *
+     * @return SubscriptionAccessCode
+     */
     public function setAccessCode(?AccessCode $accessCode): self
     {
         $this->accessCode = $accessCode;

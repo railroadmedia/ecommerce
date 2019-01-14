@@ -7,7 +7,26 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\SubscriptionRepository")
- * @ORM\Table(name="ecommerce_subscription")
+ * @ORM\Table(
+ *     name="ecommerce_subscription",
+ *     indexes={
+ *         @ORM\Index(name="ecommerce_subscription_brand_index", columns={"brand"}),
+ *         @ORM\Index(name="ecommerce_subscription_type_index", columns={"type"}),
+ *         @ORM\Index(name="ecommerce_subscription_user_id_index", columns={"user_id"}),
+ *         @ORM\Index(name="ecommerce_subscription_customer_id_index", columns={"customer_id"}),
+ *         @ORM\Index(name="ecommerce_subscription_order_id_index", columns={"order_id"}),
+ *         @ORM\Index(name="ecommerce_subscription_product_id_index", columns={"product_id"}),
+ *         @ORM\Index(name="ecommerce_subscription_is_active_index", columns={"is_active"}),
+ *         @ORM\Index(name="ecommerce_subscription_start_date_index", columns={"start_date"}),
+ *         @ORM\Index(name="ecommerce_subscription_paid_until_index", columns={"paid_until"}),
+ *         @ORM\Index(name="ecommerce_subscription_currency_index", columns={"currency"}),
+ *         @ORM\Index(name="ecommerce_subscription_interval_type_index", columns={"interval_type"}),
+ *         @ORM\Index(name="ecommerce_subscription_payment_method_id_index", columns={"payment_method_id"}),
+ *         @ORM\Index(name="ecommerce_subscription_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_subscription_updated_on_index", columns={"updated_at"}),
+ *         @ORM\Index(name="ecommerce_subscription_deleted_on_index", columns={"deleted_on"})
+ *     }
+ * )
  */
 class Subscription
 {
@@ -43,24 +62,14 @@ class Subscription
     protected $user;
 
     /**
-     * temp prop mapping
-     * when Customer entity is implemented
-     * should be refactored to ManyToOne relation
-     *
-     * @ORM\Column(type="integer", name="customer_id", nullable=true)
-     *
-     * @var int
+     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Customer")
+     * @ORM\JoinColumn(name="customer_id", referencedColumnName="id")
      */
     protected $customer;
 
     /**
-     * temp prop mapping
-     * when Order entity is implemented
-     * should be refactored to ManyToOne relation
-     *
-     * @ORM\Column(type="integer", name="order_id", nullable=true)
-     *
-     * @var int
+     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Order")
+     * @ORM\JoinColumn(name="order_id", referencedColumnName="id")
      */
     protected $order;
 
@@ -113,7 +122,7 @@ class Subscription
      *     scale=2
      * )
      *
-     * @var string
+     * @var float
      */
     protected $totalPricePerPayment;
 
@@ -126,7 +135,7 @@ class Subscription
      *     nullable=true
      * )
      *
-     * @var string
+     * @var float
      */
     protected $taxPerPayment;
 
@@ -139,7 +148,7 @@ class Subscription
      *     nullable=true
      * )
      *
-     * @var string
+     * @var float
      */
     protected $shippingPerPayment;
 
@@ -179,13 +188,8 @@ class Subscription
     protected $totalCyclesPaid;
 
     /**
-     * temp prop mapping
-     * when PaymentMethod entity is implemented
-     * should be refactored to ManyToOne relation
-     *
-     * @ORM\Column(type="integer", name="payment_method_id", nullable=true)
-     *
-     * @var int
+     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\PaymentMethod")
+     * @ORM\JoinColumn(name="payment_method_id", referencedColumnName="id")
      */
     protected $paymentMethod;
 
@@ -196,16 +200,27 @@ class Subscription
      */
     protected $deletedOn;
 
+    /**
+     * @return int|null
+     */
     public function getId(): ?int
     {
         return $this->id;
     }
 
+    /**
+     * @return string|null
+     */
     public function getBrand(): ?string
     {
         return $this->brand;
     }
 
+    /**
+     * @param string $brand
+     *
+     * @return Subscription
+     */
     public function setBrand(string $brand): self
     {
         $this->brand = $brand;
@@ -213,11 +228,19 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getType(): ?string
     {
         return $this->type;
     }
 
+    /**
+     * @param string $type
+     *
+     * @return Subscription
+     */
     public function setType(string $type): self
     {
         $this->type = $type;
@@ -225,23 +248,19 @@ class Subscription
         return $this;
     }
 
-    public function getCustomer(): ?int
-    {
-        return $this->customer;
-    }
-
-    public function setCustomer(?int $customer): self
-    {
-        $this->customer = $customer;
-
-        return $this;
-    }
-
+    /**
+     * @return int|null
+     */
     public function getOrder(): ?int
     {
         return $this->order;
     }
 
+    /**
+     * @param int $order
+     *
+     * @return Subscription
+     */
     public function setOrder(?int $order): self
     {
         $this->order = $order;
@@ -249,11 +268,19 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return bool|null
+     */
     public function getIsActive(): ?bool
     {
         return $this->isActive;
     }
 
+    /**
+     * @param bool $isActive
+     *
+     * @return Subscription
+     */
     public function setIsActive(bool $isActive): self
     {
         $this->isActive = $isActive;
@@ -261,11 +288,19 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return \DateTimeInterface|null
+     */
     public function getStartDate(): ?\DateTimeInterface
     {
         return $this->startDate;
     }
 
+    /**
+     * @param \DateTimeInterface $startDate
+     *
+     * @return Subscription
+     */
     public function setStartDate(\DateTimeInterface $startDate): self
     {
         $this->startDate = $startDate;
@@ -273,11 +308,19 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return \DateTimeInterface|null
+     */
     public function getPaidUntil(): ?\DateTimeInterface
     {
         return $this->paidUntil;
     }
 
+    /**
+     * @param \DateTimeInterface $paidUntil
+     *
+     * @return Subscription
+     */
     public function setPaidUntil(\DateTimeInterface $paidUntil): self
     {
         $this->paidUntil = $paidUntil;
@@ -285,11 +328,19 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return \DateTimeInterface|null
+     */
     public function getCanceledOn(): ?\DateTimeInterface
     {
         return $this->canceledOn;
     }
 
+    /**
+     * @param \DateTimeInterface $canceledOn
+     *
+     * @return Subscription
+     */
     public function setCanceledOn(?\DateTimeInterface $canceledOn): self
     {
         $this->canceledOn = $canceledOn;
@@ -297,11 +348,19 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getNote(): ?string
     {
         return $this->note;
     }
 
+    /**
+     * @param string $note
+     *
+     * @return Subscription
+     */
     public function setNote(string $note): self
     {
         $this->note = $note;
@@ -309,47 +368,79 @@ class Subscription
         return $this;
     }
 
-    public function getTotalPricePerPayment()
+    /**
+     * @return float|null
+     */
+    public function getTotalPricePerPayment(): ?float
     {
         return $this->totalPricePerPayment;
     }
 
-    public function setTotalPricePerPayment($totalPricePerPayment): self
+    /**
+     * @param float $totalPricePerPayment
+     *
+     * @return Subscription
+     */
+    public function setTotalPricePerPayment(float $totalPricePerPayment): self
     {
         $this->totalPricePerPayment = $totalPricePerPayment;
 
         return $this;
     }
 
-    public function getTaxPerPayment()
+    /**
+     * @return float|null
+     */
+    public function getTaxPerPayment(): ?float
     {
         return $this->taxPerPayment;
     }
 
-    public function setTaxPerPayment($taxPerPayment): self
+    /**
+     * @param float $taxPerPayment
+     *
+     * @return Subscription
+     */
+    public function setTaxPerPayment(?float $taxPerPayment): self
     {
         $this->taxPerPayment = $taxPerPayment;
 
         return $this;
     }
 
-    public function getShippingPerPayment()
+    /**
+     * @return float|null
+     */
+    public function getShippingPerPayment(): ?float
     {
         return $this->shippingPerPayment;
     }
 
-    public function setShippingPerPayment($shippingPerPayment): self
+    /**
+     * @param float $shippingPerPayment
+     *
+     * @return Subscription
+     */
+    public function setShippingPerPayment(?float $shippingPerPayment): self
     {
         $this->shippingPerPayment = $shippingPerPayment;
 
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getCurrency(): ?string
     {
         return $this->currency;
     }
 
+    /**
+     * @param string $currency
+     *
+     * @return Subscription
+     */
     public function setCurrency(string $currency): self
     {
         $this->currency = $currency;
@@ -357,11 +448,19 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getIntervalType(): ?string
     {
         return $this->intervalType;
     }
 
+    /**
+     * @param string $intervalType
+     *
+     * @return Subscription
+     */
     public function setIntervalType(string $intervalType): self
     {
         $this->intervalType = $intervalType;
@@ -369,11 +468,19 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return int|null
+     */
     public function getIntervalCount(): ?int
     {
         return $this->intervalCount;
     }
 
+    /**
+     * @param int $intervalCount
+     *
+     * @return Subscription
+     */
     public function setIntervalCount(int $intervalCount): self
     {
         $this->intervalCount = $intervalCount;
@@ -381,11 +488,19 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return int|null
+     */
     public function getTotalCyclesDue(): ?int
     {
         return $this->totalCyclesDue;
     }
 
+    /**
+     * @param int $totalCyclesDue
+     *
+     * @return Subscription
+     */
     public function setTotalCyclesDue(?int $totalCyclesDue): self
     {
         $this->totalCyclesDue = $totalCyclesDue;
@@ -393,11 +508,19 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return int|null
+     */
     public function getTotalCyclesPaid(): ?int
     {
         return $this->totalCyclesPaid;
     }
 
+    /**
+     * @param int $totalCyclesPaid
+     *
+     * @return Subscription
+     */
     public function setTotalCyclesPaid(int $totalCyclesPaid): self
     {
         $this->totalCyclesPaid = $totalCyclesPaid;
@@ -405,23 +528,39 @@ class Subscription
         return $this;
     }
 
-    public function getPaymentMethod(): ?int
+    /**
+     * @return PaymentMethod|null
+     */
+    public function getPaymentMethod(): ?PaymentMethod
     {
         return $this->paymentMethod;
     }
 
-    public function setPaymentMethod(?int $paymentMethod): self
+    /**
+     * @param PaymentMethod $paymentMethod
+     *
+     * @return Subscription
+     */
+    public function setPaymentMethod(?PaymentMethod $paymentMethod): self
     {
         $this->paymentMethod = $paymentMethod;
 
         return $this;
     }
 
+    /**
+     * @return \DateTimeInterface|null
+     */
     public function getDeletedOn(): ?\DateTimeInterface
     {
         return $this->deletedOn;
     }
 
+    /**
+     * @param \DateTimeInterface $deletedOn
+     *
+     * @return Subscription
+     */
     public function setDeletedOn(?\DateTimeInterface $deletedOn): self
     {
         $this->deletedOn = $deletedOn;
@@ -429,11 +568,19 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return User|null
+     */
     public function getUser(): ?User
     {
         return $this->user;
     }
 
+    /**
+     * @param User $user
+     *
+     * @return Subscription
+     */
     public function setUser(?User $user): self
     {
         $this->user = $user;
@@ -441,11 +588,39 @@ class Subscription
         return $this;
     }
 
+    /**
+     * @return Customer|null
+     */
+    public function getCustomer(): ?Customer
+    {
+        return $this->customer;
+    }
+
+    /**
+     * @param Customer $customer
+     *
+     * @return Subscription
+     */
+    public function setCustomer(?Customer $customer): self
+    {
+        $this->customer = $customer;
+
+        return $this;
+    }
+
+     /**
+     * @return Product|null
+     */
     public function getProduct(): ?Product
     {
         return $this->product;
     }
 
+    /**
+     * @param Product $product
+     *
+     * @return Subscription
+     */
     public function setProduct(?Product $product): self
     {
         $this->product = $product;

@@ -3,12 +3,13 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\EntityManager;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
+use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Requests\AccessCodeClaimRequest;
 use Railroad\Ecommerce\Services\AccessCodeService;
-use Railroad\Usora\Repositories\UserRepository;
+use Railroad\Usora\Entities\User;
 use Throwable;
 
 class AccessCodeController extends BaseController
@@ -18,33 +19,33 @@ class AccessCodeController extends BaseController
      */
     private $accessCodeService;
 
+    /**
+     * @var EntityManager
+     */
+    private $entityManager;
+
      /**
      * @var Hasher
      */
     private $hasher;
 
     /**
-     * @var UserRepository
-     */
-    private $userRepository;
-
-    /**
      * AccessCodeController constructor.
      *
      * @param AccessCodeService $accessCodeService
+     * @param EntityManager $entityManager
      * @param Hasher $hasher
-     * @param UserRepository $userRepository
      */
     public function __construct(
         AccessCodeService $accessCodeService,
-        Hasher $hasher,
-        UserRepository $userRepository
+        EntityManager $entityManager,
+        Hasher $hasher
     ) {
         parent::__construct();
 
         $this->accessCodeService = $accessCodeService;
+        $this->entityManager = $entityManager;
         $this->hasher = $hasher;
-        $this->userRepository = $userRepository;
     }
 
     /**
@@ -58,28 +59,41 @@ class AccessCodeController extends BaseController
      */
     public function claim(AccessCodeClaimRequest $request)
     {
-        $user = auth()->user() ?? null;
+        $user = null;
 
         if ($request->has('email')) {
             // add new user
 
             $password = $this->hasher->make($request->get('password'));
 
-            $user = $this->userRepository->create(
-                [
-                    'email' => $request->get('email'),
-                    'password' => $password,
-                    'display_name' => $request->get('email'),
-                    'created_at' => Carbon::now()->toDateTimeString()
-                ]
-            );
+            $user = new User();
 
-            auth()->loginUsingId($user['id'], true);
+            $user
+                ->setEmail($request->get('email'))
+                ->setPassword($password)
+                ->setDisplayName($request->get('email'))
+                ->setCreatedAt(Carbon::now());
 
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+
+            auth()->loginUsingId($user->getId(), true);
+
+        } else {
+
+            $userRepository = $this->entityManager->getRepository(User::class);
+
+            $user = $userRepository->find(auth()->id());
         }
 
-        $accessCode = $this->accessCodeService
-            ->claim($request->get('access_code'), $user);
+        $accessCodeRepository = $this->entityManager
+                                    ->getRepository(AccessCode::class);
+
+        $accessCode = $accessCodeRepository
+                        ->findOneBy(['code' => $request->get('access_code')]);
+
+        $claimedAccessCode = $this->accessCodeService
+                                    ->claim($accessCode, $user);
 
         return reply()->form(
             [true],

@@ -16,8 +16,8 @@ use Railroad\Usora\Entities\User;
  *         @ORM\Index(name="ecommerce_access_code_claimer_id_index", columns={"claimer_id"}),
  *         @ORM\Index(name="ecommerce_access_code_claimed_on_index", columns={"claimed_on"}),
  *         @ORM\Index(name="ecommerce_access_code_brand_index", columns={"brand"}),
- *         @ORM\Index(name="ecommerce_access_code_created_at_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_access_code_updated_at_index", columns={"updated_at"})
+ *         @ORM\Index(name="ecommerce_access_code_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_access_code_updated_on_index", columns={"updated_at"})
  *     }
  * )
  */
@@ -103,6 +103,9 @@ class AccessCode
         return $this;
     }
 
+    /**
+     * @return array|null
+     */
     public function getProductIds(): ?array
     {
         return $this->productIds;
@@ -160,6 +163,9 @@ class AccessCode
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getBrand(): ?string
     {
         return $this->brand;
@@ -177,6 +183,9 @@ class AccessCode
         return $this;
     }
 
+    /**
+     * @return User|null
+     */
     public function getClaimer(): ?User
     {
         return $this->claimer;

@@ -186,7 +186,8 @@ class AccessCodeJsonController extends BaseController
         );
 
         $userRepository = $this->entityManager->getRepository(User::class);
-        $accessCodeRepository = $this->entityManager->getRepository(AccessCode::class);
+        $accessCodeRepository = $this->entityManager
+                                    ->getRepository(AccessCode::class);
 
         $user = $userRepository->findOneBy(
             ['email' => $request->get('claim_for_user_email')]

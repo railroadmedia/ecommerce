@@ -125,7 +125,9 @@ class AccessCodeService
 
             $subscriptionAccessCode
                 ->setSubscription($subscription)
-                ->setAccessCode($accessCode);
+                ->setAccessCode($accessCode)
+                ->setCreatedAt(Carbon::now())
+                ->setUpdatedAt(Carbon::now()); // explicit date handling required for automated tests
 
             $this->entityManager->persist($subscriptionAccessCode);
 
@@ -150,15 +152,21 @@ class AccessCodeService
 
             switch ($product->getSubscriptionIntervalType()) {
                 case ConfigService::$intervalTypeMonthly:
-                    $expirationDate = Carbon::now()->addMonths($intervalCount);
+                    $expirationDate = Carbon::now()
+                                        ->addMonths($intervalCount)
+                                        ->startOfDay();
                 break;
 
                 case ConfigService::$intervalTypeYearly:
-                    $expirationDate = Carbon::now()->addYears($intervalCount);
+                    $expirationDate = Carbon::now()
+                                        ->addYears($intervalCount)
+                                        ->startOfDay();
                 break;
 
                 case ConfigService::$intervalTypeDaily:
-                    $expirationDate = Carbon::now()->addDays($intervalCount);
+                    $expirationDate = Carbon::now()
+                                        ->addDays($intervalCount)
+                                        ->startOfDay();
                 break;
             }
 
@@ -168,7 +176,7 @@ class AccessCodeService
                 ->setUser($user)
                 ->setProduct($product)
                 ->setQuantity(1)
-                ->setExpirationDate($expirationDate->startOfDay());
+                ->setExpirationDate($expirationDate);
 
             $this->entityManager->persist($userProduct);
         }
