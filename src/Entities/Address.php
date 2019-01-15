@@ -5,6 +5,9 @@ namespace Railroad\Ecommerce\Entities;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Usora\Entities\User;
+// use JMS\Serializer\Annotation\Exclude;
+// use JMS\Serializer\Annotation\ExclusionPolicy;
+use JMS\Serializer\Annotation as JMS;
 
 /**
  * @ORM\Entity()
@@ -20,6 +23,17 @@ use Railroad\Usora\Entities\User;
  *         @ORM\Index(name="ecommerce_address_created_on_index", columns={"created_at"}),
  *         @ORM\Index(name="ecommerce_address_updated_on_index", columns={"updated_at"})
  *     }
+ * )
+ * @JMS\ExclusionPolicy("none")
+ * @JMS\VirtualProperty(
+ *     "user_id",
+ *     exp="object.getUserId()",
+ *     options={@JMS\SerializedName("user_id")}
+ * )
+ * @JMS\VirtualProperty(
+ *     "customer_id",
+ *     exp="object.getCustomerId()",
+ *     options={@JMS\SerializedName("customer_id")}
  * )
  */
 class Address
@@ -52,12 +66,14 @@ class Address
     /**
      * @ORM\ManyToOne(targetEntity="Railroad\Usora\Entities\User")
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * @JMS\Exclude
      */
     protected $user;
 
     /**
      * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Customer")
      * @ORM\JoinColumn(name="customer_id", referencedColumnName="id")
+     * @JMS\Exclude
      */
     protected $customer;
 
@@ -77,17 +93,19 @@ class Address
 
     /**
      * @ORM\Column(type="string", name="street_line_1", nullable=true)
+     * @JMS\SerializedName("street_line_1");
      *
      * @var string
      */
-    protected $streelLineOne;
+    protected $streetLine1;
 
     /**
      * @ORM\Column(type="string", name="street_line_2", nullable=true)
+     * @JMS\SerializedName("street_line_2");
      *
      * @var string
      */
-    protected $streelLineTwo;
+    protected $streetLine2;
 
     /**
      * @ORM\Column(type="string", nullable=true)
@@ -208,9 +226,9 @@ class Address
     /**
      * @return string|null
      */
-    public function getStreelLineOne(): ?string
+    public function getStreetLine1(): ?string
     {
-        return $this->streelLineOne;
+        return $this->streetLine1;
     }
 
     /**
@@ -218,9 +236,9 @@ class Address
      *
      * @return Address
      */
-    public function setStreelLineOne(?string $streelLineOne): self
+    public function setStreetLine1(?string $streetLine1): self
     {
-        $this->streelLineOne = $streelLineOne;
+        $this->streetLine1 = $streetLine1;
 
         return $this;
     }
@@ -228,19 +246,19 @@ class Address
     /**
      * @return string|null
      */
-    public function getStreelLineTwo(): ?string
+    public function getStreetLine2(): ?string
     {
-        return $this->streelLineTwo;
+        return $this->streelLine2;
     }
 
     /**
-     * @param string $streelLineTwo
+     * @param string $streetLineTwo
      *
      * @return Address
      */
-    public function setStreelLineTwo(?string $streelLineTwo): self
+    public function setStreetLine2(?string $streetLine2): self
     {
-        $this->streelLineTwo = $streelLineTwo;
+        $this->streetLine2 = $streetLine2;
 
         return $this;
     }
@@ -334,6 +352,17 @@ class Address
     }
 
     /**
+     * JMS Serializer helper method
+     * used to avoid loading related entity from db
+     *
+     * @return int|null
+     */
+    public function getUserId(): ?int
+    {
+        return $this->user ? $this->user->getId() : null;
+    }
+
+    /**
      * @param User $user
      *
      * @return Address
@@ -351,6 +380,17 @@ class Address
     public function getCustomer(): ?Customer
     {
         return $this->customer;
+    }
+
+    /**
+     * JMS Serializer helper method
+     * used to avoid loading related entity from db
+     *
+     * @return int|null
+     */
+    public function getCustomerId(): ?int
+    {
+        return $this->customer ? $this->customer->getId() : null;
     }
 
     /**

@@ -3,7 +3,15 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\EntityManager;
 use Illuminate\Http\Request;
+use JMS\Serializer\Expression\ExpressionEvaluator;
+use JMS\Serializer\SerializationContext;
+use JMS\Serializer\SerializerBuilder;
+use JMS\Serializer\GraphNavigator;
+use JMS\Serializer\Handler\HandlerRegistry;
+use Railroad\Doctrine\Services\RequestHandler;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\AddressRepository;
@@ -12,6 +20,7 @@ use Railroad\Ecommerce\Requests\AddressDeleteRequest;
 use Railroad\Ecommerce\Requests\AddressUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
+use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Throwable;
 
 class AddressJsonController extends BaseController
@@ -22,9 +31,24 @@ class AddressJsonController extends BaseController
     private $addressRepository;
 
     /**
+     * @var EntityManager
+     */
+    private $entityManager;
+
+    /**
      * @var PermissionService
      */
     private $permissionService;
+
+    /**
+     * @var RequestHandler
+     */
+    private $requestHandler;
+
+    /**
+     * @var \JMS\Serializer\Serializer
+     */
+    private $serializer;
 
     /**
      * AddressJsonController constructor.
@@ -32,12 +56,35 @@ class AddressJsonController extends BaseController
      * @param AddressRepository $addressRepository
      * @param PermissionService $permissionService
      */
-    public function __construct(AddressRepository $addressRepository, PermissionService $permissionService)
-    {
+    public function __construct(
+        AddressRepository $addressRepository,
+        EntityManager $entityManager,
+        PermissionService $permissionService,
+        RequestHandler $requestHandler
+    ) {
         parent::__construct();
 
         $this->addressRepository = $addressRepository;
+        $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
+        $this->requestHandler = $requestHandler;
+
+        $this->serializer = SerializerBuilder::create()
+            ->configureHandlers(function(HandlerRegistry $registry) {
+                $registry->registerHandler(
+                    GraphNavigator::DIRECTION_SERIALIZATION,
+                    Carbon::class,
+                    'json',
+                    function($visitor, Carbon $obj, array $type) {
+                        return $obj->toDateTimeString();
+                    }
+                );
+            })
+            ->addDefaultHandlers()
+            ->setExpressionEvaluator(
+                new ExpressionEvaluator(new ExpressionLanguage())
+            )
+            ->build();
     }
 
     /**
@@ -67,7 +114,13 @@ class AddressJsonController extends BaseController
      */
     public function store(AddressCreateRequest $request)
     {
-        $address = $this->addressRepository->create(
+        /*
+        // all request keys persistance:
+        $address = $this->requestHandler->fromRequest(Address::class, $request);
+        */
+
+        $address = $this->requestHandler->fromArray(
+            Address::class,
             array_merge(
                 $request->only(
                     [
@@ -86,13 +139,20 @@ class AddressJsonController extends BaseController
                 ),
                 [
                     'brand' => $request->input('brand', ConfigService::$brand),
-                    'created_on' => Carbon::now()->toDateTimeString(),
+                    'created_at' => Carbon::now(),
                 ]
             )
-
         );
 
-        return reply()->json($address);
+        $this->entityManager->persist($address);
+        $this->entityManager->flush();
+
+        $context = new SerializationContext();
+        $context->setSerializeNull(true);
+
+        return response(
+            $this->serializer->serialize($address, 'json', $context)
+        );
     }
 
     /**

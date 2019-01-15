@@ -102,7 +102,7 @@ class Faker extends Generator
                 'zip' => $this->postcode,
                 'state' => $this->word,
                 'country' => $this->randomElement(LocationService::countries()),
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
