@@ -2,7 +2,8 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-
+use Carbon\Carbon;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Location\Services\LocationService;
 
@@ -45,5 +46,36 @@ class AddressCreateRequest extends FormRequest
             'user_id' => 'integer|nullable',
             'customer_id' => 'integer|nullable|exists:'.ConfigService::$tableCustomer.',id'
         ];
+    }
+
+    /**
+     * @return Address
+     */
+    public function toEntity()
+    {
+        return $this->fromArray(
+            Address::class,
+            array_merge(
+                $this->only(
+                    [
+                        'type',
+                        'user_id',
+                        'customer_id',
+                        'first_name',
+                        'last_name',
+                        'street_line_1',
+                        'street_line_2',
+                        'city',
+                        'zip',
+                        'state',
+                        'country',
+                    ]
+                ),
+                [
+                    'brand' => $this->input('brand', ConfigService::$brand),
+                    'created_at' => Carbon::now(),
+                ]
+            )
+        );
     }
 }

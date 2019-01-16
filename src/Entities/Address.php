@@ -5,8 +5,6 @@ namespace Railroad\Ecommerce\Entities;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Usora\Entities\User;
-// use JMS\Serializer\Annotation\Exclude;
-// use JMS\Serializer\Annotation\ExclusionPolicy;
 use JMS\Serializer\Annotation as JMS;
 
 /**

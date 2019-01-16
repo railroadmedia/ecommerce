@@ -2,7 +2,8 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-
+use Carbon\Carbon;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Services\ConfigService;
 
 class AddressUpdateRequest extends FormRequest
@@ -44,5 +45,36 @@ class AddressUpdateRequest extends FormRequest
             'user_id' => 'numeric',
             'customer_id' => 'numeric|exists:'.ConfigService::$tableCustomer.',id'
         ];
+    }
+
+    /**
+     * @param Address $address
+     *
+     * @return Address
+     */
+    public function toEntity(Address $address)
+    {
+        return $this->fromArray(
+            $address,
+            array_merge(
+                $this->only(
+                    [
+                        'type',
+                        'brand',
+                        'first_name',
+                        'last_name',
+                        'street_line_1',
+                        'street_line_2',
+                        'city',
+                        'zip',
+                        'state',
+                        'country',
+                    ]
+                ),
+                [
+                    'updated_at' => Carbon::now(),
+                ]
+            )
+        );
     }
 }

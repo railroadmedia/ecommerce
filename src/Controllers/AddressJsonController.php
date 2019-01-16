@@ -10,7 +10,6 @@ use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Handler\HandlerRegistry;
-use Railroad\Doctrine\Services\RequestHandler;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -43,7 +42,7 @@ class AddressJsonController extends BaseController
     /**
      * @var RequestHandler
      */
-    private $requestHandler;
+    // private $requestHandler;
 
     /**
      * @var \JMS\Serializer\Serializer
@@ -59,15 +58,15 @@ class AddressJsonController extends BaseController
     public function __construct(
         AddressRepository $addressRepository,
         EntityManager $entityManager,
-        PermissionService $permissionService,
-        RequestHandler $requestHandler
+        PermissionService $permissionService
     ) {
         parent::__construct();
 
-        $this->addressRepository = $addressRepository;
         $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
-        $this->requestHandler = $requestHandler;
+
+        $this->addressRepository = $this->entityManager
+            ->getRepository(Address::class);
 
         $this->serializer = SerializerBuilder::create()
             ->configureHandlers(function(HandlerRegistry $registry) {
@@ -114,35 +113,10 @@ class AddressJsonController extends BaseController
      */
     public function store(AddressCreateRequest $request)
     {
-        /*
-        // all request keys persistance:
-        $address = $this->requestHandler->fromRequest(Address::class, $request);
-        */
-
-        $address = $this->requestHandler->fromArray(
-            Address::class,
-            array_merge(
-                $request->only(
-                    [
-                        'type',
-                        'user_id',
-                        'customer_id',
-                        'first_name',
-                        'last_name',
-                        'street_line_1',
-                        'street_line_2',
-                        'city',
-                        'zip',
-                        'state',
-                        'country',
-                    ]
-                ),
-                [
-                    'brand' => $request->input('brand', ConfigService::$brand),
-                    'created_at' => Carbon::now(),
-                ]
-            )
-        );
+        /**
+         * @var $address Address
+         */
+        $address = $request->toEntity();
 
         $this->entityManager->persist($address);
         $this->entityManager->flush();
@@ -168,48 +142,40 @@ class AddressJsonController extends BaseController
      */
     public function update(AddressUpdateRequest $request, $addressId)
     {
-        $address = $this->addressRepository->read($addressId);
+
+        $address = $this->addressRepository->find($addressId);
+
         throw_if(
             is_null($address),
             new NotFoundException('Update failed, address not found with id: ' . $addressId)
         );
 
+        $addressUserId = $address->getUser() ?
+                            $address->getUser()->getId() : null;
+
+        $addressCustomerId = $address->getCustomer() ?
+                            $address->getCustomer()->getId() : null;
+
         throw_if(
             (
                 (!$this->permissionService->canOrThrow(auth()->id(), 'update.address'))
-                && (auth()->id() !== intval($address['user_id']))
-                && ($request->get('customer_id', 0) !== $address['customer_id'])
+                && (auth()->id() !== intval($addressUserId))
+                && ($request->get('customer_id', 0) !== $addressCustomerId)
             ),
             new NotAllowedException('This action is unauthorized.')
         );
 
-        //update address with the data sent on the request
-        $addressU = $this->addressRepository->update(
-            $addressId,
-            array_merge(
-                $request->only(
-                    [
-                        'type',
-                        'brand',
-                        'first_name',
-                        'last_name',
-                        'street_line_1',
-                        'street_line_2',
-                        'city',
-                        'zip',
-                        'state',
-                        'country',
-                    ]
-                ),
-                [
-                    'updated_on' => Carbon::now()->toDateTimeString(),
-                ]
-            )
-        );
+        $address = $request->toEntity($address);
 
-        return reply()->json($addressU, [
-            'code' => 201
-        ]);
+        $this->entityManager->flush();
+
+        $context = new SerializationContext();
+        $context->setSerializeNull(true);
+
+        return response(
+            $this->serializer->serialize($address, 'json', $context),
+            201
+        );
     }
 
     /**

@@ -33,7 +33,9 @@ class EcommerceTestCase extends BaseTestCase
     const TABLES = [
         'products' => 'ecommerce_product',
         'accessCodes' => 'ecommerce_access_code',
-        'subscriptions' => 'ecommerce_subscription'
+        'subscriptions' => 'ecommerce_subscription',
+        'addresses' => 'ecommerce_address',
+        'customers' => 'ecommerce_customer'
     ];
 
     /**
@@ -395,6 +397,42 @@ class EcommerceTestCase extends BaseTestCase
         $subscription['id'] = $subscriptionId;
 
         return $subscription;
+    }
+
+    /**
+     * Helper method to seed a test address
+     *
+     * @return array
+     */
+    public function fakeAddress($addressStub = []): array
+    {
+        $address = $this->faker->address($addressStub);
+
+        $addressId = $this->databaseManager
+            ->table(self::TABLES['addresses'])
+            ->insertGetId($address);
+
+        $address['id'] = $addressId;
+
+        return $address;
+    }
+
+    /**
+     * Helper method to seed a test customer
+     *
+     * @return array
+     */
+    public function fakeCustomer($customerStub = []): array
+    {
+        $customer = $this->faker->customer($customerStub);
+
+        $customerId = $this->databaseManager
+            ->table(self::TABLES['customers'])
+            ->insertGetId($customer);
+
+        $customer['id'] = $customerId;
+
+        return $customer;
     }
 
     protected function tearDown()

@@ -2,17 +2,17 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-use Illuminate\Foundation\Http\FormRequest as LaravelFormRequest;
+use Railroad\Doctrine\Requests\EntityHydratorRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-
-/**  Form Request - extend the Laravel Form Request class and handle the validation errors messages
+/**
+ * Form Request - extend the EntityHydratorRequest class and handle the validation errors messages
  *
  * Class FormRequest
  * @package Railroad\Railcontent\Requests
  */
-class FormRequest extends LaravelFormRequest
+class FormRequest extends EntityHydratorRequest
 {
     /**
      * Determine if the user is authorized to make this request.

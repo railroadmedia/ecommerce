@@ -74,7 +74,7 @@ class Faker extends Generator
                 'phone' => $this->phoneNumber,
                 'email' => $this->email,
                 'brand' => ConfigService::$brand,
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
