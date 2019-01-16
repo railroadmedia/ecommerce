@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
 use Railroad\Ecommerce\Services\ConfigService;
 
-
 class RenameDatetimeColumnsAccessCodeTable extends Migration
 {
     /**
@@ -14,16 +13,27 @@ class RenameDatetimeColumnsAccessCodeTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)->table(
-            ConfigService::$tableAccessCode,
-            function ($table) {
-                /**
-                 * @var $table \Illuminate\Database\Schema\Blueprint
-                 */
-                $table->renameColumn('created_on', 'created_at');
-                $table->renameColumn('updated_on', 'updated_at');
-            }
-        );
+        Schema::connection(ConfigService::$databaseConnectionName)
+            ->table(
+                ConfigService::$tableAccessCode,
+                function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
+                    $table->renameColumn('created_on', 'created_at');
+                }
+            );
+
+        Schema::connection(ConfigService::$databaseConnectionName)
+            ->table(
+                ConfigService::$tableAccessCode,
+                function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
+                    $table->renameColumn('updated_on', 'updated_at');
+                }
+            );
     }
 
     /**
@@ -33,15 +43,26 @@ class RenameDatetimeColumnsAccessCodeTable extends Migration
      */
     public function down()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)->table(
-            ConfigService::$tableAccessCode,
-            function ($table) {
-                /**
-                 * @var $table \Illuminate\Database\Schema\Blueprint
-                 */
-                $table->renameColumn('created_at', 'created_on');
-                $table->renameColumn('updated_at', 'updated_on');
-            }
-        );
+        Schema::connection(ConfigService::$databaseConnectionName)
+            ->table(
+                ConfigService::$tableAccessCode,
+                function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
+                    $table->renameColumn('created_at', 'created_on');
+                }
+            );
+
+        Schema::connection(ConfigService::$databaseConnectionName)
+            ->table(
+                ConfigService::$tableAccessCode,
+                function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
+                    $table->renameColumn('updated_at', 'updated_on');
+                }
+            );
     }
 }
