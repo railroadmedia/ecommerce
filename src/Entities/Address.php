@@ -3,7 +3,8 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
-use Gedmo\Timestampable\Traits\TimestampableEntity;
+// use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Usora\Entities\User;
 use JMS\Serializer\Annotation as JMS;
@@ -34,6 +35,7 @@ use JMS\Serializer\Annotation as JMS;
  *     exp="object.getCustomerId()",
  *     options={@JMS\SerializedName("customer_id")}
  * )
+ * @ORM\HasLifecycleCallbacks
  */
 class Address
 {

@@ -102,8 +102,7 @@ class Faker extends Generator
                 'country' => $this->randomElement(LocationService::countries()),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
-                'updated_at' => Carbon::now()
-                    ->toDateTimeString(),
+                'updated_at' => null,
             ],
             $override
         );
