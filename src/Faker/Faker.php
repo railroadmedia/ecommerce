@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Faker\Generator;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Location\Services\LocationService;
-use Webpatser\Countries\Countries;
 
 class Faker extends Generator
 {
@@ -102,7 +101,8 @@ class Faker extends Generator
                 'country' => $this->randomElement(LocationService::countries()),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
-                'updated_at' => null,
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
             ],
             $override
         );

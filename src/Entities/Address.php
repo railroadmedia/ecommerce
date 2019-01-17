@@ -3,11 +3,10 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
-// use Gedmo\Timestampable\Traits\TimestampableEntity;
-use Railroad\Ecommerce\Traits\TimestampableEntity;
+use Gedmo\Timestampable\Traits\TimestampableEntity;
+use JMS\Serializer\Annotation as JMS;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Usora\Entities\User;
-use JMS\Serializer\Annotation as JMS;
 
 /**
  * @ORM\Entity()
@@ -23,17 +22,6 @@ use JMS\Serializer\Annotation as JMS;
  *         @ORM\Index(name="ecommerce_address_created_on_index", columns={"created_at"}),
  *         @ORM\Index(name="ecommerce_address_updated_on_index", columns={"updated_at"})
  *     }
- * )
- * @JMS\ExclusionPolicy("none")
- * @JMS\VirtualProperty(
- *     "user_id",
- *     exp="object.getUserId()",
- *     options={@JMS\SerializedName("user_id")}
- * )
- * @JMS\VirtualProperty(
- *     "customer_id",
- *     exp="object.getCustomerId()",
- *     options={@JMS\SerializedName("customer_id")}
  * )
  * @ORM\HasLifecycleCallbacks
  */
@@ -147,7 +135,8 @@ class Address
     /**
      * @return int|null
      */
-    public function getId(): ?int
+    public function getId()
+    : ?int
     {
         return $this->id;
     }
@@ -155,7 +144,8 @@ class Address
     /**
      * @return string|null
      */
-    public function getType(): ?string
+    public function getType()
+    : ?string
     {
         return $this->type;
     }
@@ -165,8 +155,8 @@ class Address
      *
      * @return Address
      */
-    public function setType(string $type): self
-    {
+    public function setType(string $type)
+    : self {
         $this->type = $type;
 
         return $this;
@@ -175,7 +165,8 @@ class Address
     /**
      * @return string|null
      */
-    public function getBrand(): ?string
+    public function getBrand()
+    : ?string
     {
         return $this->brand;
     }
@@ -185,8 +176,8 @@ class Address
      *
      * @return Address
      */
-    public function setBrand(string $brand): self
-    {
+    public function setBrand(string $brand)
+    : self {
         $this->brand = $brand;
 
         return $this;
@@ -195,7 +186,8 @@ class Address
     /**
      * @return string|null
      */
-    public function getFirstName(): ?string
+    public function getFirstName()
+    : ?string
     {
         return $this->firstName;
     }
@@ -205,8 +197,8 @@ class Address
      *
      * @return Address
      */
-    public function setFirstName(string $firstName): self
-    {
+    public function setFirstName(string $firstName)
+    : self {
         $this->firstName = $firstName;
 
         return $this;
@@ -215,7 +207,8 @@ class Address
     /**
      * @return string|null
      */
-    public function getLastName(): ?string
+    public function getLastName()
+    : ?string
     {
         return $this->lastName;
     }
@@ -225,8 +218,8 @@ class Address
      *
      * @return Address
      */
-    public function setLastName(string $lastName): self
-    {
+    public function setLastName(string $lastName)
+    : self {
         $this->lastName = $lastName;
 
         return $this;
@@ -235,7 +228,8 @@ class Address
     /**
      * @return string|null
      */
-    public function getStreetLine1(): ?string
+    public function getStreetLine1()
+    : ?string
     {
         return $this->streetLine1;
     }
@@ -245,8 +239,8 @@ class Address
      *
      * @return Address
      */
-    public function setStreetLine1(?string $streetLine1): self
-    {
+    public function setStreetLine1(?string $streetLine1)
+    : self {
         $this->streetLine1 = $streetLine1;
 
         return $this;
@@ -255,7 +249,8 @@ class Address
     /**
      * @return string|null
      */
-    public function getStreetLine2(): ?string
+    public function getStreetLine2()
+    : ?string
     {
         return $this->streetLine2;
     }
@@ -265,8 +260,8 @@ class Address
      *
      * @return Address
      */
-    public function setStreetLine2(?string $streetLine2): self
-    {
+    public function setStreetLine2(?string $streetLine2)
+    : self {
         $this->streetLine2 = $streetLine2;
 
         return $this;
@@ -275,7 +270,8 @@ class Address
     /**
      * @return string|null
      */
-    public function getCity(): ?string
+    public function getCity()
+    : ?string
     {
         return $this->city;
     }
@@ -285,8 +281,8 @@ class Address
      *
      * @return Address
      */
-    public function setCity(?string $city): self
-    {
+    public function setCity(?string $city)
+    : self {
         $this->city = $city;
 
         return $this;
@@ -295,7 +291,8 @@ class Address
     /**
      * @return string|null
      */
-    public function getZip(): ?string
+    public function getZip()
+    : ?string
     {
         return $this->zip;
     }
@@ -305,8 +302,8 @@ class Address
      *
      * @return Address
      */
-    public function setZip(?string $zip): self
-    {
+    public function setZip(?string $zip)
+    : self {
         $this->zip = $zip;
 
         return $this;
@@ -315,7 +312,8 @@ class Address
     /**
      * @return string|null
      */
-    public function getState(): ?string
+    public function getState()
+    : ?string
     {
         return $this->state;
     }
@@ -325,8 +323,8 @@ class Address
      *
      * @return Address
      */
-    public function setState(?string $state): self
-    {
+    public function setState(?string $state)
+    : self {
         $this->state = $state;
 
         return $this;
@@ -335,7 +333,8 @@ class Address
     /**
      * @return string|null
      */
-    public function getCountry(): ?string
+    public function getCountry()
+    : ?string
     {
         return $this->country;
     }
@@ -345,8 +344,8 @@ class Address
      *
      * @return Address
      */
-    public function setCountry(?string $country): self
-    {
+    public function setCountry(?string $country)
+    : self {
         $this->country = $country;
 
         return $this;
@@ -355,7 +354,8 @@ class Address
     /**
      * @return User|null
      */
-    public function getUser(): ?User
+    public function getUser()
+    : ?User
     {
         return $this->user;
     }
@@ -366,7 +366,8 @@ class Address
      *
      * @return int|null
      */
-    public function getUserId(): ?int
+    public function getUserId()
+    : ?int
     {
         return $this->user ? $this->user->getId() : null;
     }
@@ -376,8 +377,8 @@ class Address
      *
      * @return Address
      */
-    public function setUser(?User $user): self
-    {
+    public function setUser(?User $user)
+    : self {
         $this->user = $user;
 
         return $this;
@@ -386,7 +387,8 @@ class Address
     /**
      * @return Customer|null
      */
-    public function getCustomer(): ?Customer
+    public function getCustomer()
+    : ?Customer
     {
         return $this->customer;
     }
@@ -397,7 +399,8 @@ class Address
      *
      * @return int|null
      */
-    public function getCustomerId(): ?int
+    public function getCustomerId()
+    : ?int
     {
         return $this->customer ? $this->customer->getId() : null;
     }
@@ -407,8 +410,8 @@ class Address
      *
      * @return Address
      */
-    public function setCustomer(?Customer $customer): self
-    {
+    public function setCustomer(?Customer $customer)
+    : self {
         $this->customer = $customer;
 
         return $this;
