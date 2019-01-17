@@ -43,6 +43,8 @@ use Railroad\Ecommerce\Services\CustomValidationRules;
 use Railroad\Resora\Events\Created;
 use Railroad\Resora\Events\Updated;
 use Redis;
+use Doctrine\DBAL\Types\Type;
+use Railroad\Ecommerce\Doctrine\CarbonType;
 
 class EcommerceServiceProvider extends ServiceProvider
 {
@@ -230,6 +232,8 @@ class EcommerceServiceProvider extends ServiceProvider
         //         ]
         //     )
         // );
+
+        Type::overrideType('datetime', CarbonType::class);
     }
 
     private function setupConfig()
