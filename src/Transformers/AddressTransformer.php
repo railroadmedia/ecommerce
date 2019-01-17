@@ -2,16 +2,23 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
-use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Address;
 
 class AddressTransformer extends TransformerAbstract
 {
-    // todo: user and customer mappings
+    protected $defaultIncludes = [];
 
     public function transform(Address $address)
     {
+        if ($address->getUser()) {
+            $this->defaultIncludes[] = 'user';
+        }
+
+        if ($address->getCustomer()) {
+            $this->defaultIncludes[] = 'customer';
+        }
+
         return [
             'id' => $address->getId(),
             'type' => $address->getType(),
@@ -24,10 +31,18 @@ class AddressTransformer extends TransformerAbstract
             'zip' => $address->getZip(),
             'state' => $address->getState(),
             'country' => $address->getCountry(),
-            'created_at' => Carbon::instance($address->getCreatedAt())
-                ->toDateTimeString(),
-            'updated_at' => Carbon::instance($address->getUpdatedAt())
-                ->toDateTimeString(),
+            'created_at' => $address->getCreatedAt() ? $address->getCreatedAt()->toDateTimeString() : null,
+            'updated_at' => $address->getUpdatedAt() ? $address->getUpdatedAt()->toDateTimeString() : null,
         ];
+    }
+
+    public function includeUser(Address $address)
+    {
+        return $this->item($address->getUser(), new EntityReferenceTransformer(), 'user');
+    }
+
+    public function includeCustomer(Address $address)
+    {
+        return $this->item($address->getCustomer(), new EntityReferenceTransformer(), 'customer');
     }
 }

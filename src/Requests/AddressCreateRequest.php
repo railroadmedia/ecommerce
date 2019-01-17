@@ -82,6 +82,8 @@ class AddressCreateRequest extends FormRequest
                     'data.attributes.zip',
                     'data.attributes.state',
                     'data.attributes.country',
+                    'data.relationships.user',
+                    'data.relationships.customer',
                 ]
             )
         );
