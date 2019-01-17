@@ -2,27 +2,27 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use JMS\Serializer\Expression\ExpressionEvaluator;
-use JMS\Serializer\SerializationContext;
-use JMS\Serializer\SerializerBuilder;
-use JMS\Serializer\GraphNavigator;
-use JMS\Serializer\Handler\HandlerRegistry;
+use Illuminate\Routing\Controller;
+use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Entities\Address;
-use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Requests\AddressCreateRequest;
 use Railroad\Ecommerce\Requests\AddressDeleteRequest;
 use Railroad\Ecommerce\Requests\AddressUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\ResponseService;
+use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
-use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Throwable;
 
-class AddressJsonController extends BaseController
+class AddressJsonController extends Controller
 {
     /**
      * @var AddressRepository
@@ -38,57 +38,34 @@ class AddressJsonController extends BaseController
      * @var PermissionService
      */
     private $permissionService;
-
     /**
-     * @var RequestHandler
+     * @var JsonApiHydrator
      */
-    // private $requestHandler;
-
-    /**
-     * @var \JMS\Serializer\Serializer
-     */
-    private $serializer;
+    private $jsonApiHydrator;
 
     /**
      * AddressJsonController constructor.
      *
-     * @param AddressRepository $addressRepository
+     * @param EntityManager $entityManager
      * @param PermissionService $permissionService
+     * @param JsonApiHydrator $jsonApiHydrator
      */
     public function __construct(
-        AddressRepository $addressRepository,
         EntityManager $entityManager,
-        PermissionService $permissionService
+        PermissionService $permissionService,
+        JsonApiHydrator $jsonApiHydrator
     ) {
-        parent::__construct();
-
         $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
+        $this->jsonApiHydrator = $jsonApiHydrator;
 
-        $this->addressRepository = $this->entityManager
-            ->getRepository(Address::class);
-
-        $this->serializer = SerializerBuilder::create()
-            ->configureHandlers(function(HandlerRegistry $registry) {
-                $registry->registerHandler(
-                    GraphNavigator::DIRECTION_SERIALIZATION,
-                    Carbon::class,
-                    'json',
-                    function($visitor, Carbon $obj, array $type) {
-                        return $obj->toDateTimeString();
-                    }
-                );
-            })
-            ->addDefaultHandlers()
-            ->setExpressionEvaluator(
-                new ExpressionEvaluator(new ExpressionLanguage())
-            )
-            ->build();
+        $this->addressRepository = $this->entityManager->getRepository(Address::class);
     }
 
     /**
      * @param Request $request
-     * @throws \Railroad\Permissions\Exceptions\NotAllowedException
+     * @return JsonResponse
+     * @throws NotAllowedException
      */
     public function index(Request $request)
     {
@@ -101,7 +78,8 @@ class AddressJsonController extends BaseController
             ->where('user_id', $request->get('user_id', auth()->id()))
             ->get();
 
-        return reply()->json($addresses);
+        return ResponseService::address($addresses)
+            ->respond(200);
     }
 
     /**
@@ -110,23 +88,22 @@ class AddressJsonController extends BaseController
      *
      * @param AddressCreateRequest $request
      * @return JsonResponse
+     *
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws Exception
      */
     public function store(AddressCreateRequest $request)
     {
-        /**
-         * @var $address Address
-         */
-        $address = $request->toEntity();
+        $address = new Address();
+
+        $this->jsonApiHydrator->hydrate($address, $request->onlyAllowed());
 
         $this->entityManager->persist($address);
         $this->entityManager->flush();
 
-        $context = new SerializationContext();
-        $context->setSerializeNull(true);
-
-        return response(
-            $this->serializer->serialize($address, 'json', $context)
-        );
+        return ResponseService::address($address)
+            ->respond(201);
     }
 
     /**
@@ -137,12 +114,12 @@ class AddressJsonController extends BaseController
      *
      * @param AddressUpdateRequest $request
      * @param int $addressId
+     *
      * @return JsonResponse
      * @throws Throwable
      */
     public function update(AddressUpdateRequest $request, $addressId)
     {
-
         $address = $this->addressRepository->find($addressId);
 
         throw_if(
@@ -150,32 +127,12 @@ class AddressJsonController extends BaseController
             new NotFoundException('Update failed, address not found with id: ' . $addressId)
         );
 
-        $addressUserId = $address->getUser() ?
-                            $address->getUser()->getId() : null;
-
-        $addressCustomerId = $address->getCustomer() ?
-                            $address->getCustomer()->getId() : null;
-
-        throw_if(
-            (
-                (!$this->permissionService->canOrThrow(auth()->id(), 'update.address'))
-                && (auth()->id() !== intval($addressUserId))
-                && ($request->get('customer_id', 0) !== $addressCustomerId)
-            ),
-            new NotAllowedException('This action is unauthorized.')
-        );
-
-        $address = $request->toEntity($address);
+        $this->jsonApiHydrator->hydrate($address, $request->all());
 
         $this->entityManager->flush();
 
-        $context = new SerializationContext();
-        $context->setSerializeNull(true);
-
-        return response(
-            $this->serializer->serialize($address, 'json', $context),
-            201
-        );
+        return ResponseService::address($address)
+            ->respond(200);
     }
 
     /**
@@ -199,11 +156,9 @@ class AddressJsonController extends BaseController
         );
 
         throw_if(
-            (
-                (!$this->permissionService->canOrThrow(auth()->id(), 'delete.address'))
-                && (auth()->id() !== intval($address['user_id']))
-                && ($request->get('customer_id', 0) !== $address['customer_id'])
-            ),
+            ((!$this->permissionService->canOrThrow(auth()->id(), 'delete.address')) &&
+                (auth()->id() !== intval($address['user_id'])) &&
+                ($request->get('customer_id', 0) !== $address['customer_id'])),
             new NotAllowedException('This action is unauthorized.')
         );
 

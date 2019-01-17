@@ -87,8 +87,8 @@ class EcommerceServiceProvider extends ServiceProvider
         // );
 
         $this->app->validator->resolver(
-            function ($translator, $data, $rules, $messages) {
-                return new CustomValidationRules($translator, $data, $rules, $messages);
+            function ($translator, $data, $rules, $messages, $attributes) {
+                return new CustomValidationRules($translator, $data, $rules, $messages, $attributes);
             }
         );
 

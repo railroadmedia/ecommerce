@@ -2,20 +2,32 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-use Carbon\Carbon;
-use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Location\Services\LocationService;
 
 class AddressUpdateRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Get custom attributes for validator errors.
      *
-     * @return bool
+     * @return array
      */
-    public function authorize()
+    public function attributes()
     {
-        return true;
+        return [
+            'data.type' => 'json data type',
+            'data.attributes.type' => 'type',
+            'data.attributes.first_name' => 'first name',
+            'data.attributes.last_name' => 'last name',
+            'data.attributes.street_line_1' => 'street line 1',
+            'data.attributes.street_line_2' => 'street line 2',
+            'data.attributes.city' => 'city',
+            'data.attributes.zip' => 'zip',
+            'data.attributes.state' => 'state',
+            'data.attributes.country' => 'country',
+            'data.attributes.user_id' => 'user id',
+            'data.attributes.customer_id' => 'customer id',
+        ];
     }
 
     /**
@@ -26,55 +38,57 @@ class AddressUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'type' => 'max:255|in:' .
-                implode(
+            'data.id' => 'exists:' . ConfigService::$tableAddress . ',id',
+            'data.type' => 'in:address',
+            'data.attributes.type' => 'max:255|in:' . implode(
                     ',',
                     [
                         ConfigService::$billingAddressType,
-                        ConfigService::$shippingAddressType
+                        ConfigService::$shippingAddressType,
                     ]
                 ),
-            'first_name' => 'max:255',
-            'last_name' => 'max:255',
-            'street_line_1' => 'max:255',
-            'street_line_2' => 'max:255',
-            'city' => 'max:255',
-            'zip' => 'max:255',
-            'state' => 'max:255',
-            'country' => 'max:255|country',
-            'user_id' => 'numeric',
-            'customer_id' => 'numeric|exists:'.ConfigService::$tableCustomer.',id'
+            'data.attributes.first_name' => 'nullable|max:255',
+            'data.attributes.last_name' => 'nullable|max:255',
+            'data.attributes.street_line_1' => 'nullable|max:255',
+            'data.attributes.street_line_2' => 'nullable|max:255',
+            'data.attributes.city' => 'nullable|max:255',
+            'data.attributes.zip' => 'nullable|max:255',
+            'data.attributes.state' => 'nullable|max:255',
+            'data.attributes.country' => 'max:255|in:' . implode(',', LocationService::countries()),
+
+            // todo: use proper json API spec structure for changing relationships
+//            'data.attributes.user_id' => 'integer|nullable',
+//            'data.attributes.customer_id' => 'integer|nullable|exists:' . ConfigService::$tableCustomer . ',id',
         ];
     }
 
     /**
-     * @param Address $address
-     *
-     * @return Address
+     * @return array
      */
-    public function toEntity(Address $address)
+    public function onlyAllowed()
     {
-        return $this->fromArray(
-            $address,
-            array_merge(
-                $this->only(
-                    [
-                        'type',
-                        'brand',
-                        'first_name',
-                        'last_name',
-                        'street_line_1',
-                        'street_line_2',
-                        'city',
-                        'zip',
-                        'state',
-                        'country',
-                    ]
-                ),
+        return array_merge(
+            $this->only(
                 [
-                    'updated_at' => Carbon::now(),
+                    'data.attributes.type',
+
+                    // todo: use proper json API spec structure for changing relationships
+//                    'data.attributes.user_id',
+//                    'data.attributes.customer_id',
+
+                    'data.attributes.first_name',
+                    'data.attributes.last_name',
+                    'data.attributes.street_line_1',
+                    'data.attributes.street_line_2',
+                    'data.attributes.city',
+                    'data.attributes.zip',
+                    'data.attributes.state',
+                    'data.attributes.country',
                 ]
-            )
+            ),
+            [
+                'data.attributes.brand' => $this->input('brand', ConfigService::$brand),
+            ]
         );
     }
 }

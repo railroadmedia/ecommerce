@@ -92,8 +92,6 @@ class Faker extends Generator
                     ]
                 ),
                 'brand' => ConfigService::$brand,
-                'user_id' => rand(),
-                'customer_id' => null,
                 'first_name' => $this->firstName,
                 'last_name' => $this->lastName,
                 'street_line_1' => $this->streetAddress,
@@ -103,6 +101,8 @@ class Faker extends Generator
                 'state' => $this->word,
                 'country' => $this->randomElement(LocationService::countries()),
                 'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+                'updated_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override

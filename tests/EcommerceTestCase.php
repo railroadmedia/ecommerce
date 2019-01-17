@@ -86,6 +86,17 @@ class EcommerceTestCase extends BaseTestCase
         $this->databaseManager = $this->app->make(DatabaseManager::class);
         $this->authManager = $this->app->make(AuthManager::class);
 
+        // Run the schema update tool using our entity metadata
+        $this->entityManager = app(EntityManager::class);
+
+        $this->entityManager->getMetadataFactory()
+            ->getCacheDriver()
+            ->deleteAll();
+
+        // make sure laravel is using the same connection
+        DB::connection()->setPdo($this->entityManager->getConnection()->getWrappedConnection());
+        DB::connection()->setReadPdo($this->entityManager->getConnection()->getWrappedConnection());
+
         $this->permissionServiceMock =
             $this->getMockBuilder(PermissionService::class)
                 ->disableOriginalConstructor()
@@ -194,40 +205,20 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('doctrine.redis_port', $defaultConfig['redis_port']);
 
         // sqlite
-        // $app['config']->set('doctrine.development_mode', $defaultConfig['development_mode'] ?? true);
-        // $app['config']->set('doctrine.database_driver', 'pdo_sqlite');
-        // $app['config']->set('doctrine.database_user', 'root');
-        // $app['config']->set('doctrine.database_password', 'root');
-        // $app['config']->set('doctrine.database_in_memory', true);
-
-        // $app['config']->set('database.default', 'testbench');
-        // $app['config']->set(
-        //     'database.connections.testbench',
-        //     [
-        //         'driver' => 'sqlite',
-        //         'database' => ':memory:',
-        //         'prefix' => '',
-        //     ]
-        // );
-
-        // mysql
         $app['config']->set('doctrine.development_mode', $defaultConfig['development_mode'] ?? true);
-        $app['config']->set('doctrine.database_driver', $defaultConfig['database_driver']);
-        $app['config']->set('doctrine.database_name', $defaultConfig['database_name']);
-        $app['config']->set('doctrine.database_user', $defaultConfig['database_user']);
-        $app['config']->set('doctrine.database_password', $defaultConfig['database_password']);
-        $app['config']->set('doctrine.database_host', $defaultConfig['database_host']);
+        $app['config']->set('doctrine.database_driver', 'pdo_sqlite');
+        $app['config']->set('doctrine.database_user', 'root');
+        $app['config']->set('doctrine.database_password', 'root');
+        $app['config']->set('doctrine.database_in_memory', true);
 
-        $app['config']->set('ecommerce.database_connection_name', $defaultConfig['database_connection_name']);
-        $app['config']->set('database.default', $defaultConfig['database_connection_name']);
+        $app['config']->set('ecommerce.database_connection_name', 'ecommerce_sqlite');
+        $app['config']->set('database.default', 'ecommerce_sqlite');
         $app['config']->set(
-            'database.connections.' . $defaultConfig['database_connection_name'],
+            'database.connections.' . 'ecommerce_sqlite',
             [
-                'driver' => 'mysql',
-                'database' => $defaultConfig['database_name'],
-                'username' => $defaultConfig['database_user'],
-                'password' => $defaultConfig['database_password'],
-                'host' => $defaultConfig['database_host'],
+                'driver' => 'sqlite',
+                'database' => ':memory:',
+                'prefix' => '',
             ]
         );
 
@@ -235,19 +226,6 @@ class EcommerceTestCase extends BaseTestCase
 
         // allows access to built in user auth
         $app['config']->set('auth.providers.users.model', User::class);
-
-        $this->entityManager = $app->make(EntityManager::class);
-
-        $this->entityManager->getMetadataFactory()
-            ->getCacheDriver()
-            ->deleteAll();
-
-        DB::connection()->setPdo(
-            $this->entityManager->getConnection()->getWrappedConnection()
-        );
-        DB::connection()->setReadPdo(
-            $this->entityManager->getConnection()->getWrappedConnection()
-        );
 
         // countries
 
@@ -257,7 +235,6 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(RemoteStorageServiceProvider::class);
         $app->register(CountriesServiceProvider::class);
         $app->register(PermissionsServiceProvider::class);
-        $app->register(ResponseServiceProvider::class);
         $app->register(UsoraServiceProvider::class);
 
         $app->bind(

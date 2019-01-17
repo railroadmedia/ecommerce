@@ -3,11 +3,9 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Location\Services\LocationService;
-use Webpatser\Countries\Countries;
 
 class AddressJsonControllerTest extends EcommerceTestCase
 {
@@ -16,7 +14,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         parent::setUp();
     }
 
-    public function test_store_validation()
+    public function test_store_validation_fails()
     {
         $results = $this->call('PUT', '/address', []);
 
@@ -24,56 +22,92 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(422, $results->getStatusCode());
 
         //assert that all the validation errors are returned
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "type",
-                "detail" => "The type field is required.",
+                [
+                    'source' => 'data.attributes.type',
+                    'detail' => 'The type field is required.',
+                    'title' => 'Validation failed.',
+                ],
+                [
+                    'source' => 'data.attributes.country',
+                    'detail' => 'The country field is required.',
+                    'title' => 'Validation failed.',
+                ],
             ],
-            [
-                "source" => "country",
-                "detail" => "The country field is required."
-            ]
-        ], $results->decodeResponseJson('meta')['errors']);
+            $results->decodeResponseJson('errors')
+        );
     }
 
     public function test_store_address_invalid_type()
     {
         //call the store method with an invalid type(the valid types are AddressService::SHIPPING_ADDRESS and AddressService::BILLING_ADDRESS)
-        $results = $this->call('PUT', '/address', [
-            'type'          => $this->faker->word,
-            'user_id'       => rand(),
-            'first_name'    => $this->faker->firstName,
-            'last_name'     => $this->faker->lastName,
-            'street_line_1' => $this->faker->streetAddress,
-            'city'          => $this->faker->city,
-            'zip'           => $this->faker->postcode,
-            'state'         => $this->faker->word,
-            'country'       => $this->faker->randomElement(LocationService::countries())
-        ]);
+        $results = $this->call(
+            'PUT',
+            '/address',
+            [
+                "data" => [
+                    "type" => "address",
+                    "attributes" => [
+                        'type' => $this->faker->word,
+                        'user_id' => rand(),
+                        'first_name' => $this->faker->firstName,
+                        'last_name' => $this->faker->lastName,
+                        'street_line_1' => $this->faker->streetAddress,
+                        'city' => $this->faker->city,
+                        'zip' => $this->faker->postcode,
+                        'state' => $this->faker->word,
+                        'country' => $this->faker->randomElement(LocationService::countries()),
+                    ],
+                ],
+            ]
+        );
 
         //assert results status code
         $this->assertEquals(422, $results->getStatusCode());
 
         //assert returned error message
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "type",
-                "detail" => "The selected type is invalid.",
-            ]
-        ], $results->decodeResponseJson('meta')['errors']);
+                [
+                    'source' => 'data.attributes.type',
+                    'detail' => 'The selected type is invalid.',
+                    'title' => 'Validation failed.',
+                ],
+            ],
+            $results->decodeResponseJson('errors')
+        );
     }
 
     public function test_store_response()
     {
         $address = $this->faker->address();
 
-        $results = $this->call('PUT', '/address', $address);
+        $results = $this->call(
+            'PUT',
+            '/address',
+            [
+                "data" => [
+                    "type" => "address",
+                    "attributes" => $address,
+                ],
+            ]
+        );
 
         //assert the response status code
         $this->assertEquals(200, $results->getStatusCode());
 
         //assert that the new created address it's returned in response in JSON format
-        $this->assertArraySubset($address, $results->decodeResponseJson());
+        $this->assertArraySubset(
+            [
+                "data" => [
+                    "type" => "address",
+                    "id" => 1,
+                    "attributes" => $address,
+                ],
+            ],
+            $results->decodeResponseJson()
+        );
 
         //assert that the address exists in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
@@ -83,10 +117,13 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         //take a fake address id
         $randomId = rand();
-        $results  = $this->call('PATCH', '/address/' . $randomId,
+        $results = $this->call(
+            'PATCH',
+            '/address/' . $randomId,
             [
-                'user_id' => $this->createAndLogInNewUser()
-            ]);
+                'user_id' => $this->createAndLogInNewUser(),
+            ]
+        );
 
         //assert response status code
         $this->assertEquals(404, $results->getStatusCode());
@@ -94,86 +131,92 @@ class AddressJsonControllerTest extends EcommerceTestCase
         //assert the error message that it's returned in JSON format
         $this->assertEquals(
             [
-                "title"  => "Not found.",
+                "title" => "Not found.",
                 "detail" => "Update failed, address not found with id: " . $randomId,
-            ]
-            , $results->decodeResponseJson('meta')['errors']);
+            ],
+            $results->decodeResponseJson('errors')
+        );
     }
 
     public function test_user_update_his_address_response()
     {
-        //create user address
-        $userId  = $this->createAndLogInNewUser();
-
-        $address = $this->fakeAddress([
-            'type' => ConfigService::$shippingAddressType,
-            'user_id' => $userId
-        ]);
+        $address = $this->fakeAddress();
 
         $newStreetLine1 = $this->faker->streetAddress;
 
-        $results = $this->call('PATCH', '/address/' . $address['id'], [
-            'user_id'       => $userId,
-            'street_line_1' => $newStreetLine1,
-        ]);
+        $results = $this->call(
+            'PATCH',
+            '/address/' . $address['id'],
+            [
+                'data' => [
+                    'id' => $address['id'],
+                    'type' => 'address',
+                    'attributes' => [
+                        'street_line_1' => $newStreetLine1,
+                    ],
+                ],
+            ]
+        );
 
         //assert the response status code
-        $this->assertEquals(201, $results->getStatusCode());
+        $this->assertEquals(200, $results->getStatusCode());
 
         //assert that the updated address  it's returned in JSON format
-        $this->assertEquals([
-            'id'            => (int) $address['id'],
-            'type'          => $address['type'],
-            'brand'         => $address['brand'],
-            'user_id'       => (int) $address['user_id'],
-            'customer_id'   => $address['customer_id'],
-            'first_name'    => $address['first_name'],
-            'last_name'     => $address['last_name'],
-            'street_line_1' => $newStreetLine1,
-            'street_line_2' => $address['street_line_2'],
-            'city'          => $address['city'],
-            'zip'           => $address['zip'],
-            'state'         => $address['state'],
-            'country'       => $address['country'],
-            'created_at'    => Carbon::parse($address['created_at'])->format(\DateTime::ISO8601),
-            'updated_at'    => Carbon::now()->toDateTimeString()
-        ], $results->decodeResponseJson());
+        $this->assertEquals(
+            [
+                'data' => [
+                    'id' => $address['id'],
+                    'type' => 'address',
+
+                    // todo: this could possibly be done better
+                    'attributes' => array_merge(
+                        array_diff_key($address, ['id' => 1]),
+                        [
+                            'street_line_1' => $newStreetLine1,
+                        ]
+                    ),
+                ],
+            ],
+            $results->decodeResponseJson()
+        );
 
         //assert that the address was updated in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, [
-            'id'            => $address['id'],
-            'type'          => $address['type'],
-            'brand'         => $address['brand'],
-            'user_id'       => $address['user_id'],
-            'customer_id'   => $address['customer_id'],
-            'first_name'    => $address['first_name'],
-            'last_name'     => $address['last_name'],
-            'street_line_1' => $newStreetLine1,
-            'street_line_2' => $address['street_line_2'],
-            'city'          => $address['city'],
-            'zip'           => $address['zip'],
-            'state'         => $address['state'],
-            'country'       => $address['country'],
-            'created_at'    => $address['created_at'],
-        ]);
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            [
+                'id' => $address['id'],
+                'type' => $address['type'],
+                'brand' => $address['brand'],
+                'first_name' => $address['first_name'],
+                'last_name' => $address['last_name'],
+                'street_line_1' => $newStreetLine1,
+                'street_line_2' => $address['street_line_2'],
+                'city' => $address['city'],
+                'zip' => $address['zip'],
+                'state' => $address['state'],
+                'country' => $address['country'],
+                'created_at' => $address['created_at'],
+            ]
+        );
 
         //assert that the old address street line 1 data not exist anymore in the database
-        $this->assertDatabaseMissing(ConfigService::$tableAddress, [
-            'id'            => $address['id'],
-            'type'          => $address['type'],
-            'brand'         => $address['brand'],
-            'user_id'       => $address['user_id'],
-            'customer_id'   => $address['customer_id'],
-            'first_name'    => $address['first_name'],
-            'last_name'     => $address['last_name'],
-            'street_line_1' => $address['street_line_1'],
-            'street_line_2' => $address['street_line_2'],
-            'city'          => $address['city'],
-            'zip'           => $address['zip'],
-            'state'         => $address['state'],
-            'country'       => $address['country'],
-            'created_at'    => $address['created_at'],
-        ]);
+        $this->assertDatabaseMissing(
+            ConfigService::$tableAddress,
+            [
+                'id' => $address['id'],
+                'type' => $address['type'],
+                'brand' => $address['brand'],
+                'first_name' => $address['first_name'],
+                'last_name' => $address['last_name'],
+                'street_line_1' => $address['street_line_1'],
+                'street_line_2' => $address['street_line_2'],
+                'city' => $address['city'],
+                'zip' => $address['zip'],
+                'state' => $address['state'],
+                'country' => $address['country'],
+                'created_at' => $address['created_at'],
+            ]
+        );
     }
 
     public function test_update_response_unauthorized_user()
@@ -183,17 +226,24 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $newStreetLine1 = $this->faker->streetAddress;
 
-        $results = $this->call('PATCH', '/address/' . $address['id'], [
-            'user_id'       => $this->createAndLogInNewUser(),
-            'street_line_1' => $newStreetLine1,
-        ]);
+        $results = $this->call(
+            'PATCH',
+            '/address/' . $address['id'],
+            [
+                'user_id' => $this->createAndLogInNewUser(),
+                'street_line_1' => $newStreetLine1,
+            ]
+        );
 
         //assert that the logged in user can not update other user's address if it's not admin
         $this->assertEquals(403, $results->getStatusCode());
-        $this->assertEquals([
-            'title'  => 'Not allowed.',
-            'detail' => 'This action is unauthorized.'
-        ], $results->decodeResponseJson('meta')['errors']);
+        $this->assertEquals(
+            [
+                'title' => 'Not allowed.',
+                'detail' => 'This action is unauthorized.',
+            ],
+            $results->decodeResponseJson('errors')
+        );
 
         //assert that the address was not modified in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
@@ -213,7 +263,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     //             "title"  => "Not allowed.",
     //             "detail" => "This action is unauthorized.",
     //         ]
-    //         , $results->decodeResponseJson('meta')['errors']);
+    //         , errors->decodeResponseJson);
 
     //     //assert that the address was not deleted from the database
     //     $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());
@@ -267,86 +317,105 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_create_address_with_invalid_country()
     {
-        $country     = $this->faker->word;
-        $type        = $this->faker->randomElement([
-            ConfigService::$shippingAddressType,
-            ConfigService::$billingAddressType
-        ]);
-        $userId      = rand();
-        $firstName   = $this->faker->firstName;
-        $lastName    = $this->faker->lastName;
+        $country = $this->faker->word;
+        $type = $this->faker->randomElement(
+            [
+                ConfigService::$shippingAddressType,
+                ConfigService::$billingAddressType,
+            ]
+        );
+        $userId = rand();
+        $firstName = $this->faker->firstName;
+        $lastName = $this->faker->lastName;
         $streetLine1 = $this->faker->streetAddress;
-        $city        = $this->faker->city;
-        $zip         = $this->faker->postcode;
-        $state       = $this->faker->word;
+        $city = $this->faker->city;
+        $zip = $this->faker->postcode;
+        $state = $this->faker->word;
 
-        $results = $this->call('PUT', '/address', [
-            'type'          => $type,
-            'user_id'       => $userId,
-            'first_name'    => $firstName,
-            'last_name'     => $lastName,
-            'street_line_1' => $streetLine1,
-            'city'          => $city,
-            'zip'           => $zip,
-            'state'         => $state,
-            'country'       => $country
-        ]);
+        $results = $this->call(
+            'PUT',
+            '/address',
+            [
+                'type' => $type,
+                'user_id' => $userId,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'street_line_1' => $streetLine1,
+                'city' => $city,
+                'zip' => $zip,
+                'state' => $state,
+                'country' => $country,
+            ]
+        );
 
         //assert the response status code
         $this->assertEquals(422, $results->getStatusCode());
 
         //assert the error message
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "country",
-                "detail" => 'The selected country is invalid.'
-            ]
-        ], $results->decodeResponseJson('meta')['errors']);
+                [
+                    "source" => "country",
+                    "detail" => 'The selected country is invalid.',
+                ],
+            ],
+            $results->decodeResponseJson('errors')
+        );
 
         //assert that the address with invalid country was not created
-        $this->assertDatabaseMissing(ConfigService::$tableAddress,
+        $this->assertDatabaseMissing(
+            ConfigService::$tableAddress,
             [
-                'type'          => $type,
-                'user_id'       => $userId,
-                'first_name'    => $firstName,
-                'last_name'     => $lastName,
+                'type' => $type,
+                'user_id' => $userId,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
                 'street_line_1' => $streetLine1,
-                'city'          => $city,
-                'zip'           => $zip,
-                'state'         => $state,
-                'country'       => $country
-            ]);
+                'city' => $city,
+                'zip' => $zip,
+                'state' => $state,
+                'country' => $country,
+            ]
+        );
     }
 
     public function test_update_address_with_invalid_country()
     {
         $country = $this->faker->word;
-        $userId  = $this->createAndLogInNewUser();
+        $userId = $this->createAndLogInNewUser();
 
         $address = $this->fakeAddress(['user_id' => $userId]);
 
-        $results = $this->call('PATCH', '/address/' . $address['id'], [
-            'country' => $country,
-            'user_id' => $userId
-        ]);
+        $results = $this->call(
+            'PATCH',
+            '/address/' . $address['id'],
+            [
+                'country' => $country,
+                'user_id' => $userId,
+            ]
+        );
 
         //assert response status code
         $this->assertEquals(422, $results->getStatusCode());
 
         //assert response error message
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                "source" => "country",
-                "detail" => "The country field it's invalid."
-            ]
-        ], $results->decodeResponseJson('meta')['errors']);
+                [
+                    "source" => "country",
+                    "detail" => "The country field it's invalid.",
+                ],
+            ],
+            $results->decodeResponseJson('errors')
+        );
 
         //assert that the address was not modified in the database
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
-        $this->assertDatabaseMissing(ConfigService::$tableAddress,
+        $this->assertDatabaseMissing(
+            ConfigService::$tableAddress,
             [
-                'id'      => $address['id'],
-                'country' => $country
+                'id' => $address['id'],
+                'country' => $country,
             ]
         );
     }
@@ -354,132 +423,161 @@ class AddressJsonControllerTest extends EcommerceTestCase
     public function test_admin_store_user_address()
     {
         //mock permission
-        $this->permissionServiceMock->method('is')->willReturn(true);
+        $this->permissionServiceMock->method('is')
+            ->willReturn(true);
 
-        $type = $this->faker->randomElement([
-            ConfigService::$billingAddressType,
-            ConfigService::$shippingAddressType
-        ]);
+        $type = $this->faker->randomElement(
+            [
+                ConfigService::$billingAddressType,
+                ConfigService::$shippingAddressType,
+            ]
+        );
 
         $randomUserId = rand();
-        $firstName    = $this->faker->firstName;
-        $lastName     = $this->faker->lastName;
-        $streetLine1  = $this->faker->streetAddress;
-        $city         = $this->faker->city;
-        $zip          = $this->faker->postcode;
-        $state        = $this->faker->word;
-        $country      = $this->faker->randomElement(LocationService::countries());
+        $firstName = $this->faker->firstName;
+        $lastName = $this->faker->lastName;
+        $streetLine1 = $this->faker->streetAddress;
+        $city = $this->faker->city;
+        $zip = $this->faker->postcode;
+        $state = $this->faker->word;
+        $country = $this->faker->randomElement(LocationService::countries());
 
-        $results = $this->call('PUT', '/address', [
-            'type'          => $type,
-            'user_id'       => $randomUserId,
-            'first_name'    => $firstName,
-            'last_name'     => $lastName,
-            'street_line_1' => $streetLine1,
-            'city'          => $city,
-            'zip'           => $zip,
-            'state'         => $state,
-            'country'       => $country
-        ]);
+        $results = $this->call(
+            'PUT',
+            '/address',
+            [
+                'type' => $type,
+                'user_id' => $randomUserId,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'street_line_1' => $streetLine1,
+                'city' => $city,
+                'zip' => $zip,
+                'state' => $state,
+                'country' => $country,
+            ]
+        );
 
         // there is an issue with updated_at field, as in:
         // https://stackoverflow.com/questions/39638895/how-can-i-get-gedmo-timestampable-to-keep-updated-at-null-on-first-create
 
         // assert response status code
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertArraySubset([
-            'type'          => $type,
-            'brand'         => ConfigService::$brand,
-            'user_id'       => $randomUserId,
-            'customer_id'   => null,
-            'first_name'    => $firstName,
-            'last_name'     => $lastName,
-            'street_line_1' => $streetLine1,
-            'street_line_2' => null,
-            'city'          => $city,
-            'zip'           => $zip,
-            'state'         => $state,
-            'country'       => $country,
-            'created_at'    => Carbon::now()->toDateTimeString(),
-            // 'updated_at'    => null
-        ], $results->decodeResponseJson());
+        $this->assertArraySubset(
+            [
+                'type' => $type,
+                'brand' => ConfigService::$brand,
+                'user_id' => $randomUserId,
+                'customer_id' => null,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'street_line_1' => $streetLine1,
+                'street_line_2' => null,
+                'city' => $city,
+                'zip' => $zip,
+                'state' => $state,
+                'country' => $country,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+                // 'updated_at'    => null
+            ],
+            $results->decodeResponseJson()
+        );
 
         //assert address was saved in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, [
-            'type'          => $type,
-            'brand'         => ConfigService::$brand,
-            'user_id'       => $randomUserId,
-            'customer_id'   => null,
-            'first_name'    => $firstName,
-            'last_name'     => $lastName,
-            'street_line_1' => $streetLine1,
-            'street_line_2' => null,
-            'city'          => $city,
-            'zip'           => $zip,
-            'state'         => $state,
-            'country'       => $country,
-            'created_at'    => Carbon::now()->toDateTimeString(),
-            // 'updated_at'    => null
-        ]);
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            [
+                'type' => $type,
+                'brand' => ConfigService::$brand,
+                'user_id' => $randomUserId,
+                'customer_id' => null,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'street_line_1' => $streetLine1,
+                'street_line_2' => null,
+                'city' => $city,
+                'zip' => $zip,
+                'state' => $state,
+                'country' => $country,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+                // 'updated_at'    => null
+            ]
+        );
     }
 
     public function test_admin_update_user_address()
     {
-        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')
+            ->willReturn(true);
 
         $address = $this->fakeAddress();
 
         $newStreetLine1 = $this->faker->streetAddress;
 
-        $results = $this->call('PATCH', '/address/' . $address['id'], [
-            'user_id'       => rand(),
-            'street_line_1' => $newStreetLine1
-        ]);
+        $results = $this->call(
+            'PATCH',
+            '/address/' . $address['id'],
+            [
+                'user_id' => rand(),
+                'street_line_1' => $newStreetLine1,
+            ]
+        );
 
         //assert the response status code
         $this->assertEquals(201, $results->getStatusCode());
 
         // temp quick-fix to make the test pass
         // should be removed when response will be serialized with Spatie\Fractal
-        $createdDate = Carbon::parse($address['created_at'])->format(\DateTime::ISO8601);
+        $createdDate = Carbon::parse($address['created_at'])
+            ->format(\DateTime::ISO8601);
 
         //assert that the updated addess it's returned in JSON format
-        $this->assertEquals([
-            'id'            => $address['id'],
-            'type'          => $address['type'],
-            'brand'         => $address['brand'],
-            'user_id'       => $address['user_id'],
-            'customer_id'   => $address['customer_id'],
-            'first_name'    => $address['first_name'],
-            'last_name'     => $address['last_name'],
-            'street_line_1' => $newStreetLine1,
-            'street_line_2' => $address['street_line_2'],
-            'city'          => $address['city'],
-            'zip'           => $address['zip'],
-            'state'         => $address['state'],
-            'country'       => $address['country'],
-            'created_at'    => $createdDate,
-            'updated_at'    => Carbon::now()->toDateTimeString()
-        ], $results->decodeResponseJson());
+        $this->assertEquals(
+            [
+                'id' => $address['id'],
+                'type' => $address['type'],
+                'brand' => $address['brand'],
+                'user_id' => $address['user_id'],
+                'customer_id' => $address['customer_id'],
+                'first_name' => $address['first_name'],
+                'last_name' => $address['last_name'],
+                'street_line_1' => $newStreetLine1,
+                'street_line_2' => $address['street_line_2'],
+                'city' => $address['city'],
+                'zip' => $address['zip'],
+                'state' => $address['state'],
+                'country' => $address['country'],
+                'created_at' => $createdDate,
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            $results->decodeResponseJson()
+        );
 
         //assert that the address was updated in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, [
-            'id'            => $address['id'],
-            'type'          => $address['type'],
-            'brand'         => $address['brand'],
-            'user_id'       => $address['user_id'],
-            'customer_id'   => $address['customer_id'],
-            'first_name'    => $address['first_name'],
-            'last_name'     => $address['last_name'],
-            'street_line_1' => $newStreetLine1,
-            'street_line_2' => $address['street_line_2'],
-            'city'          => $address['city'],
-            'zip'           => $address['zip'],
-            'state'         => $address['state'],
-            'country'       => $address['country'],
-            'created_at'    => $address['created_at'],
-            'updated_at'    => Carbon::now()->toDateTimeString()
-        ]);
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            [
+                'id' => $address['id'],
+                'type' => $address['type'],
+                'brand' => $address['brand'],
+                'user_id' => $address['user_id'],
+                'customer_id' => $address['customer_id'],
+                'first_name' => $address['first_name'],
+                'last_name' => $address['last_name'],
+                'street_line_1' => $newStreetLine1,
+                'street_line_2' => $address['street_line_2'],
+                'city' => $address['city'],
+                'zip' => $address['zip'],
+                'state' => $address['state'],
+                'country' => $address['country'],
+                'created_at' => $address['created_at'],
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
     }
 
     // public function test_admin_delete_user_address()
@@ -498,61 +596,74 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_customer_create_address()
     {
-        $customer    = $this->fakeCustomer();
-        $type        = $this->faker->randomElement([
-            ConfigService::$shippingAddressType,
-            ConfigService::$billingAddressType
-        ]);
-        $firstName   = $this->faker->firstName;
-        $lastName    = $this->faker->lastName;
+        $customer = $this->fakeCustomer();
+        $type = $this->faker->randomElement(
+            [
+                ConfigService::$shippingAddressType,
+                ConfigService::$billingAddressType,
+            ]
+        );
+        $firstName = $this->faker->firstName;
+        $lastName = $this->faker->lastName;
         $streetLine1 = $this->faker->streetAddress;
-        $city        = $this->faker->city;
-        $zip         = $this->faker->postcode;
-        $state       = $this->faker->word;
-        $country     = $this->faker->randomElement(LocationService::countries());
+        $city = $this->faker->city;
+        $zip = $this->faker->postcode;
+        $state = $this->faker->word;
+        $country = $this->faker->randomElement(LocationService::countries());
 
-        $results = $this->call('PUT', '/address', [
-            'type'          => $type,
-            'customer_id'   => $customer['id'],
-            'first_name'    => $firstName,
-            'last_name'     => $lastName,
-            'street_line_1' => $streetLine1,
-            'city'          => $city,
-            'zip'           => $zip,
-            'state'         => $state,
-            'country'       => $country
-        ]);
+        $results = $this->call(
+            'PUT',
+            '/address',
+            [
+                'type' => $type,
+                'customer_id' => $customer['id'],
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'street_line_1' => $streetLine1,
+                'city' => $city,
+                'zip' => $zip,
+                'state' => $state,
+                'country' => $country,
+            ]
+        );
 
         //assert response
         $this->assertEquals(200, $results->getStatusCode());
-        $this->assertArraySubset([
-            'type'          => $type,
-            'brand'         => ConfigService::$brand,
-            'user_id'       => null,
-            'customer_id'   => $customer['id'],
-            'first_name'    => $firstName,
-            'last_name'     => $lastName,
-            'street_line_1' => $streetLine1,
-            'street_line_2' => null,
-            'city'          => $city,
-            'zip'           => $zip,
-            'state'         => $state,
-            'country'       => $country,
-            'created_at'    => Carbon::now()->toDateTimeString()
-        ], $results->decodeResponseJson());
+        $this->assertArraySubset(
+            [
+                'type' => $type,
+                'brand' => ConfigService::$brand,
+                'user_id' => null,
+                'customer_id' => $customer['id'],
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'street_line_1' => $streetLine1,
+                'street_line_2' => null,
+                'city' => $city,
+                'zip' => $zip,
+                'state' => $state,
+                'country' => $country,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            $results->decodeResponseJson()
+        );
 
         //assert record exists in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, [
-            'type'          => $type,
-            'customer_id'   => $customer['id'],
-            'first_name'    => $firstName,
-            'last_name'     => $lastName,
-            'street_line_1' => $streetLine1,
-            'city'          => $city,
-            'zip'           => $zip,
-            'state'         => $state,
-            'country'       => $country
-        ]);
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            [
+                'type' => $type,
+                'customer_id' => $customer['id'],
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'street_line_1' => $streetLine1,
+                'city' => $city,
+                'zip' => $zip,
+                'state' => $state,
+                'country' => $country,
+            ]
+        );
     }
 
     public function test_customer_update_his_address()
@@ -562,36 +673,49 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $newStreetLine1 = $this->faker->streetAddress;
 
-        $results = $this->call('PATCH', '/address/' . $address['id'], [
-            'customer_id'   => $customer['id'],
-            'street_line_1' => $newStreetLine1
-        ]);
+        $results = $this->call(
+            'PATCH',
+            '/address/' . $address['id'],
+            [
+                'customer_id' => $customer['id'],
+                'street_line_1' => $newStreetLine1,
+            ]
+        );
 
         $this->assertEquals(201, $results->getStatusCode());
-        $this->assertEquals([
-            'id'            => $address['id'],
-            'type'          => $address['type'],
-            'brand'         => $address['brand'],
-            'user_id'       => $address['user_id'],
-            'customer_id'   => $address['customer_id'],
-            'first_name'    => $address['first_name'],
-            'last_name'     => $address['last_name'],
-            'street_line_1' => $newStreetLine1,
-            'street_line_2' => $address['street_line_2'],
-            'city'          => $address['city'],
-            'zip'           => $address['zip'],
-            'state'         => $address['state'],
-            'country'       => $address['country'],
-            'created_at'    => Carbon::parse($address['created_at'])->format(\DateTime::ISO8601),
-            'updated_at'    => Carbon::now()->toDateTimeString()
-        ], $results->decodeResponseJson());
+        $this->assertEquals(
+            [
+                'id' => $address['id'],
+                'type' => $address['type'],
+                'brand' => $address['brand'],
+                'user_id' => $address['user_id'],
+                'customer_id' => $address['customer_id'],
+                'first_name' => $address['first_name'],
+                'last_name' => $address['last_name'],
+                'street_line_1' => $newStreetLine1,
+                'street_line_2' => $address['street_line_2'],
+                'city' => $address['city'],
+                'zip' => $address['zip'],
+                'state' => $address['state'],
+                'country' => $address['country'],
+                'created_at' => Carbon::parse($address['created_at'])
+                    ->format(\DateTime::ISO8601),
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            $results->decodeResponseJson()
+        );
 
         //assert address raw was updated in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, [
-            'id'            => $address['id'],
-            'street_line_1' => $newStreetLine1,
-            'updated_at'    => Carbon::now()->toDateTimeString()
-        ]);
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            [
+                'id' => $address['id'],
+                'street_line_1' => $newStreetLine1,
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
     }
 
     public function test_customer_restriction_on_update_other_address()
@@ -601,26 +725,33 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $newStreetLine1 = $this->faker->streetAddress;
 
-        $results = $this->call('PATCH', '/address/' . $address['id'], [
-            'customer_id'   => $customer['id'],
-            'street_line_1' => $newStreetLine1
-        ]);
+        $results = $this->call(
+            'PATCH',
+            '/address/' . $address['id'],
+            [
+                'customer_id' => $customer['id'],
+                'street_line_1' => $newStreetLine1,
+            ]
+        );
 
         //assert response
         $this->assertEquals(403, $results->getStatusCode());
         $this->assertEquals(
             [
-                "title"  => "Not allowed.",
+                "title" => "Not allowed.",
                 "detail" => "This action is unauthorized.",
-            ]
-            , $results->decodeResponseJson('meta')['errors']);
+            ],
+            $results->decodeResponseJson('errors')
+        );
 
         //assert database content
-        $this->assertDatabaseMissing(ConfigService::$tableAddress,
+        $this->assertDatabaseMissing(
+            ConfigService::$tableAddress,
             [
-                'id'            => $address['id'],
-                'street_line_1' => $newStreetLine1
-            ]);
+                'id' => $address['id'],
+                'street_line_1' => $newStreetLine1,
+            ]
+        );
     }
 
     // public function test_customer_delete_his_address()
@@ -654,7 +785,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     //             "title"  => "Not allowed.",
     //             "detail" => "This action is unauthorized.",
     //         ]
-    //         , $results->decodeResponseJson('meta')['errors']);
+    //         , errors->decodeResponseJson);
 
     //     //assert database
     //     $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());

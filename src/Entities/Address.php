@@ -246,7 +246,7 @@ class Address
      */
     public function getStreetLine2(): ?string
     {
-        return $this->streelLine2;
+        return $this->streetLine2;
     }
 
     /**

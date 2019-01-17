@@ -1,5 +1,8 @@
 <?php
+
 namespace Railroad\Ecommerce\Exceptions;
+
+use Illuminate\Http\JsonResponse;
 
 class NotFoundException extends \Exception
 {
@@ -7,6 +10,7 @@ class NotFoundException extends \Exception
 
     /**
      * NotFoundException constructor.
+     *
      * @param string $message
      */
     public function __construct($message)
@@ -14,14 +18,20 @@ class NotFoundException extends \Exception
         $this->message = $message;
     }
 
-    public function render($request){
-        return reply()->json([],
+    /**
+     * @param $request
+     * @return JsonResponse
+     */
+    public function render($request)
+    {
+        return response()->json(
             [
-                'code' => 404,
                 'errors' => [
                     'title' => 'Not found.',
-                    'detail' => $this->message
-                ]
-            ]);
+                    'detail' => $this->message,
+                ],
+            ],
+            404
+        );
     }
 }
