@@ -83,10 +83,7 @@ class AddressCreateRequest extends FormRequest
                     'data.attributes.state',
                     'data.attributes.country',
                 ]
-            ),
-            [
-                'data.attributes.brand' => $this->input('brand', ConfigService::$brand),
-            ]
+            )
         );
     }
 }

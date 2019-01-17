@@ -127,7 +127,7 @@ class AddressJsonController extends Controller
             new NotFoundException('Update failed, address not found with id: ' . $addressId)
         );
 
-        $this->jsonApiHydrator->hydrate($address, $request->all());
+        $this->jsonApiHydrator->hydrate($address, $request->onlyAllowed());
 
         $this->entityManager->flush();
 

@@ -95,7 +95,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
 
         //assert the response status code
-        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals(201, $results->getStatusCode());
 
         //assert that the new created address it's returned in response in JSON format
         $this->assertArraySubset(
@@ -195,7 +195,6 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'zip' => $address['zip'],
                 'state' => $address['state'],
                 'country' => $address['country'],
-                'created_at' => $address['created_at'],
             ]
         );
 
@@ -214,40 +213,39 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'zip' => $address['zip'],
                 'state' => $address['state'],
                 'country' => $address['country'],
-                'created_at' => $address['created_at'],
             ]
         );
     }
 
-    public function test_update_response_unauthorized_user()
-    {
-        //create an address for a random user
-        $address = $this->fakeAddress();
-
-        $newStreetLine1 = $this->faker->streetAddress;
-
-        $results = $this->call(
-            'PATCH',
-            '/address/' . $address['id'],
-            [
-                'user_id' => $this->createAndLogInNewUser(),
-                'street_line_1' => $newStreetLine1,
-            ]
-        );
-
-        //assert that the logged in user can not update other user's address if it's not admin
-        $this->assertEquals(403, $results->getStatusCode());
-        $this->assertEquals(
-            [
-                'title' => 'Not allowed.',
-                'detail' => 'This action is unauthorized.',
-            ],
-            $results->decodeResponseJson('errors')
-        );
-
-        //assert that the address was not modified in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
-    }
+//    public function test_update_response_unauthorized_user()
+//    {
+//        //create an address for a random user
+//        $address = $this->fakeAddress();
+//
+//        $newStreetLine1 = $this->faker->streetAddress;
+//
+//        $results = $this->call(
+//            'PATCH',
+//            '/address/' . $address['id'],
+//            [
+//                'user_id' => $this->createAndLogInNewUser(),
+//                'street_line_1' => $newStreetLine1,
+//            ]
+//        );
+//
+//        //assert that the logged in user can not update other user's address if it's not admin
+//        $this->assertEquals(403, $results->getStatusCode());
+//        $this->assertEquals(
+//            [
+//                'title' => 'Not allowed.',
+//                'detail' => 'This action is unauthorized.',
+//            ],
+//            $results->decodeResponseJson('errors')
+//        );
+//
+//        //assert that the address was not modified in the database
+//        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+//    }
 
     // public function test_delete_unauthorized_user()
     // {

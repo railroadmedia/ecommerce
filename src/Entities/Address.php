@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Usora\Entities\User;
 use JMS\Serializer\Annotation as JMS;
 
@@ -132,6 +133,14 @@ class Address
      * @var string
      */
     protected $country;
+
+    /**
+     * Address constructor.
+     */
+    public function __construct()
+    {
+        $this->brand = ConfigService::$brand;
+    }
 
     /**
      * @return int|null
