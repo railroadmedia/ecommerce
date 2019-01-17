@@ -3,36 +3,7 @@
 namespace Railroad\Ecommerce\Providers;
 
 // TO-DO: clean-up the deprecated imports
-use Doctrine\Common\Annotations\AnnotationReader;
-use Doctrine\Common\Annotations\CachedReader;
-use Doctrine\Common\Cache\RedisCache;
-use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
-use Doctrine\ORM\Configuration;
-use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
-use Illuminate\Database\Events\StatementPrepared;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use PDO;
-use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
-use Railroad\Ecommerce\Decorators\AccessCodeDecorator;
-use Railroad\Ecommerce\Decorators\DiscountDiscountCriteriaDecorator;
-use Railroad\Ecommerce\Decorators\MethodDecorator;
-use Railroad\Ecommerce\Decorators\OrderItemFulfillmentAddressDecorator;
-use Railroad\Ecommerce\Decorators\OrderItemProductDecorator;
-use Railroad\Ecommerce\Decorators\OrderOrderItemsDecorators;
-use Railroad\Ecommerce\Decorators\PaymentMethodBillingAddressDecorator;
-use Railroad\Ecommerce\Decorators\PaymentMethodEntityDecorator;
-use Railroad\Ecommerce\Decorators\PaymentMethodOwnerDecorator;
-use Railroad\Ecommerce\Decorators\PaymentOrderDecorator;
-use Railroad\Ecommerce\Decorators\PaymentPaymentMethodDecorator;
-use Railroad\Ecommerce\Decorators\PaymentSubscriptionDecorator;
-use Railroad\Ecommerce\Decorators\PaymentSubscriptionDecoratorDecorator;
-use Railroad\Ecommerce\Decorators\PaymentUserDecorator;
-use Railroad\Ecommerce\Decorators\ProductDecorator;
-use Railroad\Ecommerce\Decorators\ProductDiscountDecorator;
-use Railroad\Ecommerce\Decorators\ShippingOptionsCostsDecorator;
-use Railroad\Ecommerce\Decorators\SubscriptionPaymentMethodDecorator;
-use Railroad\Ecommerce\Decorators\SubscriptionProductDecorator;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
@@ -42,9 +13,6 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CustomValidationRules;
 use Railroad\Resora\Events\Created;
 use Railroad\Resora\Events\Updated;
-use Redis;
-use Doctrine\DBAL\Types\Type;
-use Railroad\Ecommerce\Doctrine\CarbonType;
 
 class EcommerceServiceProvider extends ServiceProvider
 {
@@ -58,8 +26,8 @@ class EcommerceServiceProvider extends ServiceProvider
         $this->listen = [
             GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
             UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class],
-            Created::class => [UserProductListener::class.'@handleCreated'],
-            Updated::class => [UserProductListener::class.'@handleUpdated']
+            Created::class => [UserProductListener::class . '@handleCreated'],
+            Updated::class => [UserProductListener::class . '@handleUpdated'],
         ];
 
         parent::boot();
@@ -93,147 +61,6 @@ class EcommerceServiceProvider extends ServiceProvider
                 return new CustomValidationRules($translator, $data, $rules, $messages, $attributes);
             }
         );
-
-        // config()->set(
-        //     'resora.decorators.product',
-        //     array_merge(
-        //         config()->get('resora.decorators.product', []),
-        //         [
-        //             ProductDecorator::class,
-        //             ProductDiscountDecorator::class,
-        //         ]
-        //     )
-        // );
-
-        // config()->set(
-        //     'resora.decorators.paymentMethod',
-        //     array_merge(
-        //         config()->get('resora.decorators.paymentMethod', []),
-        //         [
-        //             MethodDecorator::class,
-        //             PaymentMethodOwnerDecorator::class,
-        //             PaymentMethodEntityDecorator::class,
-        //             PaymentMethodBillingAddressDecorator::class,
-        //         ]
-        //     )
-        // );
-
-        // config()->set(
-        //     'resora.decorators.payment',
-        //     array_merge(
-        //         config()->get('resora.decorators.payment', []),
-        //         [
-        //             PaymentPaymentMethodDecorator::class,
-        //             PaymentUserDecorator::class,
-        //             PaymentOrderDecorator::class,
-        //             PaymentSubscriptionDecorator::class
-        //         ]
-        //     )
-        // );
-
-        // config()->set(
-        //     'resora.decorators.subscription',
-        //     array_merge(
-        //         config()->get('resora.decorators.subscription', []),
-        //         [
-        //             SubscriptionPaymentMethodDecorator::class,
-        //             SubscriptionProductDecorator::class,
-        //         ]
-        //     )
-        // );
-        // config()->set(
-        //     'resora.decorators.order',
-        //     array_merge(
-        //         config()->get('resora.decorators.order', []),
-        //         [
-        //             OrderOrderItemsDecorators::class,
-        //         ]
-        //     )
-        // );
-
-        // config()->set(
-        //     'resora.decorators.orderItem',
-        //     array_merge(
-        //         config()->get('resora.decorators.orderItem', []),
-        //         [
-        //             OrderItemProductDecorator::class,
-        //         ]
-        //     )
-        // );
-
-
-        // config()->set(
-        //     'resora.decorators.discount',
-        //     array_merge(
-        //         config()->get('resora.decorators.discount', []),
-        //         [
-        //             DiscountDiscountCriteriaDecorator::class,
-        //         ]
-        //     )
-        // );
-
-        // config()->set(
-        //     'resora.decorators.discountCriteria',
-        //     array_merge(
-        //         config()->get('resora.decorators.discountCriteria', []),
-        //         [
-        //             SubscriptionProductDecorator::class,
-        //         ]
-        //     )
-        // );
-
-        // config()->set(
-        //     'resora.decorators.shippingOptions',
-        //     array_merge(
-        //         config()->get('resora.decorators.shippingOptions', []),
-        //         [
-        //             ShippingOptionsCostsDecorator::class,
-        //         ]
-        //     )
-        // );
-
-        // config()->set(
-        //     'resora.decorators.orderItemFulfillment',
-        //     array_merge(
-        //         config()->get('resora.decorators.orderItemFulfillment', []),
-        //         [
-        //             OrderItemFulfillmentAddressDecorator::class,
-        //         ]
-        //     )
-        // );
-
-        // config()->set(
-        //     'resora.decorators.userPaymentMethods',
-        //     array_merge(
-        //         config()->get('resora.decorators.userPaymentMethods', []),
-        //         [
-        //             PaymentPaymentMethodDecorator::class,
-        //             PaymentMethodEntityDecorator::class,
-        //         ]
-        //     )
-        // );
-
-        // config()->set(
-        //     'resora.decorators.accessCode',
-        //     array_merge(
-        //         config()->get('resora.decorators.accessCode', []),
-        //         [
-        //             AccessCodeDecorator::class,
-        //         ]
-        //     )
-        // );
-
-        // config()->set(
-        //     'resora.decorators.userProduct',
-        //     array_merge(
-        //         config()->get('resora.decorators.userProduct', []),
-        //         [
-        //             SubscriptionProductDecorator::class,
-        //         ]
-        //     )
-        // );
-
-        Type::overrideType('datetime', CarbonType::class);
     }
 
     private function setupConfig()
