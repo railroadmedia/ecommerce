@@ -98,14 +98,16 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         // assert that all the validation errors are returned
         $this->assertEquals([
             [
+                'title' => 'Validation failed.',
                 'source' => 'access_code',
                 'detail' => 'The access code field is required.',
             ],
             [
+                'title' => 'Validation failed.',
                 'source' => 'claim_for_user_email',
                 'detail' => 'The claim for user email field is required.',
             ]
-        ], $response->decodeResponseJson('meta')['errors']);
+        ], $response->decodeResponseJson('errors'));
     }
 
     public function test_claim_for_user_email_not_found()
@@ -140,7 +142,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not found.',
                 'detail' => 'Claim failed, user not found with email: ' . $email,
             ],
-            $response->decodeResponseJson('meta')['errors']
+            $response->decodeResponseJson('errors')
         );
     }
 
@@ -166,6 +168,40 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             'access_code' => $accessCode['code'],
             'claim_for_user_email' => $user['email']
         ]);
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'id' => $accessCode['id'],
+                    'type' => 'accessCode',
+                    // todo: this could possibly be done better
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $accessCode,
+                            [
+                                'id' => true,
+                                'claimer_id' => true,
+                                'product_ids' => true
+                            ]
+                        ),
+                        [
+                            'product_ids' => [$product['id']],
+                            'is_claimed' => true,
+                            'claimed_on' => Carbon::now()->toDateTimeString()
+                        ]
+                    ),
+                    'relationships' => [
+                        'claimer' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $user['id']
+                            ]
+                        ]
+                    ]
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
 
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -216,6 +252,32 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             'access_code_id' => $accessCode['id']
         ]);
 
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'id' => $accessCode['id'],
+                    'type' => 'accessCode',
+                    // todo: this could possibly be done better
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $accessCode,
+                            [
+                                'id' => true,
+                                'product_ids' => true,
+                                'claimer_id' => null
+                            ]
+                        ),
+                        [
+                            'product_ids' => [$product['id']],
+                            'is_claimed' => false,
+                            'claimed_on' => null
+                        ]
+                    )
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+
         //assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -241,10 +303,11 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         // assert that all the validation errors are returned
         $this->assertEquals([
             [
+                'title' => 'Validation failed.',
                 'source' => 'access_code_id',
                 'detail' => 'The access code id field is required.',
             ]
-        ], $response->decodeResponseJson('meta')['errors']);
+        ], $response->decodeResponseJson('errors'));
     }
 
     public function test_release_validation_unclaimed()
@@ -273,9 +336,10 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         // assert that all the validation errors are returned
         $this->assertEquals([
             [
+                'title' => 'Validation failed.',
                 'source' => 'access_code_id',
                 'detail' => 'The selected access code id is invalid.',
             ]
-        ], $response->decodeResponseJson('meta')['errors']);
+        ], $response->decodeResponseJson('errors'));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Carbon\Carbon;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Usora\Entities\User;
@@ -64,7 +65,7 @@ class AccessCode
     /**
      * @ORM\Column(type="datetime", name="claimed_on", nullable=true)
      *
-     * @var \DateTime
+     * @var Carbon
      */
     protected $claimedOn;
 
@@ -144,19 +145,19 @@ class AccessCode
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return Carbon|null
      */
-    public function getClaimedOn(): ?\DateTimeInterface
+    public function getClaimedOn(): ?Carbon
     {
         return $this->claimedOn;
     }
 
     /**
-     * @param \DateTimeInterface|null $claimedOn
+     * @param Carbon|null $claimedOn
      *
      * @return AccessCode
      */
-    public function setClaimedOn(?\DateTimeInterface $claimedOn): self
+    public function setClaimedOn(?Carbon $claimedOn): self
     {
         $this->claimedOn = $claimedOn;
 

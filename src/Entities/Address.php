@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
-use JMS\Serializer\Annotation as JMS;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Usora\Entities\User;
 
@@ -55,14 +54,12 @@ class Address
     /**
      * @ORM\ManyToOne(targetEntity="Railroad\Usora\Entities\User")
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     * @JMS\Exclude
      */
     protected $user;
 
     /**
      * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Customer")
      * @ORM\JoinColumn(name="customer_id", referencedColumnName="id")
-     * @JMS\Exclude
      */
     protected $customer;
 
@@ -82,7 +79,6 @@ class Address
 
     /**
      * @ORM\Column(type="string", name="street_line_1", nullable=true)
-     * @JMS\SerializedName("street_line_1");
      *
      * @var string
      */
@@ -90,7 +86,6 @@ class Address
 
     /**
      * @ORM\Column(type="string", name="street_line_2", nullable=true)
-     * @JMS\SerializedName("street_line_2");
      *
      * @var string
      */
@@ -361,18 +356,6 @@ class Address
     }
 
     /**
-     * JMS Serializer helper method
-     * used to avoid loading related entity from db
-     *
-     * @return int|null
-     */
-    public function getUserId()
-    : ?int
-    {
-        return $this->user ? $this->user->getId() : null;
-    }
-
-    /**
      * @param User $user
      *
      * @return Address
@@ -391,18 +374,6 @@ class Address
     : ?Customer
     {
         return $this->customer;
-    }
-
-    /**
-     * JMS Serializer helper method
-     * used to avoid loading related entity from db
-     *
-     * @return int|null
-     */
-    public function getCustomerId()
-    : ?int
-    {
-        return $this->customer ? $this->customer->getId() : null;
     }
 
     /**

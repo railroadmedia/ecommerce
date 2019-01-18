@@ -5,13 +5,14 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
 use Illuminate\Http\Request;
-use JMS\Serializer\SerializerBuilder;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Repository\AccessCodeRepository;
 use Railroad\Ecommerce\Requests\AccessCodeJsonClaimRequest;
 use Railroad\Ecommerce\Requests\AccessCodeReleaseRequest;
 use Railroad\Ecommerce\Services\AccessCodeService;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\Usora\Entities\User;
 use Railroad\Usora\Services\ConfigService as UsoraConfigService;
@@ -25,6 +26,11 @@ class AccessCodeJsonController extends BaseController
     private $accessCodeService;
 
     /**
+     * @var AccessCodeRepository
+     */
+    private $accessCodeRepository;
+
+    /**
      * @var EntityManager
      */
     private $entityManager;
@@ -33,11 +39,6 @@ class AccessCodeJsonController extends BaseController
      * @var PermissionService
      */
     private $permissionService;
-
-    /**
-     * @var \JMS\Serializer\Serializer
-     */
-    private $serializer;
 
     /**
      * AccessCodeJsonController constructor.
@@ -56,7 +57,9 @@ class AccessCodeJsonController extends BaseController
         $this->accessCodeService = $accessCodeService;
         $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
-        $this->serializer = SerializerBuilder::create()->build();
+
+        $this->accessCodeRepository = $this->entityManager
+                                        ->getRepository(AccessCode::class);
     }
 
     /**
@@ -186,8 +189,6 @@ class AccessCodeJsonController extends BaseController
         );
 
         $userRepository = $this->entityManager->getRepository(User::class);
-        $accessCodeRepository = $this->entityManager
-                                    ->getRepository(AccessCode::class);
 
         $user = $userRepository->findOneBy(
             ['email' => $request->get('claim_for_user_email')]
@@ -201,13 +202,13 @@ class AccessCodeJsonController extends BaseController
             )
         );
 
-        $accessCode = $accessCodeRepository
+        $accessCode = $this->accessCodeRepository
             ->findOneBy(['code' => $request->get('access_code')]);
 
         $claimedAccessCode = $this->accessCodeService
             ->claim($accessCode, $user);
 
-        return response($this->serializer->serialize($claimedAccessCode, 'json'));
+        return ResponseService::accessCode($accessCode)->respond(200);
     }
 
     /**
@@ -223,8 +224,7 @@ class AccessCodeJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'release.access_codes');
 
-        $accessCode = $this->entityManager
-                        ->getRepository(AccessCode::class)
+        $accessCode = $this->accessCodeRepository
                         ->find($request->get('access_code_id'));
         $accessCode
             ->setIsClaimed(false)
@@ -234,6 +234,6 @@ class AccessCodeJsonController extends BaseController
 
         $this->entityManager->flush();
 
-        return response($this->serializer->serialize($accessCode, 'json'));
+        return ResponseService::accessCode($accessCode)->respond(200);
     }
 }
