@@ -2,23 +2,30 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
+use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Usora\Transformers\UserTransformer;
 
 class AccessCodeTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = [];
+    protected $productsMap;
+
+    public function __construct(array $productsMap = [])
+    {
+        $this->productsMap = $productsMap;
+    }
 
     public function transform(AccessCode $accessCode)
     {
         if ($accessCode->getClaimer()) {
-            // todo: refine this block to support full claimer include upon request
             $this->defaultIncludes[] = 'claimer';
         }
 
-        // todo: add support for including full products upon request (known current usage in musora)
-        // https://discuss.jsonapi.org/t/should-json-api-attributes-element-contain-nested-objects/893/2
-        // https://jsonapi.org/format/#document-resource-object-attributes
+        if (count($this->productsMap)) {
+             $this->defaultIncludes[] = 'product';
+        }
 
         return [
             'id' => $accessCode->getId(),
@@ -34,6 +41,31 @@ class AccessCodeTransformer extends TransformerAbstract
 
     public function includeClaimer(AccessCode $accessCode)
     {
-        return $this->item($accessCode->getClaimer(), new EntityReferenceTransformer(), 'user');
+        if ($accessCode->getClaimer() instanceof Proxy) {
+            return $this->item(
+                $accessCode->getClaimer(),
+                new EntityReferenceTransformer(),
+                'user'
+            );
+        } else {
+            return $this->item(
+                $accessCode->getClaimer(),
+                new UserTransformer(),
+                'user'
+            );
+        }
+    }
+
+    public function includeProduct(AccessCode $accessCode)
+    {
+        // extract and include related products
+        return $this->collection(
+            array_intersect_key(
+                $this->productsMap,
+                array_flip($accessCode->getProductIds())
+            ),
+            new ProductTransformer(),
+            'product'
+        );
     }
 }

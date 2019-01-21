@@ -29,12 +29,30 @@ class ResponseService extends FractalResponseService
      * @param array $includes
      * @return Fractal
      */
-    public static function accessCode($entityOrEntities, QueryBuilder $queryBuilder = null, array $includes = [])
-    {
+    public static function accessCode(
+        $entityOrEntities,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
         return self::create(
                 $entityOrEntities,
                 'accessCode',
                 new AccessCodeTransformer(),
+                new JsonApiSerializer(),
+                $queryBuilder
+            )->parseIncludes($includes);
+    }
+
+    public static function decoratedAccessCode(
+        $accessCodes,
+        $products,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
+        return self::create(
+                $accessCodes,
+                'accessCode',
+                new AccessCodeTransformer($products),
                 new JsonApiSerializer(),
                 $queryBuilder
             )->parseIncludes($includes);

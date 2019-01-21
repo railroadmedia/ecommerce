@@ -281,7 +281,9 @@ class EcommerceTestCase extends BaseTestCase
                     [
                         'email' => $email,
                         'password' => $this->faker->password,
-                        'display_name' => $this->faker->name
+                        'display_name' => $this->faker->name,
+                        'created_at' => Carbon::now()->toDateTimeString(),
+                        'updated_at' => Carbon::now()->toDateTimeString(),
                     ]
                 );
 
@@ -309,7 +311,9 @@ class EcommerceTestCase extends BaseTestCase
         $userData += [
             'email' => $this->faker->email,
             'password' => $this->faker->password,
-            'display_name' => $this->faker->name
+            'display_name' => $this->faker->name,
+            'created_at' => Carbon::now()->toDateTimeString(),
+            'updated_at' => Carbon::now()->toDateTimeString(),
         ];
 
         $userId = $this->databaseManager

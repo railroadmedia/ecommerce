@@ -13,80 +13,193 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         parent::setUp();
     }
 
-    // public function test_get_all_access_codes_when_empty()
-    // {
-    //     $this->permissionServiceMock->method('can')->willReturn(true);
+    public function test_admin_get_all_access_codes()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
 
-    //     $expectedResults = [
-    //         'data' => [],
-    //         'meta' => [
-    //             'totalResults' => 0,
-    //             'page' => 1,
-    //             'limit' => 10
-    //         ]
-    //     ];
+        $userId = $this->createAndLogInNewUser();
 
-    //     $results = $this->call('GET', '/access-codes');
+        $page = 1;
+        $limit = 3;
+        $sort = 'id';
+        $nrAccessCodes = 5;
+        $accessCodes = [];
 
-    //     $this->assertEquals(200, $results->status());
+        for($i = 0; $i < $nrAccessCodes; $i++) {
 
-    //     $results->assertJson($expectedResults);
-    // }
+            $productIds = [];
 
-    // public function test_admin_get_all_access_codes()
-    // {
-    //     $this->permissionServiceMock->method('can')->willReturn(true);
+            $product = $this->fakeProduct([
+                'type' => ConfigService::$typeSubscription,
+                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                'subscription_interval_count' => 1,
+            ]);
 
-    //     $page = 1;
-    //     $limit = 30;
-    //     $sort = 'id';
-    //     $nrAccessCodes = 10;
-    //     $accessCodes = [];
+            $productIds[] = $product['id'];
 
-    //     for($i = 0; $i < $nrAccessCodes; $i++) {
-    //         $accessCode = $this->accessCodeRepository->create($this->faker->accessCode());
-    //         $accessCodes[] = iterator_to_array($accessCode) + ['claimer' => null];
-    //     }
+            $product = $this->fakeProduct([
+                'type' => ConfigService::$typeSubscription,
+                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                'subscription_interval_count' => 1,
+            ]);
 
-    //     $results = $this->call('GET', '/access-codes', [
-    //         'page' => $page,
-    //         'limit' => $limit,
-    //         'order_by_column' => $sort,
-    //         'order_by_direction' => 'asc'
-    //     ]);
+            $productIds[] = $product['id'];
 
-    //     $this->assertEquals(200, $results->status());
+            $accessCode = $this->fakeAccessCode([
+                'is_claimed' => true,
+                'claimed_on' => Carbon::now()->toDateTimeString(),
+                'product_ids' => $productIds,
+                'claimer_id' => $userId
+            ]);
 
-    //     $this->assertEquals($accessCodes, $results->decodeResponseJson('data'));
-    // }
+            $accessCodes[] = $accessCode;
+        }
 
-    // public function test_admin_search_access_codes()
-    // {
-    //     $this->permissionServiceMock->method('can')->willReturn(true);
+        $results = $this->call(
+            'GET',
+            '/access-codes',
+            [
+                'page' => $page,
+                'limit' => $limit,
+                'order_by_column' => $sort,
+                'order_by_direction' => 'asc'
+            ]
+        );
 
-    //     $nrAccessCodes = 10;
-    //     $accessCodes = [];
+        $this->assertEquals(200, $results->status());
 
-    //     for($i = 0; $i < $nrAccessCodes; $i++) {
-    //         $accessCode = $this->accessCodeRepository->create($this->faker->accessCode());
-    //         $accessCodes[] = iterator_to_array($accessCode);
-    //     }
+        $results = $results->decodeResponseJson();
 
-    //     $selectedAccessCodeIndex = $this->faker->numberBetween(0, $nrAccessCodes - 1);
-    //     $selectedAccessCode = $accessCodes[$selectedAccessCodeIndex] + ['claimer' => null];
-    //     $selectedCodeLength = strlen($selectedAccessCode['code']);
-    //     $codeFragment = substr(
-    //         $selectedAccessCode['code'],
-    //         $this->faker->numberBetween(0, intdiv($selectedCodeLength, 2)),
-    //         $this->faker->numberBetween(3, intdiv($selectedCodeLength, 2))
-    //     );
+        $aIndex = 0;
 
-    //     $response = $this->call('GET', '/access-codes/search', [
-    //         'term' => $codeFragment
-    //     ]);
+        foreach ($results['data'] as $accessCodeResponse) {
 
-    //     $this->assertContains($selectedAccessCode, $response->decodeResponseJson()['data']);
-    // }
+            // assert each response access code is in the faked/seeded list
+            $this->assertArraySubset(
+                [$aIndex => [
+                    'id' => $accessCodeResponse['id'],
+                    'code' => $accessCodeResponse['attributes']['code'],
+                    'brand' => $accessCodeResponse['attributes']['brand'],
+                    'product_ids' => serialize($accessCodeResponse['attributes']['product_ids']),
+                    'is_claimed' => $accessCodeResponse['attributes']['is_claimed'],
+                    'claimed_on' => $accessCodeResponse['attributes']['claimed_on'],
+                ]],
+                $accessCodes
+            );
+
+            // assert each response access code has the claimer relation data set
+            $this->assertEquals(
+                [
+                    'data' => [
+                        'type' => 'user',
+                        'id' => $userId
+                    ]
+                ],
+                $accessCodeResponse['relationships']['claimer']
+            );
+
+            $pIndex = 0;
+
+            foreach ($accessCodeResponse['attributes']['product_ids'] as $productId) {
+
+                // assert each response access code has the product relation data set
+                $this->assertArraySubset(
+                    [
+                        $pIndex => [
+                            'type' => 'product',
+                            'id' => $productId,
+                        ]
+                    ],
+                    $accessCodeResponse['relationships']['product']['data']
+                );
+
+                $pIndex++;
+            }
+
+            $aIndex++;
+        }
+
+        // assert results count
+        $this->assertEquals(count($results['data']), $limit);
+    }
+
+    public function test_admin_search_access_codes()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $nrAccessCodes = 10;
+        $accessCodes = [];
+
+        for($i = 0; $i < $nrAccessCodes; $i++) {
+            $product = $this->fakeProduct([
+                'type' => ConfigService::$typeSubscription,
+                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                'subscription_interval_count' => 1,
+            ]);
+
+            $accessCode = $this->fakeAccessCode([
+                'is_claimed' => true,
+                'claimed_on' => Carbon::now()->toDateTimeString(),
+                'product_ids' => [$product['id']],
+                'claimer_id' => $userId
+            ]);
+
+            $accessCodes[] = $accessCode;
+        }
+
+        $selectedAccessCodeIndex = $this->faker->numberBetween(0, $nrAccessCodes - 1);
+        $selectedAccessCode = $accessCodes[$selectedAccessCodeIndex];
+        $selectedAccessCodeProduct = unserialize($selectedAccessCode['product_ids']);
+        $selectedAccessCodeProduct = reset($selectedAccessCodeProduct);
+        $selectedCodeLength = strlen($selectedAccessCode['code']);
+        $codeFragment = substr(
+            $selectedAccessCode['code'],
+            $this->faker->numberBetween(0, intdiv($selectedCodeLength, 2)),
+            $this->faker->numberBetween(3, intdiv($selectedCodeLength, 2))
+        );
+
+        $response = $this->call('GET', '/access-codes/search', [
+            'term' => $codeFragment
+        ]);
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    [
+                        'id' => $selectedAccessCode['id'],
+                        'type' => 'accessCode',
+                        'attributes' => array_diff_key(
+                            $selectedAccessCode,
+                            [
+                                'id' => true,
+                                'claimer_id' => true,
+                                'product_ids' => true
+                            ]
+                        ),
+                        'relationships' => [
+                            'claimer' => [
+                                'data' => [
+                                    'type' => 'user',
+                                    'id' => $userId
+                                ]
+                            ],
+                            'product' => [
+                                'data' => [
+                                    [
+                                        'type' => 'product',
+                                        'id' => $selectedAccessCodeProduct
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+    }
 
     public function test_claim_validation()
     {

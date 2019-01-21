@@ -4,10 +4,11 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
-use Railroad\Ecommerce\Repository\AccessCodeRepository;
 use Railroad\Ecommerce\Requests\AccessCodeJsonClaimRequest;
 use Railroad\Ecommerce\Requests\AccessCodeReleaseRequest;
 use Railroad\Ecommerce\Services\AccessCodeService;
@@ -26,7 +27,7 @@ class AccessCodeJsonController extends BaseController
     private $accessCodeService;
 
     /**
-     * @var AccessCodeRepository
+     * @var EntityRepository
      */
     private $accessCodeRepository;
 
@@ -75,51 +76,56 @@ class AccessCodeJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
-        // $accessCodes = $this->accessCodeRepository->query()
-        //     ->select(
-        //         ConfigService::$tableAccessCode . '.*',
-        //         UsoraConfigService::$tableUsers . '.email as claimer'
-        //     )
-        //     ->leftJoin(
-        //         UsoraConfigService::$tableUsers,
-        //         ConfigService::$tableAccessCode . '.claimer_id',
-        //         '=',
-        //         UsoraConfigService::$tableUsers . '.id'
-        //     )
-        //     ->whereIn(
-        //         'brand',
-        //         $request->get('brands', [ConfigService::$availableBrands])
-        //     )
-        //     ->limit($request->get('limit', 10))
-        //     ->skip(($request->get('page', 1) - 1) * $request->get('limit', 10))
-        //     ->orderBy(
-        //         $request->get('order_by_column', 'created_on'),
-        //         $request->get('order_by_direction', 'desc')
-        //     )
-        //     ->get();
+        // parse request params and prepare db query parms
+        $alias = 'a';
+        $aliasClaimer = 'c';
+        $orderBy = $request->get('order_by_column', 'created_at');
+        if (
+            strpos($orderBy, '_') !== false
+            || strpos($orderBy, '-') !== false
+        ) {
+            $orderBy = camel_case($orderBy);
+        }
+        $orderBy = $alias . '.' . $orderBy;
+        $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
+        $brands = $request->get('brands', [ConfigService::$availableBrands]);
 
-        // $accessCodesCount = $this->accessCodeRepository->query()->count();
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->accessCodeRepository->createQueryBuilder($alias);
 
-        // $productIds = [];
+        $qb
+            ->select([$alias, $aliasClaimer])
+            ->join($alias . '.claimer', $aliasClaimer)
+            ->setMaxResults($request->get('limit', 10))
+            ->setFirstResult($first)
+            ->where($qb->expr()->in($alias . '.brand', ':brands'))
+            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'));
 
-        // foreach ($accessCodes as $accessCode) {
-        //     $accessCodeProductIds = array_flip($accessCode['product_ids']);
+        /**
+         * @var $q \Doctrine\ORM\Query
+         */
+        $q = $qb->getQuery();
 
-        //     $productIds += $accessCodeProductIds;
-        // }
+        $q->setParameter('brands', $brands);
 
-        // $products = $this->productRepository
-        //                 ->query()
-        //                 ->whereIn('id', array_keys($productIds))
-        //                 ->get();
+        $accessCodes = $q->getResult();
 
-        // return reply()->json(
-        //     $accessCodes,
-        //     [
-        //         'totalResults' => $accessCodesCount,
-        //         'meta' => ['products' => $products]
-        //     ]
-        // );
+        // fetch related products, as a dictionary
+        $productRepository = $this->entityManager
+                                ->getRepository(Product::class);
+
+        $products = $productRepository->getAccessCodesProducts($accessCodes);
+
+        // map products to ease access
+        $productsMap = [];
+
+        foreach ($products as $product) {
+            $productsMap[$product->getId()] = $product;
+        }
+
+        return ResponseService::decoratedAccessCode($accessCodes, $productsMap);
     }
 
     /**
@@ -135,41 +141,44 @@ class AccessCodeJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
-        // $accessCodes = $this->accessCodeRepository->query()
-        //     ->select(
-        //         ConfigService::$tableAccessCode . '.*',
-        //         UsoraConfigService::$tableUsers . '.email as claimer'
-        //     )
-        //     ->leftJoin(
-        //         UsoraConfigService::$tableUsers,
-        //         ConfigService::$tableAccessCode . '.claimer_id',
-        //         '=',
-        //         UsoraConfigService::$tableUsers . '.id'
-        //     )
-        //     ->whereIn(
-        //         'brand',
-        //         $request->get('brands', [ConfigService::$availableBrands])
-        //     )
-        //     ->where('code', 'like', '%' . $request->get('term') . '%')
-        //     ->get();
+        $alias = 'a';
+        $aliasClaimer = 'c';
+        $brands = $request->get('brands', [ConfigService::$availableBrands]);
 
-        // $productIds = [];
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->accessCodeRepository->createQueryBuilder($alias);
+        $qb
+            ->select([$alias, $aliasClaimer])
+            ->join($alias . '.claimer', $aliasClaimer)
+            ->where($qb->expr()->in($alias . '.brand', ':brands'))
+            ->andWhere($qb->expr()->like($alias . '.code', ':term'));
 
-        // foreach ($accessCodes as $accessCode) {
-        //     $accessCodeProductIds = array_flip($accessCode['product_ids']);
+        /**
+         * @var $q \Doctrine\ORM\Query
+         */
+        $q = $qb->getQuery();
 
-        //     $productIds += $accessCodeProductIds;
-        // }
+        $q->setParameter('brands', $brands);
+        $q->setParameter('term', '%' . $request->get('term') . '%');
 
-        // $products = $this->productRepository
-        //                 ->query()
-        //                 ->whereIn('id', array_keys($productIds))
-        //                 ->get();
+        $accessCodes = $q->getResult();
 
-        // return reply()->json(
-        //     $accessCodes,
-        //     ['meta' => ['products' => $products]]
-        // );
+        // fetch related products, as a dictionary
+        $productRepository = $this->entityManager
+                                ->getRepository(Product::class);
+
+        $products = $productRepository->getAccessCodesProducts($accessCodes);
+
+        // map products to ease access
+        $productsMap = [];
+
+        foreach ($products as $product) {
+            $productsMap[$product->getId()] = $product;
+        }
+
+        return ResponseService::decoratedAccessCode($accessCodes, $productsMap);
     }
 
     /**
