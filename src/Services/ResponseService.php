@@ -7,6 +7,7 @@ use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
+use Railroad\Ecommerce\Transformers\ProductTransformer;
 use Spatie\Fractal\Fractal;
 
 class ResponseService extends FractalResponseService
@@ -43,6 +44,14 @@ class ResponseService extends FractalResponseService
             )->parseIncludes($includes);
     }
 
+    /**
+     * @param AccessCode|array $accessCodes
+     * @param array $products - array of Products
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
     public static function decoratedAccessCode(
         $accessCodes,
         $products,
@@ -53,6 +62,27 @@ class ResponseService extends FractalResponseService
                 $accessCodes,
                 'accessCode',
                 new AccessCodeTransformer($products),
+                new JsonApiSerializer(),
+                $queryBuilder
+            )->parseIncludes($includes);
+    }
+
+    /**
+     * @param $entityOrEntities
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
+    public static function product(
+        $entityOrEntities,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
+        return self::create(
+                $entityOrEntities,
+                'product',
+                new ProductTransformer(),
                 new JsonApiSerializer(),
                 $queryBuilder
             )->parseIncludes($includes);

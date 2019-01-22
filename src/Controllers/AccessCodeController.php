@@ -95,11 +95,10 @@ class AccessCodeController extends BaseController
         $claimedAccessCode = $this->accessCodeService
                                     ->claim($accessCode, $user);
 
-        return reply()->form(
-            [true],
-            null,
-            [],
-            ['access_code' => true]
-        );
+        $message = ['success' => true];
+
+        return $request->has('redirect') ?
+            redirect()->away($request->get('redirect'))->with($message) :
+            redirect()->back()->with($message);
     }
 }
