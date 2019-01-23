@@ -69,40 +69,53 @@ class ProductJsonController extends BaseController
         $this->remoteStorageService = $remoteStorageService;
     }
 
-    /** Pull paginated products
+    /**
+     * Pull paginated products
      *
      * @param Request $request
+     *
      * @return JsonResponse
      */
     public function index(Request $request)
     {
-        // $active = $this->permissionService->can(auth()->id(), 'pull.inactive.products') ? [0, 1] : [1];
+        $active = $this->permissionService->can(auth()->id(), 'pull.inactive.products') ? [0, 1] : [1];
 
-        // $products =
-        //     $this->productRepository->query()
-        //         ->whereIn('active', $active)
-        //         ->whereIn('brand', $request->get('brands', [ConfigService::$availableBrands]))
-        //         ->limit($request->get('limit', 10))
-        //         ->skip(($request->get('page', 1) - 1) * $request->get('limit', 10))
-        //         ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
-        //         ->get();
+        $alias = 'a';
+        $orderBy = $request->get('order_by_column', 'created_at');
+        if (
+            strpos($orderBy, '_') !== false
+            || strpos($orderBy, '-') !== false
+        ) {
+            $orderBy = camel_case($orderBy);
+        }
+        $orderBy = $alias . '.' . $orderBy;
+        $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
+        $brands = $request->get('brands', [ConfigService::$availableBrands]);
 
-        // $productsCount =
-        //     $this->productRepository->query()
-        //         ->whereIn('active', $active)
-        //         ->count();
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->productRepository->createQueryBuilder($alias);
 
-        // return reply()->json(
-        //     $products,
-        //     [
-        //         'totalResults' => $productsCount,
-        //     ]
-        // );
+        $qb
+            ->setMaxResults($request->get('limit', 10))
+            ->setFirstResult($first)
+            ->where($qb->expr()->in($alias . '.brand', ':brands'))
+            ->andWhere($qb->expr()->in($alias . '.active', ':activity'))
+            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
+            ->setParameter('brands', $brands)
+            ->setParameter('activity', $active);
+
+        $products = $qb->getQuery()->getResult();
+
+        return ResponseService::product($products, $qb)->respond();
     }
 
-    /** Create a new product and return it in JSON format
+    /**
+     * Create a new product and return it in JSON format
      *
      * @param ProductCreateRequest $request
+     *
      * @return JsonResponse
      */
     public function store(ProductCreateRequest $request)
@@ -123,75 +136,56 @@ class ProductJsonController extends BaseController
         return ResponseService::product($product)->respond();
     }
 
-    /** Update a product based on product id and return it in JSON format
+    /**
+     * Update a product based on product id and return it in JSON format
      *
      * @param ProductUpdateRequest $request
      * @param integer $productId
+     *
      * @return JsonResponse|NotFoundException
      */
     public function update(ProductUpdateRequest $request, $productId)
     {
-        // $this->permissionService->canOrThrow(auth()->id(), 'update.product');
+        $this->permissionService->canOrThrow(auth()->id(), 'update.product');
 
-        // $product = $this->productRepository->read($productId);
+        $product = $this->productRepository->find($productId);
 
-        // if (is_null($product)) {
-        //     throw new NotFoundException('Update failed, product not found with id: ' . $productId);
-        // }
+        if (is_null($product)) {
+            throw new NotFoundException(
+                'Update failed, product not found with id: ' . $productId
+            );
+        }
 
-        // //update product with the data sent on the request
-        // $product = $this->productRepository->update(
-        //     $productId,
-        //     array_merge(
-        //         $request->only(
-        //             [
-        //                 'brand',
-        //                 'name',
-        //                 'sku',
-        //                 'price',
-        //                 'type',
-        //                 'active',
-        //                 'category',
-        //                 'description',
-        //                 'thumbnail_url',
-        //                 'is_physical',
-        //                 'weight',
-        //                 'subscription_interval_type',
-        //                 'subscription_interval_count',
-        //                 'stock',
-        //             ]
-        //         ),
-        //         [
-        //             'updated_on' => Carbon::now()
-        //                 ->toDateTimeString(),
-        //         ]
-        //     )
-        // );
+        $this->jsonApiHydrator->hydrate($product, $request->onlyAllowed());
 
-        // return reply()->json(
-        //     $product,
-        //     [
-        //         'code' => 201,
-        //     ]
-        // );
+        $this->entityManager->flush();
+
+        return ResponseService::product($product)->respond();
     }
 
-    /** Delete a product that it's not connected to orders or discounts and return a JsonResponse.
-     *  Throw  - NotFoundException if the product not exist or the user have not rights to delete the product
-     *         - NotAllowedException if the product it's connected to orders or discounts
+    /**
+     * Delete a product that it's not connected to orders or discounts and return a JsonResponse.
      *
      * @param integer $productId
+     *
      * @return JsonResponse
+     *
+     * @throws NotFoundException - if the product not exist or the user have not rights to delete the product
+     * @throws NotAllowedException - if the product it's connected to orders or discounts
      */
     public function delete($productId)
     {
-        // $this->permissionService->canOrThrow(auth()->id(), 'delete.product');
+        $this->permissionService->canOrThrow(auth()->id(), 'delete.product');
 
-        // $product = $this->productRepository->read($productId);
+        $product = $this->productRepository->find($productId);
 
-        // if (is_null($product)) {
-        //     throw new NotFoundException('Delete failed, product not found with id: ' . $productId);
-        // }
+        if (is_null($product)) {
+            throw new NotFoundException(
+                'Delete failed, product not found with id: ' . $productId
+            );
+        }
+
+        // todo - get details about relations, update
 
         // throw_if(
         //     (count($product->order) > 0),
@@ -203,14 +197,10 @@ class ProductJsonController extends BaseController
         //     new NotAllowedException('Delete failed, exists discounts defined for the selected product.')
         // );
 
-        // $this->productRepository->destroy($productId);
+        $this->entityManager->remove($product);
+        $this->entityManager->flush();
 
-        // return reply()->json(
-        //     null,
-        //     [
-        //         'code' => 204,
-        //     ]
-        // );
+        return ResponseService::empty(204);
     }
 
     /** Upload product thumbnail on remote storage using remotestorage package.

@@ -13,34 +13,9 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ProductControllerTest extends EcommerceTestCase
 {
-    /**
-     * @var ProductRepository
-     */
-    // protected $productRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\DiscountCriteriaRepository
-     */
-    // protected $discountCriteriaRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\DiscountRepository
-     */
-    // protected $discountRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\OrderItemRepository
-     */
-    // protected $orderItemRepository;
-
     protected function setUp()
     {
         parent::setUp();
-
-        // $this->productRepository          = $this->app->make(ProductRepository::class);
-        // $this->discountRepository         = $this->app->make(DiscountRepository::class);
-        // $this->discountCriteriaRepository = $this->app->make(DiscountCriteriaRepository::class);
-        // $this->orderItemRepository        = $this->app->make(OrderItemRepository::class);
     }
 
     public function test_store_product()
@@ -60,10 +35,10 @@ class ProductControllerTest extends EcommerceTestCase
             ]
         );
 
-        //assert response
+        // assert response
         $this->assertEquals(200, $results->getStatusCode());
 
-        //assert product data subset or results
+        // assert product data subset or results
         $this->assertArraySubset(
             [
                 'data' => [
@@ -79,7 +54,7 @@ class ProductControllerTest extends EcommerceTestCase
             $results->decodeResponseJson()
         );
 
-        //assert the product was saved in the db
+        // assert the product was saved in the db
         $this->assertDatabaseHas(
             ConfigService::$tableProduct,
             $product
@@ -105,10 +80,10 @@ class ProductControllerTest extends EcommerceTestCase
             ]
         );
 
-        //assert results status code
+        // assert results status code
         $this->assertEquals(200, $results->getStatusCode());
 
-        //assert subscription data subset of response
+        // assert subscription data subset of response
         $this->assertArraySubset(
             [
                 'data' => [
@@ -124,7 +99,7 @@ class ProductControllerTest extends EcommerceTestCase
             $results->decodeResponseJson()
         );
 
-        //assert subscription data exist in db
+        // assert subscription data exist in db
         $this->assertDatabaseHas(
             ConfigService::$tableProduct,
             $subscription
@@ -139,7 +114,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         $this->assertEquals(422, $results->status());
 
-        //assert that all the error messages are received
+        // assert that all the error messages are received
         $errors = [
             [
                 'source' => 'data.attributes.name',
@@ -176,197 +151,267 @@ class ProductControllerTest extends EcommerceTestCase
         $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
     }
 
-    // public function test_validation_for_new_subscription() // todo fix
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+    public function test_validation_for_new_subscription()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    //     $subscription = $product = $this->faker->product([
-    //         'type' => ConfigService::$typeSubscription
-    //     ]);
+        $results = $this->call(
+            'PUT',
+            '/product/',
+            [
+                'data' => [
+                    'type' => 'product',
+                    'attributes' => [
+                        'name' => $this->faker->word,
+                        'sku' => $this->faker->word,
+                        'price' => $this->faker->numberBetween(15.97, 15.99),
+                        'type' => ConfigService::$typeSubscription,
+                        'active' => true,
+                        'is_physical' => false,
+                        'stock' => $this->faker->numberBetween(0, 1000)
+                    ]
+                ]
+            ]
+        );
 
-    //     $results = $this->call(
-    //         'PUT',
-    //         '/product/',
-    //         [
-    //             'data' => [
-    //                 'type' => 'product',
-    //                 'attributes' => $subscription
-    //             ]
-    //         ]
-    //     );
+        $this->assertEquals(422, $results->status());
 
-    //     $this->assertEquals(422, $results->status());
+        // check that the proper error messages are received
+        $errors = [
+            [
+                'source' => 'data.attributes.subscription_interval_type',
+                'detail' => 'The subscription interval type field is required when type is subscription.',
+                'title' => 'Validation failed.'
+            ],
+            [
+                'source' => 'data.attributes.subscription_interval_count',
+                'detail' => 'The subscription interval count field is required when type is subscription.',
+                'title' => 'Validation failed.'
+            ]
+        ];
 
-    //     //check that the proper error messages are received
-    //     $errors = [
-    //         [
-    //             'source' => "subscription_interval_type",
-    //             "detail" => "The subscription interval type field is required when type is subscription."
-    //         ],
-    //         [
-    //             'source' => "subscription_interval_count",
-    //             "detail" => "The subscription interval count field is required when type is subscription."
-    //         ]
-    //     ];
+        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+    }
 
-    //     $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
-    // }
+    public function test_validation_sku_unique()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    // public function test_validation_sku_unique()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $product = $this->fakeProduct();
 
-    //     $product = $this->productRepository->create($this->faker->product());
+        $productWithExistingSKU = $this->faker->product([
+            'sku' => $product['sku']
+        ]);
 
-    //     $productWithExistingSKU = $this->faker->product([
-    //         'sku' => $product['sku']
-    //     ]);
+        $results = $this->call(
+            'PUT',
+            '/product/',
+            [
+                'data' => [
+                    'type' => 'product',
+                    'attributes' => $productWithExistingSKU
+                ]
+            ]
+        );
 
-    //     $results = $this->call('PUT', '/product/', $productWithExistingSKU);
+        // assert response status
+        $this->assertEquals(422, $results->status());
 
-    //     //assert response status
-    //     $this->assertEquals(422, $results->status());
+        // assert that the proper error messages are received
+        $errors = [
+            [
+                'source' => 'data.attributes.sku',
+                'detail' => 'The sku has already been taken.',
+                'title' => 'Validation failed.'
+            ]
+        ];
+        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
 
-    //     //assert that the proper error messages are received
-    //     $errors = [
-    //         [
-    //             'source' => "sku",
-    //             "detail" => "The sku has already been taken."
-    //         ]
-    //     ];
-    //     $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
+        // assert product with the same sku was not saved in the db
+        $this->assertDatabaseMissing(
+            ConfigService::$tableProduct,
+            $productWithExistingSKU
+        );
+    }
 
-    //     //assert product with the same sku was not saved in the db
-    //     $this->assertDatabaseMissing(
-    //         ConfigService::$tableProduct,
-    //         $productWithExistingSKU
-    //     );
-    // }
+    public function test_validation_weight_for_physical_products()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    // public function test_validation_weight_for_physical_products()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $results = $this->call(
+            'PUT',
+            '/product/',
+            [
+                'data' => [
+                    'type' => 'product',
+                    'attributes' => [
+                        'name' => $this->faker->word,
+                        'sku' => $this->faker->word,
+                        'price' => $this->faker->numberBetween(15.97, 15.99),
+                        'type' => ConfigService::$typeProduct,
+                        'active' => true,
+                        'is_physical' => true,
+                        'stock' => $this->faker->numberBetween(0, 1000)
+                    ]
+                ]
+            ]
+        );
 
-    //     $results = $this->call('PUT', '/product/', [
-    //         'name'        => $this->faker->word,
-    //         'sku'         => $this->faker->word,
-    //         'price'       => $this->faker->numberBetween(15.97, 15.99),
-    //         'type'        => ConfigService::$typeProduct,
-    //         'active'      => true,
-    //         'is_physical' => true,
-    //         'stock'       => $this->faker->numberBetween(0, 1000)
-    //     ]);
+        $this->assertEquals(422, $results->status());
 
-    //     $this->assertEquals(422, $results->status());
+        // check that the proper error messages are received
+        $errors = [
+            [
+                'source' => 'data.attributes.weight',
+                'detail' => 'The weight field is required when is physical is 1.',
+                'title' => 'Validation failed.'
+            ]
+        ];
 
-    //     //check that the proper error messages are received
-    //     $errors = [
-    //         [
-    //             'source' => "weight",
-    //             "detail" => "The weight field is required when is physical is 1."
-    //         ]
-    //     ];
+        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+    }
 
-    //     $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
-    // }
+    public function test_update_product_inexistent()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    // public function test_update_product_inexistent()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $randomProductId = rand();
+        $results = $this->call('PATCH', '/product/' . $randomProductId);
 
-    //     $randomProductId = rand();
-    //     $results         = $this->call('PATCH', '/product/' . $randomProductId);
+        // assert a response with 404 status
+        $this->assertEquals(404, $results->status());
 
-    //     //assert a response with 404 status
-    //     $this->assertEquals(404, $results->status());
+        // assert that the error message is received
+        $errors = [
+            'title'  => 'Not found.',
+            'detail' => 'Update failed, product not found with id: ' . $randomProductId
+        ];
+        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+    }
 
-    //     //assert that the error message is received
-    //     $errors = [
-    //         'title'  => "Not found.",
-    //         "detail" => "Update failed, product not found with id: " . $randomProductId
-    //     ];
-    //     $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
-    // }
+    public function test_update_product()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    // public function test_update_product()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $product = $this->fakeProduct();
 
-    //     $product = $this->productRepository->create($this->faker->product());
+        $newDescription = $this->faker->text;
 
-    //     $newDescription = $this->faker->text;
+        $results = $this->call(
+            'PATCH',
+            '/product/' . $product['id'],
+            [
+                'data' => [
+                    'id' => $product['id'],
+                    'type' => 'product',
+                    'attributes' => [
+                        'description' => $newDescription
+                    ],
+                ],
+            ]
+        );
 
-    //     $results = $this->call('PATCH', '/product/' . $product['id'], [
-    //         'description' => $newDescription
-    //     ]);
+        // assert response status code
+        $this->assertEquals(200, $results->getStatusCode());
 
-    //     $jsonResponse = $results->decodeResponseJson();
+        // assert product with the new description subset of response
+        $this->assertEquals(
+            [
+                'data' => [
+                    'id' => $product['id'],
+                    'type' => 'product',
 
-    //     //assert response status code
-    //     $this->assertEquals(201, $results->getStatusCode());
+                    // todo: this could possibly be done better
+                    'attributes' => array_merge(
+                        array_diff_key($product, ['id' => 1]),
+                        [
+                            'description' => $newDescription,
+                            'updated_at' => Carbon::now()->toDateTimeString()
+                        ]
+                    ),
+                ],
+            ],
+            $results->decodeResponseJson()
+        );
 
-    //     unset($product['discounts']);
+        // assert product updated in the db
+        $this->assertDatabaseHas(
+            ConfigService::$tableProduct,
+            array_merge(
+                $product,
+                [
+                    'description' => $newDescription,
+                    'updated_at' => Carbon::now()->toDateTimeString()
+                ]
+            )
+        );
+    }
 
-    //     //assert product with the new description subset of response
-    //     $product['description'] = $newDescription;
-    //     $product['updated_on']  = Carbon::now()->toDateTimeString();
-    //     $this->assertArraySubset($product, $jsonResponse['data'][0]);
+    public function test_validation_on_update_product()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    //     //assert product updated in the db
-    //     $this->assertDatabaseHas(
-    //         ConfigService::$tableProduct,
-    //         iterator_to_array($product)
-    //     );
-    // }
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeProduct,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null
+        ]);
 
-    // public function test_validation_on_update_product()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $results = $this->call(
+            'PATCH',
+            '/product/' . $product['id'],
+            [
+                'data' => [
+                    'id' => $product['id'],
+                    'type' => 'product',
+                    'attributes' => [
+                        'type' => ConfigService::$typeSubscription
+                    ],
+                ],
+            ]
+        );
 
-    //     $product = $this->productRepository->create($this->faker->product());
+        // assert response code
+        $this->assertEquals(422, $results->status());
 
-    //     $results = $this->call('PATCH', '/product/' . $product['id'], [
-    //         'type' => ConfigService::$typeSubscription
-    //     ]);
+        // assert that the proper error messages are received
+        $errors = [
+            [
+                'source' => 'data.attributes.subscription_interval_type',
+                'detail' => 'The subscription interval type field is required when type is subscription.',
+                'title' => 'Validation failed.'
+            ],
+            [
+                'source' => 'data.attributes.subscription_interval_count',
+                'detail' => 'The subscription interval count field is required when type is subscription.',
+                'title' => 'Validation failed.'
+            ]
+        ];
+        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
 
-    //     //assert response code
-    //     $this->assertEquals(422, $results->status());
+        // assert product raw was not modified in db
+        $this->assertDatabaseHas(
+            ConfigService::$tableProduct,
+            $product
+        );
+    }
 
-    //     //assert that the proper error messages are received
-    //     $errors = [
-    //         [
-    //             'source' => "subscription_interval_type",
-    //             "detail" => "The subscription interval type field is required when type is subscription."
-    //         ],
-    //         [
-    //             'source' => "subscription_interval_count",
-    //             "detail" => "The subscription interval count field is required when type is subscription."
-    //         ]
-    //     ];
-    //     $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
+    public function test_delete_missing_product()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    //     unset($product['discounts']);
+        $randomId = rand();
+        $results  = $this->call('DELETE', '/product/' . $randomId);
 
-    //     //assert product raw was not modified in db
-    //     $this->assertDatabaseHas(
-    //         ConfigService::$tableProduct,
-    //         iterator_to_array($product)
-    //     );
-    // }
+        // assert that the proper error messages are received
+        $errors = [
+            'detail' => 'Delete failed, product not found with id: ' . $randomId,
+            'title' => 'Not found.'
+        ];
+        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+    }
 
-    // public function test_delete_missing_product()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
-
-    //     $randomId = rand();
-    //     $results  = $this->call('DELETE', '/product/' . $randomId);
-
-    //     $this->assertEquals(404, $results->status());
-    //     $this->assertEquals('Not found.', $results->decodeResponseJson('meta')['errors']['title']);
-    //     $this->assertEquals('Delete failed, product not found with id: ' . $randomId, $results->decodeResponseJson('meta')['errors']['detail']);
-    // }
-
-    // public function test_delete_product_when_exists_product_order()
+    // public function test_delete_product_when_exists_product_order() // todo - update controller logic 1st
     // {
     //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
@@ -382,7 +427,7 @@ class ProductControllerTest extends EcommerceTestCase
     //     $this->assertEquals(204, $results->status());
     // }
 
-    // public function test_delete_product_when_exists_product_discounts()
+    // public function test_delete_product_when_exists_product_discounts() // todo - update controller logic 1st
     // {
     //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
@@ -404,22 +449,24 @@ class ProductControllerTest extends EcommerceTestCase
     //     $this->assertEquals('Delete failed, exists discounts defined for the selected product.', $results->decodeResponseJson('meta')['errors']['detail']);
     // }
 
-    // public function test_delete_product()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+    public function test_delete_product()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    //     $product = $this->productRepository->create($this->faker->product());
+        $product = $this->fakeProduct();
 
-    //     $results = $this->call('DELETE', '/product/' . $product['id']);
+        $results = $this->call('DELETE', '/product/' . $product['id']);
 
-    //     $this->assertEquals(204, $results->status());
-    //     $this->assertDatabaseMissing(ConfigService::$tableProduct,
-    //         [
-    //             'id' => $product['id'],
-    //         ]);
-    // }
+        // assert response code
+        $this->assertEquals(204, $results->status());
 
-    // public function test_get_all_products_paginated_when_empty()
+        // assert product was removed from db
+        $this->assertDatabaseMissing(ConfigService::$tableProduct, [
+            'id' => $product['id'],
+        ]);
+    }
+
+    // public function test_get_all_products_paginated_when_empty() // deprecated
     // {
     //     $this->permissionServiceMock->method('can')->willReturn(true);
 
@@ -437,31 +484,62 @@ class ProductControllerTest extends EcommerceTestCase
     //     $results->assertJson($expectedResults);
     // }
 
-    // public function test_admin_get_all_paginated_products()
-    // {
-    //     $this->permissionServiceMock->method('can')->willReturn(true);
+    public function test_admin_get_all_paginated_products()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
 
-    //     $page       = 1;
-    //     $limit      = 30;
-    //     $sort       = 'id';
-    //     $nrProducts = 10;
+        $user = $this->createAndLogInNewUser();
 
-    //     for($i = 0; $i < $nrProducts; $i++)
-    //     {
-    //         $product    = $this->productRepository->create($this->faker->product());
-    //         $products[] = iterator_to_array($product);
-    //     }
+        $page = 1;
+        $limit = 30;
+        $sort = 'id';
+        $nrProducts = 10;
+        $products = [];
 
-    //     $results = $this->call('GET', '/product',
-    //         [
-    //             'page'               => $page,
-    //             'limit'              => $limit,
-    //             'order_by_column'    => $sort,
-    //             'order_by_direction' => 'asc'
-    //         ]);
+        for ($i = 0; $i < $nrProducts; $i++) {
+            $products[] = $this->fakeProduct();
+        }
 
-    //     $this->assertEquals($products, $results->decodeResponseJson('data'));
-    // }
+        $expected = [
+            'data' => array_values(
+                collect($products)
+                    ->slice(($page - 1) * $limit, $limit)
+                    ->map(function($product, $key) {
+                        return [
+                            'type' => 'product',
+                            'id' => $product['id'],
+                            'attributes' => array_merge(
+                                array_diff_key( // get an array copy of product, without specified keys
+                                    $product,
+                                    [
+                                        'id' => 1,
+                                        'is_physical' => 1
+                                    ]
+                                ),
+                                [ // fix php type juggling
+                                    'is_physical' => (bool) $product['is_physical'],
+                                    'updated_at' => null
+                                ]
+                            )
+                        ];
+                    })
+                    ->all()
+            )
+        ];
+
+        $results = $this->call(
+            'GET',
+            '/product',
+            [
+                'page' => $page,
+                'limit' => $limit,
+                'order_by_column' => $sort,
+                'order_by_direction' => 'asc'
+            ]
+        );
+
+        $this->assertArraySubset($expected, $results->decodeResponseJson());
+    }
 
     // public function test_upload_thumb()
     // {
@@ -483,106 +561,168 @@ class ProductControllerTest extends EcommerceTestCase
     //     );
     // }
 
-    // public function test_user_pull_only_active_products()
-    // {
-    //     $user = $this->createAndLogInNewUser();
+    public function test_user_pull_only_active_products()
+    {
+        $user = $this->createAndLogInNewUser();
 
-    //     $page       = 2;
-    //     $limit      = 3;
-    //     $sort       = 'id';
-    //     $nrProducts = 10;
+        $page = 2;
+        $limit = 3;
+        $sort = 'id';
+        $nrProducts = 10;
+        $products = [];
+        $inactiveProducts = [];
 
-    //     for($i = 0; $i < $nrProducts; $i++)
-    //     {
-    //         if($i % 2 == 0)
-    //         {
-    //             $product    = $this->productRepository->create($this->faker->product(['active' => true]));
-    //             $products[] = iterator_to_array($product);
-    //         }
-    //         else
-    //         {
-    //             $product            = $this->productRepository->create($this->faker->product(['active' => false]));
-    //             $inactiveProducts[] = $product;
-    //         }
-    //     }
+        for ($i = 0; $i < $nrProducts; $i++) {
+            if ($i % 2 == 0) {
+                $product = $this->fakeProduct(['active' => true]);
+                $products[] = $product;
+            } else {
+                $product = $this->fakeProduct(['active' => false]);
+                $inactiveProducts[] = $product;
+            }
+        }
 
-    //     $expectedContent =
-    //         [
-    //             'data' => array_slice($products, 3, $limit),
-    //             'meta' => [
-    //                 'totalResults' => $nrProducts / 2,
-    //                 'page'         => $page,
-    //                 'limit'        => $limit
-    //             ]
-    //         ];
+        $expected = [
+            'data' => array_values(
+                collect($products)
+                    ->slice(($page - 1) * $limit, $limit)
+                    ->map(function($product, $key) {
+                        return [
+                            'type' => 'product',
+                            'id' => $product['id'],
+                            'attributes' => array_merge(
+                                array_diff_key( // get an array copy of product, without specified keys
+                                    $product,
+                                    [
+                                        'id' => 1,
+                                        'is_physical' => 1
+                                    ]
+                                ),
+                                [ // fix php type juggling
+                                    'is_physical' => (bool) $product['is_physical'],
+                                    'updated_at' => null
+                                ]
+                            )
+                        ];
+                    })
+                    ->all()
+            )
+        ];
 
-    //     $results = $this->call('GET', '/product',
-    //         [
-    //             'page'               => $page,
-    //             'limit'              => $limit,
-    //             'order_by_column'    => $sort,
-    //             'order_by_direction' => 'asc'
-    //         ]);
+        $results = $this->call(
+            'GET',
+            '/product',
+            [
+                'page' => $page,
+                'limit' => $limit,
+                'order_by_column' => $sort,
+                'order_by_direction' => 'asc'
+            ]
+        );
 
-    //     $responseContent = $results->decodeResponseJson();
-    //     $this->assertEquals($expectedContent, $responseContent);
-    // }
+        $this->assertArraySubset($expected, $results->decodeResponseJson());
+    }
 
-    // public function test_update_product_same_SKU_pass_validation()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+    public function test_update_product_same_SKU_pass_validation()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    //     $product = $this->productRepository->create($this->faker->product());
+        $product = $this->fakeProduct();
 
-    //     $newDescription = $this->faker->text;
+        $newDescription = $this->faker->text;
 
-    //     $results = $this->call('PATCH', '/product/' . $product['id'], [
-    //         'description' => $newDescription, 'sku' => $product['sku']
-    //     ]);
+        $results = $this->call('PATCH', '/product/' . $product['id'], [
+            'description' => $newDescription, 'sku' => $product['sku']
+        ]);
 
-    //     $jsonResponse = $results->decodeResponseJson();
+        $results = $this->call(
+            'PATCH',
+            '/product/' . $product['id'],
+            [
+                'data' => [
+                    'type' => 'product',
+                    'attributes' => [
+                        'description' => $newDescription,
+                        'sku' => $product['sku']
+                    ]
+                ]
+            ]
+        );
 
-    //     //assert response status code
-    //     $this->assertEquals(201, $results->getStatusCode());
+        // assert response status code
+        $this->assertEquals(200, $results->getStatusCode());
 
-    //     unset($product['discounts']);
+        // assert product with the new description subset of response
+        $this->assertEquals(
+            [
+                'data' => [
+                    'id' => $product['id'],
+                    'type' => 'product',
+                    // todo: this could possibly be done better
+                    'attributes' => array_merge(
+                        array_diff_key($product, ['id' => 1]),
+                        [
+                            'description' => $newDescription,
+                            'updated_at' => Carbon::now()->toDateTimeString()
+                        ]
+                    ),
+                ],
+            ],
+            $results->decodeResponseJson()
+        );
 
-    //     //assert product with the new description subset of response
-    //     $product['description'] = $newDescription;
-    //     $product['updated_on']  = Carbon::now()->toDateTimeString();
-    //     $this->assertArraySubset($product, $jsonResponse['data'][0]);
+        // assert product updated in the db
+        $this->assertDatabaseHas(
+            ConfigService::$tableProduct,
+            array_merge(
+                $product,
+                [
+                    'description' => $newDescription,
+                    'updated_at' => Carbon::now()->toDateTimeString()
+                ]
+            )
+        );
+    }
 
-    //     //assert product updated in the db
-    //     $this->assertDatabaseHas(
-    //         ConfigService::$tableProduct,
-    //         iterator_to_array($product)
-    //     );
-    // }
+    public function test_update_product_different_SKU_unique_validation()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    // public function test_update_product_different_SKU_unique_validation()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $product1 = $this->fakeProduct();
+        $product2 = $this->fakeProduct();
 
-    //     $product1 = $this->productRepository->create($this->faker->product());
-    //     $product2 = $this->productRepository->create($this->faker->product());
-    //     $results = $this->call('PATCH', '/product/' . $product2['id'], [
-    //         'sku' => $product1['sku']
-    //     ]);
+        $results = $this->call(
+            'PATCH',
+            '/product/' . $product2['id'],
+            [
+                'data' => [
+                    'type' => 'product',
+                    'attributes' => [
+                        'sku' => $product1['sku']
+                    ]
+                ]
+            ]
+        );
 
-    //     $jsonResponse = $results->decodeResponseJson();
+        // assert response status code
+        $this->assertEquals(422, $results->getStatusCode());
 
-    //     //assert response status code
-    //     $this->assertEquals(422, $results->getStatusCode());
+        // assert that the proper error messages are received
+        $errors = [
+            [
+                'source' => 'data.attributes.sku',
+                'detail' => 'The sku has already been taken.',
+                'title' => 'Validation failed.'
+            ]
+        ];
+        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
 
-    //     //assert that the proper error messages are received
-    //     $errors = [
-    //         [
-    //             'source' => "sku",
-    //             "detail" => "The sku has already been taken."
-    //         ]
-    //     ];
-    //     $this->assertEquals($errors, $results->decodeResponseJson('meta')['errors']);
-    // }
+        // assert product2 was not modified in db
+        $this->assertDatabaseHas(
+            ConfigService::$tableProduct,
+            $product2
+        );
+    }
 
     public function test_pull_product_not_exist()
     {
@@ -591,10 +731,10 @@ class ProductControllerTest extends EcommerceTestCase
         $randomId  = rand();
         $results = $this->call('GET','/product/'.$randomId);
 
-        //assert response status code
+        // assert response status code
         $this->assertEquals(404, $results->getStatusCode());
 
-        //assert that the proper error messages are received
+        // assert that the proper error messages are received
         $errors = [
             'title' => 'Not found.',
             'detail' => 'Pull failed, product not found with id: '.$randomId
@@ -611,7 +751,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         $results = $this->call('GET', '/product/'.$product['id']);
 
-        //assert response status code
+        // assert response status code
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset(
@@ -639,7 +779,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         $results = $this->call('GET', '/product/'.$product['id']);
 
-        //assert response status code
+        // assert response status code
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertArraySubset(
@@ -667,10 +807,10 @@ class ProductControllerTest extends EcommerceTestCase
 
         $results = $this->call('GET','/product/'.$product['id']);
 
-        //assert response status code
+        // assert response status code
         $this->assertEquals(404, $results->getStatusCode());
 
-        //assert that the proper error messages are received
+        // assert that the proper error messages are received
         $errors = [
             'title' => 'Not found.',
             'detail' => 'Pull failed, product not found with id: '.$product['id']
@@ -679,71 +819,148 @@ class ProductControllerTest extends EcommerceTestCase
         $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
     }
 
-    // public function test_pull_products_multiple_brands()
-    // {
-    //     $productFirstBrand  = $this->productRepository->create($this->faker->product([
-    //         'active' => 1,
-    //         'brand' => $this->faker->word
-    //     ]));
-    //     $productSecondBrand  = $this->productRepository->create($this->faker->product([
-    //         'active' => 1,
-    //         'brand' => $this->faker->word
-    //     ]));
-    //     $results = $this->call('GET','/product?brands[]='.$productFirstBrand['brand'].'&brands[]='.$productSecondBrand['brand']);
+    public function test_pull_products_multiple_brands()
+    {
+        $productFirstBrand = $this->fakeProduct([
+            'active' => true,
+            'brand' => $this->faker->word
+        ]);
 
-    //     //assert response status code
-    //     $this->assertEquals(200, $results->getStatusCode());
-    //     $this->assertEquals([$productFirstBrand->getArrayCopy(), $productSecondBrand->getArrayCopy()], $results->decodeResponseJson('data'));
-    // }
+        $productSecondBrand = $this->fakeProduct([
+            'active' => true,
+            'brand' => $this->faker->word
+        ]);
 
-    // public function test_pull_products_brands_not_set_on_request()
-    // {
-    //     $productFirstBrand  = $this->productRepository->create($this->faker->product([
-    //         'active' => 1,
-    //         'brand' => ConfigService::$brand
-    //     ]));
+        $expected = [
+            'data' => collect([$productFirstBrand, $productSecondBrand])
+                ->map(function($product, $key) {
+                    return [
+                        'type' => 'product',
+                        'id' => $product['id'],
+                        'attributes' => array_merge(
+                            array_diff_key( // get an array copy of product, without specified keys
+                                $product,
+                                [
+                                    'id' => 1,
+                                    'is_physical' => 1
+                                ]
+                            ),
+                            [ // fix php type juggling
+                                'is_physical' => (bool) $product['is_physical'],
+                                'updated_at' => null
+                            ]
+                        )
+                    ];
+                })
+                ->all()
+        ];
 
-    //     $productSecondBrand  = $this->productRepository->create($this->faker->product([
-    //         'active' => 1,
-    //         'brand' => $this->faker->word
-    //     ]));
-    //     $results = $this->call('GET','/product');
+        $results = $this->call(
+            'GET',
+            '/product?brands[]='.$productFirstBrand['brand'].'&brands[]='.$productSecondBrand['brand']
+        );
 
-    //     //assert response status code
-    //     $this->assertEquals(200, $results->getStatusCode());
+        //assert response status code
+        $this->assertEquals(200, $results->getStatusCode());
 
-    //     //only products defined on config brand are pulled
-    //     $this->assertEquals([$productFirstBrand->getArrayCopy()], $results->decodeResponseJson('data'));
-    // }
+        $this->assertArraySubset($expected, $results->decodeResponseJson());
+    }
 
-    // public function test_update_product_category()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+    public function test_pull_products_brands_not_set_on_request()
+    {
+        $productFirstBrand = $this->fakeProduct([
+            'active' => true,
+            'brand' => ConfigService::$brand
+        ]);
 
-    //     $product = $this->productRepository->create($this->faker->product());
+        $productSecondBrand = $this->fakeProduct([
+            'active' => true,
+            'brand' => $this->faker->word
+        ]);
 
-    //     $newCategory = $this->faker->text;
+        $results = $this->call('GET','/product');
 
-    //     $results = $this->call('PATCH', '/product/' . $product['id'], [
-    //         'category' => $newCategory, 'sku' => $product['sku']
-    //     ]);
+        //assert response status code
+        $this->assertEquals(200, $results->getStatusCode());
 
-    //     $jsonResponse = $results->decodeResponseJson();
+        // assert product with the new description subset of response
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    [
+                        'id' => $productFirstBrand['id'],
+                        'type' => 'product',
+                        // todo: this could possibly be done better
+                        'attributes' => array_merge(
+                            array_diff_key($productFirstBrand, ['id' => 1]),
+                            [
+                                'is_physical' => (bool) $productFirstBrand['is_physical'],
+                                'updated_at' => null
+                            ]
+                        ),
+                    ]
+                ],
+            ],
+            $results->decodeResponseJson()
+        );
+    }
 
-    //     //assert response status code
-    //     $this->assertEquals(201, $results->getStatusCode());
+    public function test_update_product_category()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    //     unset($product['discounts']);
+        $product = $this->fakeProduct();
 
-    //     //assert product with the new category subset of response
-    //     $product['category'] = $newCategory;
-    //     $product['updated_on']  = Carbon::now()->toDateTimeString();
-    //     $this->assertArraySubset($product, $jsonResponse['data'][0]);
+        $newCategory = $this->faker->text;
 
-    //     //assert product updated in the db
-    //     $this->assertDatabaseHas(
-    //         ConfigService::$tableProduct,
-    //         iterator_to_array($product)
-    //     );
-    // }
+        $results = $this->call(
+            'PATCH',
+            '/product/' . $product['id'],
+            [
+                'data' => [
+                    'id' => $product['id'],
+                    'type' => 'product',
+                    'attributes' => [
+                        'category' => $newCategory,
+                        'sku' => $product['sku']
+                    ],
+                ],
+            ]
+        );
+
+        // assert response status code
+        $this->assertEquals(200, $results->getStatusCode());
+
+        // assert product with the new category subset of response
+        $this->assertEquals(
+            [
+                'data' => [
+                    'id' => $product['id'],
+                    'type' => 'product',
+
+                    // todo: this could possibly be done better
+                    'attributes' => array_merge(
+                        array_diff_key($product, ['id' => 1]),
+                        [
+                            'category' => $newCategory,
+                            'updated_at' => Carbon::now()->toDateTimeString()
+                        ]
+                    ),
+                ],
+            ],
+            $results->decodeResponseJson()
+        );
+
+        // assert product updated in the db
+        $this->assertDatabaseHas(
+            ConfigService::$tableProduct,
+            array_merge(
+                $product,
+                [
+                    'category' => $newCategory,
+                    'updated_at' => Carbon::now()->toDateTimeString()
+                ]
+            )
+        );
+    }
 }

@@ -17,7 +17,6 @@
     "railroad/usora": "^2.1",
     "railroad/doctrine": "^0.0",
     "ext-redis": "*",
-    "symfony/expression-language": "^4.1",
     "railroad/doctrine-array-hydrator": "^1.0"
   },
   "require-dev": {

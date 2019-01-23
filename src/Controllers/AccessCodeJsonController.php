@@ -101,16 +101,10 @@ class AccessCodeJsonController extends BaseController
             ->setMaxResults($request->get('limit', 10))
             ->setFirstResult($first)
             ->where($qb->expr()->in($alias . '.brand', ':brands'))
-            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'));
+            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
+            ->setParameter('brands', $brands);
 
-        /**
-         * @var $q \Doctrine\ORM\Query
-         */
-        $q = $qb->getQuery();
-
-        $q->setParameter('brands', $brands);
-
-        $accessCodes = $q->getResult();
+        $accessCodes = $qb->getQuery()->getResult();
 
         // fetch related products, as a dictionary
         $productRepository = $this->entityManager
@@ -125,7 +119,11 @@ class AccessCodeJsonController extends BaseController
             $productsMap[$product->getId()] = $product;
         }
 
-        return ResponseService::decoratedAccessCode($accessCodes, $productsMap);
+        return ResponseService::decoratedAccessCode(
+            $accessCodes,
+            $productsMap,
+            $qb
+        );
     }
 
     /**

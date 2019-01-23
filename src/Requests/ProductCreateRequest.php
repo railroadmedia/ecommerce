@@ -64,10 +64,10 @@ class ProductCreateRequest extends FormRequest
                 ),
             'data.attributes.active' => 'required|boolean',
             'data.attributes.is_physical' => 'required|boolean',
-            'data.attributes.weight' => 'required_if:is_physical,true',
+            'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
             'data.attributes.stock' => 'nullable|numeric',
-            'data.attributes.subscription_interval_type' => 'required_if:type,' . ConfigService::$typeSubscription,
-            'data.attributes.subscription_interval_count' => 'required_if:type,' . ConfigService::$typeSubscription
+            'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . ConfigService::$typeSubscription,
+            'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . ConfigService::$typeSubscription
         ];
     }
 
