@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Providers\UserProviderInterface;
 use Railroad\Ecommerce\Repositories\AccessCodeRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\AccessCodeJsonClaimRequest;
@@ -12,7 +13,7 @@ use Railroad\Ecommerce\Services\AccessCodeService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\Usora\Services\ConfigService as UsoraConfigService;
-use Railroad\Usora\Repositories\UserRepository;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class AccessCodeJsonController extends BaseController
@@ -38,9 +39,9 @@ class AccessCodeJsonController extends BaseController
     private $productRepository;
 
     /**
-     * @var UserRepository
+     * @var UserProviderInterface
      */
-    private $userRepository;
+    private $userProvider;
 
     /**
      * AccessCodeJsonController constructor.
@@ -49,14 +50,12 @@ class AccessCodeJsonController extends BaseController
      * @param AccessCodeRepository $accessCodeRepository
      * @param PermissionService $permissionService
      * @param ProductRepository $productRepository
-     * @param UserRepository $userRepository
      */
     public function __construct(
         AccessCodeService $accessCodeService,
         AccessCodeRepository $accessCodeRepository,
         PermissionService $permissionService,
-        ProductRepository $productRepository,
-        UserRepository $userRepository
+        ProductRepository $productRepository
     ) {
         parent::__construct();
 
@@ -64,7 +63,8 @@ class AccessCodeJsonController extends BaseController
         $this->accessCodeRepository = $accessCodeRepository;
         $this->permissionService = $permissionService;
         $this->productRepository = $productRepository;
-        $this->userRepository = $userRepository;
+        $this->userProvider = app()->make(UserProviderInterface::class);
+
     }
 
     /**
@@ -82,14 +82,7 @@ class AccessCodeJsonController extends BaseController
 
         $accessCodes = $this->accessCodeRepository->query()
             ->select(
-                ConfigService::$tableAccessCode . '.*',
-                UsoraConfigService::$tableUsers . '.email as claimer'
-            )
-            ->leftJoin(
-                UsoraConfigService::$tableUsers,
-                ConfigService::$tableAccessCode . '.claimer_id',
-                '=',
-                UsoraConfigService::$tableUsers . '.id'
+                ConfigService::$tableAccessCode . '.*'
             )
             ->whereIn(
                 'brand',
@@ -142,14 +135,7 @@ class AccessCodeJsonController extends BaseController
 
         $accessCodes = $this->accessCodeRepository->query()
             ->select(
-                ConfigService::$tableAccessCode . '.*',
-                UsoraConfigService::$tableUsers . '.email as claimer'
-            )
-            ->leftJoin(
-                UsoraConfigService::$tableUsers,
-                ConfigService::$tableAccessCode . '.claimer_id',
-                '=',
-                UsoraConfigService::$tableUsers . '.id'
+                ConfigService::$tableAccessCode . '.*'
             )
             ->whereIn(
                 'brand',
@@ -193,21 +179,12 @@ class AccessCodeJsonController extends BaseController
             'claim.access_codes'
         );
 
-        $user = $this->userRepository
-            ->query()
-            ->where('email', '=', $request->get('claim_for_user_email'))
-            ->first();
-
-        throw_if(
-            is_null($user),
-            new NotFoundException(
-                'Claim failed, user not found with email: '
-                . $request->get('claim_for_user_email')
-            )
-        );
+        if (empty($request->get('claim_for_user_id'))) {
+            throw new NotFoundHttpException();
+        }
 
         $accessCode = $this->accessCodeService
-            ->claim($request->get('access_code'), $user);
+            ->claim($request->get('access_code'), $request->get('claim_for_user_id'));
 
         return reply()->json($accessCode);
     }

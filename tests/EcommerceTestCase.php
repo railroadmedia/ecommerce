@@ -15,6 +15,7 @@ use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Providers\UserProviderInterface;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
+use Railroad\Ecommerce\Tests\Providers\UserTestProvider;
 use Railroad\Ecommerce\Tests\Resources\Models\User;
 use Railroad\Location\Providers\LocationServiceProvider;
 use Railroad\Permissions\Providers\PermissionsServiceProvider;
@@ -106,7 +107,6 @@ class EcommerceTestCase extends BaseTestCase
         $defaultConfig = require(__DIR__ . '/../config/ecommerce.php');
         $locationConfig = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
         $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
-        $usoraConfig = require(__DIR__ . '/../vendor/railroad/usora/config/usora.php');
 
         $app['config']->set('ecommerce.database_connection_name', 'testbench');
         $app['config']->set('ecommerce.cache_duration', 60);
@@ -157,9 +157,6 @@ class EcommerceTestCase extends BaseTestCase
 
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
-        $app['config']->set('usora.data_mode', $usoraConfig['data_mode']);
-        $app['config']->set('usora.table_prefix', $usoraConfig['table_prefix']);
-        $app['config']->set('usora.tables', $usoraConfig['tables']);
 
         // setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
@@ -191,11 +188,6 @@ class EcommerceTestCase extends BaseTestCase
         );
 
         // allows access to built in user auth
-        $app['config']->set('auth.providers.users.model', User::class);
-
-        // allows access to built in user auth
-        $app['config']->set('auth.providers.users.model', User::class);
-
         if (!$app['db']->connection()
             ->getSchemaBuilder()
             ->hasTable('users')) {
@@ -207,9 +199,15 @@ class EcommerceTestCase extends BaseTestCase
                     function (Blueprint $table) {
                         $table->increments('id');
                         $table->string('email');
+                        $table->string('display_name');
+                        $table->string('password');
                     }
                 );
         }
+
+
+
+        $app->instance(UserProviderInterface::class, new UserTestProvider());
 
         // countries
 
@@ -220,26 +218,6 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(CountriesServiceProvider::class);
         $app->register(PermissionsServiceProvider::class);
         $app->register(ResponseServiceProvider::class);
-        $app->register(UsoraServiceProvider::class);
-
-        $app->bind(
-            'UserProviderInterface',
-            function () {
-                $mock =
-                    $this->getMockBuilder('UserProviderInterface')
-                        ->setMethods(['create'])
-                        ->getMock();
-
-                $mock->method('create')
-                    ->willReturn(
-                        [
-                            'id' => 1,
-                            'email' => $this->faker->email,
-                        ]
-                    );
-                return $mock;
-            }
-        );
     }
 
     /**
@@ -264,7 +242,7 @@ class EcommerceTestCase extends BaseTestCase
                 ->query()
                 ->from('users')
                 ->insertGetId(
-                    ['email' => $email]
+                    ['email' => $email, 'password' => 'test12345', 'display_name' => 'test_name' . rand()]
                 );
 
         Auth::shouldReceive('check')
@@ -274,6 +252,7 @@ class EcommerceTestCase extends BaseTestCase
             ->andReturn($userId);
 
         $userMockResults = ['id' => $userId, 'email' => $email];
+
         Auth::shouldReceive('user')
             ->andReturn($userMockResults);
 

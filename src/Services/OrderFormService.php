@@ -13,6 +13,7 @@ use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Mail\OrderInvoice;
+use Railroad\Ecommerce\Providers\UserProviderInterface;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Repositories\OrderDiscountRepository;
@@ -28,7 +29,6 @@ use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
-use Railroad\Usora\Repositories\UserRepository;
 
 class OrderFormService
 {
@@ -218,7 +218,7 @@ class OrderFormService
         $this->orderDiscountRepository = $orderDiscountRepository;
         $this->userProductService = $userProductService;
         $this->discountService = $discountService;
-        $this->userProvider = app()->make('UserProviderInterface');
+        $this->userProvider = app()->make(UserProviderInterface::class);
     }
 
     /**
@@ -232,7 +232,7 @@ class OrderFormService
         Request $request,
         $cartItems
     ) {
-        $user = auth()->user() ?? null;
+        $userId = auth()->id() ?? null;
 
         if (!empty($request->get('token'))) {
             $orderFormInput = session()->get('order-form-input', []);
@@ -244,9 +244,10 @@ class OrderFormService
         $currency = $request->get('currency', $this->currencyService->get());
 
         if (!empty($request->get('account-creation-email')) && empty($user)) {
-            $user = $this->userProvider->create(
+            $userId = $this->userProvider->create(
                 $request->get('account-creation-email'),
-                $request->get('account-creation-password')
+                $request->get('account-creation-password'),
+                $request->get('account-creation-email')
             );
         }
 
@@ -316,7 +317,7 @@ class OrderFormService
 
                 if (!$paymentMethod ||
                     !$paymentMethod['user']['user_id'] ||
-                    $paymentMethod['user']['user_id'] != $user['id']) {
+                    $paymentMethod['user']['user_id'] != $userId) {
                     $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
 
                     return [
@@ -368,7 +369,7 @@ class OrderFormService
                         $charge, $paymentMethodId, $billingAddressDB
                         ) = $this->chargeAndCreatePaymentMethod(
                         $request,
-                        $user,
+                        $userId,
                         $customer ?? null,
                         $cartItemsWithTaxesAndCosts,
                         $currency
@@ -463,7 +464,7 @@ class OrderFormService
         $order = $this->createOrder(
             $request,
             $cartItemsWithTaxesAndCosts,
-            $user ?? null,
+            $userId,
             $customer ?? null,
             $billingAddressDB,
             $payment
@@ -530,7 +531,7 @@ class OrderFormService
                     $cartItemsWithTaxesAndCosts,
                     $key,
                     $cartItem,
-                    $user,
+                    $userId,
                     $currency,
                     $paymentMethodId,
                     $payment,
@@ -563,7 +564,7 @@ class OrderFormService
                 $cartItemsWithTaxesAndCosts,
                 0,
                 [],
-                $user,
+                $userId,
                 $currency,
                 $paymentMethodId,
                 $payment,
@@ -630,7 +631,7 @@ class OrderFormService
      */
     private function chargeAndCreatePaymentMethod(
         OrderFormSubmitRequest $request,
-        $user,
+        $userId,
         $customer,
         $cartItemsWithTaxesAndCosts,
         $currency
@@ -660,7 +661,7 @@ class OrderFormService
             [
                 'type' => CartAddressService::BILLING_ADDRESS_TYPE,
                 'brand' => ConfigService::$brand,
-                'user_id' => $user['id'] ?? null,
+                'user_id' => $userId ?? null,
                 'customer_id' => $customer['id'] ?? null,
                 'zip' => $request->get('billing-zip-or-postal-code'),
                 'state' => $request->get('billing-region'),
@@ -671,7 +672,7 @@ class OrderFormService
         );
 
         $paymentMethodId = $this->paymentMethodService->createUserCreditCard(
-            $user['id'],
+            $userId,
             $card->fingerprint,
             $card->last4,
             '',
@@ -725,7 +726,7 @@ class OrderFormService
             [
                 'type' => CartAddressService::BILLING_ADDRESS_TYPE,
                 'brand' => ConfigService::$brand,
-                'user_id' => $user['id'] ?? null,
+                'user_id' => $userId ?? null,
                 'customer_id' => $customer['id'] ?? null,
                 'zip' => $request->get('billing-zip-or-postal-code'),
                 'state' => $request->get('billing-region'),
@@ -736,7 +737,7 @@ class OrderFormService
         );
 
         $paymentMethodId = $this->paymentMethodService->createPayPalBillingAgreement(
-            $user['id'],
+            $userId,
             $billingAgreementId,
             $billingAddressDB['id'],
             $request->get('gateway'),
@@ -965,7 +966,7 @@ class OrderFormService
     private function createOrder(
         Request $request,
         $cartItemsWithTaxesAndCosts,
-        $user,
+        $userId,
         $customer,
         $billingAddressDB,
         $payment
@@ -986,11 +987,12 @@ class OrderFormService
             );
         } else {
             //save the shipping address
+
             $shippingAddressDB = $this->addressRepository->create(
                 [
                     'type' => ConfigService::$shippingAddressType,
                     'brand' => ConfigService::$brand,
-                    'user_id' => $user['id'] ?? null,
+                    'user_id' => $userId ?? null,
                     'customer_id' => $customer['id'] ?? null,
                     'first_name' => $request->get('shipping-first-name'),
                     'last_name' => $request->get('shipping-last-name'),
@@ -1015,7 +1017,7 @@ class OrderFormService
                 'tax' => $cartItemsWithTaxesAndCosts['totalTax'],
                 'paid' => $paid,
                 'brand' => $request->input('brand', ConfigService::$brand),
-                'user_id' => $user['id'] ?? null,
+                'user_id' => $userId ?? null,
                 'customer_id' => $customer['id'] ?? null,
                 'shipping_costs' => $shipping,
                 'shipping_address_id' => $shippingAddressDB['id'],
@@ -1058,7 +1060,7 @@ class OrderFormService
         $cartItemsWithTaxesAndCosts,
         $key = 0,
         $cartItem = [],
-        $user,
+        $userId,
         $currency,
         $paymentMethodId,
         $payment,
@@ -1132,7 +1134,7 @@ class OrderFormService
             [
                 'brand' => $brand,
                 'type' => $type,
-                'user_id' => $user['id'],
+                'user_id' => $userId,
                 'order_id' => $order['id'],
                 'product_id' => $product['id'] ?? null,
                 'is_active' => true,

@@ -70,7 +70,7 @@ class AccessCodeService
         $this->userProductService = $userProductService;
     }
 
-    public function claim($accessCode, $user)
+    public function claim($accessCode, $userId)
     {
         // get the access code data
         $accessCode = $this->accessCodeRepository
@@ -87,7 +87,7 @@ class AccessCodeService
         // get subscriptions
         $subscriptions = $this->subscriptionRepository
             ->query()
-            ->where('user_id', $user['id'])
+            ->where('user_id', $userId)
             ->whereIn('product_id', $accessCodeProducts->pluck('id')->all())
             ->get();
 
@@ -189,7 +189,7 @@ class AccessCodeService
             }
 
             $this->userProductService->saveUserProduct(
-                $user['id'],
+                $userId,
                 $product['id'],
                 1,
                 $expirationDate
@@ -200,7 +200,7 @@ class AccessCodeService
             $accessCode['id'],
             [
                 'is_claimed' => true,
-                'claimer_id' => $user['id'],
+                'claimer_id' => $userId,
                 'claimed_on' => Carbon::now()->toDateTimeString(),
                 'updated_on' => Carbon::now()->toDateTimeString()
             ]

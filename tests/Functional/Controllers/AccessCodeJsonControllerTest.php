@@ -3,11 +3,11 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Providers\UserProviderInterface;
 use Railroad\Ecommerce\Repositories\AccessCodeRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
-use Railroad\Usora\Repositories\UserRepository;
 
 class AccessCodeJsonControllerTest extends EcommerceTestCase
 {
@@ -22,9 +22,9 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
     protected $productRepository;
 
     /**
-     * @var UserRepository
+     * @var mixed UserProviderInterface
      */
-    protected $userRepository;
+    private $userProvider;
 
     protected function setUp()
     {
@@ -32,20 +32,21 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         $this->accessCodeRepository = $this->app->make(AccessCodeRepository::class);
         $this->productRepository = $this->app->make(ProductRepository::class);
-        $this->userRepository = $this->app->make(UserRepository::class);
+        $this->userProvider = app()->make(UserProviderInterface::class);
     }
 
     public function test_get_all_access_codes_when_empty()
     {
-        $this->permissionServiceMock->method('can')->willReturn(true);
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
 
         $expectedResults = [
             'data' => [],
             'meta' => [
                 'totalResults' => 0,
                 'page' => 1,
-                'limit' => 10
-            ]
+                'limit' => 10,
+            ],
         ];
 
         $results = $this->call('GET', '/access-codes');
@@ -57,7 +58,8 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_get_all_access_codes()
     {
-        $this->permissionServiceMock->method('can')->willReturn(true);
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
 
         $page = 1;
         $limit = 30;
@@ -65,17 +67,21 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         $nrAccessCodes = 10;
         $accessCodes = [];
 
-        for($i = 0; $i < $nrAccessCodes; $i++) {
+        for ($i = 0; $i < $nrAccessCodes; $i++) {
             $accessCode = $this->accessCodeRepository->create($this->faker->accessCode());
-            $accessCodes[] = iterator_to_array($accessCode) + ['claimer' => null];
+            $accessCodes[] = iterator_to_array($accessCode);
         }
 
-        $results = $this->call('GET', '/access-codes', [
-            'page' => $page,
-            'limit' => $limit,
-            'order_by_column' => $sort,
-            'order_by_direction' => 'asc'
-        ]);
+        $results = $this->call(
+            'GET',
+            '/access-codes',
+            [
+                'page' => $page,
+                'limit' => $limit,
+                'order_by_column' => $sort,
+                'order_by_direction' => 'asc',
+            ]
+        );
 
         $this->assertEquals(200, $results->status());
 
@@ -84,18 +90,19 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_search_access_codes()
     {
-        $this->permissionServiceMock->method('can')->willReturn(true);
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
 
         $nrAccessCodes = 10;
         $accessCodes = [];
 
-        for($i = 0; $i < $nrAccessCodes; $i++) {
+        for ($i = 0; $i < $nrAccessCodes; $i++) {
             $accessCode = $this->accessCodeRepository->create($this->faker->accessCode());
             $accessCodes[] = iterator_to_array($accessCode);
         }
 
         $selectedAccessCodeIndex = $this->faker->numberBetween(0, $nrAccessCodes - 1);
-        $selectedAccessCode = $accessCodes[$selectedAccessCodeIndex] + ['claimer' => null];
+        $selectedAccessCode = $accessCodes[$selectedAccessCodeIndex];
         $selectedCodeLength = strlen($selectedAccessCode['code']);
         $codeFragment = substr(
             $selectedAccessCode['code'],
@@ -103,9 +110,13 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             $this->faker->numberBetween(3, intdiv($selectedCodeLength, 2))
         );
 
-        $response = $this->call('GET', '/access-codes/search', [
-            'term' => $codeFragment
-        ]);
+        $response = $this->call(
+            'GET',
+            '/access-codes/search',
+            [
+                'term' => $codeFragment,
+            ]
+        );
 
         $this->assertContains($selectedAccessCode, $response->decodeResponseJson()['data']);
     }
@@ -118,53 +129,16 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(422, $response->getStatusCode());
 
         // assert that all the validation errors are returned
-        $this->assertEquals([
-            [
-                'source' => 'access_code',
-                'detail' => 'The access code field is required.',
-            ],
-            [
-                'source' => 'claim_for_user_email',
-                'detail' => 'The claim for user email field is required.',
-            ]
-        ], $response->decodeResponseJson('meta')['errors']);
-    }
-
-    public function test_claim_for_user_email_not_found()
-    {
-        $userId  = $this->createAndLogInNewUser();
-
-        $product = $this->productRepository->create(
-            $this->faker->product([
-                'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                'subscription_interval_count' => 1,
-            ])
-        );
-
-        $accessCode = $this->accessCodeRepository->create(
-            $this->faker->accessCode([
-                'product_ids' => [$product['id']],
-                'is_claimed' => 0,
-                'claimed_on' => null
-            ])
-        );
-
-        $email = $this->faker->email;
-
-        $response = $this->call('POST', '/access-codes/claim', [
-            'access_code' => $accessCode['code'],
-            'claim_for_user_email' => $email
-        ]);
-
-        //assert the response status code
-        $this->assertEquals(404, $response->getStatusCode());
-
-        //assert that all the validation errors are returned
         $this->assertEquals(
             [
-                'title' => 'Not found.',
-                'detail' => 'Claim failed, user not found with email: ' . $email,
+                [
+                    'source' => 'access_code',
+                    'detail' => 'The access code field is required.',
+                ],
+                [
+                    'source' => 'claim_for_user_id',
+                    'detail' => 'The claim for user id field is required.',
+                ],
             ],
             $response->decodeResponseJson('meta')['errors']
         );
@@ -172,36 +146,44 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
     public function test_claim()
     {
-        $adminId  = $this->createAndLogInNewUser();
+        $adminId = $this->createAndLogInNewUser();
 
         $email = $this->faker->email;
 
-        $user = $this->userRepository->create([
-            'email' => $email,
-            'password' => $this->faker->password,
-            'display_name' => $this->faker->name
-        ]);
+        $userId = $this->userProvider->create(
+            $email,
+            $this->faker->password,
+            $this->faker->name
+        );
 
         $product = $this->productRepository->create(
-            $this->faker->product([
-                'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                'subscription_interval_count' => 1,
-            ])
+            $this->faker->product(
+                [
+                    'type' => ConfigService::$typeSubscription,
+                    'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                    'subscription_interval_count' => 1,
+                ]
+            )
         );
 
         $accessCode = $this->accessCodeRepository->create(
-            $this->faker->accessCode([
-                'product_ids' => [$product['id']],
-                'is_claimed' => 0,
-                'claimed_on' => null
-            ])
+            $this->faker->accessCode(
+                [
+                    'product_ids' => [$product['id']],
+                    'is_claimed' => 0,
+                    'claimed_on' => null,
+                ]
+            )
         );
 
-        $response = $this->call('POST', '/access-codes/claim', [
-            'access_code' => $accessCode['code'],
-            'claim_for_user_email' => $email
-        ]);
+        $response = $this->call(
+            'POST',
+            '/access-codes/claim',
+            [
+                'access_code' => $accessCode['code'],
+                'claim_for_user_id' => $userId,
+            ]
+        );
 
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -209,12 +191,12 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tableUserProduct,
             [
-                'user_id' => $user['id'],
+                'user_id' => $userId,
                 'product_id' => $product['id'],
                 'expiration_date' => Carbon::now()
                     ->addYear(1)
                     ->startOfDay()
-                    ->toDateTimeString()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -224,37 +206,48 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => true,
-                'claimer_id' => $user['id'],
-                'claimed_on' => Carbon::now()->toDateTimeString()
+                'claimer_id' => $userId,
+                'claimed_on' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }
 
     public function test_release()
     {
-        $userId  = $this->createAndLogInNewUser();
+        $userId = $this->createAndLogInNewUser();
 
-        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')
+            ->willReturn(true);
 
         $product = $this->productRepository->create(
-            $this->faker->product([
-                'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                'subscription_interval_count' => 1,
-            ])
+            $this->faker->product(
+                [
+                    'type' => ConfigService::$typeSubscription,
+                    'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                    'subscription_interval_count' => 1,
+                ]
+            )
         );
 
         $accessCode = $this->accessCodeRepository->create(
-            $this->faker->accessCode([
-                'product_ids' => [$product['id']],
-                'is_claimed' => 1,
-                'claimed_on' => Carbon::now()->toDateTimeString()
-            ])
+            $this->faker->accessCode(
+                [
+                    'product_ids' => [$product['id']],
+                    'is_claimed' => 1,
+                    'claimed_on' => Carbon::now()
+                        ->toDateTimeString(),
+                ]
+            )
         );
 
-        $response = $this->call('POST', '/access-codes/release', [
-            'access_code_id' => $accessCode['id']
-        ]);
+        $response = $this->call(
+            'POST',
+            '/access-codes/release',
+            [
+                'access_code_id' => $accessCode['id'],
+            ]
+        );
 
         //assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
@@ -266,7 +259,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
                 'id' => $accessCode['id'],
                 'is_claimed' => false,
                 'claimer_id' => null,
-                'claimed_on' => null
+                'claimed_on' => null,
             ]
         );
     }
@@ -279,47 +272,61 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(422, $response->getStatusCode());
 
         // assert that all the validation errors are returned
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                'source' => 'access_code_id',
-                'detail' => 'The access code id field is required.',
-            ]
-        ], $response->decodeResponseJson('meta')['errors']);
+                [
+                    'source' => 'access_code_id',
+                    'detail' => 'The access code id field is required.',
+                ],
+            ],
+            $response->decodeResponseJson('meta')['errors']
+        );
     }
 
     public function test_release_validation_unclaimed()
     {
-        $userId  = $this->createAndLogInNewUser();
+        $userId = $this->createAndLogInNewUser();
 
         $product = $this->productRepository->create(
-            $this->faker->product([
-                'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                'subscription_interval_count' => 1,
-            ])
+            $this->faker->product(
+                [
+                    'type' => ConfigService::$typeSubscription,
+                    'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                    'subscription_interval_count' => 1,
+                ]
+            )
         );
 
         $accessCode = $this->accessCodeRepository->create(
-            $this->faker->accessCode([
-                'product_ids' => [$product['id']],
-                'is_claimed' => 0,
-                'claimed_on' => null
-            ])
+            $this->faker->accessCode(
+                [
+                    'product_ids' => [$product['id']],
+                    'is_claimed' => 0,
+                    'claimed_on' => null,
+                ]
+            )
         );
 
-        $response = $this->call('POST', '/access-codes/release', [
-            'access_code_id' => $accessCode['id']
-        ]);
+        $response = $this->call(
+            'POST',
+            '/access-codes/release',
+            [
+                'access_code_id' => $accessCode['id'],
+            ]
+        );
 
         //assert the response status code
         $this->assertEquals(422, $response->getStatusCode());
 
         // assert that all the validation errors are returned
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                'source' => 'access_code_id',
-                'detail' => 'The selected access code id is invalid.',
-            ]
-        ], $response->decodeResponseJson('meta')['errors']);
+                [
+                    'source' => 'access_code_id',
+                    'detail' => 'The selected access code id is invalid.',
+                ],
+            ],
+            $response->decodeResponseJson('meta')['errors']
+        );
     }
 }
