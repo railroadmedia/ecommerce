@@ -7,6 +7,7 @@ use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
+use Railroad\Ecommerce\Transformers\DiscountTransformer;
 use Railroad\Ecommerce\Transformers\ProductTransformer;
 use Spatie\Fractal\Fractal;
 
@@ -83,6 +84,43 @@ class ResponseService extends FractalResponseService
                 $entityOrEntities,
                 'product',
                 new ProductTransformer(),
+                new JsonApiSerializer(),
+                $queryBuilder
+            )->parseIncludes($includes);
+    }
+
+    /**
+     * @param string $url
+     *
+     * @return Fractal
+     */
+    public static function productThumbnail(string $url)
+    {
+        return fractal(
+                null,
+                function($notUsed) {
+                    return null;
+                },
+                new JsonApiSerializer()
+            )->addMeta(['url' => $url]);
+    }
+
+    /**
+     * @param $entityOrEntities
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
+    public static function discount(
+        $entityOrEntities,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
+        return self::create(
+                $entityOrEntities,
+                'discount',
+                new DiscountTransformer(),
                 new JsonApiSerializer(),
                 $queryBuilder
             )->parseIncludes($includes);

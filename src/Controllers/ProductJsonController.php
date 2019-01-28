@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
 use Illuminate\Http\Request;
 use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
+use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -48,14 +50,14 @@ class ProductJsonController extends BaseController
     /**
      * ProductJsonController constructor.
      *
-     * @param \Railroad\Ecommerce\Repositories\ProductRepository $productRepository
+     * @param EntityManager $entityManager
+     * @param JsonApiHydrator $jsonApiHydrator
      * @param \Railroad\Permissions\Services\PermissionService $permissionService
      * @param \Railroad\RemoteStorage\Services\RemoteStorageService $remoteStorageService
      */
     public function __construct(
         EntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
-        // ProductRepository $productRepository,
         PermissionService $permissionService,
         RemoteStorageService $remoteStorageService
     ) {
@@ -185,17 +187,23 @@ class ProductJsonController extends BaseController
             );
         }
 
-        // todo - get details about relations, update
+        $orderItems = $this->entityManager
+                        ->getRepository(OrderItem::class)
+                        ->findByProduct($product);
 
-        // throw_if(
-        //     (count($product->order) > 0),
-        //     new NotAllowedException('Delete failed, exists orders that contain the selected product.')
-        // );
+        throw_if(
+            (count($orderItems) > 0),
+            new NotAllowedException('Delete failed, exists orders that contain the selected product.')
+        );
 
-        // throw_if(
-        //     (count($product->discounts) > 0),
-        //     new NotAllowedException('Delete failed, exists discounts defined for the selected product.')
-        // );
+        $discounts = $this->entityManager
+                        ->getRepository(Discount::class)
+                        ->findByProduct($product);
+
+        throw_if(
+            (count($discounts) > 0),
+            new NotAllowedException('Delete failed, exists discounts defined for the selected product.')
+        );
 
         $this->entityManager->remove($product);
         $this->entityManager->flush();
@@ -203,33 +211,27 @@ class ProductJsonController extends BaseController
         return ResponseService::empty(204);
     }
 
-    /** Upload product thumbnail on remote storage using remotestorage package.
+    /**
+     * Upload product thumbnail on remote storage using remotestorage package.
      * Throw an error JSON response if the upload failed or return the uploaded thumbnail url.
      *
      * @param Request $request
+     *
      * @return JsonResponse
      */
     public function uploadThumbnail(Request $request)
     {
-        // $target = $request->get('target');
-        // $upload = $this->remoteStorageService->put($target, $request->file('file'));
+        $target = $request->get('target');
+        $upload = $this->remoteStorageService->put($target, $request->file('file'));
 
-        // throw_if(
-        //     (!$upload),
-        //     reply()->json(
-        //         new Entity(['message' => 'Upload product thumbnail failed']),
-        //         [
-        //             'code' => 400,
-        //         ]
-        //     )
-        // );
+        throw_if(
+            (!$upload),
+            new NotFoundException('Upload product thumbnail failed')
+        );
 
-        // return reply()->json(
-        //     new Entity(['url' => $this->remoteStorageService->url($target)]),
-        //     [
-        //         'code' => 201,
-        //     ]
-        // );
+        return ResponseService::productThumbnail(
+            $this->remoteStorageService->url($target)
+        );
     }
 
     /**

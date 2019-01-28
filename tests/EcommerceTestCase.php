@@ -35,7 +35,9 @@ class EcommerceTestCase extends BaseTestCase
         'accessCodes' => 'ecommerce_access_code',
         'subscriptions' => 'ecommerce_subscription',
         'addresses' => 'ecommerce_address',
-        'customers' => 'ecommerce_customer'
+        'customers' => 'ecommerce_customer',
+        'orderItems' => 'ecommerce_order_item',
+        'discounts' => 'ecommerce_discount'
     ];
 
     /**
@@ -414,6 +416,42 @@ class EcommerceTestCase extends BaseTestCase
         $customer['id'] = $customerId;
 
         return $customer;
+    }
+
+    /**
+     * Helper method to seed a test order item
+     *
+     * @return array
+     */
+    public function fakeOrderItem($orderItemStub = []): array
+    {
+        $orderItem = $this->faker->orderItem($orderItemStub);
+
+        $orderItemId = $this->databaseManager
+            ->table(self::TABLES['orderItems'])
+            ->insertGetId($orderItem);
+
+        $orderItem['id'] = $orderItemId;
+
+        return $orderItem;
+    }
+
+    /**
+     * Helper method to seed a test discount
+     *
+     * @return array
+     */
+    public function fakeDiscount($discountStub = []): array
+    {
+        $discount = $this->faker->discount($discountStub);
+
+        $discountId = $this->databaseManager
+            ->table(self::TABLES['discounts'])
+            ->insertGetId($discount);
+
+        $discount['id'] = $discountId;
+
+        return $discount;
     }
 
     protected function tearDown()

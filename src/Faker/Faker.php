@@ -242,7 +242,7 @@ class Faker extends Generator
                 'product_id' => $this->randomNumber(2),
                 'active' => $this->boolean,
                 'visible' => $this->boolean,
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
@@ -259,7 +259,7 @@ class Faker extends Generator
                 'min' => $this->randomNumber(1),
                 'max' => $this->randomNumber(2),
                 'discount_id' => $this->randomNumber(1),
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
@@ -298,7 +298,7 @@ class Faker extends Generator
                 'tax' => $this->randomNumber(),
                 'shipping_costs' => $this->randomNumber(),
                 'total_price' => $this->randomNumber(),
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override

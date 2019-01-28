@@ -1,12 +1,16 @@
 <?php
+
 namespace Railroad\Ecommerce\Exceptions;
+
+use Illuminate\Http\JsonResponse;
 
 class NotAllowedException extends \Exception
 {
     protected $message;
 
     /**
-     * NotFoundException constructor.
+     * NotAllowedException constructor.
+     *
      * @param string $message
      */
     public function __construct($message)
@@ -14,15 +18,22 @@ class NotAllowedException extends \Exception
         $this->message = $message;
     }
 
-    public function render($request){
-        return reply()->json([],
+    /**
+     * @param $request
+     *
+     * @return JsonResponse
+     */
+    public function render($request)
+    {
+        return response()->json(
             [
-                'code' => 403,
                 'errors' => [
                     'title' => 'Not allowed.',
-                    'detail' => $this->message
-                ]
-            ]);
+                    'detail' => $this->message,
+                ],
+            ],
+            403
+        );
     }
 
 }

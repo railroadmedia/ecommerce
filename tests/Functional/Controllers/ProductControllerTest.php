@@ -4,11 +4,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
-use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
-use Railroad\Ecommerce\Repositories\DiscountRepository;
-use Railroad\Ecommerce\Repositories\OrderItemRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ProductControllerTest extends EcommerceTestCase
@@ -411,43 +406,53 @@ class ProductControllerTest extends EcommerceTestCase
         $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
     }
 
-    // public function test_delete_product_when_exists_product_order() // todo - update controller logic 1st
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+    public function test_delete_product_when_exists_product_order()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    //     $userId = $this->createAndLogInNewUser();
+        $userId = $this->createAndLogInNewUser();
 
-    //     $product   = $this->productRepository->create($this->faker->product());
-    //     $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
-    //         'product_id' => $product['id']
-    //     ]));
+        $product = $this->fakeProduct();
 
-    //     $results = $this->call('DELETE', '/product/' . $product['id']);
+        $orderItem = $this->fakeOrderItem([
+            'product_id' => $product['id']
+        ]);
 
-    //     $this->assertEquals(204, $results->status());
-    // }
+        $results = $this->call('DELETE', '/product/' . $product['id']);
 
-    // public function test_delete_product_when_exists_product_discounts() // todo - update controller logic 1st
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $this->assertEquals(403, $results->status());
 
-    //     $userId = $this->createAndLogInNewUser();
+        // assert that the proper error messages are received
+        $errors = [
+            'detail' => 'Delete failed, exists orders that contain the selected product.',
+            'title' => 'Not allowed.'
+        ];
+        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+    }
 
-    //     $product          = $this->productRepository->create($this->faker->product());
-    //     $discount         = $this->discountRepository->create($this->faker->discount([
-    //         'active' => 1,
-    //         'product_id'  => $product['id'],
-    //     ]));
-    //     $discountCriteria = $this->discountCriteriaRepository->create($this->faker->discountCriteria([
-    //         'product_id'  => $product['id'],
-    //         'discount_id' => $discount['id']
-    //     ]));
-    //     $results          = $this->call('DELETE', '/product/' . $product['id']);
+    public function test_delete_product_when_exists_product_discounts()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    //     $this->assertEquals(403, $results->status());
-    //     $this->assertEquals('Not allowed.', $results->decodeResponseJson('meta')['errors']['title']);
-    //     $this->assertEquals('Delete failed, exists discounts defined for the selected product.', $results->decodeResponseJson('meta')['errors']['detail']);
-    // }
+        $userId = $this->createAndLogInNewUser();
+
+        $product = $this->fakeProduct();
+
+        $discount = $this->fakeDiscount([
+            'product_id' => $product['id']
+        ]);
+
+        $results = $this->call('DELETE', '/product/' . $product['id']);
+
+        $this->assertEquals(403, $results->status());
+
+        // assert that the proper error messages are received
+        $errors = [
+            'detail' => 'Delete failed, exists discounts defined for the selected product.',
+            'title' => 'Not allowed.'
+        ];
+        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+    }
 
     public function test_delete_product()
     {
@@ -465,24 +470,6 @@ class ProductControllerTest extends EcommerceTestCase
             'id' => $product['id'],
         ]);
     }
-
-    // public function test_get_all_products_paginated_when_empty() // deprecated
-    // {
-    //     $this->permissionServiceMock->method('can')->willReturn(true);
-
-    //     $results         = $this->call('GET', '/product');
-    //     $expectedResults = [
-    //         'data' => [],
-    //         'meta' => [
-    //             'totalResults' => 0,
-    //             'page'         => 1,
-    //             'limit'        => 10
-    //         ]
-    //     ];
-
-    //     $this->assertEquals(200, $results->status());
-    //     $results->assertJson($expectedResults);
-    // }
 
     public function test_admin_get_all_paginated_products()
     {
@@ -541,25 +528,25 @@ class ProductControllerTest extends EcommerceTestCase
         $this->assertArraySubset($expected, $results->decodeResponseJson());
     }
 
-    // public function test_upload_thumb()
-    // {
-    //     $userId = $this->createAndLogInNewUser();
+    public function test_upload_thumb()
+    {
+        $userId = $this->createAndLogInNewUser();
 
-    //     $filenameAbsolute = $this->faker->image(sys_get_temp_dir());
-    //     $filenameRelative = $this->getFilenameRelativeFromAbsolute($filenameAbsolute);
+        $filenameAbsolute = $this->faker->image(sys_get_temp_dir());
+        $filenameRelative = $this->getFilenameRelativeFromAbsolute($filenameAbsolute);
 
-    //     $response = $this->call('PUT', '/product/upload/', [
-    //         'target' => $filenameRelative,
-    //         'file'   => new UploadedFile($filenameAbsolute, $filenameRelative)
-    //     ]);
+        $response = $this->call('PUT', '/product/upload/', [
+            'target' => $filenameRelative,
+            'file'   => new UploadedFile($filenameAbsolute, $filenameRelative)
+        ]);
 
-    //     $this->assertEquals(201, $response->status());
+        $this->assertEquals(200, $response->status());
 
-    //     $this->assertEquals(
-    //         storage_path('app') . '/' . $filenameRelative,
-    //         $response->decodeResponseJson('data')[0]['url']
-    //     );
-    // }
+        $this->assertEquals(
+            storage_path('app') . '/' . $filenameRelative,
+            $response->decodeResponseJson('meta')['url']
+        );
+    }
 
     public function test_user_pull_only_active_products()
     {

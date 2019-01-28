@@ -3,20 +3,35 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
+use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
+use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Requests\DiscountCreateRequest;
 use Railroad\Ecommerce\Requests\DiscountUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 
 class DiscountJsonController extends BaseController
 {
     /**
-     * @var \Railroad\Ecommerce\Repositories\DiscountRepository
+     * @var EntityRepository
      */
     private $discountRepository;
+
+    /**
+     * @var EntityManager
+     */
+    private $entityManager;
+
+    /**
+     * @var JsonApiHydrator
+     */
+    private $jsonApiHydrator;
 
     /**
      * @var \Railroad\Permissions\Services\PermissionService
@@ -26,76 +41,105 @@ class DiscountJsonController extends BaseController
     /**
      * DiscountJsonController constructor.
      *
-     * @param \Railroad\Ecommerce\Repositories\DiscountRepository $discountRepository
+     * @param EntityManager $entityManager
+     * @param JsonApiHydrator $jsonApiHydrator
      * @param \Railroad\Permissions\Services\PermissionService    $permissionService
      */
-    public function __construct(DiscountRepository $discountRepository, PermissionService $permissionService)
-    {
+    public function __construct(
+        EntityManager $entityManager,
+        JsonApiHydrator $jsonApiHydrator,
+        PermissionService $permissionService
+    ) {
         parent::__construct();
 
-        $this->discountRepository = $discountRepository;
+        $this->entityManager = $entityManager;
+        $this->jsonApiHydrator = $jsonApiHydrator;
+        $this->discountRepository = $this->entityManager
+                                        ->getRepository(Discount::class);
         $this->permissionService  = $permissionService;
     }
 
-    /** Pull discounts
+    /**
+     * Pull discounts
+     *
      * @param \Illuminate\Http\Request $request
+     *
      * @return sonResponse
      */
     public function index(Request $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.discounts');
 
-        $discounts = $this->discountRepository->query()
-            ->select(
-                ConfigService::$tableDiscount . '.*',
-                ConfigService::$tableProduct . '.name as productName'
-            )
-            ->leftJoin(
-                ConfigService::$tableProduct,
-                ConfigService::$tableDiscount . '.product_id',
-                '=',
-                ConfigService::$tableProduct . '.id'
-            )
-            ->limit($request->get('limit', 100))
-            ->skip(($request->get('page', 1) - 1) * $request->get('limit', 100))
-            ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
-            ->get();
-        $discountsCount = $this->discountRepository->query()->count();
+        // parse request params and prepare db query parms
+        $alias = 'd';
+        $aliasProduct = 'p';
+        $orderBy = $request->get('order_by_column', 'created_at');
+        if (
+            strpos($orderBy, '_') !== false
+            || strpos($orderBy, '-') !== false
+        ) {
+            $orderBy = camel_case($orderBy);
+        }
+        $orderBy = $alias . '.' . $orderBy;
+        $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
 
-        return reply()->json($discounts, [
-            'totalResults' => $discountsCount
-        ]);
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->discountRepository->createQueryBuilder($alias);
+
+        $qb
+            ->select([$alias, $aliasProduct])
+            ->join($alias . '.product', $aliasProduct)
+            ->setMaxResults($request->get('limit', 10))
+            ->setFirstResult($first)
+            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'));
+
+        $discounts = $qb->getQuery()->getResult();
+
+        return ResponseService::discount($discounts, $qb);
     }
 
-    /** Pull discount
+    /**
+     * Pull discount
+     *
      * @param \Illuminate\Http\Request $request
      * @param  int                     $discountId
+     *
      * @return JsonResponse
      */
     public function show(Request $request, $discountId)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.discounts');
 
-        $discount = $this->discountRepository->query()
-            ->select(
-                ConfigService::$tableDiscount . '.*',
-                ConfigService::$tableProduct . '.name as productName'
-            )
-            ->leftJoin(
-                ConfigService::$tableProduct,
-                ConfigService::$tableDiscount . '.product_id',
-                '=',
-                ConfigService::$tableProduct . '.id'
-            )
-            ->where(ConfigService::$tableDiscount . '.id', $discountId)
-            ->first();
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->discountRepository->createQueryBuilder('d');
+
+        $qb
+            ->select(['d', 'p'])
+            ->join('d.product', 'p')
+            ->where($qb->expr()->eq('d.id', ':id'));
+
+        /**
+         * @var $q \Doctrine\ORM\Query
+         */
+        $q = $qb->getQuery();
+
+        $q->setParameter('id', $discountId);
+
+        /**
+         * @var $discount Discount
+         */
+        $discount = $q->getOneOrNullResult();
 
         throw_if(
             is_null($discount),
             new NotFoundException('Pull failed, discount not found with id: ' . $discountId)
         );
 
-        return reply()->json($discount);
+        return ResponseService::discount($discount);
     }
 
     /**
