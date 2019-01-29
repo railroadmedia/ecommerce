@@ -17,6 +17,22 @@ class DiscountCriteriaUpdateRequest extends FormRequest
     }
 
     /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array
+     */
+    public function attributes()
+    {
+        return [
+            'data.type' => 'json data type',
+            'data.attributes.name' => 'name',
+            'data.attributes.type' => 'type',
+            'data.attributes.min' => 'min',
+            'data.attributes.max' => 'max'
+        ];
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -24,11 +40,28 @@ class DiscountCriteriaUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|max:255',
-            'type' => 'required|max:255',
-            'product_id' => 'nullable|exists:'.ConfigService::$tableProduct.',id',
-            'min' => 'required',
-            'max' => 'required'
+            'data.attributes.name' => 'required|max:255',
+            'data.attributes.type' => 'required|max:255',
+            'data.relationships.product.id' => 'nullable|exists:'.ConfigService::$tableProduct.',id',
+            'data.attributes.min' => 'required',
+            'data.attributes.max' => 'required'
         ];
+    }
+
+    /**
+     * @return array
+     */
+    public function onlyAllowed()
+    {
+        return $this->only(
+            [
+                'data.attributes.type',
+                'data.attributes.name',
+                'data.attributes.type',
+                'data.attributes.min',
+                'data.attributes.max',
+                'data.relationships.product'
+            ]
+        );
     }
 }

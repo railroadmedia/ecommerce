@@ -3,24 +3,38 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityRepository;
+use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
+use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
-use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
-use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest;
 use Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest;
+use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 
 class DiscountCriteriaJsonController extends BaseController
 {
     /**
-     * @var \Railroad\Ecommerce\Repositories\DiscountCriteriaRepository
+     * @var EntityRepository
      */
     private $discountCriteriaRepository;
 
     /**
-     * @var \Railroad\Ecommerce\Repositories\DiscountRepository
+     * @var EntityRepository
      */
     private $discountRepository;
+
+    /**
+     * @var EntityManager
+     */
+    private $entityManager;
+
+    /**
+     * @var JsonApiHydrator
+     */
+    private $jsonApiHydrator;
 
     /**
      * @var \Railroad\Permissions\Services\PermissionService
@@ -30,115 +44,113 @@ class DiscountCriteriaJsonController extends BaseController
     /**
      * DiscountCriteriaJsonController constructor.
      *
-     * @param \Railroad\Ecommerce\Repositories\DiscountCriteriaRepository $discountCriteriaRepository
-     * @param \Railroad\Permissions\Services\PermissionService            $permissionService
+     * @param EntityManager $entityManager
+     * @param JsonApiHydrator $jsonApiHydrator
+     * @param \Railroad\Permissions\Services\PermissionService $permissionService
      */
     public function __construct(
-        DiscountCriteriaRepository $discountCriteriaRepository,
-        DiscountRepository $discountRepository,
+        EntityManager $entityManager,
+        JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService
     ) {
         parent::__construct();
 
-        $this->discountCriteriaRepository = $discountCriteriaRepository;
-        $this->discountRepository         = $discountRepository;
-        $this->permissionService          = $permissionService;
+        $this->entityManager = $entityManager;
+        $this->jsonApiHydrator = $jsonApiHydrator;
+        $this->discountRepository = $this->entityManager
+                                        ->getRepository(Discount::class);
+        $this->discountCriteriaRepository = $this->entityManager
+                                        ->getRepository(DiscountCriteria::class);
+        $this->permissionService = $permissionService;
     }
 
     /**
      * @param \Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest $request
-     * @param                                                            $discountId
+     * @param int $discountId
+     *
      * @return JsonResponse
      */
     public function store(DiscountCriteriaCreateRequest $request, $discountId)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'create.discount.criteria');
 
-        $discount = $this->discountRepository->read($discountId);
+        $discount = $this->discountRepository->find($discountId);
+
         throw_if(
             is_null($discount),
             new NotFoundException('Create discount criteria failed, discount not found with id: ' . $discountId)
         );
 
-        $discountCriteria = $this->discountCriteriaRepository->create(
-            array_merge(
-                $request->only(
-                    [
-                        'name',
-                        'product_id',
-                        'type',
-                        'min',
-                        'max',
-                    ]
-                ),
-                [
-                    'discount_id' => $discountId,
-                    'created_on' => Carbon::now()->toDateTimeString(),
-                ]
-            )
+        $discountCriteria = new DiscountCriteria();
 
+        $this->jsonApiHydrator->hydrate(
+            $discountCriteria,
+            $request->onlyAllowed()
         );
-        return reply()->json($discountCriteria, [
-            'code' => 200
-        ]);
+
+        $this->entityManager->persist($discountCriteria);
+
+        $discountCriteria->setDiscount($discount);
+
+        $this->entityManager->flush();
+
+        return ResponseService::discountCriteria($discountCriteria);
     }
 
     /**
      * @param \Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest $request
-     * @param                                                            $discountCriteriaId
+     * @param int $discountCriteriaId
+     *
      * @return JsonResponse
      */
     public function update(DiscountCriteriaUpdateRequest $request, $discountCriteriaId)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'update.discount.criteria');
 
-        $discountCriteria = $this->discountCriteriaRepository->read($discountCriteriaId);
+        $discountCriteria = $this->discountCriteriaRepository
+                                ->find($discountCriteriaId);
+
         throw_if(
             is_null($discountCriteria),
-            new NotFoundException('Update discount criteria failed, discount criteria not found with id: ' . $discountCriteriaId)
-        );
-
-        //update discount criteria with the data sent on the request
-        $discountCriteria = $this->discountCriteriaRepository->update(
-            $discountCriteriaId,
-            array_merge(
-                $request->only(
-                    [
-                        'name',
-                        'product_id',
-                        'type',
-                        'min',
-                        'max',
-                    ]
-                ),
-                [
-                    'updated_on' => Carbon::now()->toDateTimeString(),
-                ]
+            new NotFoundException(
+                'Update discount criteria failed, ' .
+                'discount criteria not found with id: ' . $discountCriteriaId
             )
         );
-        return reply()->json($discountCriteria, [
-            'code' => 201
-        ]);
+
+        $this->jsonApiHydrator->hydrate(
+            $discountCriteria,
+            $request->onlyAllowed()
+        );
+
+        $this->entityManager->flush();
+
+        return ResponseService::discountCriteria($discountCriteria);
     }
 
     /**
-     * @param $discountCriteriaId
+     * @param int $discountCriteriaId
+     *
      * @return JsonResponse
      */
     public function delete($discountCriteriaId)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.discount.criteria');
 
-        $discountCriteria = $this->discountCriteriaRepository->read($discountCriteriaId);
+        $discountCriteria = $this->discountCriteriaRepository
+                                ->find($discountCriteriaId);
+
         throw_if(
             is_null($discountCriteria),
-            new NotFoundException('Delete discount criteria failed, discount criteria not found with id: ' . $discountCriteriaId)
+            new NotFoundException(
+                'Delete discount criteria failed, ' .
+                'discount criteria not found with id: ' . $discountCriteriaId
+            )
         );
 
-        $this->discountCriteriaRepository->destroy($discountCriteriaId);
+        $this->entityManager->remove($discountCriteria);
+        $this->entityManager->flush();
 
-        return reply()->json(null, [
-            'code' => 204
-        ]);
+        return ResponseService::empty(204);
     }
 }

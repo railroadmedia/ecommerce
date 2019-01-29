@@ -144,99 +144,67 @@ class DiscountJsonController extends BaseController
 
     /**
      * @param \Railroad\Ecommerce\Requests\DiscountCreateRequest $request
+     *
      * @return JsonResponse
      */
     public function store(DiscountCreateRequest $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'create.discount');
 
-        $discount = $this->discountRepository->create(
-            array_merge(
-                $request->only(
-                    [
-                        'name',
-                        'description',
-                        'type',
-                        'amount',
-                        'product_id',
-                        'product_category',
-                        'active',
-                        'visible',
-                    ]
-                ),
-                [
-                    'created_on' => Carbon::now()->toDateTimeString(),
-                ]
-            )
+        $discount = new Discount();
 
-        );
-        return reply()->json($discount, [
-            'code' => 200
-        ]);
+        $this->jsonApiHydrator->hydrate($discount, $request->onlyAllowed());
+
+        $this->entityManager->persist($discount);
+        $this->entityManager->flush();
+
+        return ResponseService::discount($discount);
     }
 
     /**
      * @param \Railroad\Ecommerce\Requests\DiscountUpdateRequest $request
-     * @param  int                                               $discountId
+     * @param int $discountId
+     *
      * @return JsonResponse
      */
     public function update(DiscountUpdateRequest $request, $discountId)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'update.discount');
 
-        $discount = $this->discountRepository->read($discountId);
+        $discount = $this->discountRepository->find($discountId);
+
         throw_if(
             is_null($discount),
             new NotFoundException('Update failed, discount not found with id: ' . $discountId)
         );
 
-        //update discount with the data sent on the request
-        $discount = $this->discountRepository->update(
-            $discountId,
-            array_merge(
-                $request->only(
-                    [
-                        'name',
-                        'description',
-                        'type',
-                        'amount',
-                        'product_id',
-                        'product_category',
-                        'active',
-                        'visible',
-                    ]
-                ),
-                [
-                    'updated_on' => Carbon::now()->toDateTimeString(),
-                ]
-            )
-        );
+        $this->jsonApiHydrator->hydrate($discount, $request->onlyAllowed());
 
-        return reply()->json($discount, [
-            'code' => 201
-        ]);
+        $this->entityManager->flush();
+
+        return ResponseService::discount($discount);
     }
 
     /**
-     * @param $discountId
+     * @param int $discountId
+     *
      * @return JsonResponse
      */
     public function delete($discountId)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.discount');
 
-        $discount = $this->discountRepository->read($discountId);
+        $discount = $this->discountRepository->find($discountId);
 
         throw_if(
             is_null($discount),
             new NotFoundException('Delete failed, discount not found with id: ' . $discountId)
         );
 
-       //TODO: delete discount criteria links
-        $this->discountRepository->destroy($discountId);
+        // TODO: delete discount criteria links
+        $this->entityManager->remove($discount);
+        $this->entityManager->flush();
 
-        return reply()->json(null, [
-            'code' => 204
-        ]);
+        return ResponseService::empty(204);
     }
 }

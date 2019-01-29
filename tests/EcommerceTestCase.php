@@ -37,7 +37,9 @@ class EcommerceTestCase extends BaseTestCase
         'addresses' => 'ecommerce_address',
         'customers' => 'ecommerce_customer',
         'orderItems' => 'ecommerce_order_item',
-        'discounts' => 'ecommerce_discount'
+        'discounts' => 'ecommerce_discount',
+        'discountCriteria' => 'ecommerce_discount_criteria',
+        'shippingOptions' => 'ecommerce_shipping_option'
     ];
 
     /**
@@ -452,6 +454,46 @@ class EcommerceTestCase extends BaseTestCase
         $discount['id'] = $discountId;
 
         return $discount;
+    }
+
+    /**
+     * Helper method to seed a test discount criteria
+     *
+     * @return array
+     */
+    public function fakeDiscountCriteria($discountCriteriaStub = []): array
+    {
+        $discountCriteria = $this->faker->discountCriteria(
+            $discountCriteriaStub
+        );
+
+        $discountCriteriaId = $this->databaseManager
+            ->table(self::TABLES['discountCriteria'])
+            ->insertGetId($discountCriteria);
+
+        $discountCriteria['id'] = $discountCriteriaId;
+
+        return $discountCriteria;
+    }
+
+    /**
+     * Helper method to seed a test shipping option
+     *
+     * @return array
+     */
+    public function fakeShippingOption($shippingOptionStub = []): array
+    {
+        $shippingOption = $this->faker->shippingOption(
+            $shippingOptionStub
+        );
+
+        $shippingOptionId = $this->databaseManager
+            ->table(self::TABLES['shippingOptions'])
+            ->insertGetId($shippingOption);
+
+        $shippingOption['id'] = $shippingOptionId;
+
+        return $shippingOption;
     }
 
     protected function tearDown()

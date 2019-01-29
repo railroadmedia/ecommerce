@@ -15,6 +15,24 @@ class DiscountCreateRequest extends FormRequest
     }
 
     /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array
+     */
+    public function attributes()
+    {
+        return [
+            'data.type' => 'json data type',
+            'data.attributes.name' => 'name',
+            'data.attributes.description' => 'description',
+            'data.attributes.type' => 'type',
+            'data.attributes.amount' => 'amount',
+            'data.attributes.active' => 'active',
+            'data.attributes.visible' => 'visible'
+        ];
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -22,12 +40,33 @@ class DiscountCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|max:255',
-            'description' => 'required|max:255',
-            'type' => 'required|max:255',
-            'amount' => 'required|numeric',
-            'active' => 'required|boolean',
-            'visible' => 'required|boolean',
+            'data.type' => 'in:discount',
+            'data.attributes.name' => 'required|max:255',
+            'data.attributes.description' => 'required|max:255',
+            'data.attributes.type' => 'required|max:255',
+            'data.attributes.amount' => 'required|numeric',
+            'data.attributes.active' => 'required|boolean',
+            'data.attributes.visible' => 'required|boolean',
         ];
+    }
+
+    /**
+     * @return array
+     */
+    public function onlyAllowed()
+    {
+        return $this->only(
+            [
+                'data.attributes.type',
+                'data.attributes.name',
+                'data.attributes.description',
+                'data.attributes.type',
+                'data.attributes.product_category',
+                'data.attributes.amount',
+                'data.attributes.active',
+                'data.attributes.visible',
+                'data.relationships.product'
+            ]
+        );
     }
 }

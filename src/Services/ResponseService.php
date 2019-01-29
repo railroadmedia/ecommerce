@@ -7,8 +7,10 @@ use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
+use Railroad\Ecommerce\Transformers\DiscountCriteriaTransformer;
 use Railroad\Ecommerce\Transformers\DiscountTransformer;
 use Railroad\Ecommerce\Transformers\ProductTransformer;
+use Railroad\Ecommerce\Transformers\ShippingOptionTransformer;
 use Spatie\Fractal\Fractal;
 
 class ResponseService extends FractalResponseService
@@ -121,6 +123,48 @@ class ResponseService extends FractalResponseService
                 $entityOrEntities,
                 'discount',
                 new DiscountTransformer(),
+                new JsonApiSerializer(),
+                $queryBuilder
+            )->parseIncludes($includes);
+    }
+
+    /**
+     * @param $entityOrEntities
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
+    public static function discountCriteria(
+        $entityOrEntities,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
+        return self::create(
+                $entityOrEntities,
+                'discountCriteria',
+                new DiscountCriteriaTransformer(),
+                new JsonApiSerializer(),
+                $queryBuilder
+            )->parseIncludes($includes);
+    }
+
+    /**
+     * @param $entityOrEntities
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
+    public static function shippingOption(
+        $entityOrEntities,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
+        return self::create(
+                $entityOrEntities,
+                'shippingOption',
+                new ShippingOptionTransformer(),
                 new JsonApiSerializer(),
                 $queryBuilder
             )->parseIncludes($includes);

@@ -3,17 +3,31 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
+use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
+use Railroad\Ecommerce\Entities\ShippingOption;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
-use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Requests\ShippingOptionCreateRequest;
 use Railroad\Ecommerce\Requests\ShippingOptionUpdateRequest;
+use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 
 class ShippingOptionController extends BaseController
 {
     /**
-     * @var ShippingOptionRepository
+     * @var EntityManager
+     */
+    private $entityManager;
+
+    /**
+     * @var JsonApiHydrator
+     */
+    private $jsonApiHydrator;
+
+    /**
+     * @var EntityRepository
      */
     private $shippingOptionRepository;
 
@@ -25,41 +39,53 @@ class ShippingOptionController extends BaseController
     /**
      * ShippingOptionController constructor.
      *
-     * @param ShippingOptionRepository $shippingOptionRepository
-     * @param PermissionService        $permissionService
+     * @param EntityManager $entityManager
+     * @param JsonApiHydrator $jsonApiHydrator
+     * @param PermissionService $permissionService
      */
     public function __construct(
-        ShippingOptionRepository $shippingOptionRepository,
+        EntityManager $entityManager,
+        JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService
     ) {
         parent::__construct();
 
-        $this->shippingOptionRepository = $shippingOptionRepository;
-        $this->permissionService        = $permissionService;
+        $this->entityManager = $entityManager;
+        $this->jsonApiHydrator = $jsonApiHydrator;
+        $this->shippingOptionRepository = $this->entityManager
+                ->getRepository(ShippingOption::class);
+        $this->permissionService = $permissionService;
     }
 
-    /** Pull shipping options
+    /**
+     * Pull shipping options
+     *
      * @param \Illuminate\Http\Request $request
+     *
      * @return JsonResponse
      */
     public function index(Request $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.shipping.options');
-        $shippingOptions = $this->shippingOptionRepository->query()
-            ->limit($request->get('limit', 100))
-            ->skip(($request->get('page', 1) - 1) * $request->get('limit', 100))
-            ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
-            ->get();
 
-        $shippingOptionsCount = $this->shippingOptionRepository->query()
-            ->limit($request->get('limit', 100))
-            ->skip(($request->get('page', 1) - 1) * $request->get('limit', 100))
-            ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
-            ->count();
+        $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
 
-        return reply()->json($shippingOptions, [
-            'totalResults' => $shippingOptionsCount
-        ]);
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->shippingOptionRepository->createQueryBuilder('s');
+
+        $qb
+            ->setMaxResults($request->get('limit', 10))
+            ->setFirstResult($first)
+            ->orderBy(
+                's.' . $request->get('order_by_column', 'created_at'),
+                $request->get('order_by_direction', 'desc')
+            );
+
+        $shippingOptions = $qb->getQuery()->getResult();
+
+        return ResponseService::shippingOption($shippingOptions, $qb);
     }
 
     /**

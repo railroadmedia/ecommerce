@@ -115,7 +115,7 @@ class Faker extends Generator
                 'country' => $this->country,
                 'active' => $this->randomNumber(),
                 'priority' => $this->boolean,
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
@@ -130,7 +130,7 @@ class Faker extends Generator
                 'min' => $this->randomNumber(),
                 'max' => $this->randomNumber(),
                 'price' => $this->randomNumber(),
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
