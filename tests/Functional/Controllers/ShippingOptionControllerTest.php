@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShippingOptionControllerTest extends EcommerceTestCase
@@ -12,161 +13,241 @@ class ShippingOptionControllerTest extends EcommerceTestCase
         parent::setUp();
     }
 
-    // public function test_store()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow');
+    public function test_store()
+    {
+        $shippingOption = $this->faker->shippingOption([
+            'updated_at' => null
+        ]);
 
-    //     $shippingOption = [
-    //         'country' => $this->faker->country,
-    //         'priority' => 1,
-    //         'active' => 1,
-    //     ];
+        $results = $this->call(
+            'PUT',
+            '/shipping-option/',
+            [
+                'data' => [
+                    'type' => 'shippingOption',
+                    'attributes' => $shippingOption
+                ],
+            ]
+        );
 
-    //     $results = $this->call('PUT', '/shipping-option/', $shippingOption);
+        $this->assertEquals(200, $results->getStatusCode());
 
-    //     $this->assertEquals(200, $results->getStatusCode());
-    //     $this->assertEquals(
-    //         array_merge(
-    //             [
-    //                 'id' => 1,
-    //                 'created_on' => Carbon::now()->toDateTimeString(),
-    //                 'updated_on' => null,
-    //                 'weightRanges' => []
-    //             ],
-    //             $shippingOption
-    //         ),
-    //         $results->decodeResponseJson()['data'][0]
-    //     );
-    // }
+        $this->assertArraySubset(
+            [
+                'type' => 'shippingOption',
+                'attributes' => array_diff_key(
+                    $shippingOption,
+                    ['updated_at' => true]
+                ),
+                'relationships' => [
+                    'shippingCostsWeightRange' => [
+                        'data' => []
+                    ]
+                ]
+            ],
+            $results->decodeResponseJson('data')
+        );
 
-    // public function test_store_validation_errors()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow');
+        $this->assertDatabaseHas(
+            ConfigService::$tableShippingOption,
+            array_diff_key(
+                $shippingOption,
+                ['updated_at' => true]
+            )
+        );
+    }
 
-    //     $results = $this->call('PUT', '/shipping-option/');
+    public function test_store_validation_errors()
+    {
+        $this->permissionServiceMock->method('canOrThrow');
 
-    //     $this->assertEquals(422, $results->getStatusCode());
+        $results = $this->call('PUT', '/shipping-option/');
 
-    //     $this->assertEquals(
-    //         [
-    //             [
-    //                 "source" => "country",
-    //                 "detail" => "The country field is required.",
-    //             ],
-    //             [
-    //                 "source" => "priority",
-    //                 "detail" => "The priority field is required.",
-    //             ],
-    //             [
-    //                 "source" => "active",
-    //                 "detail" => "The active field is required.",
-    //             ],
-    //         ],
-    //         $results->decodeResponseJson('meta')['errors']
-    //     );
-    // }
+        $this->assertEquals(422, $results->getStatusCode());
 
-    // public function test_update_negative_priority()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow');
+        $this->assertEquals(
+            [
+                [
+                    'source' => 'data.attributes.country',
+                    'detail' => 'The country field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.priority',
+                    'detail' => 'The priority field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.active',
+                    'detail' => 'The active field is required.',
+                    'title' => 'Validation failed.'
+                ],
+            ],
+            $results->decodeResponseJson()['errors']
+        );
+    }
 
-    //     $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
+    public function test_update_negative_priority()
+    {
+        $this->permissionServiceMock->method('canOrThrow');
 
-    //     $results = $this->call(
-    //         'PATCH',
-    //         '/shipping-option/' . $shippingOption['id'],
-    //         [
-    //             'priority' => -1,
-    //         ]
-    //     );
+        $shippingOption = $this->fakeShippingOption();
 
-    //     $this->assertEquals(422, $results->getStatusCode());
-    //     $this->assertEquals(
-    //         [
-    //             [
-    //                 "source" => "priority",
-    //                 "detail" => "The priority must be at least 0.",
-    //             ],
-    //         ],
-    //         $results->decodeResponseJson('meta')['errors']
-    //     );
-    // }
+        $results = $this->call(
+            'PATCH',
+            '/shipping-option/' . $shippingOption['id'],
+            [
+                'data' => [
+                    'type' => 'shippingOption',
+                    'attributes' => [
+                        'priority' => -1,
+                    ]
+                ],
+            ]
+        );
 
-    // public function test_update_not_existing_shipping_option()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow');
+        $this->assertEquals(422, $results->getStatusCode());
+        $this->assertEquals(
+            [
+                [
+                    'source' => 'data.attributes.priority',
+                    'detail' => 'The priority must be at least 0.',
+                    'title' => 'Validation failed.'
+                ],
+            ],
+            $results->decodeResponseJson('errors')
+        );
+    }
 
-    //     $randomId = rand();
-    //     $results = $this->call('PATCH', '/shipping-option/' . $randomId);
+    public function test_update_not_existing_shipping_option()
+    {
+        $this->permissionServiceMock->method('canOrThrow');
 
-    //     $this->assertEquals(404, $results->getStatusCode());
+        $randomId = rand();
+        $results = $this->call('PATCH', '/shipping-option/' . $randomId);
 
-    //     $this->assertEquals(
-    //         [
-    //             "title" => "Not found.",
-    //             "detail" => "Update failed, shipping option not found with id: " . $randomId,
-    //         ]
-    //         ,
-    //         $results->decodeResponseJson('meta')['errors']
-    //     );
-    // }
+        $this->assertEquals(404, $results->getStatusCode());
 
-    // public function test_update()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow');
+        $this->assertEquals(
+            [
+                'title' => 'Not found.',
+                'detail' => 'Update failed, shipping option not found with id: ' . $randomId,
+            ]
+            ,
+            $results->decodeResponseJson('errors')
+        );
+    }
 
-    //     $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
+    public function test_update()
+    {
+        $this->permissionServiceMock->method('canOrThrow');
 
-    //     $results = $this->call(
-    //         'PATCH',
-    //         '/shipping-option/' . $shippingOption['id'],
-    //         [
-    //             'active' => 1,
-    //         ]
-    //     );
+        $shippingOption = $this->fakeShippingOption([
+            'updated_at' => null
+        ]);
 
-    //     $this->assertEquals(201, $results->getStatusCode());
-    //     $this->assertArraySubset(
-    //         [
-    //             'id' => $shippingOption['id'],
-    //             'country' => $shippingOption['country'],
-    //             'active' => 1,
-    //             'priority' => $shippingOption['priority'],
-    //             'created_on' => $shippingOption['created_on'],
-    //             'weightRanges' => [],
-    //             'updated_on' => Carbon::now()->toDateTimeString(),
-    //         ],
-    //         $results->decodeResponseJson('data')[0]
-    //     );
-    // }
+        $shippingCost = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'updated_at' => null
+        ]);
 
-    // public function test_delete_not_existing_shipping_option()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow');
+        $updates = [
+            'active' => !$shippingOption['active'],
+            'priority' => $shippingOption['priority'] * 3
+        ];
 
-    //     $randomId = rand();
-    //     $results = $this->call('DELETE', 'shipping-option/' . $randomId);
-    //     $this->assertEquals(404, $results->getStatusCode());
+        $results = $this->call(
+            'PATCH',
+            '/shipping-option/' . $shippingOption['id'],
+            [
+                'data' => [
+                    'type' => 'shippingOption',
+                    'attributes' => $updates
+                ],
+            ]
+        );
 
-    //     $this->assertEquals(
-    //         [
-    //             "title" => "Not found.",
-    //             "detail" => "Delete failed, shipping option not found with id: " . $randomId,
-    //         ]
-    //         ,
-    //         $results->decodeResponseJson('meta')['errors']
-    //     );
-    // }
+        $this->assertEquals(200, $results->getStatusCode());
 
-    // public function test_delete()
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow');
+        $this->assertEquals(
+            [
+                'type' => 'shippingOption',
+                'id' => $shippingOption['id'],
+                'attributes' => array_merge(
+                    array_diff_key(
+                        $shippingOption,
+                        ['id' => true]
+                    ),
+                    $updates,
+                    ['updated_at' => Carbon::now()->toDateTimeString()]
+                ),
+                'relationships' => [
+                    'shippingCostsWeightRange' => [
+                        'data' => [
+                            [
+                                'type' => 'shippingCostsWeightRange',
+                                'id' => $shippingCost['id']
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            $results->decodeResponseJson('data')
+        );
 
-    //     $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
-    //     $results = $this->call('DELETE', '/shipping-option/' . $shippingOption['id']);
+        $this->assertDatabaseHas(
+            ConfigService::$tableShippingOption,
+            array_merge(
+                $shippingOption,
+                $updates,
+                ['updated_at' => Carbon::now()->toDateTimeString()]
+            )
+        );
+    }
 
-    //     $this->assertEquals(204, $results->getStatusCode());
-    // }
+    public function test_delete_not_existing_shipping_option()
+    {
+        $this->permissionServiceMock->method('canOrThrow');
+
+        $randomId = rand();
+        $results = $this->call('DELETE', 'shipping-option/' . $randomId);
+
+        $this->assertEquals(404, $results->getStatusCode());
+
+        $this->assertEquals(
+            [
+                'title' => 'Not found.',
+                'detail' => 'Delete failed, shipping option not found with id: ' . $randomId,
+            ],
+            $results->decodeResponseJson('errors')
+        );
+    }
+
+    public function test_delete()
+    {
+        $this->permissionServiceMock->method('canOrThrow');
+
+        $shippingOption = $this->fakeShippingOption([
+            'updated_at' => null
+        ]);
+
+        $shippingCost = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'updated_at' => null
+        ]);
+
+        $results = $this->call(
+            'DELETE',
+            '/shipping-option/' . $shippingOption['id']
+        );
+
+        $this->assertEquals(204, $results->getStatusCode());
+
+        $this->assertDatabaseMissing(
+            ConfigService::$tableShippingOption,
+            $shippingOption
+        );
+    }
 
     public function test_pull_shipping_options()
     {
@@ -174,10 +255,21 @@ class ShippingOptionControllerTest extends EcommerceTestCase
         $limit = 10;
         $totalNumberOfShippingOptions = $this->faker->numberBetween(15, 25);
         $shippingOptions = [];
+        $included = [];
 
         for ($i = 0; $i < $totalNumberOfShippingOptions; $i++) {
 
             $shippingOption = $this->fakeShippingOption([
+                'updated_at' => null
+            ]);
+
+            $shippingCostOne = $this->fakeShippingCost([
+                'shipping_option_id' => $shippingOption['id'],
+                'updated_at' => null
+            ]);
+
+            $shippingCostTwo = $this->fakeShippingCost([
+                'shipping_option_id' => $shippingOption['id'],
                 'updated_at' => null
             ]);
 
@@ -188,7 +280,45 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                     'attributes' => array_diff_key(
                         $shippingOption,
                         ['id' => true]
-                    )
+                    ),
+                    'relationships' => [
+                        'shippingCostsWeightRange' => [
+                            'data' => [
+                                [
+                                    'type' => 'shippingCostsWeightRange',
+                                    'id' => $shippingCostOne['id']
+                                ],
+                                [
+                                    'type' => 'shippingCostsWeightRange',
+                                    'id' => $shippingCostTwo['id']
+                                ]
+                            ]
+                        ]
+                    ]
+                ];
+
+                $included[] = [
+                    'type' => 'shippingCostsWeightRange',
+                    'id' => $shippingCostOne['id'],
+                    'attributes' => array_diff_key(
+                        $shippingCostOne,
+                        [
+                            'id' => true,
+                            'shipping_option_id' => true
+                        ]
+                    ),
+                ];
+
+                $included[] = [
+                    'type' => 'shippingCostsWeightRange',
+                    'id' => $shippingCostTwo['id'],
+                    'attributes' => array_diff_key(
+                        $shippingCostTwo,
+                        [
+                            'id' => true,
+                            'shipping_option_id' => true
+                        ]
+                    ),
                 ];
             }
         }
@@ -198,6 +328,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
             '/shipping-options',
             [
                 'page' => $page,
+                'limit' => $limit,
                 'order_by_column' => 'id',
                 'order_by_direction' => 'asc'
             ]
@@ -206,19 +337,16 @@ class ShippingOptionControllerTest extends EcommerceTestCase
         // assert response status code
         $this->assertEquals(200, $results->getStatusCode());
 
+        $resultsDecoded = $results->decodeResponseJson();
+
         $this->assertEquals(
             $shippingOptions,
-            $results->decodeResponseJson('data')
+            $resultsDecoded['data']
+        );
+
+        $this->assertEquals(
+            $included,
+            $resultsDecoded['included']
         );
     }
-
-    // public function test_pull_shipping_options_empty() // deprecated
-    // {
-    //     $results = $this->call('GET','/shipping-options',
-    //         [
-    //             'order_by_direction' => 'asc'
-    //         ]);
-    //     $this->assertEmpty($results->decodeResponseJson('data'));
-    //     $this->assertEquals(0, $results->decodeResponseJson('meta')['totalResults']);
-    // }
 }

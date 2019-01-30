@@ -9,6 +9,8 @@ class ShippingOptionTransformer extends TransformerAbstract
 {
     public function transform(ShippingOption $shippingOption)
     {
+        $this->defaultIncludes[] = 'shippingCostsWeightRange';
+
         return [
             'id' => $shippingOption->getId(),
             'country' => $shippingOption->getCountry(),
@@ -19,5 +21,15 @@ class ShippingOptionTransformer extends TransformerAbstract
             'updated_at' => $shippingOption->getUpdatedAt() ?
                     $shippingOption->getUpdatedAt()->toDateTimeString() : null,
         ];
+    }
+
+    public function includeShippingCostsWeightRange(
+        ShippingOption $shippingOption
+    ) {
+        return $this->collection(
+            $shippingOption->getShippingCostsWeightRanges(),
+            new ShippingCostsWeightRangeTransformer(),
+            'shippingCostsWeightRange'
+        );
     }
 }

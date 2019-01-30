@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -51,6 +53,20 @@ class ShippingOption
      * @var int
      */
     protected $priority;
+
+    /**
+     * @ORM\OneToMany(
+     *     targetEntity="ShippingCostsWeightRange",
+     *     mappedBy="shippingOption",
+     *     fetch="EAGER"
+     * )
+     */
+    protected $shippingCostsWeightRanges;
+
+    public function __construct()
+    {
+        $this->shippingCostsWeightRanges = new ArrayCollection();
+    }
 
     /**
      * @return int|null
@@ -116,6 +132,61 @@ class ShippingOption
     public function setPriority(int $priority): self
     {
         $this->priority = $priority;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|ShippingCostsWeightRange[]
+     */
+    public function getShippingCostsWeightRanges(): Collection
+    {
+        return $this->shippingCostsWeightRanges;
+    }
+
+    /**
+     * @param ShippingCostsWeightRange $shippingCostsWeightRange
+     *
+     * @return ShippingOption
+     */
+    public function addShippingCostsWeightRange(
+        ShippingCostsWeightRange $shippingCostsWeightRange
+    ): self {
+
+        if (
+            !$this->shippingCostsWeightRanges->contains(
+                $shippingCostsWeightRange
+            )
+        ) {
+            $this->shippingCostsWeightRanges[] = $shippingCostsWeightRange;
+            $shippingCostsWeightRange->setShippingOption($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param ShippingCostsWeightRange $shippingCostsWeightRange
+     *
+     * @return ShippingOption
+     */
+    public function removeShippingCostsWeightRange(
+        ShippingCostsWeightRange $shippingCostsWeightRange
+    ): self {
+
+        if (
+            $this->shippingCostsWeightRanges->contains(
+                $shippingCostsWeightRange
+            )
+        ) {
+            $this->shippingCostsWeightRanges
+                ->removeElement($shippingCostsWeightRange);
+
+            // set the owning side to null (unless already changed)
+            if ($shippingCostsWeightRange->getShippingOption() === $this) {
+                $shippingCostsWeightRange->setShippingOption(null);
+            }
+        }
 
         return $this;
     }

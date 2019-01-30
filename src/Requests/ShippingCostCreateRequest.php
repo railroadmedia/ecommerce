@@ -18,6 +18,22 @@ class ShippingCostCreateRequest extends FormRequest
     }
 
     /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array
+     */
+    public function attributes()
+    {
+        return [
+            'data.type' => 'json data type',
+            'data.attributes.min' => 'min',
+            'data.attributes.max' => 'max',
+            'data.attributes.price' => 'price',
+            'data.relationships.shippingOption.data.id' => 'shipping option'
+        ];
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -25,10 +41,26 @@ class ShippingCostCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'shipping_option_id' => 'required|numeric|exists:'.ConfigService::$tableShippingOption.',id',
-            'min' => 'required|numeric|min:0',
-            'max' =>'required|numeric|min:'.request('min'),
-            'price' => 'required|numeric|min:0'
+            'data.type' => 'in:shippingCostsWeightRange',
+            'data.relationships.shippingOption.data.id' => 'required|numeric|exists:'.ConfigService::$tableShippingOption.',id',
+            'data.attributes.min' => 'required|numeric|min:0',
+            'data.attributes.max' =>'required|numeric|gte:data.attributes.min',
+            'data.attributes.price' => 'required|numeric|min:0'
         ];
+    }
+
+    /**
+     * @return array
+     */
+    public function onlyAllowed()
+    {
+        return $this->only(
+            [
+                'data.attributes.min',
+                'data.attributes.max',
+                'data.attributes.price',
+                'data.relationships.shippingOption'
+            ]
+        );
     }
 }

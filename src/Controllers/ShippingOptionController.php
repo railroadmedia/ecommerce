@@ -92,26 +92,24 @@ class ShippingOptionController extends BaseController
      * Create a new shipping option and return it in JSON format
      *
      * @param ShippingOptionCreateRequest $request
+     *
      * @return JsonResponse
      */
     public function store(ShippingOptionCreateRequest $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'create.shipping.option');
 
-        $shippingOption = $this->shippingOptionRepository->create(
-            array_merge(
-                $request->only(
-                    [
-                        'country',
-                        'priority',
-                        'active',
-                    ]
-                ),
-                ['created_on' => Carbon::now()->toDateTimeString()]
-            )
+        $shippingOption = new ShippingOption();
+
+        $this->jsonApiHydrator->hydrate(
+            $shippingOption,
+            $request->onlyAllowed()
         );
 
-        return reply()->json($shippingOption);
+        $this->entityManager->persist($shippingOption);
+        $this->entityManager->flush();
+
+        return ResponseService::shippingOption($shippingOption);
     }
 
     /**
@@ -119,36 +117,33 @@ class ShippingOptionController extends BaseController
      * or proper exception if the shipping option not exist
      *
      * @param ShippingOptionUpdateRequest $request
-     * @param integer                     $shippingOptionId
+     * @param int $shippingOptionId
+     *
      * @return JsonResponse
      */
-    public function update(ShippingOptionUpdateRequest $request, $shippingOptionId)
-    {
+    public function update(
+        ShippingOptionUpdateRequest $request,
+        $shippingOptionId
+    ) {
         $this->permissionService->canOrThrow(auth()->id(), 'edit.shipping.option');
 
-        $shippingOption = $this->shippingOptionRepository->update(
-            $shippingOptionId,
-            array_merge(
-                $request->only(
-                    [
-                        'country',
-                        'priority',
-                        'active',
-                    ]
-                ),
-                ['updated_on' => Carbon::now()->toDateTimeString()]
+        $shippingOption = $this->shippingOptionRepository
+                                ->find($shippingOptionId);
+
+        throw_if(
+            is_null($shippingOption),
+            new NotFoundException(
+                'Update failed, shipping option not found with id: ' .
+                $shippingOptionId
             )
         );
 
-        //if the update method response it's null the shipping option not exist; we throw the proper exception
-        throw_if(
-            is_null($shippingOption),
-            new NotFoundException('Update failed, shipping option not found with id: ' . $shippingOptionId)
-        );
+        $this->jsonApiHydrator
+                ->hydrate($shippingOption, $request->onlyAllowed());
 
-        return reply()->json($shippingOption, [
-            'code' => 201
-        ]);
+        $this->entityManager->flush();
+
+        return ResponseService::shippingOption($shippingOption);
     }
 
     /**
@@ -156,22 +151,33 @@ class ShippingOptionController extends BaseController
      * Throw proper exception if the shipping option not exist in the database or a json response with status 204.
      *
      * @param integer $shippingOptionId
+     *
      * @return JsonResponse
      */
     public function delete($shippingOptionId)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.shipping.option');
 
-        $results = $this->shippingOptionRepository->destroy($shippingOptionId);
+        $shippingOption = $this->shippingOptionRepository
+                                ->find($shippingOptionId);
 
-        //if the delete method response it's null the shipping option not exist; we throw the proper exception
         throw_if(
-            !$results,
-            new NotFoundException('Delete failed, shipping option not found with id: ' . $shippingOptionId)
+            !$shippingOption,
+            new NotFoundException(
+                'Delete failed, shipping option not found with id: ' .
+                $shippingOptionId
+            )
         );
 
-        return reply()->json(null, [
-            'code' => 204
-        ]);
+        $shippingCosts = $shippingOption->getShippingCostsWeightRanges();
+
+        foreach ($shippingCosts as $shippingCost) {
+            $this->entityManager->remove($shippingCost);
+        }
+
+        $this->entityManager->remove($shippingOption);
+        $this->entityManager->flush();
+
+        return ResponseService::empty(204);
     }
 }

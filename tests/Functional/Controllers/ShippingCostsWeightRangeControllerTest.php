@@ -3,42 +3,34 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Repositories\ShippingCostsRepository;
-use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 {
-    /**
-     * @var ShippingOptionRepository
-     */
-    protected $shippingOptionRepository;
-
-    /**
-     * @var ShippingCostsRepository
-     */
-    protected $shippingCostRepository;
-
     protected function setUp()
     {
         parent::setUp();
-        $this->shippingOptionRepository = $this->app->make(ShippingOptionRepository::class);
-        $this->shippingCostRepository = $this->app->make(ShippingCostsRepository::class);
     }
 
     public function test_store_shipping_option_invalid()
     {
         $this->permissionServiceMock->method('canOrThrow');
+
         $randomShoppingOption = rand();
+
+        $shippingCost = $this->faker->shippingCost([
+            'shipping_option_id' => $randomShoppingOption
+        ]);
 
         $results = $this->call(
             'PUT',
             '/shipping-cost/',
             [
-                'shipping_option_id' => $randomShoppingOption,
-                'min' => 0,
-                'max' => 1,
-                'price' => rand(),
+                'data' => [
+                    'type' => 'shippingCostsWeightRange',
+                    'attributes' => $shippingCost
+                ],
             ]
         );
 
@@ -47,11 +39,12 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
         $this->assertEquals(
             [
                 [
-                    "source" => "shipping_option_id",
-                    "detail" => "The selected shipping option id is invalid.",
+                    'source' => 'data.relationships.shippingOption.data.id',
+                    'detail' => 'The shipping option field is required.',
+                    'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('meta')['errors']
+            $results->decodeResponseJson('errors')
         );
     }
 
@@ -59,30 +52,47 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
+        $shippingOption = $this->fakeShippingOption();
+
         $minValue = 10;
+
+        $shippingCost = $this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min' => $minValue,
+            'max' => rand(0, 9)
+        ]);
 
         $results = $this->call(
             'PUT',
             '/shipping-cost/',
             [
-                'shipping_option_id' => $shippingOption['id'],
-                'min' => $minValue,
-                'max' => rand(0, 9),
-                'price' => rand(),
+                'data' => [
+                    'type' => 'shippingCostsWeightRange',
+                    'attributes' => array_diff_key(
+                        $shippingCost,
+                        ['shipping_option_id' => true]
+                    ),
+                    'relationships' => [
+                        'shippingOption' => [
+                            'data' => [
+                                'type' => 'shippingOption',
+                                'id' => $shippingOption['id']
+                            ]
+                        ]
+                    ]
+                ],
             ]
         );
-
-        $this->assertEquals(422, $results->getStatusCode());
 
         $this->assertEquals(
             [
                 [
-                    "source" => "max",
-                    "detail" => "The max must be at least " . $minValue . ".",
+                    'source' => 'data.attributes.max',
+                    'detail' => 'The max must be greater than or equal ' . $minValue . '.',
+                    'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('meta')['errors']
+            $results->decodeResponseJson('errors')
         );
     }
 
@@ -96,23 +106,27 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
         $this->assertEquals(
             [
                 [
-                    "source" => "shipping_option_id",
-                    "detail" => "The shipping option id field is required.",
+                    'source' => 'data.relationships.shippingOption.data.id',
+                    'detail' => 'The shipping option field is required.',
+                    'title' => 'Validation failed.'
                 ],
                 [
-                    "source" => "min",
-                    "detail" => "The min field is required.",
+                    'source' => 'data.attributes.min',
+                    'detail' => 'The min field is required.',
+                    'title' => 'Validation failed.'
                 ],
                 [
-                    "source" => "max",
-                    "detail" => "The max field is required.",
+                    'source' => 'data.attributes.max',
+                    'detail' => 'The max field is required.',
+                    'title' => 'Validation failed.'
                 ],
                 [
-                    "source" => "price",
-                    "detail" => "The price field is required.",
+                    'source' => 'data.attributes.price',
+                    'detail' => 'The price field is required.',
+                    'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('meta')['errors']
+            $results->decodeResponseJson('errors')
         );
     }
 
@@ -120,37 +134,59 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
+        $shippingOption = $this->fakeShippingOption();
+
         $minValue = 1;
         $maxValue = rand(10, 19);
-        $price = rand(1,100);
+
+        $shippingCost = $this->faker->shippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min' => $minValue,
+            'max' => $maxValue
+        ]);
 
         $results = $this->call(
             'PUT',
             '/shipping-cost/',
             [
-                'shipping_option_id' => $shippingOption['id'],
-                'min' => $minValue,
-                'max' => $maxValue,
-                'price' => $price,
+                'data' => [
+                    'type' => 'shippingCostsWeightRange',
+                    'attributes' => array_diff_key(
+                        $shippingCost,
+                        ['shipping_option_id' => true]
+                    ),
+                    'relationships' => [
+                        'shippingOption' => [
+                            'data' => [
+                                'type' => 'shippingOption',
+                                'id' => $shippingOption['id']
+                            ]
+                        ]
+                    ]
+                ],
             ]
         );
 
         $this->assertEquals(200, $results->getStatusCode());
 
-        $this->assertEquals(
+        $this->assertArraySubset(
             [
-                'id' => 1,
-                'shipping_option_id' => $shippingOption['id'],
-                'min' => $minValue,
-                'max' => $maxValue,
-                'price' => $price,
-                'created_on' => Carbon::now()->toDateTimeString(),
-                'updated_on' => null,
+                'type' => 'shippingCostsWeightRange',
+                'attributes' => array_diff_key(
+                    $shippingCost,
+                    [
+                        'updated_at' => true,
+                        'shipping_option_id' => true
+                    ]
+                )
             ],
-            $results->decodeResponseJson()['data'][0]
+            $results->decodeResponseJson('data')
         );
 
+        $this->assertDatabaseHas(
+            ConfigService::$tableShippingCostsWeightRange,
+            $shippingCost
+        );
     }
 
     public function test_update_incorrect_shipping_cost_id()
@@ -164,11 +200,10 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
         $this->assertEquals(404, $results->getStatusCode());
         $this->assertEquals(
             [
-                "title" => "Not found.",
-                "detail" => "Update failed, shipping cost weight range not found with id: " . $randomId,
-            ]
-            ,
-            $results->decodeResponseJson('meta')['errors']
+                'title' => 'Not found.',
+                'detail' => 'Update failed, shipping cost weight range not found with id: ' . $randomId,
+            ],
+            $results->decodeResponseJson('errors')
         );
     }
 
@@ -176,31 +211,57 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
-        $shippingCost =
-            $this->shippingCostRepository->create(
-                $this->faker->shippingCost(['shipping_option_id' => $shippingOption['id']])
-            );
+        $shippingOption = $this->fakeShippingOption();
+
         $minValue = 10;
+        $maxValue = rand(0, 9);
+
+        $shippingCost = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id']
+        ]);
 
         $results = $this->call(
             'PATCH',
             '/shipping-cost/' . $shippingCost['id'],
             [
-                'min' => $minValue,
-                'max' => rand(0, 9),
+                'data' => [
+                    'type' => 'shippingCostsWeightRange',
+                    'attributes' => [
+                        'min' => $minValue,
+                        'max' => $maxValue
+                    ],
+                    'relationships' => [
+                        'shippingOption' => [
+                            'data' => [
+                                'type' => 'shippingOption',
+                                'id' => $shippingOption['id']
+                            ]
+                        ]
+                    ]
+                ],
             ]
         );
 
         $this->assertEquals(422, $results->getStatusCode());
+
         $this->assertEquals(
             [
                 [
-                    "source" => "max",
-                    "detail" => "The max must be at least " . $minValue . ".",
+                    'source' => 'data.attributes.max',
+                    'detail' => 'The max must be greater than or equal ' . $minValue . '.',
+                    'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('meta')['errors']
+            $results->decodeResponseJson('errors')
+        );
+
+        $this->assertDatabaseMissing(
+            ConfigService::$tableShippingCostsWeightRange,
+            [
+                'id' => $shippingCost['id'],
+                'min' => $minValue,
+                'max' => $maxValue
+            ]
         );
     }
 
@@ -208,35 +269,55 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
-        $shippingCost =
-            $this->shippingCostRepository->create(
-                $this->faker->shippingCost(['shipping_option_id' => $shippingOption['id']])
-            );
+        $shippingOption = $this->fakeShippingOption();
 
-        $newPrice = rand(0, 9000);
+        $shippingCost = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'price' => rand(0, 20)
+        ]);
+
+        $newPrice = rand(30, 9000);
 
         $results = $this->call(
             'PATCH',
             '/shipping-cost/' . $shippingCost['id'],
-            [
-                'price' => $newPrice,
+             [
+                'data' => [
+                    'id' => $shippingCost['id'],
+                    'type' => 'shippingCostsWeightRange',
+                    'attributes' => [
+                        'price' => $newPrice,
+                    ]
+                ]
             ]
         );
 
-        $this->assertEquals(201, $results->getStatusCode());
+        $this->assertEquals(200, $results->getStatusCode());
 
-        $this->assertEquals(
+        $this->assertArraySubset(
             [
-                'id' => $shippingCost['id'],
-                'shipping_option_id' => $shippingOption['id'],
-                'min' => $shippingCost['min'],
-                'max' => $shippingCost['max'],
-                'price' => $newPrice,
-                'created_on' => $shippingCost['created_on'],
-                'updated_on' => Carbon::now()->toDateTimeString(),
+                'type' => 'shippingCostsWeightRange',
+                'attributes' => array_merge(
+                    array_diff_key(
+                        $shippingCost,
+                        [
+                            'id' => true,
+                            'updated_at' => true,
+                            'shipping_option_id' => true
+                        ]
+                    ),
+                    ['price' => $newPrice]
+                )
             ],
-            $results->decodeResponseJson()['data'][0]
+            $results->decodeResponseJson('data')
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableShippingCostsWeightRange,
+            array_merge(
+                $shippingCost,
+                ['price' => $newPrice]
+            )
         );
     }
 
@@ -245,15 +326,17 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow');
 
         $randomId = rand();
+
         $results = $this->call('DELETE', '/shipping-cost/' . $randomId);
 
         $this->assertEquals(404, $results->getStatusCode());
+
         $this->assertEquals(
             [
-                "title" => "Not found.",
-                "detail" => "Delete failed, shipping cost weight range not found with id: " . $randomId,
+                'title' => 'Not found.',
+                'detail' => 'Delete failed, shipping cost weight range not found with id: ' . $randomId,
             ],
-            $results->decodeResponseJson('meta')['errors']
+            $results->decodeResponseJson('errors')
         );
     }
 
@@ -261,14 +344,24 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('canOrThrow');
 
-        $shippingOption = $this->shippingOptionRepository->create($this->faker->shippingOption());
-        $shippingCost =
-            $this->shippingCostRepository->create(
-                $this->faker->shippingCost(['shipping_option_id' => $shippingOption['id']])
-            );
+        $shippingOption = $this->fakeShippingOption();
 
-        $results = $this->call('DELETE', 'shipping-cost/' . $shippingCost['id']);
+        $shippingCost = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id']
+        ]);
+
+        $results = $this->call(
+            'DELETE',
+            'shipping-cost/' . $shippingCost['id']
+        );
 
         $this->assertEquals(204, $results->getStatusCode());
+
+        $this->assertDatabaseMissing(
+            ConfigService::$tableShippingCostsWeightRange,
+            [
+                'id' => $shippingCost['id']
+            ]
+        );
     }
 }

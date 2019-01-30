@@ -64,7 +64,7 @@ class DiscountJsonController extends BaseController
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return sonResponse
+     * @return JsonResponse
      */
     public function index(Request $request)
     {
@@ -104,7 +104,7 @@ class DiscountJsonController extends BaseController
      * Pull discount
      *
      * @param \Illuminate\Http\Request $request
-     * @param  int                     $discountId
+     * @param  int $discountId
      *
      * @return JsonResponse
      */

@@ -113,8 +113,8 @@ class Faker extends Generator
         return array_merge(
             [
                 'country' => $this->country,
-                'active' => $this->randomNumber(),
-                'priority' => $this->boolean,
+                'active' => $this->boolean,
+                'priority' => $this->randomNumber(),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -127,8 +127,8 @@ class Faker extends Generator
         return array_merge(
             [
                 'shipping_option_id' => $this->randomNumber(),
-                'min' => $this->randomNumber(),
-                'max' => $this->randomNumber(),
+                'min' => $this->numberBetween(0, 100),
+                'max' => $this->numberBetween(101, 200),
                 'price' => $this->randomNumber(),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),

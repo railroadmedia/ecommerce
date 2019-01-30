@@ -39,7 +39,8 @@ class EcommerceTestCase extends BaseTestCase
         'orderItems' => 'ecommerce_order_item',
         'discounts' => 'ecommerce_discount',
         'discountCriteria' => 'ecommerce_discount_criteria',
-        'shippingOptions' => 'ecommerce_shipping_option'
+        'shippingOptions' => 'ecommerce_shipping_option',
+        'shippingCosts' => 'ecommerce_shipping_costs_weight_range'
     ];
 
     /**
@@ -494,6 +495,26 @@ class EcommerceTestCase extends BaseTestCase
         $shippingOption['id'] = $shippingOptionId;
 
         return $shippingOption;
+    }
+
+    /**
+     * Helper method to seed a test shipping costs weight range
+     *
+     * @return array
+     */
+    public function fakeShippingCost($shippingCostStub = []): array
+    {
+        $shippingCost = $this->faker->shippingCost(
+            $shippingCostStub
+        );
+
+        $shippingCostId = $this->databaseManager
+            ->table(self::TABLES['shippingCosts'])
+            ->insertGetId($shippingCost);
+
+        $shippingCost['id'] = $shippingCostId;
+
+        return $shippingCost;
     }
 
     protected function tearDown()
