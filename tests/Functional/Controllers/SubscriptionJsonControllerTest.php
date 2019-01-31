@@ -3,11 +3,6 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Repositories\CreditCardRepository;
-use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
-use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\UserProductService;
@@ -19,48 +14,23 @@ use Stripe\Token;
 
 class SubscriptionJsonControllerTest extends EcommerceTestCase
 {
-    /**
-     * @var \Railroad\Ecommerce\Repositories\SubscriptionRepository
-     */
-    protected $subscriptionRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\PaymentMethodRepository
-     */
-    protected $paymentMethodRepository;
-
-    /**
-     * @var CreditCardRepository
-     */
-    protected $creditCardRepository;
-
-    /**
-     * @var UserProductRepository
-     */
-    protected $userProductRepository;
-
     public function setUp()
     {
         parent::setUp();
-        $this->subscriptionRepository = $this->app->make(SubscriptionRepository::class);
-        $this->productRepository = $this->app->make(ProductRepository::class);
-        $this->paymentMethodRepository = $this->app->make(PaymentMethodRepository::class);
-        $this->creditCardRepository = $this->app->make(CreditCardRepository::class);
-        $this->userProductRepository = $this->app->make(UserProductRepository::class);
     }
 
     public function test_delete()
     {
-        $subscription = $this->subscriptionRepository->create($this->faker->subscription());
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $subscription = $this->fakeSubscription();
 
         $results = $this->call('DELETE', '/subscription/' . $subscription['id']);
 
         $this->assertEquals(204, $results->getStatusCode());
+
         $this->assertSoftDeleted(
             ConfigService::$tableSubscription,
             [
@@ -70,52 +40,99 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
     }
 
     public function test_delete_not_existing_subscription()
-
     {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
         $randomId = $this->faker->randomNumber();
 
         $results = $this->call('DELETE', '/subscription/' . $randomId);
 
-        //assert response status code
+        // assert response status code
         $this->assertEquals(404, $results->getStatusCode());
 
-        //assert the error message that it's returned in JSON format
+        // assert the error message that it's returned in JSON format
         $this->assertEquals(
             [
-                "title" => "Not found.",
-                "detail" => "Delete failed, subscription not found with id: " . $randomId,
+                'title' => 'Not found.',
+                'detail' => 'Delete failed, subscription not found with id: ' . $randomId,
             ],
-            $results->decodeResponseJson('meta')['errors']
+            $results->decodeResponseJson('errors')
         );
     }
 
     public function test_pull_subscriptions()
     {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
         $page = 1;
         $limit = 10;
-        $nrSubscriptions = 10;
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'type' => ConfigService::$typeSubscription,
-                ]
-            )
-        );
-        unset($product['discounts']);
+        $nrSubscriptions = $this->faker->numberBetween(15, 25);
+
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription
+        ]);
+
+        $subscriptions = [];
 
         for ($i = 0; $i < $nrSubscriptions; $i++) {
-            $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod());
-            $subscription = $this->subscriptionRepository->create(
-                $this->faker->subscription(
-                    [
-                        'product_id' => $product['id'],
-                        'payment_method_id' => $paymentMethod['id'],
+            $paymentMethod = $this->fakePaymentMethod();
+            $order = $this->fakeOrder();
+
+            $subscription = $this->fakeSubscription([
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null
+            ]);
+
+            if ($i < $limit) {
+                $subscriptions[] = [
+                    'type' => 'subscription',
+                    'id' => $subscription['id'],
+                    'attributes' => array_diff_key(
+                        $subscription,
+                        [
+                            'id' => true,
+                            'product_id' => true,
+                            'user_id' => true,
+                            'customer_id' => true,
+                            'payment_method_id' => true,
+                            'order_id' => true
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ]
                     ]
-                )
-            );
-            $subscriptions[$i] = $subscription->getArrayCopy();
-            $subscriptions[$i]['payment_method'] = (array)$paymentMethod;
-            $subscriptions[$i]['product'] = (array)$product;
+                ];
+            }
         }
 
         $results = $this->call(
@@ -124,54 +141,97 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             [
                 'page' => $page,
                 'limit' => $limit,
+                'order_by_column' => 'id',
+                'order_by_direction' => 'asc'
             ]
         );
 
-        $this->assertEquals($subscriptions, $results->decodeResponseJson('data'));
+        $this->assertEquals(
+            $subscriptions,
+            $results->decodeResponseJson('data')
+        );
     }
 
     public function test_pull_subscriptions_for_specific_user()
     {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $otherUser = $this->fakeUser();
+
         $page = 1;
         $limit = 10;
-        $nrSubscriptions = 10;
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'type' => ConfigService::$typeSubscription,
-                ]
-            )
-        );
-        unset($product['discounts']);
-        $userId = $this->faker->numberBetween();
+        $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
-        for ($i = 0; $i < 5; $i++) {
-            $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod());
-            $subscription = $this->subscriptionRepository->create(
-                $this->faker->subscription(
-                    [
-                        'product_id' => $product['id'],
-                        'payment_method_id' => $paymentMethod['id'],
-                        'user_id' => rand(),
-                    ]
-                )
-            );
-        }
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription
+        ]);
+
+        $subscriptions = [];
+
         for ($i = 0; $i < $nrSubscriptions; $i++) {
-            $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod());
-            $subscription = $this->subscriptionRepository->create(
-                $this->faker->subscription(
-                    [
-                        'product_id' => $product['id'],
-                        'payment_method_id' => $paymentMethod['id'],
-                        'user_id' => $userId,
-                    ]
-                )
-            );
+            $paymentMethod = $this->fakePaymentMethod();
+            $order = $this->fakeOrder();
 
-            $subscriptions[$i] = $subscription->getArrayCopy();
-            $subscriptions[$i]['payment_method'] = (array)$paymentMethod;
-            $subscriptions[$i]['product'] = (array)$product;
+            $subscription = $this->fakeSubscription([
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $this->faker->randomElement([
+                    $userId,
+                    $otherUser['id']
+                ]),
+                'order_id' => $order['id'],
+                'updated_at' => null
+            ]);
+
+            if (
+                count($subscriptions) < $limit &&
+                $subscription['user_id'] == $userId
+            ) {
+
+                $subscriptions[] = [
+                    'type' => 'subscription',
+                    'id' => $subscription['id'],
+                    'attributes' => array_diff_key(
+                        $subscription,
+                        [
+                            'id' => true,
+                            'product_id' => true,
+                            'user_id' => true,
+                            'customer_id' => true,
+                            'payment_method_id' => true,
+                            'order_id' => true
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ]
+                    ]
+                ];
+            }
         }
 
         $results = $this->call(
@@ -180,58 +240,338 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             [
                 'page' => $page,
                 'limit' => $limit,
-                'user_id' => $userId,
+                'order_by_column' => 'id',
+                'order_by_direction' => 'asc',
+                'user_id' => $userId
             ]
         );
 
-        $this->assertEquals($subscriptions, $results->decodeResponseJson('data'));
-        $this->assertEquals($nrSubscriptions, $results->decodeResponseJson('meta')['totalResults']);
+        $this->assertEquals(
+            $subscriptions,
+            $results->decodeResponseJson('data')
+        );
+    }
+
+    public function test_store_validation()
+    {
+        $results = $this->call('PUT', '/subscription', []);
+
+        // assert the response status code
+        $this->assertEquals(422, $results->getStatusCode());
+
+        // assert the validation errors
+        $this->assertEquals(
+            [
+                [
+                    'source' => 'data.attributes.brand',
+                    'detail' => 'The brand field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.type',
+                    'detail' => 'The type field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.is_active',
+                    'detail' => 'The is_active field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.start_date',
+                    'detail' => 'The start_date field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.paid_until',
+                    'detail' => 'The paid_until field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.total_price_per_payment',
+                    'detail' => 'The total_price_per_payment field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.currency',
+                    'detail' => 'The currency field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.interval_type',
+                    'detail' => 'The interval_type field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.interval_count',
+                    'detail' => 'The interval_count field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.total_cycles_paid',
+                    'detail' => 'The total_cycles_paid field is required.',
+                    'title' => 'Validation failed.'
+                ]
+            ],
+            $results->decodeResponseJson('errors')
+        );
+    }
+
+    public function test_store()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription
+        ]);
+
+        $discount = $this->faker->discount([
+            'product_id' => $product['id']
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod();
+
+        $order = $this->fakeOrder();
+
+        $subscription = $this->faker->subscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null
+        ]);
+
+        $results  = $this->call(
+            'PUT',
+            '/subscription',
+            [
+                'data' => [
+                    'type' => 'subscription',
+                    'attributes' => $subscription,
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ]
+                    ]
+                ],
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $results->getStatusCode());
+
+        // assert returned JSON
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'subscription',
+                    'attributes' => array_diff_key(
+                        $subscription,
+                        [
+                            'product_id' => true,
+                            'payment_method_id' => true,
+                            'user_id' => true,
+                            'order_id' => true,
+                            'customer_id' => true,
+                            'updated_at' => true
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'product',
+                        'id' => $product['id'],
+                    ]
+                ]
+            ],
+            $results->decodeResponseJson()
+        );
+
+        // assert that the discount exists in the database
+        $this->assertDatabaseHas(
+            ConfigService::$tableSubscription,
+            array_diff_key(
+                $subscription,
+                ['updated_at' => true]
+            )
+        );
     }
 
     public function test_update_not_existing_subscription()
     {
-        $results = $this->call('PATCH', '/subscription/' . rand());
+        $randomId = rand();
+
+        $results = $this->call('PATCH', '/subscription/' . $randomId);
 
         $this->assertEquals(404, $results->getStatusCode());
+
+        // assert the error message that it's returned in JSON format
+        $this->assertEquals(
+            [
+                'title' => 'Not found.',
+                'detail' => 'Update failed, subscription not found with id: ' . $randomId,
+            ],
+            $results->decodeResponseJson('errors')
+        );
     }
 
     public function test_update_subscription()
     {
-        $subscription = $this->subscriptionRepository->create($this->faker->subscription());
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription
+        ]);
+
+        $discount = $this->faker->discount([
+            'product_id' => $product['id']
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod();
+
+        $order = $this->fakeOrder();
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null
+        ]);
+
         $newPrice = $this->faker->numberBetween();
 
         $results = $this->call(
             'PATCH',
             '/subscription/' . $subscription['id'],
             [
-                'total_price_per_payment' => $newPrice,
+                'data' => [
+                    'type' => 'subscription',
+                    'attributes' => ['total_price_per_payment' => $newPrice]
+                ],
             ]
         );
 
-        $this->assertEquals(201, $results->getStatusCode());
-        $this->assertEquals(
-            array_merge(
-                $subscription->getArrayCopy(),
-                [
-                    'total_price_per_payment' => $newPrice,
-                    'updated_on' => Carbon::now()
-                        ->toDateTimeString(),
-                ]
-            ),
-            $results->decodeResponseJson('data')[0]
-        );
+        $this->assertEquals(200, $results->getStatusCode());
 
-        unset($subscription['payment_method']);
-        unset($subscription['product']);
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'subscription',
+                    'id' => $subscription['id'],
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'payment_method_id' => true,
+                                'user_id' => true,
+                                'order_id' => true,
+                                'customer_id' => true,
+                                'updated_at' => true
+                            ]
+                        ),
+                        [
+                            'total_price_per_payment' => $newPrice,
+                            'updated_at' => Carbon::now()->toDateTimeString(),
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'product',
+                        'id' => $product['id'],
+                    ]
+                ]
+            ],
+            $results->decodeResponseJson()
+        );
 
         $this->assertDatabaseHas(
             ConfigService::$tableSubscription,
             array_merge(
-                $subscription->getArrayCopy(),
+                $subscription,
                 [
                     'total_price_per_payment' => $newPrice,
-                    'updated_on' => Carbon::now()
-                        ->toDateTimeString(),
+                    'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
             )
         );
@@ -239,43 +579,112 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
     public function test_cancel_subscription()
     {
-        $subscription = $this->subscriptionRepository->create($this->faker->subscription());
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription
+        ]);
+
+        $discount = $this->faker->discount([
+            'product_id' => $product['id']
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod();
+
+        $order = $this->fakeOrder();
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null
+        ]);
+
         $results = $this->call(
             'PATCH',
             '/subscription/' . $subscription['id'],
             [
-                'is_active' => false,
+                'data' => [
+                    'type' => 'subscription',
+                    'attributes' => ['is_active' => false]
+                ],
             ]
         );
 
-        $this->assertEquals(201, $results->getStatusCode());
-        $this->assertEquals(
-            array_merge(
-                $subscription->getArrayCopy(),
-                [
-                    'is_active' => 0,
-                    'canceled_on' => Carbon::now()
-                        ->toDateTimeString(),
-                    'updated_on' => Carbon::now()
-                        ->toDateTimeString(),
-                ]
-            ),
-            $results->decodeResponseJson('data')[0]
-        );
+        $this->assertEquals(200, $results->getStatusCode());
 
-        unset($subscription['payment_method']);
-        unset($subscription['product']);
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'subscription',
+                    'id' => $subscription['id'],
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'payment_method_id' => true,
+                                'user_id' => true,
+                                'order_id' => true,
+                                'customer_id' => true,
+                                'updated_at' => true
+                            ]
+                        ),
+                        [
+                            'is_active' => false,
+                            'canceled_on' => Carbon::now()->toDateTimeString(),
+                            'updated_at' => Carbon::now()->toDateTimeString(),
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'product',
+                        'id' => $product['id'],
+                    ]
+                ]
+            ],
+            $results->decodeResponseJson()
+        );
 
         $this->assertDatabaseHas(
             ConfigService::$tableSubscription,
             array_merge(
-                $subscription->getArrayCopy(),
+                $subscription,
                 [
-                    'is_active' => 0,
-                    'canceled_on' => Carbon::now()
-                        ->toDateTimeString(),
-                    'updated_on' => Carbon::now()
-                        ->toDateTimeString(),
+                    'is_active' => false,
+                    'canceled_on' => Carbon::now()->toDateTimeString(),
+                    'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
             )
         );
@@ -283,167 +692,360 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
     public function test_update_subscription_validation()
     {
-        $subscription = $this->subscriptionRepository->create($this->faker->subscription());
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription
+        ]);
+
+        $discount = $this->faker->discount([
+            'product_id' => $product['id']
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod();
+
+        $order = $this->fakeOrder();
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null
+        ]);
+
         $results = $this->call(
             'PATCH',
             '/subscription/' . $subscription['id'],
             [
-                'payment_method_id' => rand(),
-                'total_cycles_due' => -2,
-                'interval_type' => $this->faker->word,
+                'data' => [
+                    'type' => 'subscription',
+                    'attributes' => [
+                        'total_cycles_due' => -2,
+                        'interval_type' => $this->faker->word,
+                    ],
+                    'relationships' => [
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => rand()
+                            ]
+                        ],
+                    ]
+                ],
             ]
         );
 
         $this->assertEquals(422, $results->getStatusCode());
-        $this->assertEquals(3, count($results->decodeResponseJson('meta')['errors']));
+
+        // assert the validation errors
+        $this->assertEquals(
+            [
+                [
+                    'source' => 'data.attributes.interval_type',
+                    'detail' => 'The selected interval_type is invalid.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.attributes.total_cycles_due',
+                    'detail' => 'The total_cycles_due must be at least 0.',
+                    'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'data.relationships.paymentMethod.data.id',
+                    'detail' => 'The selected paymentMethod is invalid.',
+                    'title' => 'Validation failed.'
+                ]
+            ],
+            $results->decodeResponseJson('errors')
+        );
     }
 
     public function test_update_subscription_date()
     {
-        $subscription = $this->subscriptionRepository->create($this->faker->subscription());
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription
+        ]);
+
+        $discount = $this->faker->discount([
+            'product_id' => $product['id']
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod();
+
+        $order = $this->fakeOrder();
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null
+        ]);
+
         $results = $this->call(
             'PATCH',
             '/subscription/' . $subscription['id'],
             [
-                'paid_until' => Carbon::now()
-                    ->toDateTimeString(),
+                'data' => [
+                    'type' => 'subscription',
+                    'attributes' => [
+                        'paid_until' => Carbon::now()->toDateTimeString(),
+                    ]
+                ],
             ]
         );
 
-        $this->assertEquals(201, $results->getStatusCode());
-        $this->assertEquals(
-            Carbon::now()
-                ->toDateTimeString(),
-            $results->decodeResponseJson('data')[0]['paid_until']
-        );
-    }
+        $this->assertEquals(200, $results->getStatusCode());
 
-    public function test_renew_subscription()
-    {
-        $userId = $this->createAndLogInNewUser();
-
-        $this->stripeExternalHelperMock->method('retrieveCustomer')
-            ->willReturn(new Customer());
-        $this->stripeExternalHelperMock->method('retrieveCard')
-            ->willReturn(new Card());
-        $this->stripeExternalHelperMock->method('chargeCard')
-            ->willReturn(new Charge());
-
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'type' => ConfigService::$typeSubscription,
-                    'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                    'subscription_interval_count' => 1,
-                ]
-            )
-        );
-        $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
-        $paymentMethod = $this->paymentMethodRepository->create(
-            $this->faker->paymentMethod(
-                [
-                    'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                    'method_id' => $creditCard['id'],
-                ]
-            )
-        );
-        $subscription = $this->subscriptionRepository->create(
-            $this->faker->subscription(
-                [
-                    'product_id' => $product['id'],
-                    'payment_method_id' => $paymentMethod['id'],
-                    'user_id' => $userId,
-                    'paid_until' => Carbon::now()
-                        ->subDay(1)
-                        ->toDateTimeString(),
-                    'is_active' => 1,
-                    'interval_count' => 1,
-                    'interval_type' => ConfigService::$intervalTypeYearly,
-                ]
-            )
-        );
-
-        $userProduct = $this->userProductRepository->create(
-            $this->faker->userProduct(
-                [
-                    'user_id' => $userId,
-                    'product_id' => $product['id'],
-                    'quantity' => 1,
-
-                ]
-            )
-        );
-        $results = $this->call('POST', '/subscription-renew/' . $subscription['id']);
-
-        $this->assertEquals(201, $results->getStatusCode());
-
-        $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+        $this->assertArraySubset(
             [
-                'user_id' => $userId,
-                'product_id' => $product['id'],
-                'quantity' => 1,
-                'expiration_date' => Carbon::now()
-                    ->addYear(1)
-                    ->startOfDay()
-                    ->toDateTimeString(),
-            ]
+                'data' => [
+                    'type' => 'subscription',
+                    'id' => $subscription['id'],
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'payment_method_id' => true,
+                                'user_id' => true,
+                                'order_id' => true,
+                                'customer_id' => true,
+                                'updated_at' => true
+                            ]
+                        ),
+                        [
+                            'paid_until' => Carbon::now()->toDateTimeString(),
+                            'updated_at' => Carbon::now()->toDateTimeString(),
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'product',
+                        'id' => $product['id'],
+                    ]
+                ]
+            ],
+            $results->decodeResponseJson()
         );
 
         $this->assertDatabaseHas(
             ConfigService::$tableSubscription,
-            [
-                'id' => $subscription['id'],
-                'is_active' => 1,
-                'paid_until' => Carbon::now()
-                    ->addYear(1)
-                    ->startOfDay()
-                    ->toDateTimeString(),
-            ]
-        );
-    }
-
-    public function test_pull_subscription_from_specific_brand()
-    {
-        $page = 1;
-        $limit = 10;
-        $nrSubscriptions = 3;
-        $product = $this->productRepository->create(
-            $this->faker->product(
+            array_merge(
+                $subscription,
                 [
-                    'type' => ConfigService::$typeSubscription,
+                    'paid_until' => Carbon::now()->toDateTimeString(),
+                    'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
             )
         );
-        unset($product['discounts']);
-        $subscriptionBrands = [$this->faker->word, $this->faker->word];
-        for ($i = 0; $i < $nrSubscriptions; $i++) {
-            $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod());
-            $subscription = $this->subscriptionRepository->create(
-                $this->faker->subscription(
-                    [
-                        'product_id' => $product['id'],
-                        'payment_method_id' => $paymentMethod['id'],
-                        'brand' => $this->faker->randomElement($subscriptionBrands),
-                    ]
-                )
-            );
-            $subscriptions[$i] = $subscription->getArrayCopy();
-            $subscriptions[$i]['payment_method'] = (array)$paymentMethod;
-            $subscriptions[$i]['product'] = (array)$product;
-        }
+    }
 
-        //subscription on default brand
-        for ($i = 0; $i < 5; $i++) {
-            $paymentMethod = $this->paymentMethodRepository->create($this->faker->paymentMethod());
-            $subscription = $this->subscriptionRepository->create(
-                $this->faker->subscription(
-                    [
-                        'product_id' => $product['id'],
-                        'payment_method_id' => $paymentMethod['id'],
+    // public function test_renew_subscription()
+    // {
+    //     $userId = $this->createAndLogInNewUser();
+
+    //     $this->stripeExternalHelperMock->method('retrieveCustomer')
+    //         ->willReturn(new Customer());
+    //     $this->stripeExternalHelperMock->method('retrieveCard')
+    //         ->willReturn(new Card());
+    //     $this->stripeExternalHelperMock->method('chargeCard')
+    //         ->willReturn(new Charge());
+
+    //     $product = $this->productRepository->create(
+    //         $this->faker->product(
+    //             [
+    //                 'type' => ConfigService::$typeSubscription,
+    //                 'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+    //                 'subscription_interval_count' => 1,
+    //             ]
+    //         )
+    //     );
+    //     $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
+    //     $paymentMethod = $this->paymentMethodRepository->create(
+    //         $this->faker->paymentMethod(
+    //             [
+    //                 'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+    //                 'method_id' => $creditCard['id'],
+    //             ]
+    //         )
+    //     );
+    //     $subscription = $this->subscriptionRepository->create(
+    //         $this->faker->subscription(
+    //             [
+    //                 'product_id' => $product['id'],
+    //                 'payment_method_id' => $paymentMethod['id'],
+    //                 'user_id' => $userId,
+    //                 'paid_until' => Carbon::now()
+    //                     ->subDay(1)
+    //                     ->toDateTimeString(),
+    //                 'is_active' => 1,
+    //                 'interval_count' => 1,
+    //                 'interval_type' => ConfigService::$intervalTypeYearly,
+    //             ]
+    //         )
+    //     );
+
+    //     $userProduct = $this->userProductRepository->create(
+    //         $this->faker->userProduct(
+    //             [
+    //                 'user_id' => $userId,
+    //                 'product_id' => $product['id'],
+    //                 'quantity' => 1,
+
+    //             ]
+    //         )
+    //     );
+    //     $results = $this->call('POST', '/subscription-renew/' . $subscription['id']);
+
+    //     $this->assertEquals(201, $results->getStatusCode());
+
+    //     $this->assertDatabaseHas(
+    //         ConfigService::$tableUserProduct,
+    //         [
+    //             'user_id' => $userId,
+    //             'product_id' => $product['id'],
+    //             'quantity' => 1,
+    //             'expiration_date' => Carbon::now()
+    //                 ->addYear(1)
+    //                 ->startOfDay()
+    //                 ->toDateTimeString(),
+    //         ]
+    //     );
+
+    //     $this->assertDatabaseHas(
+    //         ConfigService::$tableSubscription,
+    //         [
+    //             'id' => $subscription['id'],
+    //             'is_active' => 1,
+    //             'paid_until' => Carbon::now()
+    //                 ->addYear(1)
+    //                 ->startOfDay()
+    //                 ->toDateTimeString(),
+    //         ]
+    //     );
+    // }
+
+    public function test_pull_subscription_from_specific_brand()
+    {
+
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $page = 1;
+        $limit = 10;
+        $nrSubscriptions = $this->faker->numberBetween(15, 25);
+
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription
+        ]);
+
+        $subscriptionBrands = [$this->faker->word, $this->faker->word];
+
+        $subscriptions = [];
+
+        for ($i = 0; $i < $nrSubscriptions; $i++) {
+            $paymentMethod = $this->fakePaymentMethod();
+            $order = $this->fakeOrder();
+
+            if ($i < $limit) {
+                // specific brand
+                $subscription = $this->fakeSubscription([
+                    'brand' => $this->faker->randomElement($subscriptionBrands),
+                    'product_id' => $product['id'],
+                    'payment_method_id' => $paymentMethod['id'],
+                    'user_id' => $userId,
+                    'order_id' => $order['id'],
+                    'updated_at' => null
+                ]);
+
+                $subscriptions[] = [
+                    'type' => 'subscription',
+                    'id' => $subscription['id'],
+                    'attributes' => array_diff_key(
+                        $subscription,
+                        [
+                            'id' => true,
+                            'product_id' => true,
+                            'user_id' => true,
+                            'customer_id' => true,
+                            'payment_method_id' => true,
+                            'order_id' => true
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ]
                     ]
-                )
-            );
+                ];
+            } else {
+                // default brand
+                $subscription = $this->fakeSubscription([
+                    'product_id' => $product['id'],
+                    'payment_method_id' => $paymentMethod['id'],
+                    'user_id' => $userId,
+                    'order_id' => $order['id'],
+                    'updated_at' => null
+                ]);
+            }
         }
 
         $results = $this->call(
@@ -452,11 +1054,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             [
                 'page' => $page,
                 'limit' => $limit,
+                'order_by_column' => 'id',
+                'order_by_direction' => 'asc',
                 'brands' => $subscriptionBrands
             ]
         );
 
-        //only subscriptions defined on specified brands are pulled
-        $this->assertEquals($subscriptions, $results->decodeResponseJson('data'));
+        $this->assertEquals(
+            $subscriptions,
+            $results->decodeResponseJson('data')
+        );
     }
 }

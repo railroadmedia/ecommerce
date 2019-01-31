@@ -165,7 +165,7 @@ class Faker extends Generator
                 'method_id' => $this->randomNumber(),
                 'method_type' => $this->word,
                 'currency' => $this->currencyCode,
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
@@ -279,7 +279,7 @@ class Faker extends Generator
                 'brand' => ConfigService::$brand,
                 'shipping_address_id' => $this->randomNumber(),
                 'billing_address_id' => $this->randomNumber(),
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override

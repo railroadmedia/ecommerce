@@ -81,8 +81,6 @@ class DiscountJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->assertTrue(true);
-
         // assert the response status code
         $this->assertEquals(200, $results->getStatusCode());
 
@@ -108,10 +106,11 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'product',
                         'id' => $product['id'],
-                        'attributes' => array_diff_key(
-                            $product,
-                            ['id' => true]
-                        )
+                        // full products relation is loaded upon request - todo: add test for request with product included
+                        // 'attributes' => array_diff_key(
+                        //     $product,
+                        //     ['id' => true]
+                        // )
                     ]
                 ]
             ],
@@ -202,18 +201,19 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'product',
                         'id' => $product['id'],
-                        'attributes' => array_merge(
-                            array_diff_key(
-                                $product,
-                                [
-                                    'id' => true,
-                                    'active' => true
-                                ]
-                            ),
-                            [
-                                'active' => (bool) $product['active']
-                            ]
-                        )
+                        // full products relation is loaded upon request - todo: add test for request with product included
+                        // 'attributes' => array_merge(
+                        //     array_diff_key(
+                        //         $product,
+                        //         [
+                        //             'id' => true,
+                        //             'active' => true
+                        //         ]
+                        //     ),
+                        //     [
+                        //         'active' => (bool) $product['active']
+                        //     ]
+                        // )
                     ]
                 ]
             ],

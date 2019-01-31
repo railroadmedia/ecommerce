@@ -40,7 +40,9 @@ class EcommerceTestCase extends BaseTestCase
         'discounts' => 'ecommerce_discount',
         'discountCriteria' => 'ecommerce_discount_criteria',
         'shippingOptions' => 'ecommerce_shipping_option',
-        'shippingCosts' => 'ecommerce_shipping_costs_weight_range'
+        'shippingCosts' => 'ecommerce_shipping_costs_weight_range',
+        'paymentMethods' => 'ecommerce_payment_method',
+        'orders' => 'ecommerce_order'
     ];
 
     /**
@@ -515,6 +517,46 @@ class EcommerceTestCase extends BaseTestCase
         $shippingCost['id'] = $shippingCostId;
 
         return $shippingCost;
+    }
+
+    /**
+     * Helper method to seed a test payment method
+     *
+     * @return array
+     */
+    public function fakePaymentMethod($paymentMethodStub = []): array
+    {
+        $paymentMethod = $this->faker->paymentMethod(
+            $paymentMethodStub
+        );
+
+        $paymentMethodId = $this->databaseManager
+            ->table(self::TABLES['paymentMethods'])
+            ->insertGetId($paymentMethod);
+
+        $paymentMethod['id'] = $paymentMethodId;
+
+        return $paymentMethod;
+    }
+
+    /**
+     * Helper method to seed a test order
+     *
+     * @return array
+     */
+    public function fakeOrder($orderStub = []): array
+    {
+        $order = $this->faker->order(
+            $orderStub
+        );
+
+        $orderId = $this->databaseManager
+            ->table(self::TABLES['orders'])
+            ->insertGetId($order);
+
+        $order['id'] = $orderId;
+
+        return $order;
     }
 
     protected function tearDown()

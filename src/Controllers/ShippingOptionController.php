@@ -68,20 +68,26 @@ class ShippingOptionController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.shipping.options');
 
+        $alias = 's';
         $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
+        $orderBy = $request->get('order_by_column', 'created_at');
+        if (
+            strpos($orderBy, '_') !== false
+            || strpos($orderBy, '-') !== false
+        ) {
+            $orderBy = camel_case($orderBy);
+        }
+        $orderBy = $alias . '.' . $orderBy;
 
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->shippingOptionRepository->createQueryBuilder('s');
+        $qb = $this->shippingOptionRepository->createQueryBuilder($alias);
 
         $qb
             ->setMaxResults($request->get('limit', 10))
             ->setFirstResult($first)
-            ->orderBy(
-                's.' . $request->get('order_by_column', 'created_at'),
-                $request->get('order_by_direction', 'desc')
-            );
+            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'));
 
         $shippingOptions = $qb->getQuery()->getResult();
 

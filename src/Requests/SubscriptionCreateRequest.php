@@ -17,6 +17,34 @@ class SubscriptionCreateRequest extends FormRequest
     }
 
     /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array
+     */
+    public function attributes()
+    {
+        return [
+            'data.type' => 'json data type',
+            'data.attributes.brand' => 'brand',
+            'data.attributes.type' => 'type',
+            'data.attributes.is_active' => 'is_active',
+            'data.attributes.start_date' => 'start_date',
+            'data.attributes.paid_until' => 'paid_until',
+            'data.attributes.canceled_on' => 'canceled_on',
+            'data.attributes.note' => 'note',
+            'data.attributes.total_price_per_payment' => 'total_price_per_payment',
+            'data.attributes.currency' => 'currency',
+            'data.attributes.interval_type' => 'interval_type',
+            'data.attributes.interval_count' => 'interval_count',
+            'data.attributes.total_cycles_due' => 'total_cycles_due',
+            'data.attributes.total_cycles_paid' => 'total_cycles_paid',
+            'data.relationships.order.data.id' => 'order',
+            'data.relationships.product.data.id' => 'product',
+            'data.relationships.paymentMethod.data.id' => 'paymentMethod',
+        ];
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -24,7 +52,9 @@ class SubscriptionCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'type'                    => 'max:255|in:' .
+            'data.type' => 'in:subscription',
+            'data.attributes.brand' => 'required|max:255',
+            'data.attributes.type' => 'required|max:255|in:' .
                 implode(
                     ',',
                     [
@@ -32,15 +62,16 @@ class SubscriptionCreateRequest extends FormRequest
                         ConfigService::$typeSubscription
                     ]
                 ),
-            'order_id'                => 'numeric|exists:' . ConfigService::$tableOrder . ',id',
-            'product_id'              => 'numeric|exists:' . ConfigService::$tableProduct . ',id',
-            'is_active'               => 'nullable|boolean',
-            'start_date'              => 'nullable|date',
-            'paid_until'              => 'nullable|date',
-            'canceled_on'             => 'nullable|date',
-            'note'                    => 'max:255',
-            'total_price_per_payment' => 'nullable|numeric|min:0',
-            'interval_type'           => 'nullable|in:' .
+            'data.attributes.is_active' => 'required|boolean',
+            'data.attributes.start_date' => 'required|date',
+            'data.attributes.paid_until' => 'required|date',
+            'data.attributes.canceled_on' => 'nullable|date',
+            'data.attributes.note' => 'nullable|max:255',
+            'data.attributes.total_price_per_payment' => 'required|numeric|min:0',
+            'data.attributes.tax_per_payment' => 'nullable|numeric',
+            'data.attributes.shipping_per_payment' => 'nullable|numeric',
+            'data.attributes.currency' => 'required|max:3',
+            'data.attributes.interval_type' => 'required|in:' .
                 implode(
                     ',',
                     [
@@ -49,10 +80,43 @@ class SubscriptionCreateRequest extends FormRequest
                         ConfigService::$intervalTypeDaily
                     ]
                 ),
-            'interval_count'          => 'nullable|numeric|min:0',
-            'total_cycles_due'        => 'nullable|numeric|min:0',
-            'total_cycles_paid'       => 'nullable|numeric|min:0',
-            'payment_method_id'       => 'numeric|exists:' . ConfigService::$tablePaymentMethod . ',id'
+            'data.attributes.interval_count' => 'required|numeric|min:0',
+            'data.attributes.total_cycles_due' => 'nullable|numeric|min:0',
+            'data.attributes.total_cycles_paid' => 'required|numeric|min:0',
+            'data.relationships.order.data.id' => 'numeric|exists:' . ConfigService::$tableOrder . ',id',
+            'data.relationships.product.data.id' => 'numeric|exists:' . ConfigService::$tableProduct . ',id',
+            'data.relationships.paymentMethod.data.id' => 'numeric|exists:' . ConfigService::$tablePaymentMethod . ',id',
         ];
+    }
+
+    /**
+     * @return array
+     */
+    public function onlyAllowed()
+    {
+        return $this->only(
+            [
+                'data.attributes.type',
+                'data.attributes.brand',
+                'data.attributes.is_active',
+                'data.attributes.start_date',
+                'data.attributes.paid_until',
+                'data.attributes.canceled_on',
+                'data.attributes.note',
+                'data.attributes.total_price_per_payment',
+                'data.attributes.tax_per_payment',
+                'data.attributes.shipping_per_payment',
+                'data.attributes.currency',
+                'data.attributes.interval_type',
+                'data.attributes.interval_count',
+                'data.attributes.total_cycles_due',
+                'data.attributes.total_cycles_paid',
+                'data.relationships.order',
+                'data.relationships.product',
+                'data.relationships.paymentMethod',
+                'data.relationships.user',
+                'data.relationships.customer',
+            ]
+        );
     }
 }

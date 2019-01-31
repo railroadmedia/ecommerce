@@ -97,7 +97,7 @@ class PaymentMethod
     /**
      * @return string|null
      */
-    public function getBrand(): ?string
+    public function getMethodType(): ?string
     {
         return $this->methodType;
     }
@@ -107,7 +107,7 @@ class PaymentMethod
      *
      * @return PaymentMethod
      */
-    public function setBrand(string $methodType): self
+    public function setMethodType(string $methodType): self
     {
         $this->methodType = $methodType;
 

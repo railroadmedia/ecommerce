@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Usora\Entities\User;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\SubscriptionRepository")
@@ -249,19 +250,19 @@ class Subscription
     }
 
     /**
-     * @return int|null
+     * @return Order|null
      */
-    public function getOrder(): ?int
+    public function getOrder(): ?Order
     {
         return $this->order;
     }
 
     /**
-     * @param int $order
+     * @param Order $order
      *
      * @return Subscription
      */
-    public function setOrder(?int $order): self
+    public function setOrder(?Order $order): self
     {
         $this->order = $order;
 
