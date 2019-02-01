@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Providers;
 
 // TO-DO: clean-up the deprecated imports
+use Doctrine\Common\EventManager;
+use Doctrine\ORM\Events;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
@@ -11,6 +13,7 @@ use Railroad\Ecommerce\Listeners\UserDefaultPaymentMethodListener;
 use Railroad\Ecommerce\Listeners\UserProductListener;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CustomValidationRules;
+use Railroad\Ecommerce\Listeners\UserProductEventListener;
 use Railroad\Resora\Events\Created;
 use Railroad\Resora\Events\Updated;
 
@@ -164,5 +167,34 @@ class EcommerceServiceProvider extends ServiceProvider
 
         ConfigService::$subscriptionRenewalDateCutoff = config('ecommerce.subscription_renewal_date');
         ConfigService::$failedPaymentsBeforeDeactivation = config('ecommerce.failed_payments_before_de_activation');
+    }
+
+    /**
+     * Register the application services.
+     */
+    public function register()
+    {
+        // UserProductEventListener WIP
+        // tmp disabled to make the SubscriptionJsonControllerTest::test_renew_subscription pass
+        // $eventManager = app()->make(EventManager::class);
+
+        // $userProductEventListener = app()->make(
+        //     UserProductEventListener::class
+        // );
+
+        // $eventManager->addEventListener(
+        //     [Events::preUpdate],
+        //     $userProductEventListener
+        // );
+
+        /*
+        // above works if railroad/doctrine package service provider runs 1st, below should always work
+        app()->resolving(EventManager::class, function ($eventManager, $app) {
+            $eventManager->addEventListener(
+                [Events::preUpdate],
+                $userProductEventListener
+            );
+        });
+        */
     }
 }

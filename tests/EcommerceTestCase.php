@@ -42,7 +42,9 @@ class EcommerceTestCase extends BaseTestCase
         'shippingOptions' => 'ecommerce_shipping_option',
         'shippingCosts' => 'ecommerce_shipping_costs_weight_range',
         'paymentMethods' => 'ecommerce_payment_method',
-        'orders' => 'ecommerce_order'
+        'orders' => 'ecommerce_order',
+        'creditCards' => 'ecommerce_credit_card',
+        'userProducts' => 'ecommerce_user_product'
     ];
 
     /**
@@ -557,6 +559,46 @@ class EcommerceTestCase extends BaseTestCase
         $order['id'] = $orderId;
 
         return $order;
+    }
+
+    /**
+     * Helper method to seed a test credit card
+     *
+     * @return array
+     */
+    public function fakeCreditCard($creditCardStub = []): array
+    {
+        $creditCard = $this->faker->creditCard(
+            $creditCardStub
+        );
+
+        $creditCardId = $this->databaseManager
+            ->table(self::TABLES['creditCards'])
+            ->insertGetId($creditCard);
+
+        $creditCard['id'] = $creditCardId;
+
+        return $creditCard;
+    }
+
+    /**
+     * Helper method to seed a test user product
+     *
+     * @return array
+     */
+    public function fakeUserProduct($userProductStub = []): array
+    {
+        $userProduct = $this->faker->userProduct(
+            $userProductStub
+        );
+
+        $userProductId = $this->databaseManager
+            ->table(self::TABLES['userProducts'])
+            ->insertGetId($userProduct);
+
+        $userProduct['id'] = $userProductId;
+
+        return $userProduct;
     }
 
     protected function tearDown()

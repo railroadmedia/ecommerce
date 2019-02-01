@@ -21,7 +21,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class PaymentMethod
 {
-	use TimestampableEntity;
+    use TimestampableEntity;
 
     /**
      * @ORM\Id
@@ -174,7 +174,7 @@ class PaymentMethod
         return $this;
     }
 
-	// TO-DO review the logic below, if it needs refactorin/replication
+    // TO-DO review the logic below, if it needs refactorin/replication
     // public function dot()
     // {
     //     $this->replace(array_merge($this->getArrayCopy(), (array)$this['method'] ?? []));

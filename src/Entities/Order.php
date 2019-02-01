@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Usora\Entities\User;
@@ -98,6 +100,16 @@ class Order
      * @var \DateTime
      */
     protected $deletedOn;
+
+    /**
+     * @ORM\OneToMany(targetEntity="OrderItem", mappedBy="shippingOption")
+     */
+    protected $orderItems;
+
+    public function __construct()
+    {
+        $this->orderItems = new ArrayCollection();
+    }
 
     /**
      * @return int|null
@@ -303,6 +315,51 @@ class Order
     public function setBillingAddress(?Address $billingAddress): self
     {
         $this->billingAddress = $billingAddress;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|OrderItem[]
+     */
+    public function getOrderItems(): Collection
+    {
+        return $this->orderItems;
+    }
+
+    /**
+     * @param OrderItem $orderItem
+     *
+     * @return Order
+     */
+    public function addOrderItem(OrderItem $orderItem): self {
+
+        if (!$this->orderItems->contains($orderItem)) {
+
+            $this->orderItems[] = $orderItem;
+
+            $orderItem->setOrder($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param OrderItem $orderItem
+     *
+     * @return Order
+     */
+    public function removeOrderItem(OrderItem $orderItem): self {
+
+        if ($this->orderItems->contains($orderItem)) {
+
+            $this->orderItems->removeElement($orderItem);
+
+            // set the owning side to null (unless already changed)
+            if ($orderItem->getOrder() === $this) {
+                $orderItem->setOrder(null);
+            }
+        }
 
         return $this;
     }

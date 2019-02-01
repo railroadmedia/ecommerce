@@ -151,7 +151,7 @@ class Faker extends Generator
                 'message' => null,
                 'payment_method_id' => $this->randomNumber(),
                 'currency' => $this->currencyCode,
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
@@ -184,7 +184,7 @@ class Faker extends Generator
                 'external_customer_id' => 'cus_CsviON4xYQxcwC',
                 'expiration_date' => $this->creditCardExpirationDateString,
                 'payment_gateway_name' => $this->randomElement(['drumeo', 'recordeo']),
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
@@ -211,7 +211,7 @@ class Faker extends Generator
             [
                 'external_id' => 'B-5Y6562572W918445E',
                 'payment_gateway_name' => $this->randomElement(['stripe', 'paypal']),
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
@@ -365,7 +365,7 @@ class Faker extends Generator
                 'product_id' => $this->randomNumber(),
                 'quantity' => $this->numberBetween(1, 5),
                 'expiration_date' => null,
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override

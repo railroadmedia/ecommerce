@@ -39,10 +39,11 @@ class SubscriptionJsonController extends BaseController
      * @var \Railroad\Permissions\Services\PermissionService
      */
     private $permissionService;
+
     /**
      * @var RenewalService
      */
-    // private $renewalService;
+    private $renewalService;
 
     /**
      * SubscriptionJsonController constructor.
@@ -50,12 +51,13 @@ class SubscriptionJsonController extends BaseController
      * @param EntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param \Railroad\Permissions\Services\PermissionService $permissionService
+     * @param RenewalService $renewalService
      */
     public function __construct(
         EntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
-        PermissionService $permissionService
-        // RenewalService $renewalService
+        PermissionService $permissionService,
+        RenewalService $renewalService
     ) {
         parent::__construct();
 
@@ -64,7 +66,7 @@ class SubscriptionJsonController extends BaseController
         $this->subscriptionRepository = $this->entityManager
                 ->getRepository(Subscription::class);
         $this->permissionService = $permissionService;
-        // $this->renewalService = $renewalService;
+        $this->renewalService = $renewalService;
     }
 
     /**
@@ -145,7 +147,7 @@ class SubscriptionJsonController extends BaseController
     /**
      * Store a subscription and return data in JSON format
      *
-     * @param \Railroad\Ecommerce\Requests\SubscriptionUpdateRequest $request
+     * @param \Railroad\Ecommerce\Requests\SubscriptionCreateRequest $request
      *
      * @return JsonResponse
      *
@@ -172,7 +174,6 @@ class SubscriptionJsonController extends BaseController
      * Update a subscription and returned updated data in JSON format
      *
      * @param int $subscriptionId
-     *
      * @param \Railroad\Ecommerce\Requests\SubscriptionUpdateRequest $request
      *
      * @return JsonResponse
@@ -216,29 +217,44 @@ class SubscriptionJsonController extends BaseController
     }
 
     /**
-     * @param Request $request
-     * @param $subscriptionId
+     * @param int $subscriptionId
+     *
      * @return mixed
      */
-    public function renew(Request $request, $subscriptionId)
+    public function renew($subscriptionId)
     {
-        // $this->permissionService->canOrThrow(auth()->id(), 'renew.subscription');
+        $this->permissionService->canOrThrow(auth()->id(), 'renew.subscription');
 
-        // try {
-        //     $updatedSubscription = $this->renewalService->renew($subscriptionId);
+        $subscription = $this->subscriptionRepository->find($subscriptionId);
 
-        //     return reply()->json($updatedSubscription, [
-        //         'code' => 201
-        //     ]);
-        // } catch (Exception $exception) {
-        //     return reply()->json(
-        //         null,
-        //         [
-        //             'code' => 422,
-        //             'totalResults' => 0,
-        //             'errors' => [$exception->getCode() => $exception->getMessage()]
-        //         ]
-        //     );
-        // }
+        throw_if(
+            is_null($subscription),
+            new NotFoundException(
+                'Renew failed, subscription not found with id: ' .
+                $subscriptionId
+            )
+        );
+
+        try {
+
+            $this->renewalService->renew($subscription);
+
+            return ResponseService::subscription(
+                $subscription
+            );
+
+        } catch (Exception $exception) {
+
+            response()->json(
+                [
+                    'errors' => [
+                        'title' => 'Subscription renew failed.',
+                        'source' => $exception->getCode(),
+                        'detail' => $exception->getMessage(),
+                    ]
+                ],
+                422
+            );
+        }
     }
 }

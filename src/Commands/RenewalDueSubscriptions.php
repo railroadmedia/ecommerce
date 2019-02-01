@@ -99,7 +99,7 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
 
         foreach ($dueSubscriptions as $dueSubscription) {
-            $this->renewalService->renew($dueSubscription['id']);
+            $this->renewalService->renew($dueSubscription['id']); // todo: refactor to entity param
         }
 
         //deactivate ancient subscriptions

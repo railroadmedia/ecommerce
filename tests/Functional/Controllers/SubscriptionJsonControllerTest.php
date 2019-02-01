@@ -876,90 +876,75 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    // public function test_renew_subscription()
-    // {
-    //     $userId = $this->createAndLogInNewUser();
+    public function test_renew_subscription()
+    {
+        $userId = $this->createAndLogInNewUser();
 
-    //     $this->stripeExternalHelperMock->method('retrieveCustomer')
-    //         ->willReturn(new Customer());
-    //     $this->stripeExternalHelperMock->method('retrieveCard')
-    //         ->willReturn(new Card());
-    //     $this->stripeExternalHelperMock->method('chargeCard')
-    //         ->willReturn(new Charge());
+        $this->permissionServiceMock->method('can')->willReturn(true);
 
-    //     $product = $this->productRepository->create(
-    //         $this->faker->product(
-    //             [
-    //                 'type' => ConfigService::$typeSubscription,
-    //                 'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-    //                 'subscription_interval_count' => 1,
-    //             ]
-    //         )
-    //     );
-    //     $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
-    //     $paymentMethod = $this->paymentMethodRepository->create(
-    //         $this->faker->paymentMethod(
-    //             [
-    //                 'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-    //                 'method_id' => $creditCard['id'],
-    //             ]
-    //         )
-    //     );
-    //     $subscription = $this->subscriptionRepository->create(
-    //         $this->faker->subscription(
-    //             [
-    //                 'product_id' => $product['id'],
-    //                 'payment_method_id' => $paymentMethod['id'],
-    //                 'user_id' => $userId,
-    //                 'paid_until' => Carbon::now()
-    //                     ->subDay(1)
-    //                     ->toDateTimeString(),
-    //                 'is_active' => 1,
-    //                 'interval_count' => 1,
-    //                 'interval_type' => ConfigService::$intervalTypeYearly,
-    //             ]
-    //         )
-    //     );
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn(new Charge());
 
-    //     $userProduct = $this->userProductRepository->create(
-    //         $this->faker->userProduct(
-    //             [
-    //                 'user_id' => $userId,
-    //                 'product_id' => $product['id'],
-    //                 'quantity' => 1,
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription,
+            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_count' => 1,
+        ]);
 
-    //             ]
-    //         )
-    //     );
-    //     $results = $this->call('POST', '/subscription-renew/' . $subscription['id']);
+        $creditCard = $this->fakeCreditCard();
 
-    //     $this->assertEquals(201, $results->getStatusCode());
+        $paymentMethod = $this->fakePaymentMethod([
+            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'method_id' => $creditCard['id'],
+        ]);
 
-    //     $this->assertDatabaseHas(
-    //         ConfigService::$tableUserProduct,
-    //         [
-    //             'user_id' => $userId,
-    //             'product_id' => $product['id'],
-    //             'quantity' => 1,
-    //             'expiration_date' => Carbon::now()
-    //                 ->addYear(1)
-    //                 ->startOfDay()
-    //                 ->toDateTimeString(),
-    //         ]
-    //     );
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'paid_until' => Carbon::now()
+                        ->subDay(1)
+                        ->toDateTimeString(),
+            'is_active' => 1,
+            'interval_count' => 1,
+            'interval_type' => ConfigService::$intervalTypeYearly,
+        ]);
 
-    //     $this->assertDatabaseHas(
-    //         ConfigService::$tableSubscription,
-    //         [
-    //             'id' => $subscription['id'],
-    //             'is_active' => 1,
-    //             'paid_until' => Carbon::now()
-    //                 ->addYear(1)
-    //                 ->startOfDay()
-    //                 ->toDateTimeString(),
-    //         ]
-    //     );
-    // }
+        $results = $this->call(
+            'POST',
+            '/subscription-renew/' . $subscription['id']
+        );
+
+        // UserProductEventListener WIP
+        // $this->assertDatabaseHas(
+        //     ConfigService::$tableUserProduct,
+        //     [
+        //         'user_id' => $userId,
+        //         'product_id' => $product['id'],
+        //         'quantity' => 1,
+        //         'expiration_date' => Carbon::now()
+        //             ->addYear(1)
+        //             ->startOfDay()
+        //             ->toDateTimeString(),
+        //     ]
+        // );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableSubscription,
+            [
+                'id' => $subscription['id'],
+                'is_active' => 1,
+                'paid_until' => Carbon::now()
+                    ->addYear(1)
+                    ->startOfDay()
+                    ->toDateTimeString(),
+            ]
+        );
+    }
 
     public function test_pull_subscription_from_specific_brand()
     {
