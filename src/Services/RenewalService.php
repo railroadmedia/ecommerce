@@ -257,15 +257,9 @@ class RenewalService
                 ->where($qb->expr()->eq('sp.subscription', ':subscription'))
                 ->andWhere($qb->expr()->in('p.status', ':statuses'))
                 ->setParameter('subscription', $subscription)
-                ->setParameter('statuses', ['0', 'failed']); // inspect query
+                ->setParameter('statuses', ['0', 'failed']);
 
             $failedPaymentsCount = $qb->getQuery()->getSingleScalarResult();
-
-            // echo "\n\n sql: " . var_export($qb->getQuery()->getSQL(), true) . "\n\n";
-
-            // echo "\n\n failedPaymentsBeforeDeactivation: " . var_export(ConfigService::$failedPaymentsBeforeDeactivation, true) . "\n\n";
-
-            // echo "\n\n failedPaymentsCount: " . var_export($failedPaymentsCount, true) . "\n\n";
 
             if (
                 $failedPaymentsCount >=
