@@ -2,10 +2,11 @@
 
 namespace Railroad\Ecommerce\Listeners;
 
-use Illuminate\Support\Collection;
 use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
+use Doctrine\ORM\Event\PreFlushEventArgs;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Usora\Entities\User;
 
@@ -25,18 +26,30 @@ class UserProductEventListener
         $this->userProductService = $userProductService;
     }
 
+    public function preFlush(PreFlushEventArgs $args)
+    {
+        echo "\n\n UserProductEventListener::preUpdate \n\n";
+    }
+
     public function preUpdate(LifecycleEventArgs $args)
     {
         $entity = $args->getObject();
-        $entityManager = $args->getObjectManager();
+
+        echo "\n\n UserProductEventListener::preUpdate \n\n";
 
         if ($entity instanceof Subscription) {
+
+            echo "\n\n ### \n\n";
 
             /**
              * @var $entity \Railroad\Ecommerce\Entities\Subscription
              */
 
+            // echo "\n\n entity: " . var_export($entity, true) . "\n\n";
+
             $products = $this->getProducts($entity); // todo - finish it
+
+            // echo "\n\n products: " . var_export($products, true) . "\n\n";
 
             if (
                 !$entity->getCanceledOn() &&
@@ -44,67 +57,24 @@ class UserProductEventListener
                 $entity->getType() == ConfigService::$typeSubscription
             ) {
 
-                foreach ($products as $product) {
-                    $this->assignUserProduct(
+                // echo "\n\n1\n\n";
+
+                foreach ($products as $productData) {
+                    // echo "\n\n2\n\n";
+
+                    $this->userProductService->assignUserProduct(
                         $entity->getUser(),
-                        $product['product'],
+                        $productData['product'],
                         $entity->getPaidUntil()
                     );
                 }
 
             } else {
-                $this->removeUserProducts(
-                    $entity->getUser(),
-                    $products
-                );
+
+                $this->userProductService
+                        ->removeUserProducts($entity->getUser(), $products);
             }
         }
-    }
-
-    /**
-     * @param User $user
-     * @param Collection $products - returned by UserProductEventListener::getProducts
-     */
-    private function removeUserProducts(User $user, Collection $products)
-    {
-        $productsMap = array_pluck($products, 'quantity', 'product_id');
-
-        foreach ($products as $productData) {
-
-            /**
-             * @var $product \Railroad\Ecommerce\Entities\Product
-             */
-            $product = $element['product'];
-
-            $quantity = $element['quantity'];
-
-            $productsMap[$product->getId()] = $quantity;
-        }
-
-        // todo - review service logic and refactor to use entities and entities collections instead of ids and ids map
-        $this->userProductService
-            ->removeUserProducts($user->getId(), $productsMap);
-    }
-
-    /**
-     * @param User $user
-     * @param Product $product
-     * @param DateTimeInterface $expirationDate
-     * @param int $quantity
-     */
-    private function assignUserProduct(
-        User $user,
-        Product $product,
-        \DateTimeInterface $expirationDate,
-        int $quantity = 0
-    ) {
-        // todo - review service logic and refactor to use entities instead of ids
-        $this->userProductService->assignUserProduct(
-            $user->getId(),
-            $product->getId(),
-            $expirationDate,
-            $quantity
-        );
     }
 
     /**
@@ -122,7 +92,9 @@ class UserProductEventListener
     {
         if ($subscription->getType() == ConfigService::$paymentPlanType) {
 
-            return collect($subscription->getOrder()->getOrderItems())
+            $col = $subscription->getOrder()->getOrderItems();
+
+            return collect($col)
                 ->map(function($orderItem, $key) {
                     return [
                         'product' => $orderItem->getProduct(),

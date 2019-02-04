@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\UserProductService;
@@ -436,13 +437,24 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             $results->decodeResponseJson()
         );
 
-        // assert that the discount exists in the database
+        // assert that the subscription exists in the database
         $this->assertDatabaseHas(
             ConfigService::$tableSubscription,
             array_diff_key(
                 $subscription,
                 ['updated_at' => true]
             )
+        );
+
+        // assert user product was created
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => $subscription['paid_until'],
+            ]
         );
     }
 
@@ -575,6 +587,17 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ]
             )
         );
+
+        // assert user product
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => $subscription['paid_until'],
+            ]
+        );
     }
 
     public function test_cancel_subscription()
@@ -601,6 +624,12 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'user_id' => $userId,
             'order_id' => $order['id'],
             'updated_at' => null
+        ]);
+
+        $userProduct = $this->fakeUserProduct([
+            'user_id' => $userId,
+            'product_id' => $product['id'],
+            'expiration_date' => $subscription['paid_until']
         ]);
 
         $results = $this->call(
@@ -687,6 +716,12 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
             )
+        );
+
+        // assert user product was removed
+        $this->assertDatabaseMissing(
+            ConfigService::$tableUserProduct,
+            $userProduct
         );
     }
 
@@ -789,6 +824,12 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'updated_at' => null
         ]);
 
+        $userProduct = $this->fakeUserProduct([
+            'user_id' => $userId,
+            'product_id' => $product['id'],
+            'expiration_date' => $subscription['paid_until']
+        ]);
+
         $results = $this->call(
             'PATCH',
             '/subscription/' . $subscription['id'],
@@ -874,9 +915,21 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ]
             )
         );
+
+        // assert user product was updated
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            array_merge(
+                $userProduct,
+                [
+                    'expiration_date' => Carbon::now()->toDateTimeString(),
+                    'updated_at' => Carbon::now()->toDateTimeString(),
+                ]
+            )
+        );
     }
 
-    public function test_renew_subscription()
+    public function test_renew_subscription_credit_card()
     {
         $userId = $this->createAndLogInNewUser();
 
@@ -919,19 +972,18 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             '/subscription-renew/' . $subscription['id']
         );
 
-        // UserProductEventListener WIP
-        // $this->assertDatabaseHas(
-        //     ConfigService::$tableUserProduct,
-        //     [
-        //         'user_id' => $userId,
-        //         'product_id' => $product['id'],
-        //         'quantity' => 1,
-        //         'expiration_date' => Carbon::now()
-        //             ->addYear(1)
-        //             ->startOfDay()
-        //             ->toDateTimeString(),
-        //     ]
-        // );
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => Carbon::now()
+                    ->addYear(1)
+                    ->startOfDay()
+                    ->toDateTimeString(),
+            ]
+        );
 
         $this->assertDatabaseHas(
             ConfigService::$tableSubscription,
@@ -943,6 +995,237 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ->startOfDay()
                     ->toDateTimeString(),
             ]
+        );
+    }
+
+    public function test_renew_subscription_paypal()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $this->paypalExternalHelperMock->method('createReferenceTransaction')
+            ->willReturn($this->faker->word);
+
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription,
+            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_count' => 1,
+        ]);
+
+        $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'method_id' => $paypalBillingAgreement['id'],
+        ]);
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'paid_until' => Carbon::now()
+                        ->subDay(1)
+                        ->toDateTimeString(),
+            'is_active' => 1,
+            'interval_count' => 1,
+            'interval_type' => ConfigService::$intervalTypeYearly,
+        ]);
+
+        $results = $this->call(
+            'POST',
+            '/subscription-renew/' . $subscription['id']
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => Carbon::now()
+                    ->addYear(1)
+                    ->startOfDay()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableSubscription,
+            [
+                'id' => $subscription['id'],
+                'is_active' => 1,
+                'paid_until' => Carbon::now()
+                    ->addYear(1)
+                    ->startOfDay()
+                    ->toDateTimeString(),
+            ]
+        );
+    }
+
+    public function test_renew_subscription_payment_failed_not_disabled()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+
+        $exceptionMessage = 'Charge failed';
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willThrowException(
+                new PaymentFailedException($exceptionMessage)
+            );
+
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription,
+            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_count' => 1,
+        ]);
+
+        $creditCard = $this->fakeCreditCard();
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'method_id' => $creditCard['id'],
+        ]);
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'paid_until' => Carbon::now()
+                        ->addDay(1)
+                        ->toDateTimeString(),
+            'is_active' => 1,
+            'interval_count' => 1,
+            'interval_type' => ConfigService::$intervalTypeYearly,
+        ]);
+
+        $userProduct = $this->fakeUserProduct([
+            'user_id' => $userId,
+            'product_id' => $product['id'],
+            'quantity' => 1,
+            'expiration_date' => $subscription['paid_until']
+        ]);
+
+        ConfigService::$failedPaymentsBeforeDeactivation = 3;
+
+        $results = $this->call(
+            'POST',
+            '/subscription-renew/' . $subscription['id']
+        );
+
+        // assert response status code
+        $this->assertEquals(402, $results->getStatusCode());
+
+        // assert the error message that it's returned in JSON format
+        $this->assertEquals(
+            [
+                'title' => 'Subscription renew failed.',
+                'detail' => 'Payment failed: ' . $exceptionMessage,
+            ],
+            $results->decodeResponseJson('errors')
+        );
+
+        // assert user product data was not updated
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            $userProduct
+        );
+
+        // assert subscription data was not updated
+        $this->assertDatabaseHas(
+            ConfigService::$tableSubscription,
+            $subscription
+        );
+    }
+
+    public function test_renew_subscription_payment_failed_disabled()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $exceptionMessage = 'Charge failed';
+
+        $this->paypalExternalHelperMock->method('createReferenceTransaction')
+            ->willThrowException(
+                new \Exception($exceptionMessage)
+            );
+
+        $product = $this->fakeProduct([
+            'type' => ConfigService::$typeSubscription,
+            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_count' => 1,
+        ]);
+
+        $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'method_id' => $paypalBillingAgreement['id'],
+        ]);
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'paid_until' => Carbon::now()
+                        ->addDay(1)
+                        ->toDateTimeString(),
+            'is_active' => 1,
+            'interval_count' => 1,
+            'interval_type' => ConfigService::$intervalTypeYearly,
+        ]);
+
+        $userProduct = $this->fakeUserProduct([
+            'user_id' => $userId,
+            'product_id' => $product['id'],
+            'quantity' => 1,
+            'expiration_date' => $subscription['paid_until']
+        ]);
+
+        ConfigService::$failedPaymentsBeforeDeactivation = 1;
+
+        $results = $this->call(
+            'POST',
+            '/subscription-renew/' . $subscription['id']
+        );
+
+        // assert response status code
+        $this->assertEquals(402, $results->getStatusCode());
+
+        // assert the error message that it's returned in JSON format
+        $this->assertEquals(
+            [
+                'title' => 'Subscription renew failed.',
+                'detail' => 'Payment failed: ' . $exceptionMessage,
+            ],
+            $results->decodeResponseJson('errors')
+        );
+
+        // assert user product data was removed
+        $this->assertDatabaseMissing(
+            ConfigService::$tableUserProduct,
+            $userProduct
+        );
+
+        // assert subscription was set as inactive
+        $this->assertDatabaseHas(
+            ConfigService::$tableSubscription,
+            array_merge(
+                $subscription,
+                [
+                    'is_active' => 0,
+                    'note' => 'De-activated due to payments failing.',
+                    'updated_at' => Carbon::now()->toDateTimeString()
+                ]
+            )
         );
     }
 

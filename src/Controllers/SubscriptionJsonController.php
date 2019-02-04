@@ -16,6 +16,7 @@ use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\ResponseService;
+use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
 
 class SubscriptionJsonController extends BaseController
@@ -46,18 +47,25 @@ class SubscriptionJsonController extends BaseController
     private $renewalService;
 
     /**
+     * @var UserProductService
+     */
+    private $userProductService;
+
+    /**
      * SubscriptionJsonController constructor.
      *
      * @param EntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param \Railroad\Permissions\Services\PermissionService $permissionService
      * @param RenewalService $renewalService
+     * @param UserProductService $userProductService
      */
     public function __construct(
         EntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService,
-        RenewalService $renewalService
+        RenewalService $renewalService,
+        UserProductService $userProductService
     ) {
         parent::__construct();
 
@@ -67,6 +75,7 @@ class SubscriptionJsonController extends BaseController
                 ->getRepository(Subscription::class);
         $this->permissionService = $permissionService;
         $this->renewalService = $renewalService;
+        $this->userProductService = $userProductService;
     }
 
     /**
@@ -167,6 +176,8 @@ class SubscriptionJsonController extends BaseController
         $this->entityManager->persist($subscription);
         $this->entityManager->flush();
 
+        $this->userProductService->updateSubscriptionProducts($subscription);
+
         return ResponseService::subscription($subscription);
     }
 
@@ -213,6 +224,8 @@ class SubscriptionJsonController extends BaseController
 
         $this->entityManager->flush();
 
+        $this->userProductService->updateSubscriptionProducts($subscription);
+
         return ResponseService::subscription($subscription);
     }
 
@@ -235,26 +248,29 @@ class SubscriptionJsonController extends BaseController
             )
         );
 
+        $response = null;
+
         try {
 
             $this->renewalService->renew($subscription);
 
-            return ResponseService::subscription(
-                $subscription
-            );
+            $response = ResponseService::subscription($subscription);
 
         } catch (Exception $exception) {
 
-            response()->json(
+            $response = response()->json(
                 [
                     'errors' => [
                         'title' => 'Subscription renew failed.',
-                        'source' => $exception->getCode(),
                         'detail' => $exception->getMessage(),
                     ]
                 ],
-                422
+                402
             );
         }
+
+        $this->userProductService->updateSubscriptionProducts($subscription);
+
+        return $response;
     }
 }

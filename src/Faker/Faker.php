@@ -210,7 +210,7 @@ class Faker extends Generator
         return array_merge(
             [
                 'external_id' => 'B-5Y6562572W918445E',
-                'payment_gateway_name' => $this->randomElement(['stripe', 'paypal']),
+                'payment_gateway_name' => $this->randomElement(['drumeo', 'recordeo']),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -323,9 +323,9 @@ class Faker extends Generator
                     ->toDateTimeString(),
                 'canceled_on' => null,
                 'note' => null,
-                'total_price_per_payment' => $this->randomNumber(),
-                'tax_per_payment' => $this->randomNumber(),
-                'shipping_per_payment' => $this->randomNumber(),
+                'total_price_per_payment' => $this->randomNumber(3),
+                'tax_per_payment' => $this->randomNumber(3),
+                'shipping_per_payment' => $this->randomNumber(3),
                 'currency' => 'CAD',
                 'interval_type' => 'year',
                 'interval_count' => $this->randomNumber(),

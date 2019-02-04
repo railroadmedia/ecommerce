@@ -102,7 +102,7 @@ class Order
     protected $deletedOn;
 
     /**
-     * @ORM\OneToMany(targetEntity="OrderItem", mappedBy="shippingOption")
+     * @ORM\OneToMany(targetEntity="OrderItem", mappedBy="order")
      */
     protected $orderItems;
 

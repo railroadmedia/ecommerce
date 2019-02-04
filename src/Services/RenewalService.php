@@ -24,6 +24,11 @@ class RenewalService
     protected $creditCardRepository;
 
     /**
+     * @var EntityManager
+     */
+    protected $entityManager;
+
+    /**
      * @var EntityRepository
      */
     protected $paypalRepository;
@@ -209,24 +214,26 @@ class RenewalService
 
         $this->entityManager->persist($subscriptionPayment);
 
-        switch ($subscription->getIntervalType()) {
-            case ConfigService::$intervalTypeMonthly:
-                $nextBillDate = Carbon::now()
-                            ->addMonths($subscription->getIntervalCount());
-            break;
-
-            case ConfigService::$intervalTypeYearly:
-                $nextBillDate = Carbon::now()
-                            ->addYears($subscription->getIntervalCount());
-            break;
-
-            case ConfigService::$intervalTypeDaily:
-                $nextBillDate = Carbon::now()
-                            ->addDays($subscription->getIntervalCount());
-            break;
-        }
+        $this->entityManager->flush();
 
         if ($payment->getPaid() > 0) {
+
+            switch ($subscription->getIntervalType()) {
+                case ConfigService::$intervalTypeMonthly:
+                    $nextBillDate = Carbon::now()
+                                ->addMonths($subscription->getIntervalCount());
+                break;
+
+                case ConfigService::$intervalTypeYearly:
+                    $nextBillDate = Carbon::now()
+                                ->addYears($subscription->getIntervalCount());
+                break;
+
+                case ConfigService::$intervalTypeDaily:
+                    $nextBillDate = Carbon::now()
+                                ->addDays($subscription->getIntervalCount());
+                break;
+            }
 
             $subscription
                 ->setIsActive(true)
@@ -250,9 +257,15 @@ class RenewalService
                 ->where($qb->expr()->eq('sp.subscription', ':subscription'))
                 ->andWhere($qb->expr()->in('p.status', ':statuses'))
                 ->setParameter('subscription', $subscription)
-                ->setParameter('statuses', [0, 'failed']); // inspect query
+                ->setParameter('statuses', ['0', 'failed']); // inspect query
 
             $failedPaymentsCount = $qb->getQuery()->getSingleScalarResult();
+
+            // echo "\n\n sql: " . var_export($qb->getQuery()->getSQL(), true) . "\n\n";
+
+            // echo "\n\n failedPaymentsBeforeDeactivation: " . var_export(ConfigService::$failedPaymentsBeforeDeactivation, true) . "\n\n";
+
+            // echo "\n\n failedPaymentsCount: " . var_export($failedPaymentsCount, true) . "\n\n";
 
             if (
                 $failedPaymentsCount >=

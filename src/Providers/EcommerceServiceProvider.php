@@ -168,33 +168,4 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$subscriptionRenewalDateCutoff = config('ecommerce.subscription_renewal_date');
         ConfigService::$failedPaymentsBeforeDeactivation = config('ecommerce.failed_payments_before_de_activation');
     }
-
-    /**
-     * Register the application services.
-     */
-    public function register()
-    {
-        // UserProductEventListener WIP
-        // tmp disabled to make the SubscriptionJsonControllerTest::test_renew_subscription pass
-        // $eventManager = app()->make(EventManager::class);
-
-        // $userProductEventListener = app()->make(
-        //     UserProductEventListener::class
-        // );
-
-        // $eventManager->addEventListener(
-        //     [Events::preUpdate],
-        //     $userProductEventListener
-        // );
-
-        /*
-        // above works if railroad/doctrine package service provider runs 1st, below should always work
-        app()->resolving(EventManager::class, function ($eventManager, $app) {
-            $eventManager->addEventListener(
-                [Events::preUpdate],
-                $userProductEventListener
-            );
-        });
-        */
-    }
 }
