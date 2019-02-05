@@ -255,6 +255,8 @@ class OrderFormService
             ]
         );
 
+
+        // to be refactored
         $paymentMethodId = $this->paymentMethodService->createUserCreditCard(
             $user['id'],
             $card->fingerprint,
@@ -266,10 +268,10 @@ class OrderFormService
             $card->id,
             $card->customer,
             $request->get('gateway'),
+            $customer['id']
             $billingAddressDB['id'],
             $currency,
             false,
-            $customer['id']
         );
 
         return [$charge, $paymentMethodId, $billingAddressDB];
@@ -320,6 +322,7 @@ class OrderFormService
             ]
         );
 
+        // to be refactored
         $paymentMethodId = $this->paymentMethodService->createPayPalBillingAgreement(
             $user['id'],
             $billingAgreementId,

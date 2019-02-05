@@ -198,7 +198,7 @@ class Faker extends Generator
                 'user_id' => $this->randomNumber(),
                 'payment_method_id' => $this->randomNumber(),
                 'is_primary' => $this->boolean,
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override

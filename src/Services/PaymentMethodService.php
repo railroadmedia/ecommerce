@@ -3,58 +3,53 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Repositories\CreditCardRepository;
+use Doctrine\ORM\EntityManager;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
-use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
-use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
+use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\CreditCard;
+use Railroad\Ecommerce\Entities\Customer;
+use Railroad\Ecommerce\Entities\CustomerPaymentMethods;
+use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
+use Railroad\Ecommerce\Entities\UserPaymentMethods;
+use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
+use Railroad\Usora\Entities\User;
 
 class PaymentMethodService
 {
     /**
-     * @var CreditCardRepository
+     * @var CustomerPaymentMethodsRepository
      */
-    private $creditCardRepository;
+    private $customerPaymentMethodsRepository;
 
     /**
-     * @var PaypalBillingAgreementRepository
+     * @var EntityManager
      */
-    private $paypalBillingAgreementRepository;
-
-    /**
-     * @var PaymentMethodRepository
-     */
-    private $paymentMethodRepository;
+    private $entityManager;
 
     /**
      * @var UserPaymentMethodsRepository
      */
     private $userPaymentMethodsRepository;
 
-    /**
-     * @var CustomerPaymentMethodsRepository
-     */
-    private $customerPaymentMethodsRepository;
-
     CONST PAYPAL_PAYMENT_METHOD_TYPE      = 'paypal';
     CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit-card';
 
     public function __construct(
-        CreditCardRepository $creditCardRepository,
-        PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
-        PaymentMethodRepository $paymentMethodRepository,
-        UserPaymentMethodsRepository $userPaymentMethodsRepository,
-        CustomerPaymentMethodsRepository $customerPaymentMethodsRepository
+        EntityManager $entityManager
     ) {
-        $this->creditCardRepository             = $creditCardRepository;
-        $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
-        $this->paymentMethodRepository          = $paymentMethodRepository;
-        $this->userPaymentMethodsRepository     = $userPaymentMethodsRepository;
-        $this->customerPaymentMethodsRepository = $customerPaymentMethodsRepository;
+
+        $this->entityManager = $entityManager;
+
+        $this->customerPaymentMethodsRepository = $this->entityManager
+                                        ->getRepository(CustomerPaymentMethods::class);
+        $this->userPaymentMethodsRepository = $this->entityManager
+                                        ->getRepository(UserPaymentMethods::class);
     }
 
     public function createUserCreditCard(
-        $userId,
+        ?User $user,
         $fingerPrint,
         $last4,
         $cardHolderName,
@@ -64,111 +59,157 @@ class PaymentMethodService
         $externalId,
         $externalCustomerId,
         $gatewayName,
-        $billingAddressId = null,
+        ?Customer $customer,
+        ?Address $billingAddress = null,
         $currency = null,
-        $makePrimary = false,
-        $customerId
-    ) {
-        $creditCard = $this->creditCardRepository->create(
-            [
-                'fingerprint'          => $fingerPrint,
-                'last_four_digits'     => $last4,
-                'cardholder_name'      => $cardHolderName,
-                'company_name'         => $companyName,
-                'expiration_date'      => Carbon::createFromDate($expirationYear, $expirationMonth)->toDateTimeString(),
-                'external_id'          => $externalId,
-                'external_customer_id' => $externalCustomerId,
-                'payment_gateway_name' => $gatewayName,
-                'created_on'           => Carbon::now()->toDateTimeString(),
-            ]
-        );
+        $makePrimary = false
+    ): PaymentMethod {
 
-        $paymentMethod = $this->paymentMethodRepository->create(
-            [
-                'method_id'          => $creditCard['id'],
-                'method_type'        => self::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'currency'           => $currency ?? ConfigService::$defaultCurrency,
-                'billing_address_id' => $billingAddressId,
-                'created_on'         => Carbon::now()->toDateTimeString(),
-            ]
-        );
+        $creditCard = new CreditCard();
 
-        if($userId)
-        {
-            if($makePrimary)
-            {
-                $this->userPaymentMethodsRepository->query()->where('user_id', $userId)->update(['is_primary' => false]);
+        $creditCard
+            ->setFingerprint($fingerPrint)
+            ->setLastFourDigits($last4)
+            ->setCardholderName($cardHolderName)
+            ->setCompanyName($companyName)
+            ->setExpirationDate(
+                Carbon::createFromDate($expirationYear, $expirationMonth)
+            )
+            ->setExternalId($externalId)
+            ->setExternalCustomerId($externalCustomerId)
+            ->setPaymentGatewayName($gatewayName);
+
+        $this->entityManager->persist($creditCard);
+        $this->entityManager->flush(); // needed to link composite payment method
+
+        $paymentMethod = new PaymentMethod();
+
+        $paymentMethod
+            ->setMethodId($creditCard->getId())
+            ->setMethodType(self::CREDIT_CARD_PAYMENT_METHOD_TYPE)
+            ->setCurrency($currency ?? ConfigService::$defaultCurrency)
+            ->setBillingAddress($billingAddress);
+
+        $this->entityManager->persist($paymentMethod);
+
+        if ($user) {
+
+            if (
+                $makePrimary &&
+                $primary = $this->userPaymentMethodsRepository
+                    ->getUserPrimaryPaymentMethod($user)
+            ) {
+                /**
+                 * @var $primary \Railroad\Ecommerce\Entities\UserPaymentMethods
+                 */
+                $primary->setIsPrimary(false);
             }
 
-            $this->userPaymentMethodsRepository->create(
-                [
-                    'user_id'           => $userId,
-                    'payment_method_id' => $paymentMethod['id'],
-                    'is_primary'        => $makePrimary,
-                    'created_on'        => Carbon::now()->toDateTimeString(),
-                ]
-            );
-        }
-        elseif($customerId)
-        {
-            if($makePrimary)
-            {
-                $this->customerPaymentMethodsRepository->query()->where('customer_id', $customerId)->update(['is_primary' => false]);
+            $userPaymentMethods = new UserPaymentMethods();
+
+            $userPaymentMethods
+                ->setUser($user)
+                ->setPaymentMethod($paymentMethod)
+                ->setIsPrimary($makePrimary);
+
+            $this->entityManager->persist($userPaymentMethods);
+
+        } elseif ($customer) {
+
+            if (
+                $makePrimary &&
+                $primary = $this->customerPaymentMethodsRepository
+                    ->getCustomerPrimaryPaymentMethod($customer)
+            ) {
+                /**
+                 * @var $primary \Railroad\Ecommerce\Entities\CustomerPaymentMethods
+                 */
+                $primary->setIsPrimary(false);
             }
 
-            $this->customerPaymentMethodsRepository->create(
-                [
-                    'customer_id'       => $customerId,
-                    'payment_method_id' => $paymentMethod['id'],
-                    'is_primary'        => $makePrimary,
-                    'created_on'        => Carbon::now()->toDateTimeString(),
-                ]
-            );
+            $customerPaymentMethods = new CustomerPaymentMethods();
+
+            $customerPaymentMethods
+                ->setCustomer($customer)
+                ->setPaymentMethod($paymentMethod)
+                ->setIsPrimary($makePrimary);
+
+            $this->entityManager->persist($customerPaymentMethods);
         }
 
-        return $paymentMethod['id'];
+        $this->entityManager->flush();
+
+        if ($user && $makePrimary) {
+            event(
+                new UserDefaultPaymentMethodEvent(
+                    $user->getId(),
+                    $paymentMethod->getId()
+                )
+            );
+        } // no events for customer
+
+        return $paymentMethod;
     }
 
     public function createPayPalBillingAgreement(
-        $userId,
+        User $user,
         $billingAgreementExternalId,
-        $billingAddressId,
+        Address $billingAddress,
         $paymentGatewayName,
         $currency = null,
         $makePrimary = false
-    ) {
-        $billingAgreement = $this->paypalBillingAgreementRepository->create(
-            [
-                'external_id'          => $billingAgreementExternalId,
-                'payment_gateway_name' => $paymentGatewayName,
-                'created_on'           => Carbon::now()->toDateTimeString(),
-            ]
-        );
+    ): PaymentMethod {
 
-        $paymentMethod = $this->paymentMethodRepository->create(
-            [
-                'method_id'          => $billingAgreement['id'],
-                'method_type'        => self::PAYPAL_PAYMENT_METHOD_TYPE,
-                'currency'           => $currency ?? ConfigService::$defaultCurrency,
-                'billing_address_id' => $billingAddressId,
-                'created_on'         => Carbon::now()->toDateTimeString(),
-            ]
-        );
+        $billingAgreement = new PaypalBillingAgreement();
 
-        if($makePrimary)
-        {
-            $this->userPaymentMethodsRepository->query()->where('user_id', $userId)->update(['is_primary' => false]);
+        $billingAgreement
+            ->setExternalId($billingAgreementExternalId)
+            ->setPaymentGatewayName($paymentGatewayName);
+
+        $this->entityManager->persist($billingAgreement);
+        $this->entityManager->flush(); // needed to link composite payment method
+
+        $paymentMethod = new PaymentMethod();
+
+        $paymentMethod
+            ->setMethodId($billingAgreement->getId())
+            ->setMethodType(self::PAYPAL_PAYMENT_METHOD_TYPE)
+            ->setCurrency($currency ?? ConfigService::$defaultCurrency)
+            ->setBillingAddress($billingAddress);
+
+        $this->entityManager->persist($paymentMethod);
+
+        if (
+            $makePrimary &&
+            $primary = $this->userPaymentMethodsRepository
+                ->getUserPrimaryPaymentMethod($user)
+        ) {
+            /**
+             * @var $primary \Railroad\Ecommerce\Entities\UserPaymentMethods
+             */
+            $primary->setIsPrimary(false);
         }
 
-        $userPaymentMethod = $this->userPaymentMethodsRepository->create(
-            [
-                'user_id'           => $userId,
-                'payment_method_id' => $paymentMethod['id'],
-                'is_primary'        => $makePrimary,
-                'created_on'        => Carbon::now()->toDateTimeString(),
-            ]
-        );
+        $userPaymentMethods = new UserPaymentMethods();
 
-        return $paymentMethod['id'];
+        $userPaymentMethods
+            ->setUser($user)
+            ->setPaymentMethod($paymentMethod)
+            ->setIsPrimary($makePrimary);
+
+        $this->entityManager->persist($userPaymentMethods);
+
+        $this->entityManager->flush();
+
+        if ($makePrimary) {
+            event(
+                new UserDefaultPaymentMethodEvent(
+                    $user->getId(),
+                    $paymentMethod->getId()
+                )
+            );
+        } // no events for customer
+
+        return $paymentMethod;
     }
 }

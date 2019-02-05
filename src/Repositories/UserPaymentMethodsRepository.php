@@ -2,31 +2,36 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Railroad\Ecommerce\Repositories\Queries\UserPaymentMethodQuery;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Resora\Decorators\Decorator;
-use Railroad\Resora\Repositories\RepositoryBase;
+use Doctrine\ORM\EntityRepository;
+use Railroad\Ecommerce\Entities\UserPaymentMethods;
+use Railroad\Usora\Entities\User;
 
-class UserPaymentMethodsRepository extends RepositoryBase
+class UserPaymentMethodsRepository extends EntityRepository
 {
-
-    /**
-     * @return CachedQuery|$this
-     */
-    protected function newQuery()
+    public function getUserPrimaryPaymentMethod(User $user): ?UserPaymentMethods
     {
-        return (new UserPaymentMethodQuery($this->connection()))
-            ->from(ConfigService::$tableUserPaymentMethods);
-    }
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this
+            ->getEntityManager()
+            ->createQueryBuilder();
 
-    protected function connection()
-    {
-        return app('db')->connection(ConfigService::$databaseConnectionName);
-    }
+        $qb
+            ->select('p')
+            ->from($this->getClassName(), 'p')
+            ->where($qb->expr()->in('p.user', ':user'))
+            ->andWhere($qb->expr()->in('p.isPrimary', ':true'));
 
-    protected function decorate($results)
-    {
-        return Decorator::decorate($results, 'userPaymentMethods');
+        /**
+         * @var $q \Doctrine\ORM\Query
+         */
+        $q = $qb->getQuery();
 
+        $q
+            ->setParameter('user', $user)
+            ->setParameter('true', true);
+
+        return $q->getOneOrNullResult();
     }
 }

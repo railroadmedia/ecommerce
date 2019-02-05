@@ -45,7 +45,8 @@ class EcommerceTestCase extends BaseTestCase
         'orders' => 'ecommerce_order',
         'creditCards' => 'ecommerce_credit_card',
         'userProducts' => 'ecommerce_user_product',
-        'paypalBillingAgreements' => 'ecommerce_paypal_billing_agreement'
+        'paypalBillingAgreements' => 'ecommerce_paypal_billing_agreement',
+        'userPaymentMethod' => 'ecommerce_user_payment_methods'
     ];
 
     /**
@@ -622,6 +623,26 @@ class EcommerceTestCase extends BaseTestCase
         $paypalBillingAgreement['id'] = $paypalBillingAgreementId;
 
         return $paypalBillingAgreement;
+    }
+
+    /**
+     * Helper method to seed a test credit card
+     *
+     * @return array
+     */
+    public function fakeUserPaymentMethod($userPaymentMethodStub = []): array
+    {
+        $userPaymentMethod = $this->faker->userPaymentMethod(
+            $userPaymentMethodStub
+        );
+
+        $userPaymentMethodId = $this->databaseManager
+            ->table(self::TABLES['userPaymentMethod'])
+            ->insertGetId($userPaymentMethod);
+
+        $userPaymentMethod['id'] = $userPaymentMethodId;
+
+        return $userPaymentMethod;
     }
 
     protected function tearDown()

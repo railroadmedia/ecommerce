@@ -2,22 +2,36 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Resora\Queries\CachedQuery;
-use Railroad\Resora\Repositories\RepositoryBase;
+use Doctrine\ORM\EntityRepository;
+use Railroad\Ecommerce\Entities\CustomerPaymentMethods;
+use Railroad\Ecommerce\Entities\Customer;
 
-class CustomerPaymentMethodsRepository extends RepositoryBase
+class CustomerPaymentMethodsRepository extends EntityRepository
 {
-    /**
-     * @return CachedQuery|$this
-     */
-    protected function newQuery()
+    public function getCustomerPrimaryPaymentMethod(Customer $customer): ?CustomerPaymentMethods
     {
-        return (new CachedQuery($this->connection()))->from(ConfigService::$tableCustomerPaymentMethods);
-    }
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this
+            ->getEntityManager()
+            ->createQueryBuilder();
 
-    protected function connection()
-    {
-        return app('db')->connection(ConfigService::$databaseConnectionName);
+        $qb
+            ->select('p')
+            ->from($this->getClassName(), 'p')
+            ->where($qb->expr()->in('p.customer', ':customer'))
+            ->andWhere($qb->expr()->in('p.isPrimary', ':true'));
+
+        /**
+         * @var $q \Doctrine\ORM\Query
+         */
+        $q = $qb->getQuery();
+
+        $q
+            ->setParameter('customer', $customer)
+            ->setParameter('true', true);
+
+        return $q->getOneOrNullResult();
     }
 }
