@@ -36,32 +36,39 @@ class Order
     protected $id;
 
     /**
-     * @ORM\Column(type="decimal", precision=8, scale=2)
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="total_due")
      *
      * @var float
      */
-    protected $due;
+    protected $totalDue;
 
     /**
-     * @ORM\Column(type="decimal", precision=8, scale=2)
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="product_due")
      *
      * @var float
      */
-    protected $tax;
+    protected $productDue;
 
     /**
-     * @ORM\Column(type="decimal", precision=8, scale=2, name="shipping_costs")
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="taxes_due")
      *
      * @var float
      */
-    protected $shippingCosts;
+    protected $taxesDue;
 
     /**
-     * @ORM\Column(type="decimal", precision=8, scale=2)
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="shipping_due")
      *
      * @var float
      */
-    protected $paid;
+    protected $shippingDue;
+
+    /**
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="finance_due")
+     *
+     * @var float
+     */
+    protected $financeDue;
 
     /**
      * @ORM\ManyToOne(targetEntity="Railroad\Usora\Entities\User")
@@ -122,19 +129,19 @@ class Order
     /**
      * @return float|null
      */
-    public function getDue(): ?float
+    public function getTotalDue(): ?float
     {
-        return $this->due;
+        return $this->totalDue;
     }
 
     /**
-     * @param float $due
+     * @param float $totalDue
      *
      * @return Order
      */
-    public function setDue(float $due): self
+    public function setTotalDue(float $totalDue): self
     {
-        $this->due = $due;
+        $this->totalDue = $totalDue;
 
         return $this;
     }
@@ -142,19 +149,19 @@ class Order
     /**
      * @return float|null
      */
-    public function getTax(): ?float
+    public function getProductDue(): ?float
     {
-        return $this->tax;
+        return $this->productDue;
     }
 
     /**
-     * @param float $tax
+     * @param float $productDue
      *
      * @return Order
      */
-    public function setTax(float $tax): self
+    public function setProductDue(float $productDue): self
     {
-        $this->tax = $tax;
+        $this->productDue = $productDue;
 
         return $this;
     }
@@ -162,19 +169,19 @@ class Order
     /**
      * @return float|null
      */
-    public function getShippingCosts(): ?float
+    public function getTaxesDue(): ?float
     {
-        return $this->shippingCosts;
+        return $this->taxesDue;
     }
 
     /**
-     * @param float $shippingCosts
+     * @param float $taxesDue
      *
      * @return Order
      */
-    public function setShippingCosts(float $shippingCosts): self
+    public function setTaxesDue(float $taxesDue): self
     {
-        $this->shippingCosts = $shippingCosts;
+        $this->taxesDue = $taxesDue;
 
         return $this;
     }
@@ -182,19 +189,39 @@ class Order
     /**
      * @return float|null
      */
-    public function getPaid(): ?float
+    public function getShippingDue(): ?float
     {
-        return $this->paid;
+        return $this->shippingDue;
     }
 
     /**
-     * @param float $paid
+     * @param float $shippingDue
      *
      * @return Order
      */
-    public function setPaid(float $paid): self
+    public function setShippingDue(float $shippingDue): self
     {
-        $this->paid = $paid;
+        $this->shippingDue = $shippingDue;
+
+        return $this;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getFinanceDue(): ?float
+    {
+        return $this->financeDue;
+    }
+
+    /**
+     * @param float $financeDue
+     *
+     * @return Order
+     */
+    public function setFinanceDue(float $financeDue): self
+    {
+        $this->financeDue = $financeDue;
 
         return $this;
     }

@@ -11,10 +11,11 @@ class OrderTransformer extends TransformerAbstract
     {
         return [
             'id' => $order->getId(),
-            'due' => $order->getDue(),
-            'tax' => $order->getTax(),
-            'shipping_costs' => $order->getShippingCosts(),
-            'paid' => $order->getPaid(),
+            'totalDue' => $order->getTotalDue(),
+            'productDue' => $order->getProductDue(),
+            'taxesDue' => $order->getTaxesDue(),
+            'shippingDue' => $order->getShippingDue(),
+            'financeDue' => $order->getFinanceDue(),
             'brand' => $order->getBrand(),
             'deleted_on' => $order->getDeletedOn() ? $order->getDeletedOn()->toDateTimeString() : null,
             'created_at' => $order->getCreatedAt() ? $order->getCreatedAt()->toDateTimeString() : null,
