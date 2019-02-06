@@ -270,10 +270,11 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'due' => $this->randomNumber(),
-                'tax' => $this->randomNumber(),
-                'shipping_costs' => $this->randomNumber(),
-                'paid' => $this->randomNumber(),
+                'total_due' => $this->randomNumber(),
+                'product_due' => $this->randomNumber(),
+                'taxes_due' => $this->randomNumber(),
+                'shipping_due' => $this->randomNumber(),
+                'finance_due' => $this->randomNumber(),
                 'user_id' => $this->randomNumber(),
                 'customer_id' => null,
                 'brand' => ConfigService::$brand,
