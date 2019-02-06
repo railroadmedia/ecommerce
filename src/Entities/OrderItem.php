@@ -50,6 +50,13 @@ class OrderItem
     protected $quantity;
 
     /**
+     * @ORM\Column(type="decimal", precision=8, scale=2)
+     *
+     * @var float
+     */
+    protected $weight;
+
+    /**
      * @ORM\Column(type="decimal", precision=8, scale=2, name="initial_price")
      *
      * @var float
@@ -57,32 +64,18 @@ class OrderItem
     protected $initialPrice;
 
     /**
-     * @ORM\Column(type="decimal", precision=8, scale=2)
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="total_discounted")
      *
      * @var float
      */
-    protected $discount;
+    protected $totalDiscounted;
 
     /**
-     * @ORM\Column(type="decimal", precision=8, scale=2)
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="final_price")
      *
      * @var float
      */
-    protected $tax;
-
-    /**
-     * @ORM\Column(type="decimal", precision=8, scale=2, name="shipping_costs")
-     *
-     * @var float
-     */
-    protected $shippingCosts;
-
-    /**
-     * @ORM\Column(type="decimal", precision=8, scale=2, name="total_price")
-     *
-     * @var float
-     */
-    protected $totalPrice;
+    protected $finalPrice;
 
     /**
      * @return int|null
@@ -115,6 +108,26 @@ class OrderItem
     /**
      * @return float|null
      */
+    public function getWeight(): ?float
+    {
+        return $this->weight;
+    }
+
+    /**
+     * @param float $weight
+     *
+     * @return OrderItem
+     */
+    public function setWeight(float $weight): self
+    {
+        $this->weight = $weight;
+
+        return $this;
+    }
+
+    /**
+     * @return float|null
+     */
     public function getInitialPrice(): ?float
     {
         return $this->initialPrice;
@@ -135,19 +148,19 @@ class OrderItem
     /**
      * @return float|null
      */
-    public function getDiscount(): ?float
+    public function getTotalDiscounted(): ?float
     {
-        return $this->discount;
+        return $this->totalDiscounted;
     }
 
     /**
-     * @param float $discount
+     * @param float $totalDiscounted
      *
      * @return OrderItem
      */
-    public function setDiscount(float $discount): self
+    public function setTotalDiscounted(float $totalDiscounted): self
     {
-        $this->discount = $discount;
+        $this->totalDiscounted = $totalDiscounted;
 
         return $this;
     }
@@ -155,59 +168,19 @@ class OrderItem
     /**
      * @return float|null
      */
-    public function getTax(): ?float
+    public function getFinalPrice(): ?float
     {
-        return $this->tax;
+        return $this->finalPrice;
     }
 
     /**
-     * @param float $tax
+     * @param float $finalPrice
      *
      * @return OrderItem
      */
-    public function setTax(float $tax): self
+    public function setFinalPrice(float $finalPrice): self
     {
-        $this->tax = $tax;
-
-        return $this;
-    }
-
-    /**
-     * @return float|null
-     */
-    public function getShippingCosts(): ?float
-    {
-        return $this->shippingCosts;
-    }
-
-    /**
-     * @param float $shippingCosts
-     *
-     * @return OrderItem
-     */
-    public function setShippingCosts(float $shippingCosts): self
-    {
-        $this->shippingCosts = $shippingCosts;
-
-        return $this;
-    }
-
-    /**
-     * @return float|null
-     */
-    public function getTotalPrice(): ?float
-    {
-        return $this->totalPrice;
-    }
-
-    /**
-     * @param float $totalPrice
-     *
-     * @return OrderItem
-     */
-    public function setTotalPrice(float $totalPrice): self
-    {
-        $this->totalPrice = $totalPrice;
+        $this->finalPrice = $finalPrice;
 
         return $this;
     }
