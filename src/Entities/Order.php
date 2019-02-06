@@ -19,6 +19,8 @@ use Railroad\Usora\Entities\User;
  *         @ORM\Index(name="ecommerce_order_created_on_index", columns={"created_at"}),
  *         @ORM\Index(name="ecommerce_order_updated_on_index", columns={"updated_at"}),
  *         @ORM\Index(name="ecommerce_order_deleted_on_index", columns={"deleted_on"}),
+ *         @ORM\Index(name="ecommerce_order_product_due_index", columns={"product_due"}),
+ *         @ORM\Index(name="ecommerce_order_finance_due_index", columns={"finance_due"})
  *     }
  * )
  */

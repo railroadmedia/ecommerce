@@ -168,4 +168,14 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$subscriptionRenewalDateCutoff = config('ecommerce.subscription_renewal_date');
         ConfigService::$failedPaymentsBeforeDeactivation = config('ecommerce.failed_payments_before_de_activation');
     }
+
+    public function register()
+    {
+        // tmp
+        $logger = new \Doctrine\DBAL\Logging\EchoSQLLogger();
+
+        $config = app()->make(\Doctrine\ORM\Configuration::class);
+
+        $config->setSQLLogger($logger);
+    }
 }

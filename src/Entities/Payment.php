@@ -36,25 +36,32 @@ class Payment
     protected $id;
 
     /**
-     * @ORM\Column(type="decimal", precision=8, scale=2)
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="total_due")
      *
      * @var float
      */
-    protected $due;
+    protected $totalDue;
 
     /**
-     * @ORM\Column(type="decimal", precision=8, scale=2, nullable=true)
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="total_paid", nullable=true)
      *
      * @var float
      */
-    protected $paid;
+    protected $totalPaid;
 
     /**
-     * @ORM\Column(type="decimal", precision=8, scale=2, nullable=true)
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="total_refunded", nullable=true)
      *
      * @var float
      */
-    protected $refunded;
+    protected $totalRefunded;
+
+    /**
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="conversion_rate")
+     *
+     * @var float
+     */
+    protected $conversionRate;
 
     /**
      * @ORM\Column(type="string")
@@ -122,19 +129,19 @@ class Payment
     /**
      * @return float|null
      */
-    public function getDue(): ?float
+    public function getTotalDue(): ?float
     {
-        return $this->due;
+        return $this->totalDue;
     }
 
     /**
-     * @param float $due
+     * @param float $totalDue
      *
      * @return Payment
      */
-    public function setDue(float $due): self
+    public function setTotalDue(float $totalDue): self
     {
-        $this->due = $due;
+        $this->totalDue = $totalDue;
 
         return $this;
     }
@@ -142,19 +149,19 @@ class Payment
     /**
      * @return float|null
      */
-    public function getPaid(): ?float
+    public function getTotalPaid(): ?float
     {
-        return $this->paid;
+        return $this->totalPaid;
     }
 
     /**
-     * @param float $paid
+     * @param float $totalPaid
      *
      * @return Payment
      */
-    public function setPaid(float $paid): self
+    public function setTotalPaid(?float $totalPaid): self
     {
-        $this->paid = $paid;
+        $this->totalPaid = $totalPaid;
 
         return $this;
     }
@@ -162,19 +169,39 @@ class Payment
     /**
      * @return float|null
      */
-    public function getRefunded(): ?float
+    public function getTotalRefunded(): ?float
     {
-        return $this->refunded;
+        return $this->totalRefunded;
     }
 
     /**
-     * @param float $refunded
+     * @param float $totalRefunded
      *
      * @return Payment
      */
-    public function setRefunded(float $refunded): self
+    public function setTotalRefunded(?float $totalRefunded): self
     {
-        $this->refunded = $refunded;
+        $this->totalRefunded = $totalRefunded;
+
+        return $this;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getConversionRate(): ?float
+    {
+        return $this->conversionRate;
+    }
+
+    /**
+     * @param float $conversionRate
+     *
+     * @return Payment
+     */
+    public function setConversionRate(float $conversionRate): self
+    {
+        $this->conversionRate = $conversionRate;
 
         return $this;
     }

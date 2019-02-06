@@ -88,8 +88,10 @@ class UserProductService
             ->setExpirationDate($expirationDate)
             ->setQuantity($quantity);
 
-        $this->entityManager->persist($userProduct);
-        $this->entityManager->flush();
+        // tmp
+
+        // $this->entityManager->persist($userProduct);
+        // $this->entityManager->flush();
 
         return $userProduct;
     }
@@ -253,12 +255,16 @@ class UserProductService
         $products = $this->getSubscriptionProducts($subscription);
 
         if ($subscription->getIsActive()) {
+
             foreach ($products as $productData) {
-                $this->assignUserProduct(
-                    $subscription->getUser(),
-                    $productData['product'],
-                    $subscription->getPaidUntil()
-                );
+
+                // tmp
+
+                // $this->assignUserProduct(
+                //     $subscription->getUser(),
+                //     $productData['product'],
+                //     $subscription->getPaidUntil()
+                // );
             }
         } else {
             $this->removeUserProducts(
