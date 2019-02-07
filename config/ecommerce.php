@@ -68,17 +68,12 @@ return [
         'EUR',
     ],
 
-    'default_currency'                    => 'USD',
-    'default_currency_pair_price_offsets' => [
-        'CAD' => [
-            97 => 125,
-        ],
-        'GBP' => [
-            97 => 73,
-        ],
-        'EUR' => [
-            97 => 84,
-        ],
+    'default_currency' => 'USD',
+    'default_currency_conversion_rates' => [
+        'CAD' => 1.32,
+        'EUR' => 0.88,
+        'GBP' => 0.77,
+        'USD' => 1.0,
     ],
 
     'payment_gateways' => [

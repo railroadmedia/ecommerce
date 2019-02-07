@@ -13,9 +13,11 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
+use Railroad\Ecommerce\Services\PaymentMethodService;
 
 class RenewalService
 {
@@ -109,11 +111,12 @@ class RenewalService
 
         $payment = new Payment();
 
-        $chargePrice = $this->currencyService->convertFromBase(
-            $subscription->getTotalPricePerPayment()
-        );
+        $currency = $subscription->getCurrency();
 
-        $currency = $this->currencyService->get();
+        $chargePrice = $this->currencyService->convertFromBase(
+            $subscription->getTotalPricePerPayment(),
+            $currency
+        );
 
         if (
             $paymentMethod->getMethodType() ==
@@ -220,6 +223,8 @@ class RenewalService
 
         $this->entityManager->persist($payment);
 
+        $this->entityManager->flush();
+
         $subscriptionPayment = new SubscriptionPayment();
 
         $subscriptionPayment
@@ -230,7 +235,9 @@ class RenewalService
 
         $this->entityManager->flush();
 
-        if ($payment->getPaid() > 0) {
+        if ($payment->getTotalPaid() > 0) {
+
+            $nextBillDate = null;
 
             switch ($subscription->getIntervalType()) {
                 case ConfigService::$intervalTypeMonthly:
@@ -247,13 +254,17 @@ class RenewalService
                     $nextBillDate = Carbon::now()
                                 ->addDays($subscription->getIntervalCount());
                 break;
+
+                default:
+                    throw new Exception("Subscription type not configured");
+                break;
             }
 
             $subscription
                 ->setIsActive(true)
                 ->setCanceledOn(null)
                 ->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1)
-                ->setPaidUntil($nextBillDate->startOfDay())
+                ->setPaidUntil($nextBillDate ? $nextBillDate->startOfDay() : Carbon::now()->addMonths(1))
                 ->setUpdatedAt(Carbon::now());
 
             $this->entityManager->flush();

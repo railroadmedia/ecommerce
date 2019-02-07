@@ -85,6 +85,16 @@ class EcommerceTestCase extends BaseTestCase
     protected $paypalExternalHelperMock;
 
     /**
+     * @var array
+     */
+    protected $currencies;
+
+    /**
+     * @var array
+     */
+    protected $paymentGateway;
+
+    /**
      * @var Application
      */
     protected $app;
@@ -266,6 +276,9 @@ class EcommerceTestCase extends BaseTestCase
                 return $mock;
             }
         );
+
+        $this->currencies = $defaultConfig['supported_currencies'];
+        $this->paymentGateway = $defaultConfig['payment_gateways'];
     }
 
     /**
@@ -643,6 +656,16 @@ class EcommerceTestCase extends BaseTestCase
         $userPaymentMethod['id'] = $userPaymentMethodId;
 
         return $userPaymentMethod;
+    }
+
+    public function getCurrency()
+    {
+        return $this->faker->randomElement($this->currencies);
+    }
+
+    public function getPaymentGateway($processor)
+    {
+        return $this->faker->randomElement(array_keys($this->paymentGateway[$processor]));
     }
 
     protected function tearDown()

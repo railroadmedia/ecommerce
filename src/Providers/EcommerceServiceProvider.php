@@ -172,10 +172,10 @@ class EcommerceServiceProvider extends ServiceProvider
     public function register()
     {
         // tmp
-        $logger = new \Doctrine\DBAL\Logging\EchoSQLLogger();
+        // $logger = new \Doctrine\DBAL\Logging\EchoSQLLogger();
 
-        $config = app()->make(\Doctrine\ORM\Configuration::class);
+        // $config = app()->make(\Doctrine\ORM\Configuration::class);
 
-        $config->setSQLLogger($logger);
+        // $config->setSQLLogger($logger);
     }
 }

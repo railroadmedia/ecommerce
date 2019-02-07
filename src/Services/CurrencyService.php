@@ -36,7 +36,7 @@ class CurrencyService
         return $currency;
     }
 
-    public function convertFromBase($price): float
+    public function convertFromBase($price, $currency): float
     {
         // todo - ask for specs on conversion rate
         return $price;

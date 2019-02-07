@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use DateTimeInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\Product;
@@ -37,7 +38,7 @@ class UserProductService
     }
 
     /**
-     * Get user product based on user id and product id.
+     * Get user product based on user and product.
      *
      * @param User $user
      * @param Product $product
@@ -61,6 +62,40 @@ class UserProductService
             ->setParameter('product', $product);
 
         return $qb->getQuery()->getOneOrNullResult();
+    }
+
+    /**
+     * Get user products collection based on user and product array
+     *
+     * @param User $user
+     * @param Product $product
+     *
+     * @return array
+     */
+    public function getUserProducts(
+        User $user,
+        $products
+    ): array {
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->userProductRepository->createQueryBuilder('up');
+
+        $qb
+            ->where($qb->expr()->eq('up.user', ':user'))
+            ->andWhere($qb->expr()->in('up.product', ':products'))
+            ->setParameter('user', $user)
+            ->setParameter('products', $products);
+
+        $collection = $qb->getQuery()->getResult();
+
+        $map = [];
+
+        foreach ($collection as $userProduct) {
+            $map[$userProduct->getId()] = $userProduct;
+        }
+
+        return $map;
     }
 
     /**
@@ -88,10 +123,8 @@ class UserProductService
             ->setExpirationDate($expirationDate)
             ->setQuantity($quantity);
 
-        // tmp
-
-        // $this->entityManager->persist($userProduct);
-        // $this->entityManager->flush();
+        $this->entityManager->persist($userProduct);
+        $this->entityManager->flush();
 
         return $userProduct;
     }
@@ -107,7 +140,7 @@ class UserProductService
      */
     public function updateUserProduct(
         UserProduct $userProduct,
-        \DateTimeInterface $expirationDate,
+        ?DateTimeInterface $expirationDate,
         $quantity
     ) {
         $userProduct
@@ -143,7 +176,7 @@ class UserProductService
     public function assignUserProduct(
         User $user,
         Product $product,
-        \DateTimeInterface $expirationDate,
+        DateTimeInterface $expirationDate,
         $quantity = 0
     ) {
 
@@ -183,33 +216,43 @@ class UserProductService
         User $user,
         $products
     ) {
+        $userProducts = $this->getUserProducts(
+            $user,
+            $products
+                ->pluck('product')
+                ->all()
+        );
+
         foreach ($products as $productData) {
+
+            /**
+             * @var $product Product
+             */
+            $product = $productData['product'];
+
+            if (!$userProduct = $userProducts[$product->getId()] ?? null) {
+                continue;
+            }
 
             /**
              * @var $userProduct UserProduct
              */
-            $userProduct = $this->getUserProduct(
-                $user,
-                $productData['product']
-            );
-
-            if (!$userProduct) {
-                continue;
-            }
 
             if (
                 ($userProduct->getQuantity() == 1) ||
                 ($userProduct->getQuantity() - $productData['quantity'] <= 0)
             ) {
-                $this->deleteUserProduct($userProduct);
+                $this->entityManager->remove($userProduct);
+                $this->entityManager->flush();
             } else {
-                $this->updateUserProduct(
-                    $userProduct,
-                    $userProduct->getExpirationDate(),
-                    $userProduct->getQuantity() - $productData['quantity']
-                );
+
+                $quantity = $userProduct->getQuantity() - $productData['quantity'];
+
+                $userProduct->setQuantity($quantity);
             }
         }
+
+        $this->entityManager->flush();
     }
 
     /**
