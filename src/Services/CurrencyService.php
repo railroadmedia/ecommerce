@@ -3,12 +3,16 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Location\Services\LocationService;
+use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 
 class CurrencyService
 {
+    const CONVERSION_CONFIG = 'Invalid conversion result';
+
     /**
      * @var LocationService
      */
@@ -36,9 +40,24 @@ class CurrencyService
         return $currency;
     }
 
-    public function convertFromBase($price, $currency): float
+    /**
+     * Converts base $price into $currency
+     *
+     * @param float $price
+     * @param string $currency
+     *
+     * @return float
+     *
+     * @throws PaymentFailedException
+     */
+    public function convertFromBase(float $price, string $currency): float
     {
-        // todo - ask for specs on conversion rate
-        return $price;
+        if (!$currency || !isset(ConfigService::$defaultCurrencyConversionRates[$currency])) {
+            throw new PaymentFailedException(self::CONVERSION_CONFIG);
+        }
+
+        $rate = ConfigService::$defaultCurrencyConversionRates[$currency];
+
+        return $price * $rate;
     }
 }

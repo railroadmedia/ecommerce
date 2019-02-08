@@ -291,7 +291,7 @@ class UserProductServiceTest extends EcommerceTestCase
         );
     }
 
-    public function tests_remove_user_products() // WIP
+    public function tests_remove_user_products()
     {
         $em = $this->app->make(EntityManager::class);
 

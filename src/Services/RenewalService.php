@@ -15,6 +15,7 @@ use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Services\PaymentMethodService;
@@ -57,6 +58,11 @@ class RenewalService
     protected $paypalPaymentGateway;
 
     /**
+     * @var TaxService
+     */
+    protected $taxService;
+
+    /**
      * RenewalService constructor.
      *
      * @param EntityManager $entityManager
@@ -67,9 +73,11 @@ class RenewalService
         CurrencyService $currencyService,
         EntityManager $entityManager,
         StripePaymentGateway $stripePaymentGateway,
-        PayPalPaymentGateway $payPalPaymentGateway
+        PayPalPaymentGateway $payPalPaymentGateway,
+        TaxService $taxService
     ) {
         $this->currencyService = $currencyService;
+        $this->taxService = $taxService;
         $this->entityManager = $entityManager;
         $this->stripePaymentGateway = $stripePaymentGateway;
         $this->paypalPaymentGateway = $payPalPaymentGateway;
@@ -113,16 +121,22 @@ class RenewalService
 
         $currency = $subscription->getCurrency();
 
-        $chargePrice = $this->currencyService->convertFromBase(
-            $subscription->getTotalPricePerPayment(),
-            $currency
-        );
-
         if (
             $paymentMethod->getMethodType() ==
             PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
         ) {
             try {
+
+                $priceWithVat = $this->taxService->priceWithVat(
+                    $subscription->getTotalPrice(),
+                    $paymentMethod->getBillingAddress()
+                );
+
+                $chargePrice = $this->currencyService->convertFromBase(
+                    $priceWithVat,
+                    $currency
+                );
+
                 /**
                  * @var $method \Railroad\Ecommerce\Entities\CreditCard
                  */
@@ -156,7 +170,8 @@ class RenewalService
                     ->setExternalId($charge->id)
                     ->setStatus('succeeded')
                     ->setMessage('')
-                    ->setCurrency($currency);
+                    ->setCurrency($currency)
+                    ->setConversionRate(ConfigService::$defaultCurrencyConversionRates[$currency]);
 
             } catch (Exception $exception) {
 
@@ -166,7 +181,8 @@ class RenewalService
                     ->setExternalId($charge->id ?? null)
                     ->setStatus('failed')
                     ->setMessage($exception->getMessage())
-                    ->setCurrency($currency);
+                    ->setCurrency($currency)
+                    ->setConversionRate(ConfigService::$defaultCurrencyConversionRates[$currency] ?? 0);
 
                 $paymentException = $exception;
             }
@@ -176,6 +192,17 @@ class RenewalService
         ) {
 
             try {
+
+                $priceWithVat = $this->taxService->priceWithVat(
+                    $subscription->getTotalPrice(),
+                    $paymentMethod->getBillingAddress()
+                );
+
+                $chargePrice = $this->currencyService->convertFromBase(
+                    $priceWithVat,
+                    $currency
+                );
+
                 /**
                  * @var $method \Railroad\Ecommerce\Entities\PaypalBillingAgreement
                  */
@@ -193,12 +220,13 @@ class RenewalService
                     );
 
                 $payment
-                    ->setTotalPaid($subscription->getTotalPricePerPayment())
+                    ->setTotalPaid($chargePrice)
                     ->setExternalProvider('paypal')
                     ->setExternalId($transactionId)
                     ->setStatus('succeeded')
                     ->setMessage('')
-                    ->setCurrency($currency);
+                    ->setCurrency($currency)
+                    ->setConversionRate(ConfigService::$defaultCurrencyConversionRates[$currency]);
 
             } catch (Exception $exception) {
 
@@ -208,7 +236,8 @@ class RenewalService
                     ->setExternalId($transactionId ?? null)
                     ->setStatus('failed')
                     ->setMessage($exception->getMessage())
-                    ->setCurrency($currency);
+                    ->setCurrency($currency)
+                    ->setConversionRate(ConfigService::$defaultCurrencyConversionRates[$currency] ?? 0);
 
                 $paymentException = $exception;
             }
@@ -216,7 +245,7 @@ class RenewalService
 
         // save payment data in DB
         $payment
-            ->setTotalDue($subscription->getTotalPricePerPayment())
+            ->setTotalDue($subscription->getTotalPrice())
             ->setType(ConfigService::$renewalPaymentType)
             ->setPaymentMethod($paymentMethod)
             ->setCreatedAt(Carbon::now());

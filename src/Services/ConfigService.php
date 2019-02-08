@@ -226,11 +226,6 @@ class ConfigService
     public static $defaultCurrency;
 
     /**
-     * @var array
-     */
-    public static $defaultCurrencyPairPriceOffsets;
-
-    /**
      * @var string
      */
     public static $billingAddress;
@@ -314,4 +309,9 @@ class ConfigService
      * @var int
      */
     public static $failedPaymentsBeforeDeactivation;
+
+    /**
+     * @var int
+     */
+    public static $defaultCurrencyConversionRates;
 }

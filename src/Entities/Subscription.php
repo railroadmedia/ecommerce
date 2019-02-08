@@ -118,40 +118,14 @@ class Subscription
     /**
      * @ORM\Column(
      *     type="decimal",
-     *     name="total_price_per_payment",
+     *     name="total_price",
      *     precision=8,
      *     scale=2
      * )
      *
      * @var float
      */
-    protected $totalPricePerPayment;
-
-    /**
-     * @ORM\Column(
-     *     type="decimal",
-     *     name="tax_per_payment",
-     *     precision=8,
-     *     scale=2,
-     *     nullable=true
-     * )
-     *
-     * @var float
-     */
-    protected $taxPerPayment;
-
-    /**
-     * @ORM\Column(
-     *     type="decimal",
-     *     name="shipping_per_payment",
-     *     precision=8,
-     *     scale=2,
-     *     nullable=true
-     * )
-     *
-     * @var float
-     */
-    protected $shippingPerPayment;
+    protected $totalPrice;
 
     /**
      * @ORM\Column(type="string")
@@ -372,59 +346,19 @@ class Subscription
     /**
      * @return float|null
      */
-    public function getTotalPricePerPayment(): ?float
+    public function getTotalPrice(): ?float
     {
-        return $this->totalPricePerPayment;
+        return $this->totalPrice;
     }
 
     /**
-     * @param float $totalPricePerPayment
+     * @param float $totalPrice
      *
      * @return Subscription
      */
-    public function setTotalPricePerPayment(float $totalPricePerPayment): self
+    public function setTotalPrice(float $totalPrice): self
     {
-        $this->totalPricePerPayment = $totalPricePerPayment;
-
-        return $this;
-    }
-
-    /**
-     * @return float|null
-     */
-    public function getTaxPerPayment(): ?float
-    {
-        return $this->taxPerPayment;
-    }
-
-    /**
-     * @param float $taxPerPayment
-     *
-     * @return Subscription
-     */
-    public function setTaxPerPayment(?float $taxPerPayment): self
-    {
-        $this->taxPerPayment = $taxPerPayment;
-
-        return $this;
-    }
-
-    /**
-     * @return float|null
-     */
-    public function getShippingPerPayment(): ?float
-    {
-        return $this->shippingPerPayment;
-    }
-
-    /**
-     * @param float $shippingPerPayment
-     *
-     * @return Subscription
-     */
-    public function setShippingPerPayment(?float $shippingPerPayment): self
-    {
-        $this->shippingPerPayment = $shippingPerPayment;
+        $this->totalPrice = $totalPrice;
 
         return $this;
     }

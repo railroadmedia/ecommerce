@@ -2,37 +2,51 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Services\TaxService;
+
 class TaxService
 {
-    /** Calculate the tax rate based on country and region
+    const DEFAULT_COUNTRY_RATE = 0.5;
+    const DEFAULT_RATE = 1;
+
+    /**
+     * Calculate the tax rate based on country and region
      *
-     * @param string $country
-     * @param string $region
-     * @return float|int
+     * @param Address $address
+     *
+     * @return float
      */
-    public function getTaxRate($country, $region)
+    public function getTaxRate(?Address $address): float
     {
-        if (array_key_exists(strtolower($country), ConfigService::$taxRate)) {
-            if (array_key_exists(strtolower($region), ConfigService::$taxRate[strtolower($country)])) {
-                return ConfigService::$taxRate[strtolower($country)][strtolower($region)];
+        if (
+            $address &&
+            array_key_exists(strtolower($address->getCountry()), ConfigService::$taxRate)
+        ) {
+            if (
+                array_key_exists(
+                    strtolower($address->getState()),
+                    ConfigService::$taxRate[strtolower($address->getCountry())]
+                )
+            ) {
+                return ConfigService::$taxRate[strtolower($address->getCountry())][strtolower($address->getState())];
             } else {
-                return 0.05;
+                return self::DEFAULT_COUNTRY_RATE;
             }
         } else {
-            return 0;
+            return self::DEFAULT_RATE; // TODO - ask for details
         }
     }
 
-
-    /** Calculate total taxes based on billing address and the amount that should be paid.
+    /**
+     * Calculate total taxes based on billing address and the amount that should be paid.
      *
-     * @param integer $costs
-     * @return float|int
+     * @param float $costs
+     *
+     * @return float
      */
-    public function getTaxTotal($costs, $country, $region)
+    public function priceWithVat($costs, ?Address $address): float
     {
-        return $costs * $this->getTaxRate($country, $region);
+        return $costs * $this->getTaxRate($address);
     }
-
-
 }

@@ -2,323 +2,99 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Services;
 
-use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
-use Railroad\Ecommerce\Repositories\DiscountRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Repositories\UserProductRepository;
-use Railroad\Ecommerce\Services\DiscountCriteriaService;
-use Railroad\Ecommerce\Services\DiscountService;
+use Carbon\Carbon;
 use Railroad\Ecommerce\Services\TaxService;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use Railroad\Ecommerce\Services\ConfigService;
 
 class TaxServiceTest extends EcommerceTestCase
 {
-    /**
-     * @var TaxService
-     */
-    protected $classBeingTested;
-
-    /**
-     * @var ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * @var DiscountRepository
-     */
-    protected $discountRepository;
-
-    /**
-     * @var DiscountCriteriaRepository
-     */
-    protected $discountCriteriaRepository;
-
-    /**
-     * @var UserProductRepository
-     */
-    protected $userProductRepository;
-
     public function setUp()
     {
         parent::setUp();
-
-        $this->classBeingTested = $this->app->make(TaxService::class);
-
-        $this->productRepository = $this->app->make(ProductRepository::class);
-        $this->discountRepository = $this->app->make(DiscountRepository::class);
-        $this->discountCriteriaRepository = $this->app->make(DiscountCriteriaRepository::class);
-        $this->userProductRepository = $this->app->make(UserProductRepository::class);
     }
 
-    //TODO: move from taxservice
-    public function test_apply_discount_with_multiple_criteria()
+    public function test_get_tax_rate_set()
     {
-        $this->assertTrue(true);
-        return;
-        $userId = $this->createAndLogInNewUser();
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'is_physical' => 0,
-                    'weight' => 0,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                ]
-            )
-        );
-        $product1 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                ]
-            )
-        );
+        $srv = $this->app->make(TaxService::class);
 
-        $product2 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                ]
-            )
-        );
+        $country = 'canada';
+        $state = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$country]));
 
-        $discount = $this->discountRepository->create(
-            $this->faker->discount(
-                [
-                    'active' => true,
-                    'type' => DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE,
-                    'amount' => 50,
-                ]
-            )
-        );
+        $address = new Address();
 
-        $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product1['id'],
-                    'type' => DiscountCriteriaService::PRODUCT_OWN_TYPE,
-                    'min' => 1,
-                    'max' => 10,
-                ]
-            )
-        );
-        $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product2['id'],
-                    'type' => DiscountCriteriaService::PRODUCT_OWN_TYPE,
-                    'min' => 1,
-                    'max' => 10,
-                ]
-            )
-        );
+        $address
+            ->setType($this->faker->word)
+            ->setBrand($this->faker->word)
+            ->setCreatedAt(Carbon::now())
+            ->setCountry($country)
+            ->setState($state);
 
-        $this->userProductRepository->create(
-            $this->faker->userProduct(['user_id' => $userId, 'product_id' => $product1['id']])
-        );
-
-        $this->userProductRepository->create(
-            $this->faker->userProduct(['user_id' => $userId, 'product_id' => $product2['id']])
-        );
-
-        $response = $this->classBeingTested->calculateTaxesForCartItems(
-            [
-                [
-                    "quantity" => 1,
-                    "totalPrice" => $product['price'],
-                    "options" => [
-                        "product-id" => $product['id'],
-                    ],
-                ],
-            ],
-            $this->faker->word,
-            $this->faker->word
-        );
-
-        //assert discount amount it's applied
-        $this->assertEquals($product['price'] * $discount['amount'] / 100, $response['totalDue']);
+        // TODO update after finishing tax service
+        $this->assertEquals(ConfigService::$taxRate[$country][$state], $srv->getTaxRate($address));
     }
 
-    public function _test_discount_not_applied(){
-        $userId = $this->createAndLogInNewUser();
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'is_physical' => 0,
-                    'weight' => 0,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                ]
-            )
-        );
-        $product1 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                ]
-            )
-        );
+    public function test_get_tax_rate_unset_state()
+    {
+        $srv = $this->app->make(TaxService::class);
 
-        $product2 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                ]
-            )
-        );
+        $country = 'canada';
+        $state = '';
 
-        $discount = $this->discountRepository->create(
-            $this->faker->discount(
-                [
-                    'active' => true,
-                    'type' => DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE,
-                    'amount' => 50,
-                ]
-            )
-        );
+        $address = new Address();
 
-        $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product1['id'],
-                    'type' => DiscountCriteriaService::PRODUCT_OWN_TYPE,
-                    'min' => 1,
-                    'max' => 10,
-                ]
-            )
-        );
-        $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product2['id'],
-                    'type' => DiscountCriteriaService::PRODUCT_OWN_TYPE,
-                    'min' => 1,
-                    'max' => 10,
-                ]
-            )
-        );
+        $address
+            ->setType($this->faker->word)
+            ->setBrand($this->faker->word)
+            ->setCreatedAt(Carbon::now())
+            ->setCountry($country)
+            ->setState($state);
 
-        //user own only one product
-        $this->userProductRepository->create(
-            $this->faker->userProduct(['user_id' => $userId, 'product_id' => $product1['id']])
-        );
-
-        $response = $this->classBeingTested->calculateTaxesForCartItems(
-            [
-                [
-                    "quantity" => 1,
-                    "totalPrice" => $product['price'],
-                    "options" => [
-                        "product-id" => $product['id'],
-                    ],
-                ],
-            ],
-            $this->faker->word,
-            $this->faker->word
-        );
-
-        //assert discount amount it's not applied to the order, totalDue = product price * quantity
-        $this->assertEquals($product['price'], $response['totalDue']);
+        // TODO update after finishing tax service
+        $this->assertEquals(TaxService::DEFAULT_COUNTRY_RATE, $srv->getTaxRate($address));
     }
 
-    public function _test_discount_on_product_discounts_other_products_own(){
-        $userId = $this->createAndLogInNewUser();
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => $this->faker->numberBetween(10),
-                    'active' => 1,
-                    'is_physical' => 0,
-                    'weight' => 0,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                ]
-            )
-        );
-        $product1 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                ]
-            )
-        );
+    public function test_get_tax_rate_unset_country()
+    {
+        $srv = $this->app->make(TaxService::class);
 
-        $product2 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                ]
-            )
-        );
+        $country = '';
+        $state = '';
 
-        $discount = $this->discountRepository->create(
-            $this->faker->discount(
-                [
-                    'active' => true,
-                    'product_id' => $product['id'],
-                    'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
-                    'amount' => $this->faker->numberBetween(1, 9),
-                ]
-            )
-        );
+        $address = new Address();
 
-        $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product1['id'],
-                    'type' => DiscountCriteriaService::PRODUCT_OWN_TYPE,
-                    'min' => 1,
-                    'max' => 10,
-                ]
-            )
-        );
-        $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product2['id'],
-                    'type' => DiscountCriteriaService::PRODUCT_OWN_TYPE,
-                    'min' => 1,
-                    'max' => 10,
-                ]
-            )
-        );
+        $address
+            ->setType($this->faker->word)
+            ->setBrand($this->faker->word)
+            ->setCreatedAt(Carbon::now())
+            ->setCountry($country)
+            ->setState($state);
 
-        //user own required products
-        $this->userProductRepository->create(
-            $this->faker->userProduct(['user_id' => $userId, 'product_id' => $product1['id']])
-        );
-
-        $this->userProductRepository->create(
-            $this->faker->userProduct(['user_id' => $userId, 'product_id' => $product2['id']])
-        );
-
-        $response = $this->classBeingTested->calculateTaxesForCartItems(
-            [
-                [
-                    "quantity" => 1,
-                    "price" => $product['price'],
-                    "totalPrice" => $product['price'],
-                    "options" => [
-                        "product-id" => $product['id'],
-                    ],
-                ],
-            ],
-            $this->faker->word,
-            $this->faker->word
-        );
-
-        //assert discount amount it's applied to the order
-        $this->assertEquals($product['price'] - $discount['amount'], $response['totalDue']);
+        // TODO update after finishing tax service
+        $this->assertEquals(TaxService::DEFAULT_RATE, $srv->getTaxRate($address));
     }
 
+    public function test_get_tax_total()
+    {
+        $srv = $this->app->make(TaxService::class);
 
+        $price = 100;
+        $country = 'canada';
+        $state = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$country]));
 
+        $address = new Address();
+
+        $address
+            ->setType($this->faker->word)
+            ->setBrand($this->faker->word)
+            ->setCreatedAt(Carbon::now())
+            ->setCountry($country)
+            ->setState($state);
+
+        $priceWithVat = ConfigService::$taxRate[$country][$state] * $price;
+
+        // TODO update after finishing tax service
+        $this->assertEquals($priceWithVat, $srv->priceWithVat($price, $address));
+    }
 }

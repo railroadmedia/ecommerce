@@ -52,6 +52,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     {
         parent::setUp();
 
+        // todo DEVE-31 - add taxes
+
         $this->paymentMethodRepository          = $this->app->make(PaymentMethodRepository::class);
         $this->creditCardRepository             = $this->app->make(CreditCardRepository::class);
         $this->permissionService                = $this->app->make(PermissionService::class);

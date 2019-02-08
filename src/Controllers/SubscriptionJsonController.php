@@ -215,10 +215,10 @@ class SubscriptionJsonController extends BaseController
             $subscription->setCanceledOn(Carbon::now());
         }
 
-        if ($subscription->getTotalPricePerPayment()) {
+        if ($subscription->getTotalPrice()) {
 
-            $subscription->setTotalPricePerPayment(
-                round($subscription->getTotalPricePerPayment(), 2)
+            $subscription->setTotalPrice(
+                round($subscription->getTotalPrice(), 2)
             );
         }
 

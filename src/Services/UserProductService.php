@@ -243,7 +243,6 @@ class UserProductService
                 ($userProduct->getQuantity() - $productData['quantity'] <= 0)
             ) {
                 $this->entityManager->remove($userProduct);
-                $this->entityManager->flush();
             } else {
 
                 $quantity = $userProduct->getQuantity() - $productData['quantity'];
@@ -301,13 +300,11 @@ class UserProductService
 
             foreach ($products as $productData) {
 
-                // tmp
-
-                // $this->assignUserProduct(
-                //     $subscription->getUser(),
-                //     $productData['product'],
-                //     $subscription->getPaidUntil()
-                // );
+                $this->assignUserProduct(
+                    $subscription->getUser(),
+                    $productData['product'],
+                    $subscription->getPaidUntil()
+                );
             }
         } else {
             $this->removeUserProducts(

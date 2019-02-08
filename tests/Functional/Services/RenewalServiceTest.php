@@ -10,6 +10,8 @@ use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\RenewalService;
+use Railroad\Ecommerce\Services\TaxService;
+use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Usora\Entities\User;
 use Carbon\Carbon;
@@ -102,7 +104,7 @@ class RenewalServiceTest extends EcommerceTestCase
             ->setUser($user)
             ->setStartDate(Carbon::now())
             ->setPaidUntil(Carbon::now()->subDay(1))
-            ->setTotalPricePerPayment($this->faker->randomNumber(3))
+            ->setTotalPrice($this->faker->randomNumber(3))
             ->setCurrency($this->getCurrency())
             ->setIntervalType(ConfigService::$intervalTypeMonthly)
             ->setIntervalCount(1)
@@ -118,12 +120,25 @@ class RenewalServiceTest extends EcommerceTestCase
 
         $srv->renew($subscription);
 
+        $taxService = $this->app->make(TaxService::class);
+        $currencyService = $this->app->make(CurrencyService::class);
+
+        $priceWithVat = $taxService->priceWithVat(
+            $subscription->getTotalPrice(),
+            $paymentMethod->getBillingAddress()
+        );
+
+        $chargePrice = $currencyService->convertFromBase(
+            $priceWithVat,
+            $subscription->getCurrency()
+        );
+
         // assert user product was created
         $this->assertDatabaseHas(
             ConfigService::$tablePayment,
             [
-                'total_due' => $subscription->getTotalPricePerPayment(),
-                'total_paid' => $subscription->getTotalPricePerPayment(),
+                'total_due' => $subscription->getTotalPrice(),
+                'total_paid' => $chargePrice,
                 'type' => ConfigService::$renewalPaymentType,
                 'external_id' => $charge->id,
                 'external_provider' => 'stripe',
@@ -142,7 +157,5 @@ class RenewalServiceTest extends EcommerceTestCase
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
-
-        $this->assertTrue(true);
     }
 }

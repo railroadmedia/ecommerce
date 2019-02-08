@@ -289,8 +289,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'data.attributes.total_price_per_payment',
-                    'detail' => 'The total_price_per_payment field is required.',
+                    'source' => 'data.attributes.total_price',
+                    'detail' => 'The total_price field is required.',
                     'title' => 'Validation failed.'
                 ],
                 [
@@ -510,7 +510,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             [
                 'data' => [
                     'type' => 'subscription',
-                    'attributes' => ['total_price_per_payment' => $newPrice]
+                    'attributes' => ['total_price' => $newPrice]
                 ],
             ]
         );
@@ -536,7 +536,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                             ]
                         ),
                         [
-                            'total_price_per_payment' => $newPrice,
+                            'total_price' => $newPrice,
                             'updated_at' => Carbon::now()->toDateTimeString(),
                         ]
                     ),
@@ -582,7 +582,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             array_merge(
                 $subscription,
                 [
-                    'total_price_per_payment' => $newPrice,
+                    'total_price' => $newPrice,
                     'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
             )

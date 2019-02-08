@@ -222,6 +222,7 @@ class OrderFormService
     )
     : array {
 
+        // todo DEVE-31 - add taxes
         $customerCreditCard = $this->stripePaymentGateway->getOrCreateCustomer(
             $request->get('gateway'),
             $user['email'] ?? $customer['email']

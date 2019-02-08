@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
 use Railroad\Ecommerce\Services\ConfigService;
 
-class Deve29UpdatePaymentTable extends Migration
+class Deve31UpdateSubscriptionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -15,47 +15,34 @@ class Deve29UpdatePaymentTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                ConfigService::$tableSubscription,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->renameColumn('due', 'total_due');
+                    $table->renameColumn('total_price_per_payment', 'total_price');
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                ConfigService::$tableSubscription,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->renameColumn('paid', 'total_paid');
+                    $table->dropColumn('tax_per_payment');
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                ConfigService::$tableSubscription,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->renameColumn('refunded', 'total_refunded');
-                }
-            );
-
-        Schema::connection(ConfigService::$databaseConnectionName)
-            ->table(
-                ConfigService::$tablePayment,
-                function ($table) {
-                    /**
-                     * @var $table \Illuminate\Database\Schema\Blueprint
-                     */
-                    $table
-                        ->decimal('conversion_rate')
-                        ->after('total_refunded');
+                    $table->dropColumn('shipping_per_payment');
                 }
             );
     }
@@ -69,45 +56,34 @@ class Deve29UpdatePaymentTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                ConfigService::$tableSubscription,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->renameColumn('total_due', 'due');
+                    $table->renameColumn('total_price', 'total_price_per_payment');
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                ConfigService::$tableSubscription,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->renameColumn('total_paid', 'paid');
+                    $table->decimal('tax_per_payment')->nullable();
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                ConfigService::$tableSubscription,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->renameColumn('total_refunded', 'refunded');
-                }
-            );
-
-        Schema::connection(ConfigService::$databaseConnectionName)
-            ->table(
-                ConfigService::$tablePayment,
-                function ($table) {
-                    /**
-                     * @var $table \Illuminate\Database\Schema\Blueprint
-                     */
-                    $table->dropColumn('conversion_rate');
+                    $table->decimal('shipping_per_payment')->nullable();
                 }
             );
     }

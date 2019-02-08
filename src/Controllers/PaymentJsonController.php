@@ -211,6 +211,8 @@ class PaymentJsonController extends BaseController
             ($request->has('subscription_id')) ? (ConfigService::$renewalPaymentType) :
                 (ConfigService::$orderPaymentType);
 
+        // todo DEVE-31 - add taxes
+
         //manual payment
         if (is_null($paymentMethod)) {
             $paymentData = [
