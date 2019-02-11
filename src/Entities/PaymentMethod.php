@@ -79,7 +79,7 @@ class PaymentMethod
      */
     public function getMethodId(): ?int
     {
-        return $this->id;
+        return $this->methodId;
     }
 
     /**

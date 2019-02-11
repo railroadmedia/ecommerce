@@ -31,6 +31,10 @@ class RenewalServiceTest extends EcommerceTestCase
     {
         $em = $this->app->make(EntityManager::class);
 
+        $em->getMetadataFactory()
+            ->getCacheDriver()
+            ->deleteAll();
+
         $this->stripeExternalHelperMock->method('retrieveCustomer')
             ->willReturn(new Customer());
         $this->stripeExternalHelperMock->method('retrieveCard')
@@ -111,7 +115,8 @@ class RenewalServiceTest extends EcommerceTestCase
             ->setTotalCyclesPaid($this->faker->randomNumber(3))
             ->setPaymentMethod($paymentMethod)
             ->setCreatedAt(Carbon::now())
-            ->setUpdatedAt(Carbon::now());
+            ->setUpdatedAt(Carbon::now())
+            ->setDeletedOn(Carbon::now());
 
         $em->persist($subscription);
         $em->flush();

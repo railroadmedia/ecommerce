@@ -228,43 +228,43 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('doctrine.redis_port', $defaultConfig['redis_port']);
 
         // sqlite
-        // $app['config']->set('doctrine.development_mode', $defaultConfig['development_mode'] ?? true);
-        // $app['config']->set('doctrine.database_driver', 'pdo_sqlite');
-        // $app['config']->set('doctrine.database_user', 'root');
-        // $app['config']->set('doctrine.database_password', 'root');
-        // $app['config']->set('doctrine.database_in_memory', true);
+        $app['config']->set('doctrine.development_mode', $defaultConfig['development_mode'] ?? true);
+        $app['config']->set('doctrine.database_driver', 'pdo_sqlite');
+        $app['config']->set('doctrine.database_user', 'root');
+        $app['config']->set('doctrine.database_password', 'root');
+        $app['config']->set('doctrine.database_in_memory', true);
 
-        // $app['config']->set('ecommerce.database_connection_name', 'ecommerce_sqlite');
-        // $app['config']->set('database.default', 'ecommerce_sqlite');
-        // $app['config']->set(
-        //     'database.connections.' . 'ecommerce_sqlite',
-        //     [
-        //         'driver' => 'sqlite',
-        //         'database' => ':memory:',
-        //         'prefix' => '',
-        //     ]
-        // );
-
-        // mysql
-        $app['config']->set('doctrine.database_driver', $defaultConfig['database_driver']);
-        $app['config']->set('doctrine.database_name', $defaultConfig['database_name']);
-        $app['config']->set('doctrine.database_user', $defaultConfig['database_user']);
-        $app['config']->set('doctrine.database_password', $defaultConfig['database_password']);
-        $app['config']->set('doctrine.database_host', $defaultConfig['database_host']);
-        $app['config']->set('ecommerce.database_connection_name', $defaultConfig['database_connection_name']);
-        $app['config']->set('database.default', $defaultConfig['database_connection_name']);
-
-
+        $app['config']->set('ecommerce.database_connection_name', 'ecommerce_sqlite');
+        $app['config']->set('database.default', 'ecommerce_sqlite');
         $app['config']->set(
-            'database.connections.' . $defaultConfig['database_connection_name'],
+            'database.connections.' . 'ecommerce_sqlite',
             [
-                'driver' => 'mysql',
-                'database' => $defaultConfig['database_name'],
-                'username' => $defaultConfig['database_user'],
-                'password' => $defaultConfig['database_password'],
-                'host' => $defaultConfig['database_host'],
+                'driver' => 'sqlite',
+                'database' => ':memory:',
+                'prefix' => '',
             ]
         );
+
+        // mysql
+        // $app['config']->set('doctrine.database_driver', $defaultConfig['database_driver']);
+        // $app['config']->set('doctrine.database_name', $defaultConfig['database_name']);
+        // $app['config']->set('doctrine.database_user', $defaultConfig['database_user']);
+        // $app['config']->set('doctrine.database_password', $defaultConfig['database_password']);
+        // $app['config']->set('doctrine.database_host', $defaultConfig['database_host']);
+        // $app['config']->set('ecommerce.database_connection_name', $defaultConfig['database_connection_name']);
+        // $app['config']->set('database.default', $defaultConfig['database_connection_name']);
+        // $app['config']->set('doctrine.development_mode', true);
+
+        // $app['config']->set(
+        //     'database.connections.' . $defaultConfig['database_connection_name'],
+        //     [
+        //         'driver' => 'mysql',
+        //         'database' => $defaultConfig['database_name'],
+        //         'username' => $defaultConfig['database_user'],
+        //         'password' => $defaultConfig['database_password'],
+        //         'host' => $defaultConfig['database_host'],
+        //     ]
+        // );
 
         $app->register(DoctrineServiceProvider::class);
 

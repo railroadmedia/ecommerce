@@ -4,24 +4,19 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
 use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
+use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
-// use Railroad\Ecommerce\Repositories\AddressRepository;
-// use Railroad\Ecommerce\Repositories\CreditCardRepository;
-// use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
-// use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
-// use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
-// use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentMethodCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodUpdateRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodCreatePaypalRequest;
@@ -54,11 +49,6 @@ class PaymentMethodJsonController extends BaseController
     private $jsonApiHydrator;
 
     /**
-     * @var \Railroad\Ecommerce\Services\PaymentMethodService
-     */
-    // private $paymentMethodService;
-
-    /**
      * @var \Railroad\Ecommerce\Gateways\PayPalPaymentGateway
      */
     private $payPalPaymentGateway;
@@ -72,36 +62,6 @@ class PaymentMethodJsonController extends BaseController
      * @var \Railroad\Ecommerce\Gateways\StripePaymentGateway
      */
     private $stripePaymentGateway;
-
-    /**
-     * @var PaymentMethodRepository
-     */
-    // private $paymentMethodRepository;
-
-    /**
-     * @var UserPaymentMethodsRepository
-     */
-    // private $userPaymentMethodRepository;
-
-    /**
-     * @var CustomerPaymentMethodsRepository
-     */
-    // private $customerPaymentMethodRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\AddressRepository
-     */
-    // private $addressRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\CreditCardRepository
-     */
-    // private $creditCardRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository
-     */
-    // private $paypalBillingAgreementRepository;
 
     /**
      * PaymentMethodJsonController constructor.
@@ -119,12 +79,6 @@ class PaymentMethodJsonController extends BaseController
         PaymentMethodService $paymentMethodService,
         PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService
-        // PaymentMethodRepository $paymentMethodRepository,
-        // UserPaymentMethodsRepository $userPaymentMethodsRepository,
-        // CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
-        // AddressRepository $addressRepository,
-        // CreditCardRepository $creditCardRepository,
-        // PaypalBillingAgreementRepository $paypalBillingAgreementRepository
     ) {
         parent::__construct();
 
@@ -135,13 +89,6 @@ class PaymentMethodJsonController extends BaseController
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
-
-        // $this->paymentMethodRepository          = $paymentMethodRepository;
-        // $this->userPaymentMethodRepository      = $userPaymentMethodsRepository;
-        // $this->customerPaymentMethodRepository  = $customerPaymentMethodsRepository;
-        // $this->addressRepository                = $addressRepository;
-        // $this->creditCardRepository             = $creditCardRepository;
-        // $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
 
         $this->middleware(ConfigService::$middleware);
     }
@@ -343,33 +290,42 @@ class PaymentMethodJsonController extends BaseController
      */
     public function setDefault(PaymentMethodSetDefaultRequest $request)
     {
-        $paymentMethod = $this->paymentMethodRepository
-            ->read($request->get('id'));
+        $userPaymentMethodRepository = $this->entityManager
+            ->getRepository(UserPaymentMethods::class);
 
-        if (($paymentMethod['user']['user_id'] ?? 0) !== auth()->id()) {
-            $this->permissionService
-                ->canOrThrow(auth()->id(), 'update.payment.method');
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $userPaymentMethodRepository->createQueryBuilder('p');
+
+        $userPaymentMethod = $qb
+            ->where($qb->expr()->eq('IDENTITY(p.paymentMethod)', ':id'))
+            ->setParameter('id', $request->get('id'))
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        $user = $userPaymentMethod->getUser();
+
+        if ($user && ($user->getId() ?? 0) !== auth()->id()) {
+            $this->permissionService->canOrThrow(
+                auth()->id(),
+                'update.payment.method'
+            );
         }
 
-        $message = 'Update failed, payment method not found with id: '
-            . $request->get('id');
+        $old = $userPaymentMethodRepository->getUserPrimaryPaymentMethod($user);
 
-        throw_if(is_null($paymentMethod), new NotFoundException($message));
+        if ($old) {
+            $old->setIsPrimary(false);
+        }
 
-        $this->userPaymentMethodRepository
-            ->query()
-            ->where('user_id', auth()->id())
-            ->update(['is_primary' => false]);
+        $userPaymentMethod->setIsPrimary(true);
 
-        $userPaymentMethodId = $this->userPaymentMethodRepository
-            ->query()
-            ->where('user_id', auth()->id())
-            ->where('payment_method_id', $paymentMethod['id'])
-            ->update(['is_primary' => true]);
+        $this->entityManager->flush();
 
-        return response()->json([
-            'userPaymentMethodId' => $userPaymentMethodId
-        ]);
+        event(new UserDefaultPaymentMethodEvent($user->getId(), $userPaymentMethod->getId()));
+
+        return ResponseService::empty(204);
     }
 
     /**

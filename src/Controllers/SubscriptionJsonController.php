@@ -109,7 +109,7 @@ class SubscriptionJsonController extends BaseController
         $qb
             ->where($qb->expr()->in($alias . '.brand', ':brands'))
             ->andWhere(
-                $qb->expr()->isNull($alias . '.deletedOn')
+                $qb->expr()->isNull($alias . '.deletedAt')
             )
             ->setMaxResults($request->get('limit', 10))
             ->setFirstResult($first)
@@ -147,7 +147,7 @@ class SubscriptionJsonController extends BaseController
             new NotFoundException('Delete failed, subscription not found with id: ' . $subscriptionId)
         );
 
-        $subscription->setDeletedOn(Carbon::now());
+        $subscription->setDeletedAt(Carbon::now());
         $this->entityManager->flush();
 
         return ResponseService::empty(204);

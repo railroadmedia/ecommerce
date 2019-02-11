@@ -24,7 +24,7 @@ class AccessCodeService
     /**
      * @var mixed UserProductService
      */
-    // private $userProductService;
+    private $userProductService;
 
     /**
      * @var EntityManager
@@ -40,12 +40,12 @@ class AccessCodeService
      */
     public function __construct(
         CurrencyService $currencyService,
-        EntityManager $entityManager//,
-        // UserProductService $userProductService
+        EntityManager $entityManager,
+        UserProductService $userProductService
     ) {
         $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;
-        // $this->userProductService = $userProductService;
+        $this->userProductService = $userProductService;
     }
 
     public function claim(AccessCode $accessCode, User $user)

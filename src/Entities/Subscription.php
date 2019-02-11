@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Entities;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Usora\Entities\User;
+use DateTimeInterface;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\SubscriptionRepository")
@@ -169,11 +170,11 @@ class Subscription
     protected $paymentMethod;
 
     /**
-     * @ORM\Column(type="datetime", name="deleted_on", nullable=true)
+     * @ORM\Column(type="datetime", name="deleted_at", nullable=true)
      *
      * @var \DateTime
      */
-    protected $deletedOn;
+    protected $deletedAt;
 
     /**
      * @return int|null
@@ -266,7 +267,7 @@ class Subscription
     /**
      * @return \DateTimeInterface|null
      */
-    public function getStartDate(): ?\DateTimeInterface
+    public function getStartDate(): ?DateTimeInterface
     {
         return $this->startDate;
     }
@@ -276,7 +277,7 @@ class Subscription
      *
      * @return Subscription
      */
-    public function setStartDate(\DateTimeInterface $startDate): self
+    public function setStartDate(DateTimeInterface $startDate): self
     {
         $this->startDate = $startDate;
 
@@ -286,7 +287,7 @@ class Subscription
     /**
      * @return \DateTimeInterface|null
      */
-    public function getPaidUntil(): ?\DateTimeInterface
+    public function getPaidUntil(): ?DateTimeInterface
     {
         return $this->paidUntil;
     }
@@ -296,7 +297,7 @@ class Subscription
      *
      * @return Subscription
      */
-    public function setPaidUntil(\DateTimeInterface $paidUntil): self
+    public function setPaidUntil(DateTimeInterface $paidUntil): self
     {
         $this->paidUntil = $paidUntil;
 
@@ -306,7 +307,7 @@ class Subscription
     /**
      * @return \DateTimeInterface|null
      */
-    public function getCanceledOn(): ?\DateTimeInterface
+    public function getCanceledOn(): ?DateTimeInterface
     {
         return $this->canceledOn;
     }
@@ -316,7 +317,7 @@ class Subscription
      *
      * @return Subscription
      */
-    public function setCanceledOn(?\DateTimeInterface $canceledOn): self
+    public function setCanceledOn(?DateTimeInterface $canceledOn): self
     {
         $this->canceledOn = $canceledOn;
 
@@ -486,19 +487,19 @@ class Subscription
     /**
      * @return \DateTimeInterface|null
      */
-    public function getDeletedOn(): ?\DateTimeInterface
+    public function getDeletedAt(): ?DateTimeInterface
     {
-        return $this->deletedOn;
+        return $this->deletedAt;
     }
 
     /**
-     * @param \DateTimeInterface $deletedOn
+     * @param \DateTimeInterface $deletedAt
      *
      * @return Subscription
      */
-    public function setDeletedOn(?\DateTimeInterface $deletedOn): self
+    public function setDeletedAt(?DateTimeInterface $deletedAt): self
     {
-        $this->deletedOn = $deletedOn;
+        $this->deletedAt = $deletedAt;
 
         return $this;
     }

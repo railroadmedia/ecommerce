@@ -54,8 +54,9 @@ class Deve29UpdatePaymentTable extends Migration
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
                     $table
-                        ->decimal('conversion_rate')
-                        ->after('total_refunded');
+                        ->decimal('conversion_rate', 8, 2)
+                        ->after('total_refunded')
+                        ->nullable();
                 }
             );
     }
