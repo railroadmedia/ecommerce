@@ -366,7 +366,7 @@ class PaymentMethodJsonController extends BaseController
 
         throw_if(
             (PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE != $paymentMethod->getMethodType()),
-            new NotFoundException($message) // update
+            new PaymentFailedException($message)
         );
 
         /**
