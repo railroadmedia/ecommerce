@@ -485,195 +485,231 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    // public function test_update_payment_method_permissions_fail()
+    public function test_update_payment_method_permissions_fail()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $customer = $this->fakeUser();
+
+        $currency = $this->faker->currencyCode;
+
+        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+
+        $expirationDate = $this->faker->creditCardExpirationDate;
+
+        $gateway = 'recordeo';
+
+        $creditCard = $this->fakeCreditCard();
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+
+        $creditCard = $this->fakeCreditCard();
+
+        $payload = [
+            'gateway' => 'recordeo',
+            'year' => $expirationDate->format('Y'),
+            'month' => $expirationDate->format('m'),
+            'country' => $this->faker->word,
+        ];
+
+        $updatedCard = (object)[
+            'fingerprint' => $creditCard['fingerprint'],
+            'last4' => $creditCard['last_four_digits'],
+            'name' => $creditCard['cardholder_name'],
+            'exp_year' => $payload['year'],
+            'exp_month' => $payload['month'],
+            'id' => $creditCard['external_id'],
+            'customer' => $creditCard['external_customer_id'],
+            'address_country' => $payload['country'],
+            'address_state' => $payload['state'] ?? '',
+        ];
+
+        $this->stripeExternalHelperMock->method('updateCard')
+            ->willReturn($updatedCard);
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'method_id' => $creditCard['id'],
+            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $customer['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        $exceptionMessage = 'You are not allowed to update payment method';
+
+        $this->permissionServiceMock->method('canOrThrow')
+            ->willThrowException(
+                new NotAllowedException($exceptionMessage)
+            );
+
+        $response = $this->call(
+            'PATCH',
+            '/payment-method/' . $paymentMethod['id'],
+            $payload
+        );
+
+        // assert respons status code and errors
+        $this->assertEquals(403, $response->getStatusCode());
+
+        $response->assertJsonFragment(
+            [
+                'detail' => $exceptionMessage,
+                'title' => 'Not allowed.',
+            ]
+        );
+    }
+
+    public function test_update_payment_method_not_found()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $expirationDate = $this->faker->creditCardExpirationDate;
+
+        $paymentMethodId = $this->faker->randomNumber(4);
+
+        $response = $this->call(
+            'PATCH',
+            '/payment-method/' . $paymentMethodId,
+            [
+                'gateway' => 'recordeo',
+                'year' => $expirationDate->format('Y'),
+                'month' => $expirationDate->format('m'),
+                'country' => $this->faker->word,
+            ]
+        );
+
+        // assert respons status code and errors
+        $this->assertEquals(404, $response->getStatusCode());
+
+        $details = 'Update failed, payment method not found with id: ' .
+            $paymentMethodId;
+
+        $response->assertJsonFragment(
+            [
+                'detail' => $details,
+                'title' => 'Not found.',
+            ]
+        );
+    }
+
+    public function test_update_payment_method()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+
+        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+
+        $actualDate = Carbon::now()->startOfMonth();
+
+        $newDate = Carbon::now()->addYear(1)->startOfMonth();
+
+        $gateway = $this->faker->randomElement(
+            array_keys(ConfigService::$paymentGateways['stripe'])
+        );
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+
+        $creditCard = $this->fakeCreditCard([
+            'expiration_date' => $actualDate->toDateTimeString()
+        ]);
+
+        $payload = [
+            'gateway' => $gateway,
+            'year' => $newDate->format('Y'),
+            'month' => $newDate->format('m'),
+            'country' => $this->faker->word,
+        ];
+
+        $updatedCard = (object)[
+            'fingerprint' => $this->faker->shuffleString(
+                $this->faker->bothify('???###???###???###???###')
+            ),
+            'last4' => $this->faker->randomNumber(4, true),
+            'name' => $this->faker->name,
+            'exp_year' => $payload['year'],
+            'exp_month' => $payload['month'],
+            'id' => $this->faker->word,
+            'customer' => $this->faker->word,
+            'address_country' => $payload['country'],
+            'address_state' => $payload['state'] ?? '',
+            'brand' => $this->faker->creditCardType
+        ];
+
+        $this->stripeExternalHelperMock->method('updateCard')
+            ->willReturn($updatedCard);
+
+        $address = $this->fakeAddress([
+            'type' => ConfigService::$billingAddressType
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'method_id' => $creditCard['id'],
+            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'billing_address_id' => $address['id'],
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        $response = $this->call(
+            'PATCH',
+            '/payment-method/' . $paymentMethod['id'],
+            $payload
+        );
+
+        // assert respons status code and errors
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'paymentMethod',
+                    'id' => $paymentMethod['id'],
+                    'attributes' => array_diff_key(
+                        $paymentMethod,
+                        [
+                            'id' => true,
+                            'billing_address_id' => true
+                        ]
+                    ),
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+
+        // assert user product was created
+        $this->assertDatabaseHas(
+            ConfigService::$tableCreditCard,
+            [
+                'fingerprint' => $updatedCard->fingerprint,
+                'last_four_digits' => $updatedCard->last4,
+                'cardholder_name' => $updatedCard->name,
+                'company_name' => $updatedCard->brand,
+                'external_id' => $updatedCard->id,
+                'external_customer_id' => $updatedCard->customer,
+                'expiration_date' => $newDate->toDateTimeString(),
+                'payment_gateway_name' => $payload['gateway'],
+                'updated_at' => Carbon::now()->toDateTimeString()
+            ]
+        );
+    }
+
+    // function test_update_payment_method_not_credit_card()
     // {
-    //     $userId = $this->createAndLogInNewUser();
-    //     $expirationDate = $this->faker->creditCardExpirationDate;
 
-    //     $payload = [
-    //         'gateway' => 'recordeo',
-    //         'year' => $expirationDate->format('Y'),
-    //         'month' => $expirationDate->format('m'),
-    //         'country' => $this->faker->word,
-    //     ];
-
-    //     $exceptionMessage = 'You are not allowed to update payment method';
-
-    //     $this->permissionServiceMock->method('canOrThrow')
-    //         ->willThrowException(
-    //             new NotAllowedException($exceptionMessage)
-    //         );
-
-    //     $response = $this->call(
-    //         'PATCH',
-    //         '/payment-method/' . $this->faker->randomNumber(4),
-    //         $payload
-    //     );
-
-    //     // assert respons status code and errors
-    //     $this->assertEquals(403, $response->getStatusCode());
-
-    //     $response->assertJsonFragment(
-    //         [
-    //             'detail' => $exceptionMessage,
-    //             'title' => 'Not allowed.',
-    //         ]
-    //     );
-    // }
-
-    // public function test_update_payment_method_not_found()
-    // {
-    //     $userId = $this->createAndLogInNewUser();
-    //     $expirationDate = $this->faker->creditCardExpirationDate;
-
-    //     $payload = [
-    //         'gateway' => 'recordeo',
-    //         'year' => $expirationDate->format('Y'),
-    //         'month' => $expirationDate->format('m'),
-    //         'country' => $this->faker->word,
-    //     ];
-
-    //     $id = $this->faker->randomNumber(4);
-
-    //     $this->permissionServiceMock->method('can')
-    //         ->willReturn(true);
-
-    //     $response = $this->call(
-    //         'PATCH',
-    //         '/payment-method/' . $id,
-    //         $payload
-    //     );
-
-    //     // assert respons status code and errors
-    //     $this->assertEquals(404, $response->getStatusCode());
-
-    //     $response->assertJsonFragment(
-    //         [
-    //             [
-    //                 'title' => 'Not found.',
-    //                 'detail' => 'Update failed, payment method not found with id: ' . $id,
-    //             ],
-    //         ]
-    //     );
-    // }
-
-    // public function test_update_payment_method()
-    // {
-    //     $userId = $this->createAndLogInNewUser();
-
-    //     $creditCard = $this->creditCardRepository->create(
-    //         $this->faker->creditCard(
-    //             [
-    //                 'payment_gateway_name' => 'recordeo',
-    //             ]
-    //         )
-    //     );
-
-    //     $billingAddress = $this->addressRepository->create(
-    //         [
-    //             'type' => CartAddressService::BILLING_ADDRESS_TYPE,
-    //             'brand' => 'recordeo',
-    //             'user_id' => $userId,
-    //             'state' => '',
-    //             'country' => '',
-    //             'created_on' => Carbon::now()
-    //                 ->toDateTimeString(),
-    //         ]
-    //     );
-
-    //     $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
-
-    //     $paymentMethod = $this->paymentMethodRepository->create(
-    //         $this->faker->paymentMethod(
-    //             [
-    //                 'method_type' => $methodType,
-    //                 'method_id' => $creditCard['id'],
-    //                 'billing_address_id' => $billingAddress->id,
-    //             ]
-    //         )
-    //     );
-
-    //     $userPaymentMethod = $this->userPaymentMethodRepository->create(
-    //         $this->faker->userPaymentMethod(
-    //             [
-    //                 'user_id' => $userId,
-    //                 'payment_method_id' => $paymentMethod['id'],
-    //             ]
-    //         )
-    //     );
-
-    //     $expirationDate = $this->faker->creditCardExpirationDate;
-
-    //     $payload = [
-    //         'gateway' => 'recordeo',
-    //         'year' => $expirationDate->format('Y'),
-    //         'month' => $expirationDate->format('m'),
-    //         'country' => $this->faker->word,
-    //         'state' => $this->faker->word,
-    //     ];
-
-    //     $this->permissionServiceMock->method('can')
-    //         ->willReturn(true);
-
-    //     $updatedCard = (object)[
-    //         'fingerprint' => $creditCard->fingerprint,
-    //         'last4' => $creditCard->last_four_digits,
-    //         'name' => $creditCard->cardholder_name,
-    //         'exp_year' => $payload['year'],
-    //         'exp_month' => $payload['month'],
-    //         'id' => $creditCard->external_id,
-    //         'customer' => $creditCard->external_customer_id,
-    //         'address_country' => $payload['country'],
-    //         'address_state' => $payload['state'],
-    //     ];
-
-    //     $this->stripeExternalHelperMock->method('retrieveCustomer')
-    //         ->willReturn(new Customer());
-    //     $this->stripeExternalHelperMock->method('retrieveCard')
-    //         ->willReturn(new Card());
-    //     $this->stripeExternalHelperMock->method('updateCard')
-    //         ->willReturn($updatedCard);
-
-    //     $response = $this->call(
-    //         'PATCH',
-    //         '/payment-method/' . $paymentMethod['id'],
-    //         $payload
-    //     );
-
-    //     // assert respons status code and response
-    //     $this->assertEquals(200, $response->getStatusCode());
-
-    //     $expirationDate = Carbon::createFromDate(
-    //         $updatedCard->exp_year,
-    //         $updatedCard->exp_month
-    //     )
-    //         ->toDateTimeString();
-
-    //     $response->assertJsonFragment(
-    //         [
-    //             'fingerprint' => $updatedCard->fingerprint,
-    //             'last_four_digits' => $updatedCard->last4,
-    //             'expiration_date' => $expirationDate,
-    //         ]
-    //     );
-
-    //     // assert database updates
-    //     $this->assertDatabaseHas(
-    //         ConfigService::$tableCreditCard,
-    //         [
-    //             'id' => $creditCard['id'],
-    //             'expiration_date' => $expirationDate,
-    //         ]
-    //     );
-
-    //     $this->assertDatabaseHas(
-    //         ConfigService::$tableAddress,
-    //         [
-    //             'id' => $billingAddress->id,
-    //             'state' => $updatedCard->address_state,
-    //             'country' => $updatedCard->address_country,
-    //         ]
-    //     );
     // }
 
     // function test_update_payment_method_not_default()
@@ -1137,92 +1173,92 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     //     );
     // }
 
-    public function test_set_default()
-    {
-        Event::fake();
+    // public function test_set_default() // ok
+    // {
+    //     Event::fake();
 
-        $userId = $this->createAndLogInNewUser();
+    //     $userId = $this->createAndLogInNewUser();
 
-        $creditCard = $this->fakeCreditCard([
-            'payment_gateway_name' => 'recordeo',
-        ]);
+    //     $creditCard = $this->fakeCreditCard([
+    //         'payment_gateway_name' => 'recordeo',
+    //     ]);
 
-        $address = $this->fakeAddress([
-            'type' => CartAddressService::BILLING_ADDRESS_TYPE,
-            'brand' => 'recordeo',
-            'user_id' => $userId,
-            'state' => '',
-            'country' => '',
-            'created_at' => Carbon::now()
-        ]);
+    //     $address = $this->fakeAddress([
+    //         'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+    //         'brand' => 'recordeo',
+    //         'user_id' => $userId,
+    //         'state' => '',
+    //         'country' => '',
+    //         'created_at' => Carbon::now()
+    //     ]);
 
-        $creditCard = $this->fakeCreditCard([
-            'payment_gateway_name' => 'recordeo',
-        ]);
+    //     $creditCard = $this->fakeCreditCard([
+    //         'payment_gateway_name' => 'recordeo',
+    //     ]);
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+    //     $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
 
-        $paymentMethod = $this->fakePaymentMethod([
-            'method_type' => $methodType,
-            'method_id' => $creditCard['id'],
-            'billing_address_id' => $address['id'],
-        ]);
+    //     $paymentMethod = $this->fakePaymentMethod([
+    //         'method_type' => $methodType,
+    //         'method_id' => $creditCard['id'],
+    //         'billing_address_id' => $address['id'],
+    //     ]);
 
-        $otherPaymentMethod = $this->fakePaymentMethod([
-            'method_type' => $methodType,
-            'method_id' => $creditCard['id'],
-            'billing_address_id' => $address['id'],
-        ]);
+    //     $otherPaymentMethod = $this->fakePaymentMethod([
+    //         'method_type' => $methodType,
+    //         'method_id' => $creditCard['id'],
+    //         'billing_address_id' => $address['id'],
+    //     ]);
 
-        $userPaymentMethod = $this->fakeUserPaymentMethod([
-            'user_id' => $userId,
-            'payment_method_id' => $paymentMethod['id'],
-            'is_primary' => false,
-        ]);
+    //     $userPaymentMethod = $this->fakeUserPaymentMethod([
+    //         'user_id' => $userId,
+    //         'payment_method_id' => $paymentMethod['id'],
+    //         'is_primary' => false,
+    //     ]);
 
-        $otherUserPaymentMethod = $this->fakeUserPaymentMethod([
-            'user_id' => $userId,
-            'payment_method_id' => $otherPaymentMethod['id'],
-            'is_primary' => true
-        ]);
+    //     $otherUserPaymentMethod = $this->fakeUserPaymentMethod([
+    //         'user_id' => $userId,
+    //         'payment_method_id' => $otherPaymentMethod['id'],
+    //         'is_primary' => true
+    //     ]);
 
-        $response = $this->call(
-            'PATCH',
-            '/payment-method/set-default',
-            ['id' => $paymentMethod['id']]
-        );
+    //     $response = $this->call(
+    //         'PATCH',
+    //         '/payment-method/set-default',
+    //         ['id' => $paymentMethod['id']]
+    //     );
 
-        $this->assertEquals(204, $response->getStatusCode());
+    //     $this->assertEquals(204, $response->getStatusCode());
 
-        // assert event raised and test the ids from event
-        Event::assertDispatched(
-            UserDefaultPaymentMethodEvent::class,
-            function ($e) use ($userPaymentMethod, $userId) {
-                return $userPaymentMethod['id'] == $e->getDefaultPaymentMethodId() &&
-                    $userId == $e->getUserId();
-            }
-        );
+    //     // assert event raised and test the ids from event
+    //     Event::assertDispatched(
+    //         UserDefaultPaymentMethodEvent::class,
+    //         function ($e) use ($userPaymentMethod, $userId) {
+    //             return $userPaymentMethod['id'] == $e->getDefaultPaymentMethodId() &&
+    //                 $userId == $e->getUserId();
+    //         }
+    //     );
 
-        // assert database updates - old defaultPaymentMethod is not primary
-        $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
-            [
-                'user_id' => $userId,
-                'payment_method_id' => $paymentMethod['id'],
-                'is_primary' => 1,
-            ]
-        );
+    //     // assert database updates - old defaultPaymentMethod is not primary
+    //     $this->assertDatabaseHas(
+    //         ConfigService::$tableUserPaymentMethods,
+    //         [
+    //             'user_id' => $userId,
+    //             'payment_method_id' => $paymentMethod['id'],
+    //             'is_primary' => 1,
+    //         ]
+    //     );
 
-        // assert payment method was set as default
-        $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
-            [
-                'user_id' => $userId,
-                'payment_method_id' => $otherUserPaymentMethod['id'],
-                'is_primary' => 0,
-            ]
-        );
-    }
+    //     // assert payment method was set as default
+    //     $this->assertDatabaseHas(
+    //         ConfigService::$tableUserPaymentMethods,
+    //         [
+    //             'user_id' => $userId,
+    //             'payment_method_id' => $otherUserPaymentMethod['id'],
+    //             'is_primary' => 0,
+    //         ]
+    //     );
+    // }
 
     // public function test_set_default_update_subscription()
     // {
@@ -1354,108 +1390,108 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     //     );
     // }
 
-    public function test_get_paypal_url()
-    {
-        $userId = $this->createAndLogInNewUser();
+    // public function test_get_paypal_url() // ok
+    // {
+    //     $userId = $this->createAndLogInNewUser();
 
-        $redirectToken = $this->faker->word;
+    //     $redirectToken = $this->faker->word;
 
-        $this->paypalExternalHelperMock->method('createBillingAgreementExpressCheckoutToken')
-            ->willReturn($redirectToken);
+    //     $this->paypalExternalHelperMock->method('createBillingAgreementExpressCheckoutToken')
+    //         ->willReturn($redirectToken);
 
-        $response = $this->call('GET', '/payment-method/paypal-url');
+    //     $response = $this->call('GET', '/payment-method/paypal-url');
 
-        // assert respons status code and response
-        $this->assertEquals(200, $response->getStatusCode());
+    //     // assert respons status code and response
+    //     $this->assertEquals(200, $response->getStatusCode());
 
-        // assert the redirect token is present in the response redirect url
-        $this->assertContains($redirectToken, $response->decodeResponseJson('url'));
-    }
+    //     // assert the redirect token is present in the response redirect url
+    //     $this->assertContains($redirectToken, $response->decodeResponseJson('url'));
+    // }
 
-    public function test_paypal_agreement()
-    {
-        Event::fake();
-        $userId = $this->createAndLogInNewUser();
+    // public function test_paypal_agreement() // ok
+    // {
+    //     Event::fake();
+    //     $userId = $this->createAndLogInNewUser();
 
-        $agreementToken = $this->faker->word;
-        $agreementId = $this->faker->word;
+    //     $agreementToken = $this->faker->word;
+    //     $agreementId = $this->faker->word;
 
-        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
-            ->willReturn($agreementId);
+    //     $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
+    //         ->willReturn($agreementId);
 
-        $response = $this->call(
-            'GET',
-            '/payment-method/paypal-agreement',
-            ['token' => $agreementToken]
-        );
+    //     $response = $this->call(
+    //         'GET',
+    //         '/payment-method/paypal-agreement',
+    //         ['token' => $agreementToken]
+    //     );
 
-        // assert respons status code and response
-        $this->assertEquals(204, $response->getStatusCode());
+    //     // assert respons status code and response
+    //     $this->assertEquals(204, $response->getStatusCode());
 
-        $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
-            [
-                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
-                'brand' => ConfigService::$brand,
-                'user_id' => $userId
-            ]
-        );
+    //     $this->assertDatabaseHas(
+    //         ConfigService::$tableAddress,
+    //         [
+    //             'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+    //             'brand' => ConfigService::$brand,
+    //             'user_id' => $userId
+    //         ]
+    //     );
 
-        $addressId = 1;
+    //     $addressId = 1;
 
-        // assert database updates
-        $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
-            [
-                'id' => $addressId,
-                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
-                'brand' => ConfigService::$brand,
-                'user_id' => $userId
-            ]
-        );
+    //     // assert database updates
+    //     $this->assertDatabaseHas(
+    //         ConfigService::$tableAddress,
+    //         [
+    //             'id' => $addressId,
+    //             'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+    //             'brand' => ConfigService::$brand,
+    //             'user_id' => $userId
+    //         ]
+    //     );
 
-        $paypalBillingAgreementId = 1;
+    //     $paypalBillingAgreementId = 1;
 
-        $this->assertDatabaseHas(
-            ConfigService::$tablePaypalBillingAgreement,
-            [
-                'id' => $paypalBillingAgreementId,
-                'external_id' => $agreementId,
-                'payment_gateway_name' => ConfigService::$brand,
-                'created_at' => Carbon::now()->toDateTimeString(),
-            ]
-        );
+    //     $this->assertDatabaseHas(
+    //         ConfigService::$tablePaypalBillingAgreement,
+    //         [
+    //             'id' => $paypalBillingAgreementId,
+    //             'external_id' => $agreementId,
+    //             'payment_gateway_name' => ConfigService::$brand,
+    //             'created_at' => Carbon::now()->toDateTimeString(),
+    //         ]
+    //     );
 
-        $paymentMethodId = 1;
+    //     $paymentMethodId = 1;
 
-        $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
-            [
-                'method_id' => $paymentMethodId,
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'billing_address_id' => 1,
-                'created_at' => Carbon::now()->toDateTimeString(),
-            ]
-        );
+    //     $this->assertDatabaseHas(
+    //         ConfigService::$tablePaymentMethod,
+    //         [
+    //             'method_id' => $paymentMethodId,
+    //             'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+    //             'billing_address_id' => 1,
+    //             'created_at' => Carbon::now()->toDateTimeString(),
+    //         ]
+    //     );
 
-        $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
-            [
-                'user_id' => $userId,
-                'payment_method_id' => $paymentMethodId,
-                'is_primary' => 0,
-                'created_at' => Carbon::now()->toDateTimeString(),
-            ]
-        );
+    //     $this->assertDatabaseHas(
+    //         ConfigService::$tableUserPaymentMethods,
+    //         [
+    //             'user_id' => $userId,
+    //             'payment_method_id' => $paymentMethodId,
+    //             'is_primary' => 0,
+    //             'created_at' => Carbon::now()->toDateTimeString(),
+    //         ]
+    //     );
 
-        // assert event raised and test the id from event
-        Event::assertDispatched(
-            PaypalPaymentMethodEvent::class,
-            function ($e) use ($paymentMethodId) {
-                return $paymentMethodId == $e->getPaymentMethodId();
-            }
-        );
-    }
+    //     // assert event raised and test the id from event
+    //     Event::assertDispatched(
+    //         PaypalPaymentMethodEvent::class,
+    //         function ($e) use ($paymentMethodId) {
+    //             return $paymentMethodId == $e->getPaymentMethodId();
+    //         }
+    //     );
+    // }
 
     // public function test_update_payment_method_update_credit_card_validation()
     // {

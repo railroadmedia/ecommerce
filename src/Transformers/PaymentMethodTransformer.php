@@ -13,11 +13,8 @@ class PaymentMethodTransformer extends TransformerAbstract
     public function transform(PaymentMethod $paymentMethod)
     {
         if ($paymentMethod->getBillingAddress()) {
-            // user relation is nullable
             $this->defaultIncludes[] = 'billingAddress';
         }
-
-        // ask if method should be included in response
 
         return [
             'id' => $paymentMethod->getId(),

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
@@ -30,6 +31,7 @@ use Railroad\Permissions\Exceptions\NotAllowedException as PermissionsNotAllowed
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\Usora\Entities\User;
 use Stripe\Error\Card;
+use Exception;
 
 class PaymentMethodJsonController extends BaseController
 {
@@ -64,12 +66,20 @@ class PaymentMethodJsonController extends BaseController
     private $stripePaymentGateway;
 
     /**
+     * @var EntityRepository
+     */
+    private $paymentMethodRepository;
+
+    /**
      * PaymentMethodJsonController constructor.
      *
-     * @param \Railroad\Permissions\Services\PermissionService                  $permissionService
-     * @param \Railroad\Ecommerce\Repositories\PaymentMethodRepository          $paymentMethodRepository
-     * @param \Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository     $userPaymentMethodsRepository
-     * @param \Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository $customerPaymentMethodsRepository
+     * @param CurrencyService $currencyService
+     * @param EntityManager $entityManager
+     * @param JsonApiHydrator $jsonApiHydrator
+     * @param StripePaymentGateway $stripePaymentGateway
+     * @param PaymentMethodService $paymentMethodService
+     * @param PayPalPaymentGateway $payPalPaymentGateway
+     * @param PermissionService $permissionService
      */
     public function __construct(
         CurrencyService $currencyService,
@@ -89,6 +99,9 @@ class PaymentMethodJsonController extends BaseController
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
+
+        $this->paymentMethodRepository = $this->entityManager
+                                    ->getRepository(PaymentMethod::class);
 
         $this->middleware(ConfigService::$middleware);
     }
@@ -342,88 +355,117 @@ class PaymentMethodJsonController extends BaseController
     public function update(PaymentMethodUpdateRequest $request, $paymentMethodId)
     {
         $paymentMethod = $this->paymentMethodRepository
-            ->read($paymentMethodId);
-
-        if (($paymentMethod['user']['user_id'] ?? 0) !== auth()->id()) {
-            $this->permissionService
-                ->canOrThrow(auth()->id(), 'update.payment.method');
-        }
+                                ->find($paymentMethodId);
 
         $message = 'Update failed, payment method not found with id: '
             . $paymentMethodId;
 
         throw_if(is_null($paymentMethod), new NotFoundException($message));
 
-        $customer = $this->stripePaymentGateway->getCustomer(
-            $request->get('gateway'),
-            $paymentMethod->method['external_customer_id']
+        $message = 'Only credit card payment methods may be updated';
+
+        throw_if(
+            (PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE != $paymentMethod->getMethodType()),
+            new NotFoundException($message) // update
         );
 
-        $card = $this->stripePaymentGateway->getCard(
-            $customer,
-            $paymentMethod->method['external_id'],
-            $request->get('gateway')
-        );
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->entityManager
+            ->getRepository(UserPaymentMethods::class)
+            ->createQueryBuilder('upm');
 
-        $card = $this->stripePaymentGateway->updateCard(
-            $request->get('gateway'),
-            $card,
-            $request->get('month'),
-            $request->get('year'),
-            $request->get('country', $request->has('country') ? '' : null),
-            $request->get('state', $request->has('state') ? '' : null)
-        );
+        $userPaymentMethod = $qb
+            ->select(['upm'])
+            ->where($qb->expr()->eq('IDENTITY(upm.paymentMethod)', ':id'))
+            ->setParameter('id', $paymentMethodId)
+            ->getQuery()
+            ->getOneOrNullResult();
 
-        $expirationDate = Carbon::createFromDate(
-            $card->exp_year,
-            $card->exp_month
-        )->toDateTimeString();
-
-        $this->creditCardRepository->update(
-            $paymentMethod->method['id'],
-            [
-                'fingerprint'          => $card->fingerprint,
-                'last_four_digits'     => $card->last4,
-                'cardholder_name'      => $card->name,
-                'expiration_date'      => $expirationDate,
-                'external_id'          => $card->id,
-                'external_customer_id' => $card->customer,
-                'payment_gateway_name' => $request->get('gateway'),
-                'updated_on'           => Carbon::now()->toDateTimeString(),
-            ]
-        );
-
-        $billingCountry = $card->address_country ?? $card->country;
-
-        $this->addressRepository->update(
-            $paymentMethod->billing_address['id'],
-            [
-                'state'      => $card->address_state ?? '',
-                'country'    => $billingCountry ?? '',
-                'updated_on' => Carbon::now()->toDateTimeString(),
-            ]
-        );
-
-        if ($request->get('set_default')) {
-
-            $this->userPaymentMethodRepository
-                ->query()
-                ->where('user_id', auth()->id())
-                ->update(['is_primary' => false]);
-
-            $this->userPaymentMethodRepository
-                ->query()
-                ->where('user_id', auth()->id())
-                ->where('payment_method_id', $paymentMethodId)
-                ->update(['is_primary' => true]);
+        if (
+            $userPaymentMethod &&
+            $userPaymentMethod->getUser() &&
+            ($userPaymentMethod->getUser()->getId() ?? 0) !== auth()->id()
+        ) {
+            $this->permissionService
+                ->canOrThrow(auth()->id(), 'update.payment.method');
         }
 
-        $card = $this->creditCardRepository
-            ->read($paymentMethod->method['id']);
+        try {
+            /**
+             * @var $method CreditCard
+             */
+            $method = $this->entityManager
+                ->getRepository(CreditCard::class)
+                ->find($paymentMethod->getMethodId());
 
-        return reply()->json($card, [
-            'code' => 200
-        ]);
+            $customer = $this->stripePaymentGateway->getCustomer(
+                $request->get('gateway'),
+                $method->getExternalCustomerId()
+            );
+
+            $card = $this->stripePaymentGateway->getCard(
+                $customer,
+                $method->getExternalId(),
+                $request->get('gateway')
+            );
+
+            $card = $this->stripePaymentGateway->updateCard(
+                $request->get('gateway'),
+                $card,
+                $request->get('month'),
+                $request->get('year'),
+                $request->get('country', $request->has('country') ? '' : null),
+                $request->get('state', $request->has('state') ? '' : null)
+            );
+
+            $expirationDate = Carbon::createFromDate(
+                $request->get('year'),
+                $request->get('month')
+            );
+
+            $method
+                ->setFingerprint($card->fingerprint)
+                ->setLastFourDigits($card->last4)
+                ->setCardholderName($card->name)
+                ->setCompanyName($card->brand)
+                ->setExpirationDate($expirationDate->startOfMonth())
+                ->setExternalId($card->id)
+                ->setExternalCustomerId($card->customer)
+                ->setPaymentGatewayName($request->get('gateway'))
+                ->setUpdatedAt(Carbon::now());
+
+            $billingCountry = $card->address_country ?? $card->country;
+
+            $address = $this->entityManager
+                            ->getRepository(Address::class)
+                            ->find($paymentMethod->getBillingAddress());
+
+            $address
+                ->setState($card->address_state ?? '')
+                ->setCountry($billingCountry ?? '')
+                ->setUpdatedAt(Carbon::now());
+
+        } catch (Card $exception) {
+
+            $exceptionData = $exception->getJsonBody();
+
+            // validate UI known error format
+            if (isset($exceptionData['error']) && isset($exceptionData['error']['code'])) {
+                throw new StripeCardException($exceptionData['error']);
+            }
+
+            // throw generic
+            throw new PaymentFailedException($exception->getMessage());
+
+        } catch(Exception $paymentFailedException) {
+            throw new PaymentFailedException($paymentFailedException->getMessage());
+        }
+
+        $this->entityManager->flush();
+
+        return ResponseService::paymentMethod($paymentMethod);
     }
 
     /**
