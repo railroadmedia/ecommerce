@@ -7,8 +7,8 @@ use Railroad\Ecommerce\Services\TaxService;
 
 class TaxService
 {
-    const DEFAULT_COUNTRY_RATE = 0.5;
-    const DEFAULT_RATE = 1;
+    const DEFAULT_STATE_KEY = 'default';
+    const DEFAULT_RATE = 0;
 
     /**
      * Calculate the tax rate based on country and region
@@ -30,11 +30,18 @@ class TaxService
                 )
             ) {
                 return ConfigService::$taxRate[strtolower($address->getCountry())][strtolower($address->getState())];
+            } else if (
+                array_key_exists(
+                    strtolower(self::DEFAULT_STATE_KEY),
+                    ConfigService::$taxRate[strtolower($address->getCountry())]
+                )
+            ) {
+                return ConfigService::$taxRate[strtolower($address->getCountry())][self::DEFAULT_STATE_KEY];
             } else {
-                return self::DEFAULT_COUNTRY_RATE;
+                return self::DEFAULT_RATE;
             }
         } else {
-            return self::DEFAULT_RATE; // TODO - ask for details
+            return self::DEFAULT_RATE;
         }
     }
 
@@ -45,7 +52,7 @@ class TaxService
      *
      * @return float
      */
-    public function priceWithVat($costs, ?Address $address): float
+    public function vat($costs, ?Address $address): float
     {
         return $costs * $this->getTaxRate($address);
     }

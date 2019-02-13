@@ -30,6 +30,7 @@ return [
     //the countries and the region names should be lowercase
     'tax_rate'     => [
         'canada' => [
+            'default' => 0.5,
             'alberta'                   => 0.05,
             'ab'                        => 0.05,
             'british columbia'          => 0.12,

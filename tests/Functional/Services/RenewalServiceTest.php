@@ -115,8 +115,7 @@ class RenewalServiceTest extends EcommerceTestCase
             ->setTotalCyclesPaid($this->faker->randomNumber(3))
             ->setPaymentMethod($paymentMethod)
             ->setCreatedAt(Carbon::now())
-            ->setUpdatedAt(Carbon::now())
-            ->setDeletedOn(Carbon::now());
+            ->setUpdatedAt(Carbon::now());
 
         $em->persist($subscription);
         $em->flush();
@@ -128,13 +127,13 @@ class RenewalServiceTest extends EcommerceTestCase
         $taxService = $this->app->make(TaxService::class);
         $currencyService = $this->app->make(CurrencyService::class);
 
-        $priceWithVat = $taxService->priceWithVat(
+        $vat = $taxService->vat(
             $subscription->getTotalPrice(),
             $paymentMethod->getBillingAddress()
         );
 
         $chargePrice = $currencyService->convertFromBase(
-            $priceWithVat,
+            $vat + $subscription->getTotalPrice(),
             $subscription->getCurrency()
         );
 

@@ -127,13 +127,13 @@ class RenewalService
         ) {
             try {
 
-                $priceWithVat = $this->taxService->priceWithVat(
+                $vat = $this->taxService->vat(
                     $subscription->getTotalPrice(),
                     $paymentMethod->getBillingAddress()
                 );
 
                 $chargePrice = $this->currencyService->convertFromBase(
-                    $priceWithVat,
+                    $subscription->getTotalPrice() + $vat,
                     $currency
                 );
 
@@ -193,13 +193,13 @@ class RenewalService
 
             try {
 
-                $priceWithVat = $this->taxService->priceWithVat(
+                $vat = $this->taxService->vat(
                     $subscription->getTotalPrice(),
                     $paymentMethod->getBillingAddress()
                 );
 
                 $chargePrice = $this->currencyService->convertFromBase(
-                    $priceWithVat,
+                    $subscription->getTotalPrice() + $vat,
                     $currency
                 );
 

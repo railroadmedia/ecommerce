@@ -31,7 +31,6 @@ class TaxServiceTest extends EcommerceTestCase
             ->setCountry($country)
             ->setState($state);
 
-        // TODO update after finishing tax service
         $this->assertEquals(ConfigService::$taxRate[$country][$state], $srv->getTaxRate($address));
     }
 
@@ -51,8 +50,10 @@ class TaxServiceTest extends EcommerceTestCase
             ->setCountry($country)
             ->setState($state);
 
-        // TODO update after finishing tax service
-        $this->assertEquals(TaxService::DEFAULT_COUNTRY_RATE, $srv->getTaxRate($address));
+        $this->assertEquals(
+            ConfigService::$taxRate[$country][TaxService::DEFAULT_STATE_KEY],
+            $srv->getTaxRate($address)
+        );
     }
 
     public function test_get_tax_rate_unset_country()
@@ -71,7 +72,6 @@ class TaxServiceTest extends EcommerceTestCase
             ->setCountry($country)
             ->setState($state);
 
-        // TODO update after finishing tax service
         $this->assertEquals(TaxService::DEFAULT_RATE, $srv->getTaxRate($address));
     }
 
@@ -92,9 +92,8 @@ class TaxServiceTest extends EcommerceTestCase
             ->setCountry($country)
             ->setState($state);
 
-        $priceWithVat = ConfigService::$taxRate[$country][$state] * $price;
+        $vat = ConfigService::$taxRate[$country][$state] * $price;
 
-        // TODO update after finishing tax service
-        $this->assertEquals($priceWithVat, $srv->priceWithVat($price, $address));
+        $this->assertEquals($vat, $srv->vat($price, $address));
     }
 }
