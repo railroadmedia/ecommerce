@@ -2,29 +2,51 @@
 
 namespace Railroad\Ecommerce\Listeners;
 
-use Illuminate\Support\Facades\Event;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityRepository;
+use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 
 class UserDefaultPaymentMethodListener
 {
     /**
-     * @var \Railroad\Ecommerce\Repositories\SubscriptionRepository
+     * @var EntityManager
      */
-    protected $subscriptionRepository;
+    protected $entityManager;
 
-    public function __construct(SubscriptionRepository $subscriptionRepository)
-    {
-        $this->subscriptionRepository = $subscriptionRepository;
+    public function __construct(
+        EntityManager $entityManager
+    ) {
+        $this->entityManager = $entityManager;
     }
 
     public function handle(UserDefaultPaymentMethodEvent $event)
     {
-        $this->subscriptionRepository
-            ->query()
-            ->where('user_id', $event->getUserId())
-            ->update(
-                ['payment_method_id' => $event->getDefaultPaymentMethodId()]
-            );
+        $subscriptionRepository = $this->entityManager
+                ->getRepository(Subscription::class);
+
+        $paymentMethod = $this->entityManager
+                ->getRepository(PaymentMethod::class)
+                ->find(
+                    $event->getDefaultPaymentMethodId()
+                );
+
+        $qb = $subscriptionRepository
+                        ->createQueryBuilder('s');
+
+        $qb
+            ->select('s')
+            ->where($qb->expr()->eq('IDENTITY(s.user)', ':id'))
+            ->setParameter('id', $event->getUserId());
+
+        $subscriptions = $qb->getQuery()->getResult();
+
+        foreach ($subscriptions as $subscription) {
+            $subscription
+                ->setPaymentMethod($paymentMethod);
+        }
+
+        $this->entityManager->flush();
     }
 }

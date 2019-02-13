@@ -9,12 +9,14 @@ use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\CreditCard;
+use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
+use Railroad\Ecommerce\Exceptions\PaymentMethodException;
 use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
@@ -71,6 +73,11 @@ class PaymentMethodJsonController extends BaseController
     private $paymentMethodRepository;
 
     /**
+     * @var EntityRepository
+     */
+    private $userPaymentMethodsRepository;
+
+    /**
      * PaymentMethodJsonController constructor.
      *
      * @param CurrencyService $currencyService
@@ -102,6 +109,9 @@ class PaymentMethodJsonController extends BaseController
 
         $this->paymentMethodRepository = $this->entityManager
                                     ->getRepository(PaymentMethod::class);
+
+        $this->userPaymentMethodsRepository = $this->entityManager
+                                    ->getRepository(UserPaymentMethods::class);
 
         $this->middleware(ConfigService::$middleware);
     }
@@ -303,19 +313,18 @@ class PaymentMethodJsonController extends BaseController
      */
     public function setDefault(PaymentMethodSetDefaultRequest $request)
     {
-        $userPaymentMethodRepository = $this->entityManager
-            ->getRepository(UserPaymentMethods::class);
-
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $userPaymentMethodRepository->createQueryBuilder('p');
+        $qb = $this->userPaymentMethodsRepository->createQueryBuilder('p');
 
         $userPaymentMethod = $qb
             ->where($qb->expr()->eq('IDENTITY(p.paymentMethod)', ':id'))
             ->setParameter('id', $request->get('id'))
             ->getQuery()
             ->getOneOrNullResult();
+
+        $paymentMethod = $userPaymentMethod->getPaymentMethod();
 
         $user = $userPaymentMethod->getUser();
 
@@ -326,7 +335,7 @@ class PaymentMethodJsonController extends BaseController
             );
         }
 
-        $old = $userPaymentMethodRepository->getUserPrimaryPaymentMethod($user);
+        $old = $this->userPaymentMethodsRepository->getUserPrimaryPaymentMethod($user);
 
         if ($old) {
             $old->setIsPrimary(false);
@@ -336,7 +345,12 @@ class PaymentMethodJsonController extends BaseController
 
         $this->entityManager->flush();
 
-        event(new UserDefaultPaymentMethodEvent($user->getId(), $userPaymentMethod->getId()));
+        event(
+            new UserDefaultPaymentMethodEvent(
+                $user->getId(),
+                $paymentMethod->getId()
+            )
+        );
 
         return ResponseService::empty(204);
     }
@@ -366,7 +380,7 @@ class PaymentMethodJsonController extends BaseController
 
         throw_if(
             (PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE != $paymentMethod->getMethodType()),
-            new PaymentFailedException($message)
+            new PaymentMethodException($message)
         );
 
         /**
@@ -390,6 +404,19 @@ class PaymentMethodJsonController extends BaseController
         ) {
             $this->permissionService
                 ->canOrThrow(auth()->id(), 'update.payment.method');
+        }
+
+        if (
+            $request->get('set_default') &&
+            $primary = $this->userPaymentMethodsRepository
+                ->getUserPrimaryPaymentMethod($userPaymentMethod->getUser())
+        ) {
+            /**
+             * @var $primary \Railroad\Ecommerce\Entities\UserPaymentMethods
+             */
+            $primary->setIsPrimary(false);
+
+            $userPaymentMethod->setIsPrimary(true);
         }
 
         try {
@@ -447,6 +474,15 @@ class PaymentMethodJsonController extends BaseController
                 ->setCountry($billingCountry ?? '')
                 ->setUpdatedAt(Carbon::now());
 
+            $this->entityManager->flush();
+
+            event(
+                new UserDefaultPaymentMethodEvent(
+                    $userPaymentMethod->getUser()->getId(),
+                    $paymentMethod->getId()
+                )
+            );
+
         } catch (Card $exception) {
 
             $exceptionData = $exception->getJsonBody();
@@ -459,96 +495,76 @@ class PaymentMethodJsonController extends BaseController
             // throw generic
             throw new PaymentFailedException($exception->getMessage());
 
-        } catch(Exception $paymentFailedException) {
+        } catch (Exception $paymentFailedException) {
             throw new PaymentFailedException($paymentFailedException->getMessage());
         }
-
-        $this->entityManager->flush();
 
         return ResponseService::paymentMethod($paymentMethod);
     }
 
     /**
      * Delete a payment method and return a JsonResponse.
-     *  Throw  - NotFoundException if the payment method not exist
      *
      * @param integer $paymentMethodId
+     *
      * @return JsonResponse
+     *
+     * @throws NotFoundException - if the payment method not exist
+     * @throws NotAllowedException - if the payment method is primary
      */
     public function delete($paymentMethodId)
     {
-        $paymentMethod = $this->paymentMethodRepository->read($paymentMethodId);
+        $paymentMethod = $this->paymentMethodRepository
+                            ->find($paymentMethodId);
 
         throw_if(
             is_null($paymentMethod),
-            new NotFoundException('Delete failed, payment method not found with id: ' . $paymentMethodId)
+            new NotFoundException(
+                'Delete failed, payment method not found with id: ' .
+                $paymentMethodId
+            )
         );
 
-        if($paymentMethod['user_id'] !== auth()->id())
-        {
-            $this->permissionService->canOrThrow(auth()->id(), 'delete.payment.method');
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->entityManager
+            ->getRepository(UserPaymentMethods::class)
+            ->createQueryBuilder('upm');
+
+        $userPaymentMethod = $qb
+            ->select(['upm'])
+            ->where($qb->expr()->eq('IDENTITY(upm.paymentMethod)', ':id'))
+            ->setParameter('id', $paymentMethodId)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if (
+            $userPaymentMethod->getUser() &&
+            $userPaymentMethod->getUser()->getId() !== auth()->id()
+        ) {
+            $this->permissionService->canOrThrow(
+                auth()->id(),
+                'delete.payment.method'
+            );
         }
 
         throw_if(
-            $paymentMethod->user['is_primary'],
-            new NotAllowedException('Delete failed, can not delete the default payment method')
+            $userPaymentMethod->getIsPrimary(),
+            new NotAllowedException(
+                'Delete failed, can not delete the default payment method'
+            )
         );
 
-        $results = $this->paymentMethodRepository->delete($paymentMethodId);
+        $paymentMethod->setDeletedOn(Carbon::now());
 
-        return reply()->json(null, [
-            'code' => 204
-        ]);
+        $this->entityManager->flush();
+
+        return ResponseService::empty(204);
     }
 
     /**
-     * @param \Railroad\Ecommerce\Requests\PaymentMethodCreateRequest $request
-     * @param                                                         $paymentMethod
-     */
-    private function assignPaymentMethod($request, $paymentMethod)
-    {
-        if($request->filled('user_id'))
-        {
-            $this->userPaymentMethodRepository->create(
-                [
-                    'user_id'           => $request->get('user_id'),
-                    'payment_method_id' => $paymentMethod['id'],
-                    'created_on'        => Carbon::now()->toDateTimeString(),
-                ]
-            );
-        }
-
-        if($request->filled('customer_id'))
-        {
-            $this->customerPaymentMethodRepository->create(
-                [
-                    'customer_id'       => $request->get('customer_id'),
-                    'payment_method_id' => $paymentMethod['id'],
-                    'created_on'        => Carbon::now()->toDateTimeString(),
-                ]
-            );
-        }
-    }
-
-    /**
-     * @param  $paymentMethod
-     */
-    private function revokePaymentMethod($paymentMethod)
-    {
-        $this->userPaymentMethodRepository->query()->where(
-            [
-                'payment_method_id' => $paymentMethod['id'],
-            ]
-        )->delete();
-
-        $this->customerPaymentMethodRepository->query()->where(
-            [
-                'payment_method_id' => $paymentMethod['id'],
-            ]
-        )->delete();
-    }
-
-    /** Get all user's payment methods with all the method details: credit card or paypal billing agreement
+     * Get all user's payment methods with all the method details: credit card or paypal billing agreement
      *
      * @param integer $userId
      * @return JsonResponse
@@ -557,12 +573,61 @@ class PaymentMethodJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.user.payment.method');
 
-        $paymentMethods = $this->userPaymentMethodRepository->query()->where(['user_id' => $userId])->get();
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->entityManager
+            ->getRepository(UserPaymentMethods::class)
+            ->createQueryBuilder('upm');
 
-        foreach ($paymentMethods as $paymentMethod) {
-            $paymentMethod['id'] = $paymentMethod['payment_method_id'];
+        $userPaymentMethods = $qb
+            ->select(['upm', 'pm'])
+            ->join('upm.paymentMethod', 'pm')
+            ->where($qb->expr()->eq('IDENTITY(upm.user)', ':id'))
+            ->setParameter('id', $userId)
+            ->getQuery()
+            ->getResult();
+
+        $creditCardIds = [];
+        $paypalIds = [];
+
+        foreach ($userPaymentMethods as $userPaymentMethod) {
+
+            $type = $userPaymentMethod
+                        ->getPaymentMethod()
+                        ->getMethodType();
+
+            if ($type == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+                $paypalIds[] = $userPaymentMethod
+                        ->getPaymentMethod()
+                        ->getMethodId();
+            } else {
+                $creditCardIds[] = $userPaymentMethod
+                        ->getPaymentMethod()
+                        ->getMethodId();
+            }
         }
 
-        return reply()->json($paymentMethods);
+        $qb = $this->entityManager
+            ->getRepository(CreditCard::class)
+            ->createQueryBuilder('cc');
+
+        $creditCards = $qb
+            ->where($qb->expr()->in('cc.id', ':creditCardIds'))
+            ->setParameter('creditCardIds', $creditCardIds)
+            ->getQuery()
+            ->getResult();
+
+        $qb = $this->entityManager
+            ->getRepository(PaypalBillingAgreement::class)
+            ->createQueryBuilder('pa');
+
+        $paypalAgreements = $qb
+            ->where($qb->expr()->in('pa.id', ':paypalIds'))
+            ->setParameter('paypalIds', $paypalIds)
+            ->getQuery()
+            ->getResult();
+
+        return ResponseService::empty(204); // WIP
     }
 }
