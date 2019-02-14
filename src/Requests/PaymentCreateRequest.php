@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-
 use Railroad\Ecommerce\Services\ConfigService;
 
 class PaymentCreateRequest extends FormRequest
@@ -18,6 +17,21 @@ class PaymentCreateRequest extends FormRequest
     }
 
     /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array
+     */
+    public function attributes()
+    {
+        return [
+            'data.type' => 'json data type',
+            'data.attributes.due' => 'name',
+            'data.attributes.paid' => 'type',
+            'data.attributes.refunded' => 'min',
+        ];
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -25,12 +39,31 @@ class PaymentCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'due' => 'required|numeric',
-            'paid' => 'numeric|nullable',
-            'refunded' => 'numeric|nullable',
-            'payment_method_id' => 'numeric|nullable|exists:'.ConfigService::$tablePaymentMethod.',id',
-            'order_id' => 'numeric|exists:'.ConfigService::$tableOrder.',id',
-            'subscription_id'  => 'numeric|exists:'.ConfigService::$tableSubscription.',id',
+            'data.type' => 'in:payment',
+            'data.attributes.due' => 'required|numeric',
+            'data.attributes.paid' => 'numeric|nullable',
+            'data.attributes.refunded' => 'numeric|nullable', // todo - ask for details
+            'data.relationships.paymentMethod.data.id' =>
+                'numeric|nullable|exists:'.ConfigService::$tablePaymentMethod.',id',
+            'data.relationships.order.data.id' => 'numeric|exists:'.ConfigService::$tableOrder.',id',
+            'data.relationships.subscription.data.id' => 'numeric|exists:'.ConfigService::$tableSubscription.',id',
         ];
+    }
+
+    /**
+     * @return array
+     */
+    public function onlyAllowed()
+    {
+        return $this->only(
+            [
+                'data.attributes.due',
+                'data.attributes.paid',
+                'data.attributes.refunded',
+                'data.relationships.paymentMethod',
+                'data.relationships.order',
+                'data.relationships.subscription'
+            ]
+        );
     }
 }

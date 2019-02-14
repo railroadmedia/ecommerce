@@ -3,23 +3,30 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\EntityManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
-use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
-use Railroad\Ecommerce\Repositories\OrderRepository;
-use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
-use Railroad\Ecommerce\Repositories\PaymentRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Entities\CreditCard;
+use Railroad\Ecommerce\Entities\OrderPayment;
+use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\UserPaymentMethods;
+// use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
+// use Railroad\Ecommerce\Repositories\OrderRepository;
+// use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
+// use Railroad\Ecommerce\Repositories\PaymentRepository;
+// use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
+// use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentIndexRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Location\Services\LocationService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
@@ -27,9 +34,14 @@ use Railroad\Permissions\Services\PermissionService;
 class PaymentJsonController extends BaseController
 {
     /**
+     * @var EntityManager
+     */
+    private $entityManager;
+
+    /**
      * @var PaymentRepository
      */
-    private $paymentRepository;
+    // private $paymentRepository;
 
     /**
      * @var \Railroad\Location\Services\LocationService
@@ -39,7 +51,7 @@ class PaymentJsonController extends BaseController
     /**
      * @var PaymentMethodRepository
      */
-    private $paymentMethodRepository;
+    // private $paymentMethodRepository;
 
     /**
      * @var PermissionService
@@ -54,22 +66,22 @@ class PaymentJsonController extends BaseController
     /**
      * @var SubscriptionRepository
      */
-    private $subscriptionRepository;
+    // private $subscriptionRepository;
 
     /**
      * @var SubscriptionPaymentRepository
      */
-    private $subscriptionPaymentRepository;
+    // private $subscriptionPaymentRepository;
 
     /**
      * @var OrderRepository
      */
-    private $orderRepository;
+    // private $orderRepository;
 
     /**
      * @var OrderPaymentRepository
      */
-    private $orderPaymentRepository;
+    // private $orderPaymentRepository;
 
     /**
      * @var CurrencyService
@@ -108,31 +120,38 @@ class PaymentJsonController extends BaseController
      * @param \Railroad\Ecommerce\Gateways\PayPalPaymentGateway $payPalPaymentGateway
      */
     public function __construct(
-        PaymentRepository $paymentRepository,
-        LocationService $locationService,
-        PaymentMethodRepository $paymentMethodRepository,
-        PermissionService $permissionService,
-        UserPaymentMethodsRepository $userPaymentMethodsRepository,
-        SubscriptionRepository $subscriptionRepository,
-        SubscriptionPaymentRepository $subscriptionPaymentRepository,
-        OrderRepository $orderRepository,
-        OrderPaymentRepository $orderPaymentRepository,
         CurrencyService $currencyService,
+        EntityManager $entityManager,
+        // PaymentRepository $paymentRepository,
+        LocationService $locationService,
+        // PaymentMethodRepository $paymentMethodRepository,
+        PermissionService $permissionService,
+        // UserPaymentMethodsRepository $userPaymentMethodsRepository,
+        // SubscriptionRepository $subscriptionRepository,
+        // SubscriptionPaymentRepository $subscriptionPaymentRepository,
+        // OrderRepository $orderRepository,
+        // OrderPaymentRepository $orderPaymentRepository,
         StripePaymentGateway $stripePaymentGateway,
         PayPalPaymentGateway $payPalPaymentGateway
     )
     {
         parent::__construct();
 
-        $this->paymentRepository = $paymentRepository;
+        $this->currencyService = $currencyService;
+        $this->entityManager = $entityManager;
+
+        $this->userPaymentMethodsRepository = $this->entityManager
+                                    ->getRepository(UserPaymentMethods::class);
+
+        // $this->paymentRepository = $paymentRepository;
         $this->locationService = $locationService;
-        $this->paymentMethodRepository = $paymentMethodRepository;
+        // $this->paymentMethodRepository = $paymentMethodRepository;
         $this->permissionService = $permissionService;
-        $this->userPaymentMethodRepository = $userPaymentMethodsRepository;
-        $this->subscriptionRepository = $subscriptionRepository;
-        $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
-        $this->orderRepository = $orderRepository;
-        $this->orderPaymentRepository = $orderPaymentRepository;
+        // $this->userPaymentMethodRepository = $userPaymentMethodsRepository;
+        // $this->subscriptionRepository = $subscriptionRepository;
+        // $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
+        // $this->orderRepository = $orderRepository;
+        // $this->orderPaymentRepository = $orderPaymentRepository;
         $this->currencyService = $currencyService;
         $this->stripePaymentGateway = $stripePaymentGateway;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
@@ -177,11 +196,14 @@ class PaymentJsonController extends BaseController
 
     }
 
-    /** Call the method that save a new payment and create the links with subscription or order if it's necessary.
+    /**
+     * Call the method that save a new payment and create the links with subscription or order if it's necessary.
      * Return a JsonResponse with the new created payment record, in JSON format
      *
      * @param PaymentCreateRequest $request
+     *
      * @return JsonResponse
+     *
      * @throws NotAllowedException
      * @throws \Throwable
      */
@@ -189,144 +211,185 @@ class PaymentJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'create.payment');
 
-        $userPaymentMethod = $this->userPaymentMethodRepository->query()->where(
-            [
-                'payment_method_id' => $request->get('payment_method_id'),
-            ]
-        )->first();
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->userPaymentMethodsRepository->createQueryBuilder('p');
+
+        $userPaymentMethod = $qb
+            ->where($qb->expr()->eq('IDENTITY(p.paymentMethod)', ':id'))
+            ->setParameter('id', $request->input('data.relationships.paymentMethod.data.id'))
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        $user = $userPaymentMethod->getUser();
 
         // if the logged in user it's not admin => can pay only with own payment method
         throw_if(
-            ((!$this->permissionService->can(auth()->id(), 'create.payment.method')) && (auth()->id() != $userPaymentMethod['user_id'])),
+            (
+                (!$this->permissionService->can(auth()->id(), 'create.payment.method')) &&
+                (auth()->id() != ($user->getId() ?? 0))
+            ),
             new NotAllowedException('This action is unauthorized.')
         );
 
         // if the currency not exist on the request and the payment it's manual,
         // get the currency with Location package, based on ip address
-        $currency = $request->get('currency') ?? $this->currencyService->get();
+        $currency = $request->input('data.attributes.currency')
+            ?? $this->currencyService->get();
+        $gateway = $request->input('data.attributes.payment_gateway');
 
-        $paymentMethod = $this->paymentMethodRepository->read($request->get('payment_method_id'));
+        $paymentMethod = $userPaymentMethod->getPaymentMethod();
 
-        $paymentType =
-            ($request->has('subscription_id')) ? (ConfigService::$renewalPaymentType) :
-                (ConfigService::$orderPaymentType);
+        $paymentType = $request->input('data.relationships.subscription.data.id') ?
+                            ConfigService::$renewalPaymentType :
+                            ConfigService::$orderPaymentType;
 
-        // todo DEVE-31 - add taxes
+        $paymentPrice = $request->input('data.attributes.due');
 
-        //manual payment
+        $payment = new Payment();
+
         if (is_null($paymentMethod)) {
-            $paymentData = [
-                'due' => $request->get('due'),
-                'paid' => $request->get('due'),
-                'external_provider' => ConfigService::$manualPaymentType,
-                'status' => true,
-                'payment_method_id' => null,
-                'currency' => $currency,
-                'created_on' => Carbon::now()->toDateTimeString()
-            ];
-        } else if ($paymentMethod['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-            $customer = $this->stripePaymentGateway->getCustomer(
-                $request->get('payment_gateway'),
-                $paymentMethod['method']['external_customer_id']
-            );
-            $card = $this->stripePaymentGateway->getCard(
-                $customer,
-                $paymentMethod['method']['external_id'],
-                $request->get('payment_gateway')
-            );
 
-            $charge = $this->stripePaymentGateway->chargeCustomerCard(
-                $request->get('payment_gateway'),
-                $request->get('due'),
-                ($currency ?? $paymentMethod['currency']),
-                $card,
-                $customer,
-                ''
-            );
-            $paymentData = [
-                'paid' => $charge->amount,
-                'external_provider' => 'stripe',
-                'external_id' => $charge->id,
-                'status' => ($charge->status == 'succeeded') ? 1 : 0,
-                'message' => '',
-                'currency' => $charge->currency,
-            ];
-        } else if ($paymentMethod['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
-            $transactionId = $this->payPalPaymentGateway->chargeBillingAgreement(
-                $request->get('payment_gateway'),
-                $request->get('due'),
-                ($currency ?? $paymentMethod['currency']),
-                $paymentMethod['method']['external_id'],
-                ''
-            );
+            $payment
+                ->setTotalDue($paymentPrice)
+                ->setTotalPaid($paymentPrice)
+                ->setExternalProvider(ConfigService::$manualPaymentType)
+                ->setStatus(true)
+                ->setCurrency($currency)
+                ->setCreatedAt(Carbon::now());
 
-            $paymentData = [
-                'paid' => $request->get('due'),
-                'external_provider' => 'paypal',
-                'external_id' => $transactionId,
-                'status' => 1,
-                'message' => '',
-                'currency' => $currency ?? $paymentMethod['currency'],
-            ];
+        } else if ($paymentMethod->getMethodType() == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+            try {
+
+                /**
+                 * @var $method \Railroad\Ecommerce\Entities\CreditCard
+                 */
+                $method = $this->entityManager
+                                ->getRepository(CreditCard::class)
+                                ->find($paymentMethod->getMethodId());
+
+                $customer = $this->stripePaymentGateway->getCustomer(
+                    $gateway,
+                    $method->getExternalId()
+                );
+
+                $card = $this->stripePaymentGateway->getCard(
+                    $customer,
+                    $method->getExternalId(),
+                    $gateway
+                );
+
+                $charge = $this->stripePaymentGateway->chargeCustomerCard(
+                    $gateway,
+                    $paymentPrice,
+                    $currency,
+                    $card,
+                    $customer,
+                    ''
+                );
+
+                $payment
+                    ->setTotalPaid($paymentPrice)
+                    ->setExternalProvider('stripe')
+                    ->setExternalId($charge->id)
+                    ->setStatus(($charge->status == 'succeeded') ? '1' : '0')
+                    ->setMessage('')
+                    ->setCurrency($charge->currency);
+
+            } catch (\Exception $ex) {
+                // todo - review and add exception handling
+                throw $ex;
+            }
+        } else if ($paymentMethod->getMethodType() == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+            try {
+
+                $transactionId = $this->payPalPaymentGateway->chargeBillingAgreement(
+                    $gateway,
+                    $paymentPrice,
+                    $currency,
+                    $method->getExternalId(),
+                    ''
+                );
+
+                $payment
+                    ->setTotalPaid($paymentPrice)
+                    ->setExternalProvider('paypal')
+                    ->setExternalId($transactionId)
+                    ->setStatus('1')
+                    ->setMessage('')
+                    ->setCurrency($currency);
+
+            } catch (\Exception $ex) {
+                // todo - review and add exception handling
+                throw $ex;
+            }
         }
 
-        //save payment data in DB
-        $payment = $this->paymentRepository->create(
-            array_merge(
-                $paymentData, [
-                    'due' => $request->get('due'),
-                    'type' => $paymentType,
-                    'payment_method_id' => $paymentMethod['id'],
-                    'created_on' => Carbon::now()->toDateTimeString()
-                ]
-            )
-        );
+        $payment
+            ->setTotalDue($paymentPrice)
+            ->setType($paymentType)
+            ->setConversionRate($this->currencyService->getRate($currency))
+            ->setPaymentMethod($paymentMethod)
+            ->setCreatedAt(Carbon::now());
 
-        if ($request->has('subscription_id')) {
-            $subscriptionId = $request->get('subscription_id');
-            $subscription = $this->subscriptionRepository->read($subscriptionId);
+        $this->entityManager->persist($payment);
 
-            //update subscription total cycles paid and next bill date
-            $this->subscriptionRepository->update(
-                $subscriptionId,
-                [
-                    'total_cycles_paid' => $subscription['total_cycles_paid'] + 1,
-                    'paid_until' => $this->calculateNextBillDate(
+        if ($request->input('data.relationships.subscription.data.id')) {
+
+            /**
+             * @var $method \Railroad\Ecommerce\Entities\Subscription
+             */
+            $subscription = $this->entityManager
+                            ->getRepository(Subscription::class)
+                            ->find($request->input('data.relationships.subscription.data.id'));
+
+            $subscription
+                ->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1)
+                ->setPaidUntil(
+                    $this->calculateNextBillDate(
                         $subscription['interval_type'],
                         $subscription['interval_count']
-                    ),
-                ]
-            );
-            $this->subscriptionPaymentRepository->create(
-                [
-                    'subscription_id' => $subscriptionId,
-                    'payment_id' => $payment['id'],
-                    'created_on' => Carbon::now()->toDateTimeString(),
-                ]
-            );
+                    )
+                );
+
+            $subscriptionPayment = new SubscriptionPayment();
+
+            $subscriptionPayment
+                ->setSubscription($subscription)
+                ->setPayment($payment);
+
+            $this->entityManager->persist($subscriptionPayment);
         }
 
         // Save the link between order and payment and save the paid amount on order row
-        if ($request->has('order_id')) {
-            $this->orderPaymentRepository->create(
-                [
-                    'order_id' => $request->get('order_id'),
-                    'payment_id' => $payment['id'],
-                    'created_on' => Carbon::now()->toDateTimeString(),
-                ]
-            );
+        if ($request->input('data.relationships.order.data.id')) {
 
-            $this->orderRepository->update(
-                $request->get('order_id'),
-                [
-                    'paid' => $request->get('paid'),
-                ]
-            );
+            /**
+             * @var $order \Railroad\Ecommerce\Entities\Order
+             */
+            $order = $this->entityManager
+                            ->getRepository(Order::class)
+                            ->find($request->input('data.relationships.order.data.id'));
+
+            /*
+            todo - DEVE-27 & DEVE-30
+            pull all & sum (order associated payments * payment conversion rate)
+            */
+
+            $orderPayment = new OrderPayment();
+
+            $orderPayment
+                ->setOrder($order)
+                ->setPayment($payment)
+                ->setCreatedAt(Carbon::now());
+
+            $this->entityManager->persist($orderPayment);
         }
 
-        return reply()->json($payment, [
-            'code' => 200
-        ]);
+        $this->entityManager->flush();
+
+        return ResponseService::payment($payment);
     }
 
     /** Calculate next bill date for subscription

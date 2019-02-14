@@ -41,6 +41,24 @@ class CurrencyService
     }
 
     /**
+     * Get the converion rate of specified currency
+     *
+     * @param string $currency
+     *
+     * @return float
+     *
+     * @throws PaymentFailedException
+     */
+    public function getRate(string $currency)
+    {
+        if (!$currency || !isset(ConfigService::$defaultCurrencyConversionRates[$currency])) {
+            throw new PaymentFailedException(self::CONVERSION_CONFIG);
+        }
+
+        return ConfigService::$defaultCurrencyConversionRates[$currency];
+    }
+
+    /**
      * Converts base $price into $currency
      *
      * @param float $price
@@ -52,11 +70,7 @@ class CurrencyService
      */
     public function convertFromBase(float $price, string $currency): float
     {
-        if (!$currency || !isset(ConfigService::$defaultCurrencyConversionRates[$currency])) {
-            throw new PaymentFailedException(self::CONVERSION_CONFIG);
-        }
-
-        $rate = ConfigService::$defaultCurrencyConversionRates[$currency];
+        $rate = $this->getRate($currency);
 
         return $price * $rate;
     }
