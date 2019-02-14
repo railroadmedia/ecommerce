@@ -14,6 +14,7 @@ use Railroad\Ecommerce\Transformers\ProductTransformer;
 use Railroad\Ecommerce\Transformers\ShippingCostsWeightRangeTransformer;
 use Railroad\Ecommerce\Transformers\ShippingOptionTransformer;
 use Railroad\Ecommerce\Transformers\SubscriptionTransformer;
+use Railroad\Ecommerce\Transformers\UserPaymentMethodsTransformer;
 use Spatie\Fractal\Fractal;
 
 class ResponseService extends FractalResponseService
@@ -231,6 +232,32 @@ class ResponseService extends FractalResponseService
                 $entityOrEntities,
                 'paymentMethod',
                 new PaymentMethodTransformer(),
+                new JsonApiSerializer(),
+                $queryBuilder
+            )->parseIncludes($includes);
+    }
+
+    /**
+     * @param $userPaymentMethods
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
+    public static function userPaymentMethods(
+        $userPaymentMethods,
+        $creditCards,
+        $paypalAgreements,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
+        return self::create(
+                $userPaymentMethods,
+                'userPaymentMethods',
+                new UserPaymentMethodsTransformer(
+                    $creditCards,
+                    $paypalAgreements
+                ),
                 new JsonApiSerializer(),
                 $queryBuilder
             )->parseIncludes($includes);

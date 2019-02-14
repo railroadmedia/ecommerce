@@ -2,40 +2,34 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Resora\Queries\CachedQuery;
-use Railroad\Resora\Repositories\RepositoryBase;
+use Doctrine\ORM\EntityRepository;
+use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 
-class PaypalBillingAgreementRepository extends RepositoryBase
+class PaypalBillingAgreementRepository extends EntityRepository
 {
-
-    /**
-     * @return CachedQuery|$this
-     */
-    protected function newQuery()
+    public function getPaypalAgreementsMap($paypalIds = [])
     {
-        return (new CachedQuery($this->connection()))->from(ConfigService::$tablePaypalBillingAgreement);
-    }
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this
+            ->getEntityManager()
+            ->createQueryBuilder();
 
-    public function getById($id)
-    {
-        return $this->query()
-            ->select(
-                ConfigService::$tablePaypalBillingAgreement . '.*',
-                ConfigService::$tablePaymentGateway . '.config'
-            )
-            ->join(
-                ConfigService::$tablePaymentGateway,
-                'payment_gateway_id',
-                '=',
-                ConfigService::$tablePaymentGateway . '.id'
-            )
-            ->where(ConfigService::$tablePaypalBillingAgreement . '.id', $id)
-            ->first();
-    }
+        $paypalAgreements = $qb
+            ->select('p')
+            ->from($this->getClassName(), 'p')
+            ->where($qb->expr()->in('p.id', ':paypalIds'))
+            ->setParameter('paypalIds', $paypalIds)
+            ->getQuery()
+            ->getResult();
 
-    protected function connection()
-    {
-        return app('db')->connection(ConfigService::$databaseConnectionName);
+        $results = [];
+
+        foreach ($paypalAgreements as $paypalAgreement) {
+            $results[$paypalAgreement->getId()] = $paypalAgreement;
+        }
+
+        return $results;
     }
 }

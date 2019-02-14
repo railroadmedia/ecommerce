@@ -2,42 +2,34 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Resora\Decorators\Decorator;
-use Railroad\Resora\Queries\CachedQuery;
-use Railroad\Resora\Repositories\RepositoryBase;
+use Doctrine\ORM\EntityRepository;
+use Railroad\Ecommerce\Entities\CreditCard;
 
-class CreditCardRepository extends RepositoryBase
+class CreditCardRepository extends EntityRepository
 {
-    /**
-     * @return CachedQuery|$this
-     */
-    protected function newQuery()
+    public function getCreditCardsMap($creditCardIds = [])
     {
-        return (new CachedQuery($this->connection()))->from(ConfigService::$tableCreditCard);
-    }
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this
+            ->getEntityManager()
+            ->createQueryBuilder();
 
-    public function getById($id)
-    {
-        return $this->query()
-            ->select(ConfigService::$tableCreditCard . '.*', ConfigService::$tablePaymentGateway . '.config')
-            ->join(
-                ConfigService::$tablePaymentGateway,
-                'payment_gateway_id',
-                '=',
-                ConfigService::$tablePaymentGateway . '.id'
-            )
-            ->where(ConfigService::$tableCreditCard . '.id', $id)
-            ->first();
-    }
+        $creditCards = $qb
+            ->select('c')
+            ->from($this->getClassName(), 'c')
+            ->where($qb->expr()->in('c.id', ':creditCardIds'))
+            ->setParameter('creditCardIds', $creditCardIds)
+            ->getQuery()
+            ->getResult();
 
-    protected function decorate($results)
-    {
-        return Decorator::decorate($results, 'credit-card');
-    }
+        $results = [];
 
-    protected function connection()
-    {
-        return app('db')->connection(ConfigService::$databaseConnectionName);
+        foreach ($creditCards as $creditCard) {
+            $results[$creditCard->getId()] = $creditCard;
+        }
+
+        return $results;
     }
 }

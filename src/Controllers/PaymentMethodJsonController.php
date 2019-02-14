@@ -608,26 +608,18 @@ class PaymentMethodJsonController extends BaseController
             }
         }
 
-        $qb = $this->entityManager
+        $creditCardsMap = $this->entityManager
             ->getRepository(CreditCard::class)
-            ->createQueryBuilder('cc');
+            ->getCreditCardsMap($creditCardIds);
 
-        $creditCards = $qb
-            ->where($qb->expr()->in('cc.id', ':creditCardIds'))
-            ->setParameter('creditCardIds', $creditCardIds)
-            ->getQuery()
-            ->getResult();
-
-        $qb = $this->entityManager
+        $paypalAgreementsMap = $this->entityManager
             ->getRepository(PaypalBillingAgreement::class)
-            ->createQueryBuilder('pa');
+            ->getPaypalAgreementsMap($paypalIds);
 
-        $paypalAgreements = $qb
-            ->where($qb->expr()->in('pa.id', ':paypalIds'))
-            ->setParameter('paypalIds', $paypalIds)
-            ->getQuery()
-            ->getResult();
-
-        return ResponseService::empty(204); // WIP
+        return ResponseService::userPaymentMethods(
+            $userPaymentMethods,
+            $creditCardsMap,
+            $paypalAgreementsMap
+        );
     }
 }

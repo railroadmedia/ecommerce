@@ -6,7 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 /**
- * @ORM\Entity()
+ * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\CreditCardRepository")
  * @ORM\Table(
  *     name="ecommerce_credit_card",
  *     indexes={
