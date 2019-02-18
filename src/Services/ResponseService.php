@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
 use Railroad\Ecommerce\Transformers\DiscountCriteriaTransformer;
 use Railroad\Ecommerce\Transformers\DiscountTransformer;
+use Railroad\Ecommerce\Transformers\FulfillmentTransformer;
 use Railroad\Ecommerce\Transformers\PaymentTransformer;
 use Railroad\Ecommerce\Transformers\PaymentMethodTransformer;
 use Railroad\Ecommerce\Transformers\ProductTransformer;
@@ -302,6 +303,27 @@ class ResponseService extends FractalResponseService
                 $entityOrEntities,
                 'refund',
                 new RefundTransformer(),
+                new JsonApiSerializer(),
+                $queryBuilder
+            )->parseIncludes($includes);
+    }
+
+    /**
+     * @param $entityOrEntities
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
+    public static function fulfillment(
+        $entityOrEntities,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
+        return self::create(
+                $entityOrEntities,
+                'fulfillment',
+                new FulfillmentTransformer(),
                 new JsonApiSerializer(),
                 $queryBuilder
             )->parseIncludes($includes);

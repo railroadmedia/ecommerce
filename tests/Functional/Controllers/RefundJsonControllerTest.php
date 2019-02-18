@@ -17,7 +17,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $this->currencyService = $this->app->make(CurrencyService::class);
     }
 
-    public function test_store_validation() // ok
+    public function test_store_validation()
     {
         $this->permissionServiceMock->method('canOrThrow');
 
@@ -51,7 +51,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_user_create_own_refund_credit_card() // ok
+    public function test_user_create_own_refund_credit_card()
     {
         $userId = $this->createAndLogInNewUser();
         $currency = $this->getCurrency();
@@ -186,7 +186,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_user_create_own_refund_paypal() // ok 
+    public function test_user_create_own_refund_paypal()
     {
         $userId = $this->createAndLogInNewUser();
         $currency = $this->getCurrency();
@@ -320,7 +320,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_refund_order_and_cancel_fulfilment() // ok
+    public function test_refund_order_and_cancel_fulfilment()
     {
         $userId = $this->createAndLogInNewUser();
         $currency = $this->getCurrency();
@@ -477,7 +477,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_refund_order_shipped() // ok
+    public function test_refund_order_shipped()
     {
         $userId = $this->createAndLogInNewUser();
         $currency = $this->getCurrency();
@@ -625,7 +625,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        // assert shipping fulfillment deleted
+        // assert shipping fulfillment still exists in the database
         $this->assertDatabaseHas(
             ConfigService::$tableOrderItemFulfillment,
             [
