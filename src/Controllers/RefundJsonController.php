@@ -3,32 +3,30 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Exceptions\NotAllowedException;
+use Doctrine\ORM\EntityManager;
+use Railroad\Ecommerce\Entities\OrderItemFulfillment;
+use Railroad\Ecommerce\Entities\OrderPayment;
+use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
-use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
-use Railroad\Ecommerce\Repositories\OrderItemRepository;
-use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
-use Railroad\Ecommerce\Repositories\PaymentRepository;
-use Railroad\Ecommerce\Repositories\RefundRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 
 class RefundJsonController extends BaseController
 {
     /**
-     * @var RefundRepository
+     * @var EntityManager
      */
-    private $refundRepository;
+    private $entityManager;
 
     /**
-     * @var PaymentRepository
+     * @var PayPalPaymentGateway
      */
-    private $paymentRepository;
+    private $payPalPaymentGateway;
 
     /**
      * @var \Railroad\Permissions\Services\PermissionService
@@ -41,76 +39,29 @@ class RefundJsonController extends BaseController
     private $stripePaymentGateway;
 
     /**
-     * @var PayPalPaymentGateway
-     */
-    private $payPalPaymentGateway;
-
-    /**
-     * @var OrderPaymentRepository
-     */
-    private $orderPaymentRepository;
-
-    /**
-     * @var OrderItemFulfillmentRepository
-     */
-    private $orderItemFulfillmentRepository;
-
-    /**
-     * @var OrderItemRepository
-     */
-    private $orderItemRepository;
-
-    /**
-     * @var SubscriptionPaymentRepository
-     */
-    private $subscriptionPaymentRepository;
-
-    /**
-     * @var SubscriptionRepository
-     */
-    private $subscriptionRepository;
-
-    /**
      * RefundJsonController constructor.
      *
-     * @param RefundRepository $refundRepository
-     * @param PaymentRepository $paymentRepository
+     * @param EntityManager $entityManager
+     * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
-     * @param PayPalPaymentGateway $payPalPaymentGateway
-     * @param OrderPaymentRepository $orderPaymentRepository
-     * @param OrderItemFulfillmentRepository $orderItemFulfillmentRepository
-     * @param OrderItemRepository $orderItemRepository
-     * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
-     * @param SubscriptionRepository $subscriptionRepository
      */
     public function __construct(
-        RefundRepository $refundRepository,
-        PaymentRepository $paymentRepository,
-        PermissionService $permissionService,
-        StripePaymentGateway $stripePaymentGateway,
+        EntityManager $entityManager,
         PayPalPaymentGateway $payPalPaymentGateway,
-        OrderPaymentRepository $orderPaymentRepository,
-        OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
-        OrderItemRepository $orderItemRepository,
-        SubscriptionPaymentRepository $subscriptionPaymentRepository,
-        SubscriptionRepository $subscriptionRepository
+        PermissionService $permissionService,
+        StripePaymentGateway $stripePaymentGateway
     ) {
         parent::__construct();
 
-        $this->refundRepository = $refundRepository;
-        $this->paymentRepository = $paymentRepository;
+        $this->entityManager = $entityManager;
+        $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
-        $this->payPalPaymentGateway = $payPalPaymentGateway;
-        $this->orderPaymentRepository = $orderPaymentRepository;
-        $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
-        $this->orderItemRepository = $orderItemRepository;
-        $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
-        $this->subscriptionRepository = $subscriptionRepository;
     }
 
-    /** Call the refund method from the external payment helper and the method that save the refund in the database.
+    /**
+     * Call the refund method from the external payment helper and the method that save the refund in the database.
      * Return the new created refund in JSON format
      *
      * @param RefundCreateRequest $request
@@ -120,65 +71,116 @@ class RefundJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'store.refund');
 
-        $payment = $this->paymentRepository->read($request->get('payment_id'));
+        $paymentRepository = $this->entityManager
+                                    ->getRepository(Payment::class);
 
-        if ($payment['payment_method']['method_type'] == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+        $paymentId = $request->input('data.relationships.payment.data.id');
+
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $paymentRepository->createQueryBuilder('p');
+
+        $qb
+            ->select(['p', 'pm'])
+            ->join('p.paymentMethod', 'pm')
+            ->where($qb->expr()->eq('p.id', ':id'))
+            ->setParameter('id', $paymentId);
+
+        /**
+         * @var $payment Railroad\Ecommerce\Entities\Payment
+         */
+        $payment = $qb->getQuery()->getOneOrNullResult();
+
+        /**
+         * @var $payment Railroad\Ecommerce\Entities\PaymentMethod
+         */
+        $paymentMethod = $payment->getPaymentMethod();
+
+        if ($paymentMethod->getMethodType() == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
             $refundExternalId = $this->stripePaymentGateway->refund(
-                $request->get('gateway_name'),
-                $request->get('refund_amount'),
-                $payment['external_id'],
-                $request->get('note')
+                $request->input('data.attributes.gateway_name'),
+                $request->input('data.attributes.refund_amount'),
+                $payment->getExternalId(),
+                $request->input('data.attributes.note')
             );
-        } else {
-            if ($payment['payment_method']['method_type'] == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
-                $refundExternalId = $this->payPalPaymentGateway->refund(
-                    $request->get('refund_amount'),
-                    $payment['currency'],
-                    $payment['external_id'],
-                    $request->get('gateway_name'),
-                    $request->get('note')
-                );
-            }
+        } else if ($paymentMethod->getMethodType() == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+            $refundExternalId = $this->payPalPaymentGateway->refund(
+                $request->input('data.attributes.refund_amount'),
+                $payment->getCurrency(),
+                $payment->getExternalId(),
+                $request->input('data.attributes.gateway_name'),
+                $request->input('data.attributes.note')
+            );
         }
 
-        $refund = $this->refundRepository->create(
-            [
-                'payment_id' => $payment['id'],
-                'payment_amount' => $payment['due'],
-                'refunded_amount' => $request->get('refund_amount'),
-                'note' => $request->get('note'),
-                'external_provider' => $payment['external_provider'],
-                'external_id' => $refundExternalId,
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
-            ]
+        $refund = new Refund();
+
+        $refund
+            ->setPayment($payment)
+            ->setPaymentAmount($payment->getTotalDue())
+            ->setRefundedAmount($request->input('data.attributes.refund_amount'))
+            ->setNote($request->input('data.attributes.note'))
+            ->setExternalId($refundExternalId)
+            ->setExternalProvider($payment->getExternalProvider())
+            ->setCreatedAt(Carbon::now());
+
+        $this->entityManager->persist($refund);
+
+        $payment->setTotalRefunded(
+            $payment->getTotalRefunded() + $refund->getRefundedAmount()
         );
 
-        //update refund column in payment table
-        $this->paymentRepository->update(
-            $payment['id'],
-            [
-                'refunded' => $payment['refunded'] + $refund['refunded_amount'],
-            ]
-        );
+        // cancel shipping fulfillment
 
-        //cancel shipping fulfillment
-        $orderPayment =
-            $this->orderPaymentRepository->query()
-                ->join(
-                    ConfigService::$tableOrder,
-                    ConfigService::$tableOrderPayment . '.order_id',
-                    '=',
-                    ConfigService::$tableOrder . '.id'
-                )
-                ->where('payment_id', $payment['id'])
-                ->get();
-        $this->orderItemFulfillmentRepository->query()
-            ->whereIn('order_id', $orderPayment->pluck('order_id'))
-            ->where('status', ConfigService::$fulfillmentStatusPending)
-            ->whereNull('fulfilled_on')
-            ->delete();
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->entityManager
+                ->getRepository(OrderPayment::class)
+                ->createQueryBuilder('op');
 
-        return reply()->json($refund);
+        $qb
+            ->select(['op', 'p'])
+            ->join('op.payment', 'p')
+            ->where($qb->expr()->eq('op.payment', ':payment'))
+            ->andWhere($qb->expr()->isNull('p.deletedOn'))
+            ->setParameter('payment', $payment);
+
+        $orderPayments = $qb->getQuery()->getResult();
+
+        $distinctOrders = [];
+
+        foreach ($orderPayments as $orderPayment) {
+            /**
+             * @var $order Railroad\Ecommerce\Entities\Order
+             */
+            $order = $orderPayment->getOrder();
+            $distinctOrders[$order->getId()] = $order;
+        }
+
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->entityManager
+                ->getRepository(OrderItemFulfillment::class)
+                ->createQueryBuilder('oif');
+
+        $qb
+            ->where($qb->expr()->in('oif.order', ':orders'))
+            ->andWhere($qb->expr()->eq('oif.status', ':status'))
+            ->andWhere($qb->expr()->isNull('oif.fulfilledOn'))
+            ->setParameter('orders', array_values($distinctOrders))
+            ->setParameter('status', ConfigService::$fulfillmentStatusPending);
+
+        $orderItemFulfillments = $qb->getQuery()->getResult();
+
+        foreach ($orderItemFulfillments as $orderItemFulfillment) {
+            $this->entityManager->remove($orderItemFulfillment);
+        }
+
+        $this->entityManager->flush();
+
+        return ResponseService::refund($refund);
     }
 }

@@ -49,7 +49,8 @@ class EcommerceTestCase extends BaseTestCase
         'userPaymentMethod' => 'ecommerce_user_payment_methods',
         'payments' => 'ecommerce_payment',
         'orderPayments' => 'ecommerce_order_payment',
-        'subscriptionPayments' => 'ecommerce_subscription_payment'
+        'subscriptionPayments' => 'ecommerce_subscription_payment',
+        'orderItemFulfillments' => 'ecommerce_order_item_fulfillment'
     ];
 
     /**
@@ -738,6 +739,28 @@ class EcommerceTestCase extends BaseTestCase
         $subscriptionPayment['id'] = $subscriptionPaymentId;
 
         return $subscriptionPayment;
+    }
+
+    /**
+     * Helper method to seed a test subscription payment
+     *
+     * @return array
+     */
+    public function fakeOrderItemFulfillment(
+        $orderItemFulfillmentStub = []
+    ): array {
+
+        $orderItemFulfillment = $this->faker->orderItemFulfillment(
+            $orderItemFulfillmentStub
+        );
+
+        $orderItemFulfillmentId = $this->databaseManager
+            ->table(self::TABLES['orderItemFulfillments'])
+            ->insertGetId($orderItemFulfillment);
+
+        $orderItemFulfillment['id'] = $orderItemFulfillmentId;
+
+        return $orderItemFulfillment;
     }
 
     public function getCurrency()

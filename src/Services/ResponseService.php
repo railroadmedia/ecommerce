@@ -12,6 +12,7 @@ use Railroad\Ecommerce\Transformers\DiscountTransformer;
 use Railroad\Ecommerce\Transformers\PaymentTransformer;
 use Railroad\Ecommerce\Transformers\PaymentMethodTransformer;
 use Railroad\Ecommerce\Transformers\ProductTransformer;
+use Railroad\Ecommerce\Transformers\RefundTransformer;
 use Railroad\Ecommerce\Transformers\ShippingCostsWeightRangeTransformer;
 use Railroad\Ecommerce\Transformers\ShippingOptionTransformer;
 use Railroad\Ecommerce\Transformers\SubscriptionTransformer;
@@ -280,6 +281,27 @@ class ResponseService extends FractalResponseService
                 $entityOrEntities,
                 'payment',
                 new PaymentTransformer(),
+                new JsonApiSerializer(),
+                $queryBuilder
+            )->parseIncludes($includes);
+    }
+
+    /**
+     * @param $entityOrEntities
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
+    public static function refund(
+        $entityOrEntities,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
+        return self::create(
+                $entityOrEntities,
+                'refund',
+                new RefundTransformer(),
                 new JsonApiSerializer(),
                 $queryBuilder
             )->parseIncludes($includes);

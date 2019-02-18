@@ -3,405 +3,634 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-
-use Railroad\Ecommerce\Repositories\CreditCardRepository;
-use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
-use Railroad\Ecommerce\Repositories\OrderItemRepository;
-use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
-use Railroad\Ecommerce\Repositories\OrderRepository;
-use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
-use Railroad\Ecommerce\Repositories\PaymentRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class RefundJsonControllerTest extends EcommerceTestCase
 {
-
-    CONST VALID_VISA_CARD_NUM = '4242424242424242';
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\PaymentRepository
-     */
-    protected $paymentRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\PaymentMethodRepository
-     */
-    protected $paymentMethodRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\CreditCardRepository
-     */
-    protected $creditCardRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository
-     */
-    protected $userPaymentMethodRepository;
-
-    /**
-     * @var OrderPaymentRepository
-     */
-    protected $orderPaymentRepository;
-
-    /**
-     * @var OrderItemFulfillmentRepository
-     */
-    protected $orderItemFulfillmentRepository;
-
-    /**
-     * @var OrderRepository
-     */
-    protected $orderRepository;
-
-    /**
-     * @var OrderItemRepository
-     */
-    protected $orderItemRepository;
-
-    /**
-     * @var ProductRepository
-     */
-    protected $productRepository;
-
-
     public function setUp()
     {
         parent::setUp();
 
-        $this->paymentRepository = $this->app->make(PaymentRepository::class);
-        $this->paymentMethodRepository = $this->app->make(PaymentMethodRepository::class);
-        $this->creditCardRepository = $this->app->make(CreditCardRepository::class);
-        $this->userPaymentMethodRepository = $this->app->make(UserPaymentMethodsRepository::class);
-        $this->orderPaymentRepository = $this->app->make(OrderPaymentRepository::class);
-        $this->orderItemFulfillmentRepository = $this->app->make(OrderItemFulfillmentRepository::class);
-        $this->orderItemRepository = $this->app->make(OrderItemRepository::class);
-        $this->orderRepository = $this->app->make(OrderRepository::class);
-        $this->productRepository = $this->app->make(ProductRepository::class);
+        $this->currencyService = $this->app->make(CurrencyService::class);
     }
 
-    public function test_store_validation()
+    public function test_store_validation() // ok
     {
         $this->permissionServiceMock->method('canOrThrow');
 
-        $results = $this->call(
+        $response = $this->call(
             'PUT',
             '/refund',
-            [
-                'payment_id' => rand(),
-                'note' => '',
-                'refund_amount' => rand(),
-                'gateway_name' => $this->faker->word,
-            ]
+            []
         );
 
-        $this->assertEquals(422, $results->getStatusCode());
+        $this->assertEquals(422, $response->getStatusCode());
+
         $this->assertEquals(
             [
                 [
-                    "source" => "payment_id",
-                    "detail" => "The selected payment id is invalid.",
+                    'title' => 'Validation failed.',
+                    'source' => 'data.attributes.refund_amount',
+                    'detail' => 'The refund amount field is required.',
                 ],
+                [
+                    'title' => 'Validation failed.',
+                    'source' => 'data.attributes.gateway_name',
+                    'detail' => 'The gateway name field is required.',
+                ],
+                [
+                    'title' => 'Validation failed.',
+                    'source' => 'data.relationships.payment.data.id',
+                    'detail' => 'The payment field is required.',
+                ]
             ],
-            $results->decodeResponseJson('meta')['errors']
+            $response->decodeResponseJson('errors')
         );
-        $this->assertArraySubset([], $results->decodeResponseJson('data'));
     }
 
-    public function test_user_create_own_refund()
+    public function test_user_create_own_refund_credit_card() // ok
     {
         $userId = $this->createAndLogInNewUser();
+        $currency = $this->getCurrency();
+        $conversionRate = $this->currencyService->getRate($currency);
+        $gateway = $this->faker->randomElement(
+            array_keys(ConfigService::$paymentGateways['stripe'])
+        );
+        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
         $refund = new \stdClass();
-        $refund->id = 1;
+        $refund->id = $this->faker->word;
         $this->stripeExternalHelperMock->method('createRefund')
             ->willReturn($refund);
+        $due = $this->faker->numberBetween(11, 1000);
 
-        $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
-        $paymentMethod = $this->paymentMethodRepository->create(
-            $this->faker->paymentMethod(
-                [
-                    'method_type' => 'credit-card',
-                    'method_id' => $creditCard['id'],
-                ]
-            )
-        );
-        $userPayment = $this->userPaymentMethodRepository->create(
-            $this->faker->userPaymentMethod(
-                [
-                    'user_id' => $userId,
-                    'payment_method_id' => $paymentMethod['id'],
-                ]
-            )
-        );
-        $payment = $this->paymentRepository->create(
-            $this->faker->payment(
-                [
-                    'due' => 100,
-                    'payment_method_id' => $paymentMethod['id'],
-                    'external_id' => 'ch_1CQFAJE2yPYKc9YRFZUa5ACI',
-                ]
-            )
-        );
-        $orderId = $this->orderRepository->create($this->faker->order(['user_id' => $userId]));
-        for ($i = 0; $i< 3; $i++){
-            $product[$i] = $this->productRepository->create($this->faker->product());
-            $orderItem[$i] = $this->orderItemRepository->create($this->faker->orderItem([
-                'order_id' => $orderId['id'],
-                'product_id' => $product[$i]['id']
+        $creditCard = $this->fakeCreditCard();
 
-            ]));
-
-        }
-
-        $orderPayment = $this->orderPaymentRepository->create([
-            'order_id' => $orderId['id'],
-            'payment_id' => $payment['id'],
-            'created_on' => Carbon::now()->toDateTimeString()
+        $address = $this->fakeAddress([
+            'type' => ConfigService::$billingAddressType
         ]);
-        $orderItemfulfillemt = $this->orderItemFulfillmentRepository->create(
-            $this->faker->orderItemFulfillment([
-                'order_id' => $orderId['id']
-            ])
-        );
-        $refundAmount = 100;
 
-        $this->permissionServiceMock->method('canOrThrow');
-        $results = $this->call(
+        $paymentMethod = $this->fakePaymentMethod([
+            'method_id' => $creditCard['id'],
+            'method_type' => $methodType,
+            'billing_address_id' => $address['id']
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        $refundAmount = $due - 10;
+
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'external_id' => $this->faker->word,
+            'currency' => $currency,
+            'total_due' => $due,
+            'external_provider' => 'stripe',
+            'total_refunded' => 0,
+            'conversion_rate' => $conversionRate
+        ]);
+
+        $response = $this->call(
             'PUT',
             '/refund',
             [
-                'payment_id' => $payment['id'],
-                'refund_amount' => $refundAmount,
-                'gateway_name' => 'drumeo',
+                'data' => [
+                    'type' => 'refund',
+                    'attributes' => [
+                        'refund_amount' => $refundAmount,
+                        'gateway_name' => $gateway,
+                    ],
+                    'relationships' => [
+                        'payment' => [
+                            'data' => [
+                                'type' => 'payment',
+                                'id' => $payment['id']
+                            ]
+                        ]
+                    ]
+                ]
             ]
         );
 
-        //assert refund data subset of results
-        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals(200, $response->getStatusCode());
+
         $this->assertArraySubset(
             [
-                'payment_id' => $payment['id'],
-                'payment_amount' => $payment['due'],
-                'refunded_amount' => $refundAmount,
-                'note' => '',
-                'external_provider' => $payment['external_provider'],
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
-                'updated_on' => null,
+                'data' => [
+                    'type' => 'refund',
+                    'attributes' => [
+                        'payment_amount' => $due,
+                        'refunded_amount' => $refundAmount,
+                        'note' => NULL,
+                        'external_id' => $refund->id,
+                        'external_provider' => 'stripe',
+                        'created_at' => Carbon::now()->toDateTimeString(),
+                        'updated_at' => Carbon::now()->toDateTimeString()
+                    ],
+                    'relationships' => [
+                        'payment' => [
+                            'data' => [
+                                'type' => 'payment',
+                                'id' => $payment['id']
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'payment',
+                        'id' => $payment['id'],
+                        'attributes' => array_merge(
+                            array_diff_key(
+                                $payment,
+                                [
+                                    'id' => true,
+                                    'payment_method_id' => true
+                                ]
+                            ),
+                            ['total_refunded' => $refundAmount]
+                        ),
+                    ]
+                ]
             ],
-            $results->decodeResponseJson()['data'][0]
+            $response->decodeResponseJson()
         );
 
-        //assert refund raw saved in db
+        // assert refund raw saved in db
         $this->assertDatabaseHas(
             ConfigService::$tableRefund,
             [
                 'payment_id' => $payment['id'],
-                'payment_amount' => $payment['due'],
+                'payment_amount' => $payment['total_due'],
                 'refunded_amount' => $refundAmount,
                 'note' => null,
                 'external_provider' => $payment['external_provider'],
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
-                'updated_on' => null,
+                'external_id' => $refund->id,
+                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 
-        //assert refund value saved in payment table
+        // assert refund value saved in payment table
         $this->assertDatabaseHas(
             ConfigService::$tablePayment,
             [
                 'id' => $payment['id'],
-                'refunded' => $payment['refunded'] + $refundAmount,
+                'total_refunded' => $payment['total_refunded'] + $refundAmount,
             ]
         );
     }
 
-    public function test_refund_order_and_cancel_fulfilment()
+    public function test_user_create_own_refund_paypal() // ok 
     {
-        $refund = new \stdClass();
-        $refund->id = 1;
-        $this->stripeExternalHelperMock->method('createRefund')
-            ->willReturn($refund);
+        $userId = $this->createAndLogInNewUser();
+        $currency = $this->getCurrency();
+        $conversionRate = $this->currencyService->getRate($currency);
+        $gateway = $this->faker->randomElement(
+            array_keys(ConfigService::$paymentGateways['paypal'])
+        );
+        $methodType = PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE;
+        $refundId = $this->faker->word;
+        $this->paypalExternalHelperMock->method('createTransactionRefund')
+            ->willReturn($refundId);
+        $due = $this->faker->numberBetween(11, 1000);
 
-        $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
-        $paymentMethod = $this->paymentMethodRepository->create(
-            $this->faker->paymentMethod(
-                [
-                    'method_type' => 'credit-card',
-                    'method_id' => $creditCard['id'],
-                ]
-            )
-        );
-        $userPayment = $this->userPaymentMethodRepository->create(
-            $this->faker->userPaymentMethod(
-                [
-                    'user_id' => rand(),
-                    'payment_method_id' => $paymentMethod['id'],
-                ]
-            )
-        );
-        $payment = $this->paymentRepository->create(
-            $this->faker->payment(
-                [
-                    'payment_method_id' => $paymentMethod['id'],
-                    'external_id' => 'ch_1CQFAJE2yPYKc9YRFZUa5ACI',
-                ]
-            )
-        );
-        $order = $this->orderRepository->create($this->faker->order());
-        $orderPayment = $this->orderPaymentRepository->create([
-            'order_id' => $order['id'],
-            'payment_id' => $payment['id'],
-            'created_on' => Carbon::now()->toDateTimeString()
+        $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
+
+        $address = $this->fakeAddress([
+            'type' => ConfigService::$billingAddressType
         ]);
-        $orderItemfulfillemt = $this->orderItemFulfillmentRepository->create(
-            $this->faker->orderItemFulfillment([
-                'order_id' => $order['id'],
-                'status' => ConfigService::$fulfillmentStatusPending
-            ])
-        );
-        $refundAmount = $this->faker->numberBetween(0, 100);
 
-        $this->permissionServiceMock->method('canOrThrow');
-        $results = $this->call(
+        $paymentMethod = $this->fakePaymentMethod([
+            'method_id' => $paypalBillingAgreement['id'],
+            'method_type' => $methodType,
+            'billing_address_id' => $address['id']
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        $refundAmount = $due - 10;
+
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'external_id' => $this->faker->word,
+            'currency' => $currency,
+            'total_due' => $due,
+            'external_provider' => 'stripe',
+            'total_refunded' => 0,
+            'conversion_rate' => $conversionRate
+        ]);
+
+        $response = $this->call(
             'PUT',
             '/refund',
             [
-                'payment_id' => $payment['id'],
-                'refund_amount' => $refundAmount,
-                'gateway_name' => 'drumeo',
+                'data' => [
+                    'type' => 'refund',
+                    'attributes' => [
+                        'refund_amount' => $refundAmount,
+                        'gateway_name' => $gateway,
+                    ],
+                    'relationships' => [
+                        'payment' => [
+                            'data' => [
+                                'type' => 'payment',
+                                'id' => $payment['id']
+                            ]
+                        ]
+                    ]
+                ]
             ]
         );
 
-        //assert refund data subset of results
-        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals(200, $response->getStatusCode());
 
-        //assert refund raw saved in db
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'refund',
+                    'attributes' => [
+                        'payment_amount' => $due,
+                        'refunded_amount' => $refundAmount,
+                        'note' => NULL,
+                        'external_id' => $refundId,
+                        'external_provider' => 'stripe',
+                        'created_at' => Carbon::now()->toDateTimeString(),
+                        'updated_at' => Carbon::now()->toDateTimeString()
+                    ],
+                    'relationships' => [
+                        'payment' => [
+                            'data' => [
+                                'type' => 'payment',
+                                'id' => $payment['id']
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'payment',
+                        'id' => $payment['id'],
+                        'attributes' => array_merge(
+                            array_diff_key(
+                                $payment,
+                                [
+                                    'id' => true,
+                                    'payment_method_id' => true
+                                ]
+                            ),
+                            ['total_refunded' => $refundAmount]
+                        ),
+                    ]
+                ]
+            ],
+            $response->decodeResponseJson()
+        );
+
+        // assert refund raw saved in db
         $this->assertDatabaseHas(
             ConfigService::$tableRefund,
             [
                 'payment_id' => $payment['id'],
-                'payment_amount' => $payment['due'],
+                'payment_amount' => $payment['total_due'],
                 'refunded_amount' => $refundAmount,
                 'note' => null,
                 'external_provider' => $payment['external_provider'],
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
-                'updated_on' => null,
+                'external_id' => $refundId,
+                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 
-        //assert refund value saved in payment table
+        // assert refund value saved in payment table
         $this->assertDatabaseHas(
             ConfigService::$tablePayment,
             [
                 'id' => $payment['id'],
-                'refunded' => $payment['refunded'] + $refundAmount,
+                'total_refunded' => $payment['total_refunded'] + $refundAmount,
+            ]
+        );
+    }
+
+    public function test_refund_order_and_cancel_fulfilment() // ok
+    {
+        $userId = $this->createAndLogInNewUser();
+        $currency = $this->getCurrency();
+        $conversionRate = $this->currencyService->getRate($currency);
+        $gateway = $this->faker->randomElement(
+            array_keys(ConfigService::$paymentGateways['stripe'])
+        );
+        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $refund = new \stdClass();
+        $refund->id = $this->faker->word;
+        $this->stripeExternalHelperMock->method('createRefund')
+            ->willReturn($refund);
+        $due = $this->faker->numberBetween(11, 1000);
+
+        $creditCard = $this->fakeCreditCard();
+
+        $address = $this->fakeAddress([
+            'type' => ConfigService::$billingAddressType
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'method_id' => $creditCard['id'],
+            'method_type' => $methodType,
+            'billing_address_id' => $address['id']
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        $refundAmount = $due - 10;
+
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'external_id' => $this->faker->word,
+            'currency' => $currency,
+            'total_due' => $due,
+            'external_provider' => 'stripe',
+            'total_refunded' => 0,
+            'conversion_rate' => $conversionRate
+        ]);
+
+        $order = $this->fakeOrder();
+
+        $orderPayment = $this->fakeOrderPayment([
+            'order_id' => $order['id'],
+            'payment_id' => $payment['id'],
+            'created_at' => Carbon::now()->toDateTimeString()
+        ]);
+
+        $orderItemFulfillment = $this->fakeOrderItemFulfillment([
+            'order_id' => $order['id'],
+            'status' => ConfigService::$fulfillmentStatusPending
+        ]);
+
+        $response = $this->call(
+            'PUT',
+            '/refund',
+            [
+                'data' => [
+                    'type' => 'refund',
+                    'attributes' => [
+                        'refund_amount' => $refundAmount,
+                        'gateway_name' => $gateway,
+                    ],
+                    'relationships' => [
+                        'payment' => [
+                            'data' => [
+                                'type' => 'payment',
+                                'id' => $payment['id']
+                            ]
+                        ]
+                    ]
+                ]
             ]
         );
 
-        //assert shipping fulfillment deleted
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'refund',
+                    'attributes' => [
+                        'payment_amount' => $due,
+                        'refunded_amount' => $refundAmount,
+                        'note' => NULL,
+                        'external_id' => $refund->id,
+                        'external_provider' => 'stripe',
+                        'created_at' => Carbon::now()->toDateTimeString(),
+                        'updated_at' => Carbon::now()->toDateTimeString()
+                    ],
+                    'relationships' => [
+                        'payment' => [
+                            'data' => [
+                                'type' => 'payment',
+                                'id' => $payment['id']
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'payment',
+                        'id' => $payment['id'],
+                        'attributes' => array_merge(
+                            array_diff_key(
+                                $payment,
+                                [
+                                    'id' => true,
+                                    'payment_method_id' => true
+                                ]
+                            ),
+                            ['total_refunded' => $refundAmount]
+                        ),
+                    ]
+                ]
+            ],
+            $response->decodeResponseJson()
+        );
+
+        // assert refund raw saved in db
+        $this->assertDatabaseHas(
+            ConfigService::$tableRefund,
+            [
+                'payment_id' => $payment['id'],
+                'payment_amount' => $payment['total_due'],
+                'refunded_amount' => $refundAmount,
+                'note' => null,
+                'external_provider' => $payment['external_provider'],
+                'external_id' => $refund->id,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // assert refund value saved in payment table
+        $this->assertDatabaseHas(
+            ConfigService::$tablePayment,
+            [
+                'id' => $payment['id'],
+                'total_refunded' => $payment['total_refunded'] + $refundAmount,
+            ]
+        );
+
+        // assert shipping fulfillment deleted
         $this->assertDatabaseMissing(
             ConfigService::$tableOrderItemFulfillment,
             [
-                'order_id' => $order['id']
+                'id' => $orderItemFulfillment['id'],
+                'order_id' => $order['id'],
             ]
         );
     }
 
-    public function test_refund_order_shipped()
+    public function test_refund_order_shipped() // ok
     {
+        $userId = $this->createAndLogInNewUser();
+        $currency = $this->getCurrency();
+        $conversionRate = $this->currencyService->getRate($currency);
+        $gateway = $this->faker->randomElement(
+            array_keys(ConfigService::$paymentGateways['stripe'])
+        );
+        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
         $refund = new \stdClass();
-        $refund->id = 1;
+        $refund->id = $this->faker->word;
         $this->stripeExternalHelperMock->method('createRefund')
             ->willReturn($refund);
+        $due = $this->faker->numberBetween(11, 1000);
 
-        $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
-        $paymentMethod = $this->paymentMethodRepository->create(
-            $this->faker->paymentMethod(
-                [
-                    'method_type' => 'credit-card',
-                    'method_id' => $creditCard['id'],
-                ]
-            )
-        );
-        $userPayment = $this->userPaymentMethodRepository->create(
-            $this->faker->userPaymentMethod(
-                [
-                    'user_id' => rand(),
-                    'payment_method_id' => $paymentMethod['id'],
-                ]
-            )
-        );
-        $payment = $this->paymentRepository->create(
-            $this->faker->payment(
-                [
-                    'payment_method_id' => $paymentMethod['id'],
-                    'external_id' => 'ch_1CQFAJE2yPYKc9YRFZUa5ACI',
-                ]
-            )
-        );
-        $orderId = $this->faker->numberBetween();
-        $orderPayment = $this->orderPaymentRepository->create([
-            'order_id' => $orderId,
-            'payment_id' => $payment['id'],
-            'created_on' => Carbon::now()->toDateTimeString()
+        $creditCard = $this->fakeCreditCard();
+
+        $address = $this->fakeAddress([
+            'type' => ConfigService::$billingAddressType
         ]);
-        $orderItemfulfillemt = $this->orderItemFulfillmentRepository->create(
-            $this->faker->orderItemFulfillment([
-                'order_id' => $orderId,
-                'status' => ConfigService::$fulfillmentStatusFulfilled,
-                'fulfilled_on' => Carbon::now()->toDateTimeString()
-            ])
-        );
-        $refundAmount = $this->faker->numberBetween(0, 100);
 
-        $this->permissionServiceMock->method('canOrThrow');
-        $results = $this->call(
+        $paymentMethod = $this->fakePaymentMethod([
+            'method_id' => $creditCard['id'],
+            'method_type' => $methodType,
+            'billing_address_id' => $address['id']
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        $refundAmount = $due - 10;
+
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'external_id' => $this->faker->word,
+            'currency' => $currency,
+            'total_due' => $due,
+            'external_provider' => 'stripe',
+            'total_refunded' => 0,
+            'conversion_rate' => $conversionRate
+        ]);
+
+        $order = $this->fakeOrder();
+
+        $orderPayment = $this->fakeOrderPayment([
+            'order_id' => $order['id'],
+            'payment_id' => $payment['id'],
+            'created_at' => Carbon::now()->toDateTimeString()
+        ]);
+
+        $orderItemFulfillment = $this->fakeOrderItemFulfillment([
+            'order_id' => $order['id'],
+            'status' => ConfigService::$fulfillmentStatusFulfilled,
+            'fulfilled_on' => Carbon::now()->toDateTimeString()
+        ]);
+
+        $response = $this->call(
             'PUT',
             '/refund',
             [
-                'payment_id' => $payment['id'],
-                'refund_amount' => $refundAmount,
-                'gateway_name' => 'drumeo',
+                'data' => [
+                    'type' => 'refund',
+                    'attributes' => [
+                        'refund_amount' => $refundAmount,
+                        'gateway_name' => $gateway,
+                    ],
+                    'relationships' => [
+                        'payment' => [
+                            'data' => [
+                                'type' => 'payment',
+                                'id' => $payment['id']
+                            ]
+                        ]
+                    ]
+                ]
             ]
         );
 
-        //assert refund data subset of results
-        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals(200, $response->getStatusCode());
 
-        //assert refund raw saved in db
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'refund',
+                    'attributes' => [
+                        'payment_amount' => $due,
+                        'refunded_amount' => $refundAmount,
+                        'note' => NULL,
+                        'external_id' => $refund->id,
+                        'external_provider' => 'stripe',
+                        'created_at' => Carbon::now()->toDateTimeString(),
+                        'updated_at' => Carbon::now()->toDateTimeString()
+                    ],
+                    'relationships' => [
+                        'payment' => [
+                            'data' => [
+                                'type' => 'payment',
+                                'id' => $payment['id']
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'payment',
+                        'id' => $payment['id'],
+                        'attributes' => array_merge(
+                            array_diff_key(
+                                $payment,
+                                [
+                                    'id' => true,
+                                    'payment_method_id' => true
+                                ]
+                            ),
+                            ['total_refunded' => $refundAmount]
+                        ),
+                    ]
+                ]
+            ],
+            $response->decodeResponseJson()
+        );
+
+        // assert refund raw saved in db
         $this->assertDatabaseHas(
             ConfigService::$tableRefund,
             [
                 'payment_id' => $payment['id'],
-                'payment_amount' => $payment['due'],
+                'payment_amount' => $payment['total_due'],
                 'refunded_amount' => $refundAmount,
                 'note' => null,
                 'external_provider' => $payment['external_provider'],
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
-                'updated_on' => null,
+                'external_id' => $refund->id,
+                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 
-        //assert refund value saved in payment table
+        // assert refund value saved in payment table
         $this->assertDatabaseHas(
             ConfigService::$tablePayment,
             [
                 'id' => $payment['id'],
-                'refunded' => $payment['refunded'] + $refundAmount,
+                'total_refunded' => $payment['total_refunded'] + $refundAmount,
             ]
         );
 
-        //assert shipping fulfillment still exists in the database
+        // assert shipping fulfillment deleted
         $this->assertDatabaseHas(
             ConfigService::$tableOrderItemFulfillment,
             [
-                'order_id' => $orderId
+                'id' => $orderItemFulfillment['id'],
+                'order_id' => $order['id'],
             ]
         );
     }

@@ -414,13 +414,20 @@ class PaymentJsonController extends BaseController
 
             $basedSumPaid = 0;
 
-            foreach ($orderPayments as $pastPayment) {
+            foreach ($orderPayments as $pastOrderPayment) {
 
                 /**
-                 * @var $pastPayment \Railroad\Ecommerce\Entities\OrderPayment
+                 * @var $pastOrderPayment \Railroad\Ecommerce\Entities\OrderPayment
                  */
-                $basedSumPaid += $pastPayment->getPayment()->getTotalPaid() *
-                            $pastPayment->getPayment()->getConversionRate();
+
+                /**
+                 * @var $pastPayment \Railroad\Ecommerce\Entities\Payment
+                 */
+                $pastPayment = $pastOrderPayment->getPayment();
+
+                $paid = ($pastPayment->getTotalPaid() - ($pastPayment->getTotalRefunded() ?? 0));
+
+                $basedSumPaid += $paid * $pastPayment->getConversionRate();
             }
 
             $orderPayment = new OrderPayment();

@@ -22,7 +22,6 @@ class PaymentRepository extends EntityRepository
             ->from(OrderPayment::class, 'op')
             ->join('op.payment', 'p')
             ->where($qb->expr()->eq('op.order', ':order'))
-            ->andWhere($qb->expr()->isNull('p.totalRefunded'))
             ->andWhere($qb->expr()->isNull('p.deletedOn'));
 
         /**

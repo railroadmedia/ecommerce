@@ -350,7 +350,7 @@ class Faker extends Generator
                 'company' => null,
                 'tracking_number' => null,
                 'fulfilled_on' => null,
-                'created_on' => Carbon::now()
+                'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override

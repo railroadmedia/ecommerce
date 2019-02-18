@@ -177,7 +177,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $paymentMethod = $this->fakePaymentMethod([
             'method_id' => $creditCard['id'],
             'method_type' => $methodType,
-            'billing_address_id' => $address['id']
+            'billing_address_id' => $address['id'],
+            'currency' => $currency
         ]);
 
         $userPaymentMethod = $this->fakeUserPaymentMethod([
@@ -286,7 +287,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(ConfigService::$paymentGateways['paypal'])
         );
 
         $this->paypalExternalHelperMock
