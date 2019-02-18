@@ -2,34 +2,36 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Railroad\Ecommerce\Entities\Payment;
-use Railroad\Ecommerce\Repositories\Queries\PaymentQuery;
-use Railroad\Ecommerce\Repositories\Traits\SoftDelete;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Resora\Decorators\Decorator;
-use Railroad\Resora\Queries\CachedQuery;
-use Railroad\Resora\Repositories\RepositoryBase;
+use Doctrine\ORM\EntityRepository;
+use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\OrderPayment;
 
-class PaymentRepository extends RepositoryBase
+class PaymentRepository extends EntityRepository
 {
-    use SoftDelete;
-    /**
-     * @return CachedQuery|$this
-     */
-    protected function newQuery()
+    public function getOrderPayments(Order $order)
     {
-        return (new PaymentQuery($this->connection()))
-            ->from(ConfigService::$tablePayment)
-            ->whereNull(ConfigService::$tablePayment.'.deleted_on');
-    }
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this
+            ->getEntityManager()
+            ->createQueryBuilder();
 
-    protected function decorate($results)
-    {
-        return Decorator::decorate($results, 'payment');
-    }
+        $qb
+            ->select(['op', 'p'])
+            ->from(OrderPayment::class, 'op')
+            ->join('op.payment', 'p')
+            ->where($qb->expr()->eq('op.order', ':order'))
+            ->andWhere($qb->expr()->isNull('p.totalRefunded'))
+            ->andWhere($qb->expr()->isNull('p.deletedOn'));
 
-    protected function connection()
-    {
-        return app('db')->connection(ConfigService::$databaseConnectionName);
+        /**
+         * @var $q \Doctrine\ORM\Query
+         */
+        $q = $qb->getQuery();
+
+        $q->setParameter('order', $order);
+
+        return $q->getResult();
     }
 }

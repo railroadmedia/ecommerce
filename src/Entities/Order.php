@@ -73,6 +73,13 @@ class Order
     protected $financeDue;
 
     /**
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="total_paid")
+     *
+     * @var float
+     */
+    protected $totalPaid;
+
+    /**
      * @ORM\ManyToOne(targetEntity="Railroad\Usora\Entities\User")
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
      */
@@ -224,6 +231,26 @@ class Order
     public function setFinanceDue(float $financeDue): self
     {
         $this->financeDue = $financeDue;
+
+        return $this;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getTotalPaid(): ?float
+    {
+        return $this->totalPaid;
+    }
+
+    /**
+     * @param float $totalPaid
+     *
+     * @return Order
+     */
+    public function setTotalPaid(float $totalPaid): self
+    {
+        $this->totalPaid = $totalPaid;
 
         return $this;
     }

@@ -46,7 +46,10 @@ class EcommerceTestCase extends BaseTestCase
         'creditCards' => 'ecommerce_credit_card',
         'userProducts' => 'ecommerce_user_product',
         'paypalBillingAgreements' => 'ecommerce_paypal_billing_agreement',
-        'userPaymentMethod' => 'ecommerce_user_payment_methods'
+        'userPaymentMethod' => 'ecommerce_user_payment_methods',
+        'payments' => 'ecommerce_payment',
+        'orderPayments' => 'ecommerce_order_payment',
+        'subscriptionPayments' => 'ecommerce_subscription_payment'
     ];
 
     /**
@@ -679,6 +682,62 @@ class EcommerceTestCase extends BaseTestCase
         $userPaymentMethod['id'] = $userPaymentMethodId;
 
         return $userPaymentMethod;
+    }
+
+    /**
+     * Helper method to seed a test payment
+     *
+     * @return array
+     */
+    public function fakePayment($paymentStub = []): array
+    {
+        $payment = $this->faker->payment(
+            $paymentStub
+        );
+
+        $paymentId = $this->databaseManager
+            ->table(self::TABLES['payments'])
+            ->insertGetId($payment);
+
+        $payment['id'] = $paymentId;
+
+        return $payment;
+    }
+
+    /**
+     * Helper method to seed a test order payment
+     *
+     * @return array
+     */
+    public function fakeOrderPayment($orderPaymentStub = []): array
+    {
+        $orderPayment = $orderPaymentStub + ['created_at' => Carbon::now()];
+
+        $orderPaymentId = $this->databaseManager
+            ->table(self::TABLES['orderPayments'])
+            ->insertGetId($orderPayment);
+
+        $orderPayment['id'] = $orderPaymentId;
+
+        return $orderPayment;
+    }
+
+    /**
+     * Helper method to seed a test subscription payment
+     *
+     * @return array
+     */
+    public function fakeSubscriptionPayment($subscriptionPaymentStub = []): array
+    {
+        $subscriptionPayment = $subscriptionPaymentStub + ['created_at' => Carbon::now()];
+
+        $subscriptionPaymentId = $this->databaseManager
+            ->table(self::TABLES['subscriptionPayments'])
+            ->insertGetId($subscriptionPayment);
+
+        $subscriptionPayment['id'] = $subscriptionPaymentId;
+
+        return $subscriptionPayment;
     }
 
     public function getCurrency()

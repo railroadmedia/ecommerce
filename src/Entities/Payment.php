@@ -6,7 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 /**
- * @ORM\Entity()
+ * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\PaymentRepository")
  * @ORM\Table(
  *     name="ecommerce_payment",
  *     indexes={
@@ -116,7 +116,17 @@ class Payment
      *
      * @var \DateTime
      */
-    protected $deleted_on;
+    protected $deletedOn;
+
+    /**
+     * @ORM\OneToOne(targetEntity="OrderPayment", mappedBy="payment")
+     */
+    protected $orderPayment;
+
+    /**
+     * @ORM\OneToOne(targetEntity="SubscriptionPayment", mappedBy="payment")
+     */
+    protected $subscriptionPayment;
 
     /**
      * @return int|null
@@ -331,17 +341,17 @@ class Payment
      */
     public function getDeletedOn(): ?\DateTimeInterface
     {
-        return $this->deleted_on;
+        return $this->deletedOn;
     }
 
     /**
-     * @param \DateTimeInterface $deleted_on
+     * @param \DateTimeInterface $deletedOn
      *
      * @return Payment
      */
-    public function setDeletedOn(?\DateTimeInterface $deleted_on): self
+    public function setDeletedOn(?\DateTimeInterface $deletedOn): self
     {
-        $this->deleted_on = $deleted_on;
+        $this->deletedOn = $deletedOn;
 
         return $this;
     }
@@ -362,6 +372,47 @@ class Payment
     public function setPaymentMethod(?PaymentMethod $paymentMethod): self
     {
         $this->paymentMethod = $paymentMethod;
+
+        return $this;
+    }
+
+    /**
+     * @return OrderPayment|null
+     */
+    public function getOrderPayment(): ?OrderPayment
+    {
+        return $this->orderPayment;
+    }
+
+    /**
+     * @param OrderPayment $orderPayment
+     *
+     * @return Payment
+     */
+    public function setOrderPayment(?OrderPayment $orderPayment): self
+    {
+        $this->orderPayment = $orderPayment;
+
+        return $this;
+    }
+
+    /**
+     * @return SubscriptionPayment|null
+     */
+    public function getSubscriptionPayment(): ?SubscriptionPayment
+    {
+        return $this->subscriptionPayment;
+    }
+
+    /**
+     * @param SubscriptionPayment $subscriptionPayment
+     *
+     * @return Payment
+     */
+    public function setSubscriptionPayment(
+        ?SubscriptionPayment $subscriptionPayment
+    ): self {
+        $this->subscriptionPayment = $subscriptionPayment;
 
         return $this;
     }

@@ -141,9 +141,10 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'due' => $this->randomNumber(),
-                'paid' => $this->randomNumber(),
-                'refunded' => $this->randomNumber(),
+                'total_due' => $this->randomNumber(),
+                'total_paid' => $this->randomNumber(),
+                'total_refunded' => $this->randomNumber(),
+                'conversion_rate' => $this->randomNumber(2),
                 'type' => $this->randomElement([ConfigService::$orderPaymentType, ConfigService::$renewalPaymentType]),
                 'external_provider' => $this->word,
                 'external_id' => $this->word,
@@ -275,6 +276,7 @@ class Faker extends Generator
                 'taxes_due' => $this->randomNumber(),
                 'shipping_due' => $this->randomNumber(),
                 'finance_due' => $this->randomNumber(),
+                'total_paid' => $this->randomNumber(),
                 'user_id' => $this->randomNumber(),
                 'customer_id' => null,
                 'brand' => ConfigService::$brand,

@@ -83,7 +83,7 @@ class UpdateDueColumnsOrderTable extends Migration
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->dropColumn('paid');
+                    $table->renameColumn('paid', 'total_paid');
                 }
             );
     }
@@ -157,9 +157,7 @@ class UpdateDueColumnsOrderTable extends Migration
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table
-                        ->decimal('paid')
-                        ->after('id');
+                    $table->renameColumn('total_paid', 'paid');
                 }
             );
     }

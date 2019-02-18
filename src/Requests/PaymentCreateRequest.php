@@ -28,6 +28,9 @@ class PaymentCreateRequest extends FormRequest
             'data.attributes.due' => 'name',
             'data.attributes.paid' => 'type',
             'data.attributes.refunded' => 'min',
+            'data.relationships.paymentMethod.data.id' => 'payment method',
+            'data.relationships.order.data.id' => 'order',
+            'data.relationships.subscription.data.id' => 'subscription'
         ];
     }
 
@@ -42,7 +45,7 @@ class PaymentCreateRequest extends FormRequest
             'data.type' => 'in:payment',
             'data.attributes.due' => 'required|numeric',
             'data.attributes.paid' => 'numeric|nullable',
-            'data.attributes.refunded' => 'numeric|nullable', // todo - ask for details
+            'data.attributes.refunded' => 'numeric|nullable',
             'data.relationships.paymentMethod.data.id' =>
                 'numeric|nullable|exists:'.ConfigService::$tablePaymentMethod.',id',
             'data.relationships.order.data.id' => 'numeric|exists:'.ConfigService::$tableOrder.',id',
