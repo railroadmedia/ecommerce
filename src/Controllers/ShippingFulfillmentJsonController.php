@@ -8,7 +8,6 @@ use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
-// use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
 use Railroad\Ecommerce\Requests\OrderFulfilledRequest;
 use Railroad\Ecommerce\Requests\OrderFulfillmentDeleteRequest;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -35,17 +34,15 @@ class ShippingFulfillmentJsonController extends BaseController
     /**
      * ShippingFulfillmentJsonController constructor.
      *
-     * @param \Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository $orderItemFulfillmentRepository
-     * @param \Railroad\Permissions\Services\PermissionService                $permissionService
+     * @param EntityManager $entityManager
+     * @param PermissionService $permissionService
      */
     public function __construct(
         EntityManager $entityManager,
-        // OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         PermissionService $permissionService
     ) {
         parent::__construct();
 
-        // $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->entityManager = $entityManager;
 
         $this->orderItemFulfillmentRepository = $this->entityManager
@@ -121,7 +118,7 @@ class ShippingFulfillmentJsonController extends BaseController
 
         if ($request->has('order_item_id')) {
             $qb
-                ->where($qb->expr()->eq('IDENTITY(oif.orderItem)', ':orderItemId'))
+                ->andWhere($qb->expr()->eq('IDENTITY(oif.orderItem)', ':orderItemId'))
                 ->setParameter('orderItemId', $request->get('order_item_id'));
         }
 
@@ -150,7 +147,8 @@ class ShippingFulfillmentJsonController extends BaseController
         return ResponseService::empty(201);
     }
 
-    /** Delete order or order item fulfillment.
+    /**
+     * Delete order or order item fulfillment.
      *
      * @param \Railroad\Ecommerce\Requests\OrderFulfillmentDeleteRequest $request
      * @return JsonResponse
@@ -159,23 +157,31 @@ class ShippingFulfillmentJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.fulfillment');
 
-        //if the order item id it's set on the request we delete only order item fulfillment,
-        // otherwise the entire order fulfillment it's deleted
-        /*
-        $fulfillmentsQuery = $this->orderItemFulfillmentRepository->query()
-            ->where('order_id', $request->get('order_id'))
-            ->where('status', ConfigService::$fulfillmentStatusPending);
-        if($request->has('order_item_id'))
-        {
-            $fulfillmentsQuery = $fulfillmentsQuery->where('order_item_id', $request->get('order_item_id'));
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->orderItemFulfillmentRepository->createQueryBuilder('oif');
+
+        $qb
+            ->where($qb->expr()->eq('IDENTITY(oif.order)', ':orderId'))
+            ->andWhere($qb->expr()->eq('oif.status', ':status'))
+            ->setParameter('orderId', $request->get('order_id'))
+            ->setParameter('status', ConfigService::$fulfillmentStatusPending);
+
+        if ($request->has('order_item_id')) {
+            $qb
+                ->andWhere($qb->expr()->eq('IDENTITY(oif.orderItem)', ':orderItemId'))
+                ->setParameter('orderItemId', $request->get('order_item_id'));
         }
 
-        $fulfillmentsQuery->delete();
+        $fulfillments = $qb->getQuery()->getResult();
 
-        return reply()->json(null, [
-            'code' => 204
-        ]);
-        */
-        return ResponseService::empty(204); // tmp
+        foreach ($fulfillments as $fulfillment) {
+            $this->entityManager->remove($fulfillment);
+        }
+
+        $this->entityManager->flush();
+
+        return ResponseService::empty(204);
     }
 }
