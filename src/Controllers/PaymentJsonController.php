@@ -498,50 +498,6 @@ class PaymentJsonController extends BaseController
 
         $this->entityManager->flush();
 
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
-        $qb = $this->entityManager
-                    ->getRepository(OrderPayment::class)
-                    ->createQueryBuilder('op');
-
-        $orderPayment = $qb
-            ->select(['op', 'o'])
-            ->join('op.order', 'o')
-            ->where($qb->expr()->eq('op.payment', ':payment'))
-            ->setParameter('payment', $payment)
-            ->getQuery()
-            ->getOneOrNullResult();
-
-        if ($orderPayment) {
-
-            /**
-             * @var $order \Railroad\Ecommerce\Entities\Order
-             */
-            $order = $orderPayment->getOrder();
-
-            /**
-             * @var $orderPayments[] \Railroad\Ecommerce\Entities\OrderPayment
-             */
-            $orderPayments = $this->paymentRepository
-                                ->getOrderPayments($order);
-
-            $basedSumPaid = 0;
-
-            foreach ($orderPayments as $pastPayment) {
-
-                /**
-                 * @var $pastPayment \Railroad\Ecommerce\Entities\OrderPayment
-                 */
-                $basedSumPaid += $pastPayment->getPayment()->getTotalPaid() *
-                            $pastPayment->getPayment()->getConversionRate();
-            }
-
-            $order->setTotalPaid($basedSumPaid);
-
-            $this->entityManager->flush();
-        }
-
         return ResponseService::empty(204);
     }
 }
