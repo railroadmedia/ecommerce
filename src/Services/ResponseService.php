@@ -5,11 +5,14 @@ namespace Railroad\Ecommerce\Services;
 use Doctrine\ORM\QueryBuilder;
 use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
+use Railroad\Ecommerce\Transformers\DecoratedOrderTransformer;
 use Railroad\Ecommerce\Transformers\DiscountCriteriaTransformer;
 use Railroad\Ecommerce\Transformers\DiscountTransformer;
 use Railroad\Ecommerce\Transformers\FulfillmentTransformer;
+use Railroad\Ecommerce\Transformers\OrderTransformer;
 use Railroad\Ecommerce\Transformers\PaymentTransformer;
 use Railroad\Ecommerce\Transformers\PaymentMethodTransformer;
 use Railroad\Ecommerce\Transformers\ProductTransformer;
@@ -324,6 +327,64 @@ class ResponseService extends FractalResponseService
                 $entityOrEntities,
                 'fulfillment',
                 new FulfillmentTransformer(),
+                new JsonApiSerializer(),
+                $queryBuilder
+            )->parseIncludes($includes);
+    }
+
+    /**
+     * @param $entityOrEntities
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
+    public static function order(
+        $entityOrEntities,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
+        return self::create(
+                $entityOrEntities,
+                'order',
+                new OrderTransformer(),
+                new JsonApiSerializer(),
+                $queryBuilder
+            )->parseIncludes($includes);
+    }
+
+    /**
+     * @param Order $order
+     * @param array $payments - array of Payments
+     * @param array $refunds - array of Refunds
+     * @param array $subscriptions - array of Subscriptions
+     * @param array $paymentPlans - array of PaymentPlans
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
+    public static function decoratedOrder(
+        Order $order,
+        array $payments = [],
+        array $refunds = [],
+        array $subscriptions = [],
+        array $paymentPlans = [],
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
+
+        $transformer = new DecoratedOrderTransformer(
+            $payments,
+            $refunds,
+            $subscriptions,
+            $paymentPlans
+        );
+
+        return self::create(
+                $order,
+                'order',
+                $transformer,
                 new JsonApiSerializer(),
                 $queryBuilder
             )->parseIncludes($includes);

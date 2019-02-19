@@ -50,7 +50,8 @@ class EcommerceTestCase extends BaseTestCase
         'payments' => 'ecommerce_payment',
         'orderPayments' => 'ecommerce_order_payment',
         'subscriptionPayments' => 'ecommerce_subscription_payment',
-        'orderItemFulfillments' => 'ecommerce_order_item_fulfillment'
+        'orderItemFulfillments' => 'ecommerce_order_item_fulfillment',
+        'refunds' => 'ecommerce_refund'
     ];
 
     /**
@@ -761,6 +762,34 @@ class EcommerceTestCase extends BaseTestCase
         $orderItemFulfillment['id'] = $orderItemFulfillmentId;
 
         return $orderItemFulfillment;
+    }
+
+    /**
+     * Helper method to seed a test refund
+     *
+     * @return array
+     */
+    public function fakeRefund($refundStub = []): array
+    {
+        $refund = $refundStub +
+            [
+                'payment_id' => $this->faker->randomNumber(2, true),
+                'payment_amount' => $this->faker->randomFloat(2, 1, 100),
+                'refunded_amount' => $this->faker->randomFloat(2, 1, 100),
+                'note' => $this->faker->word,
+                'external_provider' => $this->faker->word,
+                'external_id' => $this->faker->word,
+                'created_at' => Carbon::now(),
+                'updated_at' => null
+            ];
+
+        $refundId = $this->databaseManager
+            ->table(self::TABLES['refunds'])
+            ->insertGetId($refund);
+
+        $refund['id'] = $refundId;
+
+        return $refund;
     }
 
     public function getCurrency()

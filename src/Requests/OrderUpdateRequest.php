@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-
 use Railroad\Ecommerce\Services\ConfigService;
 
 class OrderUpdateRequest extends FormRequest
@@ -18,6 +17,22 @@ class OrderUpdateRequest extends FormRequest
     }
 
     /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array
+     */
+    public function attributes()
+    {
+        return [
+            'data.type' => 'json data type',
+            'data.attributes.total_due' => 'total due',
+            'data.attributes.taxes_due' => 'taxes due',
+            'data.attributes.shipping_due' => 'shipping due',
+            'data.attributes.total_paid' => 'total paid',
+        ];
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -25,10 +40,26 @@ class OrderUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'due' => 'numeric|min:0',
-            'tax' => 'numeric|min:0',
-            'shipping_costs' => 'numeric|min:0',
-            'paid' => 'numeric|min:0',
+            'data.type' => 'in:order',
+            'data.attributes.total_due' => 'numeric|min:0',
+            'data.attributes.taxes_due' => 'numeric|min:0',
+            'data.attributes.shipping_due' => 'numeric|min:0',
+            'data.attributes.total_paid' => 'numeric|min:0',
         ];
+    }
+
+    /**
+     * @return array
+     */
+    public function onlyAllowed()
+    {
+        return $this->only(
+            [
+                'data.attributes.total_due',
+                'data.attributes.taxes_due',
+                'data.attributes.shipping_due',
+                'data.attributes.total_paid',
+            ]
+        );
     }
 }

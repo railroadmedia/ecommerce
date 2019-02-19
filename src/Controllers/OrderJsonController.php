@@ -3,40 +3,39 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\Query\Expr\Join;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
+use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\OrderPayment;
+use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\Refund;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
-use Railroad\Ecommerce\Repositories\AddressRepository;
-use Railroad\Ecommerce\Repositories\OrderRepository;
-use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
-use Railroad\Ecommerce\Repositories\PaymentRepository;
-use Railroad\Ecommerce\Repositories\RefundRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\OrderUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
-
 
 class OrderJsonController extends BaseController
 {
     /**
-     * @var AddressRepository
+     * @var EntityManager
      */
-    private $addressRepository;
+    private $entityManager;
 
     /**
-     * @var \Railroad\Ecommerce\Repositories\OrderPaymentRepository
+     * @var JsonApiHydrator
      */
-    private $orderPaymentRepository;
+    private $jsonApiHydrator;
 
     /**
-     * @var \Railroad\Ecommerce\Repositories\OrderRepository
+     * @var EntityRepository
      */
     private $orderRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\PaymentRepository
-     */
-    private $paymentRepository;
 
     /**
      * @var \Railroad\Permissions\Services\PermissionService
@@ -44,47 +43,28 @@ class OrderJsonController extends BaseController
     private $permissionService;
 
     /**
-     * @var \Railroad\Permissions\Services\RefundRepository
-     */
-    private $refundRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\SubscriptionRepository
-     */
-    private $subscriptionRepository;
-
-    /**
      * OrderJsonController constructor.
      *
-     * @param \Railroad\Ecommerce\Repositories\AddressRepository $addressRepository
-     * @param \Railroad\Ecommerce\Repositories\OrderPaymentRepository $orderPaymentRepository
-     * @param \Railroad\Ecommerce\Repositories\OrderRepository $orderRepository
-     * @param \Railroad\Ecommerce\Repositories\PaymentRepository $paymentRepository
-     * @param \Railroad\Permissions\Services\PermissionService $permissionService
-     * @param \Railroad\Permissions\Services\RefundRepository $refundRepository
-     * @param \Railroad\Permissions\Services\SubscriptionRepository $subscriptionRepository
+     * @param EntityManager $entityManager
+     * @param JsonApiHydrator $jsonApiHydrator
+     * @param PermissionService $permissionService
      */
     public function __construct(
-        AddressRepository $addressRepository,
-        OrderPaymentRepository $orderPaymentRepository,
-        OrderRepository $orderRepository,
-        PaymentRepository $paymentRepository,
-        PermissionService $permissionService,
-        RefundRepository $refundRepository,
-        SubscriptionRepository $subscriptionRepository
+        EntityManager $entityManager,
+        JsonApiHydrator $jsonApiHydrator,
+        PermissionService $permissionService
     ) {
         parent::__construct();
 
-        $this->addressRepository = $addressRepository;
-        $this->orderPaymentRepository = $orderPaymentRepository;
-        $this->orderRepository   = $orderRepository;
-        $this->paymentRepository = $paymentRepository;
+        $this->entityManager = $entityManager;
+        $this->jsonApiHydrator = $jsonApiHydrator;
+        $this->orderRepository = $this->entityManager
+                                    ->getRepository(Order::class);
         $this->permissionService = $permissionService;
-        $this->refundRepository = $refundRepository;
-        $this->subscriptionRepository = $subscriptionRepository;
     }
 
-    /** Pull orders between two dates
+    /**
+     * Pull orders between two dates
      *
      * @param \Illuminate\Http\Request $request
      * @return JsonResponse
@@ -93,8 +73,35 @@ class OrderJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.orders');
 
-        $orders = $this->orderRepository->query()
-            ->whereIn('brand', $request->get('brands', [ConfigService::$availableBrands]));
+        $orderBy = $request->get('order_by_column', 'created_at');
+        if (
+            strpos($orderBy, '_') !== false
+            || strpos($orderBy, '-') !== false
+        ) {
+            $orderBy = camel_case($orderBy);
+        }
+        $orderBy = 'o.' . $orderBy;
+        $first = ($request->get('page', 1) - 1) * $request->get('limit', 100);
+
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->orderRepository->createQueryBuilder('o');
+
+        $qb
+            ->select(['o', 'oi', 'u', 'ba', 'sa'])
+            ->leftJoin('o.orderItems', 'oi')
+            ->leftJoin('o.user', 'u')
+            ->leftJoin('o.billingAddress', 'ba')
+            ->leftJoin('o.shippingAddress', 'sa')
+            ->where($qb->expr()->in('o.brand', ':brands'))
+            ->setParameter(
+                'brands',
+                $request->get('brands', [ConfigService::$availableBrands])
+            )
+            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
+            ->setMaxResults($request->get('limit', 100))
+            ->setFirstResult($first);
 
         if ($request->has('start-date')) {
             $startDate = Carbon::parse($request->get('start-date'));
@@ -105,33 +112,26 @@ class OrderJsonController extends BaseController
             $endDate = Carbon::parse($request->get('end-date'));
         }
 
-        if(isset($startDate) && isset($endDate)) {
-            $orders->whereBetween('created_on', [$startDate, $endDate]);
+        if (isset($startDate) && isset($endDate)) {
+            $qb
+                ->andWhere($qb->expr()->between('o.createdAt', ':startDate', ':endDate'))
+                ->setParameter('startDate', $startDate)
+                ->setParameter('endDate', $endDate);
         }
 
-        if($request->has('user_id'))
-        {
-            $orders = $orders->where('user_id', $request->get('user_id'));
+        if ($request->has('user_id')) {
+            $qb
+                ->where('IDENTITY(o.user)', ':userId')
+                ->setParameter('userId', $request->get('user_id'));
         }
-        $orders = $orders->limit($request->get('limit', 100))
-            ->skip(($request->get('page', 1) - 1) * $request->get('limit', 100))
-            ->orderBy($request->get('order_by_column', 'created_on'), $request->get('order_by_direction', 'desc'))
-            ->get();
 
-        $ordersCount = $this->orderRepository->query()
-            ->whereIn('brand', $request->get('brands', [ConfigService::$availableBrands]));
-        if($request->has('user_id'))
-        {
-            $ordersCount = $ordersCount->where('user_id', $request->get('user_id'));
-        }
-        $ordersCount = $ordersCount->count();
+        $orders = $qb->getQuery()->getResult();
 
-        return reply()->json($orders, [
-            'totalResults' => $ordersCount
-        ]);
+        return ResponseService::order($orders, $qb);
     }
 
-    /** Show order
+    /**
+     * Show order
      *
      * @param int $orderId
      * @return JsonResponse
@@ -140,67 +140,104 @@ class OrderJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.orders');
 
-        $order = $this->orderRepository->read($orderId);
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->orderRepository->createQueryBuilder('o');
+
+        $qb
+            ->select(['o', 'oi', 'u', 'ba', 'sa'])
+            ->leftJoin('o.orderItems', 'oi')
+            ->leftJoin('o.user', 'u')
+            ->leftJoin('o.billingAddress', 'ba')
+            ->leftJoin('o.shippingAddress', 'sa')
+            ->where($qb->expr()->in('o.id', ':orderId'))
+            ->setParameter('orderId', $orderId);
+
+        $order = $qb->getQuery()->getOneOrNullResult();
 
         throw_if(
             is_null($order),
             new NotFoundException('Pull failed, order not found with id: ' . $orderId)
         );
 
-        $order['items'] = array_values($order['items']);
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->entityManager
+                        ->getRepository(Payment::class)
+                        ->createQueryBuilder('p');
 
-        $order['addresses'] = $this->addressRepository
-            ->query()
-            ->whereIn(
-                'id',
-                [
-                    $order['shipping_address_id'],
-                    $order['billing_address_id']
-                ]
+        $qb
+            ->select(['p'])
+            ->join(
+                OrderPayment::class,
+                'op',
+                Join::WITH,
+                $qb->expr()->eq(true, true)
             )
-            ->get()
-            ->all();
+            ->join('op.payment', 'py')
+            ->where($qb->expr()->eq('op.order', ':order'))
+            ->andWhere($qb->expr()->eq('p.id', 'py.id'))
+            ->setParameter('order', $order);
 
-        $orderPayments = $this->orderPaymentRepository
-            ->query()
-            ->where('order_id', $orderId)
-            ->get()
-            ->pluck('payment_id')
-            ->all();
+        $payments = $qb->getQuery()->getResult();
 
-        $order['payments'] = $this->paymentRepository
-            ->query()
-            ->whereIn('id', $orderPayments)
-            ->get()
-            ->all();
+        $refunds = [];
 
-        $order['refunds'] = $this->refundRepository
-            ->query()
-            ->whereIn('payment_id', $orderPayments)
-            ->get()
-            ->all();
+        if (count($payments)) {
+            /**
+             * @var $qb \Doctrine\ORM\QueryBuilder
+             */
+            $qb = $this->entityManager
+                            ->getRepository(Refund::class)
+                            ->createQueryBuilder('r');
 
-        $subscriptions = $this->subscriptionRepository
-            ->query()
-            ->where('order_id', $orderId)
-            ->get();
+            $qb
+                ->select(['r'])
+                ->where($qb->expr()->in('r.payment', ':payments'))
+                ->setParameter('payments', $payments);
 
-        $order['subscriptions'] = $subscriptions
-            ->filter(function($subscription, $key) {
-                return $subscription->type == ConfigService::$typeSubscription;
+            $refunds = $qb->getQuery()->getResult();
+        }
+
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->entityManager
+                        ->getRepository(Subscription::class)
+                        ->createQueryBuilder('s');
+
+        $qb
+            ->select(['s'])
+            ->where($qb->expr()->eq('s.order', ':order'))
+            ->setParameter('order', $order);
+
+        $subscriptionItems = collect($qb->getQuery()->getResult());
+
+        $subscriptions = $subscriptionItems
+            ->filter(function(Subscription $subscription, $key) {
+                return $subscription->getType() == ConfigService::$typeSubscription;
             })
             ->all();
 
-        $order['paymentPlans'] = $subscriptions
-            ->filter(function($subscription, $key) {
-                return $subscription->type == ConfigService::$paymentPlanType;
+        $paymentPlans = $subscriptionItems
+            ->filter(function(Subscription $subscription, $key) {
+                return $subscription->getType() == ConfigService::$paymentPlanType;
             })
             ->all();
 
-        return reply()->json([$order]);
+        return ResponseService::decoratedOrder(
+            $order,
+            $payments,
+            $refunds,
+            $subscriptions,
+            $paymentPlans
+        );
     }
 
-    /** Soft delete order
+    /**
+     * Soft delete order
      *
      * @param int $orderId
      * @return JsonResponse
@@ -209,22 +246,27 @@ class OrderJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.order');
 
-        $order = $this->orderRepository->read($orderId);
+        $order = $this->orderRepository->find($orderId);
+
         throw_if(
             is_null($order),
-            new NotFoundException('Delete failed, order not found with id: ' . $orderId)
+            new NotFoundException(
+                'Delete failed, order not found with id: ' . $orderId
+            )
         );
 
-        $this->orderRepository->delete($orderId);
+        $order->setDeletedOn(Carbon::now());
 
-        return reply()->json(null, [
-            'code' => 204
-        ]);
+        $this->entityManager->flush();
+
+        return ResponseService::empty(204);
     }
 
-    /** Update order if exists in db and the user have rights to update it.
+    /**
+     * Update order if exists in db and the user have rights to update it.
      * Return updated data in JSON format
-     * @param  int                                               $orderId
+     *
+     * @param int $orderId
      * @param \Railroad\Ecommerce\Requests\OrderUpdateRequest $request
      * @return JsonResponse
      */
@@ -232,31 +274,19 @@ class OrderJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'edit.order');
 
-        $order = $this->orderRepository->read($orderId);
+        $order = $this->orderRepository->find($orderId);
 
-        throw_if(is_null($order),
-            new NotFoundException('Update failed, order not found with id: ' . $orderId)
+        throw_if(
+            is_null($order),
+            new NotFoundException(
+                'Update failed, order not found with id: ' . $orderId
+            )
         );
 
-        //update order with the data sent on the request
-        $updatedOrder = $this->orderRepository->update(
-            $orderId,
-            array_merge(
-                $request->only(
-                    [
-                        'due',
-                        'tax',
-                        'shipping_costs',
-                        'paid',
-                        'shipping_address_id',
-                        'billing_address_id'
-                    ]
-                ), [
-                'updated_on' => Carbon::now()->toDateTimeString()
-            ])
-        );
-        return reply()->json($updatedOrder, [
-            'code' => 201
-        ]);
+        $this->jsonApiHydrator->hydrate($order, $request->onlyAllowed());
+
+        $this->entityManager->flush();
+
+        return ResponseService::order($order);
     }
 }

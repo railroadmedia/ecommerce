@@ -25,9 +25,9 @@ class PaymentCreateRequest extends FormRequest
     {
         return [
             'data.type' => 'json data type',
-            'data.attributes.due' => 'name',
-            'data.attributes.paid' => 'type',
-            'data.attributes.refunded' => 'min',
+            'data.attributes.due' => 'due',
+            'data.attributes.paid' => 'paid',
+            'data.attributes.refunded' => 'refunded',
             'data.relationships.paymentMethod.data.id' => 'payment method',
             'data.relationships.order.data.id' => 'order',
             'data.relationships.subscription.data.id' => 'subscription'
