@@ -2,8 +2,8 @@
 
 namespace Railroad\Ecommerce\Services;
 
-
 use Illuminate\Session\Store;
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Location\Services\LocationService;
 
 class CartAddressService
@@ -25,42 +25,53 @@ class CartAddressService
 
     /**
      * CartAddressService constructor.
+     *
      * @param $session
      */
-    public function __construct(Store $session, LocationService $locationService)
-    {
+    public function __construct(
+        Store $session,
+        LocationService $locationService
+    ) {
         $this->session = $session;
         $this->locationService = $locationService;
     }
 
-    /** Get from the session the address(shipping or billing address - based on address type).
-     *  If the billing address it's not set on the session call the method that set on the session the guessed billing address
+    /**
+     * Get from the session the address (shipping or billing address - based on address type).
+     * If the billing address it's not set on the session call the method that set on the session the guessed billing address
+     *
      * @param string $addressType
-     * @return array|null
+     * @return Address|null
      */
-    public function getAddress($addressType)
+    public function getAddress(string $addressType)
     {
         if ($this->session->has(self::SESSION_KEY . $addressType)) {
             return $this->session->get(self::SESSION_KEY . $addressType);
         }
 
         if ($addressType == self::BILLING_ADDRESS_TYPE) {
-            return $this->setAddress([
-                'country' => $this->locationService->getCountry(),
-                'region' => $this->locationService->getRegion()
-            ],
-                CartAddressService::BILLING_ADDRESS_TYPE);
+
+            return $this->setAddress(
+                new Address(
+                    $this->locationService->getCountry(),
+                    $this->locationService->getRegion()
+                ),
+                CartAddressService::BILLING_ADDRESS_TYPE
+            );
         }
 
         return null;
     }
 
-    /** Set the address on the session and return it
+    /**
+     * Set the address on the session and return it
+     *
      * @param array $address
      * @param string $addressType
-     * @return array
+     *
+     * @return Address
      */
-    public function setAddress($address, $addressType)
+    public function setAddress(Address $address, string $addressType)
     {
         $this->session->put(
             self::SESSION_KEY . $addressType,
@@ -73,19 +84,18 @@ class CartAddressService
     /**
      * Update the address stored on the session and return it
      *
-     * @param array $address
+     * @param Address $address
      * @param string $addressType
-     * @return array
+     *
+     * @return Address
      */
-    public function updateAddress($address, $addressType)
+    public function updateAddress(Address $address, string $addressType)
     {
-        $this->session->put(
-            self::SESSION_KEY . $addressType,
-            array_merge(
-                $this->getAddress($addressType) ?? [],
-                $address
-            )
-        );
+        if ($currentAddress = $this->getAddress($addressType)) {
+            $address->merge($currentAddress);
+        }
+
+        $this->session->put(self::SESSION_KEY . $addressType, $address);
 
         return $this->getAddress($addressType);
     }
