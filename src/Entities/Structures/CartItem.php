@@ -1,6 +1,9 @@
 <?php
 
-namespace Railroad\Ecommerce\Entities;
+namespace Railroad\Ecommerce\Entities\Structures;
+
+use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Entities\Product;
 
 class CartItem
 {
@@ -196,7 +199,7 @@ class CartItem
     }
 
     /**
-     * @return mixed
+     * @return Product|null
      */
     public function getProduct()
     {
@@ -204,9 +207,9 @@ class CartItem
     }
 
     /**
-     * @param mixed $quantity
+     * @param Product $product
      */
-    public function setProduct($product)
+    public function setProduct(Product $product)
     {
         $this->product = $product;
     }
@@ -228,7 +231,7 @@ class CartItem
     }
 
     /**
-     * @return Discount[]
+     * @return array - of Discount
      */
     public function getAppliedDiscounts()
     {
@@ -238,7 +241,7 @@ class CartItem
     /**
      * @param Discount $discount
      */
-    public function addAppliedDiscount($discount)
+    public function addAppliedDiscount(Discount $discount)
     {
         $this->appliedDiscounts[] = $discount;
     }

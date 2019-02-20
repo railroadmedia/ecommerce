@@ -7,6 +7,9 @@ use Railroad\Ecommerce\Entities\Structures\Address;
 
 class CartAddressServiceTest extends EcommerceTestCase
 {
+    /**
+     * @var Store
+     */
     protected $session;
 
     protected function setUp()

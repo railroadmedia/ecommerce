@@ -2,13 +2,9 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Resora\Decorators\Decorator;
-use Railroad\Resora\Entities\Entity;
-use Railroad\Resora\Queries\CachedQuery;
-use Railroad\Resora\Repositories\RepositoryBase;
+use Doctrine\ORM\EntityRepository;
 
-class ShippingOptionRepository extends RepositoryBase
+class ShippingOptionRepository extends EntityRepository
 {
     /**
      * Determines whether inactive shipping options will be pulled or not.
@@ -17,27 +13,51 @@ class ShippingOptionRepository extends RepositoryBase
      */
     public static $pullInactiveShippingOptions = true;
 
-    /**
-     * @return CachedQuery|$this
-     */
-    protected function newQuery()
-    {
-        return (new CachedQuery($this->connection()))->from(ConfigService::$tableShippingOption);
-    }
-
+    /*
+    // todo - review and clean
     protected function decorate($results)
     {
         return Decorator::decorate($results, 'shippingOptions');
     }
+    */
 
-    /** Get the first active shipping cost based on country and total weight
+    /**
+     * Get the first active shipping cost based on country and total weight
      *
      * @param string  $country
      * @param integer $totalWeight
+     *
      * @return mixed
      */
-    public function getShippingCosts($country, $totalWeight)
+    public function getShippingCosts(string $country, float $totalWeight)
     {
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this
+            ->getEntityManager()
+            ->createQueryBuilder();
+
+        $qb
+            ->select(['so', 'scwr'])
+            ->from($this->getClassName(), 'so')
+            ->leftJoin('so.shippingCostsWeightRanges', 'scwr')
+            ->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->gte('so.country', ':country'),
+                    $qb->expr()->isNull('so.country', ':any')
+                )
+            )
+            ->andWhere($qb->expr()->lte('scwr.min', ':totalWeight'))
+            ->andWhere($qb->expr()->orX('scwr.max', ':totalWeight'))
+            ->setParameter('country', $country)
+            ->setParameter('any', '*')
+            ->setParameter('totalWeight', $totalWeight);
+
+        return $qb->getQuery()->getResult();
+
+        /*
+        // todo - deprecated - to be removed
         $results = $this->query()
             ->join(
                 ConfigService::$tableShippingCostsWeightRange,
@@ -56,15 +76,35 @@ class ShippingOptionRepository extends RepositoryBase
             ->first();
 
         return $results;
+        */
     }
 
-    /** Get all the shipping costs weight ranges based on shipping option id
+    /**
+     * Get all the shipping costs weight ranges based on shipping option id
      *
      * @param int $shippingOptionId
      * @return mixed
      */
     public function getShippingCostsForShippingOption($shippingOptionId)
     {
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this
+            ->getEntityManager()
+            ->createQueryBuilder();
+
+        $qb
+            ->select(['so', 'scwr'])
+            ->from($this->getClassName(), 'so')
+            ->leftJoin('so.shippingCostsWeightRanges', 'scwr')
+            ->where($qb->expr()->eq('so.id', ':shippingOptionId'))
+            ->setParameter('shippingOptionId', $shippingOptionId);
+
+        return $qb->getQuery()->getResult();
+
+        /*
+        // todo - deprecated - to be removed
         return $this->query()
             ->join(
                 ConfigService::$tableShippingCostsWeightRange,
@@ -74,10 +114,6 @@ class ShippingOptionRepository extends RepositoryBase
             )
             ->restrictByShippingOption($shippingOptionId)
             ->get()->toArray();
-    }
-
-    protected function connection()
-    {
-        return app('db')->connection(ConfigService::$databaseConnectionName);
+        */
     }
 }

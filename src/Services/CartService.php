@@ -3,35 +3,29 @@
 namespace Railroad\Ecommerce\Services;
 
 use Illuminate\Session\Store;
-use Railroad\Ecommerce\Entities\Cart;
-use Railroad\Ecommerce\Entities\CartItem;
-use Railroad\Ecommerce\Repositories\DiscountRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
+use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\ShippingOption;
+use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Permissions\Services\PermissionService;
 
 class CartService
 {
+    /**
+     * @var Store
+     */
     private $session;
 
-    /**
-     * @var ProductRepository
-     */
-    private $productRepository;
     /**
      * @var CartAddressService
      */
     private $cartAddressService;
 
     /**
-     * @var DiscountRepository
+     * @var EntityManager
      */
-    private $discountRepository;
-
-    /**
-     * @var ShippingOptionRepository
-     */
-    private $shippingOptionsRepository;
+    private $entityManager;
 
     /**
      * @var DiscountCriteriaService
@@ -59,31 +53,34 @@ class CartService
     /**
      * CartService constructor.
      *
+     * @param CartAddressService $cartAddressService
+     * @param DiscountCriteriaService $discountCriteriaService
+     * @param DiscountService $discountService
+     * @param EntityManager $entityManager
+     * @param PermissionService $permissionService
      * @param Store $session
-     * @param ProductRepository $productRepository
      */
     public function __construct(
-        Store $session,
-        ProductRepository $productRepository,
-        DiscountRepository $discountRepository,
         CartAddressService $cartAddressService,
         DiscountCriteriaService $discountCriteriaService,
         DiscountService $discountService,
-        ShippingOptionRepository $shippingOptionRepository,
-        PermissionService $permissionService
+        EntityManager $entityManager,
+        PermissionService $permissionService,
+        Store $session
     ) {
-        $this->session = $session;
-        $this->productRepository = $productRepository;
-        $this->discountRepository = $discountRepository;
+
         $this->cartAddressService = $cartAddressService;
         $this->discountCriteriaService = $discountCriteriaService;
         $this->discountService = $discountService;
-        $this->shippingOptionsRepository = $shippingOptionRepository;
+        $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
+        $this->session = $session;
+
         $this->cart = new Cart();
     }
 
-    /** Return an array with the cart items.
+    /**
+     * Return an array with the cart items.
      *
      * @return array
      */
@@ -93,34 +90,46 @@ class CartService
             ->getItems();
     }
 
-    /** Clear the cart items
+    /**
+     * Clear the cart items
      */
     public function removeAllCartItems()
     {
         foreach ($this->session->all() as $sessionKey => $sessionValue) {
-            if (substr($sessionKey, 0, strlen(ConfigService::$brand . '-' . self::SESSION_KEY)) ==
-                ConfigService::$brand . '-' . self::SESSION_KEY) {
+            if (
+                substr(
+                    $sessionKey,
+                    0,
+                    strlen(ConfigService::$brand . '-' . self::SESSION_KEY)
+                ) == ConfigService::$brand . '-' . self::SESSION_KEY
+            ) {
                 $this->session->remove($sessionKey);
             }
         }
     }
 
-    /** Clear and lock the cart
+    /**
+     * Clear and lock the cart
      */
     public function lockCart()
     {
         $this->removeAllCartItems();
 
-        $this->session->put(ConfigService::$brand . '-' . self::LOCKED_SESSION_KEY, true);
+        $this->session->put(
+            ConfigService::$brand . '-' . self::LOCKED_SESSION_KEY, true
+        );
     }
 
-    /** Check if the cart it's in locked state
+    /**
+     * Check if the cart it's in locked state
      *
      * @return bool
      */
     public function isLocked()
     {
-        return $this->session->get(ConfigService::$brand . '-' . self::LOCKED_SESSION_KEY) == true;
+        return true == $this->session->get(
+            ConfigService::$brand . '-' . self::LOCKED_SESSION_KEY
+        );
     }
 
     /**
@@ -131,18 +140,20 @@ class CartService
         $this->removeAllCartItems();
         $this->unlockPaymentPlan();
 
-        $this->session->put(ConfigService::$brand . '-' . self::LOCKED_SESSION_KEY, false);
+        $this->session->put(
+            ConfigService::$brand . '-' . self::LOCKED_SESSION_KEY,
+            false
+        );
     }
 
-    /** Remove the cart item
+    /**
+     * Remove the cart item
      *
      * @param $id
      */
     public function removeCartItem($id)
     {
-        $items =
-            $this->getCart()
-                ->getItems();
+        $items = $this->getCart()->getItems();
         $index = array_search($id, array_pluck($items, 'id'));
         unset($items[$index]);
         $this->removeAllCartItems();
@@ -164,16 +175,15 @@ class CartService
         return $this->cart->getItems();
     }
 
-    /** Update cart item quantity and total price.
+    /**
+     * Update cart item quantity and total price.
      *
      * @param $cartItemId
      * @param $quantity
      */
     public function updateCartItemQuantity($cartItemId, $quantity)
     {
-        $items =
-            $this->getCart()
-                ->getItems();
+        $items = $this->getCart()->getItems();
         $index = array_search($cartItemId, array_pluck($items, 'id'));
 
         $cartItem = $this->getCartItem($cartItemId);
@@ -200,41 +210,51 @@ class CartService
         return $this->cart->getItems();
     }
 
-    /** Get a cart item from the session based on cart item id
+    /**
+     * Get a cart item from the session based on cart item id
      *
      * @param $id
      * @return mixed|null
      */
     public function getCartItem($id)
     {
-        $items =
-            $this->getCart()
-                ->getItems();
+        $items = $this->getCart()->getItems();
         $index = array_search($id, array_pluck($items, 'id'));
 
         return $items[$index];
     }
 
-    /** Set on the session the number of payments
+    /**
+     * Set on the session the number of payments
      *
      * @param $numberOfPayments
      */
     public function setPaymentPlanNumberOfPayments($numberOfPayments)
     {
         if (empty($numberOfPayments) || $numberOfPayments == 1) {
-            $this->session->put(self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY, 1);
+            $this->session->put(
+                self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY,
+                1
+            );
         } else {
-            $this->session->put(self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY, $numberOfPayments);
+            $this->session->put(
+                self::PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY,
+                $numberOfPayments
+            );
         }
     }
 
-    /** Lock payment plan
+    /**
+     * Lock payment plan
      *
      * @param $numberOfPaymentsToForce
      */
     public function lockPaymentPlan($numberOfPaymentsToForce)
     {
-        $this->session->put(self::PAYMENT_PLAN_LOCKED_SESSION_KEY, $numberOfPaymentsToForce);
+        $this->session->put(
+            self::PAYMENT_PLAN_LOCKED_SESSION_KEY,
+            $numberOfPaymentsToForce
+        );
     }
 
     /**
@@ -245,16 +265,18 @@ class CartService
         $this->session->remove(self::PAYMENT_PLAN_LOCKED_SESSION_KEY);
     }
 
-    /** Set promo code on the session
+    /**
+     * Set promo code on the session
      *
      * @param string $promoCode
      */
-    public function setPromoCode($promoCode)
+    public function setPromoCode(string $promoCode)
     {
         $this->session->put(self::PROMO_CODE_KEY, $promoCode);
     }
 
-    /** Get promo code from the session
+    /**
+     * Get promo code from the session
      *
      * @return mixed
      */
@@ -263,7 +285,8 @@ class CartService
         return $this->session->get(self::PROMO_CODE_KEY);
     }
 
-    /** Add item to cart, calculate the shipping costs based on cart's products, apply discounts on cart items
+    /**
+     * Add item to cart, calculate the shipping costs based on cart's products, apply discounts on cart items
      *
      * @param $name
      * @param $description
@@ -290,39 +313,83 @@ class CartService
     ) {
         $brand = ConfigService::$brand;
 
-        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
+        if (
+            $this->permissionService->can(
+                auth()->id(),
+                'place-orders-for-other-users'
+            )
+        ) {
             $brand = $customBrand ?? ConfigService::$brand;
         }
 
         $this->getCart()->setBrand($brand);
-        $cart = $this->getCart();
-        $product = $this->productRepository->read($options['product-id']);
 
-        $shippingCosts = $this->shippingOptionsRepository->getShippingCosts(
-                $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE)['country'],
-                $cart->getTotalWeight() + $product->weight * $quantity
-            )['price'] ?? 0;
+        /**
+         * @var $cart \Railroad\Ecommerce\Entities\Structures\Cart
+         */
+        $cart = $this->getCart();
+
+        /**
+         * @var $cart \Railroad\Ecommerce\Entities\Product
+         */
+        $product = $this->entityManager
+                        ->getRepository(Product::class)
+                        ->find($options['product-id']);
+
+        /**
+         * @var $shippingAddress \Railroad\Ecommerce\Entities\Structures\Address
+         */
+        $shippingAddress = $this->cartAddressService
+                                ->getAddress(
+                                    CartAddressService::SHIPPING_ADDRESS_TYPE
+                                );
+
+        $totalWeight = $cart->getTotalWeight() + $product->weight * $quantity;
+
+        /**
+         * @var $shippingCosts array - of \Railroad\Ecommerce\Entities\ShippingOption
+         */
+        $shippingCosts = $this->entityManager
+                                ->getRepository(ShippingOption::class)
+                                ->getShippingCosts(
+                                    $shippingAddress->getCountry(),
+                                    $totalWeight
+                                );
 
         $cart->setShippingCosts($shippingCosts);
 
         // If the item already exists, just increase the quantity
-        foreach (
-            $cart->getItems() as $cartItem
-        ) {
-            if (!empty($cartItem->getOptions()['product-id']) &&
-                $cartItem->getOptions()['product-id'] == $options['product-id']) {
+        foreach ($cart->getItems() as $cartItem) {
+            if (
+                !empty($cartItem->getOptions()['product-id']) &&
+                $cartItem->getOptions()['product-id'] == $options['product-id']
+            ) {
                 $cartItem->setQuantity($cartItem->getQuantity() + $quantity);
-                $cartItem->setTotalPrice($cartItem->getTotalPrice() + $quantity * $cartItem->getPrice());
 
+                $totalPrice = $cartItem->getTotalPrice() +
+                                $quantity * $cartItem->getPrice();
+
+                $cartItem->setTotalPrice($totalPrice);
+
+                /**
+                 * @var $discountsToApply array - of \Railroad\Ecommerce\Entities\Discount
+                 */
                 $discountsToApply = $this->getDiscountsToApply();
+
                 $this->discountService->applyDiscounts(
                     $discountsToApply,
                     $cart
                 );
-                $cart->addDiscount($discountsToApply);
+
+                $cart->setDiscounts($discountsToApply);
+
                 $cartDiscounted = $this->applyDiscounts();
 
-                $this->session->put($brand . '-' . self::SESSION_KEY, $cartDiscounted);
+                $this->session->put(
+                    $brand . '-' . self::SESSION_KEY,
+                    $cartDiscounted
+                );
+
                 return $cartDiscounted;
             }
         }
@@ -343,6 +410,9 @@ class CartService
 
         $cart->addCartItem($cartItem);
 
+        /**
+         * @var $discountsToApply array - of \Railroad\Ecommerce\Entities\Discount
+         */
         $discountsToApply = $this->getDiscountsToApply();
 
         $this->discountService->applyDiscounts(
@@ -367,8 +437,13 @@ class CartService
     public function getCart()
     {
         foreach ($this->session->all() as $sessionKey => $sessionValue) {
-            if (substr($sessionKey, 0, strlen($this->cart->getBrand() . '-' . self::SESSION_KEY)) ==
-                $this->cart->getBrand() . '-' . self::SESSION_KEY) {
+            if (
+                substr(
+                    $sessionKey,
+                    0,
+                    strlen($this->cart->getBrand() . '-' . self::SESSION_KEY)
+                ) == $this->cart->getBrand() . '-' . self::SESSION_KEY
+            ) {
                 return $sessionValue;
             }
         }
@@ -384,20 +459,42 @@ class CartService
     public function getDiscountsToApply()
     {
         $discountsToApply = [];
-        $activeDiscounts =
-            $this->discountRepository->query()
+
+        $activeDiscounts = $this->discountRepository->query()
                 ->where('active', 1)
                 ->get();
 
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->entityManager
+                    ->getRepository(Discount::class)
+                    ->createQueryBuilder('d');
+
+        $qb
+            ->select(['d', 'dc'])
+            ->leftJoin('d.discountCriterias', 'dc')
+            ->where($qb->expr()->eq('d.active', ':active'))
+            ->setParameter('active', true);
+
+        $activeDiscounts = $qb->getQuery()->getResult();
+
         foreach ($activeDiscounts as $activeDiscount) {
             $criteriaMet = true;
-            foreach ($activeDiscount->criteria as $discountCriteria) {
-                if (!$this->discountCriteriaService->discountCriteriaMetForOrder(
-                    $discountCriteria,
-                    $this->getCart(),
-                    $this->getPromoCode()
-                )) {
+            foreach ($activeDiscount->getDiscountCriterias() as $discountCriteria) {
+                /**
+                 * @var $discountCriteria \Railroad\Ecommerce\Entities\DiscountCriteria
+                 */
+                $discountCriteriaMet = $this->discountCriteriaService
+                                            ->discountCriteriaMetForOrder(
+                                                $this->getCart(),
+                                                $discountCriteria,
+                                                $this->getPromoCode()
+                                            );
+
+                if (!$discountCriteriaMet) {
                     $criteriaMet = false;
+                    break;
                 }
             }
 
@@ -405,11 +502,13 @@ class CartService
                 $discountsToApply[$activeDiscount->id] = $activeDiscount;
             }
         }
+
         return $discountsToApply;
     }
 
-    /** Calculate the discounted price on items and the discounted amount on cart(discounts that should be applied on order)
-     *  and set the discounted price on order item and the total discount amount on cart.
+    /**
+     * Calculate the discounted price on items and the discounted amount on cart(discounts that should be applied on order)
+     * and set the discounted price on order item and the total discount amount on cart.
      *
      * Return the cart with the discounts applied.
      *
@@ -417,32 +516,46 @@ class CartService
      */
     public function applyDiscounts()
     {
-        foreach (
-            $this->getCart()
-                ->getDiscounts() as $discount
-        ) {
+        foreach ($this->getCart()->getDiscounts() as $discount) {
+            /**
+             * @var $discount \Railroad\Ecommerce\Entities\Discount
+             */
+            foreach ($this->getCart()->getItems() as $index => $item) {
+                /**
+                 * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+                 */
 
-            foreach (
-                $this->getCart()
-                    ->getItems() as $index => $item
-            ) {
+                /**
+                 * @var $cartProduct \Railroad\Ecommerce\Entities\Product
+                 */
+                $cartProduct = $cartItem->getProduct();
 
-                if (($discount['product_id'] == $item->getOptions()['product-id']) ||
-                    (($discount['product_category']) &&
-                        ($discount['product_category'] == $item->getProduct()['category']))) {
+                /**
+                 * @var $discountProduct \Railroad\Ecommerce\Entities\Product
+                 */
+                $discountProduct = $discount->getProduct();
+
+                if (
+                    $discountProduct->getId() == $item->getOptions()['product-id'] ||
+                    (
+                        $discount->getProductCategory() &&
+                        $discount->getProductCategory() == $cartProduct->getCategory()
+                    )
+                ) {
                     $productDiscount = 0;
 
-                    if ($discount->type == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
-                        $productDiscount = $discount->amount * $item->getQuantity();
+                    if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
+                        $productDiscount = $discount->getAmount() * $item->getQuantity();
                     }
 
-                    if ($discount->type == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
-                        $productDiscount = $discount->amount / 100 * $item->getPrice() * $item->getQuantity();
+                    if ($discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+                        $productDiscount = $discount->getAmount() / 100 * $item->getPrice() * $item->getQuantity();
                     }
 
-                    if ($discount->type == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
-                        $productDiscount = $discount->amount * $item->getQuantity();
+                    if ($discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
+                        $productDiscount = $discount->getAmount() * $item->getQuantity();
                     }
+
                     $this->getCart()
                         ->getItems()[$index]->setDiscountedPrice(max(($item->getTotalPrice() - $productDiscount), 0));
                 }
@@ -450,16 +563,12 @@ class CartService
         }
 
         $discountedAmount = $this->discountService->getAmountDiscounted(
-            $this->getCart()
-                ->getDiscounts(),
-            $this->getCart()
-                ->getTotalDue(),
-            $this->getCart()
-                ->getItems()
+            $this->getCart()->getDiscounts(),
+            $this->getCart()->getTotalDue(),
+            $this->getCart()->getItems()
         );
 
-        $this->getCart()
-            ->setTotalDiscountAmount($discountedAmount);
+        $this->getCart()->setTotalDiscountAmount($discountedAmount);
 
         return $this->getCart();
     }

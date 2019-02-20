@@ -2,6 +2,10 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Structures\Cart;
+
 class DiscountService
 {
     const PRODUCT_AMOUNT_OFF_TYPE = 'product amount off';
@@ -15,36 +19,62 @@ class DiscountService
     const ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE = 'order total shipping overwrite';
 
     /**
-     * @param $discountsToApply
-     * @param $cartItems
+     * @param array $discountsToApply - array of \Railroad\Ecommerce\Entities\Discount
+     * @param Cart $cartItems
+     *
      * @return mixed
      */
-    public function applyDiscounts($discountsToApply, $cart)
+    public function applyDiscounts(array $discountsToApply, Cart $cart)
     {
         foreach ($discountsToApply as $discount) {
+            /**
+             * @var $discount \Railroad\Ecommerce\Entities\Discount
+             */
             // save raw in order item discounts
-            if ($discount['type'] == self::PRODUCT_AMOUNT_OFF_TYPE ||
-                $discount['type'] == self::PRODUCT_PERCENT_OFF_TYPE ||
-                $discount['type'] == self::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE ||
-                $discount['type'] == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
+            if (
+                $discount->getType() == self::PRODUCT_AMOUNT_OFF_TYPE ||
+                $discount->getType() == self::PRODUCT_PERCENT_OFF_TYPE ||
+                $discount->getType() == self::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE ||
+                $discount->getType() == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE
+            ) {
 
                 foreach ($cart->getItems() as $key => $cartItem) {
-                     if (($cartItem->getProduct()['id'] == $discount['product_id']) ||
-                        ($cartItem->getProduct()['category'] == $discount['product_category'])) {
+                    /**
+                     * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+                     */
+
+                    /**
+                     * @var $cartProduct \Railroad\Ecommerce\Entities\Product
+                     */
+                    $cartProduct = $cartItem->getProduct();
+
+                    /**
+                     * @var $discountProduct \Railroad\Ecommerce\Entities\Product
+                     */
+                    $discountProduct = $discount->getProduct();
+
+                    if (
+                        ($cartProduct->getId() == $discountProduct->getId()) ||
+                        (
+                            $cartProduct->getCategory() ==
+                            $discount->getProductCategory()
+                        )
+                    ) {
                         $cartItem->addAppliedDiscount($discount);
                     }
                 }
             }
 
             // Order/shipping total discounts
-            if ($discount['type'] == self::ORDER_TOTAL_AMOUNT_OFF_TYPE ||
-                $discount['type'] == self::ORDER_TOTAL_PERCENT_OFF_TYPE ||
-                $discount['type'] == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE ||
-                $discount['type'] == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE ||
-                $discount['type'] == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
+            if (
+                $discount->getType() == self::ORDER_TOTAL_AMOUNT_OFF_TYPE ||
+                $discount->getType() == self::ORDER_TOTAL_PERCENT_OFF_TYPE ||
+                $discount->getType() == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE ||
+                $discount->getType() == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE ||
+                $discount->getType() == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE
+            ) {
 
                 $cart->addAppliedDiscount($discount);
-
             }
         }
 
@@ -52,25 +82,43 @@ class DiscountService
     }
 
     /**
-     * @param $discountsToApply
-     * @param $cartItemsTotalDue
-     * @return float|int
+     * @param array $discountsToApply - array of \Railroad\Ecommerce\Entities\Discount
+     * @param float $cartItemsTotalDue
+     * @param array $cartItems - array of \Railroad\Ecommerce\Entities\Structures\CartItem
+     *
+     * @return float
      */
-    public function getAmountDiscounted($discountsToApply, $cartItemsTotalDue, $cartItems)
-    {
+    public function getAmountDiscounted(
+        array $discountsToApply,
+        float $cartItemsTotalDue,
+        array $cartItems
+    ) {
         $amountDiscounted = 0;
 
         foreach ($discountsToApply as $discount) {
+            /**
+             * @var $discount \Railroad\Ecommerce\Entities\Discount
+             */
+
             foreach ($cartItems as $cartItem) {
-                if ($discount['type'] == self::ORDER_TOTAL_AMOUNT_OFF_TYPE) {
-                    $amountDiscounted += $discount['amount'];
+                /**
+                 * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+                 */
+
+                if (
+                    $discount->getType() == self::ORDER_TOTAL_AMOUNT_OFF_TYPE
+                ) {
+                    $amountDiscounted += $discount->getAmount();
                     break;
-                } elseif ($discount['type'] == self::ORDER_TOTAL_PERCENT_OFF_TYPE) {
-                    $amountDiscounted += $discount['amount'] / 100 * $cartItemsTotalDue;
+                } elseif (
+                    $discount->getType() == self::ORDER_TOTAL_PERCENT_OFF_TYPE
+                ) {
+                    $amountDiscounted += $discount->getAmount() / 100 * $cartItemsTotalDue;
                     break;
                 }
             }
         }
+
         return $amountDiscounted;
     }
 }

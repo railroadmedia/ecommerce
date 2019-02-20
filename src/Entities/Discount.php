@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -88,6 +90,16 @@ class Discount
      * @var bool
      */
     protected $visible;
+
+    /**
+     * @ORM\OneToMany(targetEntity="DiscountCriteria", mappedBy="discount")
+     */
+    protected $discountCriterias;
+
+    public function __construct()
+    {
+        $this->discountCriterias = new ArrayCollection();
+    }
 
     /**
      * @return int|null
@@ -253,6 +265,53 @@ class Discount
     public function setProduct(?Product $product): self
     {
         $this->product = $product;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|DiscountCriteria[]
+     */
+    public function getDiscountCriterias(): Collection
+    {
+        return $this->discountCriterias;
+    }
+
+    /**
+     * @param DiscountCriteria $discountCriteria
+     *
+     * @return Discount
+     */
+    public function addDiscountCriteria(
+        DiscountCriteria $discountCriteria
+    ): self {
+
+        if (!$this->discountCriterias->contains($discountCriteria)) {
+            $this->discountCriterias[] = $discountCriteria;
+            $discountCriteria->setDiscount($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param DiscountCriteria $shippingCostsWeightRange
+     *
+     * @return Discount
+     */
+    public function removeDiscountCriteria(
+        DiscountCriteria $discountCriteria
+    ): self {
+
+        if ($this->discountCriterias->contains($discountCriteria)) {
+
+            $this->discountCriterias->removeElement($discountCriteria);
+
+            // set the owning side to null (unless already changed)
+            if ($discountCriteria->getDiscount() === $this) {
+                $discountCriteria->setDiscount(null);
+            }
+        }
 
         return $this;
     }

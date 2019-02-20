@@ -788,7 +788,7 @@ class OrderFormService
 
         $discountsToApply = $this->cartService->getDiscountsToApply();
         $this->cartService->getCart()
-            ->addDiscount($discountsToApply);
+            ->setDiscounts($discountsToApply);
         $this->cartService->getCart()
             ->addAppliedDiscount($discountsToApply);
 

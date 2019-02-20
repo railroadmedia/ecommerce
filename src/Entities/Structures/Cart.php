@@ -1,8 +1,9 @@
 <?php
 
-namespace Railroad\Ecommerce\Entities;
+namespace Railroad\Ecommerce\Entities\Structures;
 
 use Illuminate\Support\Facades\Session;
+use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountService;
 
@@ -163,7 +164,7 @@ class Cart
     }
 
     /**
-     * @return Discount[]
+     * @return array - of \Railroad\Ecommerce\Entities\Discount
      */
     public function getDiscounts()
     {
@@ -171,11 +172,11 @@ class Cart
     }
 
     /**
-     * @param Discount $discount
+     * @param array $discounts - array of \Railroad\Ecommerce\Entities\Discount
      */
-    public function addDiscount($discount)
+    public function setDiscounts(array $discounts)
     {
-        $this->discounts = $discount;
+        $this->discounts = $discounts;
     }
 
     /**
@@ -242,7 +243,7 @@ class Cart
     }
 
     /**
-     * @return Discount[]
+     * @return array - of Discount
      */
     public function getAppliedDiscounts()
     {
@@ -252,7 +253,7 @@ class Cart
     /**
      * @param Discount $discount
      */
-    public function addAppliedDiscount($discount)
+    public function addAppliedDiscount(Discount $discount)
     {
         $this->appliedDiscounts = $discount;
     }
