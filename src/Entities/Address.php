@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Entities;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Usora\Entities\User;
 
 /**
@@ -24,7 +25,7 @@ use Railroad\Usora\Entities\User;
  * )
  * @ORM\HasLifecycleCallbacks
  */
-class Address
+class Address implements AddressInterface
 {
     use TimestampableEntity;
 
@@ -319,7 +320,7 @@ class Address
      * @return Address
      */
     public function setState(?string $state)
-    : self {
+    : AddressInterface {
         $this->state = $state;
 
         return $this;
@@ -340,7 +341,7 @@ class Address
      * @return Address
      */
     public function setCountry(?string $country)
-    : self {
+    : AddressInterface {
         $this->country = $country;
 
         return $this;

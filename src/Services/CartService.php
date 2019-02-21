@@ -3,20 +3,18 @@
 namespace Railroad\Ecommerce\Services;
 
 use Illuminate\Session\Store;
+use Doctrine\ORM\EntityManager;
 use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\ShippingOption;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
+use Railroad\Ecommerce\Services\CartAddressService;
+use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Permissions\Services\PermissionService;
 
 class CartService
 {
-    /**
-     * @var Store
-     */
-    private $session;
-
     /**
      * @var CartAddressService
      */
@@ -42,6 +40,16 @@ class CartService
      */
     private $permissionService;
 
+    /**
+     * @var Store
+     */
+    private $session;
+
+    /**
+     * @var TaxService
+     */
+    private $taxService;
+
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
@@ -59,6 +67,7 @@ class CartService
      * @param EntityManager $entityManager
      * @param PermissionService $permissionService
      * @param Store $session
+     * @param TaxService $taxService
      */
     public function __construct(
         CartAddressService $cartAddressService,
@@ -66,7 +75,8 @@ class CartService
         DiscountService $discountService,
         EntityManager $entityManager,
         PermissionService $permissionService,
-        Store $session
+        Store $session,
+        TaxService $taxService
     ) {
 
         $this->cartAddressService = $cartAddressService;
@@ -75,8 +85,12 @@ class CartService
         $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
         $this->session = $session;
+        $this->taxService = $taxService;
 
-        $this->cart = new Cart();
+        $this->cart = new Cart(
+            $this->cartAddressService,
+            $this->taxService
+        );
     }
 
     /**
@@ -86,8 +100,7 @@ class CartService
      */
     public function getAllCartItems()
     {
-        return $this->getCart()
-            ->getItems();
+        return $this->getCart()->getItems();
     }
 
     /**
@@ -344,17 +357,36 @@ class CartService
                                     CartAddressService::SHIPPING_ADDRESS_TYPE
                                 );
 
-        $totalWeight = $cart->getTotalWeight() + $product->weight * $quantity;
+        $shippingCountry = $shippingAddress ?
+                                $shippingAddress->getCountry() : '';
+
+        $totalWeight = $cart->getTotalWeight() + $product->getWeight() * $quantity;
 
         /**
          * @var $shippingCosts array - of \Railroad\Ecommerce\Entities\ShippingOption
          */
-        $shippingCosts = $this->entityManager
+        $shippingOptions = $this->entityManager
                                 ->getRepository(ShippingOption::class)
                                 ->getShippingCosts(
-                                    $shippingAddress->getCountry(),
+                                    $shippingCountry,
                                     $totalWeight
                                 );
+        $shippingCosts = 0;
+
+        if (count($shippingOptions)) {
+            /**
+             * @var $shippingOption \Railroad\Ecommerce\Entities\Structures\ShippingOption
+             */
+            $shippingOption = $shippingOptions[0];
+            /**
+             * @var $shippingCost \Railroad\Ecommerce\Entities\Structures\ShippingCostsWeightRange
+             */
+            $shippingCost = $shippingOption
+                                ->getShippingCostsWeightRanges()
+                                ->first();
+
+            $shippingCosts = $shippingCost->getPrice();
+        }
 
         $cart->setShippingCosts($shippingCosts);
 
@@ -420,7 +452,7 @@ class CartService
             $cart
         );
 
-        $cart->addDiscount($discountsToApply);
+        $cart->setDiscounts($discountsToApply);
 
         $cartDiscounted = $this->applyDiscounts();
 
@@ -448,7 +480,10 @@ class CartService
             }
         }
 
-        return new Cart();
+        return new Cart(
+            $this->cartAddressService,
+            $this->taxService
+        );
     }
 
     /**
@@ -459,10 +494,6 @@ class CartService
     public function getDiscountsToApply()
     {
         $discountsToApply = [];
-
-        $activeDiscounts = $this->discountRepository->query()
-                ->where('active', 1)
-                ->get();
 
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
@@ -499,7 +530,7 @@ class CartService
             }
 
             if ($criteriaMet) {
-                $discountsToApply[$activeDiscount->id] = $activeDiscount;
+                $discountsToApply[$activeDiscount->getId()] = $activeDiscount;
             }
         }
 
@@ -522,13 +553,13 @@ class CartService
              */
             foreach ($this->getCart()->getItems() as $index => $item) {
                 /**
-                 * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+                 * @var $item \Railroad\Ecommerce\Entities\Structures\CartItem
                  */
 
                 /**
                  * @var $cartProduct \Railroad\Ecommerce\Entities\Product
                  */
-                $cartProduct = $cartItem->getProduct();
+                $cartProduct = $item->getProduct();
 
                 /**
                  * @var $discountProduct \Railroad\Ecommerce\Entities\Product
@@ -545,6 +576,7 @@ class CartService
                     $productDiscount = 0;
 
                     if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
+
                         $productDiscount = $discount->getAmount() * $item->getQuantity();
                     }
 
@@ -564,8 +596,7 @@ class CartService
 
         $discountedAmount = $this->discountService->getAmountDiscounted(
             $this->getCart()->getDiscounts(),
-            $this->getCart()->getTotalDue(),
-            $this->getCart()->getItems()
+            $this->getCart()->getTotalDue()
         );
 
         $this->getCart()->setTotalDiscountAmount($discountedAmount);

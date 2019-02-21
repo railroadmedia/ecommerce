@@ -88,9 +88,9 @@ class CartAddressServiceTest extends EcommerceTestCase
         $this->session->flush();
 
         $storedCountry = $this->faker->word;
-        $storedRegion = null;
+        $storedState = null;
 
-        $storedAddress = new Address($storedCountry, $storedRegion);
+        $storedAddress = new Address($storedCountry, $storedState);
 
         $addressType = CartAddressService::SHIPPING_ADDRESS_TYPE;
 
@@ -100,9 +100,9 @@ class CartAddressServiceTest extends EcommerceTestCase
         );
 
         $newCountry = null;
-        $newRegion = $this->faker->word;
+        $newState = $this->faker->word;
 
-        $newAddress = new Address($newCountry, $newRegion);
+        $newAddress = new Address($newCountry, $newState);
 
         $srv->updateAddress($newAddress, $addressType);
 
@@ -115,7 +115,7 @@ class CartAddressServiceTest extends EcommerceTestCase
 
         $this->assertEquals($storedCountry, $sessionAddress->getCountry());
 
-        $this->assertEquals($newRegion, $sessionAddress->getRegion());
+        $this->assertEquals($newState, $sessionAddress->getState());
     }
 
     public function test_update_address_new()
@@ -125,9 +125,9 @@ class CartAddressServiceTest extends EcommerceTestCase
         $this->session->flush();
 
         $storedCountry = $this->faker->word;
-        $storedRegion = null;
+        $storedState = null;
 
-        $storedAddress = new Address($storedCountry, $storedRegion);
+        $storedAddress = new Address($storedCountry, $storedState);
 
         $addressType = CartAddressService::SHIPPING_ADDRESS_TYPE;
 
@@ -137,9 +137,9 @@ class CartAddressServiceTest extends EcommerceTestCase
         );
 
         $newCountry = $this->faker->word;
-        $newRegion = $this->faker->word;
+        $newState = $this->faker->word;
 
-        $newAddress = new Address($newCountry, $newRegion);
+        $newAddress = new Address($newCountry, $newState);
 
         $srv->updateAddress($newAddress, $addressType);
 
@@ -152,6 +152,6 @@ class CartAddressServiceTest extends EcommerceTestCase
 
         $this->assertEquals($newCountry, $sessionAddress->getCountry());
 
-        $this->assertEquals($newRegion, $sessionAddress->getRegion());
+        $this->assertEquals($newState, $sessionAddress->getState());
     }
 }

@@ -65,7 +65,7 @@ class DiscountCriteriaService
     public function discountCriteriaMetForOrder(
         Cart $cart,
         DiscountCriteria $discountCriteria,
-        string $promoCode = ''
+        ?string $promoCode = ''
     ): bool {
         // todo - review calls to method, param order updated
         switch ($discountCriteria->getType()) {

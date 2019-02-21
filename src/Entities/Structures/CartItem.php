@@ -201,7 +201,7 @@ class CartItem
     /**
      * @return Product|null
      */
-    public function getProduct()
+    public function getProduct(): Product
     {
         return $this->product;
     }
@@ -233,7 +233,7 @@ class CartItem
     /**
      * @return array - of Discount
      */
-    public function getAppliedDiscounts()
+    public function getAppliedDiscounts(): array
     {
         return $this->appliedDiscounts ?? [];
     }

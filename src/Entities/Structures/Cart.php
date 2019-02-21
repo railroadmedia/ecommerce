@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Session;
 use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountService;
+use Railroad\Ecommerce\Services\CartAddressService;
+use Railroad\Ecommerce\Services\TaxService;
 
 class Cart
 {
@@ -23,7 +25,32 @@ class Cart
     public $appliedDiscounts;
     private $brand;
 
-    /** Get cart items
+    /**
+     * @var CartAddressService
+     */
+    private $cartAddressService;
+
+    /**
+     * @var TaxService
+     */
+    private $taxService;
+
+    /**
+     * CartService constructor.
+     *
+     * @param CartAddressService $cartAddressService
+     * @param TaxService $taxService
+     */
+    public function __construct(
+        CartAddressService $cartAddressService,
+        TaxService $taxService
+    ) {
+        $this->cartAddressService = $cartAddressService;
+        $this->taxService = $taxService;
+    }
+
+    /**
+     * Get cart items
      *
      * @return array
      */
@@ -32,7 +59,8 @@ class Cart
         return $this->items ?? [];
     }
 
-    /** Add cart on session
+    /**
+     * Add cart on session
      *
      * @param $cartItem
      * @return Cart
@@ -59,16 +87,25 @@ class Cart
         $this->totalTax = $taxesDue;
     }
 
-    /** Calculate taxes based on items, shipping costs and tax rate
+    /**
+     * Calculate taxes based on items, shipping costs and tax rate
      *
      * @return mixed
      */
     public function calculateTaxesDue()
     {
-        if (Session::has('cart-address-billing')) {
-            $billingAddress = Session::get('cart-address-billing');
+        /**
+         * @var $billingAddress \Railroad\Ecommerce\Entities\Structures\Address
+         */
+        $billingAddress = $this->cartAddressService
+                                ->getAddress(
+                                    CartAddressService::BILLING_ADDRESS_TYPE
+                                );
 
-            $taxRate = $this->getTaxRate($billingAddress['country'], $billingAddress['region']);
+        if ($billingAddress) {
+
+            $taxRate = $this->taxService->getTaxRate($billingAddress);
+
             $this->totalTax =
                 max(round(($this->getTotalDueForItems()) * $taxRate, 2), 0) +
                 max(round($this->shippingCosts * $taxRate, 2), 0);
@@ -76,7 +113,8 @@ class Cart
         return max((float)($this->totalTax), 0);
     }
 
-     /** Calculate total due
+    /**
+     * Calculate total due
      *
      * @return float
      */
@@ -96,7 +134,8 @@ class Cart
         );
     }
 
-    /** Calculate price per payment
+    /**
+     * Calculate price per payment
      *
      * @return float
      */
@@ -115,7 +154,8 @@ class Cart
         return $this->getTotalDue();
     }
 
-    /**Get payment plan selected option from the session
+    /**
+     * Get payment plan selected option from the session
      *
      * @return mixed
      */
@@ -131,6 +171,7 @@ class Cart
 
     /**
      * @param $shipping
+     *
      * @return $this
      */
     public function setShippingCosts($shipping)
@@ -142,6 +183,7 @@ class Cart
 
     /**
      * @param bool $applyDiscounts
+     *
      * @return float
      */
     public function calculateShippingDue($applyDiscounts = true)
@@ -150,12 +192,15 @@ class Cart
 
         if ($applyDiscounts) {
             foreach ($this->getDiscounts() as $discount) {
-                if ($discount->type == DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
-                    $amountDiscounted += $discount->amount;
-                } elseif ($discount->type == DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE) {
-                    $amountDiscounted += $discount->amount / 100 * $this->shippingCosts;
-                } elseif ($discount->type == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
-                    return $discount->amount;
+                /**
+                 * @var $discount \Railroad\Ecommerce\Entities\Discount
+                 */
+                if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
+                    $amountDiscounted += $discount->getAmount();
+                } elseif ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE) {
+                    $amountDiscounted += $discount->getAmount() / 100 * $this->shippingCosts;
+                } elseif ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
+                    return $discount->getAmount();
                 }
             }
         }
@@ -186,11 +231,12 @@ class Cart
     {
         $weight = 0.0;
 
-        foreach (
-            $this
-                ->getItems() as $cartItem
-        ) {
-            $weight += $cartItem->getProduct()->weight * $cartItem->getQuantity();
+        foreach ($this->getItems() as $cartItem) {
+            /**
+             * @var $discount \Railroad\Ecommerce\Entities\Product
+             */
+            $product = $cartItem->getProduct();
+            $weight += $product->getWeight() * $cartItem->getQuantity();
         }
 
         return $weight;
@@ -243,7 +289,7 @@ class Cart
     }
 
     /**
-     * @return array - of Discount
+     * @return array - array of \Railroad\Ecommerce\Entities\Discount
      */
     public function getAppliedDiscounts()
     {
@@ -251,29 +297,11 @@ class Cart
     }
 
     /**
-     * @param Discount $discount
+     * @param array $discount - array of \Railroad\Ecommerce\Entities\Discount
      */
-    public function addAppliedDiscount(Discount $discount)
+    public function setAppliedDiscounts(array $discounts)
     {
-        $this->appliedDiscounts = $discount;
-    }
-
-    /**
-     * @param $country
-     * @param $region
-     * @return float|int
-     */
-    public function getTaxRate($country, $region)
-    {
-        if (array_key_exists(strtolower($country), ConfigService::$taxRate)) {
-            if (array_key_exists(strtolower($region), ConfigService::$taxRate[strtolower($country)])) {
-                return ConfigService::$taxRate[strtolower($country)][strtolower($region)];
-            } else {
-                return 0.05;
-            }
-        } else {
-            return 0;
-        }
+        $this->appliedDiscounts = $discounts;
     }
 
     /**
@@ -283,11 +311,11 @@ class Cart
     {
         $totalDueFromItems = 0;
 
-        foreach (
-            $this->getItems() as $cartItem
-        ) {
-            $totalDueFromItems += ($cartItem->getDiscountedPrice()) ? $cartItem->getDiscountedPrice() :
-                $cartItem->getTotalPrice();
+        foreach ($this->getItems() as $cartItem) {
+
+            $totalDueFromItems += ($cartItem->getDiscountedPrice()) ?
+                                    $cartItem->getDiscountedPrice() :
+                                    $cartItem->getTotalPrice();
         }
 
         return $totalDueFromItems;
@@ -303,7 +331,9 @@ class Cart
         $this->totalDiscountAmount = 0;
     }
 
-    /** Set brand on the cart
+    /**
+     * Set brand on the cart
+     *
      * @param $brand
      * @return $this
      */
@@ -314,7 +344,9 @@ class Cart
         return $this;
     }
 
-    /** Get brand
+    /**
+     * Get brand
+     *
      * @return string
      */
     public function getBrand()

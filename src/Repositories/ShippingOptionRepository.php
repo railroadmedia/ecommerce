@@ -41,42 +41,20 @@ class ShippingOptionRepository extends EntityRepository
         $qb
             ->select(['so', 'scwr'])
             ->from($this->getClassName(), 'so')
-            ->leftJoin('so.shippingCostsWeightRanges', 'scwr')
+            ->join('so.shippingCostsWeightRanges', 'scwr')
             ->andWhere(
                 $qb->expr()->orX(
-                    $qb->expr()->gte('so.country', ':country'),
-                    $qb->expr()->isNull('so.country', ':any')
+                    $qb->expr()->eq('so.country', ':country'),
+                    $qb->expr()->eq('so.country', ':any')
                 )
             )
             ->andWhere($qb->expr()->lte('scwr.min', ':totalWeight'))
-            ->andWhere($qb->expr()->orX('scwr.max', ':totalWeight'))
+            ->andWhere($qb->expr()->gte('scwr.max', ':totalWeight'))
             ->setParameter('country', $country)
             ->setParameter('any', '*')
             ->setParameter('totalWeight', $totalWeight);
 
         return $qb->getQuery()->getResult();
-
-        /*
-        // todo - deprecated - to be removed
-        $results = $this->query()
-            ->join(
-                ConfigService::$tableShippingCostsWeightRange,
-                $this->connection()->raw(ConfigService::$tableShippingOption . '.id'),
-                '=',
-                $this->connection()->raw(ConfigService::$tableShippingCostsWeightRange . '.shipping_option_id')
-            )
-            ->where(
-                function ($query) use ($country) {
-                    $query->where('country', $country)
-                        ->orWhere('country', '*');
-                }
-            )
-            ->where('min', '<=', $totalWeight)
-            ->where('max', '>=', $totalWeight)
-            ->first();
-
-        return $results;
-        */
     }
 
     /**
@@ -102,18 +80,5 @@ class ShippingOptionRepository extends EntityRepository
             ->setParameter('shippingOptionId', $shippingOptionId);
 
         return $qb->getQuery()->getResult();
-
-        /*
-        // todo - deprecated - to be removed
-        return $this->query()
-            ->join(
-                ConfigService::$tableShippingCostsWeightRange,
-                $this->databaseManager->raw(ConfigService::$tableShippingOption . '.id'),
-                '=',
-                $this->databaseManager->raw(ConfigService::$tableShippingCostsWeightRange . '.shipping_option_id')
-            )
-            ->restrictByShippingOption($shippingOptionId)
-            ->get()->toArray();
-        */
     }
 }

@@ -26,6 +26,8 @@ class DiscountService
      */
     public function applyDiscounts(array $discountsToApply, Cart $cart)
     {
+        $cartDiscounts = [];
+
         foreach ($discountsToApply as $discount) {
             /**
              * @var $discount \Railroad\Ecommerce\Entities\Discount
@@ -74,9 +76,11 @@ class DiscountService
                 $discount->getType() == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE
             ) {
 
-                $cart->addAppliedDiscount($discount);
+                $cartDiscounts[] = $discount;
             }
         }
+
+        $cart->setAppliedDiscounts($cartDiscounts);
 
         return $cart->getItems();
     }
@@ -84,14 +88,12 @@ class DiscountService
     /**
      * @param array $discountsToApply - array of \Railroad\Ecommerce\Entities\Discount
      * @param float $cartItemsTotalDue
-     * @param array $cartItems - array of \Railroad\Ecommerce\Entities\Structures\CartItem
      *
      * @return float
      */
     public function getAmountDiscounted(
         array $discountsToApply,
-        float $cartItemsTotalDue,
-        array $cartItems
+        float $cartItemsTotalDue
     ) {
         $amountDiscounted = 0;
 
@@ -100,22 +102,14 @@ class DiscountService
              * @var $discount \Railroad\Ecommerce\Entities\Discount
              */
 
-            foreach ($cartItems as $cartItem) {
-                /**
-                 * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
-                 */
-
-                if (
-                    $discount->getType() == self::ORDER_TOTAL_AMOUNT_OFF_TYPE
-                ) {
-                    $amountDiscounted += $discount->getAmount();
-                    break;
-                } elseif (
-                    $discount->getType() == self::ORDER_TOTAL_PERCENT_OFF_TYPE
-                ) {
-                    $amountDiscounted += $discount->getAmount() / 100 * $cartItemsTotalDue;
-                    break;
-                }
+            if (
+                $discount->getType() == self::ORDER_TOTAL_AMOUNT_OFF_TYPE
+            ) {
+                $amountDiscounted += $discount->getAmount();
+            } elseif (
+                $discount->getType() == self::ORDER_TOTAL_PERCENT_OFF_TYPE
+            ) {
+                $amountDiscounted += $discount->getAmount() / 100 * $cartItemsTotalDue;
             }
         }
 

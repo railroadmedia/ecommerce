@@ -2,7 +2,9 @@
 
 namespace Railroad\Ecommerce\Entities\Structures;
 
-class Address
+use Railroad\Ecommerce\Contracts\Address as AddressInterface;
+
+class Address implements AddressInterface
 {
     /**.
      * @var string
@@ -12,15 +14,15 @@ class Address
     /**.
      * @var string
      */
-    protected $region;
+    protected $state;
 
     public function __construct(
         ?string $country = null,
-        ?string $region = null
+        ?string $state = null
     ) {
 
         $this->country = $country;
-        $this->region = $region;
+        $this->state = $state;
     }
 
     /**
@@ -36,7 +38,7 @@ class Address
      *
      * @return Address
      */
-    public function setCountry(string $country) : self
+    public function setCountry(?string $country) : AddressInterface
     {
         $this->country = $country;
 
@@ -46,19 +48,19 @@ class Address
     /**
      * @return string|null
      */
-    public function getRegion() : ?string
+    public function getState() : ?string
     {
-        return $this->region;
+        return $this->state;
     }
 
     /**
-     * @param string $region
+     * @param string $state
      *
      * @return Address
      */
-    public function setRegion(string $region) : self
+    public function setState(?string $state) : AddressInterface
     {
-        $this->region = $region;
+        $this->state = $state;
 
         return $this;
     }
@@ -67,7 +69,7 @@ class Address
      * Merges data from $address into current address
      * current data is not overwritten, if exists
      *
-     * @param string $region
+     * @param Address $address
      *
      * @return Address
      */
@@ -77,8 +79,8 @@ class Address
             $this->country = $address->getCountry();
         }
 
-        if (!$this->region && $address->getRegion()) {
-            $this->region = $address->getRegion();
+        if (!$this->state && $address->getState()) {
+            $this->state = $address->getState();
         }
 
         return $this;

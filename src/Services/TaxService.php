@@ -2,7 +2,7 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Services\TaxService;
 
 class TaxService
@@ -13,11 +13,11 @@ class TaxService
     /**
      * Calculate the tax rate based on country and region
      *
-     * @param Address $address
+     * @param AddressInterface $address
      *
      * @return float
      */
-    public function getTaxRate(?Address $address): float
+    public function getTaxRate(?AddressInterface $address): float
     {
         if (
             $address &&
@@ -52,7 +52,7 @@ class TaxService
      *
      * @return float
      */
-    public function vat($costs, ?Address $address): float
+    public function vat($costs, ?AddressInterface $address): float
     {
         return $costs * $this->getTaxRate($address);
     }

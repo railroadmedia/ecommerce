@@ -790,7 +790,7 @@ class OrderFormService
         $this->cartService->getCart()
             ->setDiscounts($discountsToApply);
         $this->cartService->getCart()
-            ->addAppliedDiscount($discountsToApply);
+            ->setAppliedDiscounts($discountsToApply);
 
         $this->cartService->applyDiscounts();
 
