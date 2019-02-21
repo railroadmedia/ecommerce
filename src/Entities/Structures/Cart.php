@@ -233,7 +233,7 @@ class Cart
 
         foreach ($this->getItems() as $cartItem) {
             /**
-             * @var $discount \Railroad\Ecommerce\Entities\Product
+             * @var $product \Railroad\Ecommerce\Entities\Product
              */
             $product = $cartItem->getProduct();
             $weight += $product->getWeight() * $cartItem->getQuantity();

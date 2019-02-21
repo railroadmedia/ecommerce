@@ -67,7 +67,6 @@ class DiscountCriteriaService
         DiscountCriteria $discountCriteria,
         ?string $promoCode = ''
     ): bool {
-        // todo - review calls to method, param order updated
         switch ($discountCriteria->getType()) {
             case self::PRODUCT_QUANTITY_REQUIREMENT_TYPE:
                 return $this->productQuantityRequirementMet(
@@ -187,8 +186,6 @@ class DiscountCriteriaService
         DiscountCriteria $discountCriteria,
         float $shippingCosts
     ): bool {
-        // todo - review calls to method, param order updated
-
         if (
             $shippingCosts >= (float)$discountCriteria->getMin() &&
             $shippingCosts <= (float)$discountCriteria->getMax()
@@ -239,8 +236,6 @@ class DiscountCriteriaService
         DiscountCriteria $discountCriteria,
         ?string $promoCode
     ): bool {
-        // todo - review calls to method, param order updated
-
         if (
             !empty($promoCode) &&
             (

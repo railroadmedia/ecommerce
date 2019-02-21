@@ -4,7 +4,7 @@ namespace Railroad\Ecommerce\Contracts;
 
 interface Address
 {
-	/**
+    /**
      * @return string|null
      */
     public function getState(): ?string;
