@@ -349,47 +349,6 @@ class CartService
                         ->getRepository(Product::class)
                         ->find($options['product-id']);
 
-        /**
-         * @var $shippingAddress \Railroad\Ecommerce\Entities\Structures\Address
-         */
-        $shippingAddress = $this->cartAddressService
-                                ->getAddress(
-                                    CartAddressService::SHIPPING_ADDRESS_TYPE
-                                );
-
-        $shippingCountry = $shippingAddress ?
-                                $shippingAddress->getCountry() : '';
-
-        $totalWeight = $cart->getTotalWeight() + $product->getWeight() * $quantity;
-
-        /**
-         * @var $shippingCosts array - of \Railroad\Ecommerce\Entities\ShippingOption
-         */
-        $shippingOptions = $this->entityManager
-                                ->getRepository(ShippingOption::class)
-                                ->getShippingCosts(
-                                    $shippingCountry,
-                                    $totalWeight
-                                );
-        $shippingCosts = 0;
-
-        if (count($shippingOptions)) {
-            /**
-             * @var $shippingOption \Railroad\Ecommerce\Entities\Structures\ShippingOption
-             */
-            $shippingOption = $shippingOptions[0];
-            /**
-             * @var $shippingCost \Railroad\Ecommerce\Entities\Structures\ShippingCostsWeightRange
-             */
-            $shippingCost = $shippingOption
-                                ->getShippingCostsWeightRanges()
-                                ->first();
-
-            $shippingCosts = $shippingCost->getPrice();
-        }
-
-        $cart->setShippingCosts($shippingCosts);
-
         // If the item already exists, just increase the quantity
         foreach ($cart->getItems() as $cartItem) {
             if (
@@ -442,6 +401,8 @@ class CartService
 
         $cart->addCartItem($cartItem);
 
+        $this->calculateShippingCosts();
+
         foreach ($cart->getItems() as $cartItem) {
             $cartItem->removeAppliedDiscounts();
         }
@@ -463,6 +424,52 @@ class CartService
         $this->session->put($brand . '-' . self::SESSION_KEY, $cartDiscounted);
 
         return $cartDiscounted;
+    }
+
+    public function calculateShippingCosts()
+    {
+        $cart = $this->getCart();
+
+        /**
+         * @var $shippingAddress \Railroad\Ecommerce\Entities\Structures\Address
+         */
+        $shippingAddress = $this->cartAddressService
+                                ->getAddress(
+                                    CartAddressService::SHIPPING_ADDRESS_TYPE
+                                );
+
+        $shippingCountry = $shippingAddress ?
+                                $shippingAddress->getCountry() : '';
+
+        $totalWeight = $cart->getTotalWeight();
+
+        /**
+         * @var $shippingCosts array - of \Railroad\Ecommerce\Entities\ShippingOption
+         */
+        $shippingOptions = $this->entityManager
+                                ->getRepository(ShippingOption::class)
+                                ->getShippingCosts(
+                                    $shippingCountry,
+                                    $totalWeight
+                                );
+        $shippingCosts = 0;
+
+        if (count($shippingOptions)) {
+            /**
+             * @var $shippingOption \Railroad\Ecommerce\Entities\Structures\ShippingOption
+             */
+            $shippingOption = $shippingOptions[0];
+            /**
+             * @var $shippingCost \Railroad\Ecommerce\Entities\Structures\ShippingCostsWeightRange
+             */
+            $shippingCost = $shippingOption
+                                ->getShippingCostsWeightRanges()
+                                ->first();
+
+            $shippingCosts = $shippingCost->getPrice();
+        }
+
+        $cart->setShippingCosts($shippingCosts);
     }
 
     /**
@@ -515,7 +522,7 @@ class CartService
         $activeDiscounts = $qb->getQuery()->getResult();
 
         foreach ($activeDiscounts as $activeDiscount) {
-            $criteriaMet = true;
+            $criteriaMet = false;
             foreach ($activeDiscount->getDiscountCriterias() as $discountCriteria) {
                 /**
                  * @var $discountCriteria \Railroad\Ecommerce\Entities\DiscountCriteria
@@ -527,8 +534,8 @@ class CartService
                                                 $this->getPromoCode()
                                             );
 
-                if (!$discountCriteriaMet) {
-                    $criteriaMet = false;
+                if ($discountCriteriaMet) {
+                    $criteriaMet = true;
                     break;
                 }
             }

@@ -310,7 +310,7 @@
                             <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td class="content-block">
-                                        <h1 class="aligncenter">{{$currencySymbol}}{{ number_format($order['paid'], 2) }} Paid</h1>
+                                        <h1 class="aligncenter">{{$currencySymbol}}{{ number_format($order->getTotalPaid(), 2) }} Paid</h1>
 
                                     </td>
                                 </tr>
@@ -323,17 +323,17 @@
                                     <td class="content-block aligncenter">
                                         <table class="invoice">
                                             <tr>
-                                                <td><br>Invoice #{{$order['id']}}<br>
-                                                    {{ \Carbon\Carbon::parse($order['created_on'])->format('F j, Y') }}</td>
+                                                <td><br>Invoice #{{$order->getId()}}<br>
+                                                    {{ $order->getCreatedAt()->format('F j, Y') }}</td>
                                             </tr>
                                             <tr>
                                                 <td>
                                                     <table class="invoice-items" cellpadding="0" cellspacing="0">
                                                         @foreach($orderItems ?? [] as $orderItem)
                                                             <tr>
-                                                                <td>{{ $orderItem['product']['name'] }}</td>
+                                                                <td>{{ $orderItem->getProduct()->getName() }}</td>
                                                                 <td class="alignright">
-                                                                    $ {{ number_format($orderItem['total_price'], 2) }} USD
+                                                                    $ {{ number_format($orderItem->getFinalPrice(), 2) }} USD
                                                                 </td>
                                                             </tr>
                                                         @endforeach
@@ -342,13 +342,13 @@
                                                             <tr>
                                                                 <td>Tax</td>
                                                                 <td class="alignright">
-                                                                    {{ $currencySymbol}} {{ number_format($order['tax'], 2) }}</td>
+                                                                    {{ $currencySymbol}} {{ number_format($order->getTaxesDue(), 2) }}</td>
                                                             </tr>
                                                         @endif
                                                         <tr class="total">
                                                             <td class="alignright" width="80%">Total</td>
                                                             <td class="alignright">
-                                                                {{ $currencySymbol}}{{ number_format($order['paid'], 2) }} {{ $payment['currency'] }}</td>
+                                                                {{ $currencySymbol}}{{ number_format($order->getTotalPaid(), 2) }} {{ $payment->getCurrency() }}</td>
                                                         </tr>
                                                     </table>
                                                 </td>
