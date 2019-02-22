@@ -41,6 +41,7 @@ class DiscountService
             ) {
 
                 foreach ($cart->getItems() as $key => $cartItem) {
+
                     /**
                      * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
                      */
@@ -56,10 +57,13 @@ class DiscountService
                     $discountProduct = $discount->getProduct();
 
                     if (
-                        ($cartProduct->getId() == $discountProduct->getId()) ||
+                        $cartProduct &&
                         (
-                            $cartProduct->getCategory() ==
-                            $discount->getProductCategory()
+                            (
+                                $discountProduct &&
+                                $cartProduct->getId() == $discountProduct->getId()
+                            )
+                            || $cartProduct->getCategory() == $discount->getProductCategory()
                         )
                     ) {
                         $cartItem->addAppliedDiscount($discount);

@@ -442,6 +442,10 @@ class CartService
 
         $cart->addCartItem($cartItem);
 
+        foreach ($cart->getItems() as $cartItem) {
+            $cartItem->removeAppliedDiscounts();
+        }
+
         /**
          * @var $discountsToApply array - of \Railroad\Ecommerce\Entities\Discount
          */
@@ -567,10 +571,13 @@ class CartService
                 $discountProduct = $discount->getProduct();
 
                 if (
-                    $discountProduct->getId() == $item->getOptions()['product-id'] ||
+                    $cartProduct &&
                     (
-                        $discount->getProductCategory() &&
-                        $discount->getProductCategory() == $cartProduct->getCategory()
+                        (
+                            $discountProduct &&
+                            $cartProduct->getId() == $discountProduct->getId()
+                        )
+                        || $cartProduct->getCategory() == $discount->getProductCategory()
                     )
                 ) {
                     $productDiscount = 0;

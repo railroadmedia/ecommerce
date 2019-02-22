@@ -245,4 +245,12 @@ class CartItem
     {
         $this->appliedDiscounts[] = $discount;
     }
+
+    /**
+     * Resets the applied discounts
+     */
+    public function removeAppliedDiscounts()
+    {
+        $this->appliedDiscounts = [];
+    }
 }
