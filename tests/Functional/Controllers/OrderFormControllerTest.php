@@ -203,13 +203,15 @@ class OrderFormControllerTest extends EcommerceTestCase
         $response->assertSessionHas('success', true);
         $response->assertSessionHas('order');
 
+        // assert database - all persisted entities
+
         // assert database records
         $this->assertDatabaseHas(
             ConfigService::$tableUserProduct,
             [
                 'user_id' => $userId,
                 'product_id' => $productOne['id'],
-                'quantity' => 1,
+                'quantity' => $productOneQuantity,
                 'expiration_date' => null,
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
@@ -220,13 +222,11 @@ class OrderFormControllerTest extends EcommerceTestCase
             [
                 'user_id' => $userId,
                 'product_id' => $productTwo['id'],
-                'quantity' => 1,
+                'quantity' => $productTwoQuantity,
                 'expiration_date' => null,
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
-
-        // assert database - all persisted entities
 
         // billingAddress
         $this->assertDatabaseHas(

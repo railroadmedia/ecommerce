@@ -389,4 +389,20 @@ class ResponseService extends FractalResponseService
                 $queryBuilder
             )->parseIncludes($includes);
     }
+
+    /**
+     * @param string $url
+     *
+     * @return Fractal
+     */
+    public static function redirect(string $url)
+    {
+        return fractal(
+                null,
+                function($notUsed) {
+                    return null;
+                },
+                new JsonApiSerializer()
+            )->addMeta(['redirect' => $url]);
+    }
 }

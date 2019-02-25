@@ -137,6 +137,17 @@ class OrderFormService
     }
 
     /**
+     * @param float $price
+     * @param string $currency
+     *
+     * @return float
+     */
+    public function convertPrice(float $price, string $currency)
+    {
+        return $this->currencyService->convertFromBase($price, $currency);
+    }
+
+    /**
      * @param OrderFormSubmitRequest $request
      * @param User $user
      * @param Customer $customer
@@ -155,10 +166,9 @@ class OrderFormService
         $currency
     ) : array {
 
-        // todo DEVE-31 - add taxes
         $customerCreditCard = $this->stripePaymentGateway->getOrCreateCustomer(
             $request->get('gateway'),
-            $user['email'] ?? $customer['email']
+            $user->getEmail() ?? $customer->getEmail()
         );
 
         $card = $this->stripePaymentGateway->createCustomerCard(
@@ -167,9 +177,11 @@ class OrderFormService
             $request->get('card-token')
         );
 
+        $convertedPrice = $this->convertPrice($initialPrice, $currency);
+
         $charge = $this->stripePaymentGateway->chargeCustomerCard(
             $request->get('gateway'),
-            $initialPrice, // todo - review
+            $convertedPrice,
             $currency,
             $card,
             $customerCreditCard
@@ -228,16 +240,18 @@ class OrderFormService
         User $user
     ) : array {
 
+        $convertedPrice = $this->convertPrice($price, $currency);
+
         $billingAgreementId = $this->payPalPaymentGateway->createBillingAgreement(
             $request->get('gateway'),
-            $price,
+            $convertedPrice,
             $currency,
             $request->get('token')
         );
 
         $transactionId = $this->payPalPaymentGateway->chargeBillingAgreement(
             $request->get('gateway'),
-            $price,
+            $convertedPrice,
             $currency,
             $billingAgreementId
         );
@@ -311,9 +325,11 @@ class OrderFormService
             return null;
         }
 
+        $convertedPrice = $this->convertPrice($initialPrice, $currency);
+
         $charge = $this->stripePaymentGateway->chargeCustomerCard(
             $request->get('gateway'),
-            $initialPrice,
+            $convertedPrice,
             $currency,
             $card,
             $customer
@@ -345,9 +361,11 @@ class OrderFormService
                             ->getRepository(PaypalBillingAgreement::class)
                             ->find($paymentMethod->getMethodId());
 
+        $convertedPrice = $this->convertPrice($initialPrice, $currency);
+
         return $this->payPalPaymentGateway->chargeBillingAgreement(
             $request->get('gateway'),
-            $initialPrice,
+            $convertedPrice,
             $currency,
             $paypalAgreement->getExternalId()
         );
@@ -446,10 +464,8 @@ class OrderFormService
         $payment = new Payment();
 
         $conversionRate = $this->currencyService->getRate($currency);
-        $convertedTotalDue = $this->currencyService
-                                    ->convertFromBase($due, $currency);
-        $convertedTotalPaid = $this->currencyService
-                                    ->convertFromBase($paid, $currency);
+        $convertedTotalDue = $this->convertPrice($due, $currency);
+        $convertedTotalPaid = $this->convertPrice($paid, $currency);
 
         $payment
             ->setTotalDue($convertedTotalDue)

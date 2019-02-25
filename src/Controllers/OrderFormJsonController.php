@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Railroad\Ecommerce\Exceptions\NotFoundException;
-use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
@@ -11,6 +10,7 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\PaymentPlanService;
+use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\Resora\Entities\Entity;
 
@@ -25,11 +25,6 @@ class OrderFormJsonController extends BaseController
      * @var \Railroad\Ecommerce\Services\CartAddressService
      */
     private $cartAddressService;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\ShippingOptionRepository
-     */
-    private $shippingOptionsRepository;
 
     /**
      * @var CurrencyService
@@ -68,7 +63,6 @@ class OrderFormJsonController extends BaseController
         CurrencyService $currencyService,
         OrderFormService $orderFormService,
         PaymentPlanService $paymentPlanService,
-        ShippingOptionRepository $shippingOptionRepository,
         PermissionService $permissionService
     ) {
         parent::__construct();
@@ -78,12 +72,12 @@ class OrderFormJsonController extends BaseController
         $this->currencyService = $currencyService;
         $this->orderFormService = $orderFormService;
         $this->paymentPlanService = $paymentPlanService;
-        $this->shippingOptionsRepository = $shippingOptionRepository;
         $this->permissionService = $permissionService;
     }
 
     public function index()
     {
+        /*
         $this->cartService
             ->setBrand(ConfigService::$brand);
 
@@ -108,6 +102,9 @@ class OrderFormJsonController extends BaseController
             'totalDue' => $this->cartService->getCart()
                 ->getTotalDue(),
         ];
+        */
+
+        return ResponseService::empty(204); // tmp
     }
 
     /** Submit an order
@@ -117,7 +114,12 @@ class OrderFormJsonController extends BaseController
      */
     public function submitOrder(OrderFormSubmitRequest $request)
     {
-        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
+        if (
+            $this->permissionService->can(
+                auth()->id(),
+                'place-orders-for-other-users'
+            )
+        ) {
             $brand = $request->get('brand', ConfigService::$brand);
         }
 
@@ -127,8 +129,7 @@ class OrderFormJsonController extends BaseController
         // if the cart it's empty; we throw an exception
         throw_if(
             empty(
-            $this->cartService->getCart()
-                ->getItems()
+                $this->cartService->getCart()->getItems()
             ),
             new NotFoundException('The cart it\'s empty')
         );
@@ -136,25 +137,24 @@ class OrderFormJsonController extends BaseController
         $result = $this->orderFormService->processOrderForm($request);
 
         if (isset($result['order'])) {
-            return reply()->json(
-                $result['order'],
+            return ResponseService::order($result['order']);
+        } elseif (isset($result['errors'])) {
+            $errors = [];
+            foreach ($result['errors'] as $message) {
+                $errors = [
+                    'title' => 'Payment failed.',
+                    'detail' => $message,
+                ];
+            }
+            response()->json(
                 [
-                    'code' => 200,
-                ]
+                    'errors' => $errors,
+                ],
+                404
             );
-        } else {
-            $data = $options = [];
+        } elseif ($result['redirect'] && !isset($result['errors'])) {
 
-            if (isset($result['errors'])) {
-                $options['errors'] = $result['errors'];
-                $options['code'] = 400;
-            }
-
-            if ($result['redirect'] && !isset($result['errors'])) {
-                $data = new Entity(['redirect' => $result['redirect']]);
-            }
-
-            return reply()->json($data, $options);
+            return ResponseService::redirect($result['redirect']);
         }
     }
 }
