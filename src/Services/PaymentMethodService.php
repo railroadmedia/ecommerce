@@ -94,11 +94,10 @@ class PaymentMethodService
 
         if ($user) {
 
-            if (
-                $makePrimary &&
-                $primary = $this->userPaymentMethodsRepository
-                    ->getUserPrimaryPaymentMethod($user)
-            ) {
+            $primary = $this->userPaymentMethodsRepository
+                    ->getUserPrimaryPaymentMethod($user);
+
+            if ($makePrimary && $primary) {
                 /**
                  * @var $primary \Railroad\Ecommerce\Entities\UserPaymentMethods
                  */
@@ -132,7 +131,7 @@ class PaymentMethodService
             $customerPaymentMethods
                 ->setCustomer($customer)
                 ->setPaymentMethod($paymentMethod)
-                ->setIsPrimary($makePrimary);
+                ->setIsPrimary(($primary == null) || $makePrimary); // if user has no other payment method, this should be primary
 
             $this->entityManager->persist($customerPaymentMethods);
         }
@@ -179,11 +178,10 @@ class PaymentMethodService
 
         $this->entityManager->persist($paymentMethod);
 
-        if (
-            $makePrimary &&
-            $primary = $this->userPaymentMethodsRepository
-                ->getUserPrimaryPaymentMethod($user)
-        ) {
+        $primary = $this->userPaymentMethodsRepository
+                ->getUserPrimaryPaymentMethod($user);
+
+        if ($makePrimary && $primary) {
             /**
              * @var $primary \Railroad\Ecommerce\Entities\UserPaymentMethods
              */
@@ -195,7 +193,7 @@ class PaymentMethodService
         $userPaymentMethods
             ->setUser($user)
             ->setPaymentMethod($paymentMethod)
-            ->setIsPrimary($makePrimary);
+            ->setIsPrimary(($primary == null) || $makePrimary); // if user has no other payment method, this should be primary
 
         $this->entityManager->persist($userPaymentMethods);
 

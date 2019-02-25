@@ -72,6 +72,6 @@ class CurrencyService
     {
         $rate = $this->getRate($currency);
 
-        return $price * $rate;
+        return round($price * $rate, 2);
     }
 }

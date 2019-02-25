@@ -70,7 +70,7 @@ class OrderDiscount
      *
      * @return OrderDiscount
      */
-    public function setSubscription(?Order $order): self
+    public function setOrder(?Order $order): self
     {
         $this->order = $order;
 

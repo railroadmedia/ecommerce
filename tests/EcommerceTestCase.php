@@ -95,6 +95,11 @@ class EcommerceTestCase extends BaseTestCase
     protected $currencies;
 
     /**
+     * @var string
+     */
+    protected $defaultCurrency;
+
+    /**
      * @var array
      */
     protected $paymentGateway;
@@ -306,6 +311,7 @@ class EcommerceTestCase extends BaseTestCase
         );
 
         $this->currencies = $defaultConfig['supported_currencies'];
+        $this->defaultCurrency = $defaultConfig['default_currency'];
         $this->paymentGateway = $defaultConfig['payment_gateways'];
     }
 

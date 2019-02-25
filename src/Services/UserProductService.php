@@ -111,7 +111,7 @@ class UserProductService
     public function createUserProduct(
         User $user,
         Product $product,
-        \DateTimeInterface $expirationDate,
+        ?DateTimeInterface $expirationDate,
         $quantity
     ): UserProduct {
 
@@ -176,7 +176,7 @@ class UserProductService
     public function assignUserProduct(
         User $user,
         Product $product,
-        DateTimeInterface $expirationDate,
+        ?DateTimeInterface $expirationDate,
         $quantity = 0
     ) {
 

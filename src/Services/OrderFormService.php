@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Doctrine\ORM\EntityManager;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -12,6 +13,7 @@ use Railroad\Ecommerce\Entities\Customer;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderItemFulfillment;
@@ -29,6 +31,8 @@ use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
+use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\Usora\Entities\User;
 use Stripe\Error\Card as StripeCard;
@@ -71,6 +75,11 @@ class OrderFormService
     private $payPalPaymentGateway;
 
     /**
+     * @var mixed UserProductService
+     */
+    private $userProductService;
+
+    /**
      * @var mixed UserProviderInterface
      */
     private $userProvider;
@@ -82,8 +91,6 @@ class OrderFormService
 
     /**
      * OrderFormService constructor.
-     *
-     *
      *
      * @param CartService $cartService
      * @param CartAddressService $cartAddressService
@@ -102,7 +109,8 @@ class OrderFormService
         PaymentMethodService $paymentMethodService,
         PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService,
-        StripePaymentGateway $stripePaymentGateway
+        StripePaymentGateway $stripePaymentGateway,
+        UserProductService $userProductService
     ) {
         $this->cartService = $cartService;
         $this->cartAddressService = $cartAddressService;
@@ -112,6 +120,7 @@ class OrderFormService
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
+        $this->userProductService = $userProductService;
         $this->userProvider = app()->make('UserProviderInterface');
     }
 
@@ -193,10 +202,10 @@ class OrderFormService
             $card->id,
             $card->customer,
             $request->get('gateway'),
-            $customer
+            $customer,
             $billingAddress,
             $currency,
-            false,
+            false
         );
 
         return [$charge, $paymentMethod, $billingAddress];
@@ -436,10 +445,17 @@ class OrderFormService
 
         $payment = new Payment();
 
+        $conversionRate = $this->currencyService->getRate($currency);
+        $convertedTotalDue = $this->currencyService
+                                    ->convertFromBase($due, $currency);
+        $convertedTotalPaid = $this->currencyService
+                                    ->convertFromBase($paid, $currency);
+
         $payment
-            ->setTotalDue($due)
-            ->setTotalPaid($paid)
+            ->setTotalDue($convertedTotalDue)
+            ->setTotalPaid($convertedTotalPaid)
             ->setTotalRefunded(0)
+            ->setConversionRate($conversionRate)
             ->setType('order')
             ->setExternalId($charge['id'] ?? $transactionId)
             ->setExternalProvider($externalProvider)
@@ -537,7 +553,7 @@ class OrderFormService
             ->setBillingAddress($billingAddress)
             ->setCreatedAt(Carbon::now());
 
-        $orderPayment = new OrderPayment()
+        $orderPayment = new OrderPayment();
 
         $orderPayment
             ->setOrder($order)
@@ -688,7 +704,7 @@ class OrderFormService
      */
     public function processOrderForm(Request $request): array
     {
-        $user = auth()->user() ?? null;
+        $user = auth()->user() ? $this->getUserReference(auth()->id()) : null;
         $brand = ConfigService::$brand;
 
         if (
@@ -779,8 +795,6 @@ class OrderFormService
         $this->cartService->setPaymentPlanNumberOfPayments(
             $request->get('payment-plan-selector')
         );
-
-        $billingAddressDB = null;
 
         // try to make the payment
         try {
@@ -950,7 +964,7 @@ class OrderFormService
         // create order
         $order = $this->createOrder(
             $request,
-            $payment['paid'],
+            $payment->getTotalPaid(),
             $this->cartService->getCart()->calculateShippingDue(),
             $this->cartService->getCart()->getTotalDue(),
             $this->cartService->getCart()->calculateTaxesDue(),
@@ -977,7 +991,9 @@ class OrderFormService
 
             $expirationDate = null;
 
-            if (!$cartItem->getProduct()['active']) {
+            $cartItemProduct = $cartItem->getProduct();
+
+            if (!$cartItemProduct->getActive()) {
                 continue;
             }
 
@@ -985,8 +1001,9 @@ class OrderFormService
 
             $orderItem
                 ->setOrder($order)
-                ->setProduct($cartItem->getProduct())
+                ->setProduct($cartItemProduct)
                 ->setQuantity($cartItem->getQuantity())
+                ->setWeight($cartItemProduct->getWeight())
                 ->setInitialPrice($cartItem->getPrice())
                 ->setTotalDiscounted($cartItem->getDiscountedPrice() ?? 0)
                 ->setFinalPrice($cartItem->getDiscountedPrice() ?? $cartItem->getTotalPrice())
@@ -1001,8 +1018,6 @@ class OrderFormService
                 $orderItem
             );
 
-            $cartItemProduct = $cartItem->getProduct();
-
             // create subscription
             if (
                 $cartItemProduct->getType() == ConfigService::$typeSubscription
@@ -1010,7 +1025,7 @@ class OrderFormService
 
                 $subscription = $this->createSubscription(
                     $brand,
-                    $cartItem->getProduct(),
+                    $cartItemProduct,
                     $order,
                     $cartItem,
                     $user,
@@ -1035,6 +1050,16 @@ class OrderFormService
                     ->setCreatedAt(Carbon::now());
 
                 $this->entityManager->persist($orderItemFulfillment);
+            }
+
+            // add user products
+            if ($cartItemProduct->getType() == ConfigService::$typeProduct) {
+                $this->userProductService->assignUserProduct(
+                    $user,
+                    $cartItemProduct,
+                    null,
+                    $orderItem->getQuantity()
+                );
             }
 
             $orderItems[] = $orderItem;

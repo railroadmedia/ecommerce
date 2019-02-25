@@ -42,14 +42,30 @@ class OrderFormController extends BaseController
             new NotFoundException('Invalid request')
         );
 
-        $result = $this->orderFormService
-            ->processOrderForm($request);
+        $result = $this->orderFormService->processOrderForm($request);
 
-        return reply()->form(
-            [(!isset($result['errors']) && isset($result['order']))],
-            url()->route(ConfigService::$paypalAgreementFulfilledRoute),
-            $result['errors'] ?? [],
-            isset($result['order']) ? ['order' => $result['order']] : []
-        );
+        if (isset($result['errors']) || !isset($result['order'])) {
+
+            $redirectResponse = isset($result['redirect']) ?
+                    redirect()->away($result['redirect']) :
+                    redirect()->back();
+
+            foreach ($result['errors'] ?? [] as $message) {
+                $redirectResponse->with('error', $message);
+            }
+
+        } else {
+
+            $redirectResponse = redirect()->away(
+                ConfigService::$paypalAgreementFulfilledRoute
+            );
+
+            $redirectResponse->with('success', true);
+            $redirectResponse->with('order', $result['order']);
+        }
+
+        /** @var \Illuminate\Http\RedirectResponse $redirectResponse */
+
+        return $redirectResponse;
     }
 }
