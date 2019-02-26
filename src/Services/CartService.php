@@ -104,6 +104,23 @@ class CartService
     }
 
     /**
+     * @return bool
+     */
+    public function requiresShipping()
+    {
+        foreach ($this->getCart()->getItems() as $cartItem) {
+             /**
+             * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+             */
+            if ($cartItem->getRequiresShippingAddress()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Clear the cart items
      */
     public function removeAllCartItems()
@@ -343,7 +360,7 @@ class CartService
         $cart = $this->getCart();
 
         /**
-         * @var $cart \Railroad\Ecommerce\Entities\Product
+         * @var $product \Railroad\Ecommerce\Entities\Product
          */
         $product = $this->entityManager
                         ->getRepository(Product::class)

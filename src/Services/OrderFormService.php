@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Query\Expr\Join;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -13,6 +14,7 @@ use Railroad\Ecommerce\Entities\Customer;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
@@ -20,6 +22,7 @@ use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
+use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Entities\Structures\Address as SessionAddress;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
@@ -513,47 +516,10 @@ class OrderFormService
         ?User $user,
         ?Customer $customer,
         Address $billingAddress,
+        ?Address $shippingAddress,
         Payment $payment,
         $brand
     ): Order {
-
-        $shippingAddress = null;
-
-        if ($request->get('shipping-address-id')) {
-
-            $shippingAddress = $this->entityManager
-                                    ->getRepository(Address::class)
-                                    ->find($request->get('shipping-address-id'));
-
-            $message = 'Order failed. Error message: could not find shipping address id: ' .
-                $request->get('shipping-address-id');
-
-            throw_if(
-                !($shippingAddress),
-                new UnprocessableEntityException($message)
-            );
-
-        } else {
-            //save the shipping address
-            $shippingAddress = new Address();
-
-            $shippingAddress
-                ->setType(ConfigService::$shippingAddressType)
-                ->setBrand(ConfigService::$brand)
-                ->setUser($user)
-                ->setCustomer($customer)
-                ->setFirstName($request->get('shipping-first-name'))
-                ->setLastName($request->get('shipping-last-name'))
-                ->setStreetLine1($request->get('shipping-address-line-1'))
-                ->setStreetLine2($request->get('shipping-address-line-2'))
-                ->setCity($request->get('shipping-city'))
-                ->setZip($request->get('shipping-zip-or-postal-code'))
-                ->setState($request->get('shipping-region'))
-                ->setCountry($request->get('shipping-country'))
-                ->setCreatedAt(Carbon::now());
-
-            $this->entityManager->persist($shippingAddress);
-        }
 
         $order = new Order();
 
@@ -651,7 +617,7 @@ class OrderFormService
                 }
             } else {
                 $message = 'Failed to create subscription for order id: ';
-                $message .= $order['id'];
+                $message .= $order->getId();
                 throw new UnprocessableEntityException($message);
             }
         }
@@ -753,6 +719,8 @@ class OrderFormService
             );
         }
 
+        $customer = null;
+
         // save customer if billing email exists on request
         if ($request->has('billing-email')) {
 
@@ -766,23 +734,63 @@ class OrderFormService
             $this->entityManager->persist($customer);
         }
 
-        // set the shipping address on session
-        $sessionShippingAddress = new SessionAddress();
+        $shippingAddress = null;
 
-        $sessionShippingAddress
-            ->setFirstName($request->get('shipping-first-name'))
-            ->setLastName($request->get('shipping-last-name'))
-            ->setStreetLineOne($request->get('shipping-address-line-1'))
-            ->setStreetLineTwo($request->get('shipping-address-line-2'))
-            ->setZipOrPostalCode($request->get('shipping-zip-or-postal-code'))
-            ->setCity($request->get('shipping-city'))
-            ->setState($request->get('shipping-region'))
-            ->setCountry($request->get('shipping-country'));
+        if ($request->get('shipping-address-id')) {
 
-        $this->cartAddressService->setAddress(
-            $sessionShippingAddress,
-            ConfigService::$shippingAddressType
-        );
+            $shippingAddress = $this->entityManager
+                                    ->getRepository(Address::class)
+                                    ->find($request->get('shipping-address-id'));
+
+            $message = 'Order failed. Error message: could not find shipping address id: ' .
+                $request->get('shipping-address-id');
+
+            throw_if(
+                !($shippingAddress),
+                new UnprocessableEntityException($message)
+            );
+
+        } elseif ($this->cartService->requiresShipping()) {
+            //save the shipping address
+            $shippingAddress = new Address();
+
+            $shippingAddress
+                ->setType(ConfigService::$shippingAddressType)
+                ->setBrand(ConfigService::$brand)
+                ->setUser($user)
+                ->setCustomer($customer)
+                ->setFirstName($request->get('shipping-first-name'))
+                ->setLastName($request->get('shipping-last-name'))
+                ->setStreetLine1($request->get('shipping-address-line-1'))
+                ->setStreetLine2($request->get('shipping-address-line-2'))
+                ->setCity($request->get('shipping-city'))
+                ->setZip($request->get('shipping-zip-or-postal-code'))
+                ->setState($request->get('shipping-region'))
+                ->setCountry($request->get('shipping-country'))
+                ->setCreatedAt(Carbon::now());
+
+            $this->entityManager->persist($shippingAddress);
+        }
+
+        if ($shippingAddress) {
+            // set the shipping address on session
+            $sessionShippingAddress = new SessionAddress();
+
+            $sessionShippingAddress
+                ->setFirstName($shippingAddress->getFirstName())
+                ->setLastName($shippingAddress->getLastName())
+                ->setStreetLineOne($shippingAddress->getStreetLine1())
+                ->setStreetLineTwo($shippingAddress->getStreetLine2())
+                ->setZipOrPostalCode($shippingAddress->getZip())
+                ->setCity($shippingAddress->getCity())
+                ->setState($shippingAddress->getState())
+                ->setCountry($shippingAddress->getCountry());
+
+            $this->cartAddressService->setAddress(
+                $sessionShippingAddress,
+                ConfigService::$shippingAddressType
+            );
+        }
 
         $this->cartService->calculateShippingCosts();
 
@@ -816,15 +824,29 @@ class OrderFormService
         try {
             if ($request->get('payment-method-id')) {
 
-                $paymentMethod = $this->entityManager
-                                        ->getRepository(PaymentMethod::class)
-                                        ->find($request->get('payment-method-id'));
+                /**
+                 * @var $qb \Doctrine\ORM\QueryBuilder
+                 */
+                $qb = $this->entityManager
+                        ->getRepository(PaymentMethod::class)
+                        ->createQueryBuilder('pm');
 
-                if (
-                    !$paymentMethod ||
-                    !$paymentMethod->getUser() ||
-                    $paymentMethod->getUser()->getId() != $user->getId()
-                ) {
+                $qb
+                    ->select(['pm', 'upm'])
+                    ->join(
+                        UserPaymentMethods::class,
+                        'upm',
+                        Join::WITH,
+                        $qb->expr()->eq(1, 1)
+                    )
+                    ->join('upm.paymentMethod', 'pmj')
+                    ->where($qb->expr()->eq('upm.user', ':user'))
+                    ->andWhere($qb->expr()->eq('pmj.id', 'pm.id'))
+                    ->setParameter('user', $user);
+
+                $paymentMethodCheck = $qb->getQuery()->getResult();
+
+                if (empty($paymentMethodCheck)) {
 
                     $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
                     return [
@@ -834,6 +856,11 @@ class OrderFormService
                         ],
                     ];
                 }
+
+                /**
+                 * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
+                 */
+                $paymentMethod = $paymentMethodCheck[0];
 
                 $charge = $transactionId = null;
 
@@ -967,9 +994,13 @@ class OrderFormService
             throw new PaymentFailedException($paymentFailedException->getMessage());
         }
 
+        $totalPaid = $this->cartService
+                        ->getCart()
+                        ->calculateInitialPricePerPayment();
+
         // create Payment
         $payment = $this->createPayment(
-            $this->cartService->getCart()->calculateInitialPricePerPayment(),
+            $totalPaid,
             $this->cartService->getCart()->getTotalDue(),
             $charge ?? null,
             $transactionId ?? null,
@@ -980,13 +1011,14 @@ class OrderFormService
         // create order
         $order = $this->createOrder(
             $request,
-            $payment->getTotalPaid(),
+            $totalPaid,
             $this->cartService->getCart()->calculateShippingDue(),
             $this->cartService->getCart()->getTotalDue(),
             $this->cartService->getCart()->calculateTaxesDue(),
             $user ?? null,
             $customer ?? null,
             $billingAddress,
+            $shippingAddress,
             $payment,
             $brand
         );
@@ -1052,6 +1084,13 @@ class OrderFormService
                 );
 
                 $expirationDate = $subscription->getPaidUntil();
+
+                $this->userProductService->assignUserProduct(
+                    $user,
+                    $cartItemProduct,
+                    $expirationDate,
+                    $orderItem->getQuantity()
+                );
             }
 
             // product fulfillment

@@ -107,9 +107,15 @@ class Cart
             $taxRate = $this->taxService->getTaxRate($billingAddress);
 
             $this->totalTax =
-                max(round(($this->getTotalDueForItems()) * $taxRate, 2), 0) +
-                max(round($this->shippingCosts * $taxRate, 2), 0);
+                round(
+                    (
+                        max($this->getTotalDueForItems() * $taxRate, 0) +
+                        max($this->shippingCosts * $taxRate, 0)
+                    ),
+                    2
+                );
         }
+
         return max((float)($this->totalTax), 0);
     }
 

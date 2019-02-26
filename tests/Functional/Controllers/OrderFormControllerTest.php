@@ -278,7 +278,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $expectedConversionRate = $currencyService->getRate($currency);
 
-        // payment - todo - assert prices/currency - customer currency
+        // payment
         $this->assertDatabaseHas(
             ConfigService::$tablePayment,
             [
