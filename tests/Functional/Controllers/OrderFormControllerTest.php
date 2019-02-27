@@ -140,7 +140,9 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $expectedProductOneTotalPrice = $productOne['price'] * $productOneQuantity;
 
-        $expectedProductOneDiscountedPrice = $expectedProductOneTotalPrice - $discount['amount'] * $productOneQuantity;
+        $expectedProductOneDiscountAmount = round($discount['amount'] * $productOneQuantity, 2);
+
+        $expectedProductOneDiscountedPrice = round($expectedProductOneTotalPrice - $expectedProductOneDiscountAmount, 2);
 
         $productTwoQuantity = 1;
 
@@ -158,11 +160,11 @@ class OrderFormControllerTest extends EcommerceTestCase
             ]
         );
 
-        $expectedProductTwoTotalPrice = $productTwo['price'] * $productTwoQuantity;
+        $expectedProductTwoTotalPrice = round($productTwo['price'] * $productTwoQuantity, 2);
 
         $expectedProductTwoDiscountedPrice = 0;
 
-        $expectedTotalFromItems = $expectedProductOneDiscountedPrice + $expectedProductTwoTotalPrice;
+        $expectedTotalFromItems = round($expectedProductOneDiscountedPrice + $expectedProductTwoTotalPrice, 2);
 
         $taxService = $this->app->make(TaxService::class);
 
@@ -339,7 +341,7 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'quantity' => $productOneQuantity,
                 'weight' => $productOne['weight'],
                 'initial_price' => $productOne['price'],
-                'total_discounted' => $expectedProductOneDiscountedPrice,
+                'total_discounted' => $expectedProductOneDiscountAmount,
                 'final_price' => $expectedProductOneDiscountedPrice,
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
@@ -352,7 +354,7 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'quantity' => $productTwoQuantity,
                 'weight' => $productTwo['weight'],
                 'initial_price' => $productTwo['price'],
-                'total_discounted' => $expectedProductTwoDiscountedPrice,
+                'total_discounted' => $expectedProductOneDiscountAmount,
                 'final_price' => $expectedProductTwoTotalPrice,
                 'created_at' => Carbon::now()->toDateTimeString()
             ]

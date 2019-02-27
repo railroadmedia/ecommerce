@@ -115,11 +115,10 @@ class PaymentMethodService
 
         } elseif ($customer) {
 
-            if (
-                $makePrimary &&
-                $primary = $this->customerPaymentMethodsRepository
-                    ->getCustomerPrimaryPaymentMethod($customer)
-            ) {
+            $primary = $this->customerPaymentMethodsRepository
+                    ->getCustomerPrimaryPaymentMethod($customer);
+
+            if ($makePrimary && $primary) {
                 /**
                  * @var $primary \Railroad\Ecommerce\Entities\CustomerPaymentMethods
                  */

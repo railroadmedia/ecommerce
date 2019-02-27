@@ -188,6 +188,14 @@ class Cart
     }
 
     /**
+     * @return float
+     */
+    public function getShippingCosts()
+    {
+        return $this->shippingCosts;
+    }
+
+    /**
      * @param bool $applyDiscounts
      *
      * @return float
@@ -202,9 +210,9 @@ class Cart
                  * @var $discount \Railroad\Ecommerce\Entities\Discount
                  */
                 if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
-                    $amountDiscounted += $discount->getAmount();
+                    $amountDiscounted = round($amountDiscounted + $discount->getAmount(), 2);
                 } elseif ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE) {
-                    $amountDiscounted += $discount->getAmount() / 100 * $this->shippingCosts;
+                    $amountDiscounted = round($amountDiscounted + $discount->getAmount() / 100 * $this->shippingCosts, 2);
                 } elseif ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
                     return $discount->getAmount();
                 }
@@ -325,6 +333,22 @@ class Cart
         }
 
         return $totalDueFromItems;
+    }
+
+    public function getTotalInitial()
+    {
+        $totalInitial = 0;
+
+        foreach ($this->getItems() as $cartItem) {
+
+            /**
+             * @var $product \Railroad\Ecommerce\Entities\Product
+             */
+            $product = $cartItem->getProduct();
+            $totalInitial += $product->getPrice() * $cartItem->getQuantity();
+        }
+
+        return $totalInitial;
     }
 
     /**

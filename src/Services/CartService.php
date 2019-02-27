@@ -619,8 +619,10 @@ class CartService
                         $productDiscount = $discount->getAmount() * $item->getQuantity();
                     }
 
+                    $discountedPrice = round($item->getTotalPrice() - $productDiscount, 2);
+
                     $this->getCart()
-                        ->getItems()[$index]->setDiscountedPrice(max(($item->getTotalPrice() - $productDiscount), 0));
+                        ->getItems()[$index]->setDiscountedPrice(max($discountedPrice, 0));
                 }
             }
         }

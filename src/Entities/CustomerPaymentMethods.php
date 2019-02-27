@@ -9,7 +9,7 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository")
  * @ORM\Table(
- *     name="ecommerce_user_payment_methods",
+ *     name="ecommerce_customer_payment_methods",
  *     indexes={
  *         @ORM\Index(name="ecommerce_user_payment_methods_user_id_index", columns={"user_id"}),
  *         @ORM\Index(name="ecommerce_user_payment_methods_payment_method_id_index", columns={"payment_method_id"}),

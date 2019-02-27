@@ -171,7 +171,7 @@ class OrderFormService
 
         $customerCreditCard = $this->stripePaymentGateway->getOrCreateCustomer(
             $request->get('gateway'),
-            $user->getEmail() ?? $customer->getEmail()
+            $user ? $user->getEmail() : $customer->getEmail()
         );
 
         $card = $this->stripePaymentGateway->createCustomerCard(
@@ -794,6 +794,10 @@ class OrderFormService
 
         $this->cartService->calculateShippingCosts();
 
+        $initialShippingCosts = $this->cartService
+                                        ->getCart()
+                                        ->getShippingCosts();
+
         $this->cartService->getCart()->removeAppliedDiscount();
 
         $discountsToApply = $this->cartService->getDiscountsToApply();
@@ -1008,13 +1012,19 @@ class OrderFormService
             $currency
         );
 
+        $productsDuePrice = $this->cartService->getCart()->getTotalDue();
+        $productsShippingPrice = $this->cartService
+                                        ->getCart()
+                                        ->calculateShippingDue();
+        $productsTaxPrice = $this->cartService->getCart()->calculateTaxesDue();
+
         // create order
         $order = $this->createOrder(
             $request,
             $totalPaid,
-            $this->cartService->getCart()->calculateShippingDue(),
-            $this->cartService->getCart()->getTotalDue(),
-            $this->cartService->getCart()->calculateTaxesDue(),
+            $productsShippingPrice,
+            $productsDuePrice,
+            $productsTaxPrice,
             $user ?? null,
             $customer ?? null,
             $billingAddress,
@@ -1035,6 +1045,20 @@ class OrderFormService
 
         $cartItems = $this->cartService->getCart()->getItems();
 
+        $initialProductsPrice = $this->cartService
+                                    ->getCart()
+                                    ->getTotalInitial();
+
+        $discountAmount = round(
+            $initialProductsPrice -
+            (
+                $productsDuePrice -
+                $initialShippingCosts -
+                $productsTaxPrice
+            ),
+            2
+        );
+
         foreach ($cartItems as $key => $cartItem) {
 
             $expirationDate = null;
@@ -1053,7 +1077,7 @@ class OrderFormService
                 ->setQuantity($cartItem->getQuantity())
                 ->setWeight($cartItemProduct->getWeight())
                 ->setInitialPrice($cartItem->getPrice())
-                ->setTotalDiscounted($cartItem->getDiscountedPrice() ?? 0)
+                ->setTotalDiscounted($discountAmount)
                 ->setFinalPrice($cartItem->getDiscountedPrice() ?? $cartItem->getTotalPrice())
                 ->setCreatedAt(Carbon::now());
 
@@ -1108,7 +1132,7 @@ class OrderFormService
             }
 
             // add user products
-            if ($cartItemProduct->getType() == ConfigService::$typeProduct) {
+            if ($user && $cartItemProduct->getType() == ConfigService::$typeProduct) {
                 $this->userProductService->assignUserProduct(
                     $user,
                     $cartItemProduct,
@@ -1167,7 +1191,7 @@ class OrderFormService
                 ]
             );
 
-            $emailAddress = $user->getEmail() ?? $customer->getEmail();
+            $emailAddress = $user ? $user->getEmail() : $customer->getEmail();
 
             Mail::to($emailAddress)->send($orderInvoiceEmail);
 

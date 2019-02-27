@@ -109,11 +109,11 @@ class DiscountService
             if (
                 $discount->getType() == self::ORDER_TOTAL_AMOUNT_OFF_TYPE
             ) {
-                $amountDiscounted += $discount->getAmount();
+                $amountDiscounted = round($amountDiscounted + $discount->getAmount(), 2);
             } elseif (
                 $discount->getType() == self::ORDER_TOTAL_PERCENT_OFF_TYPE
             ) {
-                $amountDiscounted += $discount->getAmount() / 100 * $cartItemsTotalDue;
+                $amountDiscounted = round($amountDiscounted + $discount->getAmount() / 100 * $cartItemsTotalDue, 2);
             }
         }
 

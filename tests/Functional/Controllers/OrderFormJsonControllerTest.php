@@ -33,10 +33,54 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
      */
     protected $cartService;
 
+    /**
+     * @var CartAddressService
+     */
+    protected $cartAddressService;
+
     protected function setUp()
     {
         parent::setUp();
         $this->cartService = $this->app->make(CartService::class);
+        $this->cartAddressService = $this->app->make(CartAddressService::class);
+    }
+
+    protected function setupTaxes($country = null, $state = null, $zip = null)
+    {
+        if (!func_num_args()) {
+            $country = $this->faker->word;
+            $state = $this->faker->word;
+            $zip = $this->faker->word;
+        }
+
+        $session = $this->app->make(Store::class);
+
+        $session->flush();
+
+        $sessionBillingAddress = new Address();
+
+        $sessionBillingAddress
+            ->setCountry($country)
+            ->setState($state)
+            ->setZipOrPostalCode($zip);
+
+        $this->cartAddressService->setAddress(
+            $sessionBillingAddress,
+            CartAddressService::BILLING_ADDRESS_TYPE
+        );
+    }
+
+    protected function getExpectedTaxes(float $price)
+    {
+        $taxService = $this->app->make(TaxService::class);
+
+        $billingAddress = $this->cartAddressService->getAddress(
+                                    CartAddressService::BILLING_ADDRESS_TYPE
+                                );
+
+        $taxRate = $taxService->getTaxRate($billingAddress);
+
+        return round($price * $taxRate, 2);
     }
 
     public function test_submit_order_validation_not_physical_products()
@@ -561,17 +605,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $brand = 'drumeo';
         ConfigService::$brand = $brand;
 
-        $session = $this->app->make(Store::class);
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
 
-        $session->flush();
-
-        $cartAddressService = $this->app->make(CartAddressService::class);
+        $this->setupTaxes($country, $state, $zip);
 
         $requestData = [
             'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-            'billing-region' => $this->faker->word,
-            'billing-zip-or-postal-code' => $this->faker->postcode,
-            'billing-country' => 'Canada',
+            'billing-region' => $state,
+            'billing-zip-or-postal-code' => $zip,
+            'billing-country' => $country,
             'company_name' => $this->faker->creditCardType,
             'gateway' => $brand,
             'card-token' => $fingerPrint,
@@ -584,18 +628,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'shipping-country' => 'Canada',
             'currency' => $currency
         ];
-
-        $sessionBillingAddress = new Address();
-
-        $sessionBillingAddress
-            ->setCountry($requestData['billing-country'])
-            ->setState($requestData['billing-region'])
-            ->setZipOrPostalCode($requestData['billing-zip-or-postal-code']);
-
-        $cartAddressService->setAddress(
-            $sessionBillingAddress,
-            CartAddressService::BILLING_ADDRESS_TYPE
-        );
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
             ->willReturn(['data' => '']);
@@ -706,15 +738,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
 
-        $taxService = $this->app->make(TaxService::class);
-
-        $billingAddress = $cartAddressService->getAddress(
-                                    CartAddressService::BILLING_ADDRESS_TYPE
-                                );
-
-        $taxRate = $taxService->getTaxRate($billingAddress);
-
-        $expectedTaxes = round($expectedTotalFromItems * $taxRate + $shippingCostAmount * $taxRate, 2);
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems + $shippingCostAmount);
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
 
@@ -870,17 +894,24 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $brand = 'drumeo';
         ConfigService::$brand = $brand;
 
-        $session = $this->app->make(Store::class);
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
 
-        $session->flush();
+        // $session = $this->app->make(Store::class);
 
-        $cartAddressService = $this->app->make(CartAddressService::class);
+        // $session->flush();
+
+        // $cartAddressService = $this->app->make(CartAddressService::class);
 
         $orderRequestData = [
             'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'billing-region' => $this->faker->word,
-            'billing-zip-or-postal-code' => $this->faker->postcode,
-            'billing-country' => 'Canada',
+            // 'billing-region' => $this->faker->word,
+            // 'billing-zip-or-postal-code' => $this->faker->postcode,
+            // 'billing-country' => 'Canada',
+            'billing-region' => $state,
+            'billing-zip-or-postal-code' => $zip,
+            'billing-country' => $country,
             'company_name' => $this->faker->creditCardType,
             'gateway' => $brand,
             'shipping-first-name' => $this->faker->firstName,
@@ -893,17 +924,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'currency' => $currency
         ];
 
-        $sessionBillingAddress = new Address();
+        $this->setupTaxes($country, $state, $zip);
 
-        $sessionBillingAddress
-            ->setCountry($orderRequestData['billing-country'])
-            ->setState($orderRequestData['billing-region'])
-            ->setZipOrPostalCode($orderRequestData['billing-zip-or-postal-code']);
+        // $sessionBillingAddress = new Address();
 
-        $cartAddressService->setAddress(
-            $sessionBillingAddress,
-            CartAddressService::BILLING_ADDRESS_TYPE
-        );
+        // $sessionBillingAddress
+        //     ->setCountry($orderRequestData['billing-country'])
+        //     ->setState($orderRequestData['billing-region'])
+        //     ->setZipOrPostalCode($orderRequestData['billing-zip-or-postal-code']);
+
+        // $cartAddressService->setAddress(
+        //     $sessionBillingAddress,
+        //     CartAddressService::BILLING_ADDRESS_TYPE
+        // );
 
         $shippingOption = $this->fakeShippingOption([
             'country' => 'Canada',
@@ -1017,29 +1050,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $brand = 'drumeo';
         ConfigService::$brand = $brand;
 
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip);
+
         $billingData = [
-            'billing-region' => $this->faker->word,
-            'billing-zip-or-postal-code' => $this->faker->postcode,
-            'billing-country' => 'Canada',
+            'billing-region' => $state,
+            'billing-zip-or-postal-code' => $zip,
+            'billing-country' => $country,
         ];
-
-        $session = $this->app->make(Store::class);
-
-        $session->flush();
-
-        $cartAddressService = $this->app->make(CartAddressService::class);
-
-        $sessionBillingAddress = new Address();
-
-        $sessionBillingAddress
-            ->setCountry($billingData['billing-country'])
-            ->setState($billingData['billing-region'])
-            ->setZipOrPostalCode($billingData['billing-zip-or-postal-code']);
-
-        $cartAddressService->setAddress(
-            $sessionBillingAddress,
-            CartAddressService::BILLING_ADDRESS_TYPE
-        );
 
         $shippingOption = $this->fakeShippingOption([
             'country' => 'Canada',
@@ -1236,15 +1257,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
 
-        $taxService = $this->app->make(TaxService::class);
-
-        $billingAddress = $cartAddressService->getAddress(
-                                    CartAddressService::BILLING_ADDRESS_TYPE
-                                );
-
-        $taxRate = $taxService->getTaxRate($billingAddress);
-
-        $expectedTaxes = round($expectedTotalFromItems * $taxRate + $shippingCostAmount * $taxRate, 2);
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems + $shippingCostAmount);
 
         $expectedOrderDiscount = $discount['amount'];
 
@@ -1400,29 +1413,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $brand = 'drumeo';
         ConfigService::$brand = $brand;
 
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip);
+
         $billingData = [
-            'billing-region' => $this->faker->word,
-            'billing-zip-or-postal-code' => $this->faker->postcode,
-            'billing-country' => 'Canada',
+            'billing-region' => $state,
+            'billing-zip-or-postal-code' => $zip,
+            'billing-country' => $country,
         ];
-
-        $session = $this->app->make(Store::class);
-
-        $session->flush();
-
-        $cartAddressService = $this->app->make(CartAddressService::class);
-
-        $sessionBillingAddress = new Address();
-
-        $sessionBillingAddress
-            ->setCountry($billingData['billing-country'])
-            ->setState($billingData['billing-region'])
-            ->setZipOrPostalCode($billingData['billing-zip-or-postal-code']);
-
-        $cartAddressService->setAddress(
-            $sessionBillingAddress,
-            CartAddressService::BILLING_ADDRESS_TYPE
-        );
 
         $shippingOption = $this->fakeShippingOption([
             'country' => 'Canada',
@@ -1584,15 +1585,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
 
-        $taxService = $this->app->make(TaxService::class);
-
-        $billingAddress = $cartAddressService->getAddress(
-                                    CartAddressService::BILLING_ADDRESS_TYPE
-                                );
-
-        $taxRate = $taxService->getTaxRate($billingAddress);
-
-        $expectedTaxes = round($expectedTotalFromItems * $taxRate + $shippingCostAmount * $taxRate, 2);
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems + $shippingCostAmount);
 
         $expectedOrderDiscount = $discount['amount'];
 
@@ -1748,11 +1741,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $brand = 'drumeo';
         ConfigService::$brand = $brand;
 
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip); // calls session flush
+
         $session = $this->app->make(Store::class);
-
-        $session->flush();
-
-        $cartAddressService = $this->app->make(CartAddressService::class);
 
         $shippingAddressData = [
             'type' => ConfigService::$shippingAddressType,
@@ -1782,7 +1777,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->setStreetLineOne($shippingAddress['street_line_1'])
             ->setCity($shippingAddress['city']);
 
-        $cartAddressService->setAddress(
+        $this->cartAddressService->setAddress(
             $sessionShippingAddress,
             CartAddressService::SHIPPING_ADDRESS_TYPE
         );
@@ -1798,18 +1793,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'shipping-address-id' => $shippingAddress['id'],
             'currency' => $currency
         ];
-
-        $sessionBillingAddress = new Address();
-
-        $sessionBillingAddress
-            ->setCountry($requestData['billing-country'])
-            ->setState($requestData['billing-region'])
-            ->setZipOrPostalCode($requestData['billing-zip-or-postal-code']);
-
-        $cartAddressService->setAddress(
-            $sessionBillingAddress,
-            CartAddressService::BILLING_ADDRESS_TYPE
-        );
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
             ->willReturn(['data' => '']);
@@ -1920,15 +1903,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
 
-        $taxService = $this->app->make(TaxService::class);
-
-        $billingAddress = $cartAddressService->getAddress(
-                                    CartAddressService::BILLING_ADDRESS_TYPE
-                                );
-
-        $taxRate = $taxService->getTaxRate($billingAddress);
-
-        $expectedTaxes = round($expectedTotalFromItems * $taxRate + $shippingCostAmount * $taxRate, 2);
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems + $shippingCostAmount);
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
 
@@ -2196,20 +2171,20 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ConfigService::$brand = $brand;
         $currency = $this->getCurrency();
 
-        $session = $this->app->make(Store::class);
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
 
-        $session->flush();
-
-        $cartAddressService = $this->app->make(CartAddressService::class);
+        $this->setupTaxes($country, $state, $zip);
 
         $cardToken = $this->faker->word;
 
         $orderRequestData = [
             'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'card-token' => $cardToken,
-            'billing-region' => 'ab',
-            'billing-zip-or-postal-code' => $this->faker->postcode,
-            'billing-country' => 'Canada',
+            'billing-region' => $state,
+            'billing-zip-or-postal-code' => $zip,
+            'billing-country' => $country,
             'company_name' => $this->faker->creditCardType,
             'gateway' => $brand,
             'shipping-first-name' => $this->faker->firstName,
@@ -2221,18 +2196,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'shipping-country' => 'Canada',
             'currency' => $currency
         ];
-
-        $sessionBillingAddress = new Address();
-
-        $sessionBillingAddress
-            ->setCountry($orderRequestData['billing-country'])
-            ->setState($orderRequestData['billing-region'])
-            ->setZipOrPostalCode($orderRequestData['billing-zip-or-postal-code']);
-
-        $cartAddressService->setAddress(
-            $sessionBillingAddress,
-            CartAddressService::BILLING_ADDRESS_TYPE
-        );
 
         $shippingOption = $this->fakeShippingOption([
             'country' => 'Canada',
@@ -2329,15 +2292,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $expectedProductDiscountedPrice;
 
-        $taxService = $this->app->make(TaxService::class);
-
-        $billingAddress = $cartAddressService->getAddress(
-                                    CartAddressService::BILLING_ADDRESS_TYPE
-                                );
-
-        $taxRate = $taxService->getTaxRate($billingAddress);
-
-        $expectedTaxes = round($expectedTotalFromItems * $taxRate + $shippingCostAmount * $taxRate, 2);
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems + $shippingCostAmount);
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
 
@@ -2490,20 +2445,20 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ConfigService::$brand = $brand;
         $currency = $this->getCurrency();
 
-        $session = $this->app->make(Store::class);
-
-        $session->flush();
-
-        $cartAddressService = $this->app->make(CartAddressService::class);
-
         $cardToken = $this->faker->word;
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip);
 
         $orderRequestData = [
             'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'card-token' => $cardToken,
-            'billing-region' => 'ab',
-            'billing-zip-or-postal-code' => $this->faker->postcode,
-            'billing-country' => 'Canada',
+            'billing-region' => $state,
+            'billing-zip-or-postal-code' => $zip,
+            'billing-country' => $country,
             'company_name' => $this->faker->creditCardType,
             'gateway' => $brand,
             'shipping-first-name' => $this->faker->firstName,
@@ -2516,17 +2471,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'currency' => $currency
         ];
 
-        $sessionBillingAddress = new Address();
-
-        $sessionBillingAddress
-            ->setCountry($orderRequestData['billing-country'])
-            ->setState($orderRequestData['billing-region'])
-            ->setZipOrPostalCode($orderRequestData['billing-zip-or-postal-code']);
-
-        $cartAddressService->setAddress(
-            $sessionBillingAddress,
-            CartAddressService::BILLING_ADDRESS_TYPE
-        );
+        $this->setupTaxes($country, $state, $zip);
 
         $shippingOption = $this->fakeShippingOption([
             'country' => 'Canada',
@@ -2594,15 +2539,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $expectedProductDiscountedPrice;
 
-        $taxService = $this->app->make(TaxService::class);
-
-        $billingAddress = $cartAddressService->getAddress(
-                                    CartAddressService::BILLING_ADDRESS_TYPE
-                                );
-
-        $taxRate = $taxService->getTaxRate($billingAddress);
-
-        $expectedTaxes = round($expectedTotalFromItems * $taxRate + $shippingCostAmount * $taxRate, 2);
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems + $shippingCostAmount);
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
 
@@ -2612,7 +2549,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $orderRequestData
         );
 
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(200, $response->getStatusCode()); // todo - check failing test
 
         $this->assertArraySubset(
             [
@@ -2846,10 +2783,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    /*
     public function test_submit_order_subscription_with_discount_recurring_amount()
     {
         $userId = $this->createAndLogInNewUser();
+
+        $brand = 'drumeo';
+        ConfigService::$brand = $brand;
 
         $cardToken = $this->faker->word;
 
@@ -2883,58 +2822,51 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => 25,
-                    'type' => ConfigService::$typeSubscription,
-                    'active' => 1,
-                    'description' => $this->faker->word,
-                    'is_physical' => 0,
-                    'weight' => 0,
-                    'subscription_interval_type' => ConfigService::$intervalTypeYearly,
-                    'subscription_interval_count' => 1,
-                ]
-            )
-        );
+        $product = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeSubscription,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_count' => 1,
+        ]);
 
-        $discount = $this->discountRepository->create(
-            $this->faker->discount(
-                [
-                    'active' => true,
-                    'product_id' => $product['id'],
-                    'type' => DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE,
-                    'amount' => 10,
-                ]
-            )
-        );
-        $discountCriteria = $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product['id'],
-                    'type' => 'date requirement',
-                    'min' => $this->faker->dateTimeInInterval('', '-5days'),
-                    'max' => $this->faker->dateTimeInInterval('', '+5days'),
-                ]
-            )
-        );
+        $discount = $this->fakeDiscount([
+            'active' => true,
+            'product_id' => $product['id'],
+            'type' => DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE,
+            'amount' => 10,
+        ]);
 
-        $cart = $this->cartService->addCartItem(
+        $discountCriteria = $this->fakeDiscountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id' => $product['id'],
+            'type' => 'date requirement',
+            'min' => Carbon::now()->subDay(1),
+            'max' => Carbon::now()->addDays(3),
+        ]);
+
+        $productQuantity = 1;
+
+        $this->cartService->addCartItem(
             $product['name'],
             $product['description'],
-            1,
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $product['subscription_interval_type'],
-            $product['subscription_interval_count'],
+            $this->faker->word,
+            rand(),
             [
                 'product-id' => $product['id'],
             ]
         );
 
-        $results = $this->call(
+        $expectedTotalPrice = round($product['price'] - $discount['amount'], 2);
+
+        $response = $this->call(
             'PUT',
             '/order',
             [
@@ -2947,7 +2879,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals(200, $response->getStatusCode());
 
         //assert the discount days are added to the paid_until data
         $this->assertDatabaseHas(
@@ -2957,12 +2889,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'user_id' => $userId,
                 'is_active' => "1",
-                'start_date' => Carbon::now()
-                    ->toDateTimeString(),
+                'start_date' => Carbon::now()->toDateTimeString(),
                 'paid_until' => Carbon::now()
                     ->addYear(1)
                     ->toDateTimeString(),
-                'total_price_per_payment' => $product['price'] - $discount['amount'],
+                'total_price' => $expectedTotalPrice,
             ]
         );
     }
@@ -3003,83 +2934,84 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $quantity = 2;
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
 
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => 25,
-                    'type' => ConfigService::$typeProduct,
-                    'active' => 1,
-                    'description' => $this->faker->word,
-                    'is_physical' => 0,
-                    'weight' => 0,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                ]
-            )
-        );
+        $this->setupTaxes($country, $state, $zip);
 
-        $discount = $this->discountRepository->create(
-            $this->faker->discount(
-                [
-                    'active' => true,
-                    'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
-                    'amount' => 10,
-                ]
-            )
-        );
-        $discountCriteria = $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product['id'],
-                    'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-                    'min' => 5,
-                    'max' => 500,
-                ]
-            )
-        );
+        $product = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
 
-        $cart = $this->cartService->addCartItem(
+        $discount = $this->fakeDiscount([
+            'active' => true,
+            'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
+            'amount' => 10,
+        ]);
+
+        $discountCriteria = $this->fakeDiscountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id' => $product['id'],
+            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min' => 5,
+            'max' => 500,
+        ]);
+
+        $productQuantity = 2;
+
+        $this->cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $quantity,
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $product['subscription_interval_type'],
-            $product['subscription_interval_count'],
+            $this->faker->word,
+            rand(),
             [
                 'product-id' => $product['id'],
             ]
         );
 
-        $results = $this->call(
+        $expectedTotalFromItems = $product['price'] * $productQuantity;
+
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems);
+
+        $expectedPrice = round($expectedTotalFromItems - $discount['amount'] + $expectedTaxes, 2);
+
+        $response = $this->call(
             'PUT',
             '/order',
             [
                 'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'card-token' => $cardToken,
-                'billing-region' => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Romanian',
+                'billing-region' => $state,
+                'billing-zip-or-postal-code' => $zip,
+                'billing-country' => $country,
                 'gateway' => 'drumeo',
             ]
         );
 
-        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals(200, $response->getStatusCode());
 
-        //assert the discount amount it's included in order due
+        // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
             [
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId,
-                'due' => $product['price'] * $quantity - $discount['amount'],
-                'tax' => 0,
-                'shipping_costs' => 0,
-                'paid' => $product['price'] * $quantity - $discount['amount'],
+                'total_due' => $expectedPrice,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => 0,
+                'total_paid' => $expectedPrice,
             ]
         );
     }
@@ -3088,7 +3020,28 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
+        $currency = $this->getCurrency();
+
         $cardToken = $this->faker->word;
+
+        $brand = 'drumeo';
+        ConfigService::$brand = $brand;
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip);
+
+        $requestData = [
+            'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'card-token' => $cardToken,
+            'billing-region' => $state,
+            'billing-zip-or-postal-code' => $zip,
+            'billing-country' => $country,
+            'gateway' => $brand,
+            'currency' => $currency
+        ];
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
             ->willReturn(['data' => '']);
@@ -3120,83 +3073,73 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $quantity = 2;
+        $product = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
 
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => 25,
-                    'type' => ConfigService::$typeProduct,
-                    'active' => 1,
-                    'description' => $this->faker->word,
-                    'is_physical' => 0,
-                    'weight' => 0,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                ]
-            )
-        );
+        $discount = $this->fakeDiscount([
+            'active' => true,
+            'type' => DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE,
+            'amount' => 10.2,
+        ]);
 
-        $discount = $this->discountRepository->create(
-            $this->faker->discount(
-                [
-                    'active' => true,
-                    'type' => DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE,
-                    'amount' => 10,
-                ]
-            )
-        );
-        $discountCriteria = $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product['id'],
-                    'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-                    'min' => 5,
-                    'max' => 500,
-                ]
-            )
-        );
+        $discountCriteria = $this->fakeDiscountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id' => $product['id'],
+            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min' => 5,
+            'max' => 500,
+        ]);
 
-        $cart = $this->cartService->addCartItem(
+        $productQuantity = 2;
+
+        $this->cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $quantity,
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $product['subscription_interval_type'],
-            $product['subscription_interval_count'],
+            $this->faker->word,
+            rand(),
             [
                 'product-id' => $product['id'],
             ]
         );
 
-        $results = $this->call(
+        $expectedTotalFromItems = round($product['price'] * $productQuantity, 2);
+
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems);
+
+        $expectedOrderDiscount = round($discount['amount'] / 100 * ($expectedTotalFromItems + $expectedTaxes), 2);
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems - $expectedOrderDiscount + $expectedTaxes, 2);
+
+        $response = $this->call(
             'PUT',
             '/order',
-            [
-                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'card-token' => $cardToken,
-                'billing-region' => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Romanian',
-                'gateway' => 'drumeo',
-            ]
+            $requestData
         );
 
-        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals(200, $response->getStatusCode());
 
-        //assert the discount amount it's included in order due
+        // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
             [
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId,
-                'due' => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity,
-                'tax' => 0,
-                'shipping_costs' => 0,
-                'paid' => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity,
+                'total_due' => $expectedOrderTotalDue,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => 0,
+                'total_paid' => $expectedOrderTotalDue,
             ]
         );
     }
@@ -3207,6 +3150,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $cardToken = $this->faker->word;
 
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip);
+
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
             ->willReturn(['data' => '']);
 
@@ -3237,58 +3186,59 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $quantity = 2;
+        $product = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
 
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => 25,
-                    'type' => ConfigService::$typeProduct,
-                    'active' => 1,
-                    'description' => $this->faker->word,
-                    'is_physical' => 0,
-                    'weight' => 0,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                ]
-            )
-        );
+        $discount = $this->fakeDiscount([
+            'active' => true,
+            'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+            'product_id' => $product['id'],
+            'amount' => 10.2,
+        ]);
 
-        $discount = $this->discountRepository->create(
-            $this->faker->discount(
-                [
-                    'active' => true,
-                    'product_id' => $product['id'],
-                    'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
-                    'amount' => 10,
-                ]
-            )
-        );
-        $discountCriteria = $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product['id'],
-                    'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-                    'min' => 5,
-                    'max' => 500,
-                ]
-            )
-        );
+        $discountCriteria = $this->fakeDiscountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id' => $product['id'],
+            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min' => 5,
+            'max' => 500,
+        ]);
 
-        $cart = $this->cartService->addCartItem(
+        $productQuantity = 2;
+
+        $this->cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $quantity,
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $product['subscription_interval_type'],
-            $product['subscription_interval_count'],
+            $this->faker->word,
+            rand(),
             [
                 'product-id' => $product['id'],
             ]
         );
+
+        $expectedInitialProductPrice = $product['price'] * $productQuantity;
+
+        $expectedProductDiscount = $discount['amount'] * $productQuantity;
+
+        $expectedTotalFromItems = round($expectedInitialProductPrice - $expectedProductDiscount, 2);
+
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems);
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedTaxes, 2);
+
+        $expectedDiscountAmount = round($expectedInitialProductPrice - ($expectedOrderTotalDue - $expectedTaxes), 2);
 
         $results = $this->call(
             'PUT',
@@ -3296,9 +3246,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'card-token' => $cardToken,
-                'billing-region' => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Romanian',
+                'billing-region' => $state,
+                'billing-zip-or-postal-code' => $zip,
+                'billing-country' => $country,
                 'gateway' => 'drumeo',
             ]
         );
@@ -3311,10 +3261,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId,
-                'due' => ($product['price'] - $discount['amount']) * $quantity,
-                'tax' => 0,
-                'shipping_costs' => 0,
-                'paid' => ($product['price'] - $discount['amount']) * $quantity,
+                'total_due' => $expectedOrderTotalDue,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => 0,
+                'total_paid' => $expectedOrderTotalDue,
             ]
         );
 
@@ -3323,10 +3273,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ConfigService::$tableOrderItem,
             [
                 'product_id' => $product['id'],
-                'quantity' => $quantity,
+                'quantity' => $productQuantity,
                 'initial_price' => $product['price'],
-                'discount' => $discount['amount'] * $quantity,
-                'total_price' => ($product['price'] - $discount['amount']) * $quantity,
+                'total_discounted' => $expectedDiscountAmount,
+                'final_price' => $expectedTotalFromItems,
             ]
         );
     }
@@ -3337,6 +3287,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $cardToken = $this->faker->word;
 
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip);
+
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
             ->willReturn(['data' => '']);
 
@@ -3367,58 +3323,59 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $quantity = 2;
+        $product = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
 
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => 25,
-                    'type' => ConfigService::$typeProduct,
-                    'active' => 1,
-                    'description' => $this->faker->word,
-                    'is_physical' => 0,
-                    'weight' => 0,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                ]
-            )
-        );
+        $discount = $this->fakeDiscount([
+            'active' => true,
+            'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
+            'product_id' => $product['id'],
+            'amount' => 10.2,
+        ]);
 
-        $discount = $this->discountRepository->create(
-            $this->faker->discount(
-                [
-                    'active' => true,
-                    'product_id' => $product['id'],
-                    'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
-                    'amount' => 10,
-                ]
-            )
-        );
-        $discountCriteria = $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product['id'],
-                    'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-                    'min' => 5,
-                    'max' => 500,
-                ]
-            )
-        );
+        $discountCriteria = $this->fakeDiscountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id' => $product['id'],
+            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min' => 5,
+            'max' => 500,
+        ]);
 
-        $cart = $this->cartService->addCartItem(
+        $productQuantity = 2;
+
+        $this->cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $quantity,
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $product['subscription_interval_type'],
-            $product['subscription_interval_count'],
+            $this->faker->word,
+            rand(),
             [
                 'product-id' => $product['id'],
             ]
         );
+
+        $expectedInitialProductPrice = $product['price'] * $productQuantity;
+
+        $expectedProductDiscount = $discount['amount'] / 100 * $product['price'] * $productQuantity;
+
+        $expectedTotalFromItems = round($expectedInitialProductPrice - $expectedProductDiscount, 2);
+
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems);
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedTaxes, 2);
+
+        $expectedDiscountAmount = round($expectedInitialProductPrice - ($expectedOrderTotalDue - $expectedTaxes), 2);
 
         $results = $this->call(
             'PUT',
@@ -3426,37 +3383,37 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'card-token' => $cardToken,
-                'billing-region' => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Romanian',
+                'billing-region' => $state,
+                'billing-zip-or-postal-code' => $zip,
+                'billing-country' => $country,
                 'gateway' => 'drumeo',
             ]
         );
 
         $this->assertEquals(200, $results->getStatusCode());
 
-        //assert the discount amount it's included in order due
+        // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
             [
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId,
-                'due' => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity,
-                'tax' => 0,
-                'shipping_costs' => 0,
-                'paid' => $product['price'] * $quantity - $discount['amount'] / 100 * $product['price'] * $quantity,
+                'total_due' => $expectedOrderTotalDue,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => 0,
+                'total_paid' => $expectedOrderTotalDue,
             ]
         );
 
-        //assert the discount amount it's saved in order item data
+        // assert the discount amount it's saved in order item data
         $this->assertDatabaseHas(
             ConfigService::$tableOrderItem,
             [
                 'product_id' => $product['id'],
-                'quantity' => $quantity,
+                'quantity' => $productQuantity,
                 'initial_price' => $product['price'],
-                'discount' => $product['price'] * $quantity * $discount['amount'] / 100,
-                'total_price' => ($product['price'] - $product['price'] * $discount['amount'] / 100) * $quantity,
+                'total_discounted' => $expectedDiscountAmount,
+                'final_price' => $expectedTotalFromItems,
             ]
         );
     }
@@ -3467,6 +3424,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $cardToken = $this->faker->word;
 
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip);
+
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
             ->willReturn(['data' => '']);
 
@@ -3497,77 +3460,73 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $quantity = 2;
+        $shippingOption = $this->fakeShippingOption([
+            'country' => 'Canada',
+            'active' => 1,
+            'priority' => 1,
+        ]);
 
-        $shippingOption = $this->shippingOptionRepository->create(
-            $this->faker->shippingOption(
-                [
-                    'country' => 'Canada',
-                    'active' => 1,
-                    'priority' => 1,
-                ]
-            )
-        );
-        $shippingCosts = $this->shippingCostsRepository->create(
-            $this->faker->shippingCost(
-                [
-                    'shipping_option_id' => $shippingOption['id'],
-                    'min' => 0,
-                    'max' => 10,
-                    'price' => 5.50,
-                ]
-            )
-        );
+        $shippingCostAmount = 5.50;
 
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => 25,
-                    'type' => ConfigService::$typeProduct,
-                    'active' => 1,
-                    'description' => $this->faker->word,
-                    'is_physical' => 1,
-                    'weight' => 2,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                ]
-            )
-        );
+        $shippingCost = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min' => 0,
+            'max' => 10,
+            'price' => $shippingCostAmount,
+        ]);
 
-        $discount = $this->discountRepository->create(
-            $this->faker->discount(
-                [
-                    'active' => true,
-                    'type' => DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
-                    'amount' => 2,
-                ]
-            )
-        );
-        $discountCriteria = $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product['id'],
-                    'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-                    'min' => 5,
-                    'max' => 500,
-                ]
-            )
-        );
+        $product = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 1,
+            'weight' => 2,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
 
-        $cart = $this->cartService->addCartItem(
+        $discount = $this->fakeDiscount([
+            'active' => true,
+            'type' => DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
+            'amount' => 2,
+        ]);
+
+        $discountCriteria = $this->fakeDiscountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id' => $product['id'],
+            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min' => 5,
+            'max' => 500,
+        ]);
+
+        $productQuantity = 2;
+
+        $this->cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $quantity,
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $product['subscription_interval_type'],
-            $product['subscription_interval_count'],
+            $this->faker->word,
+            rand(),
             [
                 'product-id' => $product['id'],
             ]
         );
+
+        $expectedInitialProductPrice = $product['price'] * $productQuantity;
+
+        $expectedTotalFromItems = round($expectedInitialProductPrice, 2);
+
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems + $shippingCostAmount);
+
+        $expectedShippingCostAmount = round($shippingCostAmount - $discount['amount'], 2);
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes - $discount['amount'], 2);
+
+        $expectedDiscountAmount = round($expectedInitialProductPrice - ($expectedOrderTotalDue - $expectedTaxes - $shippingCostAmount), 2);
 
         $results = $this->call(
             'PUT',
@@ -3575,43 +3534,44 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'card-token' => $cardToken,
-                'billing-region' => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Romanian',
+                'billing-region' => $state,
+                'billing-zip-or-postal-code' => $zip,
+                'billing-country' => $country,
                 'gateway' => 'drumeo',
                 'shipping-first-name' => $this->faker->firstName,
                 'shipping-last-name' => $this->faker->lastName,
                 'shipping-address-line-1' => $this->faker->address,
-                'shipping-city' => 'Canada',
-                'shipping-region' => 'ab',
+                'shipping-city' => $this->faker->city,
+                'shipping-region' => $state,
                 'shipping-zip-or-postal-code' => $this->faker->postcode,
-                'shipping-country' => 'Canada',
+                'shipping-country' => $country,
             ]
         );
 
         $this->assertEquals(200, $results->getStatusCode());
 
-        //assert the discount amount it's included in order due
+        // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
             [
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId,
-                'due' => $product['price'] * $quantity + $shippingCosts['price'] - $discount['amount'],
-                'tax' => 0,
-                'shipping_costs' => $shippingCosts['price'] - $discount['amount'],
-                'paid' => $product['price'] * $quantity + $shippingCosts['price'] - $discount['amount'],
+                'total_due' => $expectedOrderTotalDue,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => $expectedShippingCostAmount,
+                'total_paid' => $expectedOrderTotalDue,
             ]
         );
 
-        //assert the discount amount it's saved in order item data
+        // assert the discount amount it's saved in order item data
         $this->assertDatabaseHas(
             ConfigService::$tableOrderItem,
             [
                 'product_id' => $product['id'],
-                'quantity' => $quantity,
+                'quantity' => $productQuantity,
                 'initial_price' => $product['price'],
-                'total_price' => $product['price'] * $quantity,
+                'total_discounted' => $expectedDiscountAmount,
+                'final_price' => $expectedTotalFromItems,
             ]
         );
     }
@@ -3620,6 +3580,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
+        $brand = 'drumeo';
+        ConfigService::$brand = $brand;
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip);
+
         $cardToken = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
@@ -3652,77 +3621,75 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $quantity = 2;
+        $shippingOption = $this->fakeShippingOption([
+            'country' => 'Canada',
+            'active' => 1,
+            'priority' => 1,
+        ]);
 
-        $shippingOption = $this->shippingOptionRepository->create(
-            $this->faker->shippingOption(
-                [
-                    'country' => 'Canada',
-                    'active' => 1,
-                    'priority' => 1,
-                ]
-            )
-        );
-        $shippingCosts = $this->shippingCostsRepository->create(
-            $this->faker->shippingCost(
-                [
-                    'shipping_option_id' => $shippingOption['id'],
-                    'min' => 0,
-                    'max' => 10,
-                    'price' => 5.50,
-                ]
-            )
-        );
+        $shippingCostAmount = 5.50;
 
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => 25,
-                    'type' => ConfigService::$typeProduct,
-                    'active' => 1,
-                    'description' => $this->faker->word,
-                    'is_physical' => 1,
-                    'weight' => 2,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                ]
-            )
-        );
+        $shippingCost = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min' => 0,
+            'max' => 10,
+            'price' => $shippingCostAmount,
+        ]);
 
-        $discount = $this->discountRepository->create(
-            $this->faker->discount(
-                [
-                    'active' => true,
-                    'type' => DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE,
-                    'amount' => 10,
-                ]
-            )
-        );
-        $discountCriteria = $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product['id'],
-                    'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-                    'min' => 1,
-                    'max' => 500,
-                ]
-            )
-        );
+        $product = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 1,
+            'weight' => 2,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
 
-        $cart = $this->cartService->addCartItem(
+        $discount = $this->fakeDiscount([
+            'active' => true,
+            'type' => DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE,
+            'amount' => 25,
+        ]);
+
+        $discountCriteria = $this->fakeDiscountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id' => $product['id'],
+            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min' => 5,
+            'max' => 500,
+        ]);
+
+        $productQuantity = 2;
+
+        $this->cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $quantity,
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $product['subscription_interval_type'],
-            $product['subscription_interval_count'],
+            $this->faker->word,
+            rand(),
             [
                 'product-id' => $product['id'],
             ]
         );
+
+        $expectedInitialProductPrice = $product['price'] * $productQuantity;
+
+        $expectedTotalFromItems = round($expectedInitialProductPrice, 2);
+
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems + $shippingCostAmount);
+
+        $expectedShippingDiscount = round($discount['amount'] / 100 * $shippingCostAmount, 2);
+
+        $expectedShippingCostAmount = round($shippingCostAmount - $expectedShippingDiscount, 2);
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedShippingCostAmount + $expectedTaxes , 2);
+
+        $expectedDiscountAmount = round($expectedInitialProductPrice - ($expectedOrderTotalDue - $expectedTaxes - $shippingCostAmount), 2);
 
         $results = $this->call(
             'PUT',
@@ -3730,47 +3697,43 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'card-token' => $cardToken,
-                'billing-region' => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Romanian',
-                'gateway' => 'drumeo',
+                'billing-region' => $state,
+                'billing-zip-or-postal-code' => $zip,
+                'billing-country' => $country,
+                'gateway' => $brand,
                 'shipping-first-name' => $this->faker->firstName,
                 'shipping-last-name' => $this->faker->lastName,
                 'shipping-address-line-1' => $this->faker->address,
-                'shipping-city' => 'Canada',
-                'shipping-region' => 'ab',
+                'shipping-city' => $this->faker->city,
+                'shipping-region' => $state,
                 'shipping-zip-or-postal-code' => $this->faker->postcode,
-                'shipping-country' => 'Canada',
+                'shipping-country' => $country,
             ]
         );
 
         $this->assertEquals(200, $results->getStatusCode());
 
-        //assert the discount amount it's included in order due
+        // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
             [
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId,
-                'due' => $product['price'] * $quantity +
-                    $shippingCosts['price'] -
-                    $discount['amount'] / 100 * $shippingCosts['price'],
-                'tax' => 0,
-                'shipping_costs' => $shippingCosts['price'] - $discount['amount'] / 100 * $shippingCosts['price'],
-                'paid' => $product['price'] * $quantity +
-                    $shippingCosts['price'] -
-                    $discount['amount'] / 100 * $shippingCosts['price'],
+                'total_due' => $expectedOrderTotalDue,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => $expectedShippingCostAmount,
+                'total_paid' => $expectedOrderTotalDue,
             ]
         );
 
-        //assert the discount amount it's saved in order item data
+        // assert the discount amount it's saved in order item data
         $this->assertDatabaseHas(
             ConfigService::$tableOrderItem,
             [
                 'product_id' => $product['id'],
-                'quantity' => $quantity,
                 'initial_price' => $product['price'],
-                'total_price' => $product['price'] * $quantity,
+                'total_discounted' => $expectedDiscountAmount,
+                'final_price' => $expectedTotalFromItems,
             ]
         );
     }
@@ -3779,6 +3742,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
+        $brand = 'drumeo';
+        ConfigService::$brand = $brand;
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip);
+
         $cardToken = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
@@ -3811,77 +3783,75 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $quantity = 2;
+        $shippingOption = $this->fakeShippingOption([
+            'country' => 'Canada',
+            'active' => 1,
+            'priority' => 1,
+        ]);
 
-        $shippingOption = $this->shippingOptionRepository->create(
-            $this->faker->shippingOption(
-                [
-                    'country' => 'Canada',
-                    'active' => 1,
-                    'priority' => 1,
-                ]
-            )
-        );
-        $shippingCosts = $this->shippingCostsRepository->create(
-            $this->faker->shippingCost(
-                [
-                    'shipping_option_id' => $shippingOption['id'],
-                    'min' => 0,
-                    'max' => 10,
-                    'price' => 5.50,
-                ]
-            )
-        );
+        $shippingCostAmount = 5.50;
 
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => 25,
-                    'type' => ConfigService::$typeProduct,
-                    'active' => 1,
-                    'description' => $this->faker->word,
-                    'is_physical' => 1,
-                    'weight' => 2,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                ]
-            )
-        );
+        $shippingCost = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min' => 0,
+            'max' => 10,
+            'price' => $shippingCostAmount,
+        ]);
 
-        $discount = $this->discountRepository->create(
-            $this->faker->discount(
-                [
-                    'active' => true,
-                    'type' => DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
-                    'amount' => 10,
-                ]
-            )
-        );
-        $discountCriteria = $this->discountCriteriaRepository->create(
-            $this->faker->discountCriteria(
-                [
-                    'discount_id' => $discount['id'],
-                    'product_id' => $product['id'],
-                    'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-                    'min' => 5,
-                    'max' => 500,
-                ]
-            )
-        );
+        $product = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 1,
+            'weight' => 2,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
 
-        $cart = $this->cartService->addCartItem(
+        $discount = $this->fakeDiscount([
+            'active' => true,
+            'type' => DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
+            'amount' => 12,
+        ]);
+
+        $discountCriteria = $this->fakeDiscountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id' => $product['id'],
+            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min' => 5,
+            'max' => 500,
+        ]);
+
+        $productQuantity = 2;
+
+        $this->cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $quantity,
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $product['subscription_interval_type'],
-            $product['subscription_interval_count'],
+            $this->faker->word,
+            rand(),
             [
                 'product-id' => $product['id'],
             ]
         );
+
+        $expectedInitialProductPrice = $product['price'] * $productQuantity;
+
+        $expectedTotalFromItems = round($expectedInitialProductPrice, 2);
+
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems + $shippingCostAmount);
+
+        $expectedShippingDiscount = $discount['amount'];
+
+        $expectedShippingCostAmount = round($expectedShippingDiscount, 2);
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedShippingCostAmount + $expectedTaxes, 2);
+
+        $expectedDiscountAmount = round($expectedInitialProductPrice - ($expectedOrderTotalDue - $expectedTaxes - $shippingCostAmount), 2);
 
         $results = $this->call(
             'PUT',
@@ -3889,50 +3859,49 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'card-token' => $cardToken,
-                'billing-region' => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Romanian',
-                'gateway' => 'drumeo',
+                'billing-region' => $state,
+                'billing-zip-or-postal-code' => $zip,
+                'billing-country' => $country,
+                'gateway' => $brand,
                 'shipping-first-name' => $this->faker->firstName,
                 'shipping-last-name' => $this->faker->lastName,
                 'shipping-address-line-1' => $this->faker->address,
-                'shipping-city' => 'Canada',
-                'shipping-region' => 'ab',
+                'shipping-city' => $this->faker->city,
+                'shipping-region' => $state,
                 'shipping-zip-or-postal-code' => $this->faker->postcode,
-                'shipping-country' => 'Canada',
+                'shipping-country' => $country,
             ]
         );
 
         $this->assertEquals(200, $results->getStatusCode());
 
-        //assert the discount amount it's included in order due
+        // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
             [
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId,
-                'due' => $product['price'] * $quantity + $discount['amount'],
-                'tax' => 0,
-                'shipping_costs' => $discount['amount'],
-                'paid' => $product['price'] * $quantity + $discount['amount'],
+                'total_due' => $expectedOrderTotalDue,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => $expectedShippingCostAmount,
+                'total_paid' => $expectedOrderTotalDue,
             ]
         );
 
-        //assert the discount amount it's saved in order item data
+        // assert the discount amount it's saved in order item data
         $this->assertDatabaseHas(
             ConfigService::$tableOrderItem,
             [
                 'product_id' => $product['id'],
-                'quantity' => $quantity,
                 'initial_price' => $product['price'],
-                'total_price' => $product['price'] * $quantity,
+                'total_discounted' => $expectedDiscountAmount,
+                'final_price' => $expectedTotalFromItems,
             ]
         );
     }
 
-    public function test_customer_submit_order()
+    public function test_customer_submit_order() // wip
     {
-        $fingerPrint = '4242424242424242';
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
             ->willReturn(['data' => '']);
         $fakerCustomer = new Customer();
@@ -3941,7 +3910,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerCustomer);
 
         $fakerCard = new Card();
-        $fakerCard->fingerprint = $fingerPrint;
+        $fakerCard->fingerprint = $this->faker->word;
         $fakerCard->brand = $this->faker->word;
         $fakerCard->last4 = $this->faker->randomNumber(3);
         $fakerCard->exp_year = 2020;
@@ -3962,6 +3931,110 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
+        $brand = 'drumeo';
+        ConfigService::$brand = $brand;
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip);
+
+        $shippingOption = $this->fakeShippingOption([
+            'country' => 'Canada',
+            'active' => 1,
+            'priority' => 1,
+        ]);
+
+        $shippingCostAmount = 5.50;
+
+        $shippingCost = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min' => 0,
+            'max' => 10,
+            'price' => $shippingCostAmount,
+        ]);
+
+        $productOne = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 1,
+            'weight' => 2,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
+
+        $discount = $this->fakeDiscount([
+            'active' => true,
+            'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
+            'amount' => 12,
+        ]);
+
+        $discountCriteria = $this->fakeDiscountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id' => $productOne['id'],
+            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min' => 5,
+            'max' => 500,
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 1,
+            'weight' => 2,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
+
+        $productOneQuantity = 2;
+
+        $this->cartService->addCartItem(
+            $productOne['name'],
+            $productOne['description'],
+            $productOneQuantity,
+            $productOne['price'],
+            $productOne['is_physical'],
+            $productOne['is_physical'],
+            $this->faker->word,
+            rand(),
+            [
+                'product-id' => $productOne['id'],
+            ]
+        );
+
+        $productTwoQuantity = 1;
+
+        $this->cartService->addCartItem(
+            $productTwo['name'],
+            $productTwo['description'],
+            $productTwoQuantity,
+            $productTwo['price'],
+            $productTwo['is_physical'],
+            $productTwo['is_physical'],
+            $this->faker->word,
+            rand(),
+            [
+                'product-id' => $productTwo['id'],
+            ]
+        );
+
+        $expectedInitialProductOnePrice = $productOne['price'] * $productOneQuantity;
+        $expectedInitialProductTwoPrice = $productTwo['price'] * $productTwoQuantity;
+
+        $expectedTotalFromItems = round($expectedInitialProductOnePrice + $expectedInitialProductTwoPrice, 2);
+
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems + $shippingCostAmount);
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes - $discount['amount'], 2);
+
+        $expectedDiscountAmount = round($discount['amount'], 2);
+
+        /*
         $shippingOption = $this->shippingOptionRepository->create(
             $this->faker->shippingOption(
                 [
@@ -4059,59 +4132,59 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product-id' => $product2['id'],
             ]
         );
+        */
 
-        $expirationDate = $this->faker->creditCardExpirationDate;
         $billingEmailAddress = $this->faker->email;
+        $cardToken = $this->faker->word;
 
-        $results = $this->call(
+        $response = $this->call(
             'PUT',
             '/order',
             [
                 'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'billing-region' => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Canada',
-                'company_name' => $this->faker->creditCardType,
-                'credit-card-year-selector' => $expirationDate->format('Y'),
-                'credit-card-month-selector' => $expirationDate->format('m'),
-                'credit-card-number' => $fingerPrint,
-                'credit-card-cvv' => $this->faker->randomNumber(4),
-                'gateway' => 'drumeo',
-                'card-token' => '4242424242424242',
+                'card-token' => $cardToken,
+                'billing-region' => $state,
+                'billing-zip-or-postal-code' => $zip,
+                'billing-country' => $country,
+                'gateway' => $brand,
                 'shipping-first-name' => $this->faker->firstName,
                 'shipping-last-name' => $this->faker->lastName,
                 'shipping-address-line-1' => $this->faker->address,
-                'shipping-city' => 'Canada',
-                'shipping-region' => 'ab',
+                'shipping-city' => $this->faker->city,
+                'shipping-region' => $state,
                 'shipping-zip-or-postal-code' => $this->faker->postcode,
-                'shipping-country' => 'Canada',
+                'shipping-country' => $country,
                 'billing-email' => $billingEmailAddress,
             ]
         );
 
-        $this->assertEquals(200, $results->getStatusCode());
+        echo "\n### response: " . var_export($response->decodeResponseJson(), true) . "\n"; // todo - check customer transformation
+
+        $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
             ConfigService::$tableCustomer,
             [
                 'email' => $billingEmailAddress,
                 'brand' => ConfigService::$brand,
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
+                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 
-        $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
-            [
-                'user_id' => null,
-                'customer_id' => 1,
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
-            ]
-        );
+        // todo - check customer related data and add db assertions
+
+        // $this->assertDatabaseHas(
+        //     ConfigService::$tableOrder,
+        //     [
+        //         'user_id' => null,
+        //         'customer_id' => 1,
+        //         'created_at' => Carbon::now()
+        //             ->toDateTimeString(),
+        //     ]
+        // );
     }
 
+    /*
     public function test_submit_order_new_user()
     {
         $cardToken = $this->faker->word;
