@@ -235,4 +235,20 @@ class Address implements AddressInterface
 
         return $this;
     }
+
+    /**
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return [
+            'zip_or_postal_code' => $this->zipOrPostalCode,
+            'street_line_two' => $this->streetLineTwo,
+            'street_line_one' => $this->streetLineOne,
+            'last_ame' => $this->lastName,
+            'first_name' => $this->firstName,
+            'state' => $this->state,
+            'country' => $this->country
+        ];
+    }
 }

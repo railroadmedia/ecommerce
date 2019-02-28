@@ -643,6 +643,12 @@ class OrderFormService
 
         $subscription = new Subscription();
 
+        $intervalType = $product ?
+                            $product->getSubscriptionIntervalType() :
+                            ConfigService::$intervalTypeMonthly;
+
+        $intervalCount = $product ? $product->getSubscriptionIntervalCount() : 1;
+
         $subscription
             ->setBrand($brand)
             ->setType($type)
@@ -654,8 +660,8 @@ class OrderFormService
             ->setPaidUntil($nextBillDate)
             ->setTotalPrice($subscriptionPricePerPayment ?? $cartItem->getPrice())
             ->setCurrency($currency)
-            ->setIntervalType($product->getSubscriptionIntervalType() ?? ConfigService::$intervalTypeMonthly)
-            ->setIntervalCount($product->getSubscriptionIntervalCount() ?? 1)
+            ->setIntervalType($intervalType)
+            ->setIntervalCount($intervalCount)
             ->setTotalCyclesPaid(1)
             ->setTotalCyclesDue($totalCyclesDue)
             ->setPaymentMethod($paymentMethod)

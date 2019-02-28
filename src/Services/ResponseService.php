@@ -6,8 +6,10 @@ use Doctrine\ORM\QueryBuilder;
 use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
+use Railroad\Ecommerce\Transformers\CartItemTransformer;
 use Railroad\Ecommerce\Transformers\DecoratedOrderTransformer;
 use Railroad\Ecommerce\Transformers\DiscountCriteriaTransformer;
 use Railroad\Ecommerce\Transformers\DiscountTransformer;
@@ -404,5 +406,43 @@ class ResponseService extends FractalResponseService
                 },
                 new JsonApiSerializer()
             )->addMeta(['redirect' => $url]);
+    }
+
+    /**
+     * @param Order $order
+     * @param array $payments - array of Payments
+     * @param array $refunds - array of Refunds
+     * @param array $subscriptions - array of Subscriptions
+     * @param array $paymentPlans - array of PaymentPlans
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
+    public static function orderForm(
+        array $cartItems,
+        ?AddressInterface $billingAddress,
+        ?AddressInterface $shippingAddress,
+        array $paymentPlansPricing = [],
+        float $totalDue
+    ) {
+
+        /*
+        billingAddress & shippingAddress are exported using meta key to avoid
+        InvalidArgumentException: JSON API resource objects MUST have a valid id
+        */
+
+        return self::create(
+                $cartItems,
+                'cartItem',
+                new CartItemTransformer(),
+                new JsonApiSerializer()
+            )
+            ->addMeta([
+                'paymentPlansPricing' => $paymentPlansPricing,
+                'totalDue' => $totalDue,
+                'billingAddress' => $billingAddress->toArray(),
+                'shippingAddress' => $shippingAddress->toArray(),
+            ]);
     }
 }

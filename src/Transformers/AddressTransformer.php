@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Transformers;
 
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Usora\Transformers\UserTransformer;
 
 class AddressTransformer extends TransformerAbstract
 {
@@ -38,11 +39,35 @@ class AddressTransformer extends TransformerAbstract
 
     public function includeUser(Address $address)
     {
-        return $this->item($address->getUser(), new EntityReferenceTransformer(), 'user');
+        if ($address->getUser() instanceof Proxy) {
+            return $this->item(
+                $address->getUser(),
+                new EntityReferenceTransformer(),
+                'user'
+            );
+        } else {
+            return $this->item(
+                $address->getUser(),
+                new UserTransformer(),
+                'user'
+            );
+        }
     }
 
     public function includeCustomer(Address $address)
     {
-        return $this->item($address->getCustomer(), new EntityReferenceTransformer(), 'customer');
+        if ($address->getCustomer() instanceof Proxy) {
+            return $this->item(
+                $address->getCustomer(),
+                new EntityReferenceTransformer(),
+                'customer'
+            );
+        } else {
+            return $this->item(
+                $address->getCustomer(),
+                new CustomerTransformer(),
+                'customer'
+            );
+        }
     }
 }

@@ -54,7 +54,6 @@ class OrderFormJsonController extends BaseController
      * @param CurrencyService $currencyService
      * @param OrderFormService $orderFormService
      * @param PaymentPlanService $paymentPlanService
-     * @param ShippingOptionRepository $shippingOptionRepository
      * @param PermissionService $permissionService
      */
     public function __construct(
@@ -77,11 +76,10 @@ class OrderFormJsonController extends BaseController
 
     public function index()
     {
-        /*
         $this->cartService
             ->setBrand(ConfigService::$brand);
 
-        //if the cart it's empty; we throw an exception
+        // if the cart it's empty; we throw an exception
         throw_if(
             empty(
             $this->cartService->getCart()
@@ -90,24 +88,27 @@ class OrderFormJsonController extends BaseController
             new NotFoundException('The cart it\'s empty')
         );
 
-        $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
-        $shippingAddress = $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
+        $billingAddress = $this->cartAddressService
+            ->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
 
-        return [
-            'shippingAddress' => $shippingAddress,
-            'billingAddress' => $billingAddress,
-            'paymentPlanOptions' => $this->paymentPlanService->getPaymentPlanPricingForCartItems(),
-            'cartItems' => $this->cartService->getCart()
-                ->getItems(),
-            'totalDue' => $this->cartService->getCart()
-                ->getTotalDue(),
-        ];
-        */
+        $shippingAddress = $this->cartAddressService
+            ->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
 
-        return ResponseService::empty(204); // tmp
+        $cartItems = $this->cartService->getCart()->getItems();
+        $totalDue = $this->cartService->getCart()->getTotalDue();
+        $paymentPlansPricing = $this->paymentPlanService->getPaymentPlanPricingForCartItems();
+
+        return ResponseService::orderForm(
+            $cartItems,
+            $billingAddress,
+            $shippingAddress,
+            $paymentPlansPricing,
+            $totalDue
+        );
     }
 
-    /** Submit an order
+    /**
+     * Submit an order
      *
      * @param $request
      * @return JsonResponse

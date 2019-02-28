@@ -105,6 +105,16 @@ class EcommerceTestCase extends BaseTestCase
     protected $paymentGateway;
 
     /**
+     * @var array
+     */
+    protected $paymentPlanOptions;
+
+    /**
+     * @var float
+     */
+    protected $paymentPlanMinimumPrice;
+
+    /**
      * @var Application
      */
     protected $app;
@@ -313,6 +323,16 @@ class EcommerceTestCase extends BaseTestCase
         $this->currencies = $defaultConfig['supported_currencies'];
         $this->defaultCurrency = $defaultConfig['default_currency'];
         $this->paymentGateway = $defaultConfig['payment_gateways'];
+        $this->paymentPlanOptions = array_values(
+            array_filter(
+                $defaultConfig['paymentPlanOptions'],
+                function($value) {
+                    return $value != 1;
+                }
+            )
+        );
+
+        $this->paymentPlanMinimumPrice = $defaultConfig['paymentPlanMinimumPrice'];
     }
 
     /**
@@ -806,6 +826,11 @@ class EcommerceTestCase extends BaseTestCase
     public function getPaymentGateway($processor)
     {
         return $this->faker->randomElement(array_keys($this->paymentGateway[$processor]));
+    }
+
+    public function getPaymentPlanOption()
+    {
+        return $this->faker->randomElement($this->paymentPlanOptions);
     }
 
     protected function tearDown()

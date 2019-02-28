@@ -6,7 +6,8 @@ class UnprocessableEntityException extends \Exception
     protected $message;
 
     /**
-     * NotFoundException constructor.
+     * UnprocessableEntityException constructor.
+     *
      * @param string $message
      */
     public function __construct($message)
@@ -15,14 +16,15 @@ class UnprocessableEntityException extends \Exception
     }
 
     public function render($request){
-        return reply()->json([],
+        return response()->json(
             [
-                'code' => 422,
                 'errors' => [
                     'title' => 'Unprocessable Entity.',
-                    'detail' => $this->message
-                ]
-            ]);
+                    'detail' => $this->message,
+                ],
+            ],
+            422
+        );
     }
 
 }

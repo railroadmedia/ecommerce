@@ -20,26 +20,31 @@ class PaymentPlanService
         $this->cartService = $cartService;
     }
 
-    /** Check if payment plan it's eligible: the order should not contain subscription product and
-     *  totaling over a set amount (config paymentPlanMinimumPrice)
+    /**
+     * Check if payment plan it's eligible: the order should not contain subscription product and
+     * totaling over a set amount (config paymentPlanMinimumPrice)
      *
-     * @param array $cartItems
      * @return bool
      */
     public function isPaymentPlanEligible()
     {
         $cart = $this->cartService->getCart();
 
-        if ((!$this->hasSubscriptionItems($cart->getItems())) &&
-            (($cart->getTotalDue() - $cart->calculateTaxesDue() - $cart->calculateShippingDue()) >
-                config('ecommerce.paymentPlanMinimumPrice'))) {
+        if (
+            (!$this->hasSubscriptionItems($cart->getItems())) &&
+            (
+                ($cart->getTotalDue() - $cart->calculateTaxesDue() - $cart->calculateShippingDue()) >
+                config('ecommerce.paymentPlanMinimumPrice')
+            )
+        ) {
             return true;
         }
 
         return false;
     }
 
-    /** Check if in the cart exists subscription products
+    /**
+     * Check if in the cart exists subscription products
      *
      * @param array $cartItems
      * @return bool
@@ -47,7 +52,7 @@ class PaymentPlanService
     public function hasSubscriptionItems($cartItems)
     {
         foreach ($cartItems as $cartItem) {
-            if ($cartItem->getProduct()['type'] == ConfigService::$typeSubscription) {
+            if ($cartItem->getProduct()->getType() == ConfigService::$typeSubscription) {
                 return true;
             }
         }
