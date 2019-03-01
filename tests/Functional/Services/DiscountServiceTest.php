@@ -252,7 +252,7 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $cartItemsTotalDue = $this->faker->randomFloat(2, 100, 1000);
 
-        $expectedAmountDiscounted = $discountOne['amount'] + ($discountTwo['amount'] / 100 * $cartItemsTotalDue);
+        $expectedAmountDiscounted = round($discountOne['amount'] + ($discountTwo['amount'] / 100 * $cartItemsTotalDue), 2);
 
         $em = $this->app->make(EntityManager::class);
 

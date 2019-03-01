@@ -453,12 +453,12 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $em = $this->app->make(EntityManager::class);
 
-        $shippingCosts = $this->faker->randomFloat(2, 100, 200);
+        $shippingCosts = round($this->faker->randomFloat(2, 100, 200), 2);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
-            'min' => $this->faker->randomFloat(2, 10, 200),
-            'max' => $this->faker->randomFloat(2, 300)
+            'min' => round($this->faker->randomFloat(2, 10, 90), 2),
+            'max' => round($this->faker->randomFloat(2, 210, 300), 2)
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)

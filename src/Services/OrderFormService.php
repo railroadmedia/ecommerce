@@ -103,6 +103,7 @@ class OrderFormService
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
+     * @param UserProductService $userProductService
      */
     public function __construct(
         CartService $cartService,
@@ -156,6 +157,7 @@ class OrderFormService
      * @param Customer $customer
      * @param float $initialPrice
      * @param string $currency
+     * @param string $brand
      *
      * @return array
      *
@@ -166,7 +168,8 @@ class OrderFormService
         ?User $user,
         ?Customer $customer,
         $initialPrice,
-        $currency
+        $currency,
+        $brand = null
     ) : array {
 
         $customerCreditCard = $this->stripePaymentGateway->getOrCreateCustomer(
@@ -194,7 +197,7 @@ class OrderFormService
 
         $billingAddress
             ->setType(CartAddressService::BILLING_ADDRESS_TYPE)
-            ->setBrand(ConfigService::$brand)
+            ->setBrand($brand ?? ConfigService::$brand)
             ->setUser($user)
             ->setCustomer($customer)
             ->setZip($request->get('billing-zip-or-postal-code'))
@@ -231,6 +234,7 @@ class OrderFormService
      * @param float $price
      * @param string $currency
      * @param User $user
+     * @param string $brand
      *
      * @return array
      *
@@ -240,7 +244,8 @@ class OrderFormService
         Request $request,
         $price,
         $currency,
-        User $user
+        User $user,
+        $brand = null
     ) : array {
 
         $convertedPrice = $this->convertPrice($price, $currency);
@@ -263,7 +268,7 @@ class OrderFormService
 
         $billingAddress
             ->setType(CartAddressService::BILLING_ADDRESS_TYPE)
-            ->setBrand(ConfigService::$brand)
+            ->setBrand($brand ?? ConfigService::$brand)
             ->setUser($user)
             ->setZip($request->get('billing-zip-or-postal-code'))
             ->setState($request->get('billing-region'))
@@ -346,8 +351,8 @@ class OrderFormService
      *
      * @param OrderFormSubmitRequest $request
      * @param PaymentMethod $paymentMethod
-     * @param $cartItemsWithTaxesAndCosts
-     * @param $currency
+     * @param float $initialPrice
+     * @param string $currency
      *
      * @return mixed
      *
@@ -449,7 +454,7 @@ class OrderFormService
      * @param mixed $charge
      * @param $transactionId
      * @param PaymentMethod $paymentMethod
-     * @param $currency
+     * @param string $currency
      *
      * @return Payment
      */
@@ -500,6 +505,7 @@ class OrderFormService
      * @param User $user
      * @param Customer $customer
      * @param Address $billingAddress
+     * @param Address $shippingAddress
      * @param Payment $payment
      * @param string $brand
      *
@@ -574,7 +580,7 @@ class OrderFormService
         $currency,
         PaymentMethod $paymentMethod,
         Payment $payment,
-        $applyDiscounts = false, // todo - review & remove
+        $applyDiscounts = false,
         $totalCyclesDue = null
     ): Subscription {
         $type = ConfigService::$typeSubscription;
@@ -592,7 +598,7 @@ class OrderFormService
                                             ->calculatePricePerPayment();
 
             $totalTaxSplitedPerPaymentPlan = $this->cartService->getCart()
-                                    ->calculateTaxesDue() / $totalCyclesDue; // todo - review
+                                    ->calculateTaxesDue() / $totalCyclesDue;
 
         } else {
 
@@ -920,7 +926,8 @@ class OrderFormService
                         $customer ?? null,
                         $this->cartService->getCart()
                             ->calculateInitialPricePerPayment(),
-                        $currency
+                        $currency,
+                        $brand
                     );
 
                 } elseif (
@@ -950,7 +957,8 @@ class OrderFormService
                         $this->cartService->getCart()
                             ->calculateInitialPricePerPayment(),
                         $currency,
-                        $user
+                        $user,
+                        $brand
                     );
 
                 } else {

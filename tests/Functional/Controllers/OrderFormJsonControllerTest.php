@@ -131,8 +131,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
@@ -147,8 +147,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -233,8 +233,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
@@ -249,8 +249,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -383,8 +383,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
@@ -399,8 +399,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -506,8 +506,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -561,8 +561,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -705,8 +705,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
@@ -725,8 +725,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -984,8 +984,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
@@ -1000,8 +1000,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -1224,8 +1224,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
@@ -1244,8 +1244,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -1552,8 +1552,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
@@ -1572,8 +1572,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -1603,6 +1603,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             '/order',
             $orderRequestData
         );
+
+        // echo "\n### response: " . var_export($response->decodeResponseJson(), true) . "\n";
 
         $this->assertArraySubset(
             [
@@ -1870,8 +1872,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
@@ -1890,8 +1892,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -2121,8 +2123,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2261,8 +2263,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2508,8 +2510,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2725,8 +2727,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2857,8 +2859,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -2974,8 +2976,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -3107,8 +3109,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -3221,8 +3223,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -3358,8 +3360,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -3509,8 +3511,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -3670,8 +3672,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -3832,8 +3834,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -4002,8 +4004,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
@@ -4018,8 +4020,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -4467,8 +4469,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -4594,8 +4596,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -4808,8 +4810,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
@@ -4824,8 +4826,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -5171,8 +5173,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -5292,16 +5294,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
         );
 
-        $expectedTotalFromItems = $product['price'] * $productQuantity;
-        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems);
-        $expectedOrderTotalDue = $expectedTotalFromItems + $expectedTaxes;
+        $expectedTotalFromItems = round($product['price'] * $productQuantity, 2);
+        $expectedTaxes = round($this->getExpectedTaxes($expectedTotalFromItems), 2);
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedTaxes, 2);
 
         $results = $this->call(
             'PUT',
@@ -5437,8 +5439,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
@@ -5453,8 +5455,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
@@ -5581,18 +5583,18 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
         );
 
-        $totalProductPrice = $product['price'] * $productQuantity;
+        $totalProductPrice = round($product['price'] * $productQuantity, 2);
 
-        $expectedTaxes = $this->getExpectedTaxes($totalProductPrice);;
+        $expectedTaxes = $this->getExpectedTaxes($totalProductPrice);
 
-        $expectedOrderTotalDue = $totalProductPrice + $expectedTaxes;
+        $expectedOrderTotalDue = round($totalProductPrice + $expectedTaxes, 2);
 
         $orderData = [
             'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
@@ -5687,13 +5689,21 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    /*
     public function test_admin_submit_product_for_other_user()
     {
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
-        $randomUser = $this->faker->randomNumber(2);
-        $brand = $this->faker->word;
+
+        $randomUser = $this->fakeUser();
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $brand = 'drumeo';
+        ConfigService::$brand = $brand;
+
+        $this->setupTaxes($country, $state, $zip);
 
         $cardToken = $this->faker->word;
 
@@ -5727,27 +5737,23 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $quantity = 1;
+        $product = $this->fakeProduct([
+            'price' => 142.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+        ]);
 
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => 25,
-                    'type' => ConfigService::$typeProduct,
-                    'active' => 1,
-                    'description' => $this->faker->word,
-                    'is_physical' => 0,
-                    'weight' => 0,
-                    'subscription_interval_type' => null,
-                    'subscription_interval_count' => null,
-                ]
-            )
-        );
+        $productQuantity = 2;
 
-        $cart = $this->cartService->addCartItem(
+        $this->cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $quantity,
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
@@ -5757,79 +5763,80 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product-id' => $product['id'],
             ]
         );
-        $shipping = $this->faker->address(['type' => ConfigService::$shippingAddressType]);
+
+        $totalProductPrice = round($product['price'] * $productQuantity, 2);
+
+        $expectedTaxes = $this->getExpectedTaxes($totalProductPrice);
+
+        $expectedOrderTotalDue = round($totalProductPrice + $expectedTaxes, 2);
+
+        $orderData = [
+            'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'card-token' => $cardToken,
+            'billing-region' => $state,
+            'billing-zip-or-postal-code' => $zip,
+            'billing-country' => $country,
+            'gateway' => $brand,
+            'shipping-first-name' => $this->faker->firstName,
+            'shipping-last-name' => $this->faker->lastName,
+            'shipping-address-line-1' => $this->faker->address,
+            'shipping-city' => $this->faker->city,
+            'shipping-region' => $state,
+            'shipping-zip-or-postal-code' => $this->faker->postcode,
+            'shipping-country' => $country,
+            'user_id' => $randomUser['id'],
+        ];
 
         $results = $this->call(
             'PUT',
             '/order',
-            [
-                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'card-token' => $cardToken,
-                'billing-region' => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Romanian',
-                'gateway' => 'drumeo',
-                'shipping-first-name' => $shipping['first_name'],
-                'shipping-last-name' => $shipping['last_name'],
-                'shipping-address-line-1' => $shipping['street_line_1'],
-                'shipping-city' => $shipping['city'],
-                'shipping-region' => $shipping['city'],
-                'shipping-zip-or-postal-code' => $shipping['zip'],
-                'shipping-country' => $shipping['country'],
-                'user_id' => $randomUser
-            ]
+            $orderData
         );
 
         $this->assertEquals(200, $results->getStatusCode());
 
-        //assert the discount amount it's included in order due
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
             [
-                'brand' => ConfigService::$brand,
-                'user_id' => $randomUser,
-                'due' => $product['price'] * $quantity,
-                'tax' => 0,
-                'shipping_costs' => 0,
-                'paid' => $product['price'] * $quantity,
+                'brand' => $brand,
+                'user_id' => $randomUser['id'],
+                'total_due' => $expectedOrderTotalDue,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => 0,
+                'total_paid' => $expectedOrderTotalDue,
             ]
         );
 
         $this->assertDatabaseHas(
             ConfigService::$tableUserPaymentMethods,
             [
-                'user_id' => $randomUser,
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
+                'user_id' => $randomUser['id'],
+                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 
         $this->assertDatabaseHas(
             ConfigService::$tableAddress,
             [
-                'user_id' => $randomUser,
+                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
                 'brand' => ConfigService::$brand,
-                'type' => ConfigService::$shippingAddressType,
-                'first_name' => $shipping['first_name'],
-                'last_name' => $shipping['last_name'],
-                'street_line_1' => $shipping['street_line_1'],
-                'street_line_2' => $shipping['street_line_2'],
-                'city' => $shipping['city'],
-                'zip' => $shipping['zip'],
-                'country' => $shipping['country'],
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
+                'user_id' => $randomUser['id'],
+                'customer_id' => null,
+                'zip' => $orderData['billing-zip-or-postal-code'],
+                'state' => $orderData['billing-region'],
+                'country' => $orderData['billing-country'],
+                'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
 
         $this->assertDatabaseHas(
             ConfigService::$tableUserProduct,
             [
-                'user_id' => $randomUser,
+                'user_id' => $randomUser['id'],
                 'product_id' => $product['id'],
-                'quantity' => $quantity,
+                'quantity' => $productQuantity,
                 'expiration_date' => null,
-                'created_on' => Carbon::now()->toDateTimeString()
+                'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
     }
@@ -5838,7 +5845,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
-        $randomUser = $this->faker->randomNumber(2);
+
+        $randomUser = $this->fakeUser();
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $this->setupTaxes($country, $state, $zip);
+
         $brand = $this->faker->word;
 
         $cardToken = $this->faker->word;
@@ -5873,27 +5888,23 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $quantity = 1;
+        $product = $this->fakeProduct([
+            'price' => 142.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+        ]);
 
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => 25,
-                    'type' => ConfigService::$typeProduct,
-                    'active' => 1,
-                    'description' => $this->faker->word,
-                    'is_physical' => 0,
-                    'weight' => 0,
-                    'subscription_interval_type' => null,
-                    'subscription_interval_count' => null,
-                ]
-            )
-        );
+        $productQuantity = 2;
 
-        $cart = $this->cartService->addCartItem(
+        $this->cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $quantity,
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
@@ -5904,82 +5915,86 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ],
             $brand
         );
-        $shipping = $this->faker->address(['type' => ConfigService::$shippingAddressType]);
 
-        $results = $this->call(
+        $totalProductPrice = round($product['price'] * $productQuantity, 2);
+
+        $expectedTaxes = $this->getExpectedTaxes($totalProductPrice);
+
+        $expectedOrderTotalDue = round($totalProductPrice + $expectedTaxes, 2);
+
+        $orderData = [
+            'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'card-token' => $cardToken,
+            'billing-region' => $state,
+            'billing-zip-or-postal-code' => $zip,
+            'billing-country' => $country,
+            'gateway' => $brand,
+            'shipping-first-name' => $this->faker->firstName,
+            'shipping-last-name' => $this->faker->lastName,
+            'shipping-address-line-1' => $this->faker->address,
+            'shipping-city' => $this->faker->city,
+            'shipping-region' => $state,
+            'shipping-zip-or-postal-code' => $this->faker->postcode,
+            'shipping-country' => $country,
+            'user_id' => $randomUser['id'],
+            'brand' => $brand
+        ];
+
+        ConfigService::$paymentGateways['stripe'][$brand] = [
+            'stripe_api_secret' => $this->faker->word
+        ];
+
+        $response = $this->call(
             'PUT',
             '/order',
-            [
-                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'card-token' => $cardToken,
-                'billing-region' => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Romanian',
-                'gateway' => 'drumeo',
-                'shipping-first-name' => $shipping['first_name'],
-                'shipping-last-name' => $shipping['last_name'],
-                'shipping-address-line-1' => $shipping['street_line_1'],
-                'shipping-city' => $shipping['city'],
-                'shipping-region' => $shipping['city'],
-                'shipping-zip-or-postal-code' => $shipping['zip'],
-                'shipping-country' => $shipping['country'],
-                'user_id' => $randomUser,
-                'brand' => $brand
-            ]
+            $orderData
         );
 
-        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals(200, $response->getStatusCode());
 
-        //assert the discount amount it's included in order due
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
             [
                 'brand' => $brand,
-                'user_id' => $randomUser,
-                'due' => $product['price'] * $quantity,
-                'tax' => 0,
-                'shipping_costs' => 0,
-                'paid' => $product['price'] * $quantity,
+                'user_id' => $randomUser['id'],
+                'total_due' => $expectedOrderTotalDue,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => 0,
+                'total_paid' => $expectedOrderTotalDue,
             ]
         );
 
         $this->assertDatabaseHas(
             ConfigService::$tableUserPaymentMethods,
             [
-                'user_id' => $randomUser,
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
+                'user_id' => $randomUser['id'],
+                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 
         $this->assertDatabaseHas(
             ConfigService::$tableAddress,
             [
-                'user_id' => $randomUser,
+                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
                 'brand' => $brand,
-                'type' => ConfigService::$shippingAddressType,
-                'first_name' => $shipping['first_name'],
-                'last_name' => $shipping['last_name'],
-                'street_line_1' => $shipping['street_line_1'],
-                'street_line_2' => $shipping['street_line_2'],
-                'city' => $shipping['city'],
-                'zip' => $shipping['zip'],
-                'country' => $shipping['country'],
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
+                'user_id' => $randomUser['id'],
+                'customer_id' => null,
+                'zip' => $orderData['billing-zip-or-postal-code'],
+                'state' => $orderData['billing-region'],
+                'country' => $orderData['billing-country'],
+                'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
 
         $this->assertDatabaseHas(
             ConfigService::$tableUserProduct,
             [
-                'user_id' => $randomUser,
+                'user_id' => $randomUser['id'],
                 'product_id' => $product['id'],
-                'quantity' => $quantity,
+                'quantity' => $productQuantity,
                 'expiration_date' => null,
-                'created_on' => Carbon::now()->toDateTimeString()
+                'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
     }
-    */
 }
