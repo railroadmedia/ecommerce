@@ -19,6 +19,7 @@ use Railroad\Ecommerce\Providers\UserProviderInterface;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Tests\Resources\Models\User;
+use Railroad\Ecommerce\Tests\Fixtures\UserProvider;
 use Railroad\Location\Providers\LocationServiceProvider;
 use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\Permissions\Services\PermissionService;
@@ -157,6 +158,8 @@ class EcommerceTestCase extends BaseTestCase
         $this->app->instance(\Railroad\Ecommerce\ExternalHelpers\PayPal::class, $this->paypalExternalHelperMock);
 
         Carbon::setTestNow(Carbon::now());
+
+        $this->app->instance('UserProviderInterface', new UserProvider());
 
         // $this->artisan('countries:migration');
         $this->artisan('migrate:fresh');

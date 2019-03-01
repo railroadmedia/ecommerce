@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
+use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Usora\Entities\User;
 
 /**
@@ -53,8 +54,9 @@ class Address implements AddressInterface
     protected $brand;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Railroad\Usora\Entities\User")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * @var int
+     *
+     * @ORM\Column(type="user_id", name="user_id", nullable=true)
      */
     protected $user;
 
@@ -348,20 +350,20 @@ class Address implements AddressInterface
     }
 
     /**
-     * @return User|null
+     * @return UserInterface|null
      */
     public function getUser()
-    : ?User
+    : ?UserInterface
     {
         return $this->user;
     }
 
     /**
-     * @param User $user
+     * @param UserInterface $user
      *
      * @return Address
      */
-    public function setUser(?User $user)
+    public function setUser(?UserInterface $user)
     : self {
         $this->user = $user;
 

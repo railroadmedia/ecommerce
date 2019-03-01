@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\AddressRepository;
@@ -38,10 +39,16 @@ class AddressJsonController extends Controller
      * @var PermissionService
      */
     private $permissionService;
+
     /**
      * @var JsonApiHydrator
      */
     private $jsonApiHydrator;
+
+    /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
 
     /**
      * AddressJsonController constructor.
@@ -60,6 +67,8 @@ class AddressJsonController extends Controller
         $this->jsonApiHydrator = $jsonApiHydrator;
 
         $this->addressRepository = $this->entityManager->getRepository(Address::class);
+
+        $this->userProvider = app()->make('UserProviderInterface'); // todo - update - may be moved to constructor param autowire if concrete namespaced interface binded
     }
 
     /**
@@ -69,17 +78,34 @@ class AddressJsonController extends Controller
      */
     public function index(Request $request)
     {
-        if ($request->get('user_id') !== auth()->id()) {
-            $this->permissionService->canOrThrow(auth()->id(), 'pull.user.payment.method');
+        $currentUserId = $this->userProvider->getCurrentUserId();
+
+        if ($request->get('user_id') !== $currentUserId) {
+            $this->permissionService->canOrThrow($currentUserId, 'pull.user.payment.method');
         }
 
-        $addresses = $this->addressRepository->query()
-            ->whereIn('brand', $request->get('brands', [ConfigService::$availableBrands]))
-            ->where('user_id', $request->get('user_id', auth()->id()))
-            ->get();
+        $user = $this->userProvider->getUserById(
+                $request->get('user_id', $currentUserId)
+            );
 
-        return ResponseService::address($addresses)
-            ->respond(200);
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->addressRepository->createQueryBuilder('a');
+
+        $qb
+            ->select(['a'])
+            ->where($qb->expr()->in('a.brand', ':brands'))
+            ->andWhere($qb->expr()->eq('a.user', ':user'))
+            ->setParameter(
+                'brands',
+                $request->get('brands', [ConfigService::$availableBrands])
+            )
+            ->setParameter('user', $user);
+
+        $addresses = $qb->getQuery()->getResult();
+
+        return ResponseService::address($addresses);
     }
 
     /**

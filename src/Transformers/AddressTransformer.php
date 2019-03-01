@@ -12,9 +12,10 @@ class AddressTransformer extends TransformerAbstract
 
     public function transform(Address $address)
     {
-        if ($address->getUser()) {
-            $this->defaultIncludes[] = 'user';
-        }
+        // todo - to be refactored
+        // if ($address->getUser()) {
+        //     $this->defaultIncludes[] = 'user';
+        // }
 
         if ($address->getCustomer()) {
             $this->defaultIncludes[] = 'customer';

@@ -1604,8 +1604,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $orderRequestData
         );
 
-        // echo "\n### response: " . var_export($response->decodeResponseJson(), true) . "\n";
-
         $this->assertArraySubset(
             [
                 'data' => [
