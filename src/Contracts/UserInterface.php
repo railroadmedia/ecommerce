@@ -2,9 +2,8 @@
 
 namespace Railroad\Ecommerce\Contracts;
 
-interface UserInterface
-{
-    public function getId(): int;
+use Railroad\Doctrine\Contracts\UserEntityInterface;
 
-    public function __toString();
+interface UserInterface extends UserEntityInterface
+{
 }

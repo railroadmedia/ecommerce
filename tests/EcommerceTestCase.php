@@ -12,10 +12,12 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Orchestra\Testbench\TestCase as BaseTestCase;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Doctrine\Contracts\UserProviderInterface as DoctrineUserProviderInterface;
+use Railroad\DoctrineArrayHydrator\Contracts\UserProviderInterface as DoctrineArrayHydratorUserProviderInterface;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Faker\Factory;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
-use Railroad\Ecommerce\Providers\UserProviderInterface;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Tests\Resources\Models\User;
@@ -25,7 +27,6 @@ use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
 use Railroad\Response\Providers\ResponseServiceProvider;
-use Railroad\Usora\Providers\UsoraServiceProvider;
 use Railroad\Doctrine\Providers\DoctrineServiceProvider;
 use Webpatser\Countries\CountriesServiceProvider;
 
@@ -159,11 +160,17 @@ class EcommerceTestCase extends BaseTestCase
 
         Carbon::setTestNow(Carbon::now());
 
-        $this->app->instance('UserProviderInterface', new UserProvider());
+        $userProvider = new UserProvider();
+
+        $this->app->instance(UserProviderInterface::class, $userProvider);
+        $this->app->instance(DoctrineArrayHydratorUserProviderInterface::class, $userProvider);
+        $this->app->instance(DoctrineUserProviderInterface::class, $userProvider);
 
         // $this->artisan('countries:migration');
         $this->artisan('migrate:fresh');
         $this->artisan('cache:clear');
+
+        $this->createUsersTable();
     }
 
     /**
@@ -178,7 +185,6 @@ class EcommerceTestCase extends BaseTestCase
         $defaultConfig = require(__DIR__ . '/../config/ecommerce.php');
         $locationConfig = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
         $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
-        $usoraConfig = require(__DIR__ . '/../vendor/railroad/usora/config/usora.php');
 
         $app['config']->set('ecommerce.database_connection_name', 'testbench');
         $app['config']->set('ecommerce.cache_duration', 60);
@@ -233,20 +239,9 @@ class EcommerceTestCase extends BaseTestCase
 
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
-        $app['config']->set('usora.data_mode', $usoraConfig['data_mode']);
-        $app['config']->set('usora.tables', $usoraConfig['tables']);
-
-        $app['config']->set('usora.redis_host', $defaultConfig['redis_host']);
-        $app['config']->set('usora.redis_port', $defaultConfig['redis_port']);
 
         // if new packages entities are required for testing, their entity directory/namespace config should be merged here
-        $app['config']->set(
-            'doctrine.entities',
-            array_merge(
-                $defaultConfig['entities'],
-                $usoraConfig['entities']
-            )
-        );
+        $app['config']->set('doctrine.entities', $defaultConfig['entities']);
         $app['config']->set('doctrine.redis_host', $defaultConfig['redis_host']);
         $app['config']->set('doctrine.redis_port', $defaultConfig['redis_port']);
 
@@ -268,27 +263,6 @@ class EcommerceTestCase extends BaseTestCase
             ]
         );
 
-        // mysql
-        // $app['config']->set('doctrine.database_driver', $defaultConfig['database_driver']);
-        // $app['config']->set('doctrine.database_name', $defaultConfig['database_name']);
-        // $app['config']->set('doctrine.database_user', $defaultConfig['database_user']);
-        // $app['config']->set('doctrine.database_password', $defaultConfig['database_password']);
-        // $app['config']->set('doctrine.database_host', $defaultConfig['database_host']);
-        // $app['config']->set('ecommerce.database_connection_name', $defaultConfig['database_connection_name']);
-        // $app['config']->set('database.default', $defaultConfig['database_connection_name']);
-        // $app['config']->set('doctrine.development_mode', true);
-
-        // $app['config']->set(
-        //     'database.connections.' . $defaultConfig['database_connection_name'],
-        //     [
-        //         'driver' => 'mysql',
-        //         'database' => $defaultConfig['database_name'],
-        //         'username' => $defaultConfig['database_user'],
-        //         'password' => $defaultConfig['database_password'],
-        //         'host' => $defaultConfig['database_host'],
-        //     ]
-        // );
-
         $app->register(DoctrineServiceProvider::class);
 
         // allows access to built in user auth
@@ -302,26 +276,6 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(RemoteStorageServiceProvider::class);
         $app->register(CountriesServiceProvider::class);
         $app->register(PermissionsServiceProvider::class);
-        $app->register(UsoraServiceProvider::class);
-
-        $app->bind(
-            'UserProviderInterface',
-            function () {
-                $mock =
-                    $this->getMockBuilder('UserProviderInterface')
-                        ->setMethods(['create'])
-                        ->getMock();
-
-                $mock->method('create')
-                    ->willReturn(
-                        [
-                            'id' => 1,
-                            'email' => $this->faker->email,
-                        ]
-                    );
-                return $mock;
-            }
-        );
 
         $this->currencies = $defaultConfig['supported_currencies'];
         $this->defaultCurrency = $defaultConfig['default_currency'];
@@ -336,6 +290,22 @@ class EcommerceTestCase extends BaseTestCase
         );
 
         $this->paymentPlanMinimumPrice = $defaultConfig['paymentPlanMinimumPrice'];
+    }
+
+    protected function createUsersTable()
+    {
+        if (!$this->app['db']->connection()->getSchemaBuilder()->hasTable('users')) {
+            $this->app['db']->connection()->getSchemaBuilder()->create(
+                'users',
+                function (Blueprint $table) {
+                    $table->increments('id');
+                    $table->string('email');
+                    $table->string('password');
+                    $table->string('display_name');
+                    $table->timestamps();
+                }
+            );
+        }
     }
 
     /**
@@ -357,7 +327,7 @@ class EcommerceTestCase extends BaseTestCase
         $email = $this->faker->email;
         $userId =
             $this->databaseManager
-                ->table('usora_users')
+                ->table('users')
                 ->insertGetId(
                     [
                         'email' => $email,
@@ -398,7 +368,7 @@ class EcommerceTestCase extends BaseTestCase
         ];
 
         $userId = $this->databaseManager
-            ->table('usora_users')
+            ->table('users')
             ->insertGetId($userData);
 
         $userData['id'] = $userId;

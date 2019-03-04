@@ -4,7 +4,7 @@ namespace Railroad\Ecommerce\Transformers;
 
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Address;
-use Railroad\Usora\Transformers\UserTransformer;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 
 class AddressTransformer extends TransformerAbstract
 {
@@ -12,10 +12,9 @@ class AddressTransformer extends TransformerAbstract
 
     public function transform(Address $address)
     {
-        // todo - to be refactored
-        // if ($address->getUser()) {
-        //     $this->defaultIncludes[] = 'user';
-        // }
+        if ($address->getUser()) {
+            $this->defaultIncludes[] = 'user';
+        }
 
         if ($address->getCustomer()) {
             $this->defaultIncludes[] = 'customer';
@@ -40,19 +39,15 @@ class AddressTransformer extends TransformerAbstract
 
     public function includeUser(Address $address)
     {
-        if ($address->getUser() instanceof Proxy) {
-            return $this->item(
-                $address->getUser(),
-                new EntityReferenceTransformer(),
-                'user'
-            );
-        } else {
-            return $this->item(
-                $address->getUser(),
-                new UserTransformer(),
-                'user'
-            );
-        }
+        $userProvider = app()->make(UserProviderInterface::class);
+
+        $userTransformer = $userProvider->getUserTransformer();
+
+        return $this->item(
+            $address->getUser(),
+            $userTransformer,
+            'user'
+        );
     }
 
     public function includeCustomer(Address $address)

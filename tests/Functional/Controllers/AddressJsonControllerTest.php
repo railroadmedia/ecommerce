@@ -14,8 +14,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         parent::setUp();
     }
 
-    /*
-    public function test_pull()
+    public function test_pull() // ok
     {
         $userId = $this->createAndLogInNewUser();
 
@@ -37,7 +36,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $this->assertEquals(
+        $this->assertArraySubset(
             [
                 'data' => [
                     [
@@ -52,7 +51,21 @@ class AddressJsonControllerTest extends EcommerceTestCase
                                     'customer_id' => true
                                 ]
                             )
-                        )
+                        ),
+                        'relationships' => [
+                            'user' => [
+                                'data' => [
+                                    'type' => 'user',
+                                    'id' => $userId
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'user',
+                        'id' => $userId
                     ]
                 ]
             ],
@@ -60,7 +73,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_pull_multiple_brands()
+    public function test_pull_multiple_brands() // ok
     {
         $this->createAndLogInNewUser();
 
@@ -101,7 +114,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $this->assertEquals(
+        $this->assertArraySubset(
             [
                 'data' => [
                     [
@@ -116,7 +129,15 @@ class AddressJsonControllerTest extends EcommerceTestCase
                                     'customer_id' => true
                                 ]
                             )
-                        )
+                        ),
+                        'relationships' => [
+                            'user' => [
+                                'data' => [
+                                    'type' => 'user',
+                                    'id' => $userId
+                                ]
+                            ]
+                        ]
                     ],
                     [
                         'type' => 'address',
@@ -130,15 +151,29 @@ class AddressJsonControllerTest extends EcommerceTestCase
                                     'customer_id' => true
                                 ]
                             )
-                        )
+                        ),
+                        'relationships' => [
+                            'user' => [
+                                'data' => [
+                                    'type' => 'user',
+                                    'id' => $userId
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'user',
+                        'id' => $userId
                     ]
                 ]
             ],
             $response->decodeResponseJson()
         );
     }
-
-    public function test_store_validation_fails()
+    
+    public function test_store_validation_fails() // ok
     {
         $results = $this->call('PUT', '/address', []);
 
@@ -163,16 +198,16 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_store_address_invalid_type()
+    public function test_store_address_invalid_type() // ok
     {
         //call the store method with an invalid type(the valid types are AddressService::SHIPPING_ADDRESS and AddressService::BILLING_ADDRESS)
         $results = $this->call(
             'PUT',
             '/address',
             [
-                "data" => [
-                    "type" => "address",
-                    "attributes" => [
+                'data' => [
+                    'type' => 'address',
+                    'attributes' => [
                         'type' => $this->faker->word,
                         'user_id' => rand(),
                         'first_name' => $this->faker->firstName,
@@ -202,9 +237,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
             $results->decodeResponseJson('errors')
         );
     }
-    */
 
-    public function test_store_response()
+    public function test_store_response() // ok
     {
         $user = $this->fakeUser();
         $address = $this->faker->address();
@@ -216,39 +250,45 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'data' => [
                     'type' => 'address',
                     'attributes' => $address,
-                    // todo - update after specs settled - triggers: Exception: Relation `user` association not found
-                    // 'relationships' => [
-                    //     'user' => [
-                    //         'data' => [
-                    //             'type' => 'user',
-                    //             'id' => $user['id']
-                    //         ]
-                    //     ]
-                    // ]
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $user['id']
+                            ]
+                        ]
+                    ]
                 ],
             ]
         );
 
-        //assert the response status code
+        // echo "\n### response: " . var_export($response->decodeResponseJson(), true) . "\n";
+
+        // assert the response status code
         $this->assertEquals(201, $response->getStatusCode());
 
-        //assert that the new created address it's returned in response in JSON format
+        // assert that the new created address it's returned in response in JSON format
         $this->assertArraySubset(
             [
                 'data' => [
                     'type' => 'address',
                     'id' => 1,
                     'attributes' => $address,
-                    // todo - update after specs settled
-                    // 'relationships' => [
-                    //     'user' => [
-                    //         'data' => [
-                    //             'type' => 'user',
-                    //             'id' => $user['id']
-                    //         ]
-                    //     ]
-                    // ]
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $user['id']
+                            ]
+                        ]
+                    ]
                 ],
+                'included' => [
+                    [
+                        'type' => 'user',
+                        'id' => $user['id']
+                    ]
+                ]
             ],
             $response->decodeResponseJson()
         );
@@ -257,8 +297,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
     }
 
-    /*
-    public function test_update_missing_address()
+    public function test_update_missing_address() // ok
     {
         //take a fake address id
         $randomId = rand();
@@ -276,16 +315,18 @@ class AddressJsonControllerTest extends EcommerceTestCase
         //assert the error message that it's returned in JSON format
         $this->assertEquals(
             [
-                "title" => "Not found.",
-                "detail" => "Update failed, address not found with id: " . $randomId,
+                'title' => 'Not found.',
+                'detail' => 'Update failed, address not found with id: ' . $randomId,
             ],
             $results->decodeResponseJson('errors')
         );
     }
 
-    public function test_user_update_his_address_response()
+    public function test_user_update_his_address_response() // ok
     {
-        $address = $this->fakeAddress();
+        $userId = $this->createAndLogInNewUser();
+
+        $address = $this->fakeAddress(['user_id' => $userId]);
 
         $newStreetLine1 = $this->faker->streetAddress;
 
@@ -307,21 +348,39 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         //assert that the updated address  it's returned in JSON format
-        $this->assertEquals(
+        $this->assertArraySubset(
             [
                 'data' => [
                     'id' => $address['id'],
                     'type' => 'address',
-
-                    // todo: this could possibly be done better
                     'attributes' => array_merge(
-                        array_diff_key($address, ['id' => 1]),
+                        array_diff_key(
+                            $address,
+                            [
+                                'id' => true,
+                                'user_id' => true
+                            ]
+                        ),
                         [
                             'street_line_1' => $newStreetLine1,
                             'updated_at' => Carbon::now()->toDateTimeString()
                         ]
                     ),
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ]
+                    ]
                 ],
+                'included' => [
+                    [
+                        'type' => 'user',
+                        'id' => $userId
+                    ]
+                ]
             ],
             $results->decodeResponseJson()
         );
@@ -341,6 +400,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'zip' => $address['zip'],
                 'state' => $address['state'],
                 'country' => $address['country'],
+                'user_id' => $userId
             ]
         );
 
@@ -359,11 +419,12 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'zip' => $address['zip'],
                 'state' => $address['state'],
                 'country' => $address['country'],
+                'user_id' => $userId
             ]
         );
     }
 
-//    public function test_update_response_unauthorized_user()
+//    public function test_update_response_unauthorized_user() // todo - update after permission specs settle
 //    {
 //        //create an address for a random user
 //        $address = $this->fakeAddress();
@@ -393,7 +454,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 //        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
 //    }
 
-    // public function test_delete_unauthorized_user()
+    // public function test_delete_unauthorized_user() // todo - update after permission specs settle
     // {
     //     //create an address for a random user
     //     $address = $this->addressRepository->create($this->faker->address());
@@ -413,23 +474,26 @@ class AddressJsonControllerTest extends EcommerceTestCase
     //     $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());
     // }
 
-    // public function test_user_delete_his_address()
-    // {
-    //     //create an address for logged in user
-    //     $userId = $this->createAndLogInNewUser();
+    public function test_user_delete_his_address() // ok
+    {
+        //create an address for logged in user
+        $userId = $this->createAndLogInNewUser();
 
-    //     $address = $this->addressRepository->create($this->faker->address(['user_id' => $userId]));
+        $address = $this->fakeAddress(['user_id' => $userId]);
 
-    //     $results = $this->call('DELETE', '/address/' . $address['id']);
+        $results = $this->call('DELETE', '/address/' . $address['id']);
 
-    //     //assert the response status code
-    //     $this->assertEquals(204, $results->getStatusCode());
+        //assert the response status code
+        $this->assertEquals(204, $results->getStatusCode());
 
-    //     //assert that the address was deleted
-    //     $this->assertDatabaseMissing(ConfigService::$tableAddress, $address->getArrayCopy());
-    // }
+        //assert that the address was deleted
+        $this->assertDatabaseMissing(
+            ConfigService::$tableAddress,
+            $address
+        );
+    }
 
-    // public function _test_delete_address_with_orders()
+    // public function _test_delete_address_with_orders() // todo - update after permission specs settle
     // {
     //     $userId  = $this->createAndLogInNewUser();
     //     $address = $this->addressRepository->create($this->faker->address(['user_id' => $userId]));
@@ -459,8 +523,9 @@ class AddressJsonControllerTest extends EcommerceTestCase
     //         , $results->decodeResponseJson()['error']);
     // }
 
-    public function test_create_address_with_invalid_country()
+    public function test_create_address_with_invalid_country() // ok
     {
+        $userId = $this->createAndLogInNewUser();
         $country = $this->faker->word;
         $type = $this->faker->randomElement(
             [
@@ -484,7 +549,6 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     'type' => 'address',
                     'attributes' => [
                         'type' => $type,
-                        'user_id' => $userId,
                         'first_name' => $firstName,
                         'last_name' => $lastName,
                         'street_line_1' => $streetLine1,
@@ -493,6 +557,14 @@ class AddressJsonControllerTest extends EcommerceTestCase
                         'state' => $state,
                         'country' => $country,
                     ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ]
+                    ]
                 ],
             ]
         );
@@ -529,7 +601,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_update_address_with_invalid_country()
+    public function test_update_address_with_invalid_country() // ok
     {
         $country = $this->faker->word;
         $userId = $this->createAndLogInNewUser();
@@ -576,50 +648,78 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_admin_store_user_address()
+    public function test_admin_store_user_address() // ok // todo - update after permission specs settle
     {
         //mock permission
         $this->permissionServiceMock->method('is')
             ->willReturn(true);
 
+        $userId = rand();
+
         $address = $this->faker->address();
 
-        $results = $this->call(
+        $response = $this->call(
             'PUT',
             '/address',
             [
                 'data' => [
                     'type' => 'address',
                     'attributes' => $address,
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ]
+                    ]
                 ],
             ]
         );
 
         //assert the response status code
-        $this->assertEquals(201, $results->getStatusCode());
+        $this->assertEquals(201, $response->getStatusCode());
 
         // assert that the new created address it's returned in response in JSON format
         $this->assertArraySubset(
             [
                 'data' => [
                     'type' => 'address',
-                    'id' => 1,
                     'attributes' => $address,
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ]
+                    ]
                 ],
+                'included' => [
+                    [
+                        'type' => 'user',
+                        'id' => $userId
+                    ]
+                ]
             ],
-            $results->decodeResponseJson()
+            $response->decodeResponseJson()
         );
 
         //assert that the address exists in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            $address + ['user_id' => $userId]
+        );
     }
 
-    public function test_admin_update_user_address()
+    public function test_admin_update_user_address() // ok // todo - update after permission specs settle
     {
         $this->permissionServiceMock->method('canOrThrow')
             ->willReturn(true);
 
-        $address = $this->fakeAddress();
+        $userId = rand();
+
+        $address = $this->fakeAddress(['user_id' => $userId]);
 
         $newStreetLine1 = $this->faker->streetAddress;
 
@@ -641,21 +741,39 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         //assert that the updated address  it's returned in JSON format
-        $this->assertEquals(
+        $this->assertArraySubset(
             [
                 'data' => [
                     'id' => $address['id'],
                     'type' => 'address',
-
-                    // todo: this could possibly be done better
                     'attributes' => array_merge(
-                        array_diff_key($address, ['id' => 1]),
+                        array_diff_key(
+                            $address,
+                            [
+                                'id' => true,
+                                'user_id' => true
+                            ]
+                        ),
                         [
                             'street_line_1' => $newStreetLine1,
                             'updated_at' => Carbon::now()
                         ]
                     ),
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ]
+                    ]
                 ],
+                'included' => [
+                    [
+                        'type' => 'user',
+                        'id' => $userId
+                    ]
+                ]
             ],
             $results->decodeResponseJson()
         );
@@ -675,6 +793,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'zip' => $address['zip'],
                 'state' => $address['state'],
                 'country' => $address['country'],
+                'user_id' => $userId
             ]
         );
 
@@ -693,11 +812,12 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'zip' => $address['zip'],
                 'state' => $address['state'],
                 'country' => $address['country'],
+                'user_id' => $userId
             ]
         );
     }
 
-    // public function test_admin_delete_user_address()
+    // public function test_admin_delete_user_address() // todo - update after permission specs settle
     // {
     //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
@@ -711,7 +831,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     //     $this->assertDatabaseMissing(ConfigService::$tableAddress, $address->getArrayCopy());
     // }
 
-    public function test_customer_create_address()
+    public function test_customer_create_address() // ok
     {
         $customer = $this->fakeCustomer();
 
@@ -763,7 +883,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
     }
 
-    public function test_customer_update_his_address()
+    public function test_customer_update_his_address() // ok
     {
         $customer = $this->fakeCustomer();
         $address = $this->fakeAddress(['customer_id' => $customer['id']]);
@@ -799,7 +919,6 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'data' => [
                     'id' => $address['id'],
                     'type' => 'address',
-                    // todo: this could possibly be done better
                     'attributes' => array_merge(
                         array_diff_key($address, ['id' => 1, 'customer_id' => $customer['id']]),
                         [
@@ -826,8 +945,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             [
                 'id' => $address['id'],
                 'street_line_1' => $newStreetLine1,
-                'updated_at' => Carbon::now()
-                    ->toDateTimeString(),
+                'updated_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 
@@ -841,7 +959,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    // public function test_customer_restriction_on_update_other_address() // fails - deprecated by permissions removal
+    // public function test_customer_restriction_on_update_other_address() // todo - update after permission specs settle
     // {
     //     $customer = $this->fakeCustomer();
     //     $address = $this->fakeAddress();
@@ -881,42 +999,55 @@ class AddressJsonControllerTest extends EcommerceTestCase
     //         ]
     //     );
     // }
+    
+    public function test_customer_delete_his_address() // ok
+    {
+        $customer = $this->fakeCustomer();
 
-    // public function test_customer_delete_his_address()
-    // {
-    //     $customer = $this->customerRepository->create($this->faker->customer());
-    //     $address  = $this->addressRepository->create($this->faker->address(['customer_id' => $customer['id']]));
+        $address = $this->fakeAddress(['customer_id' => $customer['id']]);
 
-    //     $results = $this->call('DELETE', '/address/' . $address['id'], [
-    //         'customer_id' => $customer['id']
-    //     ]);
+        $results = $this->call(
+            'DELETE',
+            '/address/' . $address['id'],
+            [
+                'customer_id' => $customer['id']
+            ]
+        );
 
-    //     //assert response
-    //     $this->assertEquals(204, $results->getStatusCode());
+        //assert response
+        $this->assertEquals(204, $results->getStatusCode());
 
-    //     //assert database content
-    //     $this->assertDatabaseMissing(ConfigService::$tableAddress, $address->getArrayCopy());
-    // }
+        //assert database content
+        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
+    }
 
-    // public function test_customer_can_not_delete_others_address()
-    // {
-    //     $customer = $this->customerRepository->create($this->faker->customer());
-    //     $address  = $this->addressRepository->create($this->faker->address());
-    //     $results  = $this->call('DELETE', '/address/' . $address['id'], [
-    //         'customer_id' => $customer['id']
-    //     ]);
+    public function test_customer_can_not_delete_others_address() // ok
+    {
+        $customerRequest = $this->fakeCustomer();
+        $customerAddress = $this->fakeCustomer();
 
-    //     //assert response
-    //     $this->assertEquals(403, $results->getStatusCode());
-    //     $this->assertEquals(
-    //         [
-    //             "title"  => "Not allowed.",
-    //             "detail" => "This action is unauthorized.",
-    //         ]
-    //         , errors->decodeResponseJson);
+        $address = $this->fakeAddress(['customer_id' => $customerAddress['id']]);
 
-    //     //assert database
-    //     $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());
-    // }
-    */
+        $response  = $this->call(
+            'DELETE',
+            '/address/' . $address['id'],
+            [
+                'customer_id' => $customerRequest['id']
+            ]
+        );
+
+        // assert response
+        $this->assertEquals(403, $response->getStatusCode());
+
+        $this->assertEquals(
+            [
+                'title' => 'Not allowed.',
+                'detail' => 'This action is unauthorized.',
+            ],
+            $response->decodeResponseJson('error')
+        );
+
+        // assert database
+        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+    }
 }

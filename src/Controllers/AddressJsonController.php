@@ -60,7 +60,8 @@ class AddressJsonController extends Controller
     public function __construct(
         EntityManager $entityManager,
         PermissionService $permissionService,
-        JsonApiHydrator $jsonApiHydrator
+        JsonApiHydrator $jsonApiHydrator,
+        UserProviderInterface $userProvider
     ) {
         $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
@@ -68,7 +69,7 @@ class AddressJsonController extends Controller
 
         $this->addressRepository = $this->entityManager->getRepository(Address::class);
 
-        $this->userProvider = app()->make('UserProviderInterface'); // todo - update - may be moved to constructor param autowire if concrete namespaced interface binded
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -175,28 +176,48 @@ class AddressJsonController extends Controller
      */
     public function delete($addressId, AddressDeleteRequest $request)
     {
-        $address = $this->addressRepository->read($addressId);
+        $address = $this->addressRepository->find($addressId);
+
         throw_if(
             is_null($address),
-            new NotFoundException('Delete failed, address not found with id: ' . $addressId)
+            new NotFoundException(
+                'Delete failed, address not found with id: ' . $addressId
+            )
         );
 
         throw_if(
-            ((!$this->permissionService->canOrThrow(auth()->id(), 'delete.address')) &&
-                (auth()->id() !== intval($address['user_id'])) &&
-                ($request->get('customer_id', 0) !== $address['customer_id'])),
+            (
+                (
+                    !$this->permissionService->canOrThrow(
+                        auth()->id(),
+                        'delete.address'
+                    )
+                ) &&
+                (
+                    (
+                        $address->getUser() &&
+                        auth()->id() !== intval($address->getUser()->getId())
+                    ) ||
+                    (
+                        $address->getCustomer() &&
+                        $request->get('customer_id', 0) !== $address->getCustomer()->getId()
+                    )
+                )
+            ),
             new NotAllowedException('This action is unauthorized.')
         );
 
-        $results = $this->addressRepository->destroy($addressId);
-
+        // todo - update after specs settle
         //if the delete method response it's null the product not exist; we throw the proper exception
 
-        throw_if(
-            ($results === -1),
-            new NotAllowedException('Delete failed, exists orders defined for the selected address.')
-        );
+        // throw_if(
+        //     ($results === -1),
+        //     new NotAllowedException('Delete failed, exists orders defined for the selected address.')
+        // );
 
-        return reply()->json(null, ['code' => 204]);
+        $this->entityManager->remove($address);
+        $this->entityManager->flush();
+
+        return ResponseService::empty(204);
     }
 }

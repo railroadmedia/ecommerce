@@ -7,7 +7,6 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Contracts\UserInterface;
-use Railroad\Usora\Entities\User;
 
 /**
  * @ORM\Entity()

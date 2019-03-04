@@ -5,7 +5,7 @@ namespace Railroad\Ecommerce\Entities;
 use Carbon\Carbon;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
-use Railroad\Usora\Entities\User;
+use Railroad\Ecommerce\Contracts\UserInterface;
 
 /**
  * @ORM\Entity()
@@ -57,8 +57,9 @@ class AccessCode
     protected $isClaimed;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Railroad\Usora\Entities\User")
-     * @ORM\JoinColumn(name="claimer_id", referencedColumnName="id")
+     * @var int
+     *
+     * @ORM\Column(type="user_id", name="claimer_id", nullable=true)
      */
     protected $claimer;
 
@@ -185,19 +186,19 @@ class AccessCode
     }
 
     /**
-     * @return User|null
+     * @return UserInterface|null
      */
-    public function getClaimer(): ?User
+    public function getClaimer(): ?UserInterface
     {
         return $this->claimer;
     }
 
     /**
-     * @param User|null $claimer
+     * @param UserInterface|null $claimer
      *
      * @return AccessCode
      */
-    public function setClaimer(?User $claimer): self
+    public function setClaimer(?UserInterface $claimer): self
     {
         $this->claimer = $claimer;
 
