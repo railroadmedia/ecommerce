@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Tests\Fixtures;
 
+use Illuminate\Support\Facades\DB;
+use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Ecommerce\Tests\Fixtures\User;
 use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
@@ -21,6 +23,12 @@ class UserProvider implements
 
     public function getUserById(int $id): ?UserEntityInterface
     {
+        $user = DB::table(EcommerceTestCase::TABLES['users'])->find($id);
+
+        if ($user) {
+            return new User($id, $user->email);
+        }
+
         return new User($id);
     }
 
@@ -78,6 +86,13 @@ class UserProvider implements
         string $password
     ): ?UserInterface {
 
-        return new User(rand());
+        $userId = DB::table(EcommerceTestCase::TABLES['users'])
+            ->insertGetId([
+                'email' => $email,
+                'password' => $password,
+                'display_name' => $email,
+            ]);
+
+        return $this->getUserById($userId);
     }
 }

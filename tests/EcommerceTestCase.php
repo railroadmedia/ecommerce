@@ -33,6 +33,7 @@ use Webpatser\Countries\CountriesServiceProvider;
 class EcommerceTestCase extends BaseTestCase
 {
     const TABLES = [
+        'users' => 'users',
         'products' => 'ecommerce_product',
         'accessCodes' => 'ecommerce_access_code',
         'subscriptions' => 'ecommerce_subscription',
@@ -296,7 +297,7 @@ class EcommerceTestCase extends BaseTestCase
     {
         if (!$this->app['db']->connection()->getSchemaBuilder()->hasTable('users')) {
             $this->app['db']->connection()->getSchemaBuilder()->create(
-                'users',
+                self::TABLES['users'],
                 function (Blueprint $table) {
                     $table->increments('id');
                     $table->string('email');

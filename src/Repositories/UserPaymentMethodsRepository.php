@@ -3,13 +3,14 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\EntityRepository;
+use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
-use Railroad\Usora\Entities\User;
 
 class UserPaymentMethodsRepository extends EntityRepository
 {
-    public function getUserPrimaryPaymentMethod(User $user): ?UserPaymentMethods
-    {
+    public function getUserPrimaryPaymentMethod(
+        UserInterface $user
+    ): ?UserPaymentMethods {
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */

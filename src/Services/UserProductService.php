@@ -7,10 +7,10 @@ use Illuminate\Support\Collection;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
+use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\UserProduct;
-use Railroad\Usora\Entities\User;
 
 class UserProductService
 {
@@ -40,13 +40,13 @@ class UserProductService
     /**
      * Get user product based on user and product.
      *
-     * @param User $user
+     * @param UserInterface $user
      * @param Product $product
      *
      * @return UserProduct|null
      */
     public function getUserProduct(
-        User $user,
+        UserInterface $user,
         Product $product
     ): ?UserProduct {
 
@@ -67,13 +67,13 @@ class UserProductService
     /**
      * Get user products collection based on user and product array
      *
-     * @param User $user
+     * @param UserInterface $user
      * @param Product $product
      *
      * @return array
      */
     public function getUserProducts(
-        User $user,
+        UserInterface $user,
         $products
     ): array {
         /**
@@ -101,7 +101,7 @@ class UserProductService
     /**
      * Create new record in user_product table.
      *
-     * @param User $user
+     * @param UserInterface $user
      * @param Product $product
      * @param DateTimeInterface $expirationDate
      * @param int $quantity
@@ -109,7 +109,7 @@ class UserProductService
      * @return UserProduct
      */
     public function createUserProduct(
-        User $user,
+        UserInterface $user,
         Product $product,
         ?DateTimeInterface $expirationDate,
         $quantity
@@ -168,13 +168,13 @@ class UserProductService
     /**
      * Assign new products to user or update product's quantity.
      *
-     * @param User $user
+     * @param UserInterface $user
      * @param Product $product
      * @param DateTimeInterface $expirationDate
      * @param int $quantity
      */
     public function assignUserProduct(
-        User $user,
+        UserInterface $user,
         Product $product,
         ?DateTimeInterface $expirationDate,
         $quantity = 0
@@ -205,7 +205,7 @@ class UserProductService
     /**
      * Remove user products.
      *
-     * @param User $user
+     * @param UserInterface $user
      * @param array $products - collection of elements:
      * [
      *     'product' => (Product) $product,
@@ -213,7 +213,7 @@ class UserProductService
      * ]
      */
     public function removeUserProducts(
-        User $user,
+        UserInterface $user,
         $products
     ) {
         $userProducts = $this->getUserProducts(

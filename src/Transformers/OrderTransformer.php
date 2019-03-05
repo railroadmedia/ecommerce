@@ -4,7 +4,7 @@ namespace Railroad\Ecommerce\Transformers;
 
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Order;
-use Railroad\Usora\Transformers\UserTransformer;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 
 class OrderTransformer extends TransformerAbstract
 {
@@ -66,19 +66,15 @@ class OrderTransformer extends TransformerAbstract
 
     public function includeUser(Order $order)
     {
-        if ($order->getUser() instanceof Proxy) {
-            return $this->item(
-                $order->getUser(),
-                new EntityReferenceTransformer(),
-                'user'
-            );
-        } else {
-            return $this->item(
-                $order->getUser(),
-                new UserTransformer(),
-                'user'
-            );
-        }
+        $userProvider = app()->make(UserProviderInterface::class);
+
+        $userTransformer = $userProvider->getUserTransformer();
+
+        return $this->item(
+            $order->getUser(),
+            $userTransformer,
+            'user'
+        );
     }
 
     public function includeCustomer(Order $order)

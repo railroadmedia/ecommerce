@@ -71,7 +71,9 @@ class OrderFormSubmitRequest extends FormRequest
 
             if (!auth()->user()) {
                 $rules += [
-                    'billing-email' => 'required|email',
+                    'billing-email' => 'required_without:account-creation-email|email',
+                    'account-creation-email' => 'required_without:billing-email|email',
+                    'account-creation-password' => 'required_with:account-creation-email',
                 ];
             }
         }

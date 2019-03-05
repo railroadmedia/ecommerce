@@ -4,6 +4,8 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
+use Railroad\Ecommerce\Contracts\UserInterface;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Entities\Address;
@@ -14,7 +16,6 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
-use Railroad\Usora\Entities\User;
 
 class PaymentMethodService
 {
@@ -49,7 +50,7 @@ class PaymentMethodService
     }
 
     public function createUserCreditCard(
-        ?User $user,
+        ?UserInterface $user,
         $fingerPrint,
         $last4,
         $cardHolderName,
@@ -109,7 +110,7 @@ class PaymentMethodService
             $userPaymentMethods
                 ->setUser($user)
                 ->setPaymentMethod($paymentMethod)
-                ->setIsPrimary($makePrimary);
+                ->setIsPrimary(($primary == null) || $makePrimary); // if user has no other payment method, this should be primary
 
             $this->entityManager->persist($userPaymentMethods);
 
@@ -150,7 +151,7 @@ class PaymentMethodService
     }
 
     public function createPayPalBillingAgreement(
-        User $user,
+        UserInterface $user,
         $billingAgreementExternalId,
         Address $billingAddress,
         $paymentGatewayName,

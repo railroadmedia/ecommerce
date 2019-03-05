@@ -325,9 +325,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 [
 
                     'source' => 'billing-email',
-                    'detail' => 'The billing-email field is required.',
+                    'detail' => 'The billing-email field is required when account-creation-email is not present.',
                     'title' => 'Validation failed.'
                 ],
+                [
+                    'title' => 'Validation failed.',
+                    'source' => 'account-creation-email',
+                    'detail' => 'The account-creation-email field is required when billing-email is not present.',
+                ]
             ],
             $results->decodeResponseJson('errors')
         );
@@ -898,17 +903,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $state = $this->faker->word;
         $zip = $this->faker->postcode;
 
-        // $session = $this->app->make(Store::class);
-
-        // $session->flush();
-
-        // $cartAddressService = $this->app->make(CartAddressService::class);
-
         $orderRequestData = [
             'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            // 'billing-region' => $this->faker->word,
-            // 'billing-zip-or-postal-code' => $this->faker->postcode,
-            // 'billing-country' => 'Canada',
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
             'billing-country' => $country,
@@ -925,18 +921,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ];
 
         $this->setupTaxes($country, $state, $zip);
-
-        // $sessionBillingAddress = new Address();
-
-        // $sessionBillingAddress
-        //     ->setCountry($orderRequestData['billing-country'])
-        //     ->setState($orderRequestData['billing-region'])
-        //     ->setZipOrPostalCode($orderRequestData['billing-zip-or-postal-code']);
-
-        // $cartAddressService->setAddress(
-        //     $sessionBillingAddress,
-        //     CartAddressService::BILLING_ADDRESS_TYPE
-        // );
 
         $shippingOption = $this->fakeShippingOption([
             'country' => 'Canada',
@@ -4283,8 +4267,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    /*
-    public function test_submit_order_new_user() // todo - update after user provider update
+    public function test_submit_order_new_user()
     {
         $cardToken = $this->faker->word;
 
@@ -4318,27 +4301,34 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $quantity = 2;
+        $brand = 'drumeo';
+        ConfigService::$brand = $brand;
 
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'price' => 25,
-                    'type' => ConfigService::$typeProduct,
-                    'active' => 1,
-                    'description' => $this->faker->word,
-                    'is_physical' => 0,
-                    'weight' => 0,
-                    'subscription_interval_type' => '',
-                    'subscription_interval_count' => '',
-                ]
-            )
-        );
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
 
-        $cart = $this->cartService->addCartItem(
+        $this->setupTaxes($country, $state, $zip);
+
+        $currency = $this->getCurrency();
+
+        $product = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
+
+        $productQuantity = 2;
+
+        $this->cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $quantity,
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
@@ -4349,56 +4339,154 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
+        $expectedInitialProductPrice = $product['price'] * $productQuantity;
+
+        $expectedTotalFromItems = round($expectedInitialProductPrice, 2);
+
+        $expectedTaxes = $this->getExpectedTaxes($expectedTotalFromItems);
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedTaxes, 2);
+
         $accountCreationMail = $this->faker->email;
         $accountCreationPassword = $this->faker->password;
 
-        $results = $this->call(
+        $requestData = [
+            'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'card-token' => $cardToken,
+            'billing-region' => $state,
+            'billing-zip-or-postal-code' => $zip,
+            'billing-country' => $country,
+            'gateway' => $brand,
+            'shipping-first-name' => $this->faker->firstName,
+            'shipping-last-name' => $this->faker->lastName,
+            'shipping-address-line-1' => $this->faker->address,
+            'shipping-city' => $this->faker->city,
+            'shipping-region' => $state,
+            'shipping-zip-or-postal-code' => $this->faker->postcode,
+            'shipping-country' => $country,
+            'currency' => $currency,
+            'account-creation-email' => $accountCreationMail,
+            'account-creation-password' => $accountCreationPassword,
+        ];
+
+        $response = $this->call(
             'PUT',
             '/order',
-            [
-                'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
-                'card-token' => $cardToken,
-                'billing-region' => $this->faker->word,
-                'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Romanian',
-                'gateway' => 'drumeo',
-                'shipping-first-name' => $this->faker->firstName,
-                'shipping-last-name' => $this->faker->lastName,
-                'shipping-address-line-1' => $this->faker->address,
-                'shipping-city' => 'Canada',
-                'shipping-region' => 'ab',
-                'shipping-zip-or-postal-code' => $this->faker->postcode,
-                'shipping-country' => 'Canada',
-                'account-creation-email' => $accountCreationMail,
-                'account-creation-password' => $accountCreationPassword,
-            ]
+            $requestData
         );
 
-        $this->assertEquals(200, $results->getStatusCode());
+        // assert response has newly created user information
+        $response->assertJsonStructure([
+            'data' => [
+                'relationships' => [
+                    'user' => [
+                        'data' => [
+                            'type',
+                            'id',
+                        ]
+                    ]
+                ]
+            ]
+        ]);
 
-        //assert the discount amount it's included in order due
+        $decodedResponse = $response->decodeResponseJson();
+
+        $userId = $decodedResponse['data']['relationships']['user']['data']['id'];
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'order',
+                    'attributes' => [
+                        'total_due' => $expectedOrderTotalDue,
+                        'product_due' => null,
+                        'taxes_due' => $expectedTaxes,
+                        'shipping_due' => 0,
+                        'finance_due' => null,
+                        'total_paid' => $expectedOrderTotalDue,
+                        'brand' => $brand,
+                        'created_at' => Carbon::now()->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ],
+                        'billingAddress' => [
+                            'data' => ['type' => 'address']
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'user',
+                        'id' => $userId,
+                        'attributes' => []
+                    ],
+                    [
+                        'type' => 'address',
+                        'attributes' => [
+                            'type' => ConfigService::$billingAddressType,
+                            'brand' => $brand,
+                            'first_name' => null,
+                            'last_name' => null,
+                            'street_line_1' => null,
+                            'street_line_2' => null,
+                            'city' => null,
+                            'zip' => $requestData['billing-zip-or-postal-code'],
+                            'state' => $requestData['billing-region'],
+                            'country' => $requestData['billing-country'],
+                            'created_at' => Carbon::now()->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'user' => [
+                                'data' => [
+                                    'type' => 'user',
+                                    'id' => $userId,
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            $decodedResponse
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
             [
                 'brand' => ConfigService::$brand,
-                'user_id' => 1,
-                'due' => $product['price'] * $quantity,
-                'tax' => 0,
-                'shipping_costs' => 0,
-                'paid' => $product['price'] * $quantity,
+                'user_id' => $userId,
+                'total_due' => $expectedOrderTotalDue,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => 0,
+                'total_paid' => $expectedOrderTotalDue,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrderItem,
+            [
+                'product_id' => $product['id'],
+                'initial_price' => $product['price'],
+                'total_discounted' => 0,
+                'final_price' => $expectedTotalFromItems,
             ]
         );
 
         $this->assertDatabaseHas(
             ConfigService::$tableUserPaymentMethods,
             [
-                'user_id' => 1,
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
+                'user_id' => $userId,
+                'is_primary' => true,
+                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
     }
-    */
 
     public function test_invoice_order_send_after_submit()
     {

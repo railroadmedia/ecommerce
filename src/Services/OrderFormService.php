@@ -8,6 +8,8 @@ use Doctrine\ORM\Query\Expr\Join;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Railroad\Ecommerce\Contracts\UserInterface;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Customer;
@@ -37,7 +39,6 @@ use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
-use Railroad\Usora\Entities\User;
 use Stripe\Error\Card as StripeCard;
 
 class OrderFormService
@@ -114,7 +115,8 @@ class OrderFormService
         PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService,
         StripePaymentGateway $stripePaymentGateway,
-        UserProductService $userProductService
+        UserProductService $userProductService,
+        UserProviderInterface $userProvider
     ) {
         $this->cartService = $cartService;
         $this->cartAddressService = $cartAddressService;
@@ -125,19 +127,7 @@ class OrderFormService
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
         $this->userProductService = $userProductService;
-        $this->userProvider = app()->make('UserProviderInterface');
-    }
-
-    // tmp method
-    /**
-     * @param OrderFormSubmitRequest $request
-     *
-     * @return User
-     */
-    public function getUserReference($userId)
-    {
-        return $this->entityManager
-                        ->getReference(User::class, $userId);
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -153,7 +143,7 @@ class OrderFormService
 
     /**
      * @param OrderFormSubmitRequest $request
-     * @param User $user
+     * @param UserInterface $user
      * @param Customer $customer
      * @param float $initialPrice
      * @param string $currency
@@ -165,7 +155,7 @@ class OrderFormService
      */
     private function chargeAndCreatePaymentMethod(
         OrderFormSubmitRequest $request,
-        ?User $user,
+        ?UserInterface $user,
         ?Customer $customer,
         $initialPrice,
         $currency,
@@ -233,7 +223,7 @@ class OrderFormService
      * @param Request $request
      * @param float $price
      * @param string $currency
-     * @param User $user
+     * @param UserInterface $user
      * @param string $brand
      *
      * @return array
@@ -244,7 +234,7 @@ class OrderFormService
         Request $request,
         $price,
         $currency,
-        User $user,
+        UserInterface $user,
         $brand = null
     ) : array {
 
@@ -502,7 +492,7 @@ class OrderFormService
      * @param float $shipping
      * @param float $totalDue
      * @param float $totalTax
-     * @param User $user
+     * @param UserInterface $user
      * @param Customer $customer
      * @param Address $billingAddress
      * @param Address $shippingAddress
@@ -519,7 +509,7 @@ class OrderFormService
         $shipping,
         $totalDue,
         $totalTax,
-        ?User $user,
+        ?UserInterface $user,
         ?Customer $customer,
         Address $billingAddress,
         ?Address $shippingAddress,
@@ -560,7 +550,7 @@ class OrderFormService
      * @param Product $product
      * @param Order $order
      * @param CartItem $cartItem
-     * @param User $user
+     * @param UserInterface $user
      * @param string $currency
      * @param PaymentMethod $paymentMethod
      * @param Payment $payment
@@ -576,7 +566,7 @@ class OrderFormService
         ?Product $product = null,
         Order $order,
         ?CartItem $cartItem,
-        User $user,
+        UserInterface $user,
         $currency,
         PaymentMethod $paymentMethod,
         Payment $payment,
@@ -698,7 +688,7 @@ class OrderFormService
      */
     public function processOrderForm(Request $request): array
     {
-        $user = auth()->user() ? $this->getUserReference(auth()->id()) : null;
+        $user = auth()->user() ? $this->userProvider->getCurrentUser() : null;
         $brand = ConfigService::$brand;
 
         if (
@@ -707,8 +697,7 @@ class OrderFormService
                 'place-orders-for-other-users'
             )
         ) {
-            // todo - refactor
-            $user = $this->getUserReference($request->get('user_id'));
+            $user = $this->userProvider->getUserById($request->get('user_id'));
 
             $brand = $request->get('brand', ConfigService::$brand);
         }
@@ -725,7 +714,7 @@ class OrderFormService
         $currency = $request->get('currency', $this->currencyService->get());
 
         if (!empty($request->get('account-creation-email')) && empty($user)) {
-            $user = $this->userProvider->create( // todo - review/refactor
+            $user = $this->userProvider->createUser(
                 $request->get('account-creation-email'),
                 $request->get('account-creation-password')
             );

@@ -5,7 +5,7 @@ namespace Railroad\Ecommerce\Entities;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\PaymentMethod;
-use Railroad\Usora\Entities\User;
+use Railroad\Ecommerce\Contracts\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository")
@@ -33,8 +33,9 @@ class UserPaymentMethods
     protected $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Railroad\Usora\Entities\User")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * @var int
+     *
+     * @ORM\Column(type="user_id", name="user_id", nullable=true)
      */
     protected $user;
 
@@ -60,19 +61,19 @@ class UserPaymentMethods
     }
 
     /**
-     * @return User|null
+     * @return UserInterface|null
      */
-    public function getUser(): ?User
+    public function getUser(): ?UserInterface
     {
         return $this->user;
     }
 
     /**
-     * @param User $user
+     * @param UserInterface $user
      *
      * @return UserPaymentMethods
      */
-    public function setUser(?User $user): self
+    public function setUser(?UserInterface $user): self
     {
         $this->user = $user;
 
