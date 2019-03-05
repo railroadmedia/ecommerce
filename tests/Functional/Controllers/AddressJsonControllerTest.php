@@ -14,7 +14,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         parent::setUp();
     }
 
-    public function test_pull() // ok
+    public function test_pull()
     {
         $userId = $this->createAndLogInNewUser();
 
@@ -73,7 +73,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_pull_multiple_brands() // ok
+    public function test_pull_multiple_brands()
     {
         $this->createAndLogInNewUser();
 
@@ -172,8 +172,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
             $response->decodeResponseJson()
         );
     }
-    
-    public function test_store_validation_fails() // ok
+
+    public function test_store_validation_fails()
     {
         $results = $this->call('PUT', '/address', []);
 
@@ -198,7 +198,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_store_address_invalid_type() // ok
+    public function test_store_address_invalid_type()
     {
         //call the store method with an invalid type(the valid types are AddressService::SHIPPING_ADDRESS and AddressService::BILLING_ADDRESS)
         $results = $this->call(
@@ -238,9 +238,13 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_store_response() // ok
+    public function test_store_permissions_fails()
     {
-        $user = $this->fakeUser();
+        // current logged in user, not admin
+        $userId = $this->createAndLogInNewUser();
+
+        $otherUserId = rand();
+
         $address = $this->faker->address();
 
         $response = $this->call(
@@ -254,7 +258,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                         'user' => [
                             'data' => [
                                 'type' => 'user',
-                                'id' => $user['id']
+                                'id' => $otherUserId
                             ]
                         ]
                     ]
@@ -262,7 +266,42 @@ class AddressJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        // echo "\n### response: " . var_export($response->decodeResponseJson(), true) . "\n";
+        // assert the response status code
+        $this->assertEquals(403, $response->getStatusCode());
+
+        $this->assertEquals(
+           [
+               'title' => 'Not allowed.',
+               'detail' => 'This action is unauthorized.',
+           ],
+           $response->decodeResponseJson('error')
+       );
+    }
+
+    public function test_store_response()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $address = $this->faker->address();
+
+        $response = $this->call(
+            'PUT',
+            '/address',
+            [
+                'data' => [
+                    'type' => 'address',
+                    'attributes' => $address,
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ]
+                    ]
+                ],
+            ]
+        );
 
         // assert the response status code
         $this->assertEquals(201, $response->getStatusCode());
@@ -278,7 +317,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                         'user' => [
                             'data' => [
                                 'type' => 'user',
-                                'id' => $user['id']
+                                'id' => $userId
                             ]
                         ]
                     ]
@@ -286,7 +325,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'included' => [
                     [
                         'type' => 'user',
-                        'id' => $user['id']
+                        'id' => $userId
                     ]
                 ]
             ],
@@ -294,10 +333,15 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
 
         //assert that the address exists in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            $address + [
+                'user_id' => $userId
+            ]
+        );
     }
 
-    public function test_update_missing_address() // ok
+    public function test_update_missing_address()
     {
         //take a fake address id
         $randomId = rand();
@@ -322,7 +366,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_user_update_his_address_response() // ok
+    public function test_user_update_his_address_response()
     {
         $userId = $this->createAndLogInNewUser();
 
@@ -424,106 +468,116 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-//    public function test_update_response_unauthorized_user() // todo - update after permission specs settle
-//    {
-//        //create an address for a random user
-//        $address = $this->fakeAddress();
-//
-//        $newStreetLine1 = $this->faker->streetAddress;
-//
-//        $results = $this->call(
-//            'PATCH',
-//            '/address/' . $address['id'],
-//            [
-//                'user_id' => $this->createAndLogInNewUser(),
-//                'street_line_1' => $newStreetLine1,
-//            ]
-//        );
-//
-//        //assert that the logged in user can not update other user's address if it's not admin
-//        $this->assertEquals(403, $results->getStatusCode());
-//        $this->assertEquals(
-//            [
-//                'title' => 'Not allowed.',
-//                'detail' => 'This action is unauthorized.',
-//            ],
-//            $results->decodeResponseJson('errors')
-//        );
-//
-//        //assert that the address was not modified in the database
-//        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
-//    }
-
-    // public function test_delete_unauthorized_user() // todo - update after permission specs settle
-    // {
-    //     //create an address for a random user
-    //     $address = $this->addressRepository->create($this->faker->address());
-
-    //     $results = $this->call('DELETE', '/address/' . $address['id']);
-
-    //     //assert that the logged in user have not access if it's unauthorized
-    //     $this->assertEquals(403, $results->getStatusCode());
-    //     $this->assertEquals(
-    //         [
-    //             "title"  => "Not allowed.",
-    //             "detail" => "This action is unauthorized.",
-    //         ]
-    //         , errors->decodeResponseJson);
-
-    //     //assert that the address was not deleted from the database
-    //     $this->assertDatabaseHas(ConfigService::$tableAddress, $address->getArrayCopy());
-    // }
-
-    public function test_user_delete_his_address() // ok
+    public function test_update_response_unauthorized_user()
     {
-        //create an address for logged in user
+        // current logged in user
+        $userId = $this->createAndLogInNewUser();
+
+        // create an address for a random user
+        $address = $this->fakeAddress(['user_id' => rand()]);
+
+        $newStreetLine1 = $this->faker->streetAddress;
+
+        $response = $this->call(
+            'PATCH',
+            '/address/' . $address['id'],
+            [
+                'data' => [
+                    'id' => $address['id'],
+                    'type' => 'address',
+                    'attributes' => [
+                        'street_line_1' => $newStreetLine1,
+                    ],
+                ],
+            ]
+        );
+
+        // assert that the logged in user can not update other user's address if it's not admin
+        $this->assertEquals(403, $response->getStatusCode());
+
+        $this->assertEquals(
+            [
+                'title' => 'Not allowed.',
+                'detail' => 'This action is unauthorized.',
+            ],
+            $response->decodeResponseJson('error')
+        );
+
+        // assert that the address was not modified in the database
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            $address
+        );
+    }
+
+    public function test_delete_unauthorized_user()
+    {
+        // current logged in user
+        $userId = $this->createAndLogInNewUser();
+
+        // create an address for a random user
+        $address = $this->fakeAddress(['user_id' => rand()]);
+
+        $response = $this->call('DELETE', '/address/' . $address['id']);
+
+        // assert that the logged in user have not access if it's unauthorized
+        $this->assertEquals(403, $response->getStatusCode());
+
+        $this->assertEquals(
+            [
+                'title' => 'Not allowed.',
+                'detail' => 'This action is unauthorized.'
+            ],
+            $response->decodeResponseJson('error')
+        );
+
+        // assert that the address was not deleted from the database
+        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+    }
+
+    public function test_user_delete_his_address()
+    {
+        // create an address for logged in user
         $userId = $this->createAndLogInNewUser();
 
         $address = $this->fakeAddress(['user_id' => $userId]);
 
-        $results = $this->call('DELETE', '/address/' . $address['id']);
+        $response = $this->call('DELETE', '/address/' . $address['id']);
 
-        //assert the response status code
-        $this->assertEquals(204, $results->getStatusCode());
+        // assert the response status code
+        $this->assertEquals(204, $response->getStatusCode());
 
-        //assert that the address was deleted
+        // assert that the address was deleted
         $this->assertDatabaseMissing(
             ConfigService::$tableAddress,
             $address
         );
     }
 
-    // public function _test_delete_address_with_orders() // todo - update after permission specs settle
-    // {
-    //     $userId  = $this->createAndLogInNewUser();
-    //     $address = $this->addressRepository->create($this->faker->address(['user_id' => $userId]));
-    //     $order   = [
-    //         'due'                 => $this->faker->numberBetween(0, 1000),
-    //         'tax'                 => rand(),
-    //         'shipping_costs'      => rand(),
-    //         'paid'                => rand(),
-    //         'user_id'             => $address['user_id'],
-    //         'customer_id'         => $address['customer_id'],
-    //         'brand'               => ConfigService::$brand,
-    //         'shipping_address_id' => $address['id'],
-    //         'billing_address_id'  => null,
-    //         'created_on'          => Carbon::now()->toDateTimeString()
-    //     ];
+    public function test_delete_address_with_orders()
+    {
+        $userId = $this->createAndLogInNewUser();
 
-    //     $this->query()->table(ConfigService::$tableOrder)->insertGetId($order);
+        $address = $this->fakeAddress(['user_id' => $userId]);
 
-    //     $results = $this->call('DELETE', '/address/' . $address['id']);
+        $order = $this->fakeOrder([
+            'user_id' => $userId,
+            'shipping_address_id' => $address['id']
+        ]);
 
-    //     $this->assertEquals(403, $results->getStatusCode());
-    //     $this->assertEquals(
-    //         [
-    //             "title"  => "Not allowed.",
-    //             "detail" => "Delete failed, exists orders defined for the selected address.",
-    //         ]
-    //         , $results->decodeResponseJson()['error']);
-    // }
+        $results = $this->call('DELETE', '/address/' . $address['id']);
 
-    public function test_create_address_with_invalid_country() // ok
+        $this->assertEquals(403, $results->getStatusCode());
+        $this->assertEquals(
+            [
+                'title' => 'Not allowed.',
+                'detail' => 'Delete failed, orders found with selected address.'
+            ],
+            $results->decodeResponseJson('error')
+        );
+    }
+
+    public function test_create_address_with_invalid_country()
     {
         $userId = $this->createAndLogInNewUser();
         $country = $this->faker->word;
@@ -601,7 +655,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_update_address_with_invalid_country() // ok
+    public function test_update_address_with_invalid_country()
     {
         $country = $this->faker->word;
         $userId = $this->createAndLogInNewUser();
@@ -648,10 +702,10 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_admin_store_user_address() // ok // todo - update after permission specs settle
+    public function test_admin_store_user_address()
     {
         //mock permission
-        $this->permissionServiceMock->method('is')
+        $this->permissionServiceMock->method('canOrThrow')
             ->willReturn(true);
 
         $userId = rand();
@@ -712,7 +766,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_admin_update_user_address() // ok // todo - update after permission specs settle
+    public function test_admin_update_user_address()
     {
         $this->permissionServiceMock->method('canOrThrow')
             ->willReturn(true);
@@ -817,21 +871,23 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    // public function test_admin_delete_user_address() // todo - update after permission specs settle
-    // {
-    //     $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+    public function test_admin_delete_user_address()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-    //     $address = $this->addressRepository->create($this->faker->address());
+        $userId = rand();
 
-    //     $results = $this->call('DELETE', '/address/' . $address['id']);
+        $address = $this->fakeAddress(['user_id' => $userId]);
 
-    //     $this->assertEquals(204, $results->getStatusCode());
+        $results = $this->call('DELETE', '/address/' . $address['id']);
 
-    //     //assert that address was deleted from database
-    //     $this->assertDatabaseMissing(ConfigService::$tableAddress, $address->getArrayCopy());
-    // }
+        $this->assertEquals(204, $results->getStatusCode());
 
-    public function test_customer_create_address() // ok
+        // assert that address was deleted from database
+        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
+    }
+
+    public function test_customer_create_address()
     {
         $customer = $this->fakeCustomer();
 
@@ -880,10 +936,15 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
 
         // assert that the address exists in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            $address + [
+                'customer_id' => $customer['id']
+            ]
+        );
     }
 
-    public function test_customer_update_his_address() // ok
+    public function test_customer_update_his_address()
     {
         $customer = $this->fakeCustomer();
         $address = $this->fakeAddress(['customer_id' => $customer['id']]);
@@ -920,7 +981,13 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     'id' => $address['id'],
                     'type' => 'address',
                     'attributes' => array_merge(
-                        array_diff_key($address, ['id' => 1, 'customer_id' => $customer['id']]),
+                        array_diff_key(
+                            $address,
+                            [
+                                'id' => true,
+                                'customer_id' => true
+                            ]
+                        ),
                         [
                             'street_line_1' => $newStreetLine1,
                             'updated_at' => Carbon::now()->toDateTimeString()
@@ -939,12 +1006,13 @@ class AddressJsonControllerTest extends EcommerceTestCase
             $results->decodeResponseJson()
         );
 
-        // assert address raw was updated in the database
+        // assert address row was updated in the database
         $this->assertDatabaseHas(
             ConfigService::$tableAddress,
             [
                 'id' => $address['id'],
                 'street_line_1' => $newStreetLine1,
+                'customer_id' => $customer['id'],
                 'updated_at' => Carbon::now()->toDateTimeString(),
             ]
         );
@@ -954,53 +1022,62 @@ class AddressJsonControllerTest extends EcommerceTestCase
             ConfigService::$tableAddress,
             [
                 'id' => $address['id'],
+                'customer_id' => $customer['id'],
                 'street_line_1' => $address['street_line_1'],
             ]
         );
     }
 
-    // public function test_customer_restriction_on_update_other_address() // todo - update after permission specs settle
-    // {
-    //     $customer = $this->fakeCustomer();
-    //     $address = $this->fakeAddress();
+    public function test_customer_restriction_on_update_other_address()
+    {
+        $customer = $this->fakeCustomer();
+        $address = $this->fakeAddress(['customer_id' => rand()]);
 
-    //     $newStreetLine1 = $this->faker->streetAddress;
+        $newStreetLine1 = $this->faker->streetAddress;
 
-    //     $results = $this->call(
-    //         'PATCH',
-    //         '/address/' . $address['id'],
-    //         [
-    //             'data' => [
-    //                 'id' => $address['id'],
-    //                 'type' => 'address',
-    //                 'attributes' => [
-    //                     'street_line_1' => $newStreetLine1,
-    //                 ],
-    //             ],
-    //         ]
-    //     );
+        $response = $this->call(
+            'PATCH',
+            '/address/' . $address['id'],
+            [
+                'data' => [
+                    'id' => $address['id'],
+                    'type' => 'address',
+                    'attributes' => [
+                        'street_line_1' => $newStreetLine1,
+                    ],
+                    'relationships' => [
+                        'customer' => [
+                            'data' => [
+                                'type' => 'customer',
+                                'id' => $customer['id']
+                            ]
+                        ]
+                    ]
+                ],
+            ]
+        );
 
-    //     //assert response
-    //     $this->assertEquals(403, $results->getStatusCode());
-    //     $this->assertEquals(
-    //         [
-    //             "title" => "Not allowed.",
-    //             "detail" => "This action is unauthorized.",
-    //         ],
-    //         $results->decodeResponseJson('errors')
-    //     );
+        //assert response
+        $this->assertEquals(403, $response->getStatusCode());
+        $this->assertEquals(
+            [
+                'title' => 'Not allowed.',
+                'detail' => 'This action is unauthorized.',
+            ],
+            $response->decodeResponseJson('error')
+        );
 
-    //     //assert database content
-    //     $this->assertDatabaseMissing(
-    //         ConfigService::$tableAddress,
-    //         [
-    //             'id' => $address['id'],
-    //             'street_line_1' => $newStreetLine1,
-    //         ]
-    //     );
-    // }
-    
-    public function test_customer_delete_his_address() // ok
+        //assert database content
+        $this->assertDatabaseMissing(
+            ConfigService::$tableAddress,
+            [
+                'id' => $address['id'],
+                'street_line_1' => $newStreetLine1,
+            ]
+        );
+    }
+
+    public function test_customer_delete_his_address()
     {
         $customer = $this->fakeCustomer();
 
@@ -1021,7 +1098,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
     }
 
-    public function test_customer_can_not_delete_others_address() // ok
+    public function test_customer_can_not_delete_others_address()
     {
         $customerRequest = $this->fakeCustomer();
         $customerAddress = $this->fakeCustomer();

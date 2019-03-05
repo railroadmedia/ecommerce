@@ -6,10 +6,10 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
-use Railroad\Usora\Entities\User;
+use Railroad\Ecommerce\Contracts\UserInterface;
 
 /**
- * @ORM\Entity()
+ * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\OrderRepository")
  * @ORM\Table(
  *     name="ecommerce_order",
  *     indexes={
@@ -80,8 +80,9 @@ class Order
     protected $totalPaid;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Railroad\Usora\Entities\User")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * @var int
+     *
+     * @ORM\Column(type="user_id", name="user_id", nullable=true)
      */
     protected $user;
 
@@ -296,19 +297,19 @@ class Order
     }
 
     /**
-     * @return User|null
+     * @return UserInterface|null
      */
-    public function getUser(): ?User
+    public function getUser(): ?UserInterface
     {
         return $this->user;
     }
 
     /**
-     * @param User $user
+     * @param UserInterface $user
      *
      * @return Order
      */
-    public function setUser(?User $user): self
+    public function setUser(?UserInterface $user): self
     {
         $this->user = $user;
 

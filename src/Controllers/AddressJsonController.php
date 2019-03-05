@@ -12,6 +12,7 @@ use Illuminate\Routing\Controller;
 use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Requests\AddressCreateRequest;
@@ -122,6 +123,17 @@ class AddressJsonController extends Controller
      */
     public function store(AddressCreateRequest $request)
     {
+        throw_if(
+            (
+                !$this->permissionService->canOrThrow(
+                    auth()->id(),
+                    'store.address'
+                ) &&
+                $request->input('data.relationships.user.data.id') != auth()->id()
+            ),
+            new NotAllowedException('This action is unauthorized.')
+        );
+
         $address = new Address();
 
         $this->jsonApiHydrator->hydrate($address, $request->onlyAllowed());
@@ -151,7 +163,32 @@ class AddressJsonController extends Controller
 
         throw_if(
             is_null($address),
-            new NotFoundException('Update failed, address not found with id: ' . $addressId)
+            new NotFoundException(
+                'Update failed, address not found with id: ' . $addressId
+            )
+        );
+
+        throw_if(
+            (
+                (
+                    !$this->permissionService->canOrThrow(
+                        auth()->id(),
+                        'update.address'
+                    )
+                ) &&
+                (
+                    (
+                        $address->getUser() &&
+                        auth()->id() !== intval($address->getUser()->getId())
+                    ) ||
+                    (
+                        $address->getCustomer() &&
+                        $request->input('data.relationships.customer.data.id') !==
+                            $address->getCustomer()->getId()
+                    )
+                )
+            ),
+            new NotAllowedException('This action is unauthorized.')
         );
 
         $this->jsonApiHydrator->hydrate($address, $request->onlyAllowed());
@@ -207,13 +244,14 @@ class AddressJsonController extends Controller
             new NotAllowedException('This action is unauthorized.')
         );
 
-        // todo - update after specs settle
-        //if the delete method response it's null the product not exist; we throw the proper exception
+        $orderRepository = $this->entityManager->getRepository(Order::class);
 
-        // throw_if(
-        //     ($results === -1),
-        //     new NotAllowedException('Delete failed, exists orders defined for the selected address.')
-        // );
+        throw_if(
+            $orderRepository->ordersWithAdressExist($address),
+            new NotAllowedException(
+                'Delete failed, orders found with selected address.'
+            )
+        );
 
         $this->entityManager->remove($address);
         $this->entityManager->flush();

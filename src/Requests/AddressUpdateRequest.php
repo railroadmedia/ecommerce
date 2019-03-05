@@ -25,8 +25,10 @@ class AddressUpdateRequest extends FormRequest
             'data.attributes.zip' => 'zip',
             'data.attributes.state' => 'state',
             'data.attributes.country' => 'country',
-            'data.attributes.user_id' => 'user id',
-            'data.attributes.customer_id' => 'customer id',
+            'data.relationships.customer.data.type' => 'customer type',
+            'data.relationships.customer.data.id' => 'customer id',
+            'data.relationships.user.data.type' => 'user type',
+            'data.relationships.user.data.id' => 'user id',
         ];
     }
 
@@ -55,10 +57,10 @@ class AddressUpdateRequest extends FormRequest
             'data.attributes.zip' => 'nullable|max:255',
             'data.attributes.state' => 'nullable|max:255',
             'data.attributes.country' => 'max:255|in:' . implode(',', LocationService::countries()),
-
-            // todo: use proper json API spec structure for changing relationships
-//            'data.attributes.user_id' => 'integer|nullable',
-//            'data.attributes.customer_id' => 'integer|nullable|exists:' . ConfigService::$tableCustomer . ',id',
+            'data.relationships.customer.data.type' => 'nullable|in:customer',
+            'data.relationships.customer.data.id' => 'integer|nullable|exists:' . ConfigService::$tableCustomer . ',id',
+            'data.relationships.user.data.type' => 'nullable|in:user',
+            'data.relationships.user.data.id' => 'integer|nullable',
         ];
     }
 
@@ -71,11 +73,6 @@ class AddressUpdateRequest extends FormRequest
             $this->only(
                 [
                     'data.attributes.type',
-
-                    // todo: use proper json API spec structure for changing relationships
-//                    'data.attributes.user_id',
-//                    'data.attributes.customer_id',
-
                     'data.attributes.first_name',
                     'data.attributes.last_name',
                     'data.attributes.street_line_1',
@@ -84,6 +81,8 @@ class AddressUpdateRequest extends FormRequest
                     'data.attributes.zip',
                     'data.attributes.state',
                     'data.attributes.country',
+                    'data.relationships.user',
+                    'data.relationships.customer',
                 ]
             ),
             [
