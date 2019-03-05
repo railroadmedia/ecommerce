@@ -3,8 +3,10 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use Railroad\Ecommerce\Tests\Fixtures\UserProvider;
 
 class AccessCodeJsonControllerTest extends EcommerceTestCase
 {
@@ -217,13 +219,13 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             ],
             [
                 'title' => 'Validation failed.',
-                'source' => 'claim_for_user_email',
-                'detail' => 'The claim for user email field is required.',
+                'source' => 'claim_for_user_id',
+                'detail' => 'The claim for user id field is required.',
             ]
         ], $response->decodeResponseJson('errors'));
     }
 
-    public function test_claim_for_user_email_not_found()
+    public function test_claim_for_user_id_not_found()
     {
         $userId  = $this->createAndLogInNewUser();
 
@@ -239,11 +241,28 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $email = $this->faker->email;
+        $userId = rand();
+
+        // mock UserProvider
+        $userProviderMock = $this->getMockBuilder(UserProvider::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $this->app->extend(
+            UserProviderInterface::class,
+            function ($service) use ($userProviderMock) {
+
+                return $userProviderMock;
+            }
+        );
+
+        $userProviderMock
+            ->method('getUserById')
+            ->willReturn(null);
 
         $response = $this->call('POST', '/access-codes/claim', [
             'access_code' => $accessCode['code'],
-            'claim_for_user_email' => $email
+            'claim_for_user_id' => $userId
         ]);
 
         //assert the response status code
@@ -253,7 +272,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(
             [
                 'title' => 'Not found.',
-                'detail' => 'Claim failed, user not found with email: ' . $email,
+                'detail' => 'Claim failed, user not found with id: ' . $userId,
             ],
             $response->decodeResponseJson('errors')
         );
@@ -279,15 +298,16 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call('POST', '/access-codes/claim', [
             'access_code' => $accessCode['code'],
-            'claim_for_user_email' => $user['email']
+            'claim_for_user_id' => $user['id']
         ]);
+
+        $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertArraySubset(
             [
                 'data' => [
                     'id' => $accessCode['id'],
                     'type' => 'accessCode',
-                    // todo: this could possibly be done better
                     'attributes' => array_merge(
                         array_diff_key(
                             $accessCode,
@@ -316,8 +336,6 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             $response->decodeResponseJson()
         );
 
-        $this->assertEquals(200, $response->getStatusCode());
-
         // assert the user product data was saved in the db
         $this->assertDatabaseHas(
             ConfigService::$tableUserProduct,
@@ -342,7 +360,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
-
+    
     public function test_release()
     {
         $userId  = $this->createAndLogInNewUser();
@@ -370,7 +388,6 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
                 'data' => [
                     'id' => $accessCode['id'],
                     'type' => 'accessCode',
-                    // todo: this could possibly be done better
                     'attributes' => array_merge(
                         array_diff_key(
                             $accessCode,

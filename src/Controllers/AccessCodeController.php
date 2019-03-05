@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Http\RedirectResponse;
+use Railroad\Ecommerce\Contracts\UserInterface;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Requests\AccessCodeClaimRequest;
 use Railroad\Ecommerce\Services\AccessCodeService;
@@ -30,22 +32,30 @@ class AccessCodeController extends BaseController
     private $hasher;
 
     /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
+    /**
      * AccessCodeController constructor.
      *
      * @param AccessCodeService $accessCodeService
      * @param EntityManager $entityManager
      * @param Hasher $hasher
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         AccessCodeService $accessCodeService,
         EntityManager $entityManager,
-        Hasher $hasher
+        Hasher $hasher,
+        UserProviderInterface $userProvider
     ) {
         parent::__construct();
 
         $this->accessCodeService = $accessCodeService;
         $this->entityManager = $entityManager;
         $this->hasher = $hasher;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -66,24 +76,20 @@ class AccessCodeController extends BaseController
 
             $password = $this->hasher->make($request->get('password'));
 
-            $user = new User();
-
-            $user
-                ->setEmail($request->get('email'))
-                ->setPassword($password)
-                ->setDisplayName($request->get('email'))
-                ->setCreatedAt(Carbon::now());
-
-            $this->entityManager->persist($user);
-            $this->entityManager->flush();
+            /**
+             * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+             */
+            $user = $this->userProvider
+                        ->createUser($request->get('email'), $password);
 
             auth()->loginUsingId($user->getId(), true);
 
         } else {
 
-            $userRepository = $this->entityManager->getRepository(User::class);
-
-            $user = $userRepository->find(auth()->id());
+            /**
+             * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+             */
+            $user = $this->userProvider->getCurrentUser();
         }
 
         $accessCodeRepository = $this->entityManager

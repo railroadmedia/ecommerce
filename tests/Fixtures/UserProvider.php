@@ -19,7 +19,7 @@ class UserProvider implements
 {
     CONST RESOURCE_TYPE = 'user';
 
-    public function getUserById(int $id): UserEntityInterface
+    public function getUserById(int $id): ?UserEntityInterface
     {
         return new User($id);
     }
@@ -71,5 +71,13 @@ class UserProvider implements
         }
 
         // else some exception should be thrown
+    }
+
+    public function createUser(
+        string $email,
+        string $password
+    ): ?UserInterface {
+
+        return new User(rand());
     }
 }

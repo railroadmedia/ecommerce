@@ -8,7 +8,7 @@ use League\Fractal\TransformerAbstract;
 
 interface UserProviderInterface
 {
-    public function getUserById(int $id): UserEntityInterface;
+    public function getUserById(int $id): ?UserEntityInterface;
 
     public function getUserId(UserEntityInterface $user): int;
 
@@ -17,4 +17,6 @@ interface UserProviderInterface
     public function getCurrentUserId(): int;
 
     public function getUserTransformer(): TransformerAbstract;
+
+    public function createUser(string $email, string $password): ?UserInterface;
 }

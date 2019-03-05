@@ -4,8 +4,8 @@ namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AccessCode;
-use Railroad\Usora\Transformers\UserTransformer;
 
 class AccessCodeTransformer extends TransformerAbstract
 {
@@ -41,19 +41,15 @@ class AccessCodeTransformer extends TransformerAbstract
 
     public function includeClaimer(AccessCode $accessCode)
     {
-        if ($accessCode->getClaimer() instanceof Proxy) {
-            return $this->item(
-                $accessCode->getClaimer(),
-                new EntityReferenceTransformer(),
-                'user'
-            );
-        } else {
-            return $this->item(
-                $accessCode->getClaimer(),
-                new UserTransformer(),
-                'user'
-            );
-        }
+        $userProvider = app()->make(UserProviderInterface::class);
+
+        $userTransformer = $userProvider->getUserTransformer();
+
+        return $this->item(
+            $accessCode->getClaimer(),
+            $userTransformer,
+            'user'
+        );
     }
 
     public function includeProduct(AccessCode $accessCode)

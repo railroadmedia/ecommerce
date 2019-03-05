@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -42,16 +43,23 @@ class AccessCodeJsonController extends BaseController
     private $permissionService;
 
     /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
+    /**
      * AccessCodeJsonController constructor.
      *
      * @param AccessCodeService $accessCodeService
      * @param EntityManager $entityManager
      * @param PermissionService $permissionService
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         AccessCodeService $accessCodeService,
         EntityManager $entityManager,
-        PermissionService $permissionService
+        PermissionService $permissionService,
+        UserProviderInterface $userProvider
     ) {
         parent::__construct();
 
@@ -61,6 +69,8 @@ class AccessCodeJsonController extends BaseController
 
         $this->accessCodeRepository = $this->entityManager
                                         ->getRepository(AccessCode::class);
+
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -78,7 +88,6 @@ class AccessCodeJsonController extends BaseController
 
         // parse request params and prepare db query parms
         $alias = 'a';
-        $aliasClaimer = 'c';
         $orderBy = $request->get('order_by_column', 'created_at');
         if (
             strpos($orderBy, '_') !== false
@@ -96,8 +105,7 @@ class AccessCodeJsonController extends BaseController
         $qb = $this->accessCodeRepository->createQueryBuilder($alias);
 
         $qb
-            ->select([$alias, $aliasClaimer])
-            ->join($alias . '.claimer', $aliasClaimer)
+            ->select($alias)
             ->setMaxResults($request->get('limit', 10))
             ->setFirstResult($first)
             ->where($qb->expr()->in($alias . '.brand', ':brands'))
@@ -140,7 +148,6 @@ class AccessCodeJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
         $alias = 'a';
-        $aliasClaimer = 'c';
         $brands = $request->get('brands', [ConfigService::$availableBrands]);
 
         /**
@@ -148,8 +155,7 @@ class AccessCodeJsonController extends BaseController
          */
         $qb = $this->accessCodeRepository->createQueryBuilder($alias);
         $qb
-            ->select([$alias, $aliasClaimer])
-            ->join($alias . '.claimer', $aliasClaimer)
+            ->select($alias)
             ->where($qb->expr()->in($alias . '.brand', ':brands'))
             ->andWhere($qb->expr()->like($alias . '.code', ':term'));
 
@@ -195,17 +201,15 @@ class AccessCodeJsonController extends BaseController
             'claim.access_codes'
         );
 
-        $userRepository = $this->entityManager->getRepository(User::class);
-
-        $user = $userRepository->findOneBy(
-            ['email' => $request->get('claim_for_user_email')]
-        );
+        $user = $this->userProvider->getUserById(
+                $request->get('claim_for_user_id')
+            );
 
         throw_if(
             is_null($user),
             new NotFoundException(
-                'Claim failed, user not found with email: '
-                . $request->get('claim_for_user_email')
+                'Claim failed, user not found with id: '
+                . $request->get('claim_for_user_id')
             )
         );
 

@@ -57,6 +57,7 @@ class AddressJsonController extends Controller
      * @param EntityManager $entityManager
      * @param PermissionService $permissionService
      * @param JsonApiHydrator $jsonApiHydrator
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         EntityManager $entityManager,

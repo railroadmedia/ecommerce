@@ -4,15 +4,15 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
+use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
-// use Railroad\Ecommerce\Services\UserProductService;
+use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionAccessCode;
 use Railroad\Ecommerce\Entities\UserProduct;
-use Railroad\Usora\Entities\User;
 
 class AccessCodeService
 {
@@ -48,7 +48,7 @@ class AccessCodeService
         $this->userProductService = $userProductService;
     }
 
-    public function claim(AccessCode $accessCode, User $user)
+    public function claim(AccessCode $accessCode, UserInterface $user)
     {
         $productRepository = $this->entityManager
             ->getRepository(Product::class);
