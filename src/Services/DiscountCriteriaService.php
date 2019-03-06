@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Illuminate\Database\Query\Builder;
+use Railroad\Ecommerce\Contracts\UserInterface;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Entities\Structures\Address;
@@ -28,6 +30,11 @@ class DiscountCriteriaService
      */
     private $userProductRepository;
 
+    /**
+     * @var UserInterface
+     */
+    protected $currentUser;
+
     const PRODUCT_QUANTITY_REQUIREMENT_TYPE = 'product quantity requirement';
     const DATE_REQUIREMENT_TYPE = 'date requirement';
     const ORDER_TOTAL_REQUIREMENT_TYPE = 'order total requirement';
@@ -41,16 +48,20 @@ class DiscountCriteriaService
      *
      * @param \Railroad\Ecommerce\Services\CartAddressService $cartAddressService
      * @param EntityManager $entityManager
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         CartAddressService $cartAddressService,
-        EntityManager $entityManager
+        EntityManager $entityManager,
+        UserProviderInterface $userProvider
     ) {
         $this->cartAddressService = $cartAddressService;
         $this->entityManager = $entityManager;
 
         $this->userProductRepository = $this->entityManager
                 ->getRepository(UserProduct::class);
+
+        $this->currentUser = $userProvider->getCurrentUser();
     }
 
     /**
@@ -261,8 +272,6 @@ class DiscountCriteriaService
             return false;
         }
 
-        // todo - review on user entity updates if user related logic may be replaced with constructor injected dependency
-
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
@@ -270,7 +279,7 @@ class DiscountCriteriaService
 
         $qb
             ->select('COUNT(up)')
-            ->where($qb->expr()->eq('IDENTITY(up.user)', ':userId'))
+            ->where($qb->expr()->eq('up.user', ':user'))
             ->andWhere($qb->expr()->eq('up.product', ':product'))
             ->andWhere(
                 $qb->expr()->orX(
@@ -279,7 +288,7 @@ class DiscountCriteriaService
                 )
             )
             ->andWhere($qb->expr()->between('up.quantity', ':min', ':max'))
-            ->setParameter('userId', auth()->id())
+            ->setParameter('user', $this->currentUser)
             ->setParameter('product', $discountCriteria->getProduct())
             ->setParameter('now', Carbon::now())
             ->setParameter('min', (integer)$discountCriteria->getMin())

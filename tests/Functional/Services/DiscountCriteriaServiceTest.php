@@ -16,11 +16,6 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 class DiscountCriteriaServiceTest extends EcommerceTestCase
 {
     /**
-     * @var DiscountCriteriaService
-     */
-    protected $classBeingTested;
-
-    /**
      * @var Store
      */
     protected $session;
@@ -29,13 +24,14 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         parent::setUp();
 
-        $this->classBeingTested = $this->app->make(DiscountCriteriaService::class);
         $this->session = $this->app->make(Store::class);
     }
 
     public function test_discount_criteria_met_for_order_not_met()
     {
         $this->session->flush();
+
+        $userId = $this->createAndLogInNewUser();
 
         $cartService = $this->app->make(CartService::class);
 
@@ -51,7 +47,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->discountCriteriaMetForOrder($cart, $discountCriteria);
 
         $this->assertFalse($metCriteria);
@@ -60,6 +58,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     public function test_product_quantity_requirement_met()
     {
         $this->session->flush();
+
+        $userId = $this->createAndLogInNewUser();
 
         $cartService = $this->app->make(CartService::class);
 
@@ -138,7 +138,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->productQuantityRequirementMet($cart, $discountCriteria);
 
         $this->assertTrue($metCriteria);
@@ -148,6 +150,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         $this->session->flush();
 
+        $userId = $this->createAndLogInNewUser();
+
         $cartService = $this->app->make(CartService::class);
 
         $productOne = $this->fakeProduct();
@@ -155,8 +159,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $cartItemOneData = [
             'name' => $this->faker->word,
             'description' => $this->faker->word,
-            'quantity' => $this->faker->numberBetween(1, 3), // quantity is less than discount criteria min/max
-            'price' => $this->faker->numberBetween(20, 100),
+            'quantity' => 2,
+            'price' => 12.75,
             'requiresShippingAddress' => true,
             'requiresBillingAddress' => true,
             'subscriptionIntervalType' => null,
@@ -169,8 +173,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $cartItemTwoData = [
             'name' => $this->faker->word,
             'description' => $this->faker->word,
-            'quantity' => $this->faker->numberBetween(1, 3),
-            'price' => $this->faker->numberBetween(20, 100),
+            'quantity' => 3,
+            'price' => 7.25,
             'requiresShippingAddress' => true,
             'requiresBillingAddress' => true,
             'subscriptionIntervalType' => null,
@@ -217,7 +221,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
             'product_id' => $productOne['id'],
             'min' => $this->faker->numberBetween(5, 10),
-            'max' => $this->faker->numberBetween(15, 20)
+            'max' => $this->faker->numberBetween(50, 100)
         ]);
 
         $em = $this->app->make(EntityManager::class);
@@ -225,7 +229,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->productQuantityRequirementMet($cart, $discountCriteria);
 
         $this->assertFalse($metCriteria);
@@ -246,7 +252,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->orderDateRequirement($discountCriteria);
 
         $this->assertTrue($metCriteria);
@@ -254,6 +262,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
     public function test_order_date_requirement_not_met()
     {
+        $this->session->flush();
+
         $userId = $this->createAndLogInNewUser();
 
         $em = $this->app->make(EntityManager::class);
@@ -267,7 +277,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->orderDateRequirement($discountCriteria);
 
         $this->assertFalse($metCriteria);
@@ -277,6 +289,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         $this->session->flush();
 
+        $userId = $this->createAndLogInNewUser();
+
         $cartService = $this->app->make(CartService::class);
 
         $productOne = $this->fakeProduct();
@@ -284,8 +298,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $cartItemOneData = [
             'name' => $this->faker->word,
             'description' => $this->faker->word,
-            'quantity' => $this->faker->numberBetween(1, 3),
-            'price' => $this->faker->numberBetween(20, 100),
+            'quantity' => 2,
+            'price' => 9.45,
             'requiresShippingAddress' => true,
             'requiresBillingAddress' => true,
             'subscriptionIntervalType' => null,
@@ -298,8 +312,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $cartItemTwoData = [
             'name' => $this->faker->word,
             'description' => $this->faker->word,
-            'quantity' => $this->faker->numberBetween(1, 3),
-            'price' => $this->faker->numberBetween(20, 100),
+            'quantity' => 3,
+            'price' => 3.80,
             'requiresShippingAddress' => true,
             'requiresBillingAddress' => true,
             'subscriptionIntervalType' => null,
@@ -345,8 +359,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
             'product_id' => rand(),
-            'min' => $this->faker->randomFloat(2, 10, 200),
-            'max' => $this->faker->randomFloat(2, 700, 1000)
+            'min' => 10,
+            'max' => 100
         ]);
 
         $em = $this->app->make(EntityManager::class);
@@ -354,7 +368,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->orderTotalRequirement($cart, $discountCriteria);
 
         $this->assertTrue($metCriteria);
@@ -363,6 +379,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     public function test_order_total_requirement_not_met()
     {
         $this->session->flush();
+
+        $userId = $this->createAndLogInNewUser();
 
         $cartService = $this->app->make(CartService::class);
 
@@ -441,7 +459,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->orderTotalRequirement($cart, $discountCriteria);
 
         $this->assertFalse($metCriteria);
@@ -464,7 +484,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->orderShippingTotalRequirement($discountCriteria, $shippingCosts);
 
         $this->assertTrue($metCriteria);
@@ -487,7 +509,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->orderShippingTotalRequirement($discountCriteria, $shippingCosts);
 
         $this->assertFalse($metCriteria);
@@ -521,7 +545,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->orderShippingCountryRequirement($discountCriteria);
 
         $this->assertTrue($metCriteria);
@@ -555,7 +581,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->orderShippingCountryRequirement($discountCriteria);
 
         $this->assertFalse($metCriteria);
@@ -578,7 +606,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->promoCodeRequirement($discountCriteria, $promoCode);
 
         $this->assertTrue($metCriteria);
@@ -601,7 +631,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->promoCodeRequirement($discountCriteria, $promoCode);
 
         $this->assertFalse($metCriteria);
@@ -622,7 +654,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->productOwnRequirement($discountCriteria);
 
         $this->assertFalse($metCriteria);
@@ -648,7 +682,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->productOwnRequirement($discountCriteria);
 
         $this->assertTrue($metCriteria);
@@ -674,7 +710,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->productOwnRequirement($discountCriteria);
 
         $this->assertFalse($metCriteria);
@@ -701,7 +739,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
 
-        $metCriteria = $this->classBeingTested
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
             ->productOwnRequirement($discountCriteria);
 
         $this->assertFalse($metCriteria);

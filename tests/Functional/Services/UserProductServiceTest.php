@@ -1,6 +1,7 @@
 <?php
 
 use Doctrine\ORM\EntityManager;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Subscription;
@@ -11,7 +12,6 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Ecommerce\Entities\CreditCard;
-use Railroad\Usora\Entities\User;
 use Carbon\Carbon;
 use Stripe\Card;
 use Stripe\Charge;
@@ -30,17 +30,14 @@ class UserProductServiceTest extends EcommerceTestCase
         $em = $this->app->make(EntityManager::class);
         $srv = $this->app->make(UserProductService::class);
 
-        $user = new User();
+        $userProvider = $this->app->make(UserProviderInterface::class);
 
-        $user->setEmail($this->faker->email);
-        $user->setPassword(
-            $this->faker->shuffleString(
-                $this->faker->bothify('???###???###???###???###')
-            )
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
         );
-        $user->setDisplayName($this->faker->name);
 
-        $em->persist($user);
+        $user = $userProvider->createUser($email, $password);
 
         $product = new Product();
 
@@ -66,17 +63,14 @@ class UserProductServiceTest extends EcommerceTestCase
         $em = $this->app->make(EntityManager::class);
         $srv = $this->app->make(UserProductService::class);
 
-        $user = new User();
+        $userProvider = $this->app->make(UserProviderInterface::class);
 
-        $user->setEmail($this->faker->email);
-        $user->setPassword(
-            $this->faker->shuffleString(
-                $this->faker->bothify('???###???###???###???###')
-            )
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
         );
-        $user->setDisplayName($this->faker->name);
 
-        $em->persist($user);
+        $user = $userProvider->createUser($email, $password);
 
         $product = new Product();
 
@@ -124,17 +118,14 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $srv = $this->app->make(UserProductService::class);
 
-        $user = new User();
+        $userProvider = $this->app->make(UserProviderInterface::class);
 
-        $user->setEmail($this->faker->email);
-        $user->setPassword(
-            $this->faker->shuffleString(
-                $this->faker->bothify('???###???###???###???###')
-            )
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
         );
-        $user->setDisplayName($this->faker->name);
 
-        $em->persist($user);
+        $user = $userProvider->createUser($email, $password);
 
         $product = new Product();
 
@@ -172,17 +163,14 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $srv = $this->app->make(UserProductService::class);
 
-        $user = new User();
+        $userProvider = $this->app->make(UserProviderInterface::class);
 
-        $user->setEmail($this->faker->email);
-        $user->setPassword(
-            $this->faker->shuffleString(
-                $this->faker->bothify('???###???###???###???###')
-            )
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
         );
-        $user->setDisplayName($this->faker->name);
 
-        $em->persist($user);
+        $user = $userProvider->createUser($email, $password);
 
         $product = new Product();
 
@@ -228,17 +216,14 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $srv = $this->app->make(UserProductService::class);
 
-        $user = new User();
+        $userProvider = $this->app->make(UserProviderInterface::class);
 
-        $user->setEmail($this->faker->email);
-        $user->setPassword(
-            $this->faker->shuffleString(
-                $this->faker->bothify('???###???###???###???###')
-            )
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
         );
-        $user->setDisplayName($this->faker->name);
 
-        $em->persist($user);
+        $user = $userProvider->createUser($email, $password);
 
         $product = new Product();
 
@@ -279,7 +264,7 @@ class UserProductServiceTest extends EcommerceTestCase
             $newQuantity
         );
 
-        // assert user product was created
+        // assert user product was updated
         $this->assertDatabaseHas(
             ConfigService::$tableUserProduct,
             [
@@ -297,17 +282,14 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $srv = $this->app->make(UserProductService::class);
 
-        $user = new User();
+        $userProvider = $this->app->make(UserProviderInterface::class);
 
-        $user->setEmail($this->faker->email);
-        $user->setPassword(
-            $this->faker->shuffleString(
-                $this->faker->bothify('???###???###???###???###')
-            )
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
         );
-        $user->setDisplayName($this->faker->name);
 
-        $em->persist($user);
+        $user = $userProvider->createUser($email, $password);
 
         $productOne = new Product();
 
@@ -388,7 +370,7 @@ class UserProductServiceTest extends EcommerceTestCase
             $productsCollection
         );
 
-        // assert user product was created
+        // assert user product was removed
         $this->assertDatabaseMissing(
             ConfigService::$tableUserProduct,
             [

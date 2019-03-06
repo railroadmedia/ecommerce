@@ -1,6 +1,7 @@
 <?php
 
 use Doctrine\ORM\EntityManager;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Subscription;
@@ -13,7 +14,6 @@ use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Entities\CreditCard;
-use Railroad\Usora\Entities\User;
 use Carbon\Carbon;
 use Stripe\Card;
 use Stripe\Charge;
@@ -46,18 +46,14 @@ class RenewalServiceTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn($charge);
 
-        $user = new User();
+        $userProvider = $this->app->make(UserProviderInterface::class);
 
-        $user->setEmail($this->faker->email);
-        $user->setPassword(
-            $this->faker->shuffleString(
-                $this->faker->bothify('???###???###???###???###')
-            )
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
         );
-        $user->setDisplayName($this->faker->name);
 
-        $em->persist($user);
-        $em->flush();
+        $user = $userProvider->createUser($email, $password);
 
         $creditCard = new CreditCard();
 
@@ -137,7 +133,6 @@ class RenewalServiceTest extends EcommerceTestCase
             $subscription->getCurrency()
         );
 
-        // assert user product was created
         $this->assertDatabaseHas(
             ConfigService::$tablePayment,
             [
@@ -153,7 +148,6 @@ class RenewalServiceTest extends EcommerceTestCase
             ]
         );
 
-        // assert user product was created
         $this->assertDatabaseHas(
             ConfigService::$tableSubscriptionPayment,
             [
