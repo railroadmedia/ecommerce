@@ -9,6 +9,7 @@ use Exception;
 use HttpResponseException;
 use Illuminate\Http\Request;
 use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
@@ -52,6 +53,11 @@ class SubscriptionJsonController extends BaseController
     private $userProductService;
 
     /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
+    /**
      * SubscriptionJsonController constructor.
      *
      * @param EntityManager $entityManager
@@ -59,13 +65,15 @@ class SubscriptionJsonController extends BaseController
      * @param \Railroad\Permissions\Services\PermissionService $permissionService
      * @param RenewalService $renewalService
      * @param UserProductService $userProductService
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         EntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService,
         RenewalService $renewalService,
-        UserProductService $userProductService
+        UserProductService $userProductService,
+        UserProviderInterface $userProvider
     ) {
         parent::__construct();
 
@@ -76,6 +84,7 @@ class SubscriptionJsonController extends BaseController
         $this->permissionService = $permissionService;
         $this->renewalService = $renewalService;
         $this->userProductService = $userProductService;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -117,11 +126,14 @@ class SubscriptionJsonController extends BaseController
             ->setParameter('brands', $brands);
 
         if ($request->has('user_id')) {
+
+            $user = $this->userProvider->getUserById($request->has('user_id'));
+
             $qb
                 ->andWhere(
-                    $qb->expr()->eq('IDENTITY(' . $alias . '.user)', ':userId')
+                    $qb->expr()->eq($alias . '.user', ':user')
                 )
-                ->setParameter('userId', $request->get('user_id'));
+                ->setParameter('user', $user);
         }
 
         $subscriptions = $qb->getQuery()->getResult();

@@ -338,7 +338,7 @@ class Subscription
      *
      * @return Subscription
      */
-    public function setNote(string $note): self
+    public function setNote(?string $note): self
     {
         $this->note = $note;
 
