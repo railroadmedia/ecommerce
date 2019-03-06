@@ -22,8 +22,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         parent::setUp();
 
         $this->currencyService = $this->app->make(CurrencyService::class);
-
-        // todo DEVE-31 - add taxes
     }
 
     public function test_user_store_payment()
@@ -489,6 +487,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             array_keys(ConfigService::$paymentGateways['stripe'])
         );
 
+        $user = $this->fakeUser();
+
         $creditCard = $this->fakeCreditCard();
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -497,7 +497,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         ]);
 
         $userPaymentMethod = $this->fakeUserPaymentMethod([
-            'user_id' => rand(),
+            'user_id' => $user['id'],
             'payment_method_id' => $paymentMethod['id'],
             'is_primary' => true
         ]);

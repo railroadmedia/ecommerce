@@ -80,18 +80,19 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
 
-        $userId = rand();
+        $user = $this->fakeUser();
+
         $brandOne = $this->faker->word;
 
         $addressOne = $this->fakeAddress([
-            'user_id' => $userId,
+            'user_id' => $user['id'],
             'brand' => $brandOne
         ]);
 
         $brandTwo = $this->faker->word;
 
         $addressTwo = $this->fakeAddress([
-            'user_id' => $userId,
+            'user_id' => $user['id'],
             'brand' => $brandTwo
         ]);
 
@@ -107,7 +108,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             'GET',
             '/address',
             [
-                'user_id' => $userId,
+                'user_id' => $user['id'],
                 'brands' => [$brandOne, $brandTwo]
             ]
         );
@@ -134,7 +135,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                             'user' => [
                                 'data' => [
                                     'type' => 'user',
-                                    'id' => $userId
+                                    'id' => $user['id'],
                                 ]
                             ]
                         ]
@@ -156,7 +157,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                             'user' => [
                                 'data' => [
                                     'type' => 'user',
-                                    'id' => $userId
+                                    'id' => $user['id'],
                                 ]
                             ]
                         ]
@@ -165,7 +166,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'included' => [
                     [
                         'type' => 'user',
-                        'id' => $userId
+                        'id' => $user['id'],
                     ]
                 ]
             ],
@@ -473,8 +474,10 @@ class AddressJsonControllerTest extends EcommerceTestCase
         // current logged in user
         $userId = $this->createAndLogInNewUser();
 
+        $otherUser = $this->fakeUser();
+
         // create an address for a random user
-        $address = $this->fakeAddress(['user_id' => rand()]);
+        $address = $this->fakeAddress(['user_id' => $otherUser['id']]);
 
         $newStreetLine1 = $this->faker->streetAddress;
 
@@ -515,8 +518,10 @@ class AddressJsonControllerTest extends EcommerceTestCase
         // current logged in user
         $userId = $this->createAndLogInNewUser();
 
+        $otherUser = $this->fakeUser();
+
         // create an address for a random user
-        $address = $this->fakeAddress(['user_id' => rand()]);
+        $address = $this->fakeAddress(['user_id' => $otherUser['id']]);
 
         $response = $this->call('DELETE', '/address/' . $address['id']);
 
@@ -708,7 +713,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow')
             ->willReturn(true);
 
-        $userId = rand();
+        $user = $this->fakeUser();
 
         $address = $this->faker->address();
 
@@ -723,7 +728,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                         'user' => [
                             'data' => [
                                 'type' => 'user',
-                                'id' => $userId
+                                'id' => $user['id'],
                             ]
                         ]
                     ]
@@ -744,7 +749,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                         'user' => [
                             'data' => [
                                 'type' => 'user',
-                                'id' => $userId
+                                'id' => $user['id'],
                             ]
                         ]
                     ]
@@ -752,7 +757,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'included' => [
                     [
                         'type' => 'user',
-                        'id' => $userId
+                        'id' => $user['id'],
                     ]
                 ]
             ],
@@ -762,7 +767,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         //assert that the address exists in the database
         $this->assertDatabaseHas(
             ConfigService::$tableAddress,
-            $address + ['user_id' => $userId]
+            $address + ['user_id' => $user['id']]
         );
     }
 
@@ -771,9 +776,9 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow')
             ->willReturn(true);
 
-        $userId = rand();
+        $user = $this->fakeUser();
 
-        $address = $this->fakeAddress(['user_id' => $userId]);
+        $address = $this->fakeAddress(['user_id' => $user['id']]);
 
         $newStreetLine1 = $this->faker->streetAddress;
 
@@ -817,7 +822,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                         'user' => [
                             'data' => [
                                 'type' => 'user',
-                                'id' => $userId
+                                'id' => $user['id']
                             ]
                         ]
                     ]
@@ -825,7 +830,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'included' => [
                     [
                         'type' => 'user',
-                        'id' => $userId
+                        'id' => $user['id']
                     ]
                 ]
             ],
@@ -847,7 +852,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'zip' => $address['zip'],
                 'state' => $address['state'],
                 'country' => $address['country'],
-                'user_id' => $userId
+                'user_id' => $user['id']
             ]
         );
 
@@ -866,7 +871,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'zip' => $address['zip'],
                 'state' => $address['state'],
                 'country' => $address['country'],
-                'user_id' => $userId
+                'user_id' => $user['id']
             ]
         );
     }

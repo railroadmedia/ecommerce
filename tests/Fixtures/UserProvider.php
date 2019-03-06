@@ -29,7 +29,7 @@ class UserProvider implements
             return new User($id, $user->email);
         }
 
-        return new User($id);
+        return null;
     }
 
     public function getUserId(UserEntityInterface $user): int

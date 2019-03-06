@@ -30,7 +30,6 @@ class PaymentMethodCreateRequest extends FormRequest
             'token'       => 'required_if:method_type,' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             'address_id'  => 'required_if:method_type,' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             'user_id'     => 'required_without:customer_id',
-            'user_email'     => 'required_without:customer_id',
             'customer_id' => 'required_without:user_id'
         ];
     }

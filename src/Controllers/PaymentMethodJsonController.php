@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
 use Illuminate\Http\Request;
 use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
+use Railroad\Ecommerce\Contracts\UserInterface;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\CreditCard;
@@ -31,7 +33,6 @@ use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Exceptions\NotAllowedException as PermissionsNotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
-use Railroad\Usora\Entities\User;
 use Stripe\Error\Card;
 use Exception;
 
@@ -78,6 +79,11 @@ class PaymentMethodJsonController extends BaseController
     private $userPaymentMethodsRepository;
 
     /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
+    /**
      * PaymentMethodJsonController constructor.
      *
      * @param CurrencyService $currencyService
@@ -87,6 +93,7 @@ class PaymentMethodJsonController extends BaseController
      * @param PaymentMethodService $paymentMethodService
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         CurrencyService $currencyService,
@@ -95,7 +102,8 @@ class PaymentMethodJsonController extends BaseController
         StripePaymentGateway $stripePaymentGateway,
         PaymentMethodService $paymentMethodService,
         PayPalPaymentGateway $payPalPaymentGateway,
-        PermissionService $permissionService
+        PermissionService $permissionService,
+        UserProviderInterface $userProvider
     ) {
         parent::__construct();
 
@@ -112,6 +120,8 @@ class PaymentMethodJsonController extends BaseController
 
         $this->userPaymentMethodsRepository = $this->entityManager
                                     ->getRepository(UserPaymentMethods::class);
+
+        $this->userProvider = $userProvider;
 
         $this->middleware(ConfigService::$middleware);
     }
@@ -132,27 +142,15 @@ class PaymentMethodJsonController extends BaseController
     {
         $userId = auth()->id();
 
-        $userRepository = $this->entityManager->getRepository(User::class);
-        $user = null;
-
         if ($this->permissionService->can(auth()->id(), 'create.payment.method')) {
 
-            /**
-             * @var $qb \Doctrine\ORM\QueryBuilder
-             */
-            $qb = $userRepository->createQueryBuilder('u');
-
-            $user = $qb
-                ->where($qb->expr()->eq('u.id', ':id'))
-                ->andWhere($qb->expr()->eq('u.email', ':email'))
-                ->setParameter('id', $request->get('user_id'))
-                ->setParameter('email', $request->get('user_email'))
-                ->getQuery()
-                ->getSingleResult();
-
-        } else {
-            $user = $userRepository->find($userId);
+            $userId = $request->get('user_id');
         }
+
+        /**
+         * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+         */
+        $user = $this->userProvider->getUserById($userId);
 
         /**
          * @var $user \Railroad\Usora\Entities\User
@@ -265,11 +263,9 @@ class PaymentMethodJsonController extends BaseController
                 );
 
             /**
-             * @var $user \Railroad\Usora\Entities\User
+             * @var $user \Railroad\Ecommerce\Contracts\UserInterface
              */
-            $user = $this->entityManager
-                        ->getRepository(User::class)
-                        ->find(auth()->id());
+            $user = $this->userProvider->getCurrentUser();
 
             $billingAddress = new Address();
 
@@ -574,6 +570,19 @@ class PaymentMethodJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'pull.user.payment.method');
 
         /**
+         * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+         */
+        $user = $this->userProvider->getUserById($userId);
+
+        throw_if(
+            is_null($user),
+            new NotFoundException(
+                'Pull failed, user not found with id: ' .
+                $userId
+            )
+        );
+
+        /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
         $qb = $this->entityManager
@@ -583,8 +592,8 @@ class PaymentMethodJsonController extends BaseController
         $userPaymentMethods = $qb
             ->select(['upm', 'pm'])
             ->join('upm.paymentMethod', 'pm')
-            ->where($qb->expr()->eq('IDENTITY(upm.user)', ':id'))
-            ->setParameter('id', $userId)
+            ->where($qb->expr()->eq('upm.user', ':user'))
+            ->setParameter('user', $user)
             ->getQuery()
             ->getResult();
 

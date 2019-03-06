@@ -18,9 +18,6 @@ use Stripe\Token;
 
 class PaymentMethodJsonControllerTest extends EcommerceTestCase
 {
-    CONST VALID_VISA_CARD_NUM = '4242424242424242';
-    CONST VALID_EXPRESS_CHECKOUT_TOKEN = 'EC-84G07962U40732257';
-
     protected function setUp()
     {
         parent::setUp();
@@ -85,12 +82,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     'source' => 'method_type',
                     'detail' => 'The method type field is required.',
                     'title' => 'Validation failed.'
-                ],
-                [
-                    'source' => 'user_email',
-                    'detail' => 'The user email field is required when customer id is not present.',
-                    'title' => 'Validation failed.'
-                ],
+                ]
             ],
             $results->decodeResponseJson('errors')
         );
@@ -361,33 +353,29 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_store_payment_method_credit_card_failed()
     {
         $userId = $this->createAndLogInNewUser();
-        $cardExpirationDate = Carbon::now()->addYear(2);
-        $cardYear = $cardExpirationDate->format('Y');
-        $cardMonth = $cardExpirationDate->format('m');
-        $cardLast4 = $this->faker->randomNumber(4);
-        $cardType = $this->faker->creditCardType;
-        $currency = $this->faker->currencyCode;
-        $cardExpirationDate = $this->faker->creditCardExpirationDate;
-        $cardFingerprint = self::VALID_VISA_CARD_NUM;
+
         $customer = new Customer();
         $customer->email = $this->faker->email;
+
+        $currency = $this->faker->currencyCode;
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+
         $fakerCard = new Card();
-        $fakerCard->fingerprint = $cardFingerprint;
-        $fakerCard->brand = $cardType;
-        $fakerCard->last4 = $cardLast4;
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+
         $cardToken = new Token();
         $cardToken->id = rand();
         $cardToken->card = $fakerCard;
+
         $this->stripeExternalHelperMock->method('createCustomer')
             ->willReturn($customer);
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($cardToken);
-
-        // incorrect card number
-        $cardFingerprint = $this->faker->randomNumber();
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willThrowException(
@@ -1487,7 +1475,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             [
                 'user_id' => $userId,
                 'payment_method_id' => $paymentMethodId,
-                'is_primary' => 0,
+                'is_primary' => 1,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
@@ -2033,6 +2021,25 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertArraySubset(
             $expected,
             $decodedResult
+        );
+    }
+
+    public function test_get_user_payment_methods_user_not_found()
+    {
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+
+        $userId = rand();
+
+        $response = $this->call('GET', '/user-payment-method/' . $userId);
+
+        $this->assertEquals(404, $response->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                'title' => 'Not found.',
+                'detail' => 'Pull failed, user not found with id: ' . $userId,
+            ],
+            $response->decodeResponseJson('errors')
         );
     }
 }

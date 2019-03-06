@@ -4,12 +4,12 @@ namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Transformers\CreditCardTransformer;
 use Railroad\Ecommerce\Transformers\PaymentMethodTransformer;
 use Railroad\Ecommerce\Transformers\PaypalBillingAgreementTransformer;
-use Railroad\Usora\Transformers\UserTransformer;
 
 class UserPaymentMethodsTransformer extends TransformerAbstract
 {
@@ -40,19 +40,15 @@ class UserPaymentMethodsTransformer extends TransformerAbstract
 
     public function includeUser(UserPaymentMethods $userPaymentMethod)
     {
-        if ($userPaymentMethod->getUser() instanceof Proxy) {
-            return $this->item(
-                $userPaymentMethod->getUser(),
-                new EntityReferenceTransformer(),
-                'user'
-            );
-        } else {
-            return $this->item(
-                $userPaymentMethod->getUser(),
-                new UserTransformer(),
-                'user'
-            );
-        }
+        $userProvider = app()->make(UserProviderInterface::class);
+
+        $userTransformer = $userProvider->getUserTransformer();
+
+        return $this->item(
+            $userPaymentMethod->getUser(),
+            $userTransformer,
+            'user'
+        );
     }
 
     public function includePaymentMethod(

@@ -186,6 +186,10 @@ class AddressJsonController extends Controller
                         $address->getCustomer() &&
                         $request->input('data.relationships.customer.data.id') !==
                             $address->getCustomer()->getId()
+                    ) ||
+                    (
+                        is_null($address->getUser()) &&
+                        is_null($address->getCustomer())
                     )
                 )
             ),
@@ -239,6 +243,10 @@ class AddressJsonController extends Controller
                     (
                         $address->getCustomer() &&
                         $request->get('customer_id', 0) !== $address->getCustomer()->getId()
+                    ) ||
+                    (
+                        is_null($address->getUser()) &&
+                        is_null($address->getCustomer())
                     )
                 )
             ),

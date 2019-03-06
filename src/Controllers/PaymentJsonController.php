@@ -210,10 +210,12 @@ class PaymentJsonController extends BaseController
         // if the logged in user it's not admin => can pay only with own payment method
         throw_if(
             (
-                (!$this->permissionService->can(
-                    auth()->id(),
-                    'create.payment.method'
-                )) &&
+                (
+                    !$this->permissionService->can(
+                        auth()->id(),
+                        'create.payment.method'
+                    )
+                ) &&
                 (auth()->id() != ($user->getId() ?? 0))
             ),
             new NotAllowedException('This action is unauthorized.')
