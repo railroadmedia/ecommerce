@@ -16,8 +16,6 @@ use Railroad\Ecommerce\Services\AccessCodeService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
-use Railroad\Usora\Entities\User;
-use Railroad\Usora\Services\ConfigService as UsoraConfigService;
 use Throwable;
 
 class AccessCodeJsonController extends BaseController

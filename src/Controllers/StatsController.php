@@ -18,7 +18,7 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\Resora\Decorators\Decorator;
 use Railroad\Resora\Entities\Entity;
-use Railroad\Usora\Repositories\UserRepository;
+// use Railroad\Usora\Repositories\UserRepository;
 
 class StatsController extends BaseController
 {

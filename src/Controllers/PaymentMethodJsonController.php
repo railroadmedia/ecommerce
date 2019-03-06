@@ -152,10 +152,6 @@ class PaymentMethodJsonController extends BaseController
          */
         $user = $this->userProvider->getUserById($userId);
 
-        /**
-         * @var $user \Railroad\Usora\Entities\User
-         */
-
         try {
             if (
                 $request->get('method_type') ==

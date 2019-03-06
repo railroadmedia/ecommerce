@@ -11,7 +11,6 @@ use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Requests\AccessCodeClaimRequest;
 use Railroad\Ecommerce\Services\AccessCodeService;
-use Railroad\Usora\Entities\User;
 use Throwable;
 
 class AccessCodeController extends BaseController
