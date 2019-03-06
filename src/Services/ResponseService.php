@@ -409,13 +409,11 @@ class ResponseService extends FractalResponseService
     }
 
     /**
-     * @param Order $order
-     * @param array $payments - array of Payments
-     * @param array $refunds - array of Refunds
-     * @param array $subscriptions - array of Subscriptions
-     * @param array $paymentPlans - array of PaymentPlans
-     * @param QueryBuilder|null $queryBuilder
-     * @param array $includes
+     * @param array $cartItems
+     * @param AddressInterface $billingAddress
+     * @param AddressInterface $shippingAddress
+     * @param array $paymentPlansPricing
+     * @param float $totalDue
      *
      * @return Fractal
      */
@@ -441,6 +439,26 @@ class ResponseService extends FractalResponseService
             ->addMeta([
                 'paymentPlansPricing' => $paymentPlansPricing,
                 'totalDue' => $totalDue,
+                'billingAddress' => $billingAddress->toArray(),
+                'shippingAddress' => $shippingAddress->toArray(),
+            ]);
+    }
+
+    /**
+     * @param AddressInterface $billingAddress
+     * @param AddressInterface $shippingAddress
+     */
+    public static function sessionAddresses(
+        ?AddressInterface $billingAddress,
+        ?AddressInterface $shippingAddress
+    ) {
+        return fractal(
+                null,
+                function($notUsed) {
+                    return null;
+                },
+                new JsonApiSerializer()
+            )->addMeta([
                 'billingAddress' => $billingAddress->toArray(),
                 'shippingAddress' => $shippingAddress->toArray(),
             ]);

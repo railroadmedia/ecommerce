@@ -2,10 +2,11 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Requests\SessionStoreAddressRequest;
-use Railroad\Resora\Entities\Entity;
+use Railroad\Ecommerce\Services\ResponseService;
 
 class SessionJsonController extends BaseController
 {
@@ -35,16 +36,18 @@ class SessionJsonController extends BaseController
             'shipping-country' => 'country',
             'shipping-first-name' => 'firstName',
             'shipping-last-name' => 'lastName',
-            'shipping-region' => 'region',
+            'shipping-region' => 'state',
             'shipping-zip-or-postal-code' => 'zipOrPostalCode',
         ];
 
         $requestShippingAddress = $request->only(array_keys($shippingKeys));
 
         $shippingAddress = $this->cartAddressService->updateAddress(
-            array_combine(
-                array_intersect_key($shippingKeys, $requestShippingAddress),
-                $requestShippingAddress
+            Address::createFromArray(
+                array_combine(
+                    array_intersect_key($shippingKeys, $requestShippingAddress),
+                    $requestShippingAddress
+                )
             ),
             ConfigService::$shippingAddressType
         );
@@ -52,26 +55,25 @@ class SessionJsonController extends BaseController
         $billingKeys = [
             'billing-country' => 'country',
             'billing-region' => 'region',
-            'billing-zip-or-postal-code' => 'zip',
+            'billing-zip-or-postal-code' => 'zipOrPostalCode',
             'billing-email' => 'email',
         ];
 
         $requestBillingAddress = $request->only(array_keys($billingKeys));
 
         $billingAddress = $this->cartAddressService->updateAddress(
-            array_combine(
-                array_intersect_key($billingKeys, $requestBillingAddress),
-                $requestBillingAddress
+            Address::createFromArray(
+                array_combine(
+                    array_intersect_key($billingKeys, $requestBillingAddress),
+                    $requestBillingAddress
+                )
             ),
             CartAddressService::BILLING_ADDRESS_TYPE
         );
 
-        return reply()->json(
-            new Entity([
-                'shipping' => $shippingAddress,
-                'billing' => $billingAddress
-            ]),
-            ['code' => 201]
+        return ResponseService::sessionAddresses(
+            $billingAddress,
+            $shippingAddress
         );
     }
 }

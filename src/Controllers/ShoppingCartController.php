@@ -2,9 +2,10 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Doctrine\ORM\EntityManager;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
+// use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\PaymentPlanService;
@@ -13,6 +14,11 @@ use Railroad\Resora\Entities\Entity;
 
 class ShoppingCartController extends BaseController
 {
+    /**
+     * @var EntityManager
+     */
+    private $entityManager;
+
     /**
      * @var CartService
      */
@@ -41,7 +47,7 @@ class ShoppingCartController extends BaseController
     /**
      * @var ShippingOptionRepository
      */
-    private $shippingOptionsRepository;
+    // private $shippingOptionsRepository;
 
     /**
      * ShoppingCartController constructor.
@@ -53,20 +59,24 @@ class ShoppingCartController extends BaseController
      */
     public function __construct(
         CartService $cartService,
-        ProductRepository $productRepository,
+        // ProductRepository $productRepository,
         CartAddressService $cartAddressService,
+        EntityManager $entityManager,
         PaymentPlanService $paymentPlanService,
-        TaxService $taxService,
-        ShippingOptionRepository $shippingOptionRepository
+        TaxService $taxService //,
+        // ShippingOptionRepository $shippingOptionRepository
     ) {
         parent::__construct();
 
         $this->cartService = $cartService;
-        $this->productRepository = $productRepository;
+        // $this->productRepository = $productRepository;
         $this->cartAddressService = $cartAddressService;
+        $this->entityManager = $entityManager;
         $this->paymentPlanService = $paymentPlanService;
+        $this->productRepository = $this->entityManager
+                                        ->getRepository(Product::class);
         $this->taxService = $taxService;
-        $this->shippingOptionsRepository = $shippingOptionRepository;
+        // $this->shippingOptionsRepository = $shippingOptionRepository;
     }
 
     /** Add products to cart; if the products are active and available(the product stock > requested quantity).
@@ -114,14 +124,42 @@ class ShoppingCartController extends BaseController
                     $subscriptionFrequency = !empty($productInfo[2]) ? $productInfo[2] : null;
                 }
 
+                $product = $this->productRepository
+                                ->findOneBySku($productSku);
+                /*
                 $product =
                     $this->productRepository->query()
                         ->where(['sku' => $productSku])
                         ->first();
+                */
 
-                if ($product && ($product['stock'] === null || $product['stock'] >= $quantityToAdd)) {
+                // if ($product && ($product['stock'] === null || $product['stock'] >= $quantityToAdd)) {
+                if (
+                    $product &&
+                    (
+                        $product->getStock() === null ||
+                        $product->getStock() >= $quantityToAdd
+                    )
+                ) {
                     $success = true;
                     $addedProducts[] = $product;
+                    $cart = $this->cartService->addCartItem(
+                        $product->getName(),
+                        $product->getDescription(),
+                        $quantityToAdd,
+                        $product->getPrice(),
+                        $product->getIsPhysical(),
+                        $product->getIsPhysical(),
+                        $product->getSubscriptionIntervalType(),
+                        $product->getSubscriptionIntervalCount(),
+                        [
+                            'product-id' => $product->getId(),
+                            'requires-shipping-address' => $product->getIsPhysical(),
+                            'thumbnail_url' => $product->getThumbnailUrl(),
+                            'is_physical' => $product->getIsPhysical(),
+                        ]
+                    );
+                    /*
                     $cart = $this->cartService->addCartItem(
                         $product['name'],
                         $product['description'],
@@ -138,6 +176,7 @@ class ShoppingCartController extends BaseController
                             'is_physical' => $product['is_physical'],
                         ]
                     );
+                    */
                 } else {
                     $message = 'Product with SKU:' . $productSku . ' could not be added to cart.';
                     $message .= (!is_null($product)) ?
@@ -151,34 +190,48 @@ class ShoppingCartController extends BaseController
             }
         }
 
-        $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+        $billingAddress = $this->cartAddressService
+            ->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
 
-        $response = [
-            'addedProducts' => $addedProducts,
-            'cartSubTotal' => $cart
-                ->getTotalDue(),
-            'cartNumberOfItems' => count(
-                $cart
-                    ->getItems()
-            ),
-            'notAvailableProducts' => $errors,
-        ];
-
-        if (!empty($input['redirect'])) {
-            return reply()->form(
-                [$success],
-                $input['redirect'],
-                [],
-                $response
-            );
-        }
-
-        return reply()->form(
-            [$success],
-            null,
-            [],
-            $response
+        $request->session()->flash('addedProducts', $addedProducts);
+        $request->session()->flash('cartSubTotal', $cart->getTotalDue());
+        $request->session()->flash(
+            'cartNumberOfItems',
+            count($cart->getItems())
         );
+        $request->session()->flash('notAvailableProducts', $errors);
+
+        /** @var \Illuminate\Http\RedirectResponse $redirectResponse */
+        $redirectResponse = $request->get('redirect') ?
+            redirect()->away($request->get('redirect')) :
+            redirect()->back();
+
+        $redirectResponse->with('success', $success);
+
+        return $redirectResponse;
+
+        // $response = [
+        //     'addedProducts' => $addedProducts,
+        //     'cartSubTotal' => $cart->getTotalDue(),
+        //     'cartNumberOfItems' => count($cart->getItems()),
+        //     'notAvailableProducts' => $errors,
+        // ];
+
+        // if (!empty($input['redirect'])) {
+        //     return reply()->form(
+        //         [$success],
+        //         $input['redirect'],
+        //         [],
+        //         $response
+        //     );
+        // }
+
+        // return reply()->form(
+        //     [$success],
+        //     null,
+        //     [],
+        //     $response
+        // );
     }
 
     /** Remove product from cart.

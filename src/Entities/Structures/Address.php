@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities\Structures;
 
+use Doctrine\Common\Inflector\Inflector;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 
 class Address implements AddressInterface
@@ -45,6 +46,17 @@ class Address implements AddressInterface
      * @var string
      */
     protected $city;
+
+    const PROPS_MAP = [
+        'country' => true,
+        'state' => true,
+        'firstName' => true,
+        'lastName' => true,
+        'streetLineOne' => true,
+        'streetLineTwo' => true,
+        'zipOrPostalCode' => true,
+        'city' => true
+    ];
 
     public function __construct(
         ?string $country = null,
@@ -217,7 +229,6 @@ class Address implements AddressInterface
 
     /**
      * Merges data from $address into current address
-     * current data is not overwritten, if exists
      *
      * @param Address $address
      *
@@ -225,12 +236,16 @@ class Address implements AddressInterface
      */
     public function merge(Address $address): self
     {
-        if (!$this->country && $address->getCountry()) {
-            $this->country = $address->getCountry();
-        }
+        foreach (self::PROPS_MAP as $key => $nil) {
+            $setterName = Inflector::camelize('set' . ucwords($key));
+            $getterName = Inflector::camelize('get' . ucwords($key));
 
-        if (!$this->state && $address->getState()) {
-            $this->state = $address->getState();
+            $currentValue = call_user_func([$this, $getterName]);
+            $newValue = call_user_func([$address, $getterName]);
+
+            if (!$currentValue && $newValue) {
+                call_user_func([$this, $setterName], $newValue);
+            }
         }
 
         return $this;
@@ -250,5 +265,20 @@ class Address implements AddressInterface
             'state' => $this->state,
             'country' => $this->country
         ];
+    }
+
+    public static function createFromArray($array)
+    {
+        $address = new static;
+
+        foreach (self::PROPS_MAP as $key => $nil) {
+            if (isset($array[$key])) {
+                $setterName = Inflector::camelize('set' . ucwords($key));
+
+                call_user_func([$address, $setterName], $array[$key]);
+            }
+        }
+
+        return $address;
     }
 }
