@@ -89,9 +89,8 @@ class OrderJsonController extends BaseController
         $qb = $this->orderRepository->createQueryBuilder('o');
 
         $qb
-            ->select(['o', 'oi', 'u', 'ba', 'sa'])
+            ->select(['o', 'oi', 'ba', 'sa'])
             ->leftJoin('o.orderItems', 'oi')
-            ->leftJoin('o.user', 'u')
             ->leftJoin('o.billingAddress', 'ba')
             ->leftJoin('o.shippingAddress', 'sa')
             ->where($qb->expr()->in('o.brand', ':brands'))
@@ -146,9 +145,8 @@ class OrderJsonController extends BaseController
         $qb = $this->orderRepository->createQueryBuilder('o');
 
         $qb
-            ->select(['o', 'oi', 'u', 'ba', 'sa'])
+            ->select(['o', 'oi', 'ba', 'sa'])
             ->leftJoin('o.orderItems', 'oi')
-            ->leftJoin('o.user', 'u')
             ->leftJoin('o.billingAddress', 'ba')
             ->leftJoin('o.shippingAddress', 'sa')
             ->where($qb->expr()->in('o.id', ':orderId'))

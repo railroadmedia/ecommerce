@@ -161,12 +161,15 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
     public function test_show_decorated_order()
     {
+        $userId = $this->createAndLogInNewUser();
+
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription
         ]);
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$shippingAddressType
+            'type' => ConfigService::$shippingAddressType,
+            'user_id' => $userId
         ]);
 
         $order = $this->fakeOrder([
@@ -174,7 +177,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
             'updated_at' => null,
             'billing_address_id' => null,
             'user_id' => null,
-            'shipping_address_id' => $address['id']
+            'shipping_address_id' => $address['id'],
+            'user_id' => $userId
         ]);
 
         $orderItem = $this->fakeOrderItem([
@@ -210,8 +214,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
             'product_id' => $product['id'],
             'order_id' => $order['id'],
             'payment_method_id' => null,
-            'user_id' => null,
-            'updated_at' => null
+            'updated_at' => null,
+            'user_id' => $userId
         ]);
 
         //
@@ -285,6 +289,12 @@ class OrderJsonControllerTest extends EcommerceTestCase
                             ]
                         ]
                     ],
+                    'user' => [
+                        'data' => [
+                            'type' => 'user',
+                            'id' => $userId,
+                        ]
+                    ],
                     'shippingAddress' => [
                         'data' => [
                             'type' => 'address',
@@ -304,6 +314,11 @@ class OrderJsonControllerTest extends EcommerceTestCase
                             'payment_method_id' => true
                         ]
                     )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
                 ],
                 [
                     'type' => 'orderItem',
@@ -327,7 +342,15 @@ class OrderJsonControllerTest extends EcommerceTestCase
                             'user_id' => true,
                             'customer_id' => true
                         ]
-                    )
+                    ),
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ]
                 ],
                 [
                     'type' => 'product',
@@ -374,6 +397,12 @@ class OrderJsonControllerTest extends EcommerceTestCase
                                 'id' => $product['id']
                             ]
                         ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
                         'order' => [
                             'data' => [
                                 'type' => 'order',
@@ -410,15 +439,18 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         for ($i = 0; $i < $nrOrders; $i++) {
 
+            $user = $this->fakeUser();
+
             $address = $this->fakeAddress([
-                'type' => ConfigService::$shippingAddressType
+                'type' => ConfigService::$shippingAddressType,
+                'user_id' => $user['id']
             ]);
 
             $order = $this->fakeOrder([
                 'deleted_on' => null,
                 'updated_at' => null,
                 'billing_address_id' => null,
-                'user_id' => null,
+                'user_id' => $user['id'],
                 'shipping_address_id' => $address['id']
             ]);
 
@@ -447,6 +479,12 @@ class OrderJsonControllerTest extends EcommerceTestCase
                                 'type' => 'orderItem',
                                 'id' => $orderItem['id'],
                             ]
+                        ]
+                    ],
+                    'user' => [
+                        'data' => [
+                            'type' => 'user',
+                            'id' => $user['id'],
                         ]
                     ],
                     'shippingAddress' => [
@@ -481,8 +519,11 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $page = 1;
         $limit = 10;
 
+        $user = $this->fakeUser();
+
         $address = $this->fakeAddress([
-            'type' => ConfigService::$shippingAddressType
+            'type' => ConfigService::$shippingAddressType,
+            'user_id' => $user['id']
         ]);
 
         $product = $this->fakeProduct([
@@ -494,7 +535,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             'deleted_on' => null,
             'updated_at' => null,
             'billing_address_id' => null,
-            'user_id' => null,
+            'user_id' => $user['id'],
             'shipping_address_id' => $address['id']
         ]);
 
@@ -508,7 +549,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             'deleted_on' => null,
             'updated_at' => null,
             'billing_address_id' => null,
-            'user_id' => null,
+            'user_id' => $user['id'],
             'shipping_address_id' => $address['id']
         ]);
 
@@ -537,6 +578,12 @@ class OrderJsonControllerTest extends EcommerceTestCase
                             'type' => 'orderItem',
                             'id' => $orderItemInRange['id'],
                         ]
+                    ]
+                ],
+                'user' => [
+                    'data' => [
+                        'type' => 'user',
+                        'id' => $user['id'],
                     ]
                 ],
                 'shippingAddress' => [
@@ -582,15 +629,18 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         for ($i = 0; $i < $nrOrders; $i++) {
 
+            $user = $this->fakeUser();
+
             $address = $this->fakeAddress([
-                'type' => ConfigService::$shippingAddressType
+                'type' => ConfigService::$shippingAddressType,
+                'user_id' => $user['id']
             ]);
 
             $order = $this->fakeOrder([
                 'deleted_on' => null,
                 'updated_at' => null,
                 'billing_address_id' => null,
-                'user_id' => null,
+                'user_id' => $user['id'],
                 'shipping_address_id' => $address['id'],
                 'brand' => $this->faker->randomElement($brands)
             ]);
@@ -620,6 +670,12 @@ class OrderJsonControllerTest extends EcommerceTestCase
                                 'type' => 'orderItem',
                                 'id' => $orderItem['id'],
                             ]
+                        ]
+                    ],
+                    'user' => [
+                        'data' => [
+                            'type' => 'user',
+                            'id' => $user['id'],
                         ]
                     ],
                     'shippingAddress' => [
@@ -688,15 +744,18 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         for ($i = 0; $i < $nrOrders; $i++) {
 
+            $user = $this->fakeUser();
+
             $address = $this->fakeAddress([
-                'type' => ConfigService::$shippingAddressType
+                'type' => ConfigService::$shippingAddressType,
+                'user_id' => $user['id']
             ]);
 
             $order = $this->fakeOrder([
                 'deleted_on' => null,
                 'updated_at' => null,
                 'billing_address_id' => null,
-                'user_id' => null,
+                'user_id' => $user['id'],
                 'shipping_address_id' => $address['id'],
             ]);
 
@@ -725,6 +784,12 @@ class OrderJsonControllerTest extends EcommerceTestCase
                                 'type' => 'orderItem',
                                 'id' => $orderItem['id'],
                             ]
+                        ]
+                    ],
+                    'user' => [
+                        'data' => [
+                            'type' => 'user',
+                            'id' => $user['id'],
                         ]
                     ],
                     'shippingAddress' => [

@@ -5,7 +5,7 @@ namespace Railroad\Ecommerce\Transformers;
 use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Usora\Transformers\UserTransformer;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 
 class SubscriptionTransformer extends TransformerAbstract
 {
@@ -76,19 +76,15 @@ class SubscriptionTransformer extends TransformerAbstract
 
     public function includeUser(Subscription $subscription)
     {
-        if ($subscription->getUser() instanceof Proxy) {
-            return $this->item(
-                $subscription->getUser(),
-                new EntityReferenceTransformer(),
-                'user'
-            );
-        } else {
-            return $this->item(
-                $subscription->getUser(),
-                new UserTransformer(),
-                'user'
-            );
-        }
+        $userProvider = app()->make(UserProviderInterface::class);
+
+        $userTransformer = $userProvider->getUserTransformer();
+
+        return $this->item(
+            $subscription->getUser(),
+            $userTransformer,
+            'user'
+        );
     }
 
     public function includeCustomer(Subscription $subscription)
