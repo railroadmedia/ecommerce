@@ -2,84 +2,92 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
-use Carbon\Carbon;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
-use Railroad\Ecommerce\Factories\CartFactory;
-use Railroad\Ecommerce\Repositories\ProductRepository;
+use Doctrine\ORM\EntityManager;
+use Illuminate\Session\Store;
+use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Structures\Address;
+use Railroad\Ecommerce\Entities\Structures\CartItem;
+use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\PaymentPlanService;
+use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShoppingCartControllerTest extends EcommerceTestCase
 {
-    use WithoutMiddleware;
-
     /**
-     * @var CartService
+     * @var Store
      */
-    protected $classBeingTested;
-
-    /**
-     * @var CartService
-     */
-    protected $cartService;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\ProductRepository
-     */
-    protected $productRepository;
+    protected $session;
 
     protected function setUp()
     {
         parent::setUp();
-        $this->classBeingTested = $this->app->make(CartService::class);
-        $this->cartService = $this->app->make(CartService::class);
-        $this->productRepository = $this->app->make(ProductRepository::class);
+
+        $this->session = $this->app->make(Store::class);
     }
 
     public function test_add_to_cart()
     {
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(15, 100),
-                ]
-            )
-        );
+        $this->session->flush();
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(15, 100),
+        ]);
 
         $initialQuantity = 2;
-        $this->call(
-            'PUT',
+
+        $response = $this->call(
+            'GET',
             '/add-to-cart/',
             [
                 'products' => [$product['sku'] => $initialQuantity],
             ]
         );
 
-        $newQuantity = 10;
-        $response = $this->call(
-            'GET',
-            '/add-to-cart?products[' . $product['sku'] . ']=1'
-        );
-
         // assert the session has the success message
         $response->assertSessionHas('success', true);
 
+        // assert the session has addedProducts key
+        $response->assertSessionHas('addedProducts');
+
+        $response->assertSessionHas('cartNumberOfItems', 1);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartItems = $cartService->getCart()->getItems();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cartItems));
+
+        $this->assertEquals(1, count($cartItems));
+
+        // assert cart item
+        $cartItemOne = $cartItems[0];
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($initialQuantity, $cartItemOne->getQuantity());
+
+        $this->assertEquals($product['price'], $cartItemOne->getPrice());
+
         // assert the product was added to the cart
-        $response->assertSessionHas('addedProducts', [0 => $product]);
+        $cartItemProduct = $cartItemOne->getProduct();
+
+        $this->assertNotNull($cartItemProduct);
+        $this->assertEquals(Product::class, get_class($cartItemProduct));
+        $this->assertEquals($product['id'], $cartItemProduct->getId());
     }
 
     public function test_add_product_with_stock_empty_to_cart()
     {
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => 0,
-                ]
-            )
-        );
+        $this->session->flush();
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(15, 100),
+        ]);
 
         $quantity = $this->faker->numberBetween(1, 1000);
         $response = $this->call(
@@ -93,9 +101,14 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         // assert the session has the messages set on false
         $response->assertSessionHas('success', false);
 
-        //assert the items was not added to cart
+        // assert the items was not added to cart
         $response->assertSessionHas('addedProducts', []);
         $response->assertSessionHas('cartNumberOfItems', 0);
+
+        $em = $this->app->make(EntityManager::class);
+
+        $productEntity = $em->getRepository(Product::class)
+                                ->find($product['id']);
 
         // assert the session has the error message
         $response->assertSessionHas(
@@ -110,7 +123,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
                         ') is smaller than the quantity you\'ve selected(' .
                         $quantity .
                         ')',
-                    'product' => $product
+                    'product' => $productEntity
                 ]
             ]
         );
@@ -148,30 +161,26 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
     public function test_add_many_products_to_cart()
     {
-        $product1 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(5, 100),
-                ]
-            )
-        );
-        $product2 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(5, 100),
-                ]
-            )
-        );
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productOneQuantity = 2;
+        $productTwoQuantity = 2;
 
         $response = $this->call(
             'GET',
             '/add-to-cart/',
             [
                 'products' => [
-                    $product1['sku'] => 2,
-                    $product2['sku'] => 3,
+                    $productOne['sku'] => $productOneQuantity,
+                    $productTwo['sku'] => $productTwoQuantity,
                 ],
             ]
         );
@@ -179,23 +188,64 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         // assert the session has the success message
         $response->assertSessionHas('success', true);
 
-        //assert the items was added to the cart
-        $response->assertSessionHas('addedProducts', [$product1, $product2]);
+        //assert the items were added to the cart
+        $response->assertSessionHas('addedProducts');
         $response->assertSessionHas('cartNumberOfItems', 2);
         $response->assertSessionHas('notAvailableProducts', []);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartItems = $cartService->getCart()->getItems();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cartItems));
+
+        $this->assertEquals(2, count($cartItems));
+
+        // assert cart item one
+        $cartItemOne = $cartItems[0];
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($productOneQuantity, $cartItemOne->getQuantity());
+
+        $this->assertEquals($productOne['price'], $cartItemOne->getPrice());
+
+        // assert the product one was added to the cart
+        $cartItemOneProduct = $cartItemOne->getProduct();
+
+        $this->assertNotNull($cartItemOneProduct);
+        $this->assertEquals(Product::class, get_class($cartItemOneProduct));
+        $this->assertEquals($productOne['id'], $cartItemOneProduct->getId());
+
+        // assert cart item two
+        $cartItemTwo = $cartItems[1];
+
+        $this->assertEquals(CartItem::class, get_class($cartItemTwo));
+
+        $this->assertEquals($productTwoQuantity, $cartItemTwo->getQuantity());
+
+        $this->assertEquals($productTwo['price'], $cartItemTwo->getPrice());
+
+        // assert the product two was added to the cart
+        $cartItemTwoProduct = $cartItemTwo->getProduct();
+
+        $this->assertNotNull($cartItemTwoProduct);
+        $this->assertEquals(Product::class, get_class($cartItemTwoProduct));
+        $this->assertEquals($productTwo['id'], $cartItemTwoProduct->getId());
     }
 
     public function test_add_to_cart_higher_amount_than_product_stock()
     {
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(1, 3),
-                ]
-            )
-        );
+        $this->session->flush();
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(1, 3),
+        ]);
+
         $quantity = $this->faker->numberBetween(5, 100);
+
         $response = $this->call(
             'GET',
             '/add-to-cart/',
@@ -211,6 +261,11 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas('addedProducts', []);
         $response->assertSessionHas('cartNumberOfItems', 0);
 
+        $em = $this->app->make(EntityManager::class);
+
+        $productEntity = $em->getRepository(Product::class)
+                                ->find($product['id']);
+
         // assert the session has the error message
         $response->assertSessionHas(
             'notAvailableProducts',
@@ -223,7 +278,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
                         ') is smaller than the quantity you\'ve selected(' .
                         $quantity .
                         ')',
-                    'product' => $product
+                    'product' => $productEntity
                 ]
             ]
         );
@@ -231,33 +286,30 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
     public function test_add_products_available_and_not_available_to_cart()
     {
-        $product1 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(10, 3000),
-                ]
-            )
-        );
-        $product2 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(10, 300),
-                ]
-            )
-        );
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
         $randomSku1 = $this->faker->word . 'sku1';
         $randomSku2 = $this->faker->word . 'sku2';
+
+        $productOneQuantity = $this->faker->numberBetween(1, 5);
+        $productTwoQuantity = $this->faker->numberBetween(1, 5);
 
         $response = $this->call(
             'GET',
             '/add-to-cart/',
             [
                 'products' => [
-                    $product1['sku'] => $this->faker->numberBetween(1, 5),
+                    $productOne['sku'] => $productOneQuantity,
                     $randomSku1 => 2,
-                    $product2['sku'] => $this->faker->numberBetween(1, 5),
+                    $productTwo['sku'] => $productTwoQuantity,
                     $randomSku2 => 2,
                 ],
             ]
@@ -267,7 +319,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas('success', true);
 
         //assert valid items was added into the cart
-        $response->assertSessionHas('addedProducts', [$product1, $product2]);
+        $response->assertSessionHas('addedProducts');
         $response->assertSessionHas('cartNumberOfItems', 2);
 
         // assert the session has the error messages for the invalid products
@@ -284,28 +336,71 @@ class ShoppingCartControllerTest extends EcommerceTestCase
                 ]
             ]
         );
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartItems = $cartService->getCart()->getItems();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cartItems));
+
+        $this->assertEquals(2, count($cartItems));
+
+        // assert cart item one
+        $cartItemOne = $cartItems[0];
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($productOneQuantity, $cartItemOne->getQuantity());
+
+        $this->assertEquals($productOne['price'], $cartItemOne->getPrice());
+
+        // assert the product one was added to the cart
+        $cartItemOneProduct = $cartItemOne->getProduct();
+
+        $this->assertNotNull($cartItemOneProduct);
+        $this->assertEquals(Product::class, get_class($cartItemOneProduct));
+        $this->assertEquals($productOne['id'], $cartItemOneProduct->getId());
+
+        // assert cart item two
+        $cartItemTwo = $cartItems[1];
+
+        $this->assertEquals(CartItem::class, get_class($cartItemTwo));
+
+        $this->assertEquals($productTwoQuantity, $cartItemTwo->getQuantity());
+
+        $this->assertEquals($productTwo['price'], $cartItemTwo->getPrice());
+
+        // assert the product two was added to the cart
+        $cartItemTwoProduct = $cartItemTwo->getProduct();
+
+        $this->assertNotNull($cartItemTwoProduct);
+        $this->assertEquals(Product::class, get_class($cartItemTwoProduct));
+        $this->assertEquals($productTwo['id'], $cartItemTwoProduct->getId());
     }
 
     public function test_remove_product_from_cart()
     {
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(1001, 3000),
-                ]
-            )
-        );
+        $this->session->flush();
 
-        $cart = $this->cartService->addCartItem(
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(15, 100),
+        ]);
+
+        $productQuantity = 1;
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $this->faker->numberBetween(1, 1000),
+            $productQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
@@ -314,239 +409,399 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response = $this->call('PUT', '/remove-from-cart/' . $product['id']);
 
         // assert cart data response
-        $this->assertEquals([
-            'data' => [
-                [
+        $this->assertEquals(
+            [
+                'data' => [],
+                'meta' => [
                     'tax' => 0,
-                    'total' => 0,
-                    'cartItems' => []
+                    'total' => 0
                 ]
-            ]
-        ], $response->decodeResponseJson());
+            ],
+            $response->decodeResponseJson()
+        );
 
         // assert the session has the success message and the product was removed from the cart
         $response->assertSessionMissing('addedProducts');
 
-        //assert response status code
-        $this->assertEquals(201, $response->getStatusCode());
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
     public function test_remove_product_from_cart_cart_not_empty()
     {
-        $productOne = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(1001, 3000),
-                ]
-            )
-        );
-        $productOneQuantity = $this->faker->numberBetween(1, 1000);
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
 
-        $cart = $this->cartService->addCartItem(
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productThree = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $cartService = $this->app->make(CartService::class);
+        $cartAddressService = $this->app->make(CartAddressService::class);
+
+        $sessionBillingAddress = new Address();
+
+        $sessionBillingAddress
+            ->setCountry($country)
+            ->setState($state)
+            ->setZipOrPostalCode($zip);
+
+        $cartAddressService->setAddress(
+            $sessionBillingAddress,
+            CartAddressService::BILLING_ADDRESS_TYPE
+        );
+
+        $productOneQuantity = $this->faker->numberBetween(1, 3);
+
+        $cartService->addCartItem(
             $productOne['name'],
             $productOne['description'],
             $productOneQuantity,
             $productOne['price'],
             $productOne['is_physical'],
             $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productOne['subscription_interval_type'],
+            $productOne['subscription_interval_count'],
             [
                 'product-id' => $productOne['id'],
             ]
         );
 
-        $productTwo = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(1001, 3000),
-                ]
-            )
-        );
-        $productTwoQuantity = $this->faker->numberBetween(1, 1000);
+        $productTwoQuantity = $this->faker->numberBetween(1, 3);
 
-        $cart = $this->cartService->addCartItem(
+        $cartService->addCartItem(
             $productTwo['name'],
             $productTwo['description'],
             $productTwoQuantity,
             $productTwo['price'],
             $productTwo['is_physical'],
             $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productTwo['subscription_interval_type'],
+            $productTwo['subscription_interval_count'],
             [
                 'product-id' => $productTwo['id'],
             ]
         );
 
-        $productThree = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(1001, 3000),
-                ]
-            )
-        );
-        $productThreeQuantity = $this->faker->numberBetween(1, 1000);
+        $productThreeQuantity = $this->faker->numberBetween(1, 3);
 
-        $cart = $this->cartService->addCartItem(
+        $cartService->addCartItem(
             $productThree['name'],
             $productThree['description'],
             $productThreeQuantity,
             $productThree['price'],
             $productThree['is_physical'],
             $productThree['is_physical'],
-            $this->faker->word,
-            rand(),
+            $productThree['subscription_interval_type'],
+            $productThree['subscription_interval_count'],
             [
                 'product-id' => $productThree['id'],
             ]
         );
 
-        $response = $this->call('PUT', '/remove-from-cart/' . $productOne['id']);
+        $response = $this->call(
+            'PUT',
+            '/remove-from-cart/' . $productOne['id']
+        );
 
-        $decodedResponse = $response->decodeResponseJson();
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $expectedCartItemTwoPrice = round($productTwo['price'] * $productTwoQuantity, 2);
+        $expectedCartItemThreePrice = round($productThree['price'] * $productThreeQuantity, 2);
+
+        $expectedCartItemsTotalPrice = $expectedCartItemTwoPrice + $expectedCartItemThreePrice;
+
+        $taxService = $this->app->make(TaxService::class);
+
+        $billingAddress = $cartAddressService->getAddress(
+                                    CartAddressService::BILLING_ADDRESS_TYPE
+                                );
+
+        $taxRate = $taxService->getTaxRate($billingAddress);
+
+        $expectedTaxes = round($expectedCartItemsTotalPrice * $taxRate, 2);
+
+        $expectedTotal = round($expectedCartItemsTotalPrice + $expectedTaxes, 2);
+
+        $paymentPlanService = $this->app->make(PaymentPlanService::class);
+
+        $isPaymentPlanEligible = $paymentPlanService->isPaymentPlanEligible();
+        $paymentPlanPricing = $paymentPlanService->getPaymentPlanPricingForCartItems();
 
         // assert cart data response
         $this->assertArraySubset(
             [
                 'data' => [
                     [
-                        'cartItems' => [
-                            [
-                                'name' => $productTwo['name'],
-                                'description' => $productTwo['description'],
-                                'quantity' => $productTwoQuantity,
-                                'totalPrice' => $productTwo['price'] * $productTwoQuantity,
-                                'requiresShippingAddress' => $productTwo['is_physical'],
-                                'requiresBillingAddress' => $productTwo['is_physical'],
-                                'options' => ['product-id' => $productTwo['id']]
-                            ],
-                            [
-                                'name' => $productThree['name'],
-                                'description' => $productThree['description'],
-                                'quantity' => $productThreeQuantity,
-                                'totalPrice' => $productThree['price'] * $productThreeQuantity,
-                                'requiresShippingAddress' => $productThree['is_physical'],
-                                'requiresBillingAddress' => $productThree['is_physical'],
-                                'options' => ['product-id' => $productThree['id']]
-                            ]
+                        'type' => 'cartItem',
+                        'attributes' => [
+                            'name' => $productTwo['name'],
+                            'description' => $productTwo['description'],
+                            'quantity' => $productTwoQuantity,
+                            'totalPrice' => $productTwo['price'] * $productTwoQuantity,
+                            'requiresShippingAddress' => $productTwo['is_physical'],
+                            'requiresBillingAddress' => $productTwo['is_physical'],
+                            'subscriptionIntervalType' => $productTwo['subscription_interval_type'],
+                            'subscriptionIntervalCount' => $productTwo['subscription_interval_count'],
+                            'discountedPrice' => null,
+                            'options' => ['product-id' => $productTwo['id']]
+                        ]
+                    ],
+                    [
+                        'type' => 'cartItem',
+                        'attributes' => [
+                            'name' => $productThree['name'],
+                            'description' => $productThree['description'],
+                            'quantity' => $productThreeQuantity,
+                            'totalPrice' => $productThree['price'] * $productThreeQuantity,
+                            'requiresShippingAddress' => $productThree['is_physical'],
+                            'requiresBillingAddress' => $productThree['is_physical'],
+                            'subscriptionIntervalType' => $productThree['subscription_interval_type'],
+                            'subscriptionIntervalCount' => $productThree['subscription_interval_count'],
+                            'discountedPrice' => null,
+                            'options' => ['product-id' => $productThree['id']]
                         ]
                     ]
+                ],
+                'meta' => [
+                    'tax' => $expectedTaxes,
+                    'total' => $expectedTotal,
+                    'isPaymentPlanEligible' => $isPaymentPlanEligible,
+                    'paymentPlanPricing' => $paymentPlanPricing
                 ]
             ],
-            $decodedResponse
+            $response->decodeResponseJson()
         );
-
-        // assert cart data response hax tax and total information
-        $this->assertArrayHasKey('tax', $decodedResponse['data'][0]);
-        $this->assertArrayHasKey('total', $decodedResponse['data'][0]);
-
-        // assert the session has the success message and the product was removed from the cart
-        $response->assertSessionMissing('addedProducts');
-
-        //assert response status code
-        $this->assertEquals(201, $response->getStatusCode());
     }
 
     public function test_update_cart_item_quantity()
     {
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'is_physical' => 1,
-                    'stock' => $this->faker->numberBetween(6, 3000),
-                ]
-            )
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(15, 100),
+        ]);
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $cartAddressService = $this->app->make(CartAddressService::class);
+
+        $sessionBillingAddress = new Address();
+
+        $sessionBillingAddress
+            ->setCountry($country)
+            ->setState($state)
+            ->setZipOrPostalCode($zip);
+
+        $cartAddressService->setAddress(
+            $sessionBillingAddress,
+            CartAddressService::BILLING_ADDRESS_TYPE
         );
 
-        $firstQuantity = $this->faker->numberBetween(1, 5);
-        $cart = $this->cartService->addCartItem(
+        $initialQuantity = 2;
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $firstQuantity,
+            $initialQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            rand(),
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
         );
+
         $newQuantity = $this->faker->numberBetween(6, 10);
-        $response = $this->call('PUT', '/update-product-quantity/' . $product['id'] . '/' . $newQuantity);
 
-        $decodedResponse = $response->decodeResponseJson('data');
+        $expectedCartItemPrice = round($product['price'] * $newQuantity, 2);
 
-        //assert response code status
-        $this->assertEquals(201, $response->getStatusCode());
-        $this->assertTrue($decodedResponse[0]['success']);
+        $taxService = $this->app->make(TaxService::class);
 
-        //assert updated cart item returned in response
-        $this->assertEquals($newQuantity, $decodedResponse[0]['addedProducts'][0]['quantity']);
+        $billingAddress = $cartAddressService->getAddress(
+                                    CartAddressService::BILLING_ADDRESS_TYPE
+                                );
 
+        $taxRate = $taxService->getTaxRate($billingAddress);
+
+        $expectedTaxes = round($expectedCartItemPrice * $taxRate, 2);
+
+        $expectedTotal = round($expectedCartItemPrice + $expectedTaxes, 2);
+
+        $response = $this->call(
+            'PUT',
+            '/update-product-quantity/' . $product['id'] . '/' . $newQuantity
+        );
+
+        $paymentPlanService = $this->app->make(PaymentPlanService::class);
+
+        $isPaymentPlanEligible = $paymentPlanService->isPaymentPlanEligible();
+        $paymentPlanPricing = $paymentPlanService->getPaymentPlanPricingForCartItems();
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    [
+                        'type' => 'cartItem',
+                        'attributes' => [
+                            'name' => $product['name'],
+                            'description' => $product['description'],
+                            'quantity' => $newQuantity,
+                            'totalPrice' => $product['price'] * $newQuantity,
+                            'requiresShippingAddress' => $product['is_physical'],
+                            'requiresBillingAddress' => $product['is_physical'],
+                            'subscriptionIntervalType' => $product['subscription_interval_type'],
+                            'subscriptionIntervalCount' => $product['subscription_interval_count'],
+                            'discountedPrice' => null,
+                            'options' => ['product-id' => $product['id']]
+                        ]
+                    ],
+                ],
+                'meta' => [
+                    'tax' => $expectedTaxes,
+                    'total' => $expectedTotal,
+                    'isPaymentPlanEligible' => $isPaymentPlanEligible,
+                    'paymentPlanPricing' => $paymentPlanPricing
+                ]
+            ],
+            $response->decodeResponseJson()
+        );
     }
 
     public function test_update_cart_item_quantity_insufficient_stock()
     {
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(2, 5),
-                ]
-            )
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(2, 5),
+        ]);
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $cartAddressService = $this->app->make(CartAddressService::class);
+
+        $sessionBillingAddress = new Address();
+
+        $sessionBillingAddress
+            ->setCountry($country)
+            ->setState($state)
+            ->setZipOrPostalCode($zip);
+
+        $cartAddressService->setAddress(
+            $sessionBillingAddress,
+            CartAddressService::BILLING_ADDRESS_TYPE
         );
 
-        $firstQuantity = $this->faker->numberBetween(1, 2);
+        $initialQuantity = $this->faker->numberBetween(1, 2);
 
-        $this->cartService->addCartItem(
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addCartItem(
             $product['name'],
             $product['description'],
-            $firstQuantity,
+            $initialQuantity,
             $product['price'],
             $product['is_physical'],
             $product['is_physical'],
-            $this->faker->word,
-            0,
+            $product['subscription_interval_type'],
+            $product['subscription_interval_count'],
             [
                 'product-id' => $product['id'],
             ]
         );
 
         $newQuantity = $this->faker->numberBetween(6, 10);
-        $response = $this->call('PUT', '/update-product-quantity/' . $product['id'] . '/' . $newQuantity);
 
-        $decodedResponse = $response->decodeResponseJson('data');
+        $expectedCartItemPrice = round($product['price'] * $initialQuantity, 2);
 
-        //assert response
-        $this->assertEquals(201, $response->getStatusCode());
-        $this->assertFalse($decodedResponse[0]['success']);
-        $this->assertEquals($firstQuantity, $decodedResponse[0]['addedProducts'][0]['quantity']);
+        $taxService = $this->app->make(TaxService::class);
 
+        $billingAddress = $cartAddressService->getAddress(
+                                    CartAddressService::BILLING_ADDRESS_TYPE
+                                );
+
+        $taxRate = $taxService->getTaxRate($billingAddress);
+
+        $expectedTaxes = round($expectedCartItemPrice * $taxRate, 2);
+
+        $expectedTotal = round($expectedCartItemPrice + $expectedTaxes, 2);
+
+        $response = $this->call(
+            'PUT',
+            '/update-product-quantity/' . $product['id'] . '/' . $newQuantity
+        );
+
+        // assert response
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $paymentPlanService = $this->app->make(PaymentPlanService::class);
+
+        $isPaymentPlanEligible = $paymentPlanService->isPaymentPlanEligible();
+        $paymentPlanPricing = $paymentPlanService->getPaymentPlanPricingForCartItems();
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    [
+                        'type' => 'cartItem',
+                        'attributes' => [
+                            'name' => $product['name'],
+                            'description' => $product['description'],
+                            'quantity' => $initialQuantity,
+                            'totalPrice' => $product['price'] * $initialQuantity,
+                            'requiresShippingAddress' => $product['is_physical'],
+                            'requiresBillingAddress' => $product['is_physical'],
+                            'subscriptionIntervalType' => $product['subscription_interval_type'],
+                            'subscriptionIntervalCount' => $product['subscription_interval_count'],
+                            'discountedPrice' => null,
+                            'options' => ['product-id' => $product['id']]
+                        ]
+                    ],
+                ],
+                'meta' => [
+                    'tax' => $expectedTaxes,
+                    'total' => $expectedTotal,
+                    'isPaymentPlanEligible' => $isPaymentPlanEligible,
+                    'paymentPlanPricing' => $paymentPlanPricing
+                ]
+            ],
+            $response->decodeResponseJson()
+        );
     }
 
     public function test_redirect_to_shop_with_added_product_data()
     {
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(3, 100),
-                    'is_physical' => 0
-                ]
-            )
-        );
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(15, 100),
+        ]);
+
+        $quantity = 2;
 
         $response = $this->call(
             'GET',
             '/add-to-cart/',
             [
-                'products' => [$product['sku'] => 2],
+                'products' => [$product['sku'] => $quantity],
                 'redirect' => '/shop',
             ]
         );
@@ -556,53 +811,74 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         //assert product info exists on session
         $response->assertSessionHas('success', true);
-        $response->assertSessionHas('addedProducts', [$product]);
+        $response->assertSessionHas('addedProducts');
         $response->assertSessionHas('cartNumberOfItems', 1);
-       // $response->assertSessionHas('cartSubTotal');
+        $response->assertSessionHas('cartSubTotal');
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartItems = $cartService->getCart()->getItems();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cartItems));
+
+        $this->assertEquals(1, count($cartItems));
+
+        // assert cart item
+        $cartItemOne = $cartItems[0];
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($quantity, $cartItemOne->getQuantity());
+
+        $this->assertEquals($product['price'], $cartItemOne->getPrice());
+
+        // assert the product was added to the cart
+        $cartItemProduct = $cartItemOne->getProduct();
+
+        $this->assertNotNull($cartItemProduct);
+        $this->assertEquals(Product::class, get_class($cartItemProduct));
+        $this->assertEquals($product['id'], $cartItemProduct->getId());
     }
 
     public function test_redirect_checkout()
     {
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(1, 100),
-                ]
-            )
-        );
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(1, 100),
+        ]);
+
+        $quantity = 2;
 
         $response = $this->call(
             'GET',
             '/add-to-cart/',
             [
-                'products' => [$product['sku'] => 2],
+                'products' => [$product['sku'] => $quantity],
             ],
             [],
             [],
             ['HTTP_REFERER' => '/checkout']
         );
 
-        //assert user redirected to previous page
+        // assert user redirected to previous page
         $response->assertRedirect('/checkout');
 
-        //assert product info exists on session
+        // assert product info exists on session
         $response->assertSessionHas('success', true);
-        $response->assertSessionHas('addedProducts', [$product]);
+        $response->assertSessionHas('addedProducts');
         $response->assertSessionHas('cartNumberOfItems', 1);
-        //$response->assertSessionHas('cartSubTotal');
+        $response->assertSessionHas('cartSubTotal');
     }
 
     public function test_promo_code()
     {
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(2, 5),
-                ]
-            )
-        );
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(2, 5),
+        ]);
+
+        $quantity = $this->faker->numberBetween(1, 2);
 
         $promoCode = $this->faker->word;
 
@@ -611,49 +887,78 @@ class ShoppingCartControllerTest extends EcommerceTestCase
             '/add-to-cart/',
             [
                 'products' => [
-                    $product['sku'] => $this->faker->numberBetween(1, 2),
+                    $product['sku'] => $quantity,
                 ],
                 'promo-code' => $promoCode,
             ]
         );
 
         $response->assertSessionHas('promo-code', $promoCode);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartItems = $cartService->getCart()->getItems();
+
+        // assert cart promo code
+        $this->assertEquals($promoCode, $cartService->getPromoCode());
+
+        // assert cart items count
+        $this->assertTrue(is_array($cartItems));
+
+        $this->assertEquals(1, count($cartItems));
+
+        // assert cart item
+        $cartItemOne = $cartItems[0];
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($quantity, $cartItemOne->getQuantity());
+
+        $this->assertEquals($product['price'], $cartItemOne->getPrice());
+
+        // assert the product was added to the cart
+        $cartItemProduct = $cartItemOne->getProduct();
+
+        $this->assertNotNull($cartItemProduct);
+        $this->assertEquals(Product::class, get_class($cartItemProduct));
+        $this->assertEquals($product['id'], $cartItemProduct->getId());
     }
 
     public function test_lock_cart()
     {
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(15, 100),
-                ]
-            )
-        );
-        $product2 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(15, 100),
-                    'sku' => 'DLM',
-                ]
-            )
-        );
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
 
-        $initialQuantity = 2;
-        $this->call(
-            'PUT',
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productOneQuantity = 2;
+
+        $response = $this->call(
+            'GET',
             '/add-to-cart/',
             [
-                'products' => [$product['sku'] => $initialQuantity],
+                'products' => [
+                    $productOne['sku'] => $productOneQuantity,
+                ],
                 'locked' => true
             ]
         );
 
-        $newQuantity = 10;
+        $productTwoQuantity = 10;
+
         $response = $this->call(
             'GET',
-            '/add-to-cart?products[DLM]=1,year,1'
+            '/add-to-cart/',
+            [
+                'products' => [
+                    $productTwo['sku'] => $productTwoQuantity,
+                ]
+            ]
         );
 
         // assert the session has the success message
@@ -663,52 +968,122 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas('cartNumberOfItems', 1);
 
         // assert that the cart was cleared and only the second product was added to the cart
-        $response->assertSessionHas('addedProducts', [0 => $product2]);
+        $response->assertSessionHas('addedProducts');
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartItems = $cartService->getCart()->getItems();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cartItems));
+
+        $this->assertEquals(1, count($cartItems));
+
+        // assert cart item
+        $cartItem = $cartItems[0];
+
+        $this->assertEquals(CartItem::class, get_class($cartItem));
+
+        $this->assertEquals($productTwoQuantity, $cartItem->getQuantity());
+
+        $this->assertEquals($productTwo['price'], $cartItem->getPrice());
+
+        // assert the product was added to the cart
+        $cartItemProduct = $cartItem->getProduct();
+
+        $this->assertNotNull($cartItemProduct);
+        $this->assertEquals(Product::class, get_class($cartItemProduct));
+        $this->assertEquals($productTwo['id'], $cartItemProduct->getId());
     }
 
     public function test_multiple_add_to_cart()
     {
-        $product = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(15, 100),
-                ]
-            )
-        );
-        $product2 = $this->productRepository->create(
-            $this->faker->product(
-                [
-                    'active' => 1,
-                    'stock' => $this->faker->numberBetween(15, 100),
-                    'sku' => 'DLM',
-                ]
-            )
-        );
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
 
-        $initialQuantity = 2;
-        $resp = $this->call(
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productOneQuantity = 2;
+
+        $response = $this->call(
             'GET',
             '/add-to-cart/',
             [
-                'products' => [$product['sku'] => $initialQuantity]
+                'products' => [
+                    $productOne['sku'] => $productOneQuantity,
+                ],
             ]
         );
 
-        $newQuantity = 10;
-        $response = $this->withSession($this->app['session.store']->all())
-            ->call(
+        $productTwoQuantity = 10;
+
+        $response = $this->call(
             'GET',
-            '/add-to-cart?products[DLM]=1,year,1'
+            '/add-to-cart/',
+            [
+                'products' => [
+                    $productTwo['sku'] => $productTwoQuantity,
+                ],
+            ]
         );
 
         // assert the session has the success message
         $response->assertSessionHas('success', true);
 
-        //assert the old item still exist on session
-        $response->assertSessionHas('cartNumberOfItems', 2);
+        $em = $this->app->make(EntityManager::class);
 
-        // assert that the added product exists on session
-        $response->assertSessionHas('addedProducts', [0  => $product2]);
+        $productEntity = $em->getRepository(Product::class)
+                                ->find($productTwo['id']);
+
+        //assert the items were added to the cart
+        $response->assertSessionHas('addedProducts', [$productEntity]);
+        $response->assertSessionHas('cartNumberOfItems', 2);
+        $response->assertSessionHas('notAvailableProducts', []);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartItems = $cartService->getCart()->getItems();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cartItems));
+
+        $this->assertEquals(2, count($cartItems));
+
+        // assert cart item one
+        $cartItemOne = $cartItems[0];
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($productOneQuantity, $cartItemOne->getQuantity());
+
+        $this->assertEquals($productOne['price'], $cartItemOne->getPrice());
+
+        // assert the product one was added to the cart
+        $cartItemOneProduct = $cartItemOne->getProduct();
+
+        $this->assertNotNull($cartItemOneProduct);
+        $this->assertEquals(Product::class, get_class($cartItemOneProduct));
+        $this->assertEquals($productOne['id'], $cartItemOneProduct->getId());
+
+        // assert cart item two
+        $cartItemTwo = $cartItems[1];
+
+        $this->assertEquals(CartItem::class, get_class($cartItemTwo));
+
+        $this->assertEquals($productTwoQuantity, $cartItemTwo->getQuantity());
+
+        $this->assertEquals($productTwo['price'], $cartItemTwo->getPrice());
+
+        // assert the product two was added to the cart
+        $cartItemTwoProduct = $cartItemTwo->getProduct();
+
+        $this->assertNotNull($cartItemTwoProduct);
+        $this->assertEquals(Product::class, get_class($cartItemTwoProduct));
+        $this->assertEquals($productTwo['id'], $cartItemTwoProduct->getId());
     }
 }

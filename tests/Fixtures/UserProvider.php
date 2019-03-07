@@ -37,12 +37,16 @@ class UserProvider implements
         return $user->getId();
     }
 
-    public function getCurrentUser(): UserInterface
+    public function getCurrentUser(): ?UserInterface
     {
+        if (!auth()->id()) {
+            return null;
+        }
+
         return $this->getUserById(auth()->id());
     }
 
-    public function getCurrentUserId(): int
+    public function getCurrentUserId(): ?int
     {
         return auth()->id();
     }

@@ -300,7 +300,7 @@ class CartService
      *
      * @param string $promoCode
      */
-    public function setPromoCode(string $promoCode)
+    public function setPromoCode(?string $promoCode)
     {
         $this->session->put(self::PROMO_CODE_KEY, $promoCode);
     }

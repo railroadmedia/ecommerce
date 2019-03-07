@@ -12,9 +12,9 @@ interface UserProviderInterface
 
     public function getUserId(UserEntityInterface $user): int;
 
-    public function getCurrentUser(): UserInterface;
+    public function getCurrentUser(): ?UserInterface;
 
-    public function getCurrentUserId(): int;
+    public function getCurrentUserId(): ?int;
 
     public function getUserTransformer(): TransformerAbstract;
 
