@@ -3,30 +3,34 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\EntityManager;
 use Illuminate\Http\Request;
+use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
-use Railroad\Ecommerce\Repositories\CreditCardRepository;
+use Railroad\Ecommerce\Services\ResponseService;
 
 class StripeWebhookController extends BaseController
 {
     /**
-     * @var CreditCardRepository
+     * @var EntityManager
      */
-    private $creditCardRepository;
+    private $entityManager;
 
     /**
      * StripeWebhookController constructor.
      *
      * @param CreditCardRepository $creditCardRepository
      */
-    public function __construct(CreditCardRepository $creditCardRepository)
-    {
-        $this->creditCardRepository = $creditCardRepository;
+    public function __construct(
+        EntityManager $entityManager
+    ) {
+        $this->entityManager = $entityManager;
     }
 
-    /** Receive Stripe webhook notification with type 'customer.source.updated'.
-     *  The credit card data are updated with the webhook data send by Stripe.
-     *  Webhook data are sent as JSON in the POST request body.
+    /**
+     * Receive Stripe webhook notification with type 'customer.source.updated'.
+     * The credit card data are updated with the webhook data send by Stripe.
+     * Webhook data are sent as JSON in the POST request body.
      *
      * @param Request $request
      * @return mixed
@@ -42,42 +46,30 @@ class StripeWebhookController extends BaseController
 
         throw_if(
             ($data['type'] != 'customer.source.updated'),
-            new NotFoundException('Unexpected webhook type form Stripe!' . $data['type'])
+            new NotFoundException(
+                'Unexpected webhook type form Stripe!' . $data['type']
+            )
         );
 
-        $creditCardIds =
-            $this->creditCardRepository->query()
-                ->where(
-                    [
-                        'external_id' => $data['data']['object']['id'],
-                    ]
-                )
-                ->get();
+        $creditCards = $this->entityManager
+                            ->getRepository(CreditCard::class)
+                            ->findByExternalId($data['data']['object']['id']);
 
         $expirationDate = Carbon::createFromDate(
-            $data['data']['object']['exp_year'],
-            $data['data']['object']['exp_month']
-        )
-            ->toDateTimeString();
-
-        foreach ($creditCardIds as $creditCardId) {
-            $this->creditCardRepository->update(
-                $creditCardId['id'],
-                [
-                    'expiration_date' => $expirationDate,
-                    'last_four_digits' => $data['data']['object']['last4'],
-                    'updated_on' => Carbon::now()
-                        ->toDateTimeString(),
-                ]
+                $data['data']['object']['exp_year'],
+                $data['data']['object']['exp_month']
             );
+
+        foreach ($creditCards as $creditCard) {
+            $creditCard
+                ->setExpirationDate($expirationDate)
+                ->setLastFourDigits($data['data']['object']['last4'])
+                ->setUpdatedAt(Carbon::now());
         }
 
-        return reply()->json(
-            null,
-            [
-                'code' => 200,
-            ]
-        );
+        $this->entityManager->flush();
+
+        ResponseService::empty(200);
     }
 
 }

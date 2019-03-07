@@ -3,40 +3,27 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class StripeWebhookControllerTest extends EcommerceTestCase
 {
-    /**
-     * @var CreditCardRepository
-     */
-    protected $creditCardRepository;
-
     public function setUp()
     {
         parent::setUp();
-        $this->creditCardRepository = $this->app->make(CreditCardRepository::class);
     }
 
     public function testHandleCustomerSourceUpdated()
     {
         $externalId = $this->faker->word;
 
-        $this->creditCardRepository->create(
-            [
-                'fingerprint' => $this->faker->creditCardNumber,
-                'last_four_digits' => $this->faker->randomNumber(4),
-                'company_name' => $this->faker->creditCardType,
-                'expiration_date' => Carbon::now()
-                    ->toDateTimeString(),
-                'external_id' => $externalId,
-                'payment_gateway_name' => 'stripe',
-                'created_on' => Carbon::now()
-                    ->toDateTimeString(),
-            ]
-        );
+        $creditCard = $this->fakeCreditCard([
+            'expiration_date' => Carbon::now()->toDateTimeString(),
+            'external_id' => $externalId,
+            'payment_gateway_name' => 'stripe',
+            'created_at' => Carbon::now()->toDateTimeString(),
+        ]);
+
         $results = $this->json(
             'POST',
             '/stripe/webhook',
