@@ -2,11 +2,13 @@
 
 namespace Railroad\Ecommerce\Commands;
 
+use Doctrine\ORM\EntityManager;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\RenewalService;
+use Railroad\Ecommerce\Services\UserProductService;
 
 class RenewalDueSubscriptions extends \Illuminate\Console\Command
 {
@@ -25,6 +27,11 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     protected $description = 'Renewal of due subscriptions.';
 
     /**
+     * @var EntityManager
+     */
+    private $entityManager;
+
+    /**
      * @var \Railroad\Ecommerce\Repositories\SubscriptionRepository
      */
     private $subscriptionRepository;
@@ -35,19 +42,31 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     private $renewalService;
 
     /**
+     * @var UserProductService
+     */
+    private $userProductService;
+
+    const DEACTIVATION_NOTE = 'Ancient subscription. De-activated.';
+
+    /**
      * RenewalDueSubscriptions constructor.
      *
-     * @param SubscriptionRepository $subscriptionRepository
+     * @param EntityManager $entityManager
      * @param RenewalService $renewalService
+     * @param UserProductService $userProductService
      */
     public function __construct(
-        SubscriptionRepository $subscriptionRepository,
-        RenewalService $renewalService
+        EntityManager $entityManager,
+        RenewalService $renewalService,
+        UserProductService $userProductService
     ) {
         parent::__construct();
 
-        $this->subscriptionRepository = $subscriptionRepository;
+        $this->entityManager = $entityManager;
         $this->renewalService = $renewalService;
+        $this->subscriptionRepository = $this->entityManager
+                                        ->getRepository(Subscription::class);
+        $this->userProductService = $userProductService;
     }
 
     /**
@@ -60,104 +79,92 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     {
         $this->info('------------------Renewal Due Subscriptions command------------------');
 
-        $dueSubscriptions =
-            $this->subscriptionRepository->query()
-                ->select(ConfigService::$tableSubscription . '.*')
-                ->where('brand', ConfigService::$brand)
-                ->where(
-                    'paid_until',
-                    '<',
-                    Carbon::now()
-                        ->toDateTimeString()
-                )
-                ->where(
-                    'paid_until',
-                    '>=',
-                    Carbon::now()
-                        ->subMonths(ConfigService::$subscriptionRenewalDateCutoff ?? 1)
-                        ->toDateTimeString()
-                )
-                ->where('is_active', '=', true)
-                ->whereNull('canceled_on')
-                ->where(
-                    function ($query) {
-                        /** @var $query \Eloquent */
-                        $query->whereNull(
-                            'total_cycles_due'
-                        )
-                            ->orWhere(
-                                'total_cycles_due',
-                                0
-                            )
-                            ->orWhere('total_cycles_paid', '<', DB::raw('`total_cycles_due`'));
-                    }
-                )
-                ->orderBy('start_date')
-                ->get()
-                ->toArray();
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->subscriptionRepository->createQueryBuilder('s');
 
+        $qb
+            ->select(['s'])
+            ->where($qb->expr()->eq('s.brand', ':brand'))
+            ->andWhere($qb->expr()->lt('s.paidUntil', ':now'))
+            ->andWhere($qb->expr()->gte('s.paidUntil', ':cutoff'))
+            ->andWhere($qb->expr()->eq('s.isActive', ':active'))
+            ->andWhere($qb->expr()->isNull('s.canceledOn'))
+            ->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->isNull('s.totalCyclesDue'),
+                    $qb->expr()->eq('s.totalCyclesDue', ':zero'),
+                    $qb->expr()->lt('s.totalCyclesPaid', 's.totalCyclesDue')
+                )
+            )
+            ->setParameter('brand', ConfigService::$brand)
+            ->setParameter('now', Carbon::now())
+            ->setParameter(
+                'cutoff',
+                Carbon::now()->subMonths(
+                    ConfigService::$subscriptionRenewalDateCutoff ?? 1
+                )
+            )
+            ->setParameter('active', true)
+            ->setParameter('zero', 0);
+
+        $dueSubscriptions = $qb->getQuery()->getResult();
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
 
         foreach ($dueSubscriptions as $dueSubscription) {
-            $this->renewalService->renew($dueSubscription['id']); // todo: refactor to entity param
+            $this->renewalService->renew($dueSubscription);
         }
 
-        //deactivate ancient subscriptions
-        $ancientSubscriptions =
-            $this->subscriptionRepository->query()
-                ->select(ConfigService::$tableSubscription . '.*')
-                ->where('brand', ConfigService::$brand)
-                ->where(
-                    'paid_until',
-                    '<',
-                    Carbon::now()
-                        ->subMonths(ConfigService::$subscriptionRenewalDateCutoff ?? 1)
-                        ->toDateTimeString()
+        // deactivate ancient subscriptions
+
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->subscriptionRepository->createQueryBuilder('s');
+
+        $qb
+            ->select(['s'])
+            ->where($qb->expr()->eq('s.brand', ':brand'))
+            ->andWhere($qb->expr()->lt('s.paidUntil', ':cutoff'))
+            ->andWhere($qb->expr()->eq('s.isActive', ':active'))
+            ->andWhere($qb->expr()->isNull('s.canceledOn'))
+            ->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->isNull('s.totalCyclesDue'),
+                    $qb->expr()->eq('s.totalCyclesDue', ':zero'),
+                    $qb->expr()->lt('s.totalCyclesPaid', 's.totalCyclesDue')
                 )
-                ->where('is_active', '=', true)
-                ->whereNull('canceled_on')
-                ->where(
-                    function ($query) {
-                        /** @var $query \Eloquent */
-                        $query->whereNull(
-                            'total_cycles_due'
-                        )
-                            ->orWhere(
-                                'total_cycles_due',
-                                0
-                            )
-                            ->orWhere('total_cycles_paid', '<', DB::raw('`total_cycles_due`'));
-                    }
+            )
+            ->setParameter('brand', ConfigService::$brand)
+            ->setParameter(
+                'cutoff',
+                Carbon::now()->subMonths(
+                    ConfigService::$subscriptionRenewalDateCutoff ?? 1
                 )
-                ->orderBy('start_date')
-                ->get();
+            )
+            ->setParameter('active', true)
+            ->setParameter('zero', 0);
+
+        $ancientSubscriptions = $qb->getQuery()->getResult();
 
         $this->info('De-activate ancient subscriptions. Count: ' . count($ancientSubscriptions));
 
-        $this->deactivateSubscriptions($ancientSubscriptions);
+        foreach ($ancientSubscriptions as $ancientSubscription) {
+            $ancientSubscription
+                ->setIsActive(false)
+                ->setNote(self::DEACTIVATION_NOTE)
+                ->setCanceledOn(Carbon::now())
+                ->setUpdatedAt(Carbon::now());
+
+            $this->userProductService
+                    ->updateSubscriptionProducts($ancientSubscription);
+        }
+
+        $this->entityManager->flush();
+
+        // $this->deactivateSubscriptions($ancientSubscriptions);
 
         $this->info('-----------------End Renewal Due Subscriptions command-----------------------');
     }
-
-    /**
-     * De-activate subscriptions and remove user's products.
-     *
-     * @param $ancientSubscriptions
-     */
-    private function deactivateSubscriptions($ancientSubscriptions)
-    {
-        $this->subscriptionRepository->query()
-            ->whereIn('id', $ancientSubscriptions->pluck('id'))
-            ->update(
-                [
-                    'is_active' => false,
-                    'note' => 'Ancient subscription. De-activated.',
-                    'updated_on' => Carbon::now()
-                        ->toDateTimeString(),
-                    'canceled_on' => Carbon::now()
-                        ->toDateTimeString(),
-                ]
-            );
-    }
-
 }

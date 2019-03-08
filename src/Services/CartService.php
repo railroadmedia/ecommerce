@@ -144,6 +144,7 @@ class CartService
     public function lockCart()
     {
         $this->removeAllCartItems();
+        $this->setPromoCode(null);
 
         $this->session->put(
             ConfigService::$brand . '-' . self::LOCKED_SESSION_KEY, true

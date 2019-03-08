@@ -92,8 +92,6 @@ class ShoppingCartController extends BaseController
         // if the promo code exists on the requests, set it on the session
         if (!empty($input['promo-code'])) {
             $this->cartService->setPromoCode($input['promo-code']);
-        } else {
-            $this->cartService->setPromoCode(null);
         }
 
         if (!empty($input['products'])) {

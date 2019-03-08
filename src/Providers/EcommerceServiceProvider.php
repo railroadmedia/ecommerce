@@ -6,6 +6,7 @@ namespace Railroad\Ecommerce\Providers;
 use Doctrine\Common\EventManager;
 use Doctrine\ORM\Events;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
@@ -53,11 +54,11 @@ class EcommerceServiceProvider extends ServiceProvider
         //load package routes file
         $this->loadRoutesFrom(__DIR__ . '/../../routes/routes.php');
 
-        // $this->commands(
-        //     [
-        //         RenewalDueSubscriptions::class,
-        //     ]
-        // );
+        $this->commands(
+            [
+                RenewalDueSubscriptions::class,
+            ]
+        );
 
         $this->app->validator->resolver(
             function ($translator, $data, $rules, $messages, $attributes) {

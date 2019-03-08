@@ -1086,4 +1086,181 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $this->assertEquals(Product::class, get_class($cartItemTwoProduct));
         $this->assertEquals($productTwo['id'], $cartItemTwoProduct->getId());
     }
+
+    public function test_promo_code_multiple_add_to_cart()
+    {
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productOneQuantity = 2;
+
+        $promoCode = $this->faker->word;
+
+        $response = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [
+                    $productOne['sku'] => $productOneQuantity,
+                ],
+                'promo-code' => $promoCode,
+            ]
+        );
+
+        $response->assertSessionHas('promo-code', $promoCode);
+
+        $productTwoQuantity = 10;
+
+        $response = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [
+                    $productTwo['sku'] => $productTwoQuantity,
+                ],
+            ]
+        );
+
+        $response->assertSessionHas('promo-code', $promoCode);
+
+        // assert the session has the success message
+        $response->assertSessionHas('success', true);
+
+        $em = $this->app->make(EntityManager::class);
+
+        $productEntity = $em->getRepository(Product::class)
+                                ->find($productTwo['id']);
+
+        //assert the items were added to the cart
+        $response->assertSessionHas('addedProducts', [$productEntity]);
+        $response->assertSessionHas('cartNumberOfItems', 2);
+        $response->assertSessionHas('notAvailableProducts', []);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartItems = $cartService->getCart()->getItems();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cartItems));
+
+        $this->assertEquals(2, count($cartItems));
+
+        // assert cart item one
+        $cartItemOne = $cartItems[0];
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($productOneQuantity, $cartItemOne->getQuantity());
+
+        $this->assertEquals($productOne['price'], $cartItemOne->getPrice());
+
+        // assert the product one was added to the cart
+        $cartItemOneProduct = $cartItemOne->getProduct();
+
+        $this->assertNotNull($cartItemOneProduct);
+        $this->assertEquals(Product::class, get_class($cartItemOneProduct));
+        $this->assertEquals($productOne['id'], $cartItemOneProduct->getId());
+
+        // assert cart item two
+        $cartItemTwo = $cartItems[1];
+
+        $this->assertEquals(CartItem::class, get_class($cartItemTwo));
+
+        $this->assertEquals($productTwoQuantity, $cartItemTwo->getQuantity());
+
+        $this->assertEquals($productTwo['price'], $cartItemTwo->getPrice());
+
+        // assert the product two was added to the cart
+        $cartItemTwoProduct = $cartItemTwo->getProduct();
+
+        $this->assertNotNull($cartItemTwoProduct);
+        $this->assertEquals(Product::class, get_class($cartItemTwoProduct));
+        $this->assertEquals($productTwo['id'], $cartItemTwoProduct->getId());
+    }
+
+    public function test_promo_code_lock_cart()
+    {
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productOneQuantity = 2;
+
+        $promoCode = $this->faker->word;
+
+        $response = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [
+                    $productOne['sku'] => $productOneQuantity,
+                ],
+                'promo-code' => $promoCode,
+            ]
+        );
+
+        $productTwoQuantity = 10;
+
+        $response->assertSessionHas('promo-code', $promoCode);
+
+        $response = $this->call(
+            'GET',
+            '/add-to-cart/',
+            [
+                'products' => [
+                    $productTwo['sku'] => $productTwoQuantity,
+                ],
+                'locked' => true
+            ]
+        );
+
+        $response->assertSessionMissing('promo-code');
+
+        // assert the session has the success message
+        $response->assertSessionHas('success', true);
+
+        // assert the number of items contain only the products added to cart
+        $response->assertSessionHas('cartNumberOfItems', 1);
+
+        // assert that the cart was cleared and only the second product was added to the cart
+        $response->assertSessionHas('addedProducts');
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartItems = $cartService->getCart()->getItems();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cartItems));
+
+        $this->assertEquals(1, count($cartItems));
+
+        // assert cart item
+        $cartItem = $cartItems[0];
+
+        $this->assertEquals(CartItem::class, get_class($cartItem));
+
+        $this->assertEquals($productTwoQuantity, $cartItem->getQuantity());
+
+        $this->assertEquals($productTwo['price'], $cartItem->getPrice());
+
+        // assert the product was added to the cart
+        $cartItemProduct = $cartItem->getProduct();
+
+        $this->assertNotNull($cartItemProduct);
+        $this->assertEquals(Product::class, get_class($cartItemProduct));
+        $this->assertEquals($productTwo['id'], $cartItemProduct->getId());
+    }
 }

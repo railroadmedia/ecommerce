@@ -1,78 +1,23 @@
 <?php
+
 namespace Railroad\Ecommerce\Tests\Functional\Commands;
 
 use Carbon\Carbon;
-
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Order;
-use Railroad\Ecommerce\Repositories\OrderItemRepository;
-use Railroad\Ecommerce\Repositories\OrderRepository;
-use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
-use Railroad\Ecommerce\Repositories\PaymentRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
-
+use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
-use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Stripe\Card;
 use Stripe\Charge;
 use Stripe\Customer;
 
 class RenewalDueSubscriptionsTest extends EcommerceTestCase
 {
-    /**
-     * @var \Railroad\Ecommerce\Repositories\CreditCardRepository
-     */
-    protected $creditCardRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\PaymentMethodRepository
-     */
-    protected $paymentMethodRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\PaymentRepository
-     */
-    protected $paymentRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\SubscriptionRepository
-     */
-    protected $subscriptionRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository
-     */
-    protected $subscriptionPaymentRepository;
-
-    /**
-     * @var \Railroad\Ecommerce\Repositories\ProductRepository
-     */
-    protected $productRepository;
-
-    /**
-     * @var OrderRepository
-     */
-    protected $orderRepository;
-
-    /**
-     * @var OrderItemRepository
-     */
-    protected $orderItemRepository;
-
     public function setUp()
     {
         parent::setUp();
-
-        $this->creditCardRepository = $this->app->make(CreditCardRepository::class);
-        $this->paymentMethodRepository = $this->app->make(PaymentMethodRepository::class);
-        $this->paymentRepository = $this->app->make(PaymentRepository::class);
-        $this->subscriptionRepository = $this->app->make(SubscriptionRepository::class);
-        $this->subscriptionPaymentRepository = $this->app->make(SubscriptionPaymentRepository::class);
-        $this->productRepository = $this->app->make(ProductRepository::class);
-        $this->orderRepository = $this->app->make(OrderRepository::class);
-        $this->orderItemRepository = $this->app->make(OrderItemRepository::class);
     }
 
     public function test_command()
@@ -80,92 +25,102 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
         $due = $this->faker->numberBetween(0, 1000);
 
+        $currency = $this->getCurrency();
+
+        $currencyService = $this->app->make(CurrencyService::class);
+        $taxService = $this->app->make(TaxService::class);
+
+        $expectedConversionRate = $currencyService->getRate($currency);
+
         $this->stripeExternalHelperMock->method('retrieveCustomer')
             ->willReturn(new Customer());
         $this->stripeExternalHelperMock->method('retrieveCard')
             ->willReturn(new Card());
         $fakerCharge = new Charge();
-        $fakerCharge->currency = 'cad';
+        $fakerCharge->currency = $currency;
         $fakerCharge->amount = $due;
         $fakerCharge->status = 'succeeded';
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn($fakerCharge);
 
-        for ($i = 0; $i < 10; $i++) {
-            $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
-            $paymentMethod = $this->paymentMethodRepository->create(
-                $this->faker->paymentMethod(
-                    [
-                        'method_id' => $creditCard['id'],
-                        'method_type' => ConfigService::$creditCartPaymentMethodType,
-                        'currency' => 'CAD',
-                        'created_on' => time(),
-                        'updated_on' => time(),
-                    ]
-                )
-            );
-            $payment = $this->paymentRepository->create(
-                $this->faker->payment(
-                    [
-                        'payment_method_id' => $paymentMethod['id'],
-                        'currency' => 'CAD',
-                        'due' => $this->faker->numberBetween(1, 100),
-                    ]
-                )
-            );
+        $expectedPaymentTotalDues = [];
 
-            $product = $this->productRepository->create(
-                $this->faker->product(
-                    [
-                        'type' => ConfigService::$typeSubscription,
-                    ]
-                )
-            );
-            $order = $this->orderRepository->create($this->faker->order());
-            $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+        for ($i = 0; $i < 10; $i++) {
+
+            $creditCard = $this->fakeCreditCard();
+
+            $address = $this->fakeAddress([
+                'type' => ConfigService::$billingAddressType,
+                'country' => 'Canada',
+                'state' => $this->faker->word,
+                'zip' => $this->faker->postcode
+            ]);
+
+            $paymentMethod = $this->fakePaymentMethod([
+                'method_id' => $creditCard['id'],
+                'method_type' => ConfigService::$creditCartPaymentMethodType,
+                'currency' => $currency,
+                'billing_address_id' => $address['id']
+            ]);
+
+            $payment = $this->fakePayment([
+                'payment_method_id' => $paymentMethod['id'],
+                'currency' => $currency,
+                'total_due' => $this->faker->numberBetween(1, 100),
+            ]);
+
+            $product = $this->fakeProduct([
+                'type' => ConfigService::$typeSubscription
+            ]);
+
+            $order = $this->fakeOrder();
+
+            $orderItem = $this->fakeOrderItem([
                 'order_id' => $order['id'],
                 'product_id' => $product['id'],
                 'quantity' => 1
-            ]));
-            $subscription = $this->subscriptionRepository->create(
-                $this->faker->subscription(
-                    [
-                        'user_id' => $userId,
-                        'type' => $this->faker->randomElement(
-                            [ConfigService::$typeSubscription, ConfigService::$paymentPlanType]
-                        ),
-                        'start_date' => Carbon::now()
-                            ->subYear(2),
-                        'paid_until' => Carbon::now()
-                            ->subDay(1),
-                        'product_id' => $product['id'],
-                        'currency' => 'CAD',
-                        'order_id' => $order['id'],
-                        'brand' => ConfigService::$brand,
-                        'interval_type' => ConfigService::$intervalTypeMonthly,
-                        'interval_count' => 1,
-                        'total_cycles_paid' => 1,
-                        'total_cycles_due' => $this->faker->numberBetween(2, 5),
-                        'total_price_per_payment' => $payment['due'],
-                        'payment_method_id' => $paymentMethod['id'],
-                    ]
-                )
-            );
+            ]);
 
-            $subscriptionPayment = $this->subscriptionPaymentRepository->create(
-                [
-                    'subscription_id' => $subscription['id'],
-                    'payment_id' => $payment['id'],
-                    'created_on' => Carbon::now()
-                        ->toDateTimeString(),
-                ]
-            );
+            $subscription = $this->fakeSubscription([
+                'user_id' => $userId,
+                'type' => $this->faker->randomElement(
+                    [ConfigService::$typeSubscription, ConfigService::$paymentPlanType]
+                ),
+                'start_date' => Carbon::now()->subYear(2),
+                'paid_until' => Carbon::now()->subDay(1),
+                'product_id' => $product['id'],
+                'currency' => $currency,
+                'order_id' => $order['id'],
+                'brand' => ConfigService::$brand,
+                'interval_type' => ConfigService::$intervalTypeMonthly,
+                'interval_count' => 1,
+                'total_cycles_paid' => 1,
+                'total_cycles_due' => $this->faker->numberBetween(2, 5),
+                'payment_method_id' => $paymentMethod['id'],
+            ]);
 
-            if (($subscription['type'] != ConfigService::$paymentPlanType) ||
-                ((int)$subscription['total_cycles_paid'] < (int)$subscription['total_cycles_due'])) {
+            if ($subscription['type'] != ConfigService::$paymentPlanType) {
                 $initialSubscriptions[] = $subscription;
-            }
 
+                $billingAddressEntity = new Address();
+
+                $billingAddressEntity
+                    ->setCountry($address['country'])
+                    ->setState($address['state'])
+                    ->setZip($address['zip']);
+
+                $vat = $taxService->vat(
+                    $subscription['total_price'],
+                    $billingAddressEntity
+                );
+
+                $paymentAmount = $currencyService->convertFromBase(
+                    $subscription['total_price'] + $vat,
+                    $currency
+                );
+
+                $expectedPaymentDues[$subscription['id']] = $paymentAmount;
+            }
         }
 
         $this->artisan('renewalDueSubscriptions');
@@ -181,12 +136,12 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                         ->toDateTimeString(),
                     'is_active' => 1,
                     'total_cycles_paid' => $initialSubscriptions[$i]['total_cycles_paid'] + 1,
-                    'updated_on' => Carbon::now()
+                    'updated_at' => Carbon::now()
                         ->toDateTimeString(),
                 ]
             );
 
-            //assert user products assignation
+            // assert user products assignation
             $this->assertDatabaseHas(
                 ConfigService::$tableUserProduct,
                 [
@@ -197,6 +152,23 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                         ->addMonth($initialSubscriptions[$i]['interval_count'])
                         ->startOfDay()
                         ->toDateTimeString(),
+                ]
+            );
+
+            $this->assertDatabaseHas(
+                ConfigService::$tablePayment,
+                [
+                    'total_due' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
+                    'total_paid' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
+                    'total_refunded' => 0,
+                    'conversion_rate' => $expectedConversionRate,
+                    'type' => ConfigService::$renewalPaymentType,
+                    'external_id' => $fakerCharge->id,
+                    'external_provider' => 'stripe',
+                    'status' => 'succeeded',
+                    'message' => '',
+                    'currency' => $currency,
+                    'created_at' => Carbon::now()->toDateTimeString()
                 ]
             );
         }
@@ -207,6 +179,13 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
         $due = $this->faker->numberBetween(0, 1000);
 
+        $currency = $this->getCurrency();
+
+        $currencyService = $this->app->make(CurrencyService::class);
+        $taxService = $this->app->make(TaxService::class);
+
+        $expectedConversionRate = $currencyService->getRate($currency);
+
         $this->stripeExternalHelperMock->method('retrieveCustomer')
             ->willReturn(new Customer());
         $this->stripeExternalHelperMock->method('retrieveCard')
@@ -218,160 +197,173 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn($fakerCharge);
 
-        //ancient subscriptions
+        // ancient subscriptions
         for ($i = 0; $i < 2; $i++) {
-            $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
-            $paymentMethod = $this->paymentMethodRepository->create(
-                $this->faker->paymentMethod(
-                    [
-                        'method_id' => $creditCard['id'],
-                        'method_type' => ConfigService::$creditCartPaymentMethodType,
-                        'currency' => 'CAD',
-                        'created_on' => time(),
-                        'updated_on' => time(),
-                    ]
-                )
-            );
-            $payment = $this->paymentRepository->create(
-                $this->faker->payment(
-                    [
-                        'payment_method_id' => $paymentMethod['id'],
-                        'currency' => 'CAD',
-                        'due' => $this->faker->numberBetween(1, 100),
-                    ]
-                )
-            );
+            $creditCard = $this->fakeCreditCard();
 
-            $product = $this->productRepository->create(
-                $this->faker->product(
-                    [
-                        'type' => ConfigService::$typeSubscription,
-                    ]
-                )
-            );
-            $order = $this->orderRepository->create($this->faker->order());
-            $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+            $address = $this->fakeAddress([
+                'type' => ConfigService::$billingAddressType,
+                'country' => 'Canada',
+                'state' => $this->faker->word,
+                'zip' => $this->faker->postcode
+            ]);
+
+            $paymentMethod = $this->fakePaymentMethod([
+                'method_id' => $creditCard['id'],
+                'method_type' => ConfigService::$creditCartPaymentMethodType,
+                'currency' => $currency,
+                'billing_address_id' => $address['id']
+            ]);
+
+            $payment = $this->fakePayment([
+                'payment_method_id' => $paymentMethod['id'],
+                'currency' => $currency,
+                'total_due' => $this->faker->numberBetween(1, 100),
+            ]);
+
+            $product = $this->fakeProduct([
+                'type' => ConfigService::$typeSubscription
+            ]);
+
+            $order = $this->fakeOrder();
+
+            $orderItem = $this->fakeOrderItem([
                 'order_id' => $order['id'],
                 'product_id' => $product['id'],
                 'quantity' => 1
-            ]));
-            $oldSubscriptions[] = $this->subscriptionRepository->create(
-                $this->faker->subscription(
-                    [
-                        'user_id' => $userId,
-                        'type' => $this->faker->randomElement(
-                            [ConfigService::$typeSubscription, ConfigService::$paymentPlanType]
-                        ),
-                        'start_date' => Carbon::now()
-                            ->subYear(2),
-                        'paid_until' => Carbon::now()
-                            ->subMonths(ConfigService::$subscriptionRenewalDateCutoff + 1),
-                        'product_id' => $product['id'],
-                        'order_id' => $order['id'],
-                        'currency' => 'CAD',
-                        'brand' => ConfigService::$brand,
-                        'interval_type' => ConfigService::$intervalTypeMonthly,
-                        'interval_count' => 1,
-                        'total_cycles_paid' => 1,
-                        'total_cycles_due' => $this->faker->numberBetween(2, 5),
-                        'total_price_per_payment' => $payment['due'],
-                        'payment_method_id' => $paymentMethod['id'],
-                    ]
-                )
-            );
+            ]);
+
+            $subscription = $this->fakeSubscription([
+                'user_id' => $userId,
+                'type' => $this->faker->randomElement(
+                    [ConfigService::$typeSubscription, ConfigService::$paymentPlanType]
+                ),
+                'start_date' => Carbon::now()->subYear(2),
+                'paid_until' => Carbon::now()
+                    ->subMonths(ConfigService::$subscriptionRenewalDateCutoff + 1),
+                'product_id' => $product['id'],
+                'currency' => $currency,
+                'order_id' => $order['id'],
+                'brand' => ConfigService::$brand,
+                'interval_type' => ConfigService::$intervalTypeMonthly,
+                'interval_count' => 1,
+                'total_cycles_paid' => 1,
+                'total_cycles_due' => $this->faker->numberBetween(2, 5),
+                'payment_method_id' => $paymentMethod['id'],
+            ]);
+
+            $oldSubscriptions[] = $subscription;
+
+            $userProduct = $this->fakeUserProduct([
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'expiration_date' => $subscription['paid_until'],
+                'quantity' => 1
+            ]);
         }
 
         for ($i = 0; $i < 10; $i++) {
-            $creditCard = $this->creditCardRepository->create($this->faker->creditCard());
-            $paymentMethod = $this->paymentMethodRepository->create(
-                $this->faker->paymentMethod(
-                    [
-                        'method_id' => $creditCard['id'],
-                        'method_type' => ConfigService::$creditCartPaymentMethodType,
-                        'currency' => 'CAD',
-                        'created_on' => time(),
-                        'updated_on' => time(),
-                    ]
-                )
-            );
-            $payment = $this->paymentRepository->create(
-                $this->faker->payment(
-                    [
-                        'payment_method_id' => $paymentMethod['id'],
-                        'currency' => 'CAD',
-                        'due' => $this->faker->numberBetween(1, 100),
-                    ]
-                )
-            );
+            $creditCard = $this->fakeCreditCard();
 
-            $product = $this->productRepository->create(
-                $this->faker->product(
-                    [
-                        'type' => ConfigService::$typeSubscription,
-                    ]
-                )
-            );
-            $order = $this->orderRepository->create($this->faker->order());
-            $orderItem = $this->orderItemRepository->create($this->faker->orderItem([
+            $address = $this->fakeAddress([
+                'type' => ConfigService::$billingAddressType,
+                'country' => 'Canada',
+                'state' => $this->faker->word,
+                'zip' => $this->faker->postcode
+            ]);
+
+            $paymentMethod = $this->fakePaymentMethod([
+                'method_id' => $creditCard['id'],
+                'method_type' => ConfigService::$creditCartPaymentMethodType,
+                'currency' => $currency,
+                'billing_address_id' => $address['id']
+            ]);
+
+            $payment = $this->fakePayment([
+                'payment_method_id' => $paymentMethod['id'],
+                'currency' => $currency,
+                'total_due' => $this->faker->numberBetween(1, 100),
+            ]);
+
+            $product = $this->fakeProduct([
+                'type' => ConfigService::$typeSubscription
+            ]);
+
+            $order = $this->fakeOrder();
+
+            $orderItem = $this->fakeOrderItem([
                 'order_id' => $order['id'],
                 'product_id' => $product['id'],
                 'quantity' => 1
-            ]));
-            $subscription = $this->subscriptionRepository->create(
-                $this->faker->subscription(
-                    [
-                        'user_id' => $userId,
-                        'type' => $this->faker->randomElement(
-                            [ConfigService::$typeSubscription, ConfigService::$paymentPlanType]
-                        ),
-                        'start_date' => Carbon::now()
-                            ->subYear(2),
-                        'paid_until' => Carbon::now()
-                            ->subDay(1),
-                        'product_id' => $product['id'],
-                        'order_id' => $order['id'],
-                        'currency' => 'CAD',
-                        'brand' => ConfigService::$brand,
-                        'interval_type' => ConfigService::$intervalTypeMonthly,
-                        'interval_count' => 1,
-                        'total_cycles_paid' => 1,
-                        'total_cycles_due' => $this->faker->numberBetween(2, 5),
-                        'total_price_per_payment' => $payment['due'],
-                        'payment_method_id' => $paymentMethod['id'],
-                    ]
-                )
-            );
+            ]);
 
-            $subscriptionPayment = $this->subscriptionPaymentRepository->create(
-                [
-                    'subscription_id' => $subscription['id'],
-                    'payment_id' => $payment['id'],
-                    'created_on' => Carbon::now()
-                        ->toDateTimeString(),
-                ]
-            );
+            $subscription = $this->fakeSubscription([
+                'user_id' => $userId,
+                'type' => $this->faker->randomElement(
+                    [ConfigService::$typeSubscription, ConfigService::$paymentPlanType]
+                ),
+                'start_date' => Carbon::now()->subYear(2),
+                'paid_until' => Carbon::now()->subDay(1),
+                'product_id' => $product['id'],
+                'currency' => $currency,
+                'order_id' => $order['id'],
+                'brand' => ConfigService::$brand,
+                'interval_type' => ConfigService::$intervalTypeMonthly,
+                'interval_count' => 1,
+                'total_cycles_paid' => 1,
+                'total_cycles_due' => $this->faker->numberBetween(2, 5),
+                'payment_method_id' => $paymentMethod['id'],
+            ]);
 
-            if (($subscription['type'] != ConfigService::$paymentPlanType) ||
-                ((int)$subscription['total_cycles_paid'] < (int)$subscription['total_cycles_due'])) {
+            if ($subscription['type'] != ConfigService::$paymentPlanType) {
+
                 $initialSubscriptions[] = $subscription;
-            }
 
+                $billingAddressEntity = new Address();
+
+                $billingAddressEntity
+                    ->setCountry($address['country'])
+                    ->setState($address['state'])
+                    ->setZip($address['zip']);
+
+                $vat = $taxService->vat(
+                    $subscription['total_price'],
+                    $billingAddressEntity
+                );
+
+                $paymentAmount = $currencyService->convertFromBase(
+                    $subscription['total_price'] + $vat,
+                    $currency
+                );
+
+                $expectedPaymentDues[$subscription['id']] = $paymentAmount;
+            }
         }
 
         $this->artisan('renewalDueSubscriptions');
+
         foreach ($oldSubscriptions as $deactivatedSubscription) {
             $this->assertDatabaseHas(
                 ConfigService::$tableSubscription,
                 [
                     'id' => $deactivatedSubscription['id'],
                     'is_active' => false,
-                    'updated_on' => Carbon::now()->toDateTimeString(),
-                    'canceled_on' => Carbon::now()
-                        ->toDateTimeString(),
+                    'updated_at' => Carbon::now()->toDateTimeString(),
+                    'canceled_on' => Carbon::now()->toDateTimeString(),
+                ]
+            );
+
+            $this->assertDatabaseMissing(
+                ConfigService::$tableUserProduct,
+                [
+                    'user_id' => $deactivatedSubscription['user_id'],
+                    'product_id' => $deactivatedSubscription['product_id']
                 ]
             );
         }
+
         for ($i = 0; $i < count($initialSubscriptions); $i++) {
+
             $this->assertDatabaseHas(
                 ConfigService::$tableSubscription,
                 [
@@ -382,12 +374,11 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                         ->toDateTimeString(),
                     'is_active' => 1,
                     'total_cycles_paid' => $initialSubscriptions[$i]['total_cycles_paid'] + 1,
-                    'updated_on' => Carbon::now()
-                        ->toDateTimeString(),
+                    'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
             );
 
-            //assert user products assignation
+            // assert user products assignation
             $this->assertDatabaseHas(
                 ConfigService::$tableUserProduct,
                 [
@@ -398,6 +389,23 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                         ->addMonth($initialSubscriptions[$i]['interval_count'])
                         ->startOfDay()
                         ->toDateTimeString(),
+                ]
+            );
+
+            $this->assertDatabaseHas(
+                ConfigService::$tablePayment,
+                [
+                    'total_due' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
+                    'total_paid' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
+                    'total_refunded' => 0,
+                    'conversion_rate' => $expectedConversionRate,
+                    'type' => ConfigService::$renewalPaymentType,
+                    'external_id' => $fakerCharge->id,
+                    'external_provider' => 'stripe',
+                    'status' => 'succeeded',
+                    'message' => '',
+                    'currency' => $currency,
+                    'created_at' => Carbon::now()->toDateTimeString()
                 ]
             );
         }

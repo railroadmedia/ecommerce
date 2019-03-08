@@ -4,16 +4,22 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
+use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Refund;
+use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\SubscriptionPayment;
+use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ResponseService;
+use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
 
 class RefundJsonController extends BaseController
@@ -39,6 +45,11 @@ class RefundJsonController extends BaseController
     private $stripePaymentGateway;
 
     /**
+     * @var UserProductService
+     */
+    private $userProductService;
+
+    /**
      * RefundJsonController constructor.
      *
      * @param EntityManager $entityManager
@@ -50,7 +61,8 @@ class RefundJsonController extends BaseController
         EntityManager $entityManager,
         PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService,
-        StripePaymentGateway $stripePaymentGateway
+        StripePaymentGateway $stripePaymentGateway,
+        UserProductService $userProductService
     ) {
         parent::__construct();
 
@@ -58,6 +70,7 @@ class RefundJsonController extends BaseController
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
+        $this->userProductService = $userProductService;
     }
 
     /**
@@ -177,6 +190,86 @@ class RefundJsonController extends BaseController
 
         foreach ($orderItemFulfillments as $orderItemFulfillment) {
             $this->entityManager->remove($orderItemFulfillment);
+        }
+
+        // remove user products if full refund
+        if ($refund->getPaymentAmount() == $refund->getRefundedAmount()) {
+            if (count($orderPayments)) {
+                /**
+                 * @var $qb \Doctrine\ORM\QueryBuilder
+                 */
+                $qb = $this->entityManager
+                        ->getRepository(OrderItem::class)
+                        ->createQueryBuilder('oi');
+
+                $qb
+                    ->select(['oi', 'p'])
+                    ->join('oi.product', 'p')
+                    ->where($qb->expr()->in('oi.order', ':orders'))
+                    ->setParameter('orders', array_values($distinctOrders));
+
+                $orderItems = $qb->getQuery()->getResult();
+
+                $distinctProducts = [];
+
+                foreach ($orderItems as $orderItem) {
+                    /**
+                     * @var $product \Railroad\Ecommerce\Entities\Product
+                     */
+                    $product = $orderItem->getProduct();
+
+                    $distinctProducts[$product->getId()] = $product;
+                }
+
+                /**
+                 * @var $qb \Doctrine\ORM\QueryBuilder
+                 */
+                $qb = $this->entityManager
+                        ->getRepository(UserProduct::class)
+                        ->createQueryBuilder('up');
+
+                $qb
+                    ->where($qb->expr()->in('up.product', ':products'))
+                    ->setParameter('products', array_values($distinctProducts));
+
+                $userProducts = $qb->getQuery()->getResult();
+
+                foreach ($userProducts as $userProduct) {
+                    $this->entityManager->remove($userProduct);
+                }
+            } else {
+                /**
+                 * @var $qb \Doctrine\ORM\QueryBuilder
+                 */
+                $qb = $this->entityManager
+                        ->getRepository(SubscriptionPayment::class)
+                        ->createQueryBuilder('sp');
+
+                $qb
+                    ->select(['sp', 's'])
+                    ->join('sp.subscription', 's')
+                    ->where($qb->expr()->eq('sp.payment', ':payment'))
+                    ->setParameter('payment', $payment);
+
+                $subscriptionPayments = $qb->getQuery()->getResult();
+
+                foreach ($subscriptionPayments as $subscriptionPayment) {
+                    /**
+                     * @var $subscription \Railroad\Ecommerce\Entities\Subscription
+                     */
+                    $subscription = $subscriptionPayment->getSubscription();
+
+                    $subscriptionproducts = $this->userProductService
+                            ->getSubscriptionProducts($subscription);
+
+                    $user = $subscription->getUser();
+
+                    $this->userProductService->removeUserProducts(
+                        $user,
+                        $subscriptionproducts
+                    );
+                }
+            }
         }
 
         $this->entityManager->flush();

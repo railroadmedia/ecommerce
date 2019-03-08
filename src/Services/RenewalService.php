@@ -16,6 +16,7 @@ use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\TaxService;
+use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Services\PaymentMethodService;
@@ -63,6 +64,11 @@ class RenewalService
     protected $taxService;
 
     /**
+     * @var UserProductService
+     */
+    protected $userProductService;
+
+    /**
      * RenewalService constructor.
      *
      * @param EntityManager $entityManager
@@ -74,7 +80,8 @@ class RenewalService
         EntityManager $entityManager,
         StripePaymentGateway $stripePaymentGateway,
         PayPalPaymentGateway $payPalPaymentGateway,
-        TaxService $taxService
+        TaxService $taxService,
+        UserProductService $userProductService
     ) {
         $this->currencyService = $currencyService;
         $this->taxService = $taxService;
@@ -90,6 +97,8 @@ class RenewalService
 
         $this->subscriptionPaymentRepository = $this->entityManager
                 ->getRepository(SubscriptionPayment::class);
+
+        $this->userProductService = $userProductService;
     }
 
     /**
@@ -245,7 +254,8 @@ class RenewalService
 
         // save payment data in DB
         $payment
-            ->setTotalDue($subscription->getTotalPrice())
+            ->setTotalDue($chargePrice)
+            ->setTotalRefunded(0)
             ->setType(ConfigService::$renewalPaymentType)
             ->setPaymentMethod($paymentMethod)
             ->setCreatedAt(Carbon::now());
@@ -334,6 +344,8 @@ class RenewalService
 
             throw $paymentException;
         }
+
+        $this->userProductService->updateSubscriptionProducts($subscription);
 
         return $subscription;
     }

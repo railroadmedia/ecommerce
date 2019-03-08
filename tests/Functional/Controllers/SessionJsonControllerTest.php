@@ -84,8 +84,11 @@ class SessionJsonControllerTest extends EcommerceTestCase
                 ConfigService::$shippingAddressType
             );
 
+        // some default faker countries fail the backend validation, such as: 'Svalbard & Jan Mayen Islands'
+        $countries = ['Canada', 'Serbia', 'Aruba', 'Greece'];
+
         $supplementAddress = [
-            'shipping-country' => $this->faker->country,
+            'shipping-country' => $this->faker->randomElement($countries),
             'shipping-first-name' => $this->faker->word,
         ];
 

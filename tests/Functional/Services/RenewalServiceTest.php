@@ -136,8 +136,9 @@ class RenewalServiceTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePayment,
             [
-                'total_due' => $subscription->getTotalPrice(),
+                'total_due' => $chargePrice,
                 'total_paid' => $chargePrice,
+                'total_refunded' => 0,
                 'type' => ConfigService::$renewalPaymentType,
                 'external_id' => $charge->id,
                 'external_provider' => 'stripe',
@@ -153,6 +154,20 @@ class RenewalServiceTest extends EcommerceTestCase
             [
                 'subscription_id' => $subscription->getId(),
                 'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // assert user products assignation
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $user->getId(),
+                'product_id' => $product->getId(),
+                'quantity' => 1,
+                'expiration_date' => Carbon::now()
+                    ->addMonth($subscription->getIntervalCount())
+                    ->startOfDay()
+                    ->toDateTimeString(),
             ]
         );
     }
