@@ -264,17 +264,6 @@ class EcommerceTestCase extends BaseTestCase
             ]
         );
 
-        $app['config']->set(
-            'database.connections.' . $defaultConfig['database_connection_name'],
-            [
-                'driver' => 'mysql',
-                'database' => $defaultConfig['database_name'],
-                'username' => $defaultConfig['database_user'],
-                'password' => $defaultConfig['database_password'],
-                'host' => $defaultConfig['database_host'],
-            ]
-        );
-
         $app->register(DoctrineServiceProvider::class);
 
         // allows access to built in user auth
