@@ -353,7 +353,7 @@ class PaymentMethodJsonController extends BaseController
      *        - JsonResponse with the updated payment method
      *
      * @param PaymentMethodUpdateRequest $request
-     * @param integer $paymentMethodId
+     * @param int $paymentMethodId
      * @return \Illuminate\Http\JsonResponse|NotFoundException
      * @throws \Railroad\Permissions\Exceptions\NotAllowedException
      * @throws \Railroad\Ecommerce\Exceptions\NotFoundException | \Throwable
@@ -413,7 +413,7 @@ class PaymentMethodJsonController extends BaseController
 
         try {
             /**
-             * @var $method CreditCard
+             * @var $method \Railroad\Ecommerce\Entities\CreditCard
              */
             $method = $this->entityManager
                 ->getRepository(CreditCard::class)
@@ -497,7 +497,7 @@ class PaymentMethodJsonController extends BaseController
     /**
      * Delete a payment method and return a JsonResponse.
      *
-     * @param integer $paymentMethodId
+     * @param int $paymentMethodId
      *
      * @return JsonResponse
      *
@@ -558,7 +558,7 @@ class PaymentMethodJsonController extends BaseController
     /**
      * Get all user's payment methods with all the method details: credit card or paypal billing agreement
      *
-     * @param integer $userId
+     * @param int $userId
      * @return JsonResponse
      */
     public function getUserPaymentMethods($userId)

@@ -249,7 +249,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             ConfigService::$tablePaypalBillingAgreement,
             [
                 'external_id' => $billingAgreementId,
-                'brand' => ConfigService::$brand,
+                'payment_gateway_name' => ConfigService::$brand,
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );

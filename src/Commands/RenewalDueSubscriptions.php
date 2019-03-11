@@ -163,8 +163,6 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
 
         $this->entityManager->flush();
 
-        // $this->deactivateSubscriptions($ancientSubscriptions);
-
         $this->info('-----------------End Renewal Due Subscriptions command-----------------------');
     }
 }

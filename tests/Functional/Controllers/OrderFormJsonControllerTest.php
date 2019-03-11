@@ -1297,27 +1297,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ],
                     [
                         'type' => 'address',
-                        'attributes' => [
-                            'type' => ConfigService::$billingAddressType,
-                            'brand' => $brand,
-                            'first_name' => null,
-                            'last_name' => null,
-                            'street_line_1' => null,
-                            'street_line_2' => null,
-                            'city' => null,
-                            'zip' => $orderRequestData['billing-zip-or-postal-code'],
-                            'state' => $orderRequestData['billing-region'],
-                            'country' => $orderRequestData['billing-country'],
-                            'created_at' => Carbon::now()->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
-                            ]
-                        ]
+                        'attributes' => []
                     ],
                     [
                         'type' => 'address',
@@ -1625,27 +1605,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ],
                     [
                         'type' => 'address',
-                        'attributes' => [
-                            'type' => ConfigService::$billingAddressType,
-                            'brand' => $brand,
-                            'first_name' => null,
-                            'last_name' => null,
-                            'street_line_1' => null,
-                            'street_line_2' => null,
-                            'city' => null,
-                            'zip' => $orderRequestData['billing-zip-or-postal-code'],
-                            'state' => $orderRequestData['billing-region'],
-                            'country' => $orderRequestData['billing-country'],
-                            'created_at' => Carbon::now()->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
-                            ]
-                        ]
+                        'attributes' => []
                     ],
                     [
                         'type' => 'address',

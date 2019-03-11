@@ -11,10 +11,10 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
  * @ORM\Table(
  *     name="ecommerce_customer_payment_methods",
  *     indexes={
- *         @ORM\Index(name="ecommerce_user_payment_methods_user_id_index", columns={"user_id"}),
- *         @ORM\Index(name="ecommerce_user_payment_methods_payment_method_id_index", columns={"payment_method_id"}),
- *         @ORM\Index(name="ecommerce_user_payment_methods_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_user_payment_methods_updated_on_index", columns={"updated_at"})
+ *         @ORM\Index(name="ecommerce_customer_payment_methods_customer_id_index", columns={"customer_id"}),
+ *         @ORM\Index(name="ecommerce_customer_payment_methods_payment_method_id_index", columns={"payment_method_id"}),
+ *         @ORM\Index(name="ecommerce_customer_payment_methods_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_customer_payment_methods_updated_on_index", columns={"updated_at"})
  *     }
  * )
  */

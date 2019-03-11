@@ -2,13 +2,31 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
+use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\OrderItem;
 
 class OrderItemTransformer extends TransformerAbstract
 {
+    protected static $transformedOrders = [];
+    protected static $transformedProducts = [];
+
     public function transform(OrderItem $orderItem)
     {
+        if (
+            $orderItem->getOrder() &&
+            !isset(self::$transformedOrders[$orderItem->getOrder()->getId()])
+        ) {
+            $this->defaultIncludes[] = 'order';
+        }
+
+        if (
+            $orderItem->getProduct() &&
+            !isset(self::$transformedProducts[$orderItem->getProduct()->getId()])
+        ) {
+            $this->defaultIncludes[] = 'product';
+        }
+
         return [
             'id' => $orderItem->getId(),
             'quantity' => $orderItem->getQuantity(),
@@ -21,5 +39,41 @@ class OrderItemTransformer extends TransformerAbstract
         ];
     }
 
-    // todo: add order and product relations
+    public function includeOrder(OrderItem $orderItem)
+    {
+        self::$transformedOrders[$orderItem->getOrder()->getId()] = true;
+
+        if ($orderItem->getOrder() instanceof Proxy) {
+            return $this->item(
+                $orderItem->getOrder(),
+                new EntityReferenceTransformer(),
+                'order'
+            );
+        } else {
+            return $this->item(
+                $orderItem->getOrder(),
+                new OrderTransformer(),
+                'order'
+            );
+        }
+    }
+
+    public function includeProduct(OrderItem $orderItem)
+    {
+        self::$transformedProducts[$orderItem->getProduct()->getId()] = true;
+
+        if ($orderItem->getProduct() instanceof Proxy) {
+            return $this->item(
+                $orderItem->getProduct(),
+                new EntityReferenceTransformer(),
+                'product'
+            );
+        } else {
+            return $this->item(
+                $orderItem->getProduct(),
+                new ProductTransformer(),
+                'product'
+            );
+        }
+    }
 }

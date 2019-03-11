@@ -56,6 +56,7 @@ class RefundJsonController extends BaseController
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
+     * @param UserProductService $userProductService
      */
     public function __construct(
         EntityManager $entityManager,
@@ -259,14 +260,14 @@ class RefundJsonController extends BaseController
                      */
                     $subscription = $subscriptionPayment->getSubscription();
 
-                    $subscriptionproducts = $this->userProductService
+                    $subscriptionProducts = $this->userProductService
                             ->getSubscriptionProducts($subscription);
 
                     $user = $subscription->getUser();
 
                     $this->userProductService->removeUserProducts(
                         $user,
-                        $subscriptionproducts
+                        $subscriptionProducts
                     );
                 }
             }

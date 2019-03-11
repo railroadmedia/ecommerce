@@ -110,7 +110,7 @@ class OrderFormJsonController extends BaseController
     /**
      * Submit an order
      *
-     * @param $request
+     * @param OrderFormSubmitRequest $request
      * @return JsonResponse
      */
     public function submitOrder(OrderFormSubmitRequest $request)

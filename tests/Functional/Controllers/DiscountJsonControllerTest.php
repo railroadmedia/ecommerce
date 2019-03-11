@@ -106,7 +106,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'product',
                         'id' => $product['id'],
-                        // full products relation is loaded upon request - todo: add test for request with product included
+                        // full products relation is loaded upon request
                         // 'attributes' => array_diff_key(
                         //     $product,
                         //     ['id' => true]
@@ -201,7 +201,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'product',
                         'id' => $product['id'],
-                        // full products relation is loaded upon request - todo: add test for request with product included
+                        // full products relation is loaded upon request
                         // 'attributes' => array_merge(
                         //     array_diff_key(
                         //         $product,

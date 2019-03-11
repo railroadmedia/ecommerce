@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
+use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;

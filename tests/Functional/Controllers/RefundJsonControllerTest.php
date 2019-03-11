@@ -144,6 +144,31 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'address',
+                        'id' => $address['id'],
+                        'attributes' => []
+                    ],
+                    [
+                        'type' => 'paymentMethod',
+                        'id' => $paymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $paymentMethod,
+                            [
+                                'id' => true,
+                                'method_id' => true,
+                                'billing_address_id' => true
+                            ]
+                        ),
+                        'relationships' => [
+                            'billingAddress' => [
+                                'data' => [
+                                    'type' => 'address',
+                                    'id' => $address['id']
+                                ]
+                            ]
+                        ]
+                    ],
+                    [
                         'type' => 'payment',
                         'id' => $payment['id'],
                         'attributes' => array_merge(
@@ -277,6 +302,31 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
                 'included' => [
+                    [
+                        'type' => 'address',
+                        'id' => $address['id'],
+                        'attributes' => []
+                    ],
+                    [
+                        'type' => 'paymentMethod',
+                        'id' => $paymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $paymentMethod,
+                            [
+                                'id' => true,
+                                'method_id' => true,
+                                'billing_address_id' => true
+                            ]
+                        ),
+                        'relationships' => [
+                            'billingAddress' => [
+                                'data' => [
+                                    'type' => 'address',
+                                    'id' => $address['id']
+                                ]
+                            ]
+                        ]
+                    ],
                     [
                         'type' => 'payment',
                         'id' => $payment['id'],
@@ -447,6 +497,31 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'address',
+                        'id' => $address['id'],
+                        'attributes' => []
+                    ],
+                    [
+                        'type' => 'paymentMethod',
+                        'id' => $paymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $paymentMethod,
+                            [
+                                'id' => true,
+                                'method_id' => true,
+                                'billing_address_id' => true
+                            ]
+                        ),
+                        'relationships' => [
+                            'billingAddress' => [
+                                'data' => [
+                                    'type' => 'address',
+                                    'id' => $address['id']
+                                ]
+                            ]
+                        ]
+                    ],
+                    [
                         'type' => 'payment',
                         'id' => $payment['id'],
                         'attributes' => array_merge(
@@ -614,6 +689,31 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'address',
+                        'id' => $address['id'],
+                        'attributes' => []
+                    ],
+                    [
+                        'type' => 'paymentMethod',
+                        'id' => $paymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $paymentMethod,
+                            [
+                                'id' => true,
+                                'method_id' => true,
+                                'billing_address_id' => true
+                            ]
+                        ),
+                        'relationships' => [
+                            'billingAddress' => [
+                                'data' => [
+                                    'type' => 'address',
+                                    'id' => $address['id']
+                                ]
+                            ]
+                        ]
+                    ],
+                    [
                         'type' => 'payment',
                         'id' => $payment['id'],
                         'attributes' => array_merge(
@@ -780,6 +880,31 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
                 'included' => [
+                    [
+                        'type' => 'address',
+                        'id' => $address['id'],
+                        'attributes' => []
+                    ],
+                    [
+                        'type' => 'paymentMethod',
+                        'id' => $paymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $paymentMethod,
+                            [
+                                'id' => true,
+                                'method_id' => true,
+                                'billing_address_id' => true
+                            ]
+                        ),
+                        'relationships' => [
+                            'billingAddress' => [
+                                'data' => [
+                                    'type' => 'address',
+                                    'id' => $address['id']
+                                ]
+                            ]
+                        ]
+                    ],
                     [
                         'type' => 'payment',
                         'id' => $payment['id'],
@@ -954,6 +1079,31 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
                 'included' => [
+                    [
+                        'type' => 'address',
+                        'id' => $address['id'],
+                        'attributes' => []
+                    ],
+                    [
+                        'type' => 'paymentMethod',
+                        'id' => $paymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $paymentMethod,
+                            [
+                                'id' => true,
+                                'method_id' => true,
+                                'billing_address_id' => true
+                            ]
+                        ),
+                        'relationships' => [
+                            'billingAddress' => [
+                                'data' => [
+                                    'type' => 'address',
+                                    'id' => $address['id']
+                                ]
+                            ]
+                        ]
+                    ],
                     [
                         'type' => 'payment',
                         'id' => $payment['id'],

@@ -12,6 +12,7 @@ use Railroad\Ecommerce\Contracts\UserInterface;
  * @ORM\Table(
  *     name="ecommerce_access_code",
  *     indexes={
+ *         @ORM\Index(name="ecommerce_access_code_code_index", columns={"code"}),
  *         @ORM\Index(name="ecommerce_access_code_product_ids_index", columns={"product_ids"}),
  *         @ORM\Index(name="ecommerce_access_code_is_claimed_index", columns={"is_claimed"}),
  *         @ORM\Index(name="ecommerce_access_code_claimer_id_index", columns={"claimer_id"}),

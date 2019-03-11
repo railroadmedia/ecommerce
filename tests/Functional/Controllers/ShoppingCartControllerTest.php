@@ -86,10 +86,10 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(15, 100),
+            'stock' => 0,
         ]);
 
-        $quantity = $this->faker->numberBetween(1, 1000);
+        $quantity = $this->faker->numberBetween(2, 10);
         $response = $this->call(
             'GET',
             '/add-to-cart/',
@@ -288,12 +288,12 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     {
         $productOne = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(5, 100),
+            'stock' => $this->faker->numberBetween(10, 100),
         ]);
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(5, 100),
+            'stock' => $this->faker->numberBetween(10, 100),
         ]);
 
         $randomSku1 = $this->faker->word . 'sku1';
@@ -690,7 +690,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     {
         $product = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(2, 5),
+            'stock' => $this->faker->numberBetween(3, 5),
         ]);
 
         $country = 'Canada';
@@ -845,7 +845,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     {
         $product = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(1, 100),
+            'stock' => $this->faker->numberBetween(10, 100),
         ]);
 
         $quantity = 2;
@@ -875,7 +875,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
     {
         $product = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(2, 5),
+            'stock' => $this->faker->numberBetween(3, 5),
         ]);
 
         $quantity = $this->faker->numberBetween(1, 2);
@@ -933,7 +933,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(5, 100),
+            'stock' => $this->faker->numberBetween(20, 100),
         ]);
 
         $productOneQuantity = 2;
@@ -1005,7 +1005,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(5, 100),
+            'stock' => $this->faker->numberBetween(11, 100),
         ]);
 
         $productOneQuantity = 2;
@@ -1041,8 +1041,8 @@ class ShoppingCartControllerTest extends EcommerceTestCase
                                 ->find($productTwo['id']);
 
         //assert the items were added to the cart
-        $response->assertSessionHas('addedProducts', [$productEntity]);
         $response->assertSessionHas('cartNumberOfItems', 2);
+        $response->assertSessionHas('addedProducts', [$productEntity]);
         $response->assertSessionHas('notAvailableProducts', []);
 
         $cartService = $this->app->make(CartService::class);
@@ -1096,7 +1096,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(5, 100),
+            'stock' => $this->faker->numberBetween(20, 100),
         ]);
 
         $productOneQuantity = 2;
@@ -1194,7 +1194,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(5, 100),
+            'stock' => $this->faker->numberBetween(20, 100),
         ]);
 
         $productOneQuantity = 2;

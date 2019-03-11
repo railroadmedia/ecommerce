@@ -372,7 +372,7 @@ class PaymentJsonController extends BaseController
             );
 
             /**
-             * @var $method \Railroad\Ecommerce\Entities\Subscription
+             * @var $subscription \Railroad\Ecommerce\Entities\Subscription
              */
             $subscription = $this->entityManager
                             ->getRepository(Subscription::class)
@@ -452,9 +452,11 @@ class PaymentJsonController extends BaseController
         return ResponseService::payment($payment);
     }
 
-    /** Calculate next bill date for subscription
+    /**
+     * Calculate next bill date for subscription
      *
-     * @param $orderItem
+     * @param string $intervalType
+     * @param int $intervalCount
      * @return \Carbon\Carbon
      */
     private function calculateNextBillDate($intervalType, $intervalCount)
@@ -479,7 +481,7 @@ class PaymentJsonController extends BaseController
     /**
      * Soft delete a payment
      *
-     * @param $paymentId
+     * @param int $paymentId
      *
      * @return JsonResponse
      */

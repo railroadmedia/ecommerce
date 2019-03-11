@@ -173,12 +173,4 @@ class PaymentMethod
 
         return $this;
     }
-
-    // TO-DO review the logic below, if it needs refactorin/replication
-    // public function dot()
-    // {
-    //     $this->replace(array_merge($this->getArrayCopy(), (array)$this['method'] ?? []));
-
-    //     return parent::dot();
-    // }
 }

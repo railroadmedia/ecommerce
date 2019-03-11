@@ -2,21 +2,14 @@
 
 namespace Railroad\Ecommerce\Providers;
 
-// TO-DO: clean-up the deprecated imports
-use Doctrine\Common\EventManager;
-use Doctrine\ORM\Events;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
 use Railroad\Ecommerce\Listeners\UserDefaultPaymentMethodListener;
-use Railroad\Ecommerce\Listeners\UserProductListener;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CustomValidationRules;
-use Railroad\Ecommerce\Listeners\UserProductEventListener;
-use Railroad\Resora\Events\Created;
-use Railroad\Resora\Events\Updated;
 
 class EcommerceServiceProvider extends ServiceProvider
 {
@@ -30,8 +23,6 @@ class EcommerceServiceProvider extends ServiceProvider
         $this->listen = [
             GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
             UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class],
-            Created::class => [UserProductListener::class . '@handleCreated'],
-            Updated::class => [UserProductListener::class . '@handleUpdated'],
         ];
 
         parent::boot();
@@ -168,15 +159,5 @@ class EcommerceServiceProvider extends ServiceProvider
 
         ConfigService::$subscriptionRenewalDateCutoff = config('ecommerce.subscription_renewal_date');
         ConfigService::$failedPaymentsBeforeDeactivation = config('ecommerce.failed_payments_before_de_activation');
-    }
-
-    public function register()
-    {
-        // tmp
-        // $logger = new \Doctrine\DBAL\Logging\EchoSQLLogger();
-
-        // $config = app()->make(\Doctrine\ORM\Configuration::class);
-
-        // $config->setSQLLogger($logger);
     }
 }

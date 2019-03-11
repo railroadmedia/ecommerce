@@ -19,7 +19,7 @@ class StripeWebhookController extends BaseController
     /**
      * StripeWebhookController constructor.
      *
-     * @param CreditCardRepository $creditCardRepository
+     * @param EntityManager $entityManager
      */
     public function __construct(
         EntityManager $entityManager

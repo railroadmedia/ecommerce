@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Controllers\OrderJsonController;
 use PHPUnit\Framework\TestCase;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class OrderJsonControllerTest extends EcommerceTestCase
@@ -191,7 +192,20 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $paid = $this->faker->randomFloat(2, 50, 90);
         $refunded = $this->faker->randomFloat(2, 10, 30);
 
+        $creditCard = $this->fakeCreditCard();
+
+        $billingAddress = $this->fakeAddress([
+            'type' => ConfigService::$billingAddressType
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'method_id' => $creditCard['id'],
+            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'billing_address_id' => $billingAddress['id']
+        ]);
+
         $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
             'total_due' => $due,
             'total_paid' => $paid,
             'total_refunded' => $refunded,
@@ -305,6 +319,11 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ],
             'included' => [
                 [
+                    'type' => 'paymentMethod',
+                    'id' => $paymentMethod['id'],
+                    'attributes' => []
+                ],
+                [
                     'type' => 'payment',
                     'id' => $payment['id'],
                     'attributes' => array_diff_key(
@@ -313,7 +332,21 @@ class OrderJsonControllerTest extends EcommerceTestCase
                             'id' => true,
                             'payment_method_id' => true
                         ]
-                    )
+                    ),
+                    'relationships' => [
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id'],
+                            ]
+                        ]
+                    ]
+
+                ],
+                [
+                    'type' => 'product',
+                    'id' => '1',
+                    'attributes' => []
                 ],
                 [
                     'type' => 'user',
@@ -330,7 +363,15 @@ class OrderJsonControllerTest extends EcommerceTestCase
                             'order_id' => true,
                             'product_id' => true
                         ]
-                    )
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ]
                 ],
                 [
                     'type' => 'address',
@@ -351,11 +392,6 @@ class OrderJsonControllerTest extends EcommerceTestCase
                             ]
                         ]
                     ]
-                ],
-                [
-                    'type' => 'product',
-                    'id' => $product['id'],
-                    'attributes' => []
                 ],
                 [
                     'type' => 'refund',

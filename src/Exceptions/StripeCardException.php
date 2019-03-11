@@ -16,13 +16,14 @@ class StripeCardException extends \Exception
     }
 
     public function render($request){
-        return reply()->json([],
+        return response()->json(
             [
-                'code' => 422,
                 'errors' => [
                     'title' => 'Unprocessable Card.',
                     'detail' => $this->stripeError
                 ]
-            ]);
+            ],
+            422
+        );
     }
 }

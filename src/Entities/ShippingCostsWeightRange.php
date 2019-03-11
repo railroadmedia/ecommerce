@@ -12,7 +12,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  *     indexes={
  *         @ORM\Index(
  *             name="ecommerce_shipping_costs_weight_range_shipping_option_id_index",
- *             columns={"country"}
+ *             columns={"shipping_option_id"}
  *         ),
  *         @ORM\Index(
  *             name="ecommerce_shipping_costs_weight_range_created_on_index",

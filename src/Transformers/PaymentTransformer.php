@@ -12,7 +12,10 @@ class PaymentTransformer extends TransformerAbstract
 {
     public function transform(Payment $payment)
     {
-        // todo - add paymentMethod relation
+        if ($payment->getPaymentMethod()) {
+            $this->defaultIncludes[] = 'paymentMethod';
+        }
+
         return [
             'id' => $payment->getId(),
             'total_due' => $payment->getTotalDue(),
@@ -29,5 +32,22 @@ class PaymentTransformer extends TransformerAbstract
             'created_at' => $payment->getCreatedAt() ? $payment->getCreatedAt()->toDateTimeString() : null,
             'updated_at' => $payment->getUpdatedAt() ? $payment->getUpdatedAt()->toDateTimeString() : null,
         ];
+    }
+
+    public function includePaymentMethod(Payment $payment)
+    {
+        if ($payment->getPaymentMethod() instanceof Proxy) {
+            return $this->item(
+                $payment->getPaymentMethod(),
+                new EntityReferenceTransformer(),
+                'paymentMethod'
+            );
+        } else {
+            return $this->item(
+                $payment->getPaymentMethod(),
+                new PaymentMethodTransformer(),
+                'paymentMethod'
+            );
+        }
     }
 }

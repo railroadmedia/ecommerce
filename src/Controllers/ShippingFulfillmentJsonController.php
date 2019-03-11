@@ -100,7 +100,7 @@ class ShippingFulfillmentJsonController extends BaseController
      * Fulfilled order or order item. If the order_item_id it's set on the request only the order item it's fulfilled,
      * otherwise entire order it's fulfilled.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param OrderFulfilledRequest $request
      * @return JsonResponse
      */
     public function markShippingFulfilled(OrderFulfilledRequest $request)
