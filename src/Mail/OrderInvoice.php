@@ -29,8 +29,8 @@ class OrderInvoice extends Mailable
     public function build()
     {
         return $this
-            ->from(config('ecommerce.invoiceSender'), config('ecommerce.invoiceSenderName'))
-            ->subject(config('ecommerce.invoiceEmailSubject'))
+            ->from(config('ecommerce.invoice_sender'), config('ecommerce.invoice_sender_name'))
+            ->subject(config('ecommerce.invoice_email_subject'))
             ->view('ecommerce::billing', $this->viewData);
     }
 }

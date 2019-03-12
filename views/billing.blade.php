@@ -358,7 +358,7 @@
                                 </tr>
                                 <tr>
                                     <td class="content-block aligncenter">
-                                        {{config('ecommerce.invoiceAddress')}}
+                                        {{config('ecommerce.invoice_address')}}
                                     </td>
                                 </tr>
                             </table>
@@ -368,7 +368,7 @@
                 <div class="footer">
                     <table width="100%">
                         <tr>
-                            <td class="aligncenter content-block">Questions? Email <a href="mailto:">{{config('ecommerce.invoiceSender')}}</a></td>
+                            <td class="aligncenter content-block">Questions? Email <a href="mailto:">{{config('ecommerce.invoice_sender')}}</a></td>
                         </tr>
                     </table>
                 </div>

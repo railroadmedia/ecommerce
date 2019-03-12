@@ -116,37 +116,37 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$middleware = config('ecommerce.middleware', []);
 
         //product type
-        ConfigService::$typeProduct = config('ecommerce.typeProduct');
+        ConfigService::$typeProduct = config('ecommerce.type_product');
 
         //subscription type
-        ConfigService::$typeSubscription = config('ecommerce.typeSubscription');
+        ConfigService::$typeSubscription = config('ecommerce.type_subscription');
 
         //payment plan type
-        ConfigService::$paymentPlanType = config('ecommerce.typePaymentPlan');
+        ConfigService::$paymentPlanType = config('ecommerce.type_payment_plan');
 
         //shipping address type
-        ConfigService::$shippingAddressType = config('ecommerce.shippingAddress');
+        ConfigService::$shippingAddressType = config('ecommerce.shipping_address');
 
         //billing address type
-        ConfigService::$billingAddressType = config('ecommerce.billingAddress');
+        ConfigService::$billingAddressType = config('ecommerce.billing_address');
 
         //payment method types
-        ConfigService::$paypalPaymentMethodType = config('ecommerce.paypalPaymentMethodType');
-        ConfigService::$creditCartPaymentMethodType = config('ecommerce.creditCartPaymentMethodType');
-        ConfigService::$manualPaymentType = config('ecommerce.manualPaymentMethodType');
+        ConfigService::$paypalPaymentMethodType = config('ecommerce.paypal_payment_method_type');
+        ConfigService::$creditCartPaymentMethodType = config('ecommerce.credit_cart_payment_method_type');
+        ConfigService::$manualPaymentType = config('ecommerce.manual_payment_method_type');
 
         //payment types
-        ConfigService::$orderPaymentType = config('ecommerce.orderPaymentType');
-        ConfigService::$renewalPaymentType = config('ecommerce.renewalPaymentType');
+        ConfigService::$orderPaymentType = config('ecommerce.order_payment_type');
+        ConfigService::$renewalPaymentType = config('ecommerce.renewal_payment_type');
 
         //subscription interval types
-        ConfigService::$intervalTypeDaily = config('ecommerce.intervalTypeDaily');
-        ConfigService::$intervalTypeMonthly = config('ecommerce.intervalTypeMonthly');
-        ConfigService::$intervalTypeYearly = config('ecommerce.intervalTypeYearly');
+        ConfigService::$intervalTypeDaily = config('ecommerce.interval_type_daily');
+        ConfigService::$intervalTypeMonthly = config('ecommerce.interval_type_monthly');
+        ConfigService::$intervalTypeYearly = config('ecommerce.interval_type_yearly');
 
         //shipping fulfillment status
-        ConfigService::$fulfillmentStatusPending = config('ecommerce.fulfillmentStatusPending');
-        ConfigService::$fulfillmentStatusFulfilled = config('ecommerce.fulfillmentStatusFulfilled');
+        ConfigService::$fulfillmentStatusPending = config('ecommerce.fulfillment_status_pending');
+        ConfigService::$fulfillmentStatusFulfilled = config('ecommerce.fulfillment_status_fulfilled');
 
         // currencies
         ConfigService::$supportedCurrencies = config('ecommerce.supported_currencies');
@@ -154,8 +154,8 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$defaultCurrencyConversionRates = config('ecommerce.default_currency_conversion_rates');
 
         // paypal
-        ConfigService::$paypalAgreementRoute = config('ecommerce.paypal.agreementRoute');
-        ConfigService::$paypalAgreementFulfilledRoute = config('ecommerce.paypal.agreementFulfilledRoute');
+        ConfigService::$paypalAgreementRoute = config('ecommerce.paypal.agreement_route');
+        ConfigService::$paypalAgreementFulfilledRoute = config('ecommerce.paypal.agreement_fulfilled_route');
 
         ConfigService::$subscriptionRenewalDateCutoff = config('ecommerce.subscription_renewal_date');
         ConfigService::$failedPaymentsBeforeDeactivation = config('ecommerce.failed_payments_before_de_activation');

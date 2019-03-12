@@ -202,31 +202,32 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.supported_currencies', $defaultConfig['supported_currencies']);
         $app['config']->set('ecommerce.default_currency', $defaultConfig['default_currency']);
         $app['config']->set('ecommerce.default_currency_conversion_rates', $defaultConfig['default_currency_conversion_rates']);
-        $app['config']->set('ecommerce.invoiceSender', $defaultConfig['invoiceSender']);
-        $app['config']->set('ecommerce.invoiceAddress', $defaultConfig['invoiceAddress']);
-        $app['config']->set('ecommerce.invoiceEmailSubject', $defaultConfig['invoiceEmailSubject']);
-        $app['config']->set('ecommerce.paymentPlanMinimumPrice', $defaultConfig['paymentPlanMinimumPrice']);
-        $app['config']->set('ecommerce.paymentPlanOptions', $defaultConfig['paymentPlanOptions']);
-        $app['config']->set('ecommerce.typeProduct', $defaultConfig['typeProduct']);
-        $app['config']->set('ecommerce.typeSubscription', $defaultConfig['typeSubscription']);
-        $app['config']->set('ecommerce.typePaymentPlan', $defaultConfig['typePaymentPlan']);
-        $app['config']->set('ecommerce.shippingAddress', $defaultConfig['shippingAddress']);
-        $app['config']->set('ecommerce.billingAddress', $defaultConfig['billingAddress']);
-        $app['config']->set('ecommerce.paypalPaymentMethodType', $defaultConfig['paypalPaymentMethodType']);
-        $app['config']->set('ecommerce.creditCartPaymentMethodType', $defaultConfig['creditCartPaymentMethodType']);
-        $app['config']->set('ecommerce.manualPaymentMethodType', $defaultConfig['manualPaymentMethodType']);
-        $app['config']->set('ecommerce.orderPaymentType', $defaultConfig['orderPaymentType']);
-        $app['config']->set('ecommerce.renewalPaymentType', $defaultConfig['renewalPaymentType']);
-        $app['config']->set('ecommerce.intervalTypeDaily', $defaultConfig['intervalTypeDaily']);
-        $app['config']->set('ecommerce.intervalTypeMonthly', $defaultConfig['intervalTypeMonthly']);
-        $app['config']->set('ecommerce.intervalTypeYearly', $defaultConfig['intervalTypeYearly']);
-        $app['config']->set('ecommerce.fulfillmentStatusPending', $defaultConfig['fulfillmentStatusPending']);
-        $app['config']->set('ecommerce.fulfillmentStatusFulfilled', $defaultConfig['fulfillmentStatusFulfilled']);
+        $app['config']->set('ecommerce.invoice_sender', $defaultConfig['invoice_sender']);
+        $app['config']->set('ecommerce.invoice_sender_name', $defaultConfig['invoice_sender_name']);
+        $app['config']->set('ecommerce.invoice_address', $defaultConfig['invoice_address']);
+        $app['config']->set('ecommerce.invoice_email_subject', $defaultConfig['invoice_email_subject']);
+        $app['config']->set('ecommerce.payment_plan_minimum_price', $defaultConfig['payment_plan_minimum_price']);
+        $app['config']->set('ecommerce.payment_plan_options', $defaultConfig['payment_plan_options']);
+        $app['config']->set('ecommerce.type_product', $defaultConfig['type_product']);
+        $app['config']->set('ecommerce.type_subscription', $defaultConfig['type_subscription']);
+        $app['config']->set('ecommerce.type_payment_plan', $defaultConfig['type_payment_plan']);
+        $app['config']->set('ecommerce.shipping_address', $defaultConfig['shipping_address']);
+        $app['config']->set('ecommerce.billing_address', $defaultConfig['billing_address']);
+        $app['config']->set('ecommerce.paypal_payment_method_type', $defaultConfig['paypal_payment_method_type']);
+        $app['config']->set('ecommerce.credit_cart_payment_method_type', $defaultConfig['credit_cart_payment_method_type']);
+        $app['config']->set('ecommerce.manual_payment_method_type', $defaultConfig['manual_payment_method_type']);
+        $app['config']->set('ecommerce.order_payment_type', $defaultConfig['order_payment_type']);
+        $app['config']->set('ecommerce.renewal_payment_type', $defaultConfig['renewal_payment_type']);
+        $app['config']->set('ecommerce.interval_type_daily', $defaultConfig['interval_type_daily']);
+        $app['config']->set('ecommerce.interval_type_monthly', $defaultConfig['interval_type_monthly']);
+        $app['config']->set('ecommerce.interval_type_yearly', $defaultConfig['interval_type_yearly']);
+        $app['config']->set('ecommerce.fulfillment_status_pending', $defaultConfig['fulfillment_status_pending']);
+        $app['config']->set('ecommerce.fulfillment_status_fulfilled', $defaultConfig['fulfillment_status_fulfilled']);
 
-        $app['config']->set('ecommerce.paypal.agreementRoute', $defaultConfig['paypal']['agreementRoute']);
+        $app['config']->set('ecommerce.paypal.agreement_route', $defaultConfig['paypal']['agreement_route']);
         $app['config']->set(
-            'ecommerce.paypal.agreementFulfilledRoute',
-            $defaultConfig['paypal']['agreementFulfilledRoute']
+            'ecommerce.paypal.agreement_fulfilled_route',
+            $defaultConfig['paypal']['agreement_fulfilled_route']
         );
 
         $app['config']->set('ecommerce.subscription_renewal_date', $defaultConfig['subscription_renewal_date']);
@@ -283,14 +284,14 @@ class EcommerceTestCase extends BaseTestCase
         $this->paymentGateway = $defaultConfig['payment_gateways'];
         $this->paymentPlanOptions = array_values(
             array_filter(
-                $defaultConfig['paymentPlanOptions'],
+                $defaultConfig['payment_plan_options'],
                 function($value) {
                     return $value != 1;
                 }
             )
         );
 
-        $this->paymentPlanMinimumPrice = $defaultConfig['paymentPlanMinimumPrice'];
+        $this->paymentPlanMinimumPrice = $defaultConfig['payment_plan_minimum_price'];
     }
 
     protected function createUsersTable()

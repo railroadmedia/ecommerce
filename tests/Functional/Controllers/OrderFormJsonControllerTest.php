@@ -4551,8 +4551,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 $mail->build();
 
                 return $mail->hasTo(auth()->user()['email']) &&
-                    $mail->hasFrom(config('ecommerce.invoiceSender')) &&
-                    $mail->subject(config('ecommerce.invoicerEmailSubject'));
+                    $mail->hasFrom(config('ecommerce.invoice_sender')) &&
+                    $mail->subject(config('ecommerce.invoicer_email_subject'));
             }
         );
 

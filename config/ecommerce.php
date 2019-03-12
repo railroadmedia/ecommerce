@@ -137,8 +137,8 @@ return [
     ],
 
     'paypal' => [
-        'agreementRoute' => 'payment-method.paypal.agreement',
-        'agreementFulfilledRoute' => '' // route to redirect after handling a paypal agreement, eg for recordeo 'account.settings.payments'
+        'agreement_route' => 'payment-method.paypal.agreement',
+        'agreement_fulfilled_route' => '' // route to redirect after handling a paypal agreement, eg for recordeo 'account.settings.payments'
     ],
 
     'role_abilities'          => [
@@ -175,28 +175,29 @@ return [
         ],
     ],
 
-    'invoiceSender'           => 'support@drumeo.com',
-    'invoiceSenderName'       => 'Drumeo',
-    'invoiceAddress'          => 'Drumeo 107-31265 Wheel Avenue - Abbotsford BC, Canada',
-    'invoiceEmailSubject'     => 'Order Invoice - Thank You!',
-    'paymentPlanOptions'      => [1, 2, 5],
-    'paymentPlanMinimumPrice' => 20,
+    'invoice_sender' => 'support@drumeo.com',
+    'invoice_sender_name' => 'Drumeo',
+    'invoice_address' => 'Drumeo 107-31265 Wheel Avenue - Abbotsford BC, Canada',
+    'invoice_email_subject' => 'Order Invoice - Thank You!',
 
-    'billingAddress'              => 'billing',
-    'shippingAddress'             => 'shipping',
-    'paypalPaymentMethodType'     => 'paypal',
-    'creditCartPaymentMethodType' => 'credit-card',
-    'manualPaymentMethodType'     => 'manual',
-    'orderPaymentType'            => 'order',
-    'renewalPaymentType'          => 'renewal',
-    'typeProduct'                 => 'product',
-    'typeSubscription'            => 'subscription',
-    'typePaymentPlan'             => 'payment plan',
-    'intervalTypeDaily'           => 'day',
-    'intervalTypeMonthly'         => 'month',
-    'intervalTypeYearly'          => 'year',
-    'fulfillmentStatusPending'    => 'pending',
-    'fulfillmentStatusFulfilled'  => 'fulfilled',
+    'payment_plan_options' => [1, 2, 5],
+    'payment_plan_minimum_price' => 20,
+
+    'billing_address' => 'billing',
+    'shipping_address' => 'shipping',
+    'paypal_payment_method_type' => 'paypal',
+    'credit_cart_payment_method_type' => 'credit-card',
+    'manual_payment_method_type' => 'manual',
+    'order_payment_type' => 'order',
+    'renewal_payment_type' => 'renewal',
+    'type_product' => 'product',
+    'type_subscription' => 'subscription',
+    'type_payment_plan' => 'payment plan',
+    'interval_type_daily' => 'day',
+    'interval_type_monthly' => 'month',
+    'interval_type_yearly' => 'year',
+    'fulfillment_status_pending' => 'pending',
+    'fulfillment_status_fulfilled' => 'fulfilled',
 
     'subscription_renewal_date' => 1,
     'failed_payments_before_de_activation' => 1,

@@ -22,7 +22,7 @@ class PaymentPlanService
 
     /**
      * Check if payment plan it's eligible: the order should not contain subscription product and
-     * totaling over a set amount (config paymentPlanMinimumPrice)
+     * totaling over a set amount (config payment_plan_minimum_price)
      *
      * @return bool
      */
@@ -34,7 +34,7 @@ class PaymentPlanService
             (!$this->hasSubscriptionItems($cart->getItems())) &&
             (
                 ($cart->getTotalDue() - $cart->calculateTaxesDue() - $cart->calculateShippingDue()) >
-                config('ecommerce.paymentPlanMinimumPrice')
+                config('ecommerce.payment_plan_minimum_price')
             )
         ) {
             return true;
@@ -70,7 +70,7 @@ class PaymentPlanService
             $initialPaymentPlanOption =
                 $this->cartService->getCart()
                     ->getPaymentPlanNumberOfPayments();
-            foreach (config('ecommerce.paymentPlanOptions') as $paymentPlan) {
+            foreach (config('ecommerce.payment_plan_options') as $paymentPlan) {
                 $this->cartService->setPaymentPlanNumberOfPayments($paymentPlan);
 
                 $paymentPlanPricing[$paymentPlan] =
