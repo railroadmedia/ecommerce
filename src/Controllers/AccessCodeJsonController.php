@@ -3,13 +3,13 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Requests\AccessCodeJsonClaimRequest;
 use Railroad\Ecommerce\Requests\AccessCodeReleaseRequest;
 use Railroad\Ecommerce\Services\AccessCodeService;
@@ -31,7 +31,7 @@ class AccessCodeJsonController extends BaseController
     private $accessCodeRepository;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -49,13 +49,13 @@ class AccessCodeJsonController extends BaseController
      * AccessCodeJsonController constructor.
      *
      * @param AccessCodeService $accessCodeService
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param PermissionService $permissionService
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
         AccessCodeService $accessCodeService,
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         PermissionService $permissionService,
         UserProviderInterface $userProvider
     ) {

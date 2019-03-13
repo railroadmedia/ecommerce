@@ -9,6 +9,7 @@ use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest;
 use Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest;
 use Railroad\Ecommerce\Services\ResponseService;
@@ -27,7 +28,7 @@ class DiscountCriteriaJsonController extends BaseController
     private $discountRepository;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -44,12 +45,12 @@ class DiscountCriteriaJsonController extends BaseController
     /**
      * DiscountCriteriaJsonController constructor.
      *
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param \Railroad\Permissions\Services\PermissionService $permissionService
      */
     public function __construct(
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService
     ) {

@@ -14,6 +14,7 @@ use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Requests\AddressCreateRequest;
 use Railroad\Ecommerce\Requests\AddressDeleteRequest;
@@ -32,7 +33,7 @@ class AddressJsonController extends Controller
     private $addressRepository;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -54,13 +55,13 @@ class AddressJsonController extends Controller
     /**
      * AddressJsonController constructor.
      *
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param PermissionService $permissionService
      * @param JsonApiHydrator $jsonApiHydrator
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         PermissionService $permissionService,
         JsonApiHydrator $jsonApiHydrator,
         UserProviderInterface $userProvider
@@ -140,6 +141,7 @@ class AddressJsonController extends Controller
         $this->jsonApiHydrator->hydrate($address, $request->onlyAllowed());
 
         $this->entityManager->persist($address);
+
         $this->entityManager->flush();
 
         return ResponseService::address($address)

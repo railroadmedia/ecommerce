@@ -11,6 +11,18 @@ use Railroad\Ecommerce\Listeners\UserDefaultPaymentMethodListener;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CustomValidationRules;
 
+
+
+use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Cache\RedisCache;
+use Doctrine\Common\EventManager;
+use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
+use Doctrine\ORM\Configuration;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Doctrine\TimestampableListener;
+
 class EcommerceServiceProvider extends ServiceProvider
 {
     /**
@@ -176,5 +188,65 @@ class EcommerceServiceProvider extends ServiceProvider
 
         ConfigService::$subscriptionRenewalDateCutoff = config('ecommerce.subscription_renewal_date');
         ConfigService::$failedPaymentsBeforeDeactivation = config('ecommerce.failed_payments_before_de_activation');
+    }
+
+    public function register()
+    {
+        $this->setupEntityManager();
+    }
+
+    private function setupEntityManager()
+    {
+        // temp setup - needs confirmation
+
+        $redisCache = app()->make(RedisCache::class);
+
+        $annotationReader = new AnnotationReader();
+
+        $cachedAnnotationReader = new CachedReader(
+            $annotationReader, $redisCache
+        );
+
+        $driverChain = app()->make(MappingDriverChain::class);
+
+        foreach (config('ecommerce.entities') as $driverConfig) {
+            $annotationDriver = new AnnotationDriver(
+                $cachedAnnotationReader, $driverConfig['path']
+            );
+
+            $driverChain->addDriver(
+                $annotationDriver,
+                $driverConfig['namespace']
+            );
+        }
+
+        $eventManager = app()->make(EventManager::class);
+
+        $ormConfiguration = app()->make(Configuration::class);
+
+        if (config('ecommerce.database_in_memory') !== true) {
+            $databaseOptions = [
+                'driver' => config('ecommerce.database_driver'),
+                'dbname' => config('ecommerce.database_name'),
+                'user' => config('ecommerce.database_user'),
+                'password' => config('ecommerce.database_password'),
+                'host' => config('ecommerce.database_host'),
+            ];
+        } else {
+            $databaseOptions = [
+                'driver' => config('ecommerce.database_driver'),
+                'user' => config('ecommerce.database_user'),
+                'password' => config('ecommerce.database_password'),
+                'memory' => true,
+            ];
+        }
+
+        $entityManager = EcommerceEntityManager::create(
+            $databaseOptions,
+            $ormConfiguration,
+            $eventManager
+        );
+
+        app()->instance(EcommerceEntityManager::class, $entityManager);
     }
 }

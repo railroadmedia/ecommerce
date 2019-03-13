@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Tests;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Faker\Generator;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Database\DatabaseManager;
@@ -17,6 +16,7 @@ use Railroad\Doctrine\Contracts\UserProviderInterface as DoctrineUserProviderInt
 use Railroad\DoctrineArrayHydrator\Contracts\UserProviderInterface as DoctrineArrayHydratorUserProviderInterface;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Faker\Factory;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
@@ -131,7 +131,7 @@ class EcommerceTestCase extends BaseTestCase
         $this->authManager = $this->app->make(AuthManager::class);
 
         // Run the schema update tool using our entity metadata
-        $this->entityManager = app(EntityManager::class);
+        $this->entityManager = app(EcommerceEntityManager::class);
 
         $this->entityManager->getMetadataFactory()
             ->getCacheDriver()
@@ -193,6 +193,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.redis_port', $defaultConfig['redis_port']);
         $app['config']->set('ecommerce.table_prefix', $defaultConfig['table_prefix']);
         $app['config']->set('ecommerce.data_mode', $defaultConfig['data_mode']);
+        $app['config']->set('ecommerce.entities', $defaultConfig['entities']);
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
         $app['config']->set('ecommerce.available_brands', $defaultConfig['available_brands']);
         $app['config']->set('ecommerce.tax_rate', $defaultConfig['tax_rate']);
@@ -241,6 +242,12 @@ class EcommerceTestCase extends BaseTestCase
 
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
+
+        $app['config']->set('ecommerce.development_mode', $defaultConfig['development_mode'] ?? true);
+        $app['config']->set('ecommerce.database_driver', 'pdo_sqlite');
+        $app['config']->set('ecommerce.database_user', 'root');
+        $app['config']->set('ecommerce.database_password', 'root');
+        $app['config']->set('ecommerce.database_in_memory', true);
 
         // if new packages entities are required for testing, their entity directory/namespace config should be merged here
         $app['config']->set('doctrine.entities', $defaultConfig['entities']);
