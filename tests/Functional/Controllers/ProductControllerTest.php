@@ -534,6 +534,19 @@ class ProductControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $filenameAbsolute = $this->faker->image(sys_get_temp_dir());
+        /*
+        Faker\Provider\Image::image returns false from block:
+
+        if (!$success) {
+            unlink($filepath);
+
+            // could not contact the distant URL or HTTP error - fail silently.
+            return false;
+        }
+
+        to be re-tested
+        */
+
         $filenameRelative = $this->getFilenameRelativeFromAbsolute($filenameAbsolute);
 
         $response = $this->call('PUT', '/product/upload/', [
