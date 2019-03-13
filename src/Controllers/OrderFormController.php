@@ -3,9 +3,11 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\ConfigService;
+use Throwable;
 
 class OrderFormController extends BaseController
 {
@@ -31,7 +33,10 @@ class OrderFormController extends BaseController
      * Landing action for paypal agreement redirect
      *
      * @param $request
-     * @return JsonResponse
+     *
+     * @return RedirectResponse
+     *
+     * @throws Throwable
      */
     public function submitPaypalOrder(Request $request)
     {

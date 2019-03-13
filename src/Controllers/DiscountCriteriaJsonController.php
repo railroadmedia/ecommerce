@@ -2,27 +2,29 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\EntityRepository;
+use Illuminate\Http\JsonResponse;
 use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
-use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest;
 use Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest;
+use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
+use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class DiscountCriteriaJsonController extends BaseController
 {
     /**
-     * @var EntityRepository
+     * @var DiscountCriteriaRepository
      */
     private $discountCriteriaRepository;
 
     /**
-     * @var EntityRepository
+     * @var DiscountRepository
      */
     private $discountRepository;
 
@@ -44,23 +46,25 @@ class DiscountCriteriaJsonController extends BaseController
     /**
      * DiscountCriteriaJsonController constructor.
      *
+     * @param DiscountCriteriaRepository $discountCriteriaRepository
+     * @param DiscountRepository $discountRepository
      * @param EntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
-     * @param \Railroad\Permissions\Services\PermissionService $permissionService
+     * @param PermissionService $permissionService
      */
     public function __construct(
+        DiscountCriteriaRepository $discountCriteriaRepository,
+        DiscountRepository $discountRepository,
         EntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService
     ) {
         parent::__construct();
 
+        $this->discountCriteriaRepository = $discountCriteriaRepository;
+        $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
-        $this->discountRepository = $this->entityManager
-                                        ->getRepository(Discount::class);
-        $this->discountCriteriaRepository = $this->entityManager
-                                        ->getRepository(DiscountCriteria::class);
         $this->permissionService = $permissionService;
     }
 
@@ -68,7 +72,9 @@ class DiscountCriteriaJsonController extends BaseController
      * @param \Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest $request
      * @param int $discountId
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function store(DiscountCriteriaCreateRequest $request, $discountId)
     {
@@ -101,7 +107,9 @@ class DiscountCriteriaJsonController extends BaseController
      * @param \Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest $request
      * @param int $discountCriteriaId
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function update(DiscountCriteriaUpdateRequest $request, $discountCriteriaId)
     {
@@ -132,6 +140,8 @@ class DiscountCriteriaJsonController extends BaseController
      * @param int $discountCriteriaId
      *
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     public function delete($discountCriteriaId)
     {

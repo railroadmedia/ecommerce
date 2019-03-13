@@ -4,31 +4,32 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\EntityRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
-use Railroad\Ecommerce\Entities\AccessCode;
-use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\AccessCodeJsonClaimRequest;
 use Railroad\Ecommerce\Requests\AccessCodeReleaseRequest;
+use Railroad\Ecommerce\Repositories\AccessCodeRepository;
+use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\AccessCodeService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
 use Throwable;
 
 class AccessCodeJsonController extends BaseController
 {
     /**
+     * @var AccessCodeRepository
+     */
+    private $accessCodeRepository;
+
+    /**
      * @var AccessCodeService
      */
     private $accessCodeService;
-
-    /**
-     * @var EntityRepository
-     */
-    private $accessCodeRepository;
 
     /**
      * @var EntityManager
@@ -41,6 +42,11 @@ class AccessCodeJsonController extends BaseController
     private $permissionService;
 
     /**
+     * @var ProductRepository
+     */
+    private $productRepository;
+
+    /**
      * @var UserProviderInterface
      */
     private $userProvider;
@@ -48,26 +54,28 @@ class AccessCodeJsonController extends BaseController
     /**
      * AccessCodeJsonController constructor.
      *
+     * @param AccessCodeRepository $accessCodeRepository
      * @param AccessCodeService $accessCodeService
      * @param EntityManager $entityManager
      * @param PermissionService $permissionService
+     * @param ProductRepository $productRepository
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        AccessCodeRepository $accessCodeRepository,
         AccessCodeService $accessCodeService,
         EntityManager $entityManager,
         PermissionService $permissionService,
+        ProductRepository $productRepository,
         UserProviderInterface $userProvider
     ) {
         parent::__construct();
 
+        $this->accessCodeRepository = $accessCodeRepository;
         $this->accessCodeService = $accessCodeService;
         $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
-
-        $this->accessCodeRepository = $this->entityManager
-                                        ->getRepository(AccessCode::class);
-
+        $this->productRepository = $productRepository;
         $this->userProvider = $userProvider;
     }
 
@@ -76,7 +84,7 @@ class AccessCodeJsonController extends BaseController
      *
      * @param Request $request
      *
-     * @return JsonResponse
+     * @return Fractal
      *
      * @throws Throwable
      */
@@ -113,14 +121,14 @@ class AccessCodeJsonController extends BaseController
         $accessCodes = $qb->getQuery()->getResult();
 
         // fetch related products, as a dictionary
-        $productRepository = $this->entityManager
-                                ->getRepository(Product::class);
-
-        $products = $productRepository->getAccessCodesProducts($accessCodes);
+        $products = $this->productRepository->getAccessCodesProducts($accessCodes);
 
         // map products to ease access
         $productsMap = [];
 
+        /**
+         * @var $product \Railroad\Ecommerce\Entities\Product
+         */
         foreach ($products as $product) {
             $productsMap[$product->getId()] = $product;
         }
@@ -137,7 +145,7 @@ class AccessCodeJsonController extends BaseController
      *
      * @param Request $request
      *
-     * @return JsonResponse
+     * @return Fractal
      *
      * @throws Throwable
      */
@@ -168,14 +176,15 @@ class AccessCodeJsonController extends BaseController
         $accessCodes = $q->getResult();
 
         // fetch related products, as a dictionary
-        $productRepository = $this->entityManager
-                                ->getRepository(Product::class);
-
-        $products = $productRepository->getAccessCodesProducts($accessCodes);
+        $products = $this->productRepository
+                            ->getAccessCodesProducts($accessCodes);
 
         // map products to ease access
         $productsMap = [];
 
+        /**
+         * @var $product \Railroad\Ecommerce\Entities\Product
+         */
         foreach ($products as $product) {
             $productsMap[$product->getId()] = $product;
         }
@@ -199,6 +208,9 @@ class AccessCodeJsonController extends BaseController
             'claim.access_codes'
         );
 
+        /**
+         * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+         */
         $user = $this->userProvider->getUserById(
                 $request->get('claim_for_user_id')
             );
@@ -214,8 +226,7 @@ class AccessCodeJsonController extends BaseController
         $accessCode = $this->accessCodeRepository
             ->findOneBy(['code' => $request->get('access_code')]);
 
-        $claimedAccessCode = $this->accessCodeService
-            ->claim($accessCode, $user);
+        $this->accessCodeService->claim($accessCode, $user);
 
         return ResponseService::accessCode($accessCode)->respond(200);
     }

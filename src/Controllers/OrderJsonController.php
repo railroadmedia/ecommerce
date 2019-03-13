@@ -9,16 +9,21 @@ use Doctrine\ORM\Query\Expr\Join;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
-use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Repositories\OrderRepository;
+use Railroad\Ecommerce\Repositories\PaymentRepository;
+use Railroad\Ecommerce\Repositories\RefundRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\OrderUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class OrderJsonController extends BaseController
 {
@@ -38,36 +43,63 @@ class OrderJsonController extends BaseController
     private $orderRepository;
 
     /**
-     * @var \Railroad\Permissions\Services\PermissionService
+     * @var PaymentRepository
+     */
+    private $paymentRepository;
+
+    /**
+     * @var PermissionService
      */
     private $permissionService;
+
+    /**
+     * @var RefundRepository
+     */
+    private $refundRepository;
+
+    /**
+     * @var SubscriptionRepository
+     */
+    private $subscriptionRepository;
+
 
     /**
      * OrderJsonController constructor.
      *
      * @param EntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
+     * @param OrderRepository $orderRepository
+     * @param PaymentRepository $paymentRepository
      * @param PermissionService $permissionService
      */
     public function __construct(
         EntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
-        PermissionService $permissionService
+        OrderRepository $orderRepository,
+        PaymentRepository $paymentRepository,
+        PermissionService $permissionService,
+        RefundRepository $refundRepository,
+        SubscriptionRepository $subscriptionRepository
     ) {
         parent::__construct();
 
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
-        $this->orderRepository = $this->entityManager
-                                    ->getRepository(Order::class);
+        $this->orderRepository = $orderRepository;
+        $this->paymentRepository = $paymentRepository;
         $this->permissionService = $permissionService;
+        $this->refundRepository = $refundRepository;
+        $this->subscriptionRepository = $subscriptionRepository;
     }
 
     /**
      * Pull orders between two dates
      *
-     * @param \Illuminate\Http\Request $request
-     * @return JsonResponse
+     * @param Request $request
+     *
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function index(Request $request)
     {
@@ -133,7 +165,10 @@ class OrderJsonController extends BaseController
      * Show order
      *
      * @param int $orderId
-     * @return JsonResponse
+     *
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function show($orderId)
     {
@@ -162,9 +197,7 @@ class OrderJsonController extends BaseController
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->entityManager
-                        ->getRepository(Payment::class)
-                        ->createQueryBuilder('p');
+        $qb = $this->paymentRepository->createQueryBuilder('p');
 
         $qb
             ->select(['p'])
@@ -187,9 +220,7 @@ class OrderJsonController extends BaseController
             /**
              * @var $qb \Doctrine\ORM\QueryBuilder
              */
-            $qb = $this->entityManager
-                            ->getRepository(Refund::class)
-                            ->createQueryBuilder('r');
+            $qb = $this->refundRepository->createQueryBuilder('r');
 
             $qb
                 ->select(['r'])
@@ -202,9 +233,7 @@ class OrderJsonController extends BaseController
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->entityManager
-                        ->getRepository(Subscription::class)
-                        ->createQueryBuilder('s');
+        $qb = $this->subscriptionRepository->createQueryBuilder('s');
 
         $qb
             ->select(['s'])
@@ -214,13 +243,13 @@ class OrderJsonController extends BaseController
         $subscriptionItems = collect($qb->getQuery()->getResult());
 
         $subscriptions = $subscriptionItems
-            ->filter(function(Subscription $subscription, $key) {
+            ->filter(function(Subscription $subscription) {
                 return $subscription->getType() == ConfigService::$typeSubscription;
             })
             ->all();
 
         $paymentPlans = $subscriptionItems
-            ->filter(function(Subscription $subscription, $key) {
+            ->filter(function(Subscription $subscription) {
                 return $subscription->getType() == ConfigService::$paymentPlanType;
             })
             ->all();
@@ -238,7 +267,10 @@ class OrderJsonController extends BaseController
      * Soft delete order
      *
      * @param int $orderId
+     *
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     public function delete($orderId)
     {
@@ -265,8 +297,11 @@ class OrderJsonController extends BaseController
      * Return updated data in JSON format
      *
      * @param int $orderId
-     * @param \Railroad\Ecommerce\Requests\OrderUpdateRequest $request
-     * @return JsonResponse
+     * @param OrderUpdateRequest $request
+     *
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function update($orderId, OrderUpdateRequest $request)
     {

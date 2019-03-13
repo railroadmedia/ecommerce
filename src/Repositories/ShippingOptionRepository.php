@@ -2,19 +2,41 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
+use Railroad\Ecommerce\Entities\ShippingOption;
 
+/**
+ * Class ShippingOptionRepository
+ *
+ * @method ShippingOption find($id, $lockMode = null, $lockVersion = null)
+ * @method ShippingOption findOneBy(array $criteria, array $orderBy = null)
+ * @method ShippingOption[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method ShippingOption[] findAll()
+ *
+ * @package Railroad\Ecommerce\Repositories
+ */
 class ShippingOptionRepository extends EntityRepository
 {
+    /**
+     * ShippingOptionRepository constructor.
+     *
+     * @param EntityManager $em
+     */
+    public function __construct(EntityManager $em)
+    {
+        parent::__construct($em, $em->getClassMetadata(ShippingOption::class));
+    }
+
     /**
      * Get the first active shipping cost based on country and total weight
      *
      * @param string  $country
-     * @param integer $totalWeight
+     * @param float $totalWeight
      *
      * @return mixed
      */
-    public function getShippingCosts(string $country, float $totalWeight)
+    public function getShippingCosts(string $country, float $totalWeight): ?array
     {
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder

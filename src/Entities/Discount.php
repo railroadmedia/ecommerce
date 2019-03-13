@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 /**
- * @ORM\Entity()
+ * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\DiscountRepository")
  * @ORM\Table(
  *     name="ecommerce_discount",
  *     indexes={

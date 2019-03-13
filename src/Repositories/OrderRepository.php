@@ -2,12 +2,43 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Order;
 
+/**
+ * Class OrderRepository
+ *
+ * @method Order find($id, $lockMode = null, $lockVersion = null)
+ * @method Order findOneBy(array $criteria, array $orderBy = null)
+ * @method Order[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method Order[] findAll()
+ *
+ * @package Railroad\Ecommerce\Repositories
+ */
 class OrderRepository extends EntityRepository
 {
-    public function ordersWithAdressExist(Address $address)
+    /**
+     * OrderRepository constructor.
+     *
+     * @param EntityManager $em
+     */
+    public function __construct(EntityManager $em)
+    {
+        parent::__construct($em, $em->getClassMetadata(Order::class));
+    }
+
+    /** @noinspection PhpDocMissingThrowsInspection */
+    /**
+     * Returns true if any order has billing or shipping $address set
+     * The usage of select count() avoids NonUniqueResultException exception
+     *
+     * @param Address $address
+     *
+     * @return bool
+     */
+    public function ordersWithAdressExist(Address $address): bool
     {
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder

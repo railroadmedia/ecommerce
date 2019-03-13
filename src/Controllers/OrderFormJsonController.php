@@ -12,7 +12,8 @@ use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\PaymentPlanService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
-use Railroad\Resora\Entities\Entity;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class OrderFormJsonController extends BaseController
 {
@@ -74,6 +75,11 @@ class OrderFormJsonController extends BaseController
         $this->permissionService = $permissionService;
     }
 
+    /**
+     * @return Fractal
+     *
+     * @throws Throwable
+     */
     public function index()
     {
         $this->cartService
@@ -111,7 +117,10 @@ class OrderFormJsonController extends BaseController
      * Submit an order
      *
      * @param OrderFormSubmitRequest $request
-     * @return JsonResponse
+     *
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function submitOrder(OrderFormSubmitRequest $request)
     {

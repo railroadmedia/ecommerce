@@ -2,12 +2,41 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Entities\Product;
 
+/**
+ * Class ProductRepository
+ *
+ * @method Product find($id, $lockMode = null, $lockVersion = null)
+ * @method Product findOneBy(array $criteria, array $orderBy = null)
+ * @method Product[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method Product[] findAll()
+ *
+ * @package Railroad\Ecommerce\Repositories
+ */
 class ProductRepository extends EntityRepository
 {
-    public function getAccessCodeProducts(AccessCode $accessCode)
+    /**
+     * ProductRepository constructor.
+     *
+     * @param EntityManager $em
+     */
+    public function __construct(EntityManager $em)
+    {
+        parent::__construct($em, $em->getClassMetadata(Product::class));
+    }
+
+    /**
+     * Returns an array of Products from $accessCode productsIds
+     *
+     * @param AccessCode $accessCode
+     *
+     * @return array
+     */
+    public function getAccessCodeProducts(AccessCode $accessCode): array
     {
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
@@ -31,7 +60,14 @@ class ProductRepository extends EntityRepository
         return $q->getResult();
     }
 
-    public function getAccessCodesProducts(array $accessCodes)
+    /**
+     * Returns an array of Products from $accessCodes productsIds
+     *
+     * @param array $accessCodes
+     *
+     * @return array
+     */
+    public function getAccessCodesProducts(array $accessCodes): array
     {
         $productIds = [];
 

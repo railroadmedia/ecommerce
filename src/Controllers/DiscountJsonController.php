@@ -2,9 +2,9 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Entities\Discount;
@@ -12,9 +12,10 @@ use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Requests\DiscountCreateRequest;
 use Railroad\Ecommerce\Requests\DiscountUpdateRequest;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class DiscountJsonController extends BaseController
 {
@@ -41,21 +42,22 @@ class DiscountJsonController extends BaseController
     /**
      * DiscountJsonController constructor.
      *
+     * @param DiscountRepository $discountRepository
      * @param EntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
-     * @param \Railroad\Permissions\Services\PermissionService    $permissionService
+     * @param PermissionService $permissionService
      */
     public function __construct(
+        DiscountRepository $discountRepository,
         EntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService
     ) {
         parent::__construct();
 
+        $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
-        $this->discountRepository = $this->entityManager
-                                        ->getRepository(Discount::class);
         $this->permissionService  = $permissionService;
     }
 
@@ -64,7 +66,9 @@ class DiscountJsonController extends BaseController
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function index(Request $request)
     {
@@ -103,12 +107,13 @@ class DiscountJsonController extends BaseController
     /**
      * Pull discount
      *
-     * @param \Illuminate\Http\Request $request
-     * @param  int $discountId
+     * @param int $discountId
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
-    public function show(Request $request, $discountId)
+    public function show($discountId)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.discounts');
 
@@ -143,9 +148,11 @@ class DiscountJsonController extends BaseController
     }
 
     /**
-     * @param \Railroad\Ecommerce\Requests\DiscountCreateRequest $request
+     * @param DiscountCreateRequest $request
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function store(DiscountCreateRequest $request)
     {
@@ -162,10 +169,12 @@ class DiscountJsonController extends BaseController
     }
 
     /**
-     * @param \Railroad\Ecommerce\Requests\DiscountUpdateRequest $request
+     * @param DiscountUpdateRequest $request
      * @param int $discountId
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function update(DiscountUpdateRequest $request, $discountId)
     {
@@ -189,6 +198,8 @@ class DiscountJsonController extends BaseController
      * @param int $discountId
      *
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     public function delete($discountId)
     {

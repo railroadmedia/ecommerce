@@ -19,7 +19,11 @@ use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Exceptions\TransactionFailedException;
+use Railroad\Ecommerce\Repositories\CreditCardRepository;
+use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
+use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentIndexRequest;
@@ -34,9 +38,19 @@ use Railroad\Permissions\Services\PermissionService;
 class PaymentJsonController extends BaseController
 {
     /**
+     * @var CreditCardRepository
+     */
+    private $creditCardRepository;
+
+    /**
      * @var EntityManager
      */
     private $entityManager;
+
+    /**
+     * @var OrderRepository
+     */
+    private $orderRepository;
 
     /**
      * @var PaymentRepository
@@ -44,9 +58,19 @@ class PaymentJsonController extends BaseController
     private $paymentRepository;
 
     /**
+     * @var PaypalBillingAgreementRepository
+     */
+    private $paypalBillingAgreementRepository;
+
+    /**
      * @var PermissionService
      */
     private $permissionService;
+
+    /**
+     * @var SubscriptionRepository
+     */
+    private $subscriptionRepository;
 
     /**
      * @var UserPaymentMethodsRepository
@@ -76,34 +100,43 @@ class PaymentJsonController extends BaseController
     /**
      * PaymentJsonController constructor.
      *
+     * @param CreditCardRepository $creditCardRepository
      * @param CurrencyService $currencyService
      * @param EntityManager $entityManager
+     * @param PaymentRepository $paymentRepository
+     * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
+     * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
-     * @param PayPalPaymentGateway $payPalPaymentGateway
+     * @param SubscriptionRepository $subscriptionRepository
+     * @param UserPaymentMethodsRepository $userPaymentMethodsRepository
      */
     public function __construct(
+        CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
         EntityManager $entityManager,
+        OrderRepository $orderRepository,
+        PaymentRepository $paymentRepository,
+        PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
+        PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService,
         StripePaymentGateway $stripePaymentGateway,
-        PayPalPaymentGateway $payPalPaymentGateway
-    )
-    {
+        SubscriptionRepository $subscriptionRepository,
+        UserPaymentMethodsRepository $userPaymentMethodsRepository
+    ) {
         parent::__construct();
 
+        $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;
-
-        $this->userPaymentMethodsRepository = $this->entityManager
-                                    ->getRepository(UserPaymentMethods::class);
-
-        $this->paymentRepository = $this->entityManager
-                                    ->getRepository(Payment::class);
-
+        $this->orderRepository = $orderRepository;
+        $this->paymentRepository = $paymentRepository;
+        $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
+        $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
-        $this->payPalPaymentGateway = $payPalPaymentGateway;
+        $this->subscriptionRepository = $subscriptionRepository;
+        $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
     }
 
     /**
@@ -259,8 +292,7 @@ class PaymentJsonController extends BaseController
                 /**
                  * @var $method \Railroad\Ecommerce\Entities\CreditCard
                  */
-                $method = $this->entityManager
-                                ->getRepository(CreditCard::class)
+                $method = $this->creditCardRepository
                                 ->find($paymentMethod->getMethodId());
 
                 $customer = $this->stripePaymentGateway->getCustomer(
@@ -312,8 +344,7 @@ class PaymentJsonController extends BaseController
                 /**
                  * @var $method \Railroad\Ecommerce\Entities\PaypalBillingAgreement
                  */
-                $method = $this->entityManager
-                                ->getRepository(PaypalBillingAgreement::class)
+                $method = $this->paypalBillingAgreementRepository
                                 ->find($paymentMethod->getMethodId());
 
                 $transactionId = $this->payPalPaymentGateway
@@ -374,8 +405,7 @@ class PaymentJsonController extends BaseController
             /**
              * @var $subscription \Railroad\Ecommerce\Entities\Subscription
              */
-            $subscription = $this->entityManager
-                            ->getRepository(Subscription::class)
+            $subscription = $this->subscriptionRepository
                             ->find($subscriptionId);
 
             $subscription
@@ -404,9 +434,7 @@ class PaymentJsonController extends BaseController
             /**
              * @var $order \Railroad\Ecommerce\Entities\Order
              */
-            $order = $this->entityManager
-                            ->getRepository(Order::class)
-                            ->find($oderId);
+            $order = $this->orderRepository->find($oderId);
 
             /**
              * @var $orderPayments[] \Railroad\Ecommerce\Entities\OrderPayment

@@ -12,9 +12,9 @@ use Illuminate\Routing\Controller;
 use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
-use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\AddressRepository;
+use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Requests\AddressCreateRequest;
 use Railroad\Ecommerce\Requests\AddressDeleteRequest;
 use Railroad\Ecommerce\Requests\AddressUpdateRequest;
@@ -22,6 +22,7 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
 use Throwable;
 
 class AddressJsonController extends Controller
@@ -42,6 +43,11 @@ class AddressJsonController extends Controller
     private $permissionService;
 
     /**
+     * @var OrderRepository
+     */
+    private $orderRepository;
+
+    /**
      * @var JsonApiHydrator
      */
     private $jsonApiHydrator;
@@ -54,29 +60,32 @@ class AddressJsonController extends Controller
     /**
      * AddressJsonController constructor.
      *
+     * @param AddressRepository $addressRepository
      * @param EntityManager $entityManager
+     * @param OrderRepository $orderRepository
      * @param PermissionService $permissionService
      * @param JsonApiHydrator $jsonApiHydrator
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        AddressRepository $addressRepository,
         EntityManager $entityManager,
+        OrderRepository $orderRepository,
         PermissionService $permissionService,
         JsonApiHydrator $jsonApiHydrator,
         UserProviderInterface $userProvider
     ) {
+        $this->addressRepository = $addressRepository;
         $this->entityManager = $entityManager;
+        $this->orderRepository = $orderRepository;
         $this->permissionService = $permissionService;
         $this->jsonApiHydrator = $jsonApiHydrator;
-
-        $this->addressRepository = $this->entityManager->getRepository(Address::class);
-
         $this->userProvider = $userProvider;
     }
 
     /**
      * @param Request $request
-     * @return JsonResponse
+     * @return Fractal
      * @throws NotAllowedException
      */
     public function index(Request $request)
@@ -121,6 +130,7 @@ class AddressJsonController extends Controller
      * @throws ORMException
      * @throws OptimisticLockException
      * @throws Exception
+     * @throws Throwable
      */
     public function store(AddressCreateRequest $request)
     {
@@ -253,10 +263,8 @@ class AddressJsonController extends Controller
             new NotAllowedException('This action is unauthorized.')
         );
 
-        $orderRepository = $this->entityManager->getRepository(Order::class);
-
         throw_if(
-            $orderRepository->ordersWithAdressExist($address),
+            $this->orderRepository->ordersWithAdressExist($address),
             new NotAllowedException(
                 'Delete failed, orders found with selected address.'
             )

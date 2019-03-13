@@ -2,10 +2,32 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
+use Railroad\Ecommerce\Entities\Subscription;
 
+/**
+ * Class SubscriptionRepository
+ *
+ * @method Subscription find($id, $lockMode = null, $lockVersion = null)
+ * @method Subscription findOneBy(array $criteria, array $orderBy = null)
+ * @method Subscription[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method Subscription[] findAll()
+ *
+ * @package Railroad\Ecommerce\Repositories
+ */
 class SubscriptionRepository extends EntityRepository
 {
+    /**
+     * SubscriptionRepository constructor.
+     *
+     * @param EntityManager $em
+     */
+    public function __construct(EntityManager $em)
+    {
+        parent::__construct($em, $em->getClassMetadata(Subscription::class));
+    }
+
     /**
      * Gets subscriptions that are related to the specified products
      *

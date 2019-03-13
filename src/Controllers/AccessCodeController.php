@@ -2,19 +2,22 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Http\RedirectResponse;
-use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
-use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Repositories\AccessCodeRepository;
 use Railroad\Ecommerce\Requests\AccessCodeClaimRequest;
 use Railroad\Ecommerce\Services\AccessCodeService;
 use Throwable;
 
 class AccessCodeController extends BaseController
 {
+    /**
+     * @var AccessCodeRepository
+     */
+    private $accessCodeRepository;
+
     /**
      * @var AccessCodeService
      */
@@ -38,12 +41,14 @@ class AccessCodeController extends BaseController
     /**
      * AccessCodeController constructor.
      *
+     * @param AccessCodeRepository $accessCodeRepository
      * @param AccessCodeService $accessCodeService
      * @param EntityManager $entityManager
      * @param Hasher $hasher
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        AccessCodeRepository $accessCodeRepository,
         AccessCodeService $accessCodeService,
         EntityManager $entityManager,
         Hasher $hasher,
@@ -51,6 +56,7 @@ class AccessCodeController extends BaseController
     ) {
         parent::__construct();
 
+        $this->accessCodeRepository = $accessCodeRepository;
         $this->accessCodeService = $accessCodeService;
         $this->entityManager = $entityManager;
         $this->hasher = $hasher;
@@ -91,14 +97,10 @@ class AccessCodeController extends BaseController
             $user = $this->userProvider->getCurrentUser();
         }
 
-        $accessCodeRepository = $this->entityManager
-                                    ->getRepository(AccessCode::class);
-
-        $accessCode = $accessCodeRepository
+        $accessCode = $this->accessCodeRepository
                         ->findOneBy(['code' => $request->get('access_code')]);
 
-        $claimedAccessCode = $this->accessCodeService
-                                    ->claim($accessCode, $user);
+        $this->accessCodeService->claim($accessCode, $user);
 
         $message = ['success' => true];
 

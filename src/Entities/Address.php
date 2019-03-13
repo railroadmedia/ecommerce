@@ -9,7 +9,7 @@ use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Contracts\UserInterface;
 
 /**
- * @ORM\Entity()
+ * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\AddressRepository")
  * @ORM\Table(
  *     name="ecommerce_address",
  *     indexes={

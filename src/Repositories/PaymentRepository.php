@@ -2,13 +2,42 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
+use Railroad\Ecommerce\Entities\Payment;
 
+/**
+ * Class PaymentRepository
+ *
+ * @method Payment find($id, $lockMode = null, $lockVersion = null)
+ * @method Payment findOneBy(array $criteria, array $orderBy = null)
+ * @method Payment[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method Payment[] findAll()
+ *
+ * @package Railroad\Ecommerce\Repositories
+ */
 class PaymentRepository extends EntityRepository
 {
-    public function getOrderPayments(Order $order)
+    /**
+     * PaymentRepository constructor.
+     *
+     * @param EntityManager $em
+     */
+    public function __construct(EntityManager $em)
+    {
+        parent::__construct($em, $em->getClassMetadata(Payment::class));
+    }
+
+    /**
+     * Returns order payments with associated payments
+     *
+     * @param Order $order
+     *
+     * @return array
+     */
+    public function getOrderPayments(Order $order): array
     {
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
