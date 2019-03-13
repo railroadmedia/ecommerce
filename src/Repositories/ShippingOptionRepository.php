@@ -7,14 +7,6 @@ use Doctrine\ORM\EntityRepository;
 class ShippingOptionRepository extends EntityRepository
 {
     /**
-     * Determines whether inactive shipping options will be pulled or not.
-     * todo - update logic or remove
-     *
-     * @var array|bool
-     */
-    public static $pullInactiveShippingOptions = true;
-
-    /**
      * Get the first active shipping cost based on country and total weight
      *
      * @param string  $country
