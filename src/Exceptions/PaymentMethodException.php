@@ -18,10 +18,9 @@ class PaymentMethodException extends Exception
     }
 
     /**
-     * @param $request
      * @return JsonResponse
      */
-    public function render($request)
+    public function render()
     {
         return response()->json(
             [

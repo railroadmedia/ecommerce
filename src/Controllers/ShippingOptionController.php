@@ -2,17 +2,19 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Carbon\Carbon;
-use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Railroad\Ecommerce\Entities\ShippingOption;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Ecommerce\Requests\ShippingOptionCreateRequest;
 use Railroad\Ecommerce\Requests\ShippingOptionUpdateRequest;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class ShippingOptionController extends BaseController
 {
@@ -27,7 +29,7 @@ class ShippingOptionController extends BaseController
     private $jsonApiHydrator;
 
     /**
-     * @var EntityRepository
+     * @var ShippingOptionRepository
      */
     private $shippingOptionRepository;
 
@@ -42,19 +44,20 @@ class ShippingOptionController extends BaseController
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param PermissionService $permissionService
+     * @param ShippingOptionRepository $shippingOptionRepository
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
-        PermissionService $permissionService
+        PermissionService $permissionService,
+        ShippingOptionRepository $shippingOptionRepository
     ) {
         parent::__construct();
 
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
-        $this->shippingOptionRepository = $this->entityManager
-                ->getRepository(ShippingOption::class);
         $this->permissionService = $permissionService;
+        $this->shippingOptionRepository = $shippingOptionRepository;
     }
 
     /**
@@ -62,7 +65,9 @@ class ShippingOptionController extends BaseController
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function index(Request $request)
     {
@@ -99,7 +104,9 @@ class ShippingOptionController extends BaseController
      *
      * @param ShippingOptionCreateRequest $request
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function store(ShippingOptionCreateRequest $request)
     {
@@ -125,7 +132,9 @@ class ShippingOptionController extends BaseController
      * @param ShippingOptionUpdateRequest $request
      * @param int $shippingOptionId
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function update(
         ShippingOptionUpdateRequest $request,
@@ -159,6 +168,8 @@ class ShippingOptionController extends BaseController
      * @param integer $shippingOptionId
      *
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     public function delete($shippingOptionId)
     {

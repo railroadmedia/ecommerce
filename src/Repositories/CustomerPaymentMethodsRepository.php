@@ -26,7 +26,10 @@ class CustomerPaymentMethodsRepository extends EntityRepository
      */
     public function __construct(EcommerceEntityManager $em)
     {
-        parent::__construct($em, $em->getClassMetadata(CustomerPaymentMethods::class));
+        parent::__construct(
+            $em,
+            $em->getClassMetadata(CustomerPaymentMethods::class)
+        );
     }
 
     /**
@@ -38,8 +41,9 @@ class CustomerPaymentMethodsRepository extends EntityRepository
      *
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    public function getCustomerPrimaryPaymentMethod(Customer $customer): ?CustomerPaymentMethods
-    {
+    public function getCustomerPrimaryPaymentMethod(
+        Customer $customer
+    ): ?CustomerPaymentMethods {
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */

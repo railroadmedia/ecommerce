@@ -2,13 +2,12 @@
 
 namespace Railroad\Ecommerce\Listeners;
 
-use Doctrine\ORM\EntityRepository;
-use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
-use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Throwable;
 
 class UserDefaultPaymentMethodListener
 {
@@ -18,25 +17,46 @@ class UserDefaultPaymentMethodListener
     protected $entityManager;
 
     /**
+     * @var PaymentMethodRepository
+     */
+    protected $paymentMethodRepository;
+
+    /**
+     * @var SubscriptionRepository
+     */
+    protected $subscriptionRepository;
+
+    /**
      * @var UserProviderInterface
      */
     protected $userProvider;
 
+    /**
+     * @param EcommerceEntityManager $entityManager
+     * @param PaymentMethodRepository $paymentMethodRepository
+     * @param SubscriptionRepository $subscriptionRepository
+     * @param UserProviderInterface $userProvider
+     */
     public function __construct(
         EcommerceEntityManager $entityManager,
+        PaymentMethodRepository $paymentMethodRepository,
+        SubscriptionRepository $subscriptionRepository,
         UserProviderInterface $userProvider
     ) {
         $this->entityManager = $entityManager;
+        $this->paymentMethodRepository = $paymentMethodRepository;
+        $this->subscriptionRepository = $subscriptionRepository;
         $this->userProvider = $userProvider;
     }
 
+    /**
+     * @param UserDefaultPaymentMethodEvent $event
+     *
+     * @throws Throwable
+     */
     public function handle(UserDefaultPaymentMethodEvent $event)
     {
-        $subscriptionRepository = $this->entityManager
-                ->getRepository(Subscription::class);
-
-        $paymentMethod = $this->entityManager
-                ->getRepository(PaymentMethod::class)
+        $paymentMethod = $this->paymentMethodRepository
                 ->find(
                     $event->getDefaultPaymentMethodId()
                 );
@@ -46,8 +66,7 @@ class UserDefaultPaymentMethodListener
          */
         $user = $this->userProvider->getUserById($event->getUserId());
 
-        $qb = $subscriptionRepository
-                        ->createQueryBuilder('s');
+        $qb = $this->subscriptionRepository->createQueryBuilder('s');
 
         $qb
             ->select('s')
@@ -57,6 +76,9 @@ class UserDefaultPaymentMethodListener
         $subscriptions = $qb->getQuery()->getResult();
 
         foreach ($subscriptions as $subscription) {
+            /**
+             * @var $subscription \Railroad\Ecommerce\Entities\Subscription
+             */
             $subscription
                 ->setPaymentMethod($paymentMethod);
         }

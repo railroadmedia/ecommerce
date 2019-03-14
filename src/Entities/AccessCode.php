@@ -58,7 +58,7 @@ class AccessCode
     protected $isClaimed;
 
     /**
-     * @var int
+     * @var UserInterface
      *
      * @ORM\Column(type="user_id", name="claimer_id", nullable=true)
      */

@@ -3,16 +3,18 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
 use Railroad\Ecommerce\Requests\OrderFulfilledRequest;
 use Railroad\Ecommerce\Requests\OrderFulfillmentDeleteRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class ShippingFulfillmentJsonController extends BaseController
 {
@@ -22,7 +24,7 @@ class ShippingFulfillmentJsonController extends BaseController
     private $entityManager;
 
     /**
-     * @var EntityRepository
+     * @var OrderItemFulfillmentRepository
      */
     private $orderItemFulfillmentRepository;
 
@@ -35,19 +37,18 @@ class ShippingFulfillmentJsonController extends BaseController
      * ShippingFulfillmentJsonController constructor.
      *
      * @param EcommerceEntityManager $entityManager
+     * @param OrderItemFulfillmentRepository $orderItemFulfillmentRepository
      * @param PermissionService $permissionService
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
+        OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         PermissionService $permissionService
     ) {
         parent::__construct();
 
         $this->entityManager = $entityManager;
-
-        $this->orderItemFulfillmentRepository = $this->entityManager
-            ->getRepository(OrderItemFulfillment::class);
-
+        $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->permissionService = $permissionService;
     }
 
@@ -55,7 +56,10 @@ class ShippingFulfillmentJsonController extends BaseController
      * Pull shipping fulfillments. If the status it's set on the requests the results are filtered by status.
      *
      * @param \Illuminate\Http\Request $request
-     * @return JsonResponse
+     *
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function index(Request $request)
     {
@@ -101,7 +105,10 @@ class ShippingFulfillmentJsonController extends BaseController
      * otherwise entire order it's fulfilled.
      *
      * @param OrderFulfilledRequest $request
+     *
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     public function markShippingFulfilled(OrderFulfilledRequest $request)
     {
@@ -127,7 +134,9 @@ class ShippingFulfillmentJsonController extends BaseController
         $found = false;
 
         foreach ($fulfillments as $fulfillment) {
-
+            /**
+             * @var $fulfillment \Railroad\Ecommerce\Entities\OrderItemFulfillment
+             */
             $found = true;
 
             $fulfillment
@@ -150,8 +159,11 @@ class ShippingFulfillmentJsonController extends BaseController
     /**
      * Delete order or order item fulfillment.
      *
-     * @param \Railroad\Ecommerce\Requests\OrderFulfillmentDeleteRequest $request
+     * @param OrderFulfillmentDeleteRequest $request
+     *
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     public function delete(OrderFulfillmentDeleteRequest $request)
     {

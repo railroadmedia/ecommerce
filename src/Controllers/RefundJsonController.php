@@ -3,24 +3,24 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Entities\OrderItem;
-use Railroad\Ecommerce\Entities\OrderItemFulfillment;
-use Railroad\Ecommerce\Entities\OrderPayment;
-use Railroad\Ecommerce\Entities\Payment;
-use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Refund;
-use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Entities\SubscriptionPayment;
-use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
+use Railroad\Ecommerce\Repositories\OrderItemRepository;
+use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
+use Railroad\Ecommerce\Repositories\PaymentRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
+use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class RefundJsonController extends BaseController
 {
@@ -28,6 +28,26 @@ class RefundJsonController extends BaseController
      * @var EcommerceEntityManager
      */
     private $entityManager;
+
+    /**
+     * @var OrderItemFulfillmentRepository
+     */
+    private $orderItemFulfillmentRepository;
+
+    /**
+     * @var OrderItemRepository
+     */
+    private $orderItemRepository;
+
+    /**
+     * @var OrderPaymentRepository
+     */
+    private $orderPaymentRepository;
+
+    /**
+     * @var PaymentRepository
+     */
+    private $paymentRepository;
 
     /**
      * @var PayPalPaymentGateway
@@ -45,33 +65,61 @@ class RefundJsonController extends BaseController
     private $stripePaymentGateway;
 
     /**
+     * @var SubscriptionPaymentRepository
+     */
+    private $subscriptionPaymentRepository;
+
+    /**
      * @var UserProductService
      */
     private $userProductService;
 
     /**
+     * @var UserProductRepository
+     */
+    private $userProductRepository;
+
+    /**
      * RefundJsonController constructor.
      *
      * @param EcommerceEntityManager $entityManager
+     * @param OrderItemFulfillmentRepository $orderItemFulfillmentRepository
+     * @param OrderItemRepository $orderItemRepository
+     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param PaymentRepository $paymentRepository
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
+     * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
      * @param UserProductService $userProductService
+     * @param UserProductRepository $userProductRepository
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
+        OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
+        OrderItemRepository $orderItemRepository,
+        OrderPaymentRepository $orderPaymentRepository,
+        PaymentRepository $paymentRepository,
         PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService,
         StripePaymentGateway $stripePaymentGateway,
-        UserProductService $userProductService
+        SubscriptionPaymentRepository $subscriptionPaymentRepository,
+        UserProductService $userProductService,
+        UserProductRepository $userProductRepository
     ) {
         parent::__construct();
 
         $this->entityManager = $entityManager;
+        $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
+        $this->orderItemRepository = $orderItemRepository;
+        $this->orderPaymentRepository = $orderPaymentRepository;
+        $this->paymentRepository = $paymentRepository;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
+        $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->userProductService = $userProductService;
+        $this->userProductRepository = $userProductRepository;
     }
 
     /**
@@ -79,21 +127,21 @@ class RefundJsonController extends BaseController
      * Return the new created refund in JSON format
      *
      * @param RefundCreateRequest $request
-     * @return JsonResponse
+     *
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function store(RefundCreateRequest $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'store.refund');
-
-        $paymentRepository = $this->entityManager
-                                    ->getRepository(Payment::class);
 
         $paymentId = $request->input('data.relationships.payment.data.id');
 
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $paymentRepository->createQueryBuilder('p');
+        $qb = $this->paymentRepository->createQueryBuilder('p');
 
         $qb
             ->select(['p', 'pm'])
@@ -102,14 +150,16 @@ class RefundJsonController extends BaseController
             ->setParameter('id', $paymentId);
 
         /**
-         * @var $payment Railroad\Ecommerce\Entities\Payment
+         * @var $payment \Railroad\Ecommerce\Entities\Payment
          */
         $payment = $qb->getQuery()->getOneOrNullResult();
 
         /**
-         * @var $payment Railroad\Ecommerce\Entities\PaymentMethod
+         * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
          */
         $paymentMethod = $payment->getPaymentMethod();
+
+        $refundExternalId = null;
 
         if ($paymentMethod->getMethodType() == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
             $refundExternalId = $this->stripePaymentGateway->refund(
@@ -150,9 +200,7 @@ class RefundJsonController extends BaseController
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->entityManager
-                ->getRepository(OrderPayment::class)
-                ->createQueryBuilder('op');
+        $qb = $this->orderPaymentRepository->createQueryBuilder('op');
 
         $qb
             ->select(['op', 'p'])
@@ -165,9 +213,12 @@ class RefundJsonController extends BaseController
 
         $distinctOrders = [];
 
+        /**
+         * @var $orderPayment \Railroad\Ecommerce\Entities\OrderPayment
+         */
         foreach ($orderPayments as $orderPayment) {
             /**
-             * @var $order Railroad\Ecommerce\Entities\Order
+             * @var $order \Railroad\Ecommerce\Entities\Order
              */
             $order = $orderPayment->getOrder();
             $distinctOrders[$order->getId()] = $order;
@@ -176,9 +227,7 @@ class RefundJsonController extends BaseController
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->entityManager
-                ->getRepository(OrderItemFulfillment::class)
-                ->createQueryBuilder('oif');
+        $qb = $this->orderItemFulfillmentRepository->createQueryBuilder('oif');
 
         $qb
             ->where($qb->expr()->in('oif.order', ':orders'))
@@ -199,9 +248,7 @@ class RefundJsonController extends BaseController
                 /**
                  * @var $qb \Doctrine\ORM\QueryBuilder
                  */
-                $qb = $this->entityManager
-                        ->getRepository(OrderItem::class)
-                        ->createQueryBuilder('oi');
+                $qb = $this->orderItemRepository->createQueryBuilder('oi');
 
                 $qb
                     ->select(['oi', 'p'])
@@ -213,6 +260,9 @@ class RefundJsonController extends BaseController
 
                 $distinctProducts = [];
 
+                /**
+                 * @var $orderItem \Railroad\Ecommerce\Entities\OrderItem
+                 */
                 foreach ($orderItems as $orderItem) {
                     /**
                      * @var $product \Railroad\Ecommerce\Entities\Product
@@ -225,9 +275,7 @@ class RefundJsonController extends BaseController
                 /**
                  * @var $qb \Doctrine\ORM\QueryBuilder
                  */
-                $qb = $this->entityManager
-                        ->getRepository(UserProduct::class)
-                        ->createQueryBuilder('up');
+                $qb = $this->userProductRepository->createQueryBuilder('up');
 
                 $qb
                     ->where($qb->expr()->in('up.product', ':products'))
@@ -242,9 +290,8 @@ class RefundJsonController extends BaseController
                 /**
                  * @var $qb \Doctrine\ORM\QueryBuilder
                  */
-                $qb = $this->entityManager
-                        ->getRepository(SubscriptionPayment::class)
-                        ->createQueryBuilder('sp');
+                $qb = $this->subscriptionPaymentRepository
+                                ->createQueryBuilder('sp');
 
                 $qb
                     ->select(['sp', 's'])
@@ -254,6 +301,9 @@ class RefundJsonController extends BaseController
 
                 $subscriptionPayments = $qb->getQuery()->getResult();
 
+                /**
+                 * @var $subscriptionPayment \Railroad\Ecommerce\Entities\SubscriptionPayment
+                 */
                 foreach ($subscriptionPayments as $subscriptionPayment) {
                     /**
                      * @var $subscription \Railroad\Ecommerce\Entities\Subscription

@@ -15,7 +15,8 @@ class StripeCardException extends \Exception
         $this->stripeError = $stripeError;
     }
 
-    public function render($request){
+    public function render()
+    {
         return response()->json(
             [
                 'errors' => [

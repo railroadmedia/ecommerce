@@ -3,9 +3,8 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityRepository;
 use Exception;
-use HttpResponseException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Subscription;
@@ -13,12 +12,15 @@ use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
 use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class SubscriptionJsonController extends BaseController
 {
@@ -33,7 +35,7 @@ class SubscriptionJsonController extends BaseController
     private $jsonApiHydrator;
 
     /**
-     * @var EntityRepository
+     * @var SubscriptionRepository
      */
     private $subscriptionRepository;
 
@@ -64,6 +66,7 @@ class SubscriptionJsonController extends BaseController
      * @param JsonApiHydrator $jsonApiHydrator
      * @param \Railroad\Permissions\Services\PermissionService $permissionService
      * @param RenewalService $renewalService
+     * @param SubscriptionRepository $subscriptionRepository
      * @param UserProductService $userProductService
      * @param UserProviderInterface $userProvider
      */
@@ -72,6 +75,7 @@ class SubscriptionJsonController extends BaseController
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService,
         RenewalService $renewalService,
+        SubscriptionRepository $subscriptionRepository,
         UserProductService $userProductService,
         UserProviderInterface $userProvider
     ) {
@@ -79,10 +83,9 @@ class SubscriptionJsonController extends BaseController
 
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
-        $this->subscriptionRepository = $this->entityManager
-                ->getRepository(Subscription::class);
         $this->permissionService = $permissionService;
         $this->renewalService = $renewalService;
+        $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
         $this->userProvider = $userProvider;
     }
@@ -92,7 +95,9 @@ class SubscriptionJsonController extends BaseController
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function index(Request $request)
     {
@@ -147,6 +152,8 @@ class SubscriptionJsonController extends BaseController
      * @param int $subscriptionId
      *
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     public function delete($subscriptionId)
     {
@@ -170,9 +177,9 @@ class SubscriptionJsonController extends BaseController
      *
      * @param \Railroad\Ecommerce\Requests\SubscriptionCreateRequest $request
      *
-     * @return JsonResponse
+     * @return Fractal
      *
-     * @throws \Railroad\Permissions\Exceptions\NotAllowedException
+     * @throws Throwable
      */
     public function store(SubscriptionCreateRequest $request)
     {
@@ -197,9 +204,11 @@ class SubscriptionJsonController extends BaseController
      * Update a subscription and returned updated data in JSON format
      *
      * @param int $subscriptionId
-     * @param \Railroad\Ecommerce\Requests\SubscriptionUpdateRequest $request
+     * @param SubscriptionUpdateRequest $request
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function update($subscriptionId, SubscriptionUpdateRequest $request)
     {
@@ -244,7 +253,9 @@ class SubscriptionJsonController extends BaseController
     /**
      * @param int $subscriptionId
      *
-     * @return mixed
+     * @return JsonResponse
+     *
+     * @throws Throwable
      */
     public function renew($subscriptionId)
     {

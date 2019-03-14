@@ -2,14 +2,14 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Railroad\Ecommerce\Entities\Discount;
-use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\DiscountRepository;
+use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\ProductCreateRequest;
 use Railroad\Ecommerce\Requests\ProductUpdateRequest;
@@ -18,10 +18,16 @@ use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Services\RemoteStorageService;
-use Railroad\Resora\Entities\Entity;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class ProductJsonController extends BaseController
 {
+    /**
+     * @var DiscountRepository
+     */
+    private $discountRepository;
+
     /**
      * @var EcommerceEntityManager
      */
@@ -33,41 +39,53 @@ class ProductJsonController extends BaseController
     private $jsonApiHydrator;
 
     /**
-     * @var \Railroad\Permissions\Services\PermissionService
+     * @var OrderItemRepository
+     */
+    private $orderItemRepository;
+
+    /**
+     * @var PermissionService
      */
     private $permissionService;
 
     /**
-     * @var \Railroad\Ecommerce\Repositories\ProductRepository
+     * @var ProductRepository
      */
     private $productRepository;
 
     /**
-     * @var \Railroad\RemoteStorage\Services\RemoteStorageService
+     * @var RemoteStorageService
      */
     private $remoteStorageService;
 
     /**
      * ProductJsonController constructor.
      *
+     * @param DiscountRepository $discountRepository
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
-     * @param \Railroad\Permissions\Services\PermissionService $permissionService
-     * @param \Railroad\RemoteStorage\Services\RemoteStorageService $remoteStorageService
+     * @param OrderItemRepository $orderItemRepository
+     * @param PermissionService $permissionService
+     * @param ProductRepository $productRepository
+     * @param RemoteStorageService $remoteStorageService
      */
     public function __construct(
+        DiscountRepository $discountRepository,
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
+        OrderItemRepository $orderItemRepository,
         PermissionService $permissionService,
+        ProductRepository $productRepository,
         RemoteStorageService $remoteStorageService
     ) {
         parent::__construct();
 
+        $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
+        $this->orderItemRepository = $orderItemRepository;
         $this->permissionService = $permissionService;
-        $this->productRepository = $this->entityManager
-                                        ->getRepository(Product::class);
+        $this->productRepository = $productRepository;
         $this->remoteStorageService = $remoteStorageService;
     }
 
@@ -119,6 +137,8 @@ class ProductJsonController extends BaseController
      * @param ProductCreateRequest $request
      *
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     public function store(ProductCreateRequest $request)
     {
@@ -142,9 +162,11 @@ class ProductJsonController extends BaseController
      * Update a product based on product id and return it in JSON format
      *
      * @param ProductUpdateRequest $request
-     * @param integer $productId
+     * @param int $productId
      *
      * @return JsonResponse|NotFoundException
+     *
+     * @throws Throwable
      */
     public function update(ProductUpdateRequest $request, $productId)
     {
@@ -168,12 +190,11 @@ class ProductJsonController extends BaseController
     /**
      * Delete a product that it's not connected to orders or discounts and return a JsonResponse.
      *
-     * @param integer $productId
+     * @param int $productId
      *
      * @return JsonResponse
      *
-     * @throws NotFoundException - if the product not exist or the user have not rights to delete the product
-     * @throws NotAllowedException - if the product it's connected to orders or discounts
+     * @throws Throwable
      */
     public function delete($productId)
     {
@@ -187,18 +208,14 @@ class ProductJsonController extends BaseController
             );
         }
 
-        $orderItems = $this->entityManager
-                        ->getRepository(OrderItem::class)
-                        ->findByProduct($product);
+        $orderItems = $this->orderItemRepository->findByProduct($product);
 
         throw_if(
             (count($orderItems) > 0),
             new NotAllowedException('Delete failed, exists orders that contain the selected product.')
         );
 
-        $discounts = $this->entityManager
-                        ->getRepository(Discount::class)
-                        ->findByProduct($product);
+        $discounts = $this->discountRepository->findByProduct($product);
 
         throw_if(
             (count($discounts) > 0),
@@ -217,7 +234,9 @@ class ProductJsonController extends BaseController
      *
      * @param Request $request
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function uploadThumbnail(Request $request)
     {
@@ -237,14 +256,13 @@ class ProductJsonController extends BaseController
     /**
      * Pull specific product
      *
-     * @param Request $request
      * @param $productId
      *
      * @return mixed
      *
-     * @throws \Throwable
+     * @throws Throwable
      */
-    public function show(Request $request, $productId)
+    public function show($productId)
     {
         $active = $this->permissionService->can(
             auth()->id(),

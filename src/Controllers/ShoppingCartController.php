@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -10,8 +11,7 @@ use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\PaymentPlanService;
 use Railroad\Ecommerce\Services\ResponseService;
-use Railroad\Ecommerce\Services\TaxService;
-use Railroad\Resora\Entities\Entity;
+use Spatie\Fractal\Fractal;
 
 class ShoppingCartController extends BaseController
 {
@@ -43,16 +43,18 @@ class ShoppingCartController extends BaseController
     /**
      * ShoppingCartController constructor.
      *
-     * @param \Railroad\Ecommerce\Services\CartService $cartService
-     * @param \Railroad\Ecommerce\Services\CartAddressService $cartAddressService
+     * @param CartService $cartService
+     * @param CartAddressService $cartAddressService
      * @param EcommerceEntityManager $entityManager
-     * @param \Railroad\Ecommerce\Services\PaymentPlanService $paymentPlanService
+     * @param PaymentPlanService $paymentPlanService
+     * @param ProductRepository $productRepository
      */
     public function __construct(
         CartService $cartService,
         CartAddressService $cartAddressService,
         EcommerceEntityManager $entityManager,
-        PaymentPlanService $paymentPlanService
+        PaymentPlanService $paymentPlanService,
+        ProductRepository $productRepository
     ) {
         parent::__construct();
 
@@ -60,8 +62,7 @@ class ShoppingCartController extends BaseController
         $this->cartAddressService = $cartAddressService;
         $this->entityManager = $entityManager;
         $this->paymentPlanService = $paymentPlanService;
-        $this->productRepository = $this->entityManager
-                                        ->getRepository(Product::class);
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -69,7 +70,8 @@ class ShoppingCartController extends BaseController
      * The success field from response it's set to false if at least one product it's not active or available.
      *
      * @param Request $request
-     * @return array
+     *
+     * @return RedirectResponse
      */
     public function addToCart(Request $request)
     {
@@ -77,7 +79,6 @@ class ShoppingCartController extends BaseController
         $errors = [];
         $addedProducts = [];
         $success = false;
-        $redirect = false;
 
         if (!empty($input['locked']) && $input['locked'] == "true") {
             $this->cartService->lockCart();
@@ -85,31 +86,22 @@ class ShoppingCartController extends BaseController
             $this->cartService->unlockCart();
         }
 
-        if (array_key_exists('redirect', $input) && $input['redirect'] == "/shop") {
-            $redirect = $input['redirect'];
-        }
-
         // if the promo code exists on the requests, set it on the session
         if (!empty($input['promo-code'])) {
             $this->cartService->setPromoCode($input['promo-code']);
         }
 
+        $cart = $this->cartService->getCart();
+
         if (!empty($input['products'])) {
             $products = $input['products'];
-            $cart = $this->cartService->getCart();
 
             foreach ($products as $productSku => $productInfo) {
                 $productInfo = explode(',', $productInfo);
 
                 $quantityToAdd = $productInfo[0];
 
-                if (!empty($productInfo[1])) {
-                    $subscriptionType = !empty($productInfo[1]) ? $productInfo[1] : null;
-                    $subscriptionFrequency = !empty($productInfo[2]) ? $productInfo[2] : null;
-                }
-
-                $product = $this->productRepository
-                                ->findOneBySku($productSku);
+                $product = $this->productRepository->findOneBySku($productSku);
 
                 if (
                     $product &&
@@ -150,9 +142,6 @@ class ShoppingCartController extends BaseController
             }
         }
 
-        $billingAddress = $this->cartAddressService
-            ->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
-
         /** @var \Illuminate\Http\RedirectResponse $redirectResponse */
         $redirectResponse = $request->get('redirect') ?
             redirect()->away($request->get('redirect')) :
@@ -171,13 +160,17 @@ class ShoppingCartController extends BaseController
      * Remove product from cart.
      *
      * @param int $productId
-     * @return JsonResponse
+     *
+     * @return Fractal
      */
     public function removeCartItem($productId)
     {
         $cartItems = $this->cartService->getCart()->getItems();
 
         foreach ($cartItems as $cartItem) {
+            /**
+             * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+             */
             if ($cartItem->getOptions()['product-id'] == $productId) {
                 $this->cartService->removeCartItem($cartItem->id);
                 $this->cartService->calculateShippingCosts();
@@ -198,13 +191,12 @@ class ShoppingCartController extends BaseController
      *
      * @param int $productId
      * @param int $quantity
-     * @return JsonResponse
+     *
+     * @return Fractal
      */
     public function updateCartItemQuantity($productId, $quantity)
     {
-        $product = $this->entityManager
-                        ->getRepository(Product::class)
-                        ->find($productId);
+        $product = $this->productRepository->find($productId);
 
         $errors = [];
         $success = true;
@@ -231,6 +223,9 @@ class ShoppingCartController extends BaseController
             $cartItems = $this->cartService->getAllCartItems();
 
             foreach ($cartItems as $cartItem) {
+                /**
+                 * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+                 */
                 if ($cartItem->getOptions()['product-id'] == $productId) {
                     if ($quantity > 0) {
                         $this->cartService

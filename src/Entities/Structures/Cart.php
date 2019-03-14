@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Entities\Structures;
 
 use Illuminate\Support\Facades\Session;
-use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\CartAddressService;
@@ -311,7 +310,7 @@ class Cart
     }
 
     /**
-     * @param array $discount - array of \Railroad\Ecommerce\Entities\Discount
+     * @param array $discounts - array of \Railroad\Ecommerce\Entities\Discount
      */
     public function setAppliedDiscounts(array $discounts)
     {

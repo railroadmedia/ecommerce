@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
@@ -12,6 +13,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  * @method Discount find($id, $lockMode = null, $lockVersion = null)
  * @method Discount findOneBy(array $criteria, array $orderBy = null)
  * @method Discount[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method Discount[] findByProduct(Product $product)
  * @method Discount[] findAll()
  *
  * @package Railroad\Ecommerce\Repositories

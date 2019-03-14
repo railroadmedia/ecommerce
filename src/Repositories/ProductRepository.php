@@ -12,6 +12,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  *
  * @method Product find($id, $lockMode = null, $lockVersion = null)
  * @method Product findOneBy(array $criteria, array $orderBy = null)
+ * @method Product findOneBySku(string $sku)
  * @method Product[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  * @method Product[] findAll()
  *

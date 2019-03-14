@@ -206,7 +206,7 @@ class UserProductService
      * Remove user products.
      *
      * @param UserInterface $user
-     * @param array $products - collection of elements:
+     * @param Collection $products - collection of elements:
      * [
      *     'product' => (Product) $product,
      *     'quantity' => (int) $quantity

@@ -4,13 +4,19 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Services\ResponseService;
+use Throwable;
 
 class StripeWebhookController extends BaseController
 {
+    /**
+     * @var CreditCardRepository
+     */
+    private $creditCardRepository;
+
     /**
      * @var EcommerceEntityManager
      */
@@ -22,8 +28,10 @@ class StripeWebhookController extends BaseController
      * @param EcommerceEntityManager $entityManager
      */
     public function __construct(
+        CreditCardRepository $creditCardRepository,
         EcommerceEntityManager $entityManager
     ) {
+        $this->creditCardRepository = $creditCardRepository;
         $this->entityManager = $entityManager;
     }
 
@@ -33,7 +41,10 @@ class StripeWebhookController extends BaseController
      * Webhook data are sent as JSON in the POST request body.
      *
      * @param Request $request
+     *
      * @return mixed
+     *
+     * @throws Throwable
      */
     public function handleCustomerSourceUpdated(Request $request)
     {
@@ -51,8 +62,7 @@ class StripeWebhookController extends BaseController
             )
         );
 
-        $creditCards = $this->entityManager
-                            ->getRepository(CreditCard::class)
+        $creditCards = $this->creditCardRepository
                             ->findByExternalId($data['data']['object']['id']);
 
         $expirationDate = Carbon::createFromDate(
@@ -61,6 +71,9 @@ class StripeWebhookController extends BaseController
             );
 
         foreach ($creditCards as $creditCard) {
+            /**
+             * @var $creditCard \Railroad\Ecommerce\Entities\CreditCard
+             */
             $creditCard
                 ->setExpirationDate($expirationDate)
                 ->setLastFourDigits($data['data']['object']['last4'])
@@ -69,7 +82,7 @@ class StripeWebhookController extends BaseController
 
         $this->entityManager->flush();
 
-        ResponseService::empty(200);
+        return ResponseService::empty(200);
     }
 
 }

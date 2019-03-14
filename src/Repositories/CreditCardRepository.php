@@ -12,6 +12,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  * @method CreditCard find($id, $lockMode = null, $lockVersion = null)
  * @method CreditCard findOneBy(array $criteria, array $orderBy = null)
  * @method CreditCard[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method CreditCard[] findByExternalId(string $externalId)
  * @method CreditCard[] findAll()
  *
  * @package Railroad\Ecommerce\Repositories

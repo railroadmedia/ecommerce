@@ -3,12 +3,12 @@
 namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\UserProductService;
+use Throwable;
 
 class RenewalDueSubscriptions extends \Illuminate\Console\Command
 {
@@ -53,27 +53,27 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
      *
      * @param EcommerceEntityManager $entityManager
      * @param RenewalService $renewalService
+     * @param SubscriptionRepository $subscriptionRepository
      * @param UserProductService $userProductService
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
         RenewalService $renewalService,
+        SubscriptionRepository $subscriptionRepository,
         UserProductService $userProductService
     ) {
         parent::__construct();
 
         $this->entityManager = $entityManager;
         $this->renewalService = $renewalService;
-        $this->subscriptionRepository = $this->entityManager
-                                        ->getRepository(Subscription::class);
+        $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
     }
 
     /**
      * Execute the console command.
      *
-     * @return mixed
-     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     * @throws Throwable
      */
     public function handle()
     {

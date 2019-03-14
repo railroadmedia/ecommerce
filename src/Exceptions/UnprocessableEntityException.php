@@ -15,7 +15,8 @@ class UnprocessableEntityException extends \Exception
         $this->message = $message;
     }
 
-    public function render($request){
+    public function render()
+    {
         return response()->json(
             [
                 'errors' => [

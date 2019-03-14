@@ -58,7 +58,7 @@ class Subscription
     protected $type;
 
     /**
-     * @var int
+     * @var UserInterface
      *
      * @ORM\Column(type="user_id", name="user_id", nullable=true)
      */

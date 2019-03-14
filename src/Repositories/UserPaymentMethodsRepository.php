@@ -26,7 +26,10 @@ class UserPaymentMethodsRepository extends EntityRepository
      */
     public function __construct(EcommerceEntityManager $em)
     {
-        parent::__construct($em, $em->getClassMetadata(UserPaymentMethods::class));
+        parent::__construct(
+            $em,
+            $em->getClassMetadata(UserPaymentMethods::class)
+        );
     }
 
     /**

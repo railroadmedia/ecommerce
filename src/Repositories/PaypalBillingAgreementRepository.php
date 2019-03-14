@@ -25,7 +25,10 @@ class PaypalBillingAgreementRepository extends EntityRepository
      */
     public function __construct(EcommerceEntityManager $em)
     {
-        parent::__construct($em, $em->getClassMetadata(PaypalBillingAgreement::class));
+        parent::__construct(
+            $em,
+            $em->getClassMetadata(PaypalBillingAgreement::class)
+        );
     }
 
     /**

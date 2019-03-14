@@ -53,7 +53,7 @@ class Address implements AddressInterface
     protected $brand;
 
     /**
-     * @var int
+     * @var UserInterface
      *
      * @ORM\Column(type="user_id", name="user_id", nullable=true)
      */
@@ -148,7 +148,7 @@ class Address implements AddressInterface
     }
 
     /**
-     * @param string $brand
+     * @param string $type
      *
      * @return Address
      */
@@ -232,7 +232,7 @@ class Address implements AddressInterface
     }
 
     /**
-     * @param string $streelLineOne
+     * @param string $streetLine1
      *
      * @return Address
      */
@@ -253,7 +253,7 @@ class Address implements AddressInterface
     }
 
     /**
-     * @param string $streetLineTwo
+     * @param string $streetLine2
      *
      * @return Address
      */

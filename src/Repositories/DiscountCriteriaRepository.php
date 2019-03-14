@@ -25,6 +25,9 @@ class DiscountCriteriaRepository extends EntityRepository
      */
     public function __construct(EcommerceEntityManager $em)
     {
-        parent::__construct($em, $em->getClassMetadata(DiscountCriteria::class));
+        parent::__construct(
+            $em,
+            $em->getClassMetadata(DiscountCriteria::class)
+        );
     }
 }

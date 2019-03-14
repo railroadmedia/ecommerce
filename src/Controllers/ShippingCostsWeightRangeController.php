@@ -2,17 +2,18 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Carbon\Carbon;
-use Doctrine\ORM\EntityRepository;
+use Illuminate\Http\JsonResponse;
 use Railroad\Ecommerce\Entities\ShippingCostsWeightRange;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\ShippingCostsRepository;
+use Railroad\Ecommerce\Repositories\ShippingCostsWeightRangeRepository;
 use Railroad\Ecommerce\Requests\ShippingCostCreateRequest;
 use Railroad\Ecommerce\Requests\ShippingCostUpdateRequest;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class ShippingCostsWeightRangeController extends BaseController
 {
@@ -27,9 +28,9 @@ class ShippingCostsWeightRangeController extends BaseController
     private $jsonApiHydrator;
 
     /**
-     * @var EntityRepository
+     * @var ShippingCostsWeightRangeRepository
      */
-    private $shippingCostsRepository;
+    private $shippingCostsWeightRangeRepository;
 
     /**
      * @var PermissionService
@@ -42,19 +43,20 @@ class ShippingCostsWeightRangeController extends BaseController
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param PermissionService $permissionService
+     * @param ShippingCostsWeightRangeRepository $shippingCostsWeightRangeRepository
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
-        PermissionService $permissionService
+        PermissionService $permissionService,
+        ShippingCostsWeightRangeRepository $shippingCostsWeightRangeRepository
     ) {
         parent::__construct();
 
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
-        $this->shippingCostsRepository = $this->entityManager
-                ->getRepository(ShippingCostsWeightRange::class);
         $this->permissionService = $permissionService;
+        $this->shippingCostsWeightRangeRepository = $shippingCostsWeightRangeRepository;
     }
 
     /**
@@ -63,7 +65,9 @@ class ShippingCostsWeightRangeController extends BaseController
      *
      * @param ShippingCostCreateRequest $request
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function store(ShippingCostCreateRequest $request)
     {
@@ -89,13 +93,16 @@ class ShippingCostsWeightRangeController extends BaseController
      * @param ShippingCostUpdateRequest $request
      * @param int $shippingCostId
      *
-     * @return JsonResponse
+     * @return Fractal
+     *
+     * @throws Throwable
      */
     public function update(ShippingCostUpdateRequest $request, $shippingCostId)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'edit.shipping_cost');
 
-        $shippingCost = $this->shippingCostsRepository->find($shippingCostId);
+        $shippingCost = $this->shippingCostsWeightRangeRepository
+                                ->find($shippingCostId);
 
         throw_if(
             is_null($shippingCost),
@@ -123,12 +130,15 @@ class ShippingCostsWeightRangeController extends BaseController
      * @param integer $shippingCostId
      *
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     public function delete($shippingCostId)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.shipping_cost');
 
-        $shippingCost = $this->shippingCostsRepository->find($shippingCostId);
+        $shippingCost = $this->shippingCostsWeightRangeRepository
+                                    ->find($shippingCostId);
 
         throw_if(
             !$shippingCost,

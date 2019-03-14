@@ -7,7 +7,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Contracts\UserInterface;
 
 /**
- * @ORM\Entity()
+ * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\UserProductRepository")
  * @ORM\Table(
  *     name="ecommerce_user_product",
  *     indexes={
@@ -34,7 +34,7 @@ class UserProduct
     protected $id;
 
     /**
-     * @var int
+     * @var UserInterface
      *
      * @ORM\Column(type="user_id", name="user_id")
      */

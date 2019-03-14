@@ -191,7 +191,7 @@ class CartItem
     }
 
     /**
-     * @param mixed $price
+     * @param mixed $totalPrice
      */
     public function setTotalPrice($totalPrice)
     {
