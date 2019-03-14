@@ -3,10 +3,10 @@
 namespace Railroad\Ecommerce\Tests\Functional\Services;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Structures\Address;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
@@ -37,7 +37,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $cart = $cartService->getCart();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         // all discountCriteriaMetForOrder switch cases are tested below, except default
         $discountCriteriaData = $this->fakeDiscountCriteria([
@@ -133,7 +133,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
             'max' => $this->faker->numberBetween(15, 20)
         ]);
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
@@ -224,7 +224,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
             'max' => $this->faker->numberBetween(50, 100)
         ]);
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
@@ -241,7 +241,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
@@ -266,7 +266,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
@@ -363,7 +363,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
             'max' => 100
         ]);
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
@@ -454,7 +454,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
             'max' => $this->faker->randomFloat(2, 50, 100) // cart total will be more than max
         ]);
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
                                 ->find($discountCriteriaData['id']);
@@ -471,7 +471,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $shippingCosts = round($this->faker->randomFloat(2, 100, 200), 2);
 
@@ -496,7 +496,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $shippingCosts = $this->faker->randomFloat(2, 100);
 
@@ -532,7 +532,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
             CartAddressService::SHIPPING_ADDRESS_TYPE
         );
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $promoCode = $this->faker->word;
 
@@ -568,7 +568,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
             CartAddressService::SHIPPING_ADDRESS_TYPE
         );
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $promoCode = $this->faker->word;
 
@@ -593,7 +593,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $promoCode = $this->faker->word;
 
@@ -618,7 +618,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $promoCode = $this->faker->word;
 
@@ -643,7 +643,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
@@ -666,7 +666,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $userProductData = $this->fakeUserProduct([
             'user_id' => $userId,
@@ -694,7 +694,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $userProductData = $this->fakeUserProduct([
             'user_id' => $userId,
@@ -722,7 +722,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $userProductData = $this->fakeUserProduct([
             'user_id' => $userId,

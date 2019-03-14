@@ -2,11 +2,11 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Doctrine\ORM\EntityManager;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Http\RedirectResponse;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Repositories\AccessCodeRepository;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Requests\AccessCodeClaimRequest;
 use Railroad\Ecommerce\Services\AccessCodeService;
 use Throwable;
@@ -24,7 +24,7 @@ class AccessCodeController extends BaseController
     private $accessCodeService;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -43,14 +43,14 @@ class AccessCodeController extends BaseController
      *
      * @param AccessCodeRepository $accessCodeRepository
      * @param AccessCodeService $accessCodeService
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param Hasher $hasher
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
         AccessCodeRepository $accessCodeRepository,
         AccessCodeService $accessCodeService,
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         Hasher $hasher,
         UserProviderInterface $userProvider
     ) {

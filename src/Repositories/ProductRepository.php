@@ -2,10 +2,10 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
  * Class ProductRepository
@@ -22,9 +22,9 @@ class ProductRepository extends EntityRepository
     /**
      * ProductRepository constructor.
      *
-     * @param EntityManager $em
+     * @param EcommerceEntityManager $em
      */
-    public function __construct(EntityManager $em)
+    public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(Product::class));
     }

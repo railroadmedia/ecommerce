@@ -2,9 +2,9 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
  * Class PaypalBillingAgreementRepository
@@ -21,9 +21,9 @@ class PaypalBillingAgreementRepository extends EntityRepository
     /**
      * PaypalBillingAgreementRepository constructor.
      *
-     * @param EntityManager $em
+     * @param EcommerceEntityManager $em
      */
-    public function __construct(EntityManager $em)
+    public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(PaypalBillingAgreement::class));
     }
@@ -31,7 +31,7 @@ class PaypalBillingAgreementRepository extends EntityRepository
     /**
      * Returns an array of PaypalBillingAgreement, with keys as PaypalBillingAgreements ids
      *
-     * @param array $creditCardIds
+     * @param array $paypalIds
      *
      * @return array
      */

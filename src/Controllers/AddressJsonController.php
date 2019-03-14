@@ -2,23 +2,23 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Requests\AddressCreateRequest;
 use Railroad\Ecommerce\Requests\AddressDeleteRequest;
 use Railroad\Ecommerce\Requests\AddressUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
@@ -33,7 +33,7 @@ class AddressJsonController extends Controller
     private $addressRepository;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -61,16 +61,16 @@ class AddressJsonController extends Controller
      * AddressJsonController constructor.
      *
      * @param AddressRepository $addressRepository
-     * @param EntityManager $entityManager
      * @param OrderRepository $orderRepository
+     * @param EcommerceEntityManager $entityManager
      * @param PermissionService $permissionService
      * @param JsonApiHydrator $jsonApiHydrator
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
         AddressRepository $addressRepository,
-        EntityManager $entityManager,
         OrderRepository $orderRepository,
+        EcommerceEntityManager $entityManager,
         PermissionService $permissionService,
         JsonApiHydrator $jsonApiHydrator,
         UserProviderInterface $userProvider
@@ -150,6 +150,7 @@ class AddressJsonController extends Controller
         $this->jsonApiHydrator->hydrate($address, $request->onlyAllowed());
 
         $this->entityManager->persist($address);
+
         $this->entityManager->flush();
 
         return ResponseService::address($address)

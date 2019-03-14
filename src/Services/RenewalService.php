@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Exception;
 use Railroad\Ecommerce\Entities\CreditCard;
@@ -13,6 +12,7 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\TaxService;
@@ -34,7 +34,7 @@ class RenewalService
     protected $currencyService;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     protected $entityManager;
 
@@ -71,13 +71,13 @@ class RenewalService
     /**
      * RenewalService constructor.
      *
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param StripePaymentGateway $stripePaymentGateway
      * @param PayPalPaymentGateway $payPalPaymentGateway
      */
     public function __construct(
         CurrencyService $currencyService,
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         StripePaymentGateway $stripePaymentGateway,
         PayPalPaymentGateway $payPalPaymentGateway,
         TaxService $taxService,

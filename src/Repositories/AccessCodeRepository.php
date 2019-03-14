@@ -2,9 +2,9 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
  * Class AccessCodeRepository
@@ -21,9 +21,9 @@ class AccessCodeRepository extends EntityRepository
     /**
      * AccessCodeRepository constructor.
      *
-     * @param EntityManager $em
+     * @param EcommerceEntityManager $em
      */
-    public function __construct(EntityManager $em)
+    public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(AccessCode::class));
     }

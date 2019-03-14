@@ -3,26 +3,26 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\ResponseService;
 
 class StripeWebhookController extends BaseController
 {
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
     /**
      * StripeWebhookController constructor.
      *
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      */
     public function __construct(
-        EntityManager $entityManager
+        EcommerceEntityManager $entityManager
     ) {
         $this->entityManager = $entityManager;
     }

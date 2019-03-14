@@ -2,11 +2,11 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
-use Doctrine\ORM\EntityManager;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\PaymentPlanService;
@@ -105,7 +105,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas('addedProducts', []);
         $response->assertSessionHas('cartNumberOfItems', 0);
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $productEntity = $em->getRepository(Product::class)
                                 ->find($product['id']);
@@ -261,7 +261,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         $response->assertSessionHas('addedProducts', []);
         $response->assertSessionHas('cartNumberOfItems', 0);
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $productEntity = $em->getRepository(Product::class)
                                 ->find($product['id']);
@@ -1035,7 +1035,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         // assert the session has the success message
         $response->assertSessionHas('success', true);
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $productEntity = $em->getRepository(Product::class)
                                 ->find($productTwo['id']);
@@ -1133,7 +1133,7 @@ class ShoppingCartControllerTest extends EcommerceTestCase
         // assert the session has the success message
         $response->assertSessionHas('success', true);
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $productEntity = $em->getRepository(Product::class)
                                 ->find($productTwo['id']);

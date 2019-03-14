@@ -5,17 +5,17 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use DateTimeInterface;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\UserProduct;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 class UserProductService
 {
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     protected $entityManager;
 
@@ -27,9 +27,9 @@ class UserProductService
     /**
      * UserProductService constructor.
      *
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      */
-    public function __construct(EntityManager $entityManager)
+    public function __construct(EcommerceEntityManager $entityManager)
     {
         $this->entityManager = $entityManager;
 

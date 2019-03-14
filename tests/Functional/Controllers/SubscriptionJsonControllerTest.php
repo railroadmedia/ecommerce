@@ -2,9 +2,9 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
-use Doctrine\ORM\EntityManager;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\UserProductService;
@@ -23,7 +23,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
     public function test_delete()
     {
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
         $em->getMetadataFactory()
             ->getCacheDriver()
             ->deleteAll();

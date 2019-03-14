@@ -1,6 +1,5 @@
 <?php
 
-use Doctrine\ORM\EntityManager;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Ecommerce\Entities\PaymentMethod;
@@ -8,6 +7,7 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\UserProduct;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\RenewalService;
@@ -29,7 +29,7 @@ class RenewalServiceTest extends EcommerceTestCase
 
     public function test_service_credit_card()
     {
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $em->getMetadataFactory()
             ->getCacheDriver()

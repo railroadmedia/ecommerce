@@ -3,9 +3,9 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Entities\Address;
@@ -25,7 +25,7 @@ class PaymentMethodService
     private $customerPaymentMethodsRepository;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -38,7 +38,7 @@ class PaymentMethodService
     CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit-card';
 
     public function __construct(
-        EntityManager $entityManager
+        EcommerceEntityManager $entityManager
     ) {
 
         $this->entityManager = $entityManager;

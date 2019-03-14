@@ -3,9 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Illuminate\Http\Request;
-use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
@@ -22,6 +20,7 @@ use Railroad\Ecommerce\Exceptions\PaymentMethodException;
 use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Requests\PaymentMethodCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodUpdateRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodCreatePaypalRequest;
@@ -29,6 +28,7 @@ use Railroad\Ecommerce\Requests\PaymentMethodSetDefaultRequest;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Exceptions\NotAllowedException as PermissionsNotAllowedException;
@@ -44,7 +44,7 @@ class PaymentMethodJsonController extends BaseController
     private $currencyService;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -87,7 +87,7 @@ class PaymentMethodJsonController extends BaseController
      * PaymentMethodJsonController constructor.
      *
      * @param CurrencyService $currencyService
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param StripePaymentGateway $stripePaymentGateway
      * @param PaymentMethodService $paymentMethodService
@@ -97,7 +97,7 @@ class PaymentMethodJsonController extends BaseController
      */
     public function __construct(
         CurrencyService $currencyService,
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         StripePaymentGateway $stripePaymentGateway,
         PaymentMethodService $paymentMethodService,

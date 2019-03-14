@@ -2,9 +2,9 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Doctrine\ORM\EntityManager;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
@@ -16,7 +16,7 @@ use Railroad\Resora\Entities\Entity;
 class ShoppingCartController extends BaseController
 {
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -45,13 +45,13 @@ class ShoppingCartController extends BaseController
      *
      * @param \Railroad\Ecommerce\Services\CartService $cartService
      * @param \Railroad\Ecommerce\Services\CartAddressService $cartAddressService
-     * @param \Doctrine\ORM\EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param \Railroad\Ecommerce\Services\PaymentPlanService $paymentPlanService
      */
     public function __construct(
         CartService $cartService,
         CartAddressService $cartAddressService,
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         PaymentPlanService $paymentPlanService
     ) {
         parent::__construct();

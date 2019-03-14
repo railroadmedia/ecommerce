@@ -4,21 +4,15 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Exception;
-use Doctrine\ORM\EntityManager;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
-use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
-use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
-use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Entities\UserPaymentMethods;
-use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Exceptions\TransactionFailedException;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
@@ -31,9 +25,10 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ResponseService;
-use Railroad\Location\Services\LocationService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class PaymentJsonController extends BaseController
 {
@@ -43,7 +38,7 @@ class PaymentJsonController extends BaseController
     private $creditCardRepository;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -73,24 +68,24 @@ class PaymentJsonController extends BaseController
     private $subscriptionRepository;
 
     /**
-     * @var UserPaymentMethodsRepository
-     */
-    private $userPaymentMethodRepository;
-
-    /**
      * @var CurrencyService
      */
     private $currencyService;
 
     /**
-     * @var \Railroad\Ecommerce\Gateways\StripePaymentGateway
+     * @var StripePaymentGateway
      */
     private $stripePaymentGateway;
 
     /**
-     * @var \Railroad\Ecommerce\Gateways\PayPalPaymentGateway
+     * @var PayPalPaymentGateway
      */
     private $payPalPaymentGateway;
+
+    /**
+     * @var UserPaymentMethodsRepository
+     */
+    private $userPaymentMethodsRepository;
 
     // subscription interval type
     const INTERVAL_TYPE_DAILY = 'day';
@@ -102,7 +97,8 @@ class PaymentJsonController extends BaseController
      *
      * @param CreditCardRepository $creditCardRepository
      * @param CurrencyService $currencyService
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
+     * @param OrderRepository $orderRepository
      * @param PaymentRepository $paymentRepository
      * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      * @param PayPalPaymentGateway $payPalPaymentGateway
@@ -114,7 +110,7 @@ class PaymentJsonController extends BaseController
     public function __construct(
         CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         OrderRepository $orderRepository,
         PaymentRepository $paymentRepository,
         PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
@@ -141,6 +137,8 @@ class PaymentJsonController extends BaseController
 
     /**
      * @param PaymentIndexRequest $request
+     *
+     * @return Fractal
      *
      * @throws NotAllowedException
      */
@@ -215,10 +213,10 @@ class PaymentJsonController extends BaseController
      *
      * @param PaymentCreateRequest $request
      *
-     * @return JsonResponse
+     * @return Fractal
      *
      * @throws NotAllowedException
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function store(PaymentCreateRequest $request)
     {
@@ -238,6 +236,9 @@ class PaymentJsonController extends BaseController
             ->getQuery()
             ->getOneOrNullResult();
 
+        /**
+         * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+         */
         $user = $userPaymentMethod->getUser();
 
         // if the logged in user it's not admin => can pay only with own payment method
@@ -256,6 +257,9 @@ class PaymentJsonController extends BaseController
 
         $gateway = $request->input('data.attributes.payment_gateway');
 
+        /**
+         * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
+         */
         $paymentMethod = $userPaymentMethod->getPaymentMethod();
 
         // if the currency not exist on the request and the payment it's manual,
@@ -512,6 +516,8 @@ class PaymentJsonController extends BaseController
      * @param int $paymentId
      *
      * @return JsonResponse
+     *
+     * @throws Throwable
      */
     public function delete($paymentId)
     {

@@ -3,8 +3,8 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Railroad\Ecommerce\Contracts\UserInterface;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\UserProductService;
@@ -40,7 +40,7 @@ class AccessCodeService
      */
     public function __construct(
         CurrencyService $currencyService,
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         UserProductService $userProductService
     ) {
         $this->currencyService = $currencyService;

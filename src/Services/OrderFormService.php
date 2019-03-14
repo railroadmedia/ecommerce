@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Query\Expr\Join;
 use Exception;
 use Illuminate\Http\Request;
@@ -35,6 +34,7 @@ use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Mail\OrderInvoice;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\UserProductService;
@@ -54,7 +54,7 @@ class OrderFormService
     private $cartAddressService;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -99,7 +99,7 @@ class OrderFormService
      * @param CartService $cartService
      * @param CartAddressService $cartAddressService
      * @param CurrencyService $currencyService
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param PaymentMethodService $paymentMethodService
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
@@ -110,7 +110,7 @@ class OrderFormService
         CartService $cartService,
         CartAddressService $cartAddressService,
         CurrencyService $currencyService,
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         PaymentMethodService $paymentMethodService,
         PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService,

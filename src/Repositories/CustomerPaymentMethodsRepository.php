@@ -2,10 +2,10 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\CustomerPaymentMethods;
 use Railroad\Ecommerce\Entities\Customer;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
  * Class CustomerPaymentMethodsRepository
@@ -22,9 +22,9 @@ class CustomerPaymentMethodsRepository extends EntityRepository
     /**
      * CustomerPaymentMethodsRepository constructor.
      *
-     * @param EntityManager $em
+     * @param EcommerceEntityManager $em
      */
-    public function __construct(EntityManager $em)
+    public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(CustomerPaymentMethods::class));
     }
