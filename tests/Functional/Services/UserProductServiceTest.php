@@ -1,6 +1,5 @@
 <?php
 
-use Doctrine\ORM\EntityManager;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Ecommerce\Entities\PaymentMethod;
@@ -8,6 +7,7 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\UserProduct;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\UserProductService;
@@ -27,7 +27,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
     public function test_get_user_product_null()
     {
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
         $srv = $this->app->make(UserProductService::class);
 
         $userProvider = $this->app->make(UserProviderInterface::class);
@@ -60,7 +60,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
     public function test_get_user_product()
     {
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
         $srv = $this->app->make(UserProductService::class);
 
         $userProvider = $this->app->make(UserProviderInterface::class);
@@ -114,7 +114,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
     public function test_create_user_product()
     {
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $srv = $this->app->make(UserProductService::class);
 
@@ -159,7 +159,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
     public function test_assign_user_product_create()
     {
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $srv = $this->app->make(UserProductService::class);
 
@@ -212,7 +212,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
     public function test_assign_user_product_update()
     {
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $srv = $this->app->make(UserProductService::class);
 
@@ -278,7 +278,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
     public function tests_remove_user_products()
     {
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $srv = $this->app->make(UserProductService::class);
 

@@ -2,18 +2,18 @@
 
 namespace Railroad\Ecommerce\Listeners;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 class UserDefaultPaymentMethodListener
 {
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     protected $entityManager;
 
@@ -23,7 +23,7 @@ class UserDefaultPaymentMethodListener
     protected $userProvider;
 
     public function __construct(
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         UserProviderInterface $userProvider
     ) {
         $this->entityManager = $entityManager;

@@ -2,9 +2,9 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Services;
 
-use Doctrine\ORM\EntityManager;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -127,7 +127,7 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $cart = $cartService->getCart();
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $discounts = $em
                         ->getRepository(Discount::class)
@@ -254,7 +254,7 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $expectedAmountDiscounted = round($discountOne['amount'] + ($discountTwo['amount'] / 100 * $cartItemsTotalDue), 2);
 
-        $em = $this->app->make(EntityManager::class);
+        $em = $this->app->make(EcommerceEntityManager::class);
 
         $discounts = $em
                         ->getRepository(Discount::class)

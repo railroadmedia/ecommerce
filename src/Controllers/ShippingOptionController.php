@@ -3,21 +3,21 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
-use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Entities\ShippingOption;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Requests\ShippingOptionCreateRequest;
 use Railroad\Ecommerce\Requests\ShippingOptionUpdateRequest;
+use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 
 class ShippingOptionController extends BaseController
 {
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -39,12 +39,12 @@ class ShippingOptionController extends BaseController
     /**
      * ShippingOptionController constructor.
      *
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param PermissionService $permissionService
      */
     public function __construct(
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService
     ) {

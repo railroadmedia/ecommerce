@@ -3,12 +3,12 @@
 namespace Railroad\Ecommerce\Services;
 
 use Illuminate\Session\Store;
-use Doctrine\ORM\EntityManager;
 use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\ShippingOption;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Permissions\Services\PermissionService;
@@ -21,7 +21,7 @@ class CartService
     private $cartAddressService;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -64,7 +64,7 @@ class CartService
      * @param CartAddressService $cartAddressService
      * @param DiscountCriteriaService $discountCriteriaService
      * @param DiscountService $discountService
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param PermissionService $permissionService
      * @param Store $session
      * @param TaxService $taxService
@@ -73,7 +73,7 @@ class CartService
         CartAddressService $cartAddressService,
         DiscountCriteriaService $discountCriteriaService,
         DiscountService $discountService,
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         PermissionService $permissionService,
         Store $session,
         TaxService $taxService

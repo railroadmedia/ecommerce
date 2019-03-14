@@ -2,14 +2,12 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Order;
@@ -20,6 +18,7 @@ use Railroad\Ecommerce\Requests\AddressCreateRequest;
 use Railroad\Ecommerce\Requests\AddressDeleteRequest;
 use Railroad\Ecommerce\Requests\AddressUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;

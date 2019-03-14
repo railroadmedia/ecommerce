@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Contracts\UserInterface;
@@ -12,6 +11,7 @@ use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 class DiscountCriteriaService
 {
@@ -21,7 +21,7 @@ class DiscountCriteriaService
     private $cartAddressService;
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     protected $entityManager;
 
@@ -47,12 +47,12 @@ class DiscountCriteriaService
      * DiscountCriteriaService constructor.
      *
      * @param \Railroad\Ecommerce\Services\CartAddressService $cartAddressService
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
         CartAddressService $cartAddressService,
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         UserProviderInterface $userProvider
     ) {
         $this->cartAddressService = $cartAddressService;

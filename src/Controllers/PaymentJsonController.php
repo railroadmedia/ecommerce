@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Exception;
-use Doctrine\ORM\EntityManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -19,6 +18,7 @@ use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Exceptions\TransactionFailedException;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentCreateRequest;
@@ -34,7 +34,7 @@ use Railroad\Permissions\Services\PermissionService;
 class PaymentJsonController extends BaseController
 {
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -77,14 +77,14 @@ class PaymentJsonController extends BaseController
      * PaymentJsonController constructor.
      *
      * @param CurrencyService $currencyService
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
      * @param PayPalPaymentGateway $payPalPaymentGateway
      */
     public function __construct(
         CurrencyService $currencyService,
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         PermissionService $permissionService,
         StripePaymentGateway $stripePaymentGateway,
         PayPalPaymentGateway $payPalPaymentGateway

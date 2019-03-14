@@ -2,9 +2,9 @@
 
 namespace Railroad\Ecommerce\Commands;
 
-use Doctrine\ORM\EntityManager;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\RenewalService;
@@ -27,7 +27,7 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     protected $description = 'Renewal of due subscriptions.';
 
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -51,12 +51,12 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     /**
      * RenewalDueSubscriptions constructor.
      *
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param RenewalService $renewalService
      * @param UserProductService $userProductService
      */
     public function __construct(
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         RenewalService $renewalService,
         UserProductService $userProductService
     ) {

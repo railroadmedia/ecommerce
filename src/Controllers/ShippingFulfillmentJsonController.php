@@ -3,11 +3,11 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Requests\OrderFulfilledRequest;
 use Railroad\Ecommerce\Requests\OrderFulfillmentDeleteRequest;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -17,7 +17,7 @@ use Railroad\Permissions\Services\PermissionService;
 class ShippingFulfillmentJsonController extends BaseController
 {
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -34,11 +34,11 @@ class ShippingFulfillmentJsonController extends BaseController
     /**
      * ShippingFulfillmentJsonController constructor.
      *
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param PermissionService $permissionService
      */
     public function __construct(
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         PermissionService $permissionService
     ) {
         parent::__construct();

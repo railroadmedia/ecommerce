@@ -3,18 +3,18 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityManager;
 use Illuminate\Http\Request;
-use Railroad\DoctrineArrayHydrator\JsonApiHydrator;
 use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\ProductCreateRequest;
 use Railroad\Ecommerce\Requests\ProductUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Services\RemoteStorageService;
@@ -23,7 +23,7 @@ use Railroad\Resora\Entities\Entity;
 class ProductJsonController extends BaseController
 {
     /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
 
@@ -50,13 +50,13 @@ class ProductJsonController extends BaseController
     /**
      * ProductJsonController constructor.
      *
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param \Railroad\Permissions\Services\PermissionService $permissionService
      * @param \Railroad\RemoteStorage\Services\RemoteStorageService $remoteStorageService
      */
     public function __construct(
-        EntityManager $entityManager,
+        EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService,
         RemoteStorageService $remoteStorageService
