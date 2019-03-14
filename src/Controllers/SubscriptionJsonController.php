@@ -158,8 +158,10 @@ class SubscriptionJsonController extends BaseController
         throw_if(is_null($subscription),
             new NotFoundException('Update failed, subscription not found with id: ' . $subscriptionId)
         );
+
         $cancelDate = null;
-        if ($request->has('canceled_on') || ($request->get('is_active') === false)) {
+        
+        if (!empty($request->get('canceled_on')) || ($request->get('is_active') === false)) {
             $cancelDate = Carbon::parse($request->get('canceled_on', Carbon::now()->toDateTimeString()));
         }
 
