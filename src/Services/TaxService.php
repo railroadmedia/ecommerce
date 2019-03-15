@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Services;
 
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
-use Railroad\Ecommerce\Services\TaxService;
 
 class TaxService
 {
@@ -49,6 +48,7 @@ class TaxService
      * Calculate total taxes based on billing address and the amount that should be paid.
      *
      * @param float $costs
+     * @param AddressInterface $address
      *
      * @return float
      */

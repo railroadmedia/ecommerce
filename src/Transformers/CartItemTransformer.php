@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Transformers;
 
 use League\Fractal\TransformerAbstract;
-use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 
 class CartItemTransformer extends TransformerAbstract

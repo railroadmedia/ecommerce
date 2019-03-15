@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Contracts\UserInterface;
-use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
@@ -16,6 +15,7 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
+use Throwable;
 
 class PaymentMethodService
 {
@@ -37,18 +37,47 @@ class PaymentMethodService
     CONST PAYPAL_PAYMENT_METHOD_TYPE      = 'paypal';
     CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit-card';
 
+    /**
+     * PaymentMethodService constructor.
+     *
+     * @param CustomerPaymentMethodsRepository $customerPaymentMethodsRepository
+     * @param EcommerceEntityManager $entityManager
+     * @param UserPaymentMethodsRepository $userPaymentMethodsRepository
+     */
     public function __construct(
-        EcommerceEntityManager $entityManager
+        CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
+        EcommerceEntityManager $entityManager,
+        UserPaymentMethodsRepository $userPaymentMethodsRepository
     ) {
 
+        $this->customerPaymentMethodsRepository = $customerPaymentMethodsRepository;
         $this->entityManager = $entityManager;
-
-        $this->customerPaymentMethodsRepository = $this->entityManager
-                                        ->getRepository(CustomerPaymentMethods::class);
-        $this->userPaymentMethodsRepository = $this->entityManager
-                                        ->getRepository(UserPaymentMethods::class);
+        $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
     }
 
+    /**
+     * Creates $user or $customer credit card and payment method
+     * Sets the $makePrimary flag for $user or $customer payment method
+     *
+     * @param UserInterface $user
+     * @param string $fingerPrint
+     * @param int $last4
+     * @param string $cardHolderName
+     * @param string $companyName
+     * @param $expirationYear
+     * @param $expirationMonth
+     * @param string $externalId
+     * @param string $externalCustomerId
+     * @param string $gatewayName
+     * @param Customer $customer
+     * @param Address $billingAddress - default null
+     * @param string $currency - default null
+     * @param bool $makePrimary - default false
+     *
+     * @return PaymentMethod
+     *
+     * @throws Throwable
+     */
     public function createUserCreditCard(
         ?UserInterface $user,
         $fingerPrint,
@@ -150,6 +179,21 @@ class PaymentMethodService
         return $paymentMethod;
     }
 
+    /**
+     * Creates $user paypal billing agreement and payment method
+     * Sets the $makePrimary flag for $user payment method
+     *
+     * @param UserInterface $user
+     * @param string $billingAgreementExternalId
+     * @param Address $billingAddress
+     * @param string $paymentGatewayName
+     * @param string $currency - default null
+     * @param bool $makePrimary - default false
+     *
+     * @return PaymentMethod
+     *
+     * @throws Throwable
+     */
     public function createPayPalBillingAgreement(
         UserInterface $user,
         $billingAgreementExternalId,

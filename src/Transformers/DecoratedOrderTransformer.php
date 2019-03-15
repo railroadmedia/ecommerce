@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
-use League\Fractal\TransformerAbstract;
-use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Transformers\OrderTransformer;
 
 class DecoratedOrderTransformer extends OrderTransformer
@@ -32,7 +30,7 @@ class DecoratedOrderTransformer extends OrderTransformer
         ];
     }
 
-    public function includePayments(Order $order)
+    public function includePayments()
     {
         return $this->collection(
             $this->payments,
@@ -41,7 +39,7 @@ class DecoratedOrderTransformer extends OrderTransformer
         );
     }
 
-    public function includeRefunds(Order $order)
+    public function includeRefunds()
     {
         return $this->collection(
             $this->refunds,
@@ -50,7 +48,7 @@ class DecoratedOrderTransformer extends OrderTransformer
         );
     }
 
-    public function includeSubscriptions(Order $order)
+    public function includeSubscriptions()
     {
         return $this->collection(
             $this->subscriptions,
@@ -59,7 +57,7 @@ class DecoratedOrderTransformer extends OrderTransformer
         );
     }
 
-    public function includePaymentPlans(Order $order)
+    public function includePaymentPlans()
     {
         return $this->collection(
             $this->paymentPlans,

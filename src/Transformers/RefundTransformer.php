@@ -2,11 +2,9 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
-use Doctrine\Common\Persistence\Proxy;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Transformers\PaymentTransformer;
 use League\Fractal\TransformerAbstract;
-use Railroad\Ecommerce\Transformers\EntityReferenceTransformer;
 
 class RefundTransformer extends TransformerAbstract
 {

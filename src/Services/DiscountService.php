@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Railroad\Ecommerce\Entities\Discount;
-use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 
 class DiscountService
@@ -20,7 +18,7 @@ class DiscountService
 
     /**
      * @param array $discountsToApply - array of \Railroad\Ecommerce\Entities\Discount
-     * @param Cart $cartItems
+     * @param Cart $cart
      *
      * @return mixed
      */

@@ -3,14 +3,12 @@
 namespace Railroad\Ecommerce\Services;
 
 use Illuminate\Session\Store;
-use Railroad\Ecommerce\Entities\Discount;
-use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Entities\ShippingOption;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Services\CartAddressService;
-use Railroad\Ecommerce\Services\TaxService;
+use Railroad\Ecommerce\Repositories\DiscountRepository;
+use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Permissions\Services\PermissionService;
 
 class CartService
@@ -21,14 +19,14 @@ class CartService
     private $cartAddressService;
 
     /**
-     * @var EcommerceEntityManager
-     */
-    private $entityManager;
-
-    /**
      * @var DiscountCriteriaService
      */
     private $discountCriteriaService;
+
+    /**
+     * @var DiscountRepository
+     */
+    private $discountRepository;
 
     /**
      * @var DiscountService
@@ -36,9 +34,24 @@ class CartService
     private $discountService;
 
     /**
+     * @var EcommerceEntityManager
+     */
+    private $entityManager;
+
+    /**
      * @var PermissionService
      */
     private $permissionService;
+
+    /**
+     * @var ProductRepository
+     */
+    private $productRepository;
+
+    /**
+     * @var ShippingOptionRepository
+     */
+    private $shippingOptionRepository;
 
     /**
      * @var Store
@@ -63,18 +76,24 @@ class CartService
      *
      * @param CartAddressService $cartAddressService
      * @param DiscountCriteriaService $discountCriteriaService
+     * @param DiscountRepository $discountRepository
      * @param DiscountService $discountService
      * @param EcommerceEntityManager $entityManager
      * @param PermissionService $permissionService
+     * @param ProductRepository $productRepository
+     * @param ShippingOptionRepository $shippingOptionRepository
      * @param Store $session
      * @param TaxService $taxService
      */
     public function __construct(
         CartAddressService $cartAddressService,
         DiscountCriteriaService $discountCriteriaService,
+        DiscountRepository $discountRepository,
         DiscountService $discountService,
         EcommerceEntityManager $entityManager,
         PermissionService $permissionService,
+        ProductRepository $productRepository,
+        ShippingOptionRepository $shippingOptionRepository,
         Store $session,
         TaxService $taxService
     ) {
@@ -82,8 +101,11 @@ class CartService
         $this->cartAddressService = $cartAddressService;
         $this->discountCriteriaService = $discountCriteriaService;
         $this->discountService = $discountService;
+        $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
+        $this->productRepository = $productRepository;
+        $this->shippingOptionRepository = $shippingOptionRepository;
         $this->session = $session;
         $this->taxService = $taxService;
 
@@ -109,7 +131,7 @@ class CartService
     public function requiresShipping()
     {
         foreach ($this->getCart()->getItems() as $cartItem) {
-             /**
+            /**
              * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
              */
             if ($cartItem->getRequiresShippingAddress()) {
@@ -181,6 +203,8 @@ class CartService
      * Remove the cart item
      *
      * @param $id
+     *
+     * @return array
      */
     public function removeCartItem($id)
     {
@@ -190,6 +214,9 @@ class CartService
         $this->removeAllCartItems();
 
         foreach ($items as $item) {
+            /**
+             * @var $item \Railroad\Ecommerce\Entities\Structures\CartItem
+             */
             $this->addCartItem(
                 $item->getName(),
                 $item->getDescription(),
@@ -211,6 +238,8 @@ class CartService
      *
      * @param $cartItemId
      * @param $quantity
+     *
+     * @return array
      */
     public function updateCartItemQuantity($cartItemId, $quantity)
     {
@@ -225,6 +254,9 @@ class CartService
         $this->removeAllCartItems();
 
         foreach ($items as $item) {
+            /**
+             * @var $item \Railroad\Ecommerce\Entities\Structures\CartItem
+             */
             $this->addCartItem(
                 $item->getName(),
                 $item->getDescription(),
@@ -328,6 +360,8 @@ class CartService
      * @param null $subscriptionIntervalType
      * @param null $subscriptionIntervalCount
      * @param array $options
+     * @param string $customBrand
+     *
      * @return Cart
      */
     public function addCartItem(
@@ -363,12 +397,13 @@ class CartService
         /**
          * @var $product \Railroad\Ecommerce\Entities\Product
          */
-        $product = $this->entityManager
-                        ->getRepository(Product::class)
-                        ->find($options['product-id']);
+        $product = $this->productRepository->find($options['product-id']);
 
         // If the item already exists, just increase the quantity
         foreach ($cart->getItems() as $cartItem) {
+            /**
+             * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+             */
             if (
                 !empty($cartItem->getOptions()['product-id']) &&
                 $cartItem->getOptions()['product-id'] == $options['product-id']
@@ -422,6 +457,9 @@ class CartService
         $this->calculateShippingCosts();
 
         foreach ($cart->getItems() as $cartItem) {
+            /**
+             * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+             */
             $cartItem->removeAppliedDiscounts();
         }
 
@@ -464,8 +502,7 @@ class CartService
         /**
          * @var $shippingCosts array - of \Railroad\Ecommerce\Entities\ShippingOption
          */
-        $shippingOptions = $this->entityManager
-                                ->getRepository(ShippingOption::class)
+        $shippingOptions = $this->shippingOptionRepository
                                 ->getShippingCosts(
                                     $shippingCountry,
                                     $totalWeight
@@ -474,11 +511,11 @@ class CartService
 
         if (count($shippingOptions)) {
             /**
-             * @var $shippingOption \Railroad\Ecommerce\Entities\Structures\ShippingOption
+             * @var $shippingOption \Railroad\Ecommerce\Entities\ShippingOption
              */
             $shippingOption = $shippingOptions[0];
             /**
-             * @var $shippingCost \Railroad\Ecommerce\Entities\Structures\ShippingCostsWeightRange
+             * @var $shippingCost \Railroad\Ecommerce\Entities\ShippingCostsWeightRange
              */
             $shippingCost = $shippingOption
                                 ->getShippingCostsWeightRanges()
@@ -527,9 +564,7 @@ class CartService
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->entityManager
-                    ->getRepository(Discount::class)
-                    ->createQueryBuilder('d');
+        $qb = $this->discountRepository->createQueryBuilder('d');
 
         $qb
             ->select(['d', 'dc'])
@@ -540,6 +575,9 @@ class CartService
         $activeDiscounts = $qb->getQuery()->getResult();
 
         foreach ($activeDiscounts as $activeDiscount) {
+            /**
+             * @var $activeDiscount \Railroad\Ecommerce\Entities\Discount
+             */
             $criteriaMet = false;
             foreach ($activeDiscount->getDiscountCriterias() as $discountCriteria) {
                 /**
@@ -622,8 +660,12 @@ class CartService
 
                     $discountedPrice = round($item->getTotalPrice() - $productDiscount, 2);
 
-                    $this->getCart()
-                        ->getItems()[$index]->setDiscountedPrice(max($discountedPrice, 0));
+                    /**
+                     * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+                     */
+                    $cartItem = $this->getCart()->getItems()[$index];
+
+                    $cartItem->setDiscountedPrice(max($discountedPrice, 0));
                 }
             }
         }

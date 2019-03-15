@@ -3,15 +3,14 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityRepository;
-use Illuminate\Database\Query\Builder;
+use Exception;
 use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
-use Railroad\Ecommerce\Entities\UserProduct;
-use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\UserProductRepository;
+use Throwable;
 
 class DiscountCriteriaService
 {
@@ -26,7 +25,7 @@ class DiscountCriteriaService
     protected $entityManager;
 
     /**
-     * @var EntityRepository
+     * @var UserProductRepository
      */
     private $userProductRepository;
 
@@ -48,18 +47,18 @@ class DiscountCriteriaService
      *
      * @param \Railroad\Ecommerce\Services\CartAddressService $cartAddressService
      * @param EcommerceEntityManager $entityManager
+     * @param UserProductRepository $userProductRepository
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
         CartAddressService $cartAddressService,
         EcommerceEntityManager $entityManager,
+        UserProductRepository $userProductRepository,
         UserProviderInterface $userProvider
     ) {
         $this->cartAddressService = $cartAddressService;
         $this->entityManager = $entityManager;
-
-        $this->userProductRepository = $this->entityManager
-                ->getRepository(UserProduct::class);
+        $this->userProductRepository = $userProductRepository;
 
         $this->currentUser = $userProvider->getCurrentUser();
     }
@@ -72,6 +71,8 @@ class DiscountCriteriaService
      * @param string $promoCode
      *
      * @return bool
+     *
+     * @throws Throwable
      */
     public function discountCriteriaMetForOrder(
         Cart $cart,
@@ -120,6 +121,9 @@ class DiscountCriteriaService
         DiscountCriteria $discountCriteria
     ): bool {
         foreach ($cart->getItems() as $cartItem) {
+            /**
+             * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+             */
             if (
                 ($cartItem->getOptions()['product-id'] == $discountCriteria->getProduct()->getId()) &&
                 ($cartItem->getQuantity() >= (integer)$discountCriteria->getMin()) &&
@@ -264,6 +268,8 @@ class DiscountCriteriaService
      * @param DiscountCriteria $discountCriteria
      *
      * @return bool
+     *
+     * @throws Throwable
      */
     public function productOwnRequirement(
         DiscountCriteria $discountCriteria

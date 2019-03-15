@@ -26,7 +26,8 @@ class CartAddressService
     /**
      * CartAddressService constructor.
      *
-     * @param $session
+     * @param Store $session
+     * @param LocationService $locationService
      */
     public function __construct(
         Store $session,
@@ -66,7 +67,7 @@ class CartAddressService
     /**
      * Set the address on the session and return it
      *
-     * @param array $address
+     * @param Address $address
      * @param string $addressType
      *
      * @return Address

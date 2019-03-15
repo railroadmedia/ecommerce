@@ -11,6 +11,8 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\UserProductRepository;
+use Throwable;
 
 class UserProductService
 {
@@ -28,13 +30,14 @@ class UserProductService
      * UserProductService constructor.
      *
      * @param EcommerceEntityManager $entityManager
+     * @param UserProductRepository $userProductRepository
      */
-    public function __construct(EcommerceEntityManager $entityManager)
-    {
+    public function __construct(
+        EcommerceEntityManager $entityManager,
+        UserProductRepository $userProductRepository
+    ) {
         $this->entityManager = $entityManager;
-
-        $this->userProductRepository = $this->entityManager
-                ->getRepository(UserProduct::class);
+        $this->userProductRepository = $userProductRepository;
     }
 
     /**
@@ -44,6 +47,8 @@ class UserProductService
      * @param Product $product
      *
      * @return UserProduct|null
+     *
+     * @throws Throwable
      */
     public function getUserProduct(
         UserInterface $user,
@@ -68,7 +73,7 @@ class UserProductService
      * Get user products collection based on user and product array
      *
      * @param UserInterface $user
-     * @param Product $product
+     * @param array $products
      *
      * @return array
      */
@@ -92,6 +97,9 @@ class UserProductService
         $map = [];
 
         foreach ($collection as $userProduct) {
+            /**
+             * @var $userProduct UserProduct
+             */
             $map[$userProduct->getId()] = $userProduct;
         }
 
@@ -107,6 +115,8 @@ class UserProductService
      * @param int $quantity
      *
      * @return UserProduct
+     *
+     * @throws Throwable
      */
     public function createUserProduct(
         UserInterface $user,
@@ -137,6 +147,8 @@ class UserProductService
      * @param int $quantity
      *
      * @return UserProduct
+     *
+     * @throws Throwable
      */
     public function updateUserProduct(
         UserProduct $userProduct,
@@ -158,6 +170,8 @@ class UserProductService
      * Delete user product
      *
      * @param UserProduct $userProduct
+     *
+     * @throws Throwable
      */
     public function deleteUserProduct(UserProduct $userProduct)
     {
@@ -172,6 +186,8 @@ class UserProductService
      * @param Product $product
      * @param DateTimeInterface $expirationDate
      * @param int $quantity
+     *
+     * @throws Throwable
      */
     public function assignUserProduct(
         UserInterface $user,
@@ -211,6 +227,8 @@ class UserProductService
      *     'product' => (Product) $product,
      *     'quantity' => (int) $quantity
      * ]
+     *
+     * @throws Throwable
      */
     public function removeUserProducts(
         UserInterface $user,
@@ -274,7 +292,10 @@ class UserProductService
             }
 
             return collect($subscription->getOrder()->getOrderItems())
-                ->map(function($orderItem, $key) {
+                ->map(function($orderItem) {
+                    /**
+                     * @var $orderItem \Railroad\Ecommerce\Entities\OrderItem
+                     */
                     return [
                         'product' => $orderItem->getProduct(),
                         'quantity' => $orderItem->getQuantity()
@@ -292,6 +313,13 @@ class UserProductService
         }
     }
 
+    /**
+     * Updates subscription user products
+     *
+     * @param Subscription $subscription
+     *
+     * @throws Throwable
+     */
     public function updateSubscriptionProducts(Subscription $subscription)
     {
         $products = $this->getSubscriptionProducts($subscription);

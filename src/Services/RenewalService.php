@@ -3,28 +3,22 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityRepository;
 use Exception;
-use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
-use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Payment;
-use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\TaxService;
-use Railroad\Ecommerce\Services\UserProductService;
+use Railroad\Ecommerce\Repositories\CreditCardRepository;
+use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
-use Railroad\Ecommerce\Services\PaymentMethodService;
 
 class RenewalService
 {
     /**
-     * @var EntityRepository
+     * @var CreditCardRepository
      */
     protected $creditCardRepository;
 
@@ -39,12 +33,12 @@ class RenewalService
     protected $entityManager;
 
     /**
-     * @var EntityRepository
+     * @var PaypalBillingAgreementRepository
      */
     protected $paypalRepository;
 
     /**
-     * @var EntityRepository
+     * @var SubscriptionPaymentRepository
      */
     protected $subscriptionPaymentRepository;
 
@@ -71,33 +65,35 @@ class RenewalService
     /**
      * RenewalService constructor.
      *
+     * @param CreditCardRepository $creditCardRepository
+     * @param CurrencyService $currencyService
      * @param EcommerceEntityManager $entityManager
      * @param StripePaymentGateway $stripePaymentGateway
+     * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      * @param PayPalPaymentGateway $payPalPaymentGateway
+     * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
+     * @param TaxService $taxService
+     * @param UserProductService $userProductService
      */
     public function __construct(
+        CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
         EcommerceEntityManager $entityManager,
         StripePaymentGateway $stripePaymentGateway,
+        PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
         PayPalPaymentGateway $payPalPaymentGateway,
+        SubscriptionPaymentRepository $subscriptionPaymentRepository,
         TaxService $taxService,
         UserProductService $userProductService
     ) {
+        $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
         $this->taxService = $taxService;
         $this->entityManager = $entityManager;
         $this->stripePaymentGateway = $stripePaymentGateway;
+        $this->paypalRepository = $paypalBillingAgreementRepository;
         $this->paypalPaymentGateway = $payPalPaymentGateway;
-
-        $this->creditCardRepository = $this->entityManager
-                ->getRepository(CreditCard::class);
-
-        $this->paypalRepository = $this->entityManager
-                ->getRepository(PaypalBillingAgreement::class);
-
-        $this->subscriptionPaymentRepository = $this->entityManager
-                ->getRepository(SubscriptionPayment::class);
-
+        $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->userProductService = $userProductService;
     }
 
@@ -129,6 +125,8 @@ class RenewalService
         $payment = new Payment();
 
         $currency = $subscription->getCurrency();
+
+        $chargePrice = null;
 
         if (
             $paymentMethod->getMethodType() ==
@@ -342,7 +340,7 @@ class RenewalService
                 );
             }
 
-            throw $paymentException;
+            throw isset($paymentException) ? $paymentException : new Exception();
         }
 
         $this->userProductService->updateSubscriptionProducts($subscription);

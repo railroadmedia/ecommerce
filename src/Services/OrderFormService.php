@@ -10,11 +10,9 @@ use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
-use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Customer;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
-use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
@@ -25,7 +23,6 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Entities\Structures\Address as SessionAddress;
-use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
@@ -35,23 +32,35 @@ use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
-use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\UserProductService;
+use Railroad\Ecommerce\Repositories\AddressRepository;
+use Railroad\Ecommerce\Repositories\CreditCardRepository;
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
+use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Permissions\Services\PermissionService;
 use Stripe\Error\Card as StripeCard;
+use Throwable;
 
 class OrderFormService
 {
+    /**
+     * @var AddressRepository
+     */
+    private $addressRepository;
+
     /**
      * @var CartService
      */
     private $cartService;
 
     /**
-     * @var \Railroad\Ecommerce\Services\CartAddressService
+     * @var CartAddressService
      */
     private $cartAddressService;
+
+    /**
+     * @var CreditCardRepository
+     */
+    private $creditCardRepository;
 
     /**
      * @var EcommerceEntityManager
@@ -59,24 +68,39 @@ class OrderFormService
     private $entityManager;
 
     /**
-     * @var \Railroad\Ecommerce\Services\PaymentMethodService
-     */
-    private $paymentMethodService;
-
-    /**
      * @var CurrencyService
      */
     private $currencyService;
 
     /**
-     * @var StripePaymentGateway
+     * @var PaymentMethodRepository
      */
-    private $stripePaymentGateway;
+    private $paymentMethodRepository;
+
+    /**
+     * @var PaymentMethodService
+     */
+    private $paymentMethodService;
+
+    /**
+     * @var PaypalBillingAgreementRepository
+     */
+    private $paypalBillingAgreementRepository;
 
     /**
      * @var PayPalPaymentGateway
      */
     private $payPalPaymentGateway;
+
+    /**
+     * @var PermissionService
+     */
+    private $permissionService;
+
+    /**
+     * @var StripePaymentGateway
+     */
+    private $stripePaymentGateway;
 
     /**
      * @var mixed UserProductService
@@ -89,40 +113,48 @@ class OrderFormService
     private $userProvider;
 
     /**
-     * @var PermissionService
-     */
-    private $permissionService;
-
-    /**
      * OrderFormService constructor.
      *
+     * @param AddressRepository $addressRepository
      * @param CartService $cartService
      * @param CartAddressService $cartAddressService
+     * @param CreditCardRepository $creditCardRepository
      * @param CurrencyService $currencyService
      * @param EcommerceEntityManager $entityManager
+     * @param PaymentMethodRepository $paymentMethodRepository
      * @param PaymentMethodService $paymentMethodService
+     * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
      * @param UserProductService $userProductService
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        AddressRepository $addressRepository,
         CartService $cartService,
         CartAddressService $cartAddressService,
+        CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
         EcommerceEntityManager $entityManager,
+        PaymentMethodRepository $paymentMethodRepository,
         PaymentMethodService $paymentMethodService,
+        PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
         PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService,
         StripePaymentGateway $stripePaymentGateway,
         UserProductService $userProductService,
         UserProviderInterface $userProvider
     ) {
+        $this->addressRepository = $addressRepository;
         $this->cartService = $cartService;
         $this->cartAddressService = $cartAddressService;
+        $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;
+        $this->paymentMethodRepository = $paymentMethodRepository;
         $this->paymentMethodService = $paymentMethodService;
+        $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
@@ -135,6 +167,8 @@ class OrderFormService
      * @param string $currency
      *
      * @return float
+     *
+     * @throws Throwable
      */
     public function convertPrice(float $price, string $currency)
     {
@@ -142,7 +176,7 @@ class OrderFormService
     }
 
     /**
-     * @param OrderFormSubmitRequest $request
+     * @param Request $request
      * @param UserInterface $user
      * @param Customer $customer
      * @param float $initialPrice
@@ -151,10 +185,11 @@ class OrderFormService
      *
      * @return array
      *
-     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     * @throws PaymentFailedException
+     * @throws Throwable
      */
     private function chargeAndCreatePaymentMethod(
-        OrderFormSubmitRequest $request,
+        Request $request,
         ?UserInterface $user,
         ?Customer $customer,
         $initialPrice,
@@ -228,7 +263,8 @@ class OrderFormService
      *
      * @return array
      *
-     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     * @throws PaymentFailedException
+     * @throws Throwable
      */
     private function transactionAndCreatePaymentMethod(
         Request $request,
@@ -284,24 +320,24 @@ class OrderFormService
     /**
      * Re-charge an existing credit card payment method
      *
-     * @param OrderFormSubmitRequest $request
+     * @param Request $request
      * @param PaymentMethod $paymentMethod
      * @param float $initialPrice
      * @param string $currency
      *
      * @return mixed
      *
-     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     * @throws PaymentFailedException
+     * @throws Throwable
      */
     private function rechargeCreditCard(
-        OrderFormSubmitRequest $request,
+        Request $request,
         PaymentMethod $paymentMethod,
         $initialPrice,
         $currency
     ) {
 
-        $creditCard = $this->entityManager
-                            ->getRepository(CreditCard::class)
+        $creditCard = $this->creditCardRepository
                             ->find($paymentMethod->getMethodId());
 
         $customer = $this->stripePaymentGateway->getCustomer(
@@ -339,24 +375,24 @@ class OrderFormService
     /**
      * Re-charge an existing paypal agreement payment method
      *
-     * @param OrderFormSubmitRequest $request
+     * @param Request $request
      * @param PaymentMethod $paymentMethod
      * @param float $initialPrice
      * @param string $currency
      *
      * @return mixed
      *
-     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     * @throws PaymentFailedException
+     * @throws Throwable
      */
     private function rechargeAgreement(
-        OrderFormSubmitRequest $request,
+        Request $request,
         PaymentMethod $paymentMethod,
         $initialPrice,
         $currency
     ) {
 
-        $paypalAgreement = $this->entityManager
-                            ->getRepository(PaypalBillingAgreement::class)
+        $paypalAgreement = $this->paypalBillingAgreementRepository
                             ->find($paymentMethod->getMethodId());
 
         $convertedPrice = $this->convertPrice($initialPrice, $currency);
@@ -373,11 +409,13 @@ class OrderFormService
      * @param Order $order
      *
      * @return bool
+     *
+     * @throws Throwable
      */
     private function createOrderDiscounts(Order $order)
     {
         /**
-         * @var $cart \Railroad\Ecommerce\Entities\Strctures\Cart
+         * @var $cart \Railroad\Ecommerce\Entities\Structures\Cart
          */
         $cart = $this->cartService->getCart();
 
@@ -408,6 +446,8 @@ class OrderFormService
      * @param OrderItem $orderItem
      *
      * @return OrderItem
+     *
+     * @throws Throwable
      */
     private function createOrderItemDiscounts(
         CartItem $cartItem,
@@ -447,6 +487,8 @@ class OrderFormService
      * @param string $currency
      *
      * @return Payment
+     *
+     * @throws Throwable
      */
     private function createPayment(
         $paid,
@@ -487,7 +529,6 @@ class OrderFormService
     }
 
     /**
-     * @param Request $request
      * @param float $paid
      * @param float $shipping
      * @param float $totalDue
@@ -501,10 +542,9 @@ class OrderFormService
      *
      * @return Order
      *
-     * @throws UnprocessableEntityException
+     * @throws Throwable
      */
     private function createOrder(
-        Request $request,
         $paid,
         $shipping,
         $totalDue,
@@ -554,29 +594,30 @@ class OrderFormService
      * @param string $currency
      * @param PaymentMethod $paymentMethod
      * @param Payment $payment
-     * @param $applyDiscounts
      * @param int $totalCyclesDue
      *
      * @return Subscription
      *
-     * @throws \Railroad\Ecommerce\Exceptions\UnprocessableEntityException
+     * @throws UnprocessableEntityException
+     * @throws Throwable
      */
     private function createSubscription(
         $brand,
-        ?Product $product = null,
+        ?Product $product,
         Order $order,
         ?CartItem $cartItem,
         UserInterface $user,
         $currency,
         PaymentMethod $paymentMethod,
         Payment $payment,
-        $applyDiscounts = false,
         $totalCyclesDue = null
     ): Subscription {
         $type = ConfigService::$typeSubscription;
 
         // if the product it's not defined we should create a payment plan.
         // Define payment plan next bill date, price per payment and tax per payment.
+
+        $nextBillDate = null;
 
         if (is_null($product)) {
 
@@ -586,9 +627,6 @@ class OrderFormService
 
             $subscriptionPricePerPayment = $this->cartService->getCart()
                                             ->calculatePricePerPayment();
-
-            $totalTaxSplitedPerPaymentPlan = $this->cartService->getCart()
-                                    ->calculateTaxesDue() / $totalCyclesDue;
 
         } else {
 
@@ -680,13 +718,15 @@ class OrderFormService
     }
 
     /**
-     * Submit an order
+     * Returns an array with user, customer and brand
      *
      * @param Request $request
      *
      * @return array
+     *
+     * @throws Throwable
      */
-    public function processOrderForm(Request $request): array
+    public function getUserCustomerBrand(Request $request)
     {
         $user = auth()->user() ? $this->userProvider->getCurrentUser() : null;
         $brand = ConfigService::$brand;
@@ -701,17 +741,6 @@ class OrderFormService
 
             $brand = $request->get('brand', ConfigService::$brand);
         }
-
-        $this->cartService->setBrand($brand);
-
-        if (!empty($request->get('token'))) {
-            $orderFormInput = session()->get('order-form-input', []);
-            unset($orderFormInput['token']);
-            session()->forget('order-form-input');
-            $request->merge($orderFormInput);
-        }
-
-        $currency = $request->get('currency', $this->currencyService->get());
 
         if (!empty($request->get('account-creation-email')) && empty($user)) {
             $user = $this->userProvider->createUser(
@@ -735,12 +764,34 @@ class OrderFormService
             $this->entityManager->persist($customer);
         }
 
+        return [$user, $customer, $brand];
+    }
+
+    /**
+     * Returns client shipping address
+     * If request contains a shipping address id key, it will look it up in db
+     * Throws exception if not found
+     * If cart items require shipping it will create a new address with request data
+     *
+     * @param Request $request
+     * @param UserInterface $user
+     * @param Customer $customer
+     *
+     * @return Address
+     *
+     * @throws Throwable
+     */
+    public function getShippingAddress(
+        Request $request,
+        ?UserInterface $user,
+        ?Customer $customer
+    ): ?Address {
+
         $shippingAddress = null;
 
         if ($request->get('shipping-address-id')) {
 
-            $shippingAddress = $this->entityManager
-                                    ->getRepository(Address::class)
+            $shippingAddress = $this->addressRepository
                                     ->find($request->get('shipping-address-id'));
 
             $message = 'Order failed. Error message: could not find shipping address id: ' .
@@ -793,11 +844,12 @@ class OrderFormService
             );
         }
 
-        $this->cartService->calculateShippingCosts();
+        return $shippingAddress;
+    }
 
-        $initialShippingCosts = $this->cartService
-                                        ->getCart()
-                                        ->getShippingCosts();
+    public function refreshCart()
+    {
+        $this->cartService->calculateShippingCosts();
 
         $this->cartService->getCart()->removeAppliedDiscount();
 
@@ -807,8 +859,15 @@ class OrderFormService
         $this->cartService->getCart()->setAppliedDiscounts($discountsToApply);
 
         $this->cartService->applyDiscounts();
+    }
 
-        // set the shipping address on session
+    /**
+     * Creates billing address from request data and stores on sesison
+     *
+     * @param Request $request
+     */
+    public function setupSessionBillingAddress(Request $request)
+    {
         $sessionBillingAddress = new SessionAddress();
 
         $sessionBillingAddress
@@ -820,194 +879,126 @@ class OrderFormService
             $sessionBillingAddress,
             CartAddressService::BILLING_ADDRESS_TYPE
         );
+    }
 
-        $this->cartService->setPaymentPlanNumberOfPayments(
-            $request->get('payment-plan-selector')
-        );
+    /**
+     * Re-bills an existing client
+     * The payment method is looked up in db
+     * If not found, it will throw an exception
+     *
+     * @param Request $request
+     * @param UserInterface $user
+     * @param string $currency
+     * @param float $paymentAmount
+     *
+     * @return array
+     *
+     * Returns array [$charge, $transactionId, $paymentMethod, $billingAddress]
+     *
+     * @throws Throwable
+     */
+    public function rebillClient(
+        Request $request,
+        ?UserInterface $user,
+        string $currency,
+        float $paymentAmount
+    ) {
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->paymentMethodRepository
+                ->createQueryBuilder('pm');
 
-        // try to make the payment
-        try {
-            if ($request->get('payment-method-id')) {
+        $qb
+            ->select(['pm', 'upm'])
+            ->join(
+                UserPaymentMethods::class,
+                'upm',
+                Join::WITH,
+                $qb->expr()->eq(1, 1)
+            )
+            ->join('upm.paymentMethod', 'pmj')
+            ->where($qb->expr()->eq('upm.user', ':user'))
+            ->andWhere($qb->expr()->eq('pmj.id', 'pm.id'))
+            ->setParameter('user', $user);
 
-                /**
-                 * @var $qb \Doctrine\ORM\QueryBuilder
-                 */
-                $qb = $this->entityManager
-                        ->getRepository(PaymentMethod::class)
-                        ->createQueryBuilder('pm');
+        $paymentMethodCheck = $qb->getQuery()->getResult();
 
-                $qb
-                    ->select(['pm', 'upm'])
-                    ->join(
-                        UserPaymentMethods::class,
-                        'upm',
-                        Join::WITH,
-                        $qb->expr()->eq(1, 1)
-                    )
-                    ->join('upm.paymentMethod', 'pmj')
-                    ->where($qb->expr()->eq('upm.user', ':user'))
-                    ->andWhere($qb->expr()->eq('pmj.id', 'pm.id'))
-                    ->setParameter('user', $user);
+        if (empty($paymentMethodCheck)) {
 
-                $paymentMethodCheck = $qb->getQuery()->getResult();
-
-                if (empty($paymentMethodCheck)) {
-
-                    $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
-                    return [
-                        'redirect' => $url,
-                        'errors' => [
-                            'payment' => 'Invalid Payment Method',
-                        ],
-                    ];
-                }
-
-                /**
-                 * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
-                 */
-                $paymentMethod = $paymentMethodCheck[0];
-
-                $charge = $transactionId = null;
-
-                if ($paymentMethod->getMethodType() == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-                    $charge = $this->rechargeCreditCard(
-                        $request,
-                        $paymentMethod,
-                        $this->cartService->getCart()
-                            ->calculateInitialPricePerPayment(),
-                        $currency
-                    );
-                } else {
-                    $transactionId = $this->rechargeAgreement(
-                        $request,
-                        $paymentMethod,
-                        $this->cartService->getCart()
-                            ->calculateInitialPricePerPayment(),
-                        $currency
-                    );
-                }
-
-                if (!$charge && !$transactionId) {
-
-                    $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
-
-                    return [
-                        'redirect' => $url,
-                        'errors' => [
-                            'payment' => 'Could not recharge existing payment method',
-                        ],
-                    ];
-                }
-
-                $billingAddress = $paymentMethod->getBillingAddress();
-
-            } else {
-
-                if (
-                    $request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE &&
-                    empty($request->get('token'))
-                ) {
-                    list(
-                        $charge, $paymentMethod, $billingAddress
-                    ) = $this->chargeAndCreatePaymentMethod(
-                        $request,
-                        $user,
-                        $customer ?? null,
-                        $this->cartService->getCart()
-                            ->calculateInitialPricePerPayment(),
-                        $currency,
-                        $brand
-                    );
-
-                } elseif (
-                    $request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE ||
-                    !empty($request->get('token'))
-                ) {
-                    if (empty($request->get('token'))) {
-
-                        $gateway = $request->get('gateway');
-                        $config = ConfigService::$paymentGateways['paypal'];
-                        $url = $config[$gateway]['paypal_api_checkout_return_url'];
-
-                        $checkoutUrl = $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl(
-                            $gateway,
-                            $url
-                        );
-
-                        session()->put('order-form-input', $request->all());
-
-                        return ['redirect' => $checkoutUrl];
-                    }
-
-                    list (
-                        $transactionId, $paymentMethod, $billingAddress
-                    ) = $this->transactionAndCreatePaymentMethod(
-                        $request,
-                        $this->cartService->getCart()
-                            ->calculateInitialPricePerPayment(),
-                        $currency,
-                        $user,
-                        $brand
-                    );
-
-                } else {
-                    $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
-
-                    return [
-                        'redirect' => $url,
-                        'errors' => [
-                            'payment' => 'Payment method not supported.',
-                        ],
-                    ];
-                }
-            }
-        } catch (PaymentFailedException $paymentFailedException) {
-
-            $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
-
-            return [
-                'redirect' => $url,
-                'errors' => [
-                    'payment' => $paymentFailedException->getMessage(),
-                ],
-            ];
-        } catch (StripeCard $exception) {
-
-            $exceptionData = $exception->getJsonBody();
-
-            $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
-
-            // validate UI known error format
-            if (isset($exceptionData['error']) && isset($exceptionData['error']['code'])) {
-
-                if ($request->has('redirect')) {
-                    // assume request having redirect is aware and able to proccess stripe session errors
-                    return [
-                        'redirect' => $url,
-                        'errors' => [
-                            ['stripe' => $exceptionData['error']],
-                        ],
-                    ];
-                } else {
-                    // assume request not having redirect is json request
-                    throw new StripeCardException($exceptionData['error']);
-                }
-            }
-
-            // throw generic
-            throw new PaymentFailedException($exception->getMessage());
-        } catch (Exception $paymentFailedException) {
-
-            throw new PaymentFailedException($paymentFailedException->getMessage());
+            // throw exception to redirect
+            throw new PaymentFailedException('Invalid Payment Method');
         }
 
-        $totalPaid = $this->cartService
-                        ->getCart()
-                        ->calculateInitialPricePerPayment();
+        /**
+         * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
+         */
+        $paymentMethod = $paymentMethodCheck[0];
 
+        $charge = $transactionId = null;
+
+        if ($paymentMethod->getMethodType() == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+            $charge = $this->rechargeCreditCard(
+                $request,
+                $paymentMethod,
+                $paymentAmount,
+                $currency
+            );
+        } else {
+            $transactionId = $this->rechargeAgreement(
+                $request,
+                $paymentMethod,
+                $paymentAmount,
+                $currency
+            );
+        }
+
+        if (!$charge && !$transactionId) {
+
+            // throw exception to redirect
+            throw new PaymentFailedException('Could not recharge existing payment method');
+        }
+
+        $billingAddress = $paymentMethod->getBillingAddress();
+
+        return [$charge, $transactionId, $paymentMethod, $billingAddress];
+    }
+
+    /**
+     * Creates payment and order objects
+     *
+     * @param PaymentMethod $paymentMethod
+     * @param UserInterface $user
+     * @param Customer $customer
+     * @param Address $billingAddress
+     * @param Address $shippingAddress
+     * @param $charge
+     * @param $transactionId
+     * @param string $currency
+     * @param string $brand
+     * @param float $paymentAmount
+     *
+     * @return array
+     *
+     * Returns array [$payment, $order]
+     *
+     * @throws Throwable
+     */
+    public function createPaymentAndOrder(
+        PaymentMethod $paymentMethod,
+        ?UserInterface $user,
+        ?Customer $customer,
+        Address $billingAddress,
+        ?Address $shippingAddress,
+        $charge,
+        $transactionId,
+        string $currency,
+        string $brand,
+        float $paymentAmount
+    ) {
         // create Payment
         $payment = $this->createPayment(
-            $totalPaid,
+            $paymentAmount,
             $this->cartService->getCart()->getTotalDue(),
             $charge ?? null,
             $transactionId ?? null,
@@ -1023,8 +1014,7 @@ class OrderFormService
 
         // create order
         $order = $this->createOrder(
-            $request,
-            $totalPaid,
+            $paymentAmount,
             $productsShippingPrice,
             $productsDuePrice,
             $productsTaxPrice,
@@ -1036,13 +1026,39 @@ class OrderFormService
             $brand
         );
 
-        // create payment plan
-        $paymentPlanNumbersOfPayments = $this->cartService->getCart()
-                ->getPaymentPlanNumberOfPayments();
+        // if the order failed; we throw the proper exception
+        throw_if(
+            !($order),
+            new UnprocessableEntityException('Order failed.')
+        );
 
-        // apply order discounts
-        $this->createOrderDiscounts($order);
+        return [$payment, $order];
+    }
 
+    /**
+     * Creates payment and order objects
+     *
+     * @param UserInterface $user
+     * @param Order $order
+     * @param PaymentMethod $paymentMethod
+     * @param Payment $payment
+     * @param string $currency
+     * @param string $brand
+     *
+     * @return array
+     *
+     * Returns array of OrderItem
+     *
+     * @throws Throwable
+     */
+    public function createAndProcessOrderItems(
+        ?UserInterface $user,
+        Order $order,
+        PaymentMethod $paymentMethod,
+        Payment $payment,
+        string $currency,
+        string $brand
+    ): array {
         // order items
         $orderItems = [];
 
@@ -1051,6 +1067,12 @@ class OrderFormService
         $initialProductsPrice = $this->cartService
                                     ->getCart()
                                     ->getTotalInitial();
+
+        $productsDuePrice = $this->cartService->getCart()->getTotalDue();
+        $productsTaxPrice = $this->cartService->getCart()->calculateTaxesDue();
+        $initialShippingCosts = $this->cartService
+                                        ->getCart()
+                                        ->getShippingCosts();
 
         $discountAmount = round(
             $initialProductsPrice -
@@ -1063,7 +1085,9 @@ class OrderFormService
         );
 
         foreach ($cartItems as $key => $cartItem) {
-
+            /**
+             * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+             */
             $expirationDate = null;
 
             $cartItemProduct = $cartItem->getProduct();
@@ -1106,8 +1130,7 @@ class OrderFormService
                     $user,
                     $currency,
                     $paymentMethod,
-                    $payment,
-                    true
+                    $payment
                 );
 
                 $expirationDate = $subscription->getPaidUntil();
@@ -1147,6 +1170,190 @@ class OrderFormService
             $orderItems[] = $orderItem;
         }
 
+        return $orderItems;
+    }
+
+    /**
+     * Submit an order
+     *
+     * @param Request $request
+     *
+     * @return array
+     *
+     * @throws Throwable
+     */
+    public function processOrderForm(Request $request): array
+    {
+        list($user, $customer, $brand) = $this->getUserCustomerBrand($request);
+
+        $this->cartService->setBrand($brand);
+
+        if (!empty($request->get('token'))) {
+            $orderFormInput = session()->get('order-form-input', []);
+            unset($orderFormInput['token']);
+            session()->forget('order-form-input');
+            $request->merge($orderFormInput);
+        }
+
+        $currency = $request->get('currency', $this->currencyService->get());
+
+        $shippingAddress = $this->getShippingAddress(
+            $request,
+            $user,
+            $customer
+        );
+
+        $this->refreshCart();
+
+        $this->setupSessionBillingAddress($request);
+
+        $this->cartService->setPaymentPlanNumberOfPayments(
+            $request->get('payment-plan-selector')
+        );
+
+        $paymentAmount = $this->cartService
+                        ->getCart()
+                        ->calculateInitialPricePerPayment();
+
+        // try to make the payment
+        try {
+            $charge = $transactionId = $paymentMethod = $billingAddress = null;
+
+            if ($request->get('payment-method-id')) {
+
+                list(
+                    $charge,
+                    $transactionId,
+                    $paymentMethod,
+                    $billingAddress
+                ) = $this->rebillClient(
+                    $request,
+                    $user,
+                    $currency,
+                    $paymentAmount
+                );
+
+            } else {
+
+                if (
+                    $request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE &&
+                    empty($request->get('token'))
+                ) {
+                    list(
+                        $charge, $paymentMethod, $billingAddress
+                    ) = $this->chargeAndCreatePaymentMethod(
+                        $request,
+                        $user,
+                        $customer ?? null,
+                        $paymentAmount,
+                        $currency,
+                        $brand
+                    );
+
+                } elseif (
+                    $request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE ||
+                    !empty($request->get('token'))
+                ) {
+                    if (empty($request->get('token'))) {
+
+                        $gateway = $request->get('gateway');
+                        $config = ConfigService::$paymentGateways['paypal'];
+                        $url = $config[$gateway]['paypal_api_checkout_return_url'];
+
+                        $checkoutUrl = $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl(
+                            $gateway,
+                            $url
+                        );
+
+                        session()->put('order-form-input', $request->all());
+
+                        return ['redirect' => $checkoutUrl];
+                    }
+
+                    list (
+                        $transactionId, $paymentMethod, $billingAddress
+                    ) = $this->transactionAndCreatePaymentMethod(
+                        $request,
+                        $paymentAmount,
+                        $currency,
+                        $user,
+                        $brand
+                    );
+
+                } else {
+
+                    throw new PaymentFailedException('Payment method not supported.');
+                }
+            }
+        } catch (PaymentFailedException $paymentFailedException) {
+
+            $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
+
+            return [
+                'redirect' => $url,
+                'errors' => [
+                    'payment' => $paymentFailedException->getMessage(),
+                ],
+            ];
+        } catch (StripeCard $exception) {
+
+            $exceptionData = $exception->getJsonBody();
+
+            $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
+
+            // validate UI known error format
+            if (isset($exceptionData['error']) && isset($exceptionData['error']['code'])) {
+
+                if ($request->has('redirect')) {
+                    // assume request having redirect is aware and able to proccess stripe session errors
+                    return [
+                        'redirect' => $url,
+                        'errors' => [
+                            ['stripe' => $exceptionData['error']],
+                        ],
+                    ];
+                } else {
+                    // assume request not having redirect is json request
+                    throw new StripeCardException($exceptionData['error']);
+                }
+            }
+
+            // throw generic
+            throw new PaymentFailedException($exception->getMessage());
+        } catch (Exception $paymentFailedException) {
+
+            throw new PaymentFailedException($paymentFailedException->getMessage());
+        }
+
+        list($payment, $order) = $this->createPaymentAndOrder(
+            $paymentMethod,
+            $user,
+            $customer,
+            $billingAddress,
+            $shippingAddress,
+            $charge,
+            $transactionId,
+            $currency,
+            $brand,
+            $paymentAmount
+        );
+
+        // apply order discounts
+        $this->createOrderDiscounts($order);
+
+        $orderItems = $this->createAndProcessOrderItems(
+            $user,
+            $order,
+            $paymentMethod,
+            $payment,
+            $currency,
+            $brand
+        );
+
+        // create payment plan
+        $paymentPlanNumbersOfPayments = $this->cartService->getCart()
+                ->getPaymentPlanNumberOfPayments();
+
         if ($paymentPlanNumbersOfPayments > 1) {
             $this->createSubscription(
                 $this->cartService->getCart()->getBrand(),
@@ -1157,18 +1364,11 @@ class OrderFormService
                 $currency,
                 $paymentMethod,
                 $payment,
-                false,
                 $paymentPlanNumbersOfPayments
             );
         }
 
-        // if the order failed; we throw the proper exception
-        throw_if(
-            !($order),
-            new UnprocessableEntityException('Order failed. Error message: ')
-        );
-
-        //prepare currency symbol for order invoice
+        // prepare currency symbol for order invoice
         switch ($currency) {
             case 'USD':
             case 'CAD':

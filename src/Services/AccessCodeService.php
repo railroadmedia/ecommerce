@@ -5,14 +5,13 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\UserProductService;
+use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Entities\AccessCode;
-use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionAccessCode;
 use Railroad\Ecommerce\Entities\UserProduct;
+use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
+use Throwable;
 
 class AccessCodeService
 {
@@ -22,61 +21,88 @@ class AccessCodeService
     private $currencyService;
 
     /**
-     * @var mixed UserProductService
-     */
-    private $userProductService;
-
-    /**
-     * @var EntityManager
+     * @var EcommerceEntityManager
      */
     private $entityManager;
+
+    /**
+     * @var ProductRepository
+     */
+    private $productRepository;
+
+    /**
+     * @var SubscriptionRepository
+     */
+    private $subscriptionRepository;
+
+    /**
+     * @var UserProductService
+     */
+    private $userProductService;
 
     /**
      * AccessCodeService constructor.
      *
      * @param CurrencyService $currencyService
-     * @param EntityManager $entityManager
+     * @param EcommerceEntityManager $entityManager
+     * @param ProductRepository $productRepository
+     * @param SubscriptionRepository $subscriptionRepository
      * @param UserProductService $userProductService
      */
     public function __construct(
         CurrencyService $currencyService,
         EcommerceEntityManager $entityManager,
+        ProductRepository $productRepository,
+        SubscriptionRepository $subscriptionRepository,
         UserProductService $userProductService
     ) {
         $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;
+        $this->productRepository = $productRepository;
+        $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
     }
 
-    public function claim(AccessCode $accessCode, UserInterface $user)
-    {
-        $productRepository = $this->entityManager
-            ->getRepository(Product::class);
-
-        $accessCodeProducts = $productRepository
+    /**
+     * Sets up the $accessCode as claimed by $user
+     * extends $accessCode associated subscriptions
+     * adds user products
+     *
+     * @param AccessCode $accessCode
+     * @param UserInterface $user
+     *
+     * @return AccessCode
+     *
+     * @throws Throwable
+     */
+    public function claim(
+        AccessCode $accessCode,
+        UserInterface $user
+    ): AccessCode {
+        $accessCodeProducts = $this->productRepository
             ->getAccessCodeProducts($accessCode);
 
-        $subscriptionRepository = $this->entityManager
-            ->getRepository(Subscription::class);
-
-        $subscriptions = $subscriptionRepository
+        $subscriptions = $this->subscriptionRepository
             ->getProductsSubscriptions($accessCodeProducts);
 
         $processedProductsIds = [];
 
         // extend subscriptions
 
-        /**
-         * @var $subscription \Railroad\Ecommerce\Entities\Subscription
-         */
         foreach ($subscriptions as $subscription) {
+            /**
+             * @var $subscription \Railroad\Ecommerce\Entities\Subscription
+             */
+
+            /**
+             * @var $paidUntil \Datetime
+             */
+            $paidUntil = $subscription->getPaidUntil();
 
             /**
              * @var $subscriptionEndDate \Carbon\Carbon
              */
-            $subscriptionEndDate = Carbon::instance(
-                    $subscription->getPaidUntil()
-                );
+            $subscriptionEndDate = Carbon::instance($paidUntil);
 
             // if subscription is expired, the access code will create a UserProduct
             if ($subscriptionEndDate->isPast()) {
@@ -131,10 +157,8 @@ class AccessCodeService
 
             $this->entityManager->persist($subscriptionAccessCode);
 
-            $processedProducts[$product->getId()] = true;
+            $processedProductsIds[$product->getId()] = true;
         }
-
-        $currency = $this->currencyService->get();
 
         // add user products
 
@@ -143,7 +167,7 @@ class AccessCodeService
          */
         foreach ($accessCodeProducts as $product) {
 
-            if (isset($processedProducts[$product->getId()])) {
+            if (isset($processedProductsIds[$product->getId()])) {
                 continue;
             }
 

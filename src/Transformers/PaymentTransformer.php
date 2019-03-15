@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Transformers;
 use Doctrine\Common\Persistence\Proxy;
 use Railroad\Ecommerce\Entities\Payment;
 use League\Fractal\TransformerAbstract;
-use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Transformers\EntityReferenceTransformer;
 
 class PaymentTransformer extends TransformerAbstract

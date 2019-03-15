@@ -2,10 +2,6 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Carbon\Carbon;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Repositories\AddressRepository;
-use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Location\Services\LocationService;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 
@@ -20,6 +16,8 @@ class CurrencyService
 
     /**
      * CurrencyService constructor.
+     *
+     * @param LocationService $locationService
      */
     public function __construct(LocationService $locationService)
     {

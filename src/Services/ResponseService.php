@@ -5,8 +5,9 @@ namespace Railroad\Ecommerce\Services;
 use Doctrine\ORM\QueryBuilder;
 use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
+use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Order;
-use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
 use Railroad\Ecommerce\Transformers\CartItemTransformer;
@@ -112,7 +113,7 @@ class ResponseService extends FractalResponseService
     {
         return fractal(
                 null,
-                function($notUsed) {
+                function() {
                     return null;
                 },
                 new JsonApiSerializer()
@@ -247,6 +248,8 @@ class ResponseService extends FractalResponseService
 
     /**
      * @param $userPaymentMethods
+     * @param array $creditCards
+     * @param array $paypalAgreements
      * @param QueryBuilder|null $queryBuilder
      * @param array $includes
      *
@@ -401,7 +404,7 @@ class ResponseService extends FractalResponseService
     {
         return fractal(
                 null,
-                function($notUsed) {
+                function() {
                     return null;
                 },
                 new JsonApiSerializer()
@@ -410,8 +413,8 @@ class ResponseService extends FractalResponseService
 
     /**
      * @param array $cartItems
-     * @param AddressInterface $billingAddress
-     * @param AddressInterface $shippingAddress
+     * @param Address $billingAddress
+     * @param Address $shippingAddress
      * @param array $paymentPlansPricing
      * @param float $totalDue
      *
@@ -419,9 +422,9 @@ class ResponseService extends FractalResponseService
      */
     public static function orderForm(
         array $cartItems,
-        ?AddressInterface $billingAddress,
-        ?AddressInterface $shippingAddress,
-        array $paymentPlansPricing = [],
+        ?Address $billingAddress,
+        ?Address $shippingAddress,
+        array $paymentPlansPricing,
         float $totalDue
     ) {
 
@@ -439,22 +442,24 @@ class ResponseService extends FractalResponseService
             ->addMeta([
                 'paymentPlansPricing' => $paymentPlansPricing,
                 'totalDue' => $totalDue,
-                'billingAddress' => $billingAddress->toArray(),
-                'shippingAddress' => $shippingAddress->toArray(),
+                'billingAddress' => $billingAddress ? $billingAddress->toArray() : null,
+                'shippingAddress' => $shippingAddress ? $shippingAddress->toArray() : null,
             ]);
     }
 
     /**
-     * @param AddressInterface $billingAddress
-     * @param AddressInterface $shippingAddress
+     * @param Address $billingAddress
+     * @param Address $shippingAddress
+     *
+     * @return Fractal
      */
     public static function sessionAddresses(
-        ?AddressInterface $billingAddress,
-        ?AddressInterface $shippingAddress
+        ?Address $billingAddress,
+        ?Address $shippingAddress
     ) {
         return fractal(
                 null,
-                function($notUsed) {
+                function() {
                     return null;
                 },
                 new JsonApiSerializer()
