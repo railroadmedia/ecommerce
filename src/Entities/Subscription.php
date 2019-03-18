@@ -2,10 +2,9 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
-use Railroad\Ecommerce\Contracts\UserInterface;
-use DateTimeInterface;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\SubscriptionRepository")
@@ -58,7 +57,7 @@ class Subscription
     protected $type;
 
     /**
-     * @var UserInterface
+     * @var User
      *
      * @ORM\Column(type="user_id", name="user_id", nullable=true)
      */
@@ -506,19 +505,19 @@ class Subscription
     }
 
     /**
-     * @return UserInterface|null
+     * @return User|null
      */
-    public function getUser(): ?UserInterface
+    public function getUser(): ?User
     {
         return $this->user;
     }
 
     /**
-     * @param UserInterface $user
+     * @param User $user
      *
      * @return Subscription
      */
-    public function setUser(?UserInterface $user): self
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 
@@ -545,7 +544,7 @@ class Subscription
         return $this;
     }
 
-     /**
+    /**
      * @return Product|null
      */
     public function getProduct(): ?Product

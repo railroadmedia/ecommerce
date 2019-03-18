@@ -6,7 +6,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
-use Railroad\Ecommerce\Contracts\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\OrderRepository")
@@ -80,7 +79,7 @@ class Order
     protected $totalPaid;
 
     /**
-     * @var UserInterface
+     * @var User
      *
      * @ORM\Column(type="user_id", name="user_id", nullable=true)
      */
@@ -297,19 +296,19 @@ class Order
     }
 
     /**
-     * @return UserInterface|null
+     * @return User|null
      */
-    public function getUser(): ?UserInterface
+    public function getUser(): ?User
     {
         return $this->user;
     }
 
     /**
-     * @param UserInterface $user
+     * @param User $user
      *
      * @return Order
      */
-    public function setUser(?UserInterface $user): self
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 
@@ -389,7 +388,8 @@ class Order
      *
      * @return Order
      */
-    public function addOrderItem(OrderItem $orderItem): self {
+    public function addOrderItem(OrderItem $orderItem): self
+    {
 
         if (!$this->orderItems->contains($orderItem)) {
 
@@ -406,7 +406,8 @@ class Order
      *
      * @return Order
      */
-    public function removeOrderItem(OrderItem $orderItem): self {
+    public function removeOrderItem(OrderItem $orderItem): self
+    {
 
         if ($this->orderItems->contains($orderItem)) {
 

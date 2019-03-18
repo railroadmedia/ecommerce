@@ -176,7 +176,7 @@ class PaymentMethodJsonController extends BaseController
         }
 
         /**
-         * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+         * @var $user \Railroad\Ecommerce\Entities\User
          */
         $user = $this->userProvider->getUserById($userId);
 
@@ -287,7 +287,7 @@ class PaymentMethodJsonController extends BaseController
                 );
 
             /**
-             * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+             * @var $user \Railroad\Ecommerce\Entities\User
              */
             $user = $this->userProvider->getCurrentUser();
 
@@ -351,7 +351,7 @@ class PaymentMethodJsonController extends BaseController
         $paymentMethod = $userPaymentMethod->getPaymentMethod();
 
         /**
-         * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+         * @var $user \Railroad\Ecommerce\Entities\User
          */
         $user = $userPaymentMethod->getUser();
 
@@ -598,7 +598,7 @@ class PaymentMethodJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'pull.user.payment.method');
 
         /**
-         * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+         * @var $user \Railroad\Ecommerce\Entities\User
          */
         $user = $this->userProvider->getUserById($userId);
 

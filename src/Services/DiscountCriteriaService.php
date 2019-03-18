@@ -4,10 +4,10 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Exception;
-use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Throwable;
@@ -30,7 +30,7 @@ class DiscountCriteriaService
     private $userProductRepository;
 
     /**
-     * @var UserInterface
+     * @var User
      */
     protected $currentUser;
 
@@ -81,28 +81,17 @@ class DiscountCriteriaService
     ): bool {
         switch ($discountCriteria->getType()) {
             case self::PRODUCT_QUANTITY_REQUIREMENT_TYPE:
-                return $this->productQuantityRequirementMet(
-                    $cart,
-                    $discountCriteria
-                );
+                return $this->productQuantityRequirementMet($cart, $discountCriteria);
             case self::DATE_REQUIREMENT_TYPE:
                 return $this->orderDateRequirement($discountCriteria);
             case self::ORDER_TOTAL_REQUIREMENT_TYPE:
                 return $this->orderTotalRequirement($cart, $discountCriteria);
             case self::SHIPPING_TOTAL_REQUIREMENT_TYPE:
-                return $this->orderShippingTotalRequirement(
-                    $discountCriteria,
-                    $cart->calculateShippingDue(false)
-                );
+                return $this->orderShippingTotalRequirement($discountCriteria, $cart->calculateShippingDue(false));
             case self::SHIPPING_COUNTRY_REQUIREMENT_TYPE:
-                return $this->orderShippingCountryRequirement(
-                    $discountCriteria
-                );
+                return $this->orderShippingCountryRequirement($discountCriteria);
             case self::PROMO_CODE_REQUIREMENT_TYPE:
-                return $this->promoCodeRequirement(
-                    $discountCriteria,
-                    $promoCode
-                );
+                return $this->promoCodeRequirement($discountCriteria, $promoCode);
             case self::PRODUCT_OWN_TYPE:
                 return $this->productOwnRequirement($discountCriteria);
             default:
@@ -124,11 +113,11 @@ class DiscountCriteriaService
             /**
              * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
              */
-            if (
-                ($cartItem->getOptions()['product-id'] == $discountCriteria->getProduct()->getId()) &&
+            if (($cartItem->getOptions()['product-id'] ==
+                    $discountCriteria->getProduct()
+                        ->getId()) &&
                 ($cartItem->getQuantity() >= (integer)$discountCriteria->getMin()) &&
-                ($cartItem->getQuantity() <= (integer)$discountCriteria->getMax())
-            ) {
+                ($cartItem->getQuantity() <= (integer)$discountCriteria->getMax())) {
                 return true;
             }
         }
@@ -144,10 +133,7 @@ class DiscountCriteriaService
     public function orderDateRequirement(
         DiscountCriteria $discountCriteria
     ): bool {
-        if (
-            empty($discountCriteria->getMax()) ||
-            empty($discountCriteria->getMin())
-        ) {
+        if (empty($discountCriteria->getMax()) || empty($discountCriteria->getMin())) {
             return false;
         }
 
@@ -158,12 +144,7 @@ class DiscountCriteriaService
             return false;
         }
 
-        if (
-            $maxDate !== false &&
-            $minDate !== false &&
-            Carbon::now() >= $minDate &&
-            Carbon::now() <= $maxDate
-        ) {
+        if ($maxDate !== false && $minDate !== false && Carbon::now() >= $minDate && Carbon::now() <= $maxDate) {
             return true;
         }
 
@@ -182,8 +163,7 @@ class DiscountCriteriaService
     ): bool {
         $cartItemsTotalWithoutTaxAndShipping = $cart->getTotalDue();
 
-        if (
-            $cartItemsTotalWithoutTaxAndShipping >= (float)$discountCriteria->getMin() &&
+        if ($cartItemsTotalWithoutTaxAndShipping >= (float)$discountCriteria->getMin() &&
             $cartItemsTotalWithoutTaxAndShipping <= (float)$discountCriteria->getMax()) {
             return true;
         }
@@ -201,10 +181,8 @@ class DiscountCriteriaService
         DiscountCriteria $discountCriteria,
         float $shippingCosts
     ): bool {
-        if (
-            $shippingCosts >= (float)$discountCriteria->getMin() &&
-            $shippingCosts <= (float)$discountCriteria->getMax()
-        ) {
+        if ($shippingCosts >= (float)$discountCriteria->getMin() &&
+            $shippingCosts <= (float)$discountCriteria->getMax()) {
             return true;
         }
 
@@ -222,19 +200,14 @@ class DiscountCriteriaService
         /**
          * @var $shippingCountry \Railroad\Ecommerce\Entities\Structures\Address
          */
-        $shippingCountry = $this->cartAddressService
-            ->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
+        $shippingCountry = $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
 
-        if (
-            !empty($shippingCountry) &&
+        if (!empty($shippingCountry) &&
             !empty($shippingCountry->getCountry()) &&
-            (
-                strtolower($shippingCountry->getCountry()) == strtolower($discountCriteria->getMin()) ||
+            (strtolower($shippingCountry->getCountry()) == strtolower($discountCriteria->getMin()) ||
                 $discountCriteria->getMin() == '*' ||
                 strtolower($shippingCountry->getCountry()) == strtolower($discountCriteria->getMax()) ||
-                $discountCriteria->getMax() == '*'
-            )
-        ) {
+                $discountCriteria->getMax() == '*')) {
             return true;
         }
 
@@ -242,7 +215,7 @@ class DiscountCriteriaService
     }
 
     /**
-     * @param DiscountCriteria $discountCriteria,
+     * @param DiscountCriteria $discountCriteria ,
      * @param string $promoCode
      *
      * @return bool
@@ -251,13 +224,8 @@ class DiscountCriteriaService
         DiscountCriteria $discountCriteria,
         ?string $promoCode
     ): bool {
-        if (
-            !empty($promoCode) &&
-            (
-                $discountCriteria->getMin() == $promoCode ||
-                $discountCriteria->getMax() == $promoCode
-            )
-        ) {
+        if (!empty($promoCode) &&
+            ($discountCriteria->getMin() == $promoCode || $discountCriteria->getMax() == $promoCode)) {
             return true;
         }
 
@@ -283,23 +251,24 @@ class DiscountCriteriaService
          */
         $qb = $this->userProductRepository->createQueryBuilder('up');
 
-        $qb
-            ->select('COUNT(up)')
-            ->where($qb->expr()->eq('up.user', ':user'))
-            ->andWhere($qb->expr()->eq('up.product', ':product'))
-            ->andWhere(
-                $qb->expr()->orX(
-                    $qb->expr()->gte('up.expirationDate', ':now'),
-                    $qb->expr()->isNull('up.expirationDate')
-                )
-            )
-            ->andWhere($qb->expr()->between('up.quantity', ':min', ':max'))
+        $qb->select('COUNT(up)')
+            ->where($qb->expr()
+                ->eq('up.user', ':user'))
+            ->andWhere($qb->expr()
+                ->eq('up.product', ':product'))
+            ->andWhere($qb->expr()
+                ->orX($qb->expr()
+                    ->gte('up.expirationDate', ':now'), $qb->expr()
+                    ->isNull('up.expirationDate')))
+            ->andWhere($qb->expr()
+                ->between('up.quantity', ':min', ':max'))
             ->setParameter('user', $this->currentUser)
             ->setParameter('product', $discountCriteria->getProduct())
             ->setParameter('now', Carbon::now())
             ->setParameter('min', (integer)$discountCriteria->getMin())
             ->setParameter('max', (integer)$discountCriteria->getMax());
 
-        return (integer) $qb->getQuery()->getSingleScalarResult() > 0;
+        return (integer)$qb->getQuery()
+                ->getSingleScalarResult() > 0;
     }
 }

@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Entities;
 use Carbon\Carbon;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
-use Railroad\Ecommerce\Contracts\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\AccessCodeRepository")
@@ -58,7 +57,7 @@ class AccessCode
     protected $isClaimed;
 
     /**
-     * @var UserInterface
+     * @var User
      *
      * @ORM\Column(type="user_id", name="claimer_id", nullable=true)
      */
@@ -187,19 +186,19 @@ class AccessCode
     }
 
     /**
-     * @return UserInterface|null
+     * @return User|null
      */
-    public function getClaimer(): ?UserInterface
+    public function getClaimer(): ?User
     {
         return $this->claimer;
     }
 
     /**
-     * @param UserInterface|null $claimer
+     * @param User|null $claimer
      *
      * @return AccessCode
      */
-    public function setClaimer(?UserInterface $claimer): self
+    public function setClaimer(?User $claimer): self
     {
         $this->claimer = $claimer;
 

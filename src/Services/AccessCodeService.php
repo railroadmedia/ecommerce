@@ -3,14 +3,14 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Contracts\UserInterface;
+use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Entities\SubscriptionAccessCode;
+use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Entities\UserProduct;
+use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
-use Railroad\Ecommerce\Entities\AccessCode;
-use Railroad\Ecommerce\Entities\SubscriptionAccessCode;
-use Railroad\Ecommerce\Entities\UserProduct;
-use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
 use Throwable;
 
 class AccessCodeService
@@ -69,21 +69,17 @@ class AccessCodeService
      * adds user products
      *
      * @param AccessCode $accessCode
-     * @param UserInterface $user
+     * @param User $user
      *
      * @return AccessCode
      *
      * @throws Throwable
      */
-    public function claim(
-        AccessCode $accessCode,
-        UserInterface $user
-    ): AccessCode {
-        $accessCodeProducts = $this->productRepository
-            ->getAccessCodeProducts($accessCode);
+    public function claim(AccessCode $accessCode, User $user): AccessCode
+    {
+        $accessCodeProducts = $this->productRepository->getAccessCodeProducts($accessCode);
 
-        $subscriptions = $this->subscriptionRepository
-            ->getProductsSubscriptions($accessCodeProducts);
+        $subscriptions = $this->subscriptionRepository->getProductsSubscriptions($accessCodeProducts);
 
         $processedProductsIds = [];
 
@@ -118,30 +114,25 @@ class AccessCodeService
             switch ($product->getSubscriptionIntervalType()) {
                 case ConfigService::$intervalTypeMonthly:
                     $endDate = $subscriptionEndDate->addMonths($intervalCount);
-                break;
+                    break;
 
                 case ConfigService::$intervalTypeYearly:
                     $endDate = $subscriptionEndDate->addYears($intervalCount);
-                break;
+                    break;
 
                 case ConfigService::$intervalTypeDaily:
                     $endDate = $subscriptionEndDate->addDays($intervalCount);
-                break;
+                    break;
 
                 default:
                     $format = 'Unknown subscription interval type for product id %s: %s';
-                    $message = sprintf(
-                        $format,
-                        $product->getId(),
-                        $product->getSubscriptionIntervalType()
-                    );
+                    $message = sprintf($format, $product->getId(), $product->getSubscriptionIntervalType());
 
                     throw new UnprocessableEntityException($message);
-                break;
+                    break;
             }
 
-            $subscription
-                ->setIsActive(true)
+            $subscription->setIsActive(true)
                 ->setCanceledOn(null)
                 ->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1)
                 ->setPaidUntil($endDate->startOfDay())
@@ -149,8 +140,7 @@ class AccessCodeService
 
             $subscriptionAccessCode = new SubscriptionAccessCode();
 
-            $subscriptionAccessCode
-                ->setSubscription($subscription)
+            $subscriptionAccessCode->setSubscription($subscription)
                 ->setAccessCode($accessCode)
                 ->setCreatedAt(Carbon::now())
                 ->setUpdatedAt(Carbon::now()); // explicit date handling required for automated tests
@@ -177,27 +167,26 @@ class AccessCodeService
             switch ($product->getSubscriptionIntervalType()) {
                 case ConfigService::$intervalTypeMonthly:
                     $expirationDate = Carbon::now()
-                                        ->addMonths($intervalCount)
-                                        ->startOfDay();
-                break;
+                        ->addMonths($intervalCount)
+                        ->startOfDay();
+                    break;
 
                 case ConfigService::$intervalTypeYearly:
                     $expirationDate = Carbon::now()
-                                        ->addYears($intervalCount)
-                                        ->startOfDay();
-                break;
+                        ->addYears($intervalCount)
+                        ->startOfDay();
+                    break;
 
                 case ConfigService::$intervalTypeDaily:
                     $expirationDate = Carbon::now()
-                                        ->addDays($intervalCount)
-                                        ->startOfDay();
-                break;
+                        ->addDays($intervalCount)
+                        ->startOfDay();
+                    break;
             }
 
             $userProduct = new UserProduct();
 
-            $userProduct
-                ->setUser($user)
+            $userProduct->setUser($user)
                 ->setProduct($product)
                 ->setQuantity(1)
                 ->setExpirationDate($expirationDate);
@@ -205,8 +194,7 @@ class AccessCodeService
             $this->entityManager->persist($userProduct);
         }
 
-        $accessCode
-            ->setIsClaimed(true)
+        $accessCode->setIsClaimed(true)
             ->setClaimer($user)
             ->setClaimedOn(Carbon::now())
             ->setUpdatedAt(Carbon::now());

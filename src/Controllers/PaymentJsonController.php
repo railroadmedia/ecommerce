@@ -237,7 +237,7 @@ class PaymentJsonController extends BaseController
             ->getOneOrNullResult();
 
         /**
-         * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+         * @var $user \Railroad\Ecommerce\Entities\User
          */
         $user = $userPaymentMethod->getUser();
 

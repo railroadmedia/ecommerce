@@ -3,7 +3,7 @@
 namespace Railroad\Ecommerce\Tests;
 
 use Carbon\Carbon;
-use Faker\Generator;
+use Doctrine\ORM\EntityManager;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
@@ -11,23 +11,19 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Orchestra\Testbench\TestCase as BaseTestCase;
-use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Doctrine\Contracts\UserProviderInterface as DoctrineUserProviderInterface;
+use Railroad\Doctrine\Providers\DoctrineServiceProvider;
 use Railroad\DoctrineArrayHydrator\Contracts\UserProviderInterface as DoctrineArrayHydratorUserProviderInterface;
-use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Faker\Factory;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
-use Railroad\Ecommerce\Repositories\AddressRepository;
-use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
-use Railroad\Ecommerce\Tests\Resources\Models\User;
 use Railroad\Ecommerce\Tests\Fixtures\UserProvider;
 use Railroad\Location\Providers\LocationServiceProvider;
 use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
-use Railroad\Response\Providers\ResponseServiceProvider;
-use Railroad\Doctrine\Providers\DoctrineServiceProvider;
 use Webpatser\Countries\CountriesServiceProvider;
 
 class EcommerceTestCase extends BaseTestCase
@@ -54,7 +50,7 @@ class EcommerceTestCase extends BaseTestCase
         'orderPayments' => 'ecommerce_order_payment',
         'subscriptionPayments' => 'ecommerce_subscription_payment',
         'orderItemFulfillments' => 'ecommerce_order_item_fulfillment',
-        'refunds' => 'ecommerce_refund'
+        'refunds' => 'ecommerce_refund',
     ];
 
     /**
@@ -138,25 +134,26 @@ class EcommerceTestCase extends BaseTestCase
             ->deleteAll();
 
         // make sure laravel is using the same connection
-        DB::connection()->setPdo($this->entityManager->getConnection()->getWrappedConnection());
-        DB::connection()->setReadPdo($this->entityManager->getConnection()->getWrappedConnection());
+        DB::connection()
+            ->setPdo($this->entityManager->getConnection()
+                ->getWrappedConnection());
+        DB::connection()
+            ->setReadPdo($this->entityManager->getConnection()
+                ->getWrappedConnection());
 
-        $this->permissionServiceMock =
-            $this->getMockBuilder(PermissionService::class)
-                ->disableOriginalConstructor()
-                ->getMock();
+        $this->permissionServiceMock = $this->getMockBuilder(PermissionService::class)
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->app->instance(PermissionService::class, $this->permissionServiceMock);
 
-        $this->stripeExternalHelperMock =
-            $this->getMockBuilder(\Railroad\Ecommerce\ExternalHelpers\Stripe::class)
-                ->disableOriginalConstructor()
-                ->getMock();
+        $this->stripeExternalHelperMock = $this->getMockBuilder(\Railroad\Ecommerce\ExternalHelpers\Stripe::class)
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->app->instance(\Railroad\Ecommerce\ExternalHelpers\Stripe::class, $this->stripeExternalHelperMock);
 
-        $this->paypalExternalHelperMock =
-            $this->getMockBuilder(\Railroad\Ecommerce\ExternalHelpers\PayPal::class)
-                ->disableOriginalConstructor()
-                ->getMock();
+        $this->paypalExternalHelperMock = $this->getMockBuilder(\Railroad\Ecommerce\ExternalHelpers\PayPal::class)
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->app->instance(\Railroad\Ecommerce\ExternalHelpers\PayPal::class, $this->paypalExternalHelperMock);
 
         Carbon::setTestNow(Carbon::now());
@@ -202,7 +199,8 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.payment_gateways', $defaultConfig['payment_gateways']);
         $app['config']->set('ecommerce.supported_currencies', $defaultConfig['supported_currencies']);
         $app['config']->set('ecommerce.default_currency', $defaultConfig['default_currency']);
-        $app['config']->set('ecommerce.default_currency_conversion_rates', $defaultConfig['default_currency_conversion_rates']);
+        $app['config']->set('ecommerce.default_currency_conversion_rates',
+            $defaultConfig['default_currency_conversion_rates']);
         $app['config']->set('ecommerce.invoice_sender', $defaultConfig['invoice_sender']);
         $app['config']->set('ecommerce.invoice_sender_name', $defaultConfig['invoice_sender_name']);
         $app['config']->set('ecommerce.invoice_address', $defaultConfig['invoice_address']);
@@ -215,7 +213,8 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.shipping_address', $defaultConfig['shipping_address']);
         $app['config']->set('ecommerce.billing_address', $defaultConfig['billing_address']);
         $app['config']->set('ecommerce.paypal_payment_method_type', $defaultConfig['paypal_payment_method_type']);
-        $app['config']->set('ecommerce.credit_cart_payment_method_type', $defaultConfig['credit_cart_payment_method_type']);
+        $app['config']->set('ecommerce.credit_cart_payment_method_type',
+            $defaultConfig['credit_cart_payment_method_type']);
         $app['config']->set('ecommerce.manual_payment_method_type', $defaultConfig['manual_payment_method_type']);
         $app['config']->set('ecommerce.order_payment_type', $defaultConfig['order_payment_type']);
         $app['config']->set('ecommerce.renewal_payment_type', $defaultConfig['renewal_payment_type']);
@@ -226,13 +225,12 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.fulfillment_status_fulfilled', $defaultConfig['fulfillment_status_fulfilled']);
 
         $app['config']->set('ecommerce.paypal.agreement_route', $defaultConfig['paypal']['agreement_route']);
-        $app['config']->set(
-            'ecommerce.paypal.agreement_fulfilled_route',
-            $defaultConfig['paypal']['agreement_fulfilled_route']
-        );
+        $app['config']->set('ecommerce.paypal.agreement_fulfilled_route',
+            $defaultConfig['paypal']['agreement_fulfilled_route']);
 
         $app['config']->set('ecommerce.subscription_renewal_date', $defaultConfig['subscription_renewal_date']);
-        $app['config']->set('ecommerce.failed_payments_before_de_activation', $defaultConfig['failed_payments_before_de_activation']);
+        $app['config']->set('ecommerce.failed_payments_before_de_activation',
+            $defaultConfig['failed_payments_before_de_activation']);
 
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
@@ -263,14 +261,11 @@ class EcommerceTestCase extends BaseTestCase
 
         $app['config']->set('ecommerce.database_connection_name', 'ecommerce_sqlite');
         $app['config']->set('database.default', 'ecommerce_sqlite');
-        $app['config']->set(
-            'database.connections.' . 'ecommerce_sqlite',
-            [
+        $app['config']->set('database.connections.' . 'ecommerce_sqlite', [
                 'driver' => 'sqlite',
                 'database' => ':memory:',
                 'prefix' => '',
-            ]
-        );
+            ]);
 
         $app->register(DoctrineServiceProvider::class);
 
@@ -289,31 +284,28 @@ class EcommerceTestCase extends BaseTestCase
         $this->currencies = $defaultConfig['supported_currencies'];
         $this->defaultCurrency = $defaultConfig['default_currency'];
         $this->paymentGateway = $defaultConfig['payment_gateways'];
-        $this->paymentPlanOptions = array_values(
-            array_filter(
-                $defaultConfig['payment_plan_options'],
-                function($value) {
+        $this->paymentPlanOptions =
+            array_values(array_filter($defaultConfig['payment_plan_options'], function ($value) {
                     return $value != 1;
-                }
-            )
-        );
+                }));
 
         $this->paymentPlanMinimumPrice = $defaultConfig['payment_plan_minimum_price'];
     }
 
     protected function createUsersTable()
     {
-        if (!$this->app['db']->connection()->getSchemaBuilder()->hasTable('users')) {
-            $this->app['db']->connection()->getSchemaBuilder()->create(
-                self::TABLES['users'],
-                function (Blueprint $table) {
+        if (!$this->app['db']->connection()
+            ->getSchemaBuilder()
+            ->hasTable('users')) {
+            $this->app['db']->connection()
+                ->getSchemaBuilder()
+                ->create(self::TABLES['users'], function (Blueprint $table) {
                     $table->increments('id');
                     $table->string('email');
                     $table->string('password');
                     $table->string('display_name');
                     $table->timestamps();
-                }
-            );
+                });
         }
     }
 
@@ -334,18 +326,16 @@ class EcommerceTestCase extends BaseTestCase
     public function createAndLogInNewUser()
     {
         $email = $this->faker->email;
-        $userId =
-            $this->databaseManager
-                ->table('users')
-                ->insertGetId(
-                    [
-                        'email' => $email,
-                        'password' => $this->faker->password,
-                        'display_name' => $this->faker->name,
-                        'created_at' => Carbon::now()->toDateTimeString(),
-                        'updated_at' => Carbon::now()->toDateTimeString(),
-                    ]
-                );
+        $userId = $this->databaseManager->table('users')
+            ->insertGetId([
+                    'email' => $email,
+                    'password' => $this->faker->password,
+                    'display_name' => $this->faker->name,
+                    'created_at' => Carbon::now()
+                        ->toDateTimeString(),
+                    'updated_at' => Carbon::now()
+                        ->toDateTimeString(),
+                ]);
 
         Auth::shouldReceive('check')
             ->andReturn(true);
@@ -372,12 +362,13 @@ class EcommerceTestCase extends BaseTestCase
             'email' => $this->faker->email,
             'password' => $this->faker->password,
             'display_name' => $this->faker->name,
-            'created_at' => Carbon::now()->toDateTimeString(),
-            'updated_at' => Carbon::now()->toDateTimeString(),
+            'created_at' => Carbon::now()
+                ->toDateTimeString(),
+            'updated_at' => Carbon::now()
+                ->toDateTimeString(),
         ];
 
-        $userId = $this->databaseManager
-            ->table('users')
+        $userId = $this->databaseManager->table('users')
             ->insertGetId($userData);
 
         $userData['id'] = $userId;
@@ -394,8 +385,7 @@ class EcommerceTestCase extends BaseTestCase
     {
         $product = $this->faker->product($productStub);
 
-        $productId = $this->databaseManager
-            ->table(self::TABLES['products'])
+        $productId = $this->databaseManager->table(self::TABLES['products'])
             ->insertGetId($product);
 
         $product['id'] = $productId;
@@ -413,8 +403,7 @@ class EcommerceTestCase extends BaseTestCase
         $accessCode = $this->faker->accessCode($accessCodeStub);
         $accessCode['product_ids'] = serialize($accessCode['product_ids']);
 
-        $accessCodeId = $this->databaseManager
-            ->table(self::TABLES['accessCodes'])
+        $accessCodeId = $this->databaseManager->table(self::TABLES['accessCodes'])
             ->insertGetId($accessCode);
 
         $accessCode['id'] = $accessCodeId;
@@ -431,8 +420,7 @@ class EcommerceTestCase extends BaseTestCase
     {
         $subscription = $this->faker->subscription($subscriptionStub);
 
-        $subscriptionId = $this->databaseManager
-            ->table(self::TABLES['subscriptions'])
+        $subscriptionId = $this->databaseManager->table(self::TABLES['subscriptions'])
             ->insertGetId($subscription);
 
         $subscription['id'] = $subscriptionId;
@@ -449,8 +437,7 @@ class EcommerceTestCase extends BaseTestCase
     {
         $address = $this->faker->address($addressStub);
 
-        $addressId = $this->databaseManager
-            ->table(self::TABLES['addresses'])
+        $addressId = $this->databaseManager->table(self::TABLES['addresses'])
             ->insertGetId($address);
 
         $address['id'] = $addressId;
@@ -467,8 +454,7 @@ class EcommerceTestCase extends BaseTestCase
     {
         $customer = $this->faker->customer($customerStub);
 
-        $customerId = $this->databaseManager
-            ->table(self::TABLES['customers'])
+        $customerId = $this->databaseManager->table(self::TABLES['customers'])
             ->insertGetId($customer);
 
         $customer['id'] = $customerId;
@@ -485,8 +471,7 @@ class EcommerceTestCase extends BaseTestCase
     {
         $orderItem = $this->faker->orderItem($orderItemStub);
 
-        $orderItemId = $this->databaseManager
-            ->table(self::TABLES['orderItems'])
+        $orderItemId = $this->databaseManager->table(self::TABLES['orderItems'])
             ->insertGetId($orderItem);
 
         $orderItem['id'] = $orderItemId;
@@ -503,8 +488,7 @@ class EcommerceTestCase extends BaseTestCase
     {
         $discount = $this->faker->discount($discountStub);
 
-        $discountId = $this->databaseManager
-            ->table(self::TABLES['discounts'])
+        $discountId = $this->databaseManager->table(self::TABLES['discounts'])
             ->insertGetId($discount);
 
         $discount['id'] = $discountId;
@@ -519,12 +503,9 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function fakeDiscountCriteria($discountCriteriaStub = []): array
     {
-        $discountCriteria = $this->faker->discountCriteria(
-            $discountCriteriaStub
-        );
+        $discountCriteria = $this->faker->discountCriteria($discountCriteriaStub);
 
-        $discountCriteriaId = $this->databaseManager
-            ->table(self::TABLES['discountCriteria'])
+        $discountCriteriaId = $this->databaseManager->table(self::TABLES['discountCriteria'])
             ->insertGetId($discountCriteria);
 
         $discountCriteria['id'] = $discountCriteriaId;
@@ -539,12 +520,9 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function fakeShippingOption($shippingOptionStub = []): array
     {
-        $shippingOption = $this->faker->shippingOption(
-            $shippingOptionStub
-        );
+        $shippingOption = $this->faker->shippingOption($shippingOptionStub);
 
-        $shippingOptionId = $this->databaseManager
-            ->table(self::TABLES['shippingOptions'])
+        $shippingOptionId = $this->databaseManager->table(self::TABLES['shippingOptions'])
             ->insertGetId($shippingOption);
 
         $shippingOption['id'] = $shippingOptionId;
@@ -559,12 +537,9 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function fakeShippingCost($shippingCostStub = []): array
     {
-        $shippingCost = $this->faker->shippingCost(
-            $shippingCostStub
-        );
+        $shippingCost = $this->faker->shippingCost($shippingCostStub);
 
-        $shippingCostId = $this->databaseManager
-            ->table(self::TABLES['shippingCosts'])
+        $shippingCostId = $this->databaseManager->table(self::TABLES['shippingCosts'])
             ->insertGetId($shippingCost);
 
         $shippingCost['id'] = $shippingCostId;
@@ -579,12 +554,9 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function fakePaymentMethod($paymentMethodStub = []): array
     {
-        $paymentMethod = $this->faker->paymentMethod(
-            $paymentMethodStub
-        );
+        $paymentMethod = $this->faker->paymentMethod($paymentMethodStub);
 
-        $paymentMethodId = $this->databaseManager
-            ->table(self::TABLES['paymentMethods'])
+        $paymentMethodId = $this->databaseManager->table(self::TABLES['paymentMethods'])
             ->insertGetId($paymentMethod);
 
         $paymentMethod['id'] = $paymentMethodId;
@@ -599,12 +571,9 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function fakeOrder($orderStub = []): array
     {
-        $order = $this->faker->order(
-            $orderStub
-        );
+        $order = $this->faker->order($orderStub);
 
-        $orderId = $this->databaseManager
-            ->table(self::TABLES['orders'])
+        $orderId = $this->databaseManager->table(self::TABLES['orders'])
             ->insertGetId($order);
 
         $order['id'] = $orderId;
@@ -619,12 +588,9 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function fakeCreditCard($creditCardStub = []): array
     {
-        $creditCard = $this->faker->creditCard(
-            $creditCardStub
-        );
+        $creditCard = $this->faker->creditCard($creditCardStub);
 
-        $creditCardId = $this->databaseManager
-            ->table(self::TABLES['creditCards'])
+        $creditCardId = $this->databaseManager->table(self::TABLES['creditCards'])
             ->insertGetId($creditCard);
 
         $creditCard['id'] = $creditCardId;
@@ -639,12 +605,9 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function fakeUserProduct($userProductStub = []): array
     {
-        $userProduct = $this->faker->userProduct(
-            $userProductStub
-        );
+        $userProduct = $this->faker->userProduct($userProductStub);
 
-        $userProductId = $this->databaseManager
-            ->table(self::TABLES['userProducts'])
+        $userProductId = $this->databaseManager->table(self::TABLES['userProducts'])
             ->insertGetId($userProduct);
 
         $userProduct['id'] = $userProductId;
@@ -661,12 +624,9 @@ class EcommerceTestCase extends BaseTestCase
         $paypalBillingAgreementStub = []
     ): array {
 
-        $paypalBillingAgreement = $this->faker->paypalBillingAgreement(
-            $paypalBillingAgreementStub
-        );
+        $paypalBillingAgreement = $this->faker->paypalBillingAgreement($paypalBillingAgreementStub);
 
-        $paypalBillingAgreementId = $this->databaseManager
-            ->table(self::TABLES['paypalBillingAgreements'])
+        $paypalBillingAgreementId = $this->databaseManager->table(self::TABLES['paypalBillingAgreements'])
             ->insertGetId($paypalBillingAgreement);
 
         $paypalBillingAgreement['id'] = $paypalBillingAgreementId;
@@ -681,12 +641,9 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function fakeUserPaymentMethod($userPaymentMethodStub = []): array
     {
-        $userPaymentMethod = $this->faker->userPaymentMethod(
-            $userPaymentMethodStub
-        );
+        $userPaymentMethod = $this->faker->userPaymentMethod($userPaymentMethodStub);
 
-        $userPaymentMethodId = $this->databaseManager
-            ->table(self::TABLES['userPaymentMethod'])
+        $userPaymentMethodId = $this->databaseManager->table(self::TABLES['userPaymentMethod'])
             ->insertGetId($userPaymentMethod);
 
         $userPaymentMethod['id'] = $userPaymentMethodId;
@@ -701,12 +658,9 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function fakePayment($paymentStub = []): array
     {
-        $payment = $this->faker->payment(
-            $paymentStub
-        );
+        $payment = $this->faker->payment($paymentStub);
 
-        $paymentId = $this->databaseManager
-            ->table(self::TABLES['payments'])
+        $paymentId = $this->databaseManager->table(self::TABLES['payments'])
             ->insertGetId($payment);
 
         $payment['id'] = $paymentId;
@@ -723,8 +677,7 @@ class EcommerceTestCase extends BaseTestCase
     {
         $orderPayment = $orderPaymentStub + ['created_at' => Carbon::now()];
 
-        $orderPaymentId = $this->databaseManager
-            ->table(self::TABLES['orderPayments'])
+        $orderPaymentId = $this->databaseManager->table(self::TABLES['orderPayments'])
             ->insertGetId($orderPayment);
 
         $orderPayment['id'] = $orderPaymentId;
@@ -741,8 +694,7 @@ class EcommerceTestCase extends BaseTestCase
     {
         $subscriptionPayment = $subscriptionPaymentStub + ['created_at' => Carbon::now()];
 
-        $subscriptionPaymentId = $this->databaseManager
-            ->table(self::TABLES['subscriptionPayments'])
+        $subscriptionPaymentId = $this->databaseManager->table(self::TABLES['subscriptionPayments'])
             ->insertGetId($subscriptionPayment);
 
         $subscriptionPayment['id'] = $subscriptionPaymentId;
@@ -759,12 +711,9 @@ class EcommerceTestCase extends BaseTestCase
         $orderItemFulfillmentStub = []
     ): array {
 
-        $orderItemFulfillment = $this->faker->orderItemFulfillment(
-            $orderItemFulfillmentStub
-        );
+        $orderItemFulfillment = $this->faker->orderItemFulfillment($orderItemFulfillmentStub);
 
-        $orderItemFulfillmentId = $this->databaseManager
-            ->table(self::TABLES['orderItemFulfillments'])
+        $orderItemFulfillmentId = $this->databaseManager->table(self::TABLES['orderItemFulfillments'])
             ->insertGetId($orderItemFulfillment);
 
         $orderItemFulfillment['id'] = $orderItemFulfillmentId;
@@ -779,8 +728,7 @@ class EcommerceTestCase extends BaseTestCase
      */
     public function fakeRefund($refundStub = []): array
     {
-        $refund = $refundStub +
-            [
+        $refund = $refundStub + [
                 'payment_id' => $this->faker->randomNumber(2, true),
                 'payment_amount' => $this->faker->randomFloat(2, 1, 100),
                 'refunded_amount' => $this->faker->randomFloat(2, 1, 100),
@@ -788,11 +736,10 @@ class EcommerceTestCase extends BaseTestCase
                 'external_provider' => $this->faker->word,
                 'external_id' => $this->faker->word,
                 'created_at' => Carbon::now(),
-                'updated_at' => null
+                'updated_at' => null,
             ];
 
-        $refundId = $this->databaseManager
-            ->table(self::TABLES['refunds'])
+        $refundId = $this->databaseManager->table(self::TABLES['refunds'])
             ->insertGetId($refund);
 
         $refund['id'] = $refundId;

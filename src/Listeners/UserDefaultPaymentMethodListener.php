@@ -62,7 +62,7 @@ class UserDefaultPaymentMethodListener
                 );
 
         /**
-         * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+         * @var $user \Railroad\Ecommerce\Entities\User
          */
         $user = $this->userProvider->getUserById($event->getUserId());
 

@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Http\RedirectResponse;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Repositories\AccessCodeRepository;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Requests\AccessCodeClaimRequest;
@@ -82,7 +83,7 @@ class AccessCodeController extends BaseController
             $password = $this->hasher->make($request->get('password'));
 
             /**
-             * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+             * @var $user User
              */
             $user = $this->userProvider
                         ->createUser($request->get('email'), $password);
@@ -92,7 +93,7 @@ class AccessCodeController extends BaseController
         } else {
 
             /**
-             * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+             * @var $user User
              */
             $user = $this->userProvider->getCurrentUser();
         }

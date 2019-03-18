@@ -209,7 +209,7 @@ class AccessCodeJsonController extends BaseController
         );
 
         /**
-         * @var $user \Railroad\Ecommerce\Contracts\UserInterface
+         * @var $user \Railroad\Ecommerce\Entities\User
          */
         $user = $this->userProvider->getUserById(
                 $request->get('claim_for_user_id')

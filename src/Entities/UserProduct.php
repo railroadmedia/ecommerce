@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
-use Railroad\Ecommerce\Contracts\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\UserProductRepository")
@@ -34,7 +33,7 @@ class UserProduct
     protected $id;
 
     /**
-     * @var UserInterface
+     * @var User
      *
      * @ORM\Column(type="user_id", name="user_id")
      */
@@ -110,19 +109,19 @@ class UserProduct
     }
 
     /**
-     * @return UserInterface|null
+     * @return User|null
      */
-    public function getUser(): ?UserInterface
+    public function getUser(): ?User
     {
         return $this->user;
     }
 
     /**
-     * @param UserInterface $user
+     * @param User $user
      *
      * @return UserProduct
      */
-    public function setUser(?UserInterface $user): self
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 

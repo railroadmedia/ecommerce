@@ -7,27 +7,27 @@ use Doctrine\ORM\Query\Expr\Join;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use Railroad\Ecommerce\Contracts\UserInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Customer;
-use Railroad\Ecommerce\Entities\Payment;
-use Railroad\Ecommerce\Entities\PaymentMethod;
-use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 use Railroad\Ecommerce\Entities\OrderPayment;
-use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Entities\SubscriptionPayment;
-use Railroad\Ecommerce\Entities\UserPaymentMethods;
+use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address as SessionAddress;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
+use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\SubscriptionPayment;
+use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
-use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
 use Railroad\Ecommerce\Exceptions\StripeCardException;
+use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Mail\OrderInvoice;
@@ -177,7 +177,7 @@ class OrderFormService
 
     /**
      * @param Request $request
-     * @param UserInterface $user
+     * @param User $user
      * @param Customer $customer
      * @param float $initialPrice
      * @param string $currency
@@ -190,38 +190,28 @@ class OrderFormService
      */
     private function chargeAndCreatePaymentMethod(
         Request $request,
-        ?UserInterface $user,
+        ?User $user,
         ?Customer $customer,
         $initialPrice,
         $currency,
         $brand = null
-    ) : array {
+    ): array {
 
-        $customerCreditCard = $this->stripePaymentGateway->getOrCreateCustomer(
-            $request->get('gateway'),
-            $user ? $user->getEmail() : $customer->getEmail()
-        );
+        $customerCreditCard = $this->stripePaymentGateway->getOrCreateCustomer($request->get('gateway'),
+            $user ? $user->getEmail() : $customer->getEmail());
 
-        $card = $this->stripePaymentGateway->createCustomerCard(
-            $request->get('gateway'),
-            $customerCreditCard,
-            $request->get('card-token')
-        );
+        $card = $this->stripePaymentGateway->createCustomerCard($request->get('gateway'), $customerCreditCard,
+            $request->get('card-token'));
 
         $convertedPrice = $this->convertPrice($initialPrice, $currency);
 
-        $charge = $this->stripePaymentGateway->chargeCustomerCard(
-            $request->get('gateway'),
-            $convertedPrice,
-            $currency,
-            $card,
-            $customerCreditCard
-        );
+        $charge =
+            $this->stripePaymentGateway->chargeCustomerCard($request->get('gateway'), $convertedPrice, $currency, $card,
+                $customerCreditCard);
 
         $billingAddress = new Address();
 
-        $billingAddress
-            ->setType(CartAddressService::BILLING_ADDRESS_TYPE)
+        $billingAddress->setType(CartAddressService::BILLING_ADDRESS_TYPE)
             ->setBrand($brand ?? ConfigService::$brand)
             ->setUser($user)
             ->setCustomer($customer)
@@ -234,22 +224,10 @@ class OrderFormService
 
         $this->entityManager->flush();
 
-        $paymentMethod = $this->paymentMethodService->createUserCreditCard(
-            $user,
-            $card->fingerprint,
-            $card->last4,
-            '',
-            $card->brand,
-            $card->exp_year,
-            $card->exp_month,
-            $card->id,
-            $card->customer,
-            $request->get('gateway'),
-            $customer,
-            $billingAddress,
-            $currency,
-            false
-        );
+        $paymentMethod =
+            $this->paymentMethodService->createUserCreditCard($user, $card->fingerprint, $card->last4, '', $card->brand,
+                $card->exp_year, $card->exp_month, $card->id, $card->customer, $request->get('gateway'), $customer,
+                $billingAddress, $currency, false);
 
         return [$charge, $paymentMethod, $billingAddress];
     }
@@ -258,7 +236,7 @@ class OrderFormService
      * @param Request $request
      * @param float $price
      * @param string $currency
-     * @param UserInterface $user
+     * @param User $user
      * @param string $brand
      *
      * @return array
@@ -270,30 +248,23 @@ class OrderFormService
         Request $request,
         $price,
         $currency,
-        UserInterface $user,
+        User $user,
         $brand = null
-    ) : array {
+    ): array {
 
         $convertedPrice = $this->convertPrice($price, $currency);
 
-        $billingAgreementId = $this->payPalPaymentGateway->createBillingAgreement(
-            $request->get('gateway'),
-            $convertedPrice,
-            $currency,
-            $request->get('token')
-        );
+        $billingAgreementId =
+            $this->payPalPaymentGateway->createBillingAgreement($request->get('gateway'), $convertedPrice, $currency,
+                $request->get('token'));
 
-        $transactionId = $this->payPalPaymentGateway->chargeBillingAgreement(
-            $request->get('gateway'),
-            $convertedPrice,
-            $currency,
-            $billingAgreementId
-        );
+        $transactionId =
+            $this->payPalPaymentGateway->chargeBillingAgreement($request->get('gateway'), $convertedPrice, $currency,
+                $billingAgreementId);
 
         $billingAddress = new Address();
 
-        $billingAddress
-            ->setType(CartAddressService::BILLING_ADDRESS_TYPE)
+        $billingAddress->setType(CartAddressService::BILLING_ADDRESS_TYPE)
             ->setBrand($brand ?? ConfigService::$brand)
             ->setUser($user)
             ->setZip($request->get('billing-zip-or-postal-code'))
@@ -305,14 +276,9 @@ class OrderFormService
 
         $this->entityManager->flush();
 
-        $paymentMethod = $this->paymentMethodService->createPayPalBillingAgreement(
-            $user,
-            $billingAgreementId,
-            $billingAddress,
-            $request->get('gateway'),
-            $currency,
-            false
-        );
+        $paymentMethod =
+            $this->paymentMethodService->createPayPalBillingAgreement($user, $billingAgreementId, $billingAddress,
+                $request->get('gateway'), $currency, false);
 
         return [$transactionId, $paymentMethod, $billingAddress];
     }
@@ -337,23 +303,16 @@ class OrderFormService
         $currency
     ) {
 
-        $creditCard = $this->creditCardRepository
-                            ->find($paymentMethod->getMethodId());
+        $creditCard = $this->creditCardRepository->find($paymentMethod->getMethodId());
 
-        $customer = $this->stripePaymentGateway->getCustomer(
-            $request->get('gateway'),
-            $creditCard->getExternalCustomerId()
-        );
+        $customer =
+            $this->stripePaymentGateway->getCustomer($request->get('gateway'), $creditCard->getExternalCustomerId());
 
         if (!$customer) {
             return null;
         }
 
-        $card = $this->stripePaymentGateway->getCard(
-            $customer,
-            $creditCard->getExternalId(),
-            $request->get('gateway')
-        );
+        $card = $this->stripePaymentGateway->getCard($customer, $creditCard->getExternalId(), $request->get('gateway'));
 
         if (!$card) {
             return null;
@@ -361,13 +320,9 @@ class OrderFormService
 
         $convertedPrice = $this->convertPrice($initialPrice, $currency);
 
-        $charge = $this->stripePaymentGateway->chargeCustomerCard(
-            $request->get('gateway'),
-            $convertedPrice,
-            $currency,
-            $card,
-            $customer
-        );
+        $charge =
+            $this->stripePaymentGateway->chargeCustomerCard($request->get('gateway'), $convertedPrice, $currency, $card,
+                $customer);
 
         return $charge;
     }
@@ -392,17 +347,12 @@ class OrderFormService
         $currency
     ) {
 
-        $paypalAgreement = $this->paypalBillingAgreementRepository
-                            ->find($paymentMethod->getMethodId());
+        $paypalAgreement = $this->paypalBillingAgreementRepository->find($paymentMethod->getMethodId());
 
         $convertedPrice = $this->convertPrice($initialPrice, $currency);
 
-        return $this->payPalPaymentGateway->chargeBillingAgreement(
-            $request->get('gateway'),
-            $convertedPrice,
-            $currency,
-            $paypalAgreement->getExternalId()
-        );
+        return $this->payPalPaymentGateway->chargeBillingAgreement($request->get('gateway'), $convertedPrice, $currency,
+            $paypalAgreement->getExternalId());
     }
 
     /**
@@ -427,8 +377,7 @@ class OrderFormService
 
             $orderDiscount = new OrderDiscount();
 
-            $orderDiscount
-                ->setOrder($order)
+            $orderDiscount->setOrder($order)
                 ->setDiscount($discount)
                 ->setCreatedAt(Carbon::now());
 
@@ -463,8 +412,7 @@ class OrderFormService
 
                 $orderDiscount = new OrderDiscount();
 
-                $orderDiscount
-                    ->setOrder($order)
+                $orderDiscount->setOrder($order)
                     ->setDiscount($discount)
                     ->setOrderItem($orderItem)
                     ->setCreatedAt(Carbon::now());
@@ -507,8 +455,7 @@ class OrderFormService
         $convertedTotalDue = $this->convertPrice($due, $currency);
         $convertedTotalPaid = $this->convertPrice($paid, $currency);
 
-        $payment
-            ->setTotalDue($convertedTotalDue)
+        $payment->setTotalDue($convertedTotalDue)
             ->setTotalPaid($convertedTotalPaid)
             ->setTotalRefunded(0)
             ->setConversionRate($conversionRate)
@@ -533,7 +480,7 @@ class OrderFormService
      * @param float $shipping
      * @param float $totalDue
      * @param float $totalTax
-     * @param UserInterface $user
+     * @param User $user
      * @param Customer $customer
      * @param Address $billingAddress
      * @param Address $shippingAddress
@@ -549,7 +496,7 @@ class OrderFormService
         $shipping,
         $totalDue,
         $totalTax,
-        ?UserInterface $user,
+        ?User $user,
         ?Customer $customer,
         Address $billingAddress,
         ?Address $shippingAddress,
@@ -559,8 +506,7 @@ class OrderFormService
 
         $order = new Order();
 
-        $order
-            ->setTotalDue($totalDue)
+        $order->setTotalDue($totalDue)
             ->setTaxesDue($totalTax)
             ->setTotalPaid($paid)
             ->setBrand($brand)
@@ -573,8 +519,7 @@ class OrderFormService
 
         $orderPayment = new OrderPayment();
 
-        $orderPayment
-            ->setOrder($order)
+        $orderPayment->setOrder($order)
             ->setPayment($payment)
             ->setCreatedAt(Carbon::now());
 
@@ -590,7 +535,7 @@ class OrderFormService
      * @param Product $product
      * @param Order $order
      * @param CartItem $cartItem
-     * @param UserInterface $user
+     * @param User $user
      * @param string $currency
      * @param PaymentMethod $paymentMethod
      * @param Payment $payment
@@ -606,7 +551,7 @@ class OrderFormService
         ?Product $product,
         Order $order,
         ?CartItem $cartItem,
-        UserInterface $user,
+        User $user,
         $currency,
         PaymentMethod $paymentMethod,
         Payment $payment,
@@ -621,33 +566,28 @@ class OrderFormService
 
         if (is_null($product)) {
 
-            $nextBillDate = Carbon::now()->addMonths(1);
+            $nextBillDate = Carbon::now()
+                ->addMonths(1);
 
             $type = ConfigService::$paymentPlanType;
 
             $subscriptionPricePerPayment = $this->cartService->getCart()
-                                            ->calculatePricePerPayment();
+                ->calculatePricePerPayment();
 
         } else {
 
             if (!empty($product->getSubscriptionIntervalType())) {
                 if ($product->getSubscriptionIntervalType() == ConfigService::$intervalTypeMonthly) {
                     $nextBillDate = Carbon::now()
-                            ->addMonths(
-                                $product->getSubscriptionIntervalCount()
-                            );
+                        ->addMonths($product->getSubscriptionIntervalCount());
 
                 } elseif ($product->getSubscriptionIntervalType() == ConfigService::$intervalTypeYearly) {
                     $nextBillDate = Carbon::now()
-                            ->addYears(
-                                $product->getSubscriptionIntervalCount()
-                            );
+                        ->addYears($product->getSubscriptionIntervalCount());
 
                 } elseif ($product->getSubscriptionIntervalType() == ConfigService::$intervalTypeDaily) {
                     $nextBillDate = Carbon::now()
-                            ->addDays(
-                                $product->getSubscriptionIntervalCount()
-                            );
+                        ->addDays($product->getSubscriptionIntervalCount());
                 }
             } else {
                 $message = 'Failed to create subscription for order id: ';
@@ -664,9 +604,7 @@ class OrderFormService
 
                 if ($discount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
                     //add the days from the discount to the subscription next bill date
-                    $nextBillDate = $nextBillDate->addDays(
-                        $discount->getAmount()
-                    );
+                    $nextBillDate = $nextBillDate->addDays($discount->getAmount());
 
                 } elseif ($discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
                     //calculate subscription price per payment after discount
@@ -677,14 +615,11 @@ class OrderFormService
 
         $subscription = new Subscription();
 
-        $intervalType = $product ?
-                            $product->getSubscriptionIntervalType() :
-                            ConfigService::$intervalTypeMonthly;
+        $intervalType = $product ? $product->getSubscriptionIntervalType() : ConfigService::$intervalTypeMonthly;
 
         $intervalCount = $product ? $product->getSubscriptionIntervalCount() : 1;
 
-        $subscription
-            ->setBrand($brand)
+        $subscription->setBrand($brand)
             ->setType($type)
             ->setUser($user)
             ->setOrder($order)
@@ -705,8 +640,7 @@ class OrderFormService
 
         $subscriptionPayment = new SubscriptionPayment();
 
-        $subscriptionPayment
-            ->setSubscription($subscription)
+        $subscriptionPayment->setSubscription($subscription)
             ->setPayment($payment)
             ->setCreatedAt(Carbon::now());
 
@@ -731,22 +665,15 @@ class OrderFormService
         $user = auth()->user() ? $this->userProvider->getCurrentUser() : null;
         $brand = ConfigService::$brand;
 
-        if (
-            $this->permissionService->can(
-                auth()->id(),
-                'place-orders-for-other-users'
-            )
-        ) {
+        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
             $user = $this->userProvider->getUserById($request->get('user_id'));
 
             $brand = $request->get('brand', ConfigService::$brand);
         }
 
         if (!empty($request->get('account-creation-email')) && empty($user)) {
-            $user = $this->userProvider->createUser(
-                $request->get('account-creation-email'),
-                $request->get('account-creation-password')
-            );
+            $user = $this->userProvider->createUser($request->get('account-creation-email'),
+                $request->get('account-creation-password'));
         }
 
         $customer = null;
@@ -756,8 +683,7 @@ class OrderFormService
 
             $customer = new Customer();
 
-            $customer
-                ->setEmail($request->get('billing-email'))
+            $customer->setEmail($request->get('billing-email'))
                 ->setBrand($brand)
                 ->setCreatedAt(Carbon::now());
 
@@ -774,7 +700,7 @@ class OrderFormService
      * If cart items require shipping it will create a new address with request data
      *
      * @param Request $request
-     * @param UserInterface $user
+     * @param User $user
      * @param Customer $customer
      *
      * @return Address
@@ -783,7 +709,7 @@ class OrderFormService
      */
     public function getShippingAddress(
         Request $request,
-        ?UserInterface $user,
+        ?User $user,
         ?Customer $customer
     ): ?Address {
 
@@ -791,23 +717,18 @@ class OrderFormService
 
         if ($request->get('shipping-address-id')) {
 
-            $shippingAddress = $this->addressRepository
-                                    ->find($request->get('shipping-address-id'));
+            $shippingAddress = $this->addressRepository->find($request->get('shipping-address-id'));
 
             $message = 'Order failed. Error message: could not find shipping address id: ' .
                 $request->get('shipping-address-id');
 
-            throw_if(
-                !($shippingAddress),
-                new UnprocessableEntityException($message)
-            );
+            throw_if(!($shippingAddress), new UnprocessableEntityException($message));
 
         } elseif ($this->cartService->requiresShipping()) {
             //save the shipping address
             $shippingAddress = new Address();
 
-            $shippingAddress
-                ->setType(ConfigService::$shippingAddressType)
+            $shippingAddress->setType(ConfigService::$shippingAddressType)
                 ->setBrand(ConfigService::$brand)
                 ->setUser($user)
                 ->setCustomer($customer)
@@ -828,8 +749,7 @@ class OrderFormService
             // set the shipping address on session
             $sessionShippingAddress = new SessionAddress();
 
-            $sessionShippingAddress
-                ->setFirstName($shippingAddress->getFirstName())
+            $sessionShippingAddress->setFirstName($shippingAddress->getFirstName())
                 ->setLastName($shippingAddress->getLastName())
                 ->setStreetLineOne($shippingAddress->getStreetLine1())
                 ->setStreetLineTwo($shippingAddress->getStreetLine2())
@@ -838,10 +758,7 @@ class OrderFormService
                 ->setState($shippingAddress->getState())
                 ->setCountry($shippingAddress->getCountry());
 
-            $this->cartAddressService->setAddress(
-                $sessionShippingAddress,
-                ConfigService::$shippingAddressType
-            );
+            $this->cartAddressService->setAddress($sessionShippingAddress, ConfigService::$shippingAddressType);
         }
 
         return $shippingAddress;
@@ -851,12 +768,15 @@ class OrderFormService
     {
         $this->cartService->calculateShippingCosts();
 
-        $this->cartService->getCart()->removeAppliedDiscount();
+        $this->cartService->getCart()
+            ->removeAppliedDiscount();
 
         $discountsToApply = $this->cartService->getDiscountsToApply();
 
-        $this->cartService->getCart()->setDiscounts($discountsToApply);
-        $this->cartService->getCart()->setAppliedDiscounts($discountsToApply);
+        $this->cartService->getCart()
+            ->setDiscounts($discountsToApply);
+        $this->cartService->getCart()
+            ->setAppliedDiscounts($discountsToApply);
 
         $this->cartService->applyDiscounts();
     }
@@ -870,15 +790,11 @@ class OrderFormService
     {
         $sessionBillingAddress = new SessionAddress();
 
-        $sessionBillingAddress
-            ->setCountry($request->get('billing-country'))
+        $sessionBillingAddress->setCountry($request->get('billing-country'))
             ->setState($request->get('billing-region'))
             ->setZipOrPostalCode($request->get('billing-zip-or-postal-code'));
 
-        $this->cartAddressService->setAddress(
-            $sessionBillingAddress,
-            CartAddressService::BILLING_ADDRESS_TYPE
-        );
+        $this->cartAddressService->setAddress($sessionBillingAddress, CartAddressService::BILLING_ADDRESS_TYPE);
     }
 
     /**
@@ -887,7 +803,7 @@ class OrderFormService
      * If not found, it will throw an exception
      *
      * @param Request $request
-     * @param UserInterface $user
+     * @param User $user
      * @param string $currency
      * @param float $paymentAmount
      *
@@ -899,30 +815,27 @@ class OrderFormService
      */
     public function rebillClient(
         Request $request,
-        ?UserInterface $user,
+        ?User $user,
         string $currency,
         float $paymentAmount
     ) {
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->paymentMethodRepository
-                ->createQueryBuilder('pm');
+        $qb = $this->paymentMethodRepository->createQueryBuilder('pm');
 
-        $qb
-            ->select(['pm', 'upm'])
-            ->join(
-                UserPaymentMethods::class,
-                'upm',
-                Join::WITH,
-                $qb->expr()->eq(1, 1)
-            )
+        $qb->select(['pm', 'upm'])
+            ->join(UserPaymentMethods::class, 'upm', Join::WITH, $qb->expr()
+                ->eq(1, 1))
             ->join('upm.paymentMethod', 'pmj')
-            ->where($qb->expr()->eq('upm.user', ':user'))
-            ->andWhere($qb->expr()->eq('pmj.id', 'pm.id'))
+            ->where($qb->expr()
+                ->eq('upm.user', ':user'))
+            ->andWhere($qb->expr()
+                ->eq('pmj.id', 'pm.id'))
             ->setParameter('user', $user);
 
-        $paymentMethodCheck = $qb->getQuery()->getResult();
+        $paymentMethodCheck = $qb->getQuery()
+            ->getResult();
 
         if (empty($paymentMethodCheck)) {
 
@@ -938,19 +851,9 @@ class OrderFormService
         $charge = $transactionId = null;
 
         if ($paymentMethod->getMethodType() == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-            $charge = $this->rechargeCreditCard(
-                $request,
-                $paymentMethod,
-                $paymentAmount,
-                $currency
-            );
+            $charge = $this->rechargeCreditCard($request, $paymentMethod, $paymentAmount, $currency);
         } else {
-            $transactionId = $this->rechargeAgreement(
-                $request,
-                $paymentMethod,
-                $paymentAmount,
-                $currency
-            );
+            $transactionId = $this->rechargeAgreement($request, $paymentMethod, $paymentAmount, $currency);
         }
 
         if (!$charge && !$transactionId) {
@@ -968,7 +871,7 @@ class OrderFormService
      * Creates payment and order objects
      *
      * @param PaymentMethod $paymentMethod
-     * @param UserInterface $user
+     * @param User $user
      * @param Customer $customer
      * @param Address $billingAddress
      * @param Address $shippingAddress
@@ -986,7 +889,7 @@ class OrderFormService
      */
     public function createPaymentAndOrder(
         PaymentMethod $paymentMethod,
-        ?UserInterface $user,
+        ?User $user,
         ?Customer $customer,
         Address $billingAddress,
         ?Address $shippingAddress,
@@ -997,40 +900,22 @@ class OrderFormService
         float $paymentAmount
     ) {
         // create Payment
-        $payment = $this->createPayment(
-            $paymentAmount,
-            $this->cartService->getCart()->getTotalDue(),
-            $charge ?? null,
-            $transactionId ?? null,
-            $paymentMethod,
-            $currency
-        );
+        $payment = $this->createPayment($paymentAmount, $this->cartService->getCart()
+            ->getTotalDue(), $charge ?? null, $transactionId ?? null, $paymentMethod, $currency);
 
-        $productsDuePrice = $this->cartService->getCart()->getTotalDue();
-        $productsShippingPrice = $this->cartService
-                                        ->getCart()
-                                        ->calculateShippingDue();
-        $productsTaxPrice = $this->cartService->getCart()->calculateTaxesDue();
+        $productsDuePrice = $this->cartService->getCart()
+            ->getTotalDue();
+        $productsShippingPrice = $this->cartService->getCart()
+            ->calculateShippingDue();
+        $productsTaxPrice = $this->cartService->getCart()
+            ->calculateTaxesDue();
 
         // create order
-        $order = $this->createOrder(
-            $paymentAmount,
-            $productsShippingPrice,
-            $productsDuePrice,
-            $productsTaxPrice,
-            $user ?? null,
-            $customer ?? null,
-            $billingAddress,
-            $shippingAddress,
-            $payment,
-            $brand
-        );
+        $order = $this->createOrder($paymentAmount, $productsShippingPrice, $productsDuePrice, $productsTaxPrice,
+            $user ?? null, $customer ?? null, $billingAddress, $shippingAddress, $payment, $brand);
 
         // if the order failed; we throw the proper exception
-        throw_if(
-            !($order),
-            new UnprocessableEntityException('Order failed.')
-        );
+        throw_if(!($order), new UnprocessableEntityException('Order failed.'));
 
         return [$payment, $order];
     }
@@ -1038,7 +923,7 @@ class OrderFormService
     /**
      * Creates payment and order objects
      *
-     * @param UserInterface $user
+     * @param User $user
      * @param Order $order
      * @param PaymentMethod $paymentMethod
      * @param Payment $payment
@@ -1052,7 +937,7 @@ class OrderFormService
      * @throws Throwable
      */
     public function createAndProcessOrderItems(
-        ?UserInterface $user,
+        ?User $user,
         Order $order,
         PaymentMethod $paymentMethod,
         Payment $payment,
@@ -1062,27 +947,21 @@ class OrderFormService
         // order items
         $orderItems = [];
 
-        $cartItems = $this->cartService->getCart()->getItems();
+        $cartItems = $this->cartService->getCart()
+            ->getItems();
 
-        $initialProductsPrice = $this->cartService
-                                    ->getCart()
-                                    ->getTotalInitial();
+        $initialProductsPrice = $this->cartService->getCart()
+            ->getTotalInitial();
 
-        $productsDuePrice = $this->cartService->getCart()->getTotalDue();
-        $productsTaxPrice = $this->cartService->getCart()->calculateTaxesDue();
-        $initialShippingCosts = $this->cartService
-                                        ->getCart()
-                                        ->getShippingCosts();
+        $productsDuePrice = $this->cartService->getCart()
+            ->getTotalDue();
+        $productsTaxPrice = $this->cartService->getCart()
+            ->calculateTaxesDue();
+        $initialShippingCosts = $this->cartService->getCart()
+            ->getShippingCosts();
 
-        $discountAmount = round(
-            $initialProductsPrice -
-            (
-                $productsDuePrice -
-                $initialShippingCosts -
-                $productsTaxPrice
-            ),
-            2
-        );
+        $discountAmount =
+            round($initialProductsPrice - ($productsDuePrice - $initialShippingCosts - $productsTaxPrice), 2);
 
         foreach ($cartItems as $key => $cartItem) {
             /**
@@ -1098,8 +977,7 @@ class OrderFormService
 
             $orderItem = new OrderItem();
 
-            $orderItem
-                ->setOrder($order)
+            $orderItem->setOrder($order)
                 ->setProduct($cartItemProduct)
                 ->setQuantity($cartItem->getQuantity())
                 ->setWeight($cartItemProduct->getWeight())
@@ -1111,36 +989,18 @@ class OrderFormService
             $this->entityManager->persist($orderItem);
 
             // apply order items discounts
-            $orderItem = $this->createOrderItemDiscounts(
-                $cartItem,
-                $order,
-                $orderItem
-            );
+            $orderItem = $this->createOrderItemDiscounts($cartItem, $order, $orderItem);
 
             // create subscription
-            if (
-                $cartItemProduct->getType() == ConfigService::$typeSubscription
-            ) {
+            if ($cartItemProduct->getType() == ConfigService::$typeSubscription) {
 
-                $subscription = $this->createSubscription(
-                    $brand,
-                    $cartItemProduct,
-                    $order,
-                    $cartItem,
-                    $user,
-                    $currency,
-                    $paymentMethod,
-                    $payment
-                );
+                $subscription = $this->createSubscription($brand, $cartItemProduct, $order, $cartItem, $user, $currency,
+                    $paymentMethod, $payment);
 
                 $expirationDate = $subscription->getPaidUntil();
 
-                $this->userProductService->assignUserProduct(
-                    $user,
-                    $cartItemProduct,
-                    $expirationDate,
-                    $orderItem->getQuantity()
-                );
+                $this->userProductService->assignUserProduct($user, $cartItemProduct, $expirationDate,
+                    $orderItem->getQuantity());
             }
 
             // product fulfillment
@@ -1148,8 +1008,7 @@ class OrderFormService
 
                 $orderItemFulfillment = new OrderItemFulfillment();
 
-                $orderItemFulfillment
-                    ->setOrder($order)
+                $orderItemFulfillment->setOrder($order)
                     ->setOrderItem($orderItem)
                     ->setStatus('pending')
                     ->setCreatedAt(Carbon::now());
@@ -1159,12 +1018,7 @@ class OrderFormService
 
             // add user products
             if ($user && $cartItemProduct->getType() == ConfigService::$typeProduct) {
-                $this->userProductService->assignUserProduct(
-                    $user,
-                    $cartItemProduct,
-                    null,
-                    $orderItem->getQuantity()
-                );
+                $this->userProductService->assignUserProduct($user, $cartItemProduct, null, $orderItem->getQuantity());
             }
 
             $orderItems[] = $orderItem;
@@ -1197,23 +1051,16 @@ class OrderFormService
 
         $currency = $request->get('currency', $this->currencyService->get());
 
-        $shippingAddress = $this->getShippingAddress(
-            $request,
-            $user,
-            $customer
-        );
+        $shippingAddress = $this->getShippingAddress($request, $user, $customer);
 
         $this->refreshCart();
 
         $this->setupSessionBillingAddress($request);
 
-        $this->cartService->setPaymentPlanNumberOfPayments(
-            $request->get('payment-plan-selector')
-        );
+        $this->cartService->setPaymentPlanNumberOfPayments($request->get('payment-plan-selector'));
 
-        $paymentAmount = $this->cartService
-                        ->getCart()
-                        ->calculateInitialPricePerPayment();
+        $paymentAmount = $this->cartService->getCart()
+            ->calculateInitialPricePerPayment();
 
         // try to make the payment
         try {
@@ -1221,64 +1068,35 @@ class OrderFormService
 
             if ($request->get('payment-method-id')) {
 
-                list(
-                    $charge,
-                    $transactionId,
-                    $paymentMethod,
-                    $billingAddress
-                ) = $this->rebillClient(
-                    $request,
-                    $user,
-                    $currency,
-                    $paymentAmount
-                );
+                list($charge, $transactionId, $paymentMethod, $billingAddress) =
+                    $this->rebillClient($request, $user, $currency, $paymentAmount);
 
             } else {
 
-                if (
-                    $request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE &&
-                    empty($request->get('token'))
-                ) {
-                    list(
-                        $charge, $paymentMethod, $billingAddress
-                    ) = $this->chargeAndCreatePaymentMethod(
-                        $request,
-                        $user,
-                        $customer ?? null,
-                        $paymentAmount,
-                        $currency,
-                        $brand
-                    );
+                if ($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE &&
+                    empty($request->get('token'))) {
+                    list($charge, $paymentMethod, $billingAddress) =
+                        $this->chargeAndCreatePaymentMethod($request, $user, $customer ?? null, $paymentAmount,
+                            $currency, $brand);
 
-                } elseif (
-                    $request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE ||
-                    !empty($request->get('token'))
-                ) {
+                } elseif ($request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE ||
+                    !empty($request->get('token'))) {
                     if (empty($request->get('token'))) {
 
                         $gateway = $request->get('gateway');
                         $config = ConfigService::$paymentGateways['paypal'];
                         $url = $config[$gateway]['paypal_api_checkout_return_url'];
 
-                        $checkoutUrl = $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl(
-                            $gateway,
-                            $url
-                        );
+                        $checkoutUrl =
+                            $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl($gateway, $url);
 
                         session()->put('order-form-input', $request->all());
 
                         return ['redirect' => $checkoutUrl];
                     }
 
-                    list (
-                        $transactionId, $paymentMethod, $billingAddress
-                    ) = $this->transactionAndCreatePaymentMethod(
-                        $request,
-                        $paymentAmount,
-                        $currency,
-                        $user,
-                        $brand
-                    );
+                    list ($transactionId, $paymentMethod, $billingAddress) =
+                        $this->transactionAndCreatePaymentMethod($request, $paymentAmount, $currency, $user, $brand);
 
                 } else {
 
@@ -1325,47 +1143,23 @@ class OrderFormService
             throw new PaymentFailedException($paymentFailedException->getMessage());
         }
 
-        list($payment, $order) = $this->createPaymentAndOrder(
-            $paymentMethod,
-            $user,
-            $customer,
-            $billingAddress,
-            $shippingAddress,
-            $charge,
-            $transactionId,
-            $currency,
-            $brand,
-            $paymentAmount
-        );
+        list($payment, $order) =
+            $this->createPaymentAndOrder($paymentMethod, $user, $customer, $billingAddress, $shippingAddress, $charge,
+                $transactionId, $currency, $brand, $paymentAmount);
 
         // apply order discounts
         $this->createOrderDiscounts($order);
 
-        $orderItems = $this->createAndProcessOrderItems(
-            $user,
-            $order,
-            $paymentMethod,
-            $payment,
-            $currency,
-            $brand
-        );
+        $orderItems = $this->createAndProcessOrderItems($user, $order, $paymentMethod, $payment, $currency, $brand);
 
         // create payment plan
         $paymentPlanNumbersOfPayments = $this->cartService->getCart()
-                ->getPaymentPlanNumberOfPayments();
+            ->getPaymentPlanNumberOfPayments();
 
         if ($paymentPlanNumbersOfPayments > 1) {
-            $this->createSubscription(
-                $this->cartService->getCart()->getBrand(),
-                null,
-                $order,
-                null,
-                $user,
-                $currency,
-                $paymentMethod,
-                $payment,
-                $paymentPlanNumbersOfPayments
-            );
+            $this->createSubscription($this->cartService->getCart()
+                ->getBrand(), null, $order, null, $user, $currency, $paymentMethod, $payment,
+                $paymentPlanNumbersOfPayments);
         }
 
         // prepare currency symbol for order invoice
@@ -1385,18 +1179,17 @@ class OrderFormService
 
         try {
             // prepare the order invoice
-            $orderInvoiceEmail = new OrderInvoice(
-                [
+            $orderInvoiceEmail = new OrderInvoice([
                     'order' => $order,
                     'orderItems' => $orderItems,
                     'payment' => $payment,
                     'currencySymbol' => $currencySymbol,
-                ]
-            );
+                ]);
 
             $emailAddress = $user ? $user->getEmail() : $customer->getEmail();
 
-            Mail::to($emailAddress)->send($orderInvoiceEmail);
+            Mail::to($emailAddress)
+                ->send($orderInvoiceEmail);
 
         } catch (Exception $e) {
             error_log('Failed to send invoice for order: ' . $order->getId());

@@ -3,7 +3,7 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\EntityRepository;
-use Railroad\Ecommerce\Contracts\UserInterface;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
@@ -26,44 +26,39 @@ class UserPaymentMethodsRepository extends EntityRepository
      */
     public function __construct(EcommerceEntityManager $em)
     {
-        parent::__construct(
-            $em,
-            $em->getClassMetadata(UserPaymentMethods::class)
-        );
+        parent::__construct($em, $em->getClassMetadata(UserPaymentMethods::class));
     }
 
     /**
      * Returns users' primary payment method
      *
-     * @param UserInterface $user
+     * @param User $user
      *
      * @return UserPaymentMethods
      *
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    public function getUserPrimaryPaymentMethod(
-        UserInterface $user
-    ): ?UserPaymentMethods {
+    public function getUserPrimaryPaymentMethod(User $user): ?UserPaymentMethods
+    {
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this
-            ->getEntityManager()
+        $qb = $this->getEntityManager()
             ->createQueryBuilder();
 
-        $qb
-            ->select('p')
+        $qb->select('p')
             ->from($this->getClassName(), 'p')
-            ->where($qb->expr()->in('p.user', ':user'))
-            ->andWhere($qb->expr()->in('p.isPrimary', ':true'));
+            ->where($qb->expr()
+                ->in('p.user', ':user'))
+            ->andWhere($qb->expr()
+                ->in('p.isPrimary', ':true'));
 
         /**
          * @var $q \Doctrine\ORM\Query
          */
         $q = $qb->getQuery();
 
-        $q
-            ->setParameter('user', $user)
+        $q->setParameter('user', $user)
             ->setParameter('true', true);
 
         return $q->getOneOrNullResult();

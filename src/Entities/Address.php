@@ -4,9 +4,8 @@ namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
-use Railroad\Ecommerce\Contracts\UserInterface;
+use Railroad\Ecommerce\Services\ConfigService;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\AddressRepository")
@@ -53,7 +52,7 @@ class Address implements AddressInterface
     protected $brand;
 
     /**
-     * @var UserInterface
+     * @var User
      *
      * @ORM\Column(type="user_id", name="user_id", nullable=true)
      */
@@ -132,8 +131,7 @@ class Address implements AddressInterface
     /**
      * @return int|null
      */
-    public function getId()
-    : ?int
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -141,8 +139,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getType()
-    : ?string
+    public function getType(): ?string
     {
         return $this->type;
     }
@@ -152,8 +149,8 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setType(string $type)
-    : self {
+    public function setType(string $type): self
+    {
         $this->type = $type;
 
         return $this;
@@ -162,8 +159,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getBrand()
-    : ?string
+    public function getBrand(): ?string
     {
         return $this->brand;
     }
@@ -173,8 +169,8 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setBrand(string $brand)
-    : self {
+    public function setBrand(string $brand): self
+    {
         $this->brand = $brand;
 
         return $this;
@@ -183,8 +179,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getFirstName()
-    : ?string
+    public function getFirstName(): ?string
     {
         return $this->firstName;
     }
@@ -194,8 +189,8 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setFirstName(string $firstName)
-    : self {
+    public function setFirstName(string $firstName): self
+    {
         $this->firstName = $firstName;
 
         return $this;
@@ -204,8 +199,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getLastName()
-    : ?string
+    public function getLastName(): ?string
     {
         return $this->lastName;
     }
@@ -215,8 +209,8 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setLastName(string $lastName)
-    : self {
+    public function setLastName(string $lastName): self
+    {
         $this->lastName = $lastName;
 
         return $this;
@@ -225,8 +219,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getStreetLine1()
-    : ?string
+    public function getStreetLine1(): ?string
     {
         return $this->streetLine1;
     }
@@ -236,8 +229,8 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setStreetLine1(?string $streetLine1)
-    : self {
+    public function setStreetLine1(?string $streetLine1): self
+    {
         $this->streetLine1 = $streetLine1;
 
         return $this;
@@ -246,8 +239,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getStreetLine2()
-    : ?string
+    public function getStreetLine2(): ?string
     {
         return $this->streetLine2;
     }
@@ -257,8 +249,8 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setStreetLine2(?string $streetLine2)
-    : self {
+    public function setStreetLine2(?string $streetLine2): self
+    {
         $this->streetLine2 = $streetLine2;
 
         return $this;
@@ -267,8 +259,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getCity()
-    : ?string
+    public function getCity(): ?string
     {
         return $this->city;
     }
@@ -278,8 +269,8 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setCity(?string $city)
-    : self {
+    public function setCity(?string $city): self
+    {
         $this->city = $city;
 
         return $this;
@@ -288,8 +279,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getZip()
-    : ?string
+    public function getZip(): ?string
     {
         return $this->zip;
     }
@@ -299,8 +289,8 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setZip(?string $zip)
-    : self {
+    public function setZip(?string $zip): self
+    {
         $this->zip = $zip;
 
         return $this;
@@ -309,8 +299,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getState()
-    : ?string
+    public function getState(): ?string
     {
         return $this->state;
     }
@@ -320,8 +309,8 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setState(?string $state)
-    : AddressInterface {
+    public function setState(?string $state): AddressInterface
+    {
         $this->state = $state;
 
         return $this;
@@ -330,8 +319,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getCountry()
-    : ?string
+    public function getCountry(): ?string
     {
         return $this->country;
     }
@@ -341,29 +329,28 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setCountry(?string $country)
-    : AddressInterface {
+    public function setCountry(?string $country): AddressInterface
+    {
         $this->country = $country;
 
         return $this;
     }
 
     /**
-     * @return UserInterface|null
+     * @return User|null
      */
-    public function getUser()
-    : ?UserInterface
+    public function getUser(): ?User
     {
         return $this->user;
     }
 
     /**
-     * @param UserInterface $user
+     * @param User $user
      *
      * @return Address
      */
-    public function setUser(?UserInterface $user)
-    : self {
+    public function setUser(?User $user): self
+    {
         $this->user = $user;
 
         return $this;
@@ -372,8 +359,7 @@ class Address implements AddressInterface
     /**
      * @return Customer|null
      */
-    public function getCustomer()
-    : ?Customer
+    public function getCustomer(): ?Customer
     {
         return $this->customer;
     }
@@ -383,8 +369,8 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setCustomer(?Customer $customer)
-    : self {
+    public function setCustomer(?Customer $customer): self
+    {
         $this->customer = $customer;
 
         return $this;

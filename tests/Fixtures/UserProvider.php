@@ -2,28 +2,26 @@
 
 namespace Railroad\Ecommerce\Tests\Fixtures;
 
-use Illuminate\Support\Facades\DB;
-use Railroad\Ecommerce\Tests\EcommerceTestCase;
-use Railroad\Ecommerce\Tests\Fixtures\User;
-use Railroad\Ecommerce\Contracts\UserInterface;
-use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Doctrine\Common\Inflector\Inflector;
-use Railroad\Doctrine\Contracts\UserEntityInterface;
-use Railroad\Doctrine\Contracts\UserProviderInterface as DoctrineUserProviderInterface;
-use Railroad\DoctrineArrayHydrator\Contracts\UserProviderInterface as DoctrineArrayHydratorUserProviderInterface;
-use Railroad\Ecommerce\Tests\Fixtures\UserTransformer;
+use Illuminate\Support\Facades\DB;
 use League\Fractal\TransformerAbstract;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use Railroad\Ecommerce\Transformers\UserTransformer;
 
-class UserProvider implements
-    UserProviderInterface,
-    DoctrineUserProviderInterface,
-    DoctrineArrayHydratorUserProviderInterface
+class UserProvider implements UserProviderInterface
 {
     CONST RESOURCE_TYPE = 'user';
 
-    public function getUserById(int $id): ?UserEntityInterface
+    /**
+     * @param int $id
+     * @return User|null
+     */
+    public function getUserById(int $id): ?User
     {
-        $user = DB::table(EcommerceTestCase::TABLES['users'])->find($id);
+        $user = DB::table(EcommerceTestCase::TABLES['users'])
+            ->find($id);
 
         if ($user) {
             return new User($id, $user->email);
@@ -32,12 +30,19 @@ class UserProvider implements
         return null;
     }
 
-    public function getUserId(UserEntityInterface $user): int
+    /**
+     * @param User $user
+     * @return int
+     */
+    public function getUserId(User $user): int
     {
         return $user->getId();
     }
 
-    public function getCurrentUser(): ?UserInterface
+    /**
+     * @return User|null
+     */
+    public function getCurrentUser(): ?User
     {
         if (!auth()->id()) {
             return null;
@@ -46,36 +51,36 @@ class UserProvider implements
         return $this->getUserById(auth()->id());
     }
 
+    /**
+     * @return int|null
+     */
     public function getCurrentUserId(): ?int
     {
         return auth()->id();
     }
 
+    /**
+     * @return TransformerAbstract
+     */
     public function getUserTransformer(): TransformerAbstract
     {
         return new UserTransformer();
     }
 
-    public function isTransient(string $resourceType): bool {
-
-        return $resourceType !== self::RESOURCE_TYPE;
-    }
-
-    public function hydrateTransDomain(
-        $entity,
-        string $relationName,
-        array $data
-    ): void {
-
+    /**
+     * @param $entity
+     * @param string $relationName
+     * @param array $data
+     */
+    public function hydrateTransDomain($entity, string $relationName, array $data): void
+    {
         $setterName = Inflector::camelize('set' . ucwords($relationName));
 
-        if (
-            isset($data['data']['type']) &&
+        if (isset($data['data']['type']) &&
             $data['data']['type'] === self::RESOURCE_TYPE &&
             isset($data['data']['id']) &&
             is_object($entity) &&
-            method_exists($entity, $setterName)
-        ) {
+            method_exists($entity, $setterName)) {
 
             $user = $this->getUserById($data['data']['id']);
 
@@ -85,11 +90,22 @@ class UserProvider implements
         // else some exception should be thrown
     }
 
-    public function createUser(
-        string $email,
-        string $password
-    ): ?UserInterface {
+    /**
+     * @param string $resourceType
+     * @return bool
+     */
+    public function isTransient(string $resourceType): bool
+    {
+        return $resourceType !== self::RESOURCE_TYPE;
+    }
 
+    /**
+     * @param string $email
+     * @param string $password
+     * @return User|null
+     */
+    public function createUser(string $email, string $password): ?User
+    {
         $userId = DB::table(EcommerceTestCase::TABLES['users'])
             ->insertGetId([
                 'email' => $email,

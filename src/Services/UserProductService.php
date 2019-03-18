@@ -3,12 +3,12 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use DateTimeInterface;
 use Doctrine\ORM\EntityRepository;
-use Railroad\Ecommerce\Contracts\UserInterface;
+use Illuminate\Support\Collection;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
@@ -43,7 +43,7 @@ class UserProductService
     /**
      * Get user product based on user and product.
      *
-     * @param UserInterface $user
+     * @param User $user
      * @param Product $product
      *
      * @return UserProduct|null
@@ -51,7 +51,7 @@ class UserProductService
      * @throws Throwable
      */
     public function getUserProduct(
-        UserInterface $user,
+        User $user,
         Product $product
     ): ?UserProduct {
 
@@ -60,25 +60,27 @@ class UserProductService
          */
         $qb = $this->userProductRepository->createQueryBuilder('up');
 
-        $qb
-            ->where($qb->expr()->eq('up.user', ':user'))
-            ->andWhere($qb->expr()->eq('up.product', ':product'))
+        $qb->where($qb->expr()
+                ->eq('up.user', ':user'))
+            ->andWhere($qb->expr()
+                ->eq('up.product', ':product'))
             ->setParameter('user', $user)
             ->setParameter('product', $product);
 
-        return $qb->getQuery()->getOneOrNullResult();
+        return $qb->getQuery()
+            ->getOneOrNullResult();
     }
 
     /**
      * Get user products collection based on user and product array
      *
-     * @param UserInterface $user
+     * @param User $user
      * @param array $products
      *
      * @return array
      */
     public function getUserProducts(
-        UserInterface $user,
+        User $user,
         $products
     ): array {
         /**
@@ -86,13 +88,15 @@ class UserProductService
          */
         $qb = $this->userProductRepository->createQueryBuilder('up');
 
-        $qb
-            ->where($qb->expr()->eq('up.user', ':user'))
-            ->andWhere($qb->expr()->in('up.product', ':products'))
+        $qb->where($qb->expr()
+                ->eq('up.user', ':user'))
+            ->andWhere($qb->expr()
+                ->in('up.product', ':products'))
             ->setParameter('user', $user)
             ->setParameter('products', $products);
 
-        $collection = $qb->getQuery()->getResult();
+        $collection = $qb->getQuery()
+            ->getResult();
 
         $map = [];
 
@@ -109,7 +113,7 @@ class UserProductService
     /**
      * Create new record in user_product table.
      *
-     * @param UserInterface $user
+     * @param User $user
      * @param Product $product
      * @param DateTimeInterface $expirationDate
      * @param int $quantity
@@ -119,7 +123,7 @@ class UserProductService
      * @throws Throwable
      */
     public function createUserProduct(
-        UserInterface $user,
+        User $user,
         Product $product,
         ?DateTimeInterface $expirationDate,
         $quantity
@@ -127,8 +131,7 @@ class UserProductService
 
         $userProduct = new UserProduct();
 
-        $userProduct
-            ->setUser($user)
+        $userProduct->setUser($user)
             ->setProduct($product)
             ->setExpirationDate($expirationDate)
             ->setQuantity($quantity);
@@ -155,8 +158,7 @@ class UserProductService
         ?DateTimeInterface $expirationDate,
         $quantity
     ) {
-        $userProduct
-            ->setExpirationDate($expirationDate)
+        $userProduct->setExpirationDate($expirationDate)
             ->setQuantity($quantity)
             ->setUpdatedAt(Carbon::now());
 
@@ -182,7 +184,7 @@ class UserProductService
     /**
      * Assign new products to user or update product's quantity.
      *
-     * @param UserInterface $user
+     * @param User $user
      * @param Product $product
      * @param DateTimeInterface $expirationDate
      * @param int $quantity
@@ -190,7 +192,7 @@ class UserProductService
      * @throws Throwable
      */
     public function assignUserProduct(
-        UserInterface $user,
+        User $user,
         Product $product,
         ?DateTimeInterface $expirationDate,
         $quantity = 0
@@ -203,25 +205,16 @@ class UserProductService
 
         if (!$userProduct) {
             $productQuantity = ($quantity == 0) ? 1 : $quantity;
-            $this->createUserProduct(
-                $user,
-                $product,
-                $expirationDate,
-                $productQuantity
-            );
+            $this->createUserProduct($user, $product, $expirationDate, $productQuantity);
         } else {
-            $this->updateUserProduct(
-                $userProduct,
-                $expirationDate,
-                ($userProduct->getQuantity() + $quantity)
-            );
+            $this->updateUserProduct($userProduct, $expirationDate, ($userProduct->getQuantity() + $quantity));
         }
     }
 
     /**
      * Remove user products.
      *
-     * @param UserInterface $user
+     * @param User $user
      * @param Collection $products - collection of elements:
      * [
      *     'product' => (Product) $product,
@@ -231,15 +224,11 @@ class UserProductService
      * @throws Throwable
      */
     public function removeUserProducts(
-        UserInterface $user,
+        User $user,
         $products
     ) {
-        $userProducts = $this->getUserProducts(
-            $user,
-            $products
-                ->pluck('product')
-                ->all()
-        );
+        $userProducts = $this->getUserProducts($user, $products->pluck('product')
+            ->all());
 
         foreach ($products as $productData) {
 
@@ -256,10 +245,7 @@ class UserProductService
              * @var $userProduct UserProduct
              */
 
-            if (
-                ($userProduct->getQuantity() == 1) ||
-                ($userProduct->getQuantity() - $productData['quantity'] <= 0)
-            ) {
+            if (($userProduct->getQuantity() == 1) || ($userProduct->getQuantity() - $productData['quantity'] <= 0)) {
                 $this->entityManager->remove($userProduct);
             } else {
 
@@ -291,14 +277,14 @@ class UserProductService
                 return collect([]);
             }
 
-            return collect($subscription->getOrder()->getOrderItems())
-                ->map(function($orderItem) {
+            return collect($subscription->getOrder()
+                ->getOrderItems())->map(function ($orderItem) {
                     /**
                      * @var $orderItem \Railroad\Ecommerce\Entities\OrderItem
                      */
                     return [
                         'product' => $orderItem->getProduct(),
-                        'quantity' => $orderItem->getQuantity()
+                        'quantity' => $orderItem->getQuantity(),
                     ];
                 });
 
@@ -307,8 +293,8 @@ class UserProductService
             return collect([
                 [
                     'product' => $subscription->getProduct(),
-                    'quantity' => 1
-                ]
+                    'quantity' => 1,
+                ],
             ]);
         }
     }
@@ -328,17 +314,11 @@ class UserProductService
 
             foreach ($products as $productData) {
 
-                $this->assignUserProduct(
-                    $subscription->getUser(),
-                    $productData['product'],
-                    $subscription->getPaidUntil()
-                );
+                $this->assignUserProduct($subscription->getUser(), $productData['product'],
+                    $subscription->getPaidUntil());
             }
         } else {
-            $this->removeUserProducts(
-                $subscription->getUser(),
-                $products
-            );
+            $this->removeUserProducts($subscription->getUser(), $products);
         }
     }
 }

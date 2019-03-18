@@ -3,7 +3,7 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Contracts\UserInterface;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
@@ -59,7 +59,7 @@ class PaymentMethodService
      * Creates $user or $customer credit card and payment method
      * Sets the $makePrimary flag for $user or $customer payment method
      *
-     * @param UserInterface $user
+     * @param User $user
      * @param string $fingerPrint
      * @param int $last4
      * @param string $cardHolderName
@@ -79,7 +79,7 @@ class PaymentMethodService
      * @throws Throwable
      */
     public function createUserCreditCard(
-        ?UserInterface $user,
+        ?User $user,
         $fingerPrint,
         $last4,
         $cardHolderName,
@@ -183,7 +183,7 @@ class PaymentMethodService
      * Creates $user paypal billing agreement and payment method
      * Sets the $makePrimary flag for $user payment method
      *
-     * @param UserInterface $user
+     * @param User $user
      * @param string $billingAgreementExternalId
      * @param Address $billingAddress
      * @param string $paymentGatewayName
@@ -195,7 +195,7 @@ class PaymentMethodService
      * @throws Throwable
      */
     public function createPayPalBillingAgreement(
-        UserInterface $user,
+        User $user,
         $billingAgreementExternalId,
         Address $billingAddress,
         $paymentGatewayName,
