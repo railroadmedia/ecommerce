@@ -1,29 +1,31 @@
 <?php
 
 return [
-    'cache_duration'           => 60 * 60 * 24 * 30,
+    'development_mode' => true,
+
+    // database
     'database_connection_name' => 'mysql',
-    'connection_mask_prefix'   => 'ecommerce_',
-    'data_mode'                => 'host',
-
-    'brand'        => 'brand',
-    'available_brands'        => ['brand'],
-
-    'redis_host' => 'redis',
-    'redis_port' => 6379,
-
-    'database_name' => 'tests_ecommerce',
-    'database_user' => 'root',
-    'database_password' => 'root',
-    'database_host' => 'mysql',
+    'database_name' => env('DB_DATABASE'),
+    'database_user' => env('DB_USERNAME'),
+    'database_password' => env('DB_PASSWORD'),
+    'database_host' => env('DB_HOST'),
     'database_driver' => 'pdo_mysql',
     'database_in_memory' => false,
+
+    // host does the db migrations, clients do not
+    'data_mode' => 'client', // 'host' or 'client'
+
+    'table_prefix' => 'ecommerce_',
+
+    // cache
+    'redis_host' => 'redis',
+    'redis_port' => 6379,
 
     'entities' => [
         [
             'path' => __DIR__ . '/../src/Entities',
-            'namespace' => 'Railroad\Ecommerce\Entities'
-        ]
+            'namespace' => 'Railroad\Ecommerce\Entities',
+        ],
     ],
 
     //the countries and the region names should be lowercase
