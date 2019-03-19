@@ -31,6 +31,7 @@ class PluralizeTables extends Migration
         Schema::rename('ecommerce_subscription', 'ecommerce_subscriptions');
         Schema::rename('ecommerce_subscription_access_code', 'ecommerce_subscription_access_codes');
         Schema::rename('ecommerce_subscription_payment', 'ecommerce_subscription_payments');
+        Schema::rename('ecommerce_user_product', 'ecommerce_user_products');
     }
 
     /**
@@ -59,6 +60,7 @@ class PluralizeTables extends Migration
         Schema::rename('ecommerce_subscriptions', 'ecommerce_subscription');
         Schema::rename('ecommerce_subscription_access_codes', 'ecommerce_subscription_access_code');
         Schema::rename('ecommerce_subscription_payments', 'ecommerce_subscription_payment');
+        Schema::rename('ecommerce_user_products', 'ecommerce_user_product');
     }
 }
 

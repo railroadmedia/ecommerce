@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
 use Railroad\Ecommerce\Services\ConfigService;
 
-class Deve28UpdateOrderItemTable extends Migration
+class UpdatePaymentTable extends Migration
 {
     /**
      * Run the migrations.
@@ -15,59 +15,48 @@ class Deve28UpdateOrderItemTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrderItem,
+                ConfigService::$tablePayment,
+                function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
+                    $table->renameColumn('due', 'total_due');
+                }
+            );
+
+        Schema::connection(ConfigService::$databaseConnectionName)
+            ->table(
+                ConfigService::$tablePayment,
+                function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
+                    $table->renameColumn('paid', 'total_paid');
+                }
+            );
+
+        Schema::connection(ConfigService::$databaseConnectionName)
+            ->table(
+                ConfigService::$tablePayment,
+                function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
+                    $table->renameColumn('refunded', 'total_refunded');
+                }
+            );
+
+        Schema::connection(ConfigService::$databaseConnectionName)
+            ->table(
+                ConfigService::$tablePayment,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
                     $table
-                        ->decimal('weight')
-                        ->after('quantity')
+                        ->decimal('conversion_rate', 8, 2)
+                        ->after('total_refunded')
                         ->nullable();
-                }
-            );
-
-        Schema::connection(ConfigService::$databaseConnectionName)
-            ->table(
-                ConfigService::$tableOrderItem,
-                function ($table) {
-                    /**
-                     * @var $table \Illuminate\Database\Schema\Blueprint
-                     */
-                    $table->renameColumn('discount', 'total_discounted');
-                }
-            );
-
-        Schema::connection(ConfigService::$databaseConnectionName)
-            ->table(
-                ConfigService::$tableOrderItem,
-                function ($table) {
-                    /**
-                     * @var $table \Illuminate\Database\Schema\Blueprint
-                     */
-                    $table->dropColumn('tax');
-                }
-            );
-
-        Schema::connection(ConfigService::$databaseConnectionName)
-            ->table(
-                ConfigService::$tableOrderItem,
-                function ($table) {
-                    /**
-                     * @var $table \Illuminate\Database\Schema\Blueprint
-                     */
-                    $table->dropColumn('shipping_costs');
-                }
-            );
-
-        Schema::connection(ConfigService::$databaseConnectionName)
-            ->table(
-                ConfigService::$tableOrderItem,
-                function ($table) {
-                    /**
-                     * @var $table \Illuminate\Database\Schema\Blueprint
-                     */
-                    $table->renameColumn('total_price', 'final_price');
                 }
             );
     }
@@ -81,60 +70,45 @@ class Deve28UpdateOrderItemTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrderItem,
+                ConfigService::$tablePayment,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->dropColumn('weight');
+                    $table->renameColumn('total_due', 'due');
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrderItem,
+                ConfigService::$tablePayment,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->renameColumn('total_discounted', 'discount');
+                    $table->renameColumn('total_paid', 'paid');
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrderItem,
+                ConfigService::$tablePayment,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table
-                        ->decimal('tax')
-                        ->after('discount');
+                    $table->renameColumn('total_refunded', 'refunded');
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrderItem,
+                ConfigService::$tablePayment,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table
-                        ->decimal('shipping_costs')
-                        ->after('initial_price');
-                }
-            );
-
-        Schema::connection(ConfigService::$databaseConnectionName)
-            ->table(
-                ConfigService::$tableOrderItem,
-                function ($table) {
-                    /**
-                     * @var $table \Illuminate\Database\Schema\Blueprint
-                     */
-                    $table->renameColumn('final_price', 'total_price');
+                    $table->dropColumn('conversion_rate');
                 }
             );
     }

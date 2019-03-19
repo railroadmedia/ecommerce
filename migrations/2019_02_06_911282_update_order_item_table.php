@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
 use Railroad\Ecommerce\Services\ConfigService;
 
-class Deve31UpdateSubscriptionsTable extends Migration
+class UpdateOrderItemTable extends Migration
 {
     /**
      * Run the migrations.
@@ -15,45 +15,59 @@ class Deve31UpdateSubscriptionsTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                ConfigService::$tableOrderItem,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->dateTime('deleted_at')->nullable();
+                    $table
+                        ->decimal('weight')
+                        ->after('quantity')
+                        ->nullable();
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                ConfigService::$tableOrderItem,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->renameColumn('total_price_per_payment', 'total_price');
+                    $table->renameColumn('discount', 'total_discounted');
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                ConfigService::$tableOrderItem,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->dropColumn('tax_per_payment');
+                    $table->dropColumn('tax');
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                ConfigService::$tableOrderItem,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->dropColumn('shipping_per_payment');
+                    $table->dropColumn('shipping_costs');
+                }
+            );
+
+        Schema::connection(ConfigService::$databaseConnectionName)
+            ->table(
+                ConfigService::$tableOrderItem,
+                function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
+                    $table->renameColumn('total_price', 'final_price');
                 }
             );
     }
@@ -67,45 +81,60 @@ class Deve31UpdateSubscriptionsTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                ConfigService::$tableOrderItem,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->dropColumn('deleted_at');
+                    $table->dropColumn('weight');
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                ConfigService::$tableOrderItem,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->renameColumn('total_price', 'total_price_per_payment');
+                    $table->renameColumn('total_discounted', 'discount');
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                ConfigService::$tableOrderItem,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->decimal('tax_per_payment')->nullable();
+                    $table
+                        ->decimal('tax')
+                        ->after('discount');
                 }
             );
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                ConfigService::$tableOrderItem,
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->decimal('shipping_per_payment')->nullable();
+                    $table
+                        ->decimal('shipping_costs')
+                        ->after('initial_price');
+                }
+            );
+
+        Schema::connection(ConfigService::$databaseConnectionName)
+            ->table(
+                ConfigService::$tableOrderItem,
+                function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
+                    $table->renameColumn('final_price', 'total_price');
                 }
             );
     }
