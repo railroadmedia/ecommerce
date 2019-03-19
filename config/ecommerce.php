@@ -3,6 +3,10 @@
 return [
     'development_mode' => true,
 
+    // brands
+    'brand' => 'brand',
+    'available_brands' => ['brand'],
+
     // database
     'database_connection_name' => 'mysql',
     'database_name' => env('DB_DATABASE'),
@@ -29,37 +33,37 @@ return [
     ],
 
     //the countries and the region names should be lowercase
-    'tax_rate'     => [
+    'tax_rate' => [
         'canada' => [
             'default' => 0.5,
-            'alberta'                   => 0.05,
-            'ab'                        => 0.05,
-            'british columbia'          => 0.12,
-            'bc'                        => 0.12,
-            'manitoba'                  => 0.05,
-            'mb'                        => 0.05,
-            'new brunswick'             => 0.13,
-            'nb'                        => 0.13,
-            'newfoundland'              => 0.13,
-            'nl'                        => 0.13,
+            'alberta' => 0.05,
+            'ab' => 0.05,
+            'british columbia' => 0.12,
+            'bc' => 0.12,
+            'manitoba' => 0.05,
+            'mb' => 0.05,
+            'new brunswick' => 0.13,
+            'nb' => 0.13,
+            'newfoundland' => 0.13,
+            'nl' => 0.13,
             'newfoundland and labrador' => 0.13,
-            'northwest territories'     => 0.05,
-            'nt'                        => 0.05,
-            'nova scotia'               => 0.15,
-            'ns'                        => 0.15,
-            'nunavut'                   => 0.05,
-            'nu'                        => 0.05,
-            'ontario'                   => 0.13,
-            'on'                        => 0.13,
-            'prince edward island'      => 0.14,
-            'pe'                        => 0.14,
-            'pei'                       => 0.14,
-            'quebec'                    => 0.05,
-            'qc'                        => 0.05,
-            'saskatchewan'              => 0.05,
-            'sk'                        => 0.05,
-            'yukon'                     => 0.05,
-            'yt'                        => 0.05,
+            'northwest territories' => 0.05,
+            'nt' => 0.05,
+            'nova scotia' => 0.15,
+            'ns' => 0.15,
+            'nunavut' => 0.05,
+            'nu' => 0.05,
+            'ontario' => 0.13,
+            'on' => 0.13,
+            'prince edward island' => 0.14,
+            'pe' => 0.14,
+            'pei' => 0.14,
+            'quebec' => 0.05,
+            'qc' => 0.05,
+            'saskatchewan' => 0.05,
+            'sk' => 0.05,
+            'yukon' => 0.05,
+            'yt' => 0.05,
         ],
     ],
 
@@ -80,51 +84,51 @@ return [
 
     'payment_gateways' => [
         'paypal' => [
-            'drumeo'   => [
-                'paypal_api_username'                  => '',
-                'paypal_api_password'                  => '',
-                'paypal_api_signature'                 => '',
-                'paypal_api_currency_code'             => '',
-                'paypal_api_version'                   => '',
-                'paypal_api_nvp_curl_url'              => '',
-                'paypal_api_checkout_redirect_url'     => 'https://www.sandbox.paypal.com/checkoutnow/2?useraction=commit&token=',
-                'paypal_api_checkout_return_url'       => '',
-                'paypal_api_checkout_cancel_url'       => '',
+            'drumeo' => [
+                'paypal_api_username' => '',
+                'paypal_api_password' => '',
+                'paypal_api_signature' => '',
+                'paypal_api_currency_code' => '',
+                'paypal_api_version' => '',
+                'paypal_api_nvp_curl_url' => '',
+                'paypal_api_checkout_redirect_url' => 'https://www.sandbox.paypal.com/checkoutnow/2?useraction=commit&token=',
+                'paypal_api_checkout_return_url' => '',
+                'paypal_api_checkout_cancel_url' => '',
                 'paypal_api_test_billing_agreement_id' => '',
             ],
             'recordeo' => [
-                'paypal_api_username'                  => '',
-                'paypal_api_password'                  => '',
-                'paypal_api_signature'                 => '',
-                'paypal_api_currency_code'             => '',
-                'paypal_api_version'                   => '',
-                'paypal_api_nvp_curl_url'              => '',
-                'paypal_api_checkout_redirect_url'     => '',
-                'paypal_api_checkout_return_url'       => '',
-                'paypal_api_checkout_cancel_url'       => '',
+                'paypal_api_username' => '',
+                'paypal_api_password' => '',
+                'paypal_api_signature' => '',
+                'paypal_api_currency_code' => '',
+                'paypal_api_version' => '',
+                'paypal_api_nvp_curl_url' => '',
+                'paypal_api_checkout_redirect_url' => '',
+                'paypal_api_checkout_return_url' => '',
+                'paypal_api_checkout_cancel_url' => '',
                 'paypal_api_test_billing_agreement_id' => '',
             ],
             'brand' => [
-                'paypal_api_username'                  => '',
-                'paypal_api_password'                  => '',
-                'paypal_api_signature'                 => '',
-                'paypal_api_currency_code'             => '',
-                'paypal_api_version'                   => '',
-                'paypal_api_nvp_curl_url'              => '',
-                'paypal_api_checkout_redirect_url'     => '',
-                'paypal_api_checkout_return_url'       => '',
-                'paypal_api_checkout_cancel_url'       => '',
+                'paypal_api_username' => '',
+                'paypal_api_password' => '',
+                'paypal_api_signature' => '',
+                'paypal_api_currency_code' => '',
+                'paypal_api_version' => '',
+                'paypal_api_nvp_curl_url' => '',
+                'paypal_api_checkout_redirect_url' => '',
+                'paypal_api_checkout_return_url' => '',
+                'paypal_api_checkout_cancel_url' => '',
                 'paypal_api_test_billing_agreement_id' => '',
-            ]
+            ],
         ],
 
         'stripe' => [
-            'drumeo'   => [
-                'stripe_api_secret'      => '',
+            'drumeo' => [
+                'stripe_api_secret' => '',
                 'stripe_publishable_key' => '',
             ],
             'recordeo' => [
-                'stripe_api_secret'      => '',
+                'stripe_api_secret' => '',
                 'stripe_publishable_key' => '',
             ],
         ],
@@ -139,10 +143,11 @@ return [
 
     'paypal' => [
         'agreement_route' => 'payment-method.paypal.agreement',
-        'agreement_fulfilled_route' => '' // route to redirect after handling a paypal agreement, eg for recordeo 'account.settings.payments'
+        'agreement_fulfilled_route' => ''
+        // route to redirect after handling a paypal agreement, eg for recordeo 'account.settings.payments'
     ],
 
-    'role_abilities'          => [
+    'role_abilities' => [
         'administrator' => [
             'create.shipping.option',
             'edit.shipping.option',
@@ -172,7 +177,7 @@ return [
 
             'pull.access_codes',
             'claim.access_codes',
-            'release.access_codes'
+            'release.access_codes',
         ],
     ],
 
