@@ -47,6 +47,13 @@ class RenameDatetimeColumns extends Migration
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
                     $table->renameColumn('created_on', 'created_at');
+                });
+
+            Schema::connection(ConfigService::$databaseConnectionName)
+                ->table($_table, function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
                     $table->renameColumn('updated_on', 'updated_at');
                 });
         }
@@ -66,6 +73,13 @@ class RenameDatetimeColumns extends Migration
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
                     $table->renameColumn('created_at', 'created_on');
+                });
+
+            Schema::connection(ConfigService::$databaseConnectionName)
+                ->table($_table, function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
                     $table->renameColumn('updated_at', 'updated_on');
                 });
         }
