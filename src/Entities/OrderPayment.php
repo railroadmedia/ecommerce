@@ -8,12 +8,12 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\OrderPaymentRepository")
  * @ORM\Table(
- *     name="ecommerce_order_payment",
+ *     name="ecommerce_order_payments",
  *     indexes={
- *         @ORM\Index(name="ecommerce_order_payment_order_id_index", columns={"order_id"}),
- *         @ORM\Index(name="ecommerce_order_payment_payment_id_index", columns={"payment_id"}),
- *         @ORM\Index(name="ecommerce_order_payment_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_order_payment_updated_on_index", columns={"updated_at"})
+ *         @ORM\Index(name="ecommerce_order_payments_order_id_index", columns={"order_id"}),
+ *         @ORM\Index(name="ecommerce_order_payments_payment_id_index", columns={"payment_id"}),
+ *         @ORM\Index(name="ecommerce_order_payments_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_order_payments_updated_on_index", columns={"updated_at"})
  *     }
  * )
  */

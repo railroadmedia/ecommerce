@@ -16,7 +16,7 @@ class CreateOrderDiscountTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableOrderDiscount,
+            'ecommerce_order_discount',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->integer('order_id')->index();
@@ -35,6 +35,6 @@ class CreateOrderDiscountTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableOrderDiscount);
+        Schema::dropIfExists('ecommerce_order_discount');
     }
 }

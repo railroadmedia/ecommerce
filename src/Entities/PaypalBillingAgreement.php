@@ -8,15 +8,15 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository")
  * @ORM\Table(
- *     name="ecommerce_paypal_billing_agreement",
+ *     name="ecommerce_paypal_billing_agreements",
  *     indexes={
- *         @ORM\Index(name="ecommerce_paypal_billing_agreement_external_id_index", columns={"external_id"}),
+ *         @ORM\Index(name="ecommerce_paypal_billing_agreements_external_id_index", columns={"external_id"}),
  *         @ORM\Index(
- *             name="ecommerce_paypal_billing_agreement_payment_gateway_name_index",
+ *             name="ecommerce_paypal_billing_agreements_payment_gateway_name_index",
  *             columns={"payment_gateway_name"}
  *         ),
- *         @ORM\Index(name="ecommerce_paypal_billing_agreement_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_paypal_billing_agreement_updated_on_index", columns={"updated_at"})
+ *         @ORM\Index(name="ecommerce_paypal_billing_agreements_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_paypal_billing_agreements_updated_on_index", columns={"updated_at"})
  *     }
  * )
  */

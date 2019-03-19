@@ -16,7 +16,7 @@ class CreateOrderTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableOrder,
+            'ecommerce_order',
             function(Blueprint $table) {
                 $table->increments('id');
 
@@ -42,6 +42,6 @@ class CreateOrderTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableOrder);
+        Schema::dropIfExists('ecommerce_order');
     }
 }

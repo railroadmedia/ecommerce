@@ -8,19 +8,19 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\ProductRepository")
  * @ORM\Table(
- *     name="ecommerce_product",
+ *     name="ecommerce_products",
  *     indexes={
- *         @ORM\Index(name="ecommerce_product_brand_index", columns={"brand"}),
- *         @ORM\Index(name="ecommerce_product_name_index", columns={"name"}),
- *         @ORM\Index(name="ecommerce_product_sku_index", columns={"sku"}),
- *         @ORM\Index(name="ecommerce_product_type_index", columns={"type"}),
- *         @ORM\Index(name="ecommerce_product_active_index", columns={"active"}),
- *         @ORM\Index(name="ecommerce_product_subscription_interval_type_index", columns={"subscription_interval_type"}),
- *         @ORM\Index(name="ecommerce_product_subscription_interval_count_index", columns={"subscription_interval_count"}),
- *         @ORM\Index(name="ecommerce_product_stock_index", columns={"stock"}),
- *         @ORM\Index(name="ecommerce_product_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_product_updated_on_index", columns={"updated_at"}),
- *         @ORM\Index(name="ecommerce_product_category_index", columns={"category"})
+ *         @ORM\Index(name="ecommerce_products_brand_index", columns={"brand"}),
+ *         @ORM\Index(name="ecommerce_products_name_index", columns={"name"}),
+ *         @ORM\Index(name="ecommerce_products_sku_index", columns={"sku"}),
+ *         @ORM\Index(name="ecommerce_products_type_index", columns={"type"}),
+ *         @ORM\Index(name="ecommerce_products_active_index", columns={"active"}),
+ *         @ORM\Index(name="ecommerce_products_subscription_interval_type_index", columns={"subscription_interval_type"}),
+ *         @ORM\Index(name="ecommerce_products_subscription_interval_count_index", columns={"subscription_interval_count"}),
+ *         @ORM\Index(name="ecommerce_products_stock_index", columns={"stock"}),
+ *         @ORM\Index(name="ecommerce_products_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_products_updated_on_index", columns={"updated_at"}),
+ *         @ORM\Index(name="ecommerce_products_category_index", columns={"category"})
  *     }
  * )
  */

@@ -16,7 +16,7 @@ class CreateSubscriptionAccessCodeTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableSubscriptionAccessCode,
+            'ecommerce_subscription_access_code',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->integer('subscription_id')->index();
@@ -34,6 +34,6 @@ class CreateSubscriptionAccessCodeTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableSubscriptionAccessCode);
+        Schema::dropIfExists('ecommerce_subscription_access_code');
     }
 }

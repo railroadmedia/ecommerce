@@ -30,27 +30,27 @@ class EcommerceTestCase extends BaseTestCase
 {
     const TABLES = [
         'users' => 'users',
-        'products' => 'ecommerce_product',
-        'accessCodes' => 'ecommerce_access_code',
-        'subscriptions' => 'ecommerce_subscription',
-        'addresses' => 'ecommerce_address',
-        'customers' => 'ecommerce_customer',
-        'orderItems' => 'ecommerce_order_item',
-        'discounts' => 'ecommerce_discount',
+        'products' => 'ecommerce_products',
+        'accessCodes' => 'ecommerce_access_codes',
+        'subscriptions' => 'ecommerce_subscriptions',
+        'addresses' => 'ecommerce_addresses',
+        'customers' => 'ecommerce_customers',
+        'orderItems' => 'ecommerce_order_items',
+        'discounts' => 'ecommerce_discounts',
         'discountCriteria' => 'ecommerce_discount_criteria',
-        'shippingOptions' => 'ecommerce_shipping_option',
-        'shippingCosts' => 'ecommerce_shipping_costs_weight_range',
-        'paymentMethods' => 'ecommerce_payment_method',
-        'orders' => 'ecommerce_order',
-        'creditCards' => 'ecommerce_credit_card',
-        'userProducts' => 'ecommerce_user_product',
-        'paypalBillingAgreements' => 'ecommerce_paypal_billing_agreement',
+        'shippingOptions' => 'ecommerce_shipping_options',
+        'shippingCosts' => 'ecommerce_shipping_costs_weight_ranges',
+        'paymentMethods' => 'ecommerce_payment_methods',
+        'orders' => 'ecommerce_orders',
+        'creditCards' => 'ecommerce_credit_cards',
+        'userProducts' => 'ecommerce_user_products',
+        'paypalBillingAgreements' => 'ecommerce_paypal_billing_agreements',
         'userPaymentMethod' => 'ecommerce_user_payment_methods',
-        'payments' => 'ecommerce_payment',
-        'orderPayments' => 'ecommerce_order_payment',
-        'subscriptionPayments' => 'ecommerce_subscription_payment',
+        'payments' => 'ecommerce_payments',
+        'orderPayments' => 'ecommerce_order_payments',
+        'subscriptionPayments' => 'ecommerce_subscription_payments',
         'orderItemFulfillments' => 'ecommerce_order_item_fulfillment',
-        'refunds' => 'ecommerce_refund',
+        'refunds' => 'ecommerce_refunds',
     ];
 
     /**
@@ -188,7 +188,6 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.cache_duration', 60);
         $app['config']->set('ecommerce.redis_host', $defaultConfig['redis_host']);
         $app['config']->set('ecommerce.redis_port', $defaultConfig['redis_port']);
-        $app['config']->set('ecommerce.table_prefix', $defaultConfig['table_prefix']);
         $app['config']->set('ecommerce.data_mode', $defaultConfig['data_mode']);
         $app['config']->set('ecommerce.entities', $defaultConfig['entities']);
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);

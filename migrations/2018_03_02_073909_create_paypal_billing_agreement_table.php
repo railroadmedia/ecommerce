@@ -16,7 +16,7 @@ class CreatePaypalBillingAgreementTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tablePaypalBillingAgreement,
+            'ecommerce_paypal_billing_agreement',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->string('external_id',64)->index();
@@ -34,6 +34,6 @@ class CreatePaypalBillingAgreementTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tablePaypalBillingAgreement);
+        Schema::dropIfExists('ecommerce_paypal_billing_agreement');
     }
 }

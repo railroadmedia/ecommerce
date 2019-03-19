@@ -16,7 +16,7 @@ class CreateAccessCodesTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableAccessCode,
+            'ecommerce_access_code',
             function(Blueprint $table) {
 
                 /**
@@ -44,6 +44,6 @@ class CreateAccessCodesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableAccessCode);
+        Schema::dropIfExists('ecommerce_access_code');
     }
 }

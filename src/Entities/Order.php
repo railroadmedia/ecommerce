@@ -10,16 +10,16 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\OrderRepository")
  * @ORM\Table(
- *     name="ecommerce_order",
+ *     name="ecommerce_orders",
  *     indexes={
- *         @ORM\Index(name="ecommerce_order_user_id_index", columns={"user_id"}),
- *         @ORM\Index(name="ecommerce_order_customer_id_index", columns={"customer_id"}),
- *         @ORM\Index(name="ecommerce_order_brand_index", columns={"brand"}),
- *         @ORM\Index(name="ecommerce_order_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_order_updated_on_index", columns={"updated_at"}),
- *         @ORM\Index(name="ecommerce_order_deleted_on_index", columns={"deleted_on"}),
- *         @ORM\Index(name="ecommerce_order_product_due_index", columns={"product_due"}),
- *         @ORM\Index(name="ecommerce_order_finance_due_index", columns={"finance_due"})
+ *         @ORM\Index(name="ecommerce_orders_user_id_index", columns={"user_id"}),
+ *         @ORM\Index(name="ecommerce_orders_customer_id_index", columns={"customer_id"}),
+ *         @ORM\Index(name="ecommerce_orders_brand_index", columns={"brand"}),
+ *         @ORM\Index(name="ecommerce_orders_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_orders_updated_on_index", columns={"updated_at"}),
+ *         @ORM\Index(name="ecommerce_orders_deleted_on_index", columns={"deleted_on"}),
+ *         @ORM\Index(name="ecommerce_orders_product_due_index", columns={"product_due"}),
+ *         @ORM\Index(name="ecommerce_orders_finance_due_index", columns={"finance_due"})
  *     }
  * )
  */

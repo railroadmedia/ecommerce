@@ -16,7 +16,7 @@ class CreateOrderItemFulfillmentTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->integer('order_id')->index();
@@ -38,6 +38,6 @@ class CreateOrderItemFulfillmentTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableOrderItemFulfillment);
+        Schema::dropIfExists('ecommerce_order_item_fulfillment');
     }
 }

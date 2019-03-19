@@ -16,7 +16,7 @@ class CreateProductTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableProduct,
+            'ecommerce_product',
             function(Blueprint $table) {
                 $table->increments('id');
 
@@ -46,6 +46,6 @@ class CreateProductTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableProduct);
+        Schema::dropIfExists('ecommerce_product');
     }
 }

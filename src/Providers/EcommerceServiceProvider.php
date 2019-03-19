@@ -98,35 +98,33 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$dataMode = config('ecommerce.data_mode');
 
         // tables
-        ConfigService::$tablePrefix = config('ecommerce.table_prefix');
-
-        ConfigService::$tableProduct = ConfigService::$tablePrefix . 'product';
-        ConfigService::$tableOrder = ConfigService::$tablePrefix . 'order';
-        ConfigService::$tableOrderItem = ConfigService::$tablePrefix . 'order_item';
-        ConfigService::$tableAddress = ConfigService::$tablePrefix . 'address';
-        ConfigService::$tableCustomer = ConfigService::$tablePrefix . 'customer';
-        ConfigService::$tableOrderPayment = ConfigService::$tablePrefix . 'order_payment';
-        ConfigService::$tablePayment = ConfigService::$tablePrefix . 'payment';
-        ConfigService::$tablePaymentMethod = ConfigService::$tablePrefix . 'payment_method';
-        ConfigService::$tableCreditCard = ConfigService::$tablePrefix . 'credit_card';
-        ConfigService::$tableRefund = ConfigService::$tablePrefix . 'refund';
-        ConfigService::$tableSubscription = ConfigService::$tablePrefix . 'subscription';
-        ConfigService::$tableSubscriptionPayment = ConfigService::$tablePrefix . 'subscription_payment';
-        ConfigService::$tableDiscount = ConfigService::$tablePrefix . 'discount';
-        ConfigService::$tableDiscountCriteria = ConfigService::$tablePrefix . 'discount_criteria';
-        ConfigService::$tableOrderDiscount = ConfigService::$tablePrefix . 'order_discount';
-        ConfigService::$tableOrderItemFulfillment = ConfigService::$tablePrefix . 'order_item_fulfillment';
-        ConfigService::$tableShippingOption = ConfigService::$tablePrefix . 'shipping_option';
-        ConfigService::$tableShippingCostsWeightRange = ConfigService::$tablePrefix . 'shipping_costs_weight_range';
-        ConfigService::$tablePaypalBillingAgreement = ConfigService::$tablePrefix . 'paypal_billing_agreement';
-        ConfigService::$tableCustomerPaymentMethods = ConfigService::$tablePrefix . 'customer_payment_methods';
-        ConfigService::$tableUserPaymentMethods = ConfigService::$tablePrefix . 'user_payment_methods';
-        ConfigService::$tableCustomerStripeCustomer = ConfigService::$tablePrefix . 'customer_stripe_customer';
-        ConfigService::$tableUserStripeCustomer = ConfigService::$tablePrefix . 'user_stripe_customer';
-        ConfigService::$tablePaymentGateway = ConfigService::$tablePrefix . 'payment_gateway';
-        ConfigService::$tableUserProduct = ConfigService::$tablePrefix . 'user_product';
-        ConfigService::$tableAccessCode = ConfigService::$tablePrefix . 'access_code';
-        ConfigService::$tableSubscriptionAccessCode = ConfigService::$tablePrefix . 'subscription_access_code';
+        ConfigService::$tableProduct = 'ecommerce_products';
+        ConfigService::$tableOrder = 'ecommerce_orders';
+        ConfigService::$tableOrderItem = 'ecommerce_order_items';
+        ConfigService::$tableAddress = 'ecommerce_addresses';
+        ConfigService::$tableCustomer = 'ecommerce_customers';
+        ConfigService::$tableOrderPayment = 'ecommerce_order_payments';
+        ConfigService::$tablePayment = 'ecommerce_payments';
+        ConfigService::$tablePaymentMethod = 'ecommerce_payment_methods';
+        ConfigService::$tableCreditCard = 'ecommerce_credit_cards';
+        ConfigService::$tableRefund = 'ecommerce_refunds';
+        ConfigService::$tableSubscription = 'ecommerce_subscriptions';
+        ConfigService::$tableSubscriptionPayment = 'ecommerce_subscription_payments';
+        ConfigService::$tableDiscount = 'ecommerce_discounts';
+        ConfigService::$tableDiscountCriteria = 'ecommerce_discount_criteria';
+        ConfigService::$tableOrderDiscount = 'ecommerce_order_discounts';
+        ConfigService::$tableOrderItemFulfillment = 'ecommerce_order_item_fulfillment';
+        ConfigService::$tableShippingOption = 'ecommerce_shipping_options';
+        ConfigService::$tableShippingCostsWeightRange = 'ecommerce_shipping_costs_weight_ranges';
+        ConfigService::$tablePaypalBillingAgreement = 'ecommerce_paypal_billing_agreements';
+        ConfigService::$tableCustomerPaymentMethods = 'ecommerce_customer_payment_methods';
+        ConfigService::$tableUserPaymentMethods = 'ecommerce_user_payment_methods';
+        ConfigService::$tableCustomerStripeCustomer = 'ecommerce_customer_stripe_customers';
+        ConfigService::$tableUserStripeCustomer = 'ecommerce_user_stripe_customers';
+        ConfigService::$tablePaymentGateway = 'ecommerce_payment_gateways';
+        ConfigService::$tableUserProduct = 'ecommerce_user_products';
+        ConfigService::$tableAccessCode = 'ecommerce_access_codes';
+        ConfigService::$tableSubscriptionAccessCode = 'ecommerce_subscription_access_codes';
 
         // brand
         ConfigService::$brand = config('ecommerce.brand');

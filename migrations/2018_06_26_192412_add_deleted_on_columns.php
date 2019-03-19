@@ -16,7 +16,7 @@ class AddDeletedOnColumns extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function (Blueprint $table) {
                     $table->dateTime('deleted_on')->index()->nullable();
                 }
@@ -24,7 +24,7 @@ class AddDeletedOnColumns extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                'ecommerce_payment',
                 function (Blueprint $table) {
                     $table->dateTime('deleted_on')->index()->nullable();
                 }
@@ -32,7 +32,7 @@ class AddDeletedOnColumns extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscription',
                 function (Blueprint $table) {
                     $table->dateTime('deleted_on')->index()->nullable();
                 }
@@ -48,7 +48,7 @@ class AddDeletedOnColumns extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function (Blueprint $table) {
                     $table->dropColumn('deleted_on');
                 }
@@ -56,7 +56,7 @@ class AddDeletedOnColumns extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                'ecommerce_payment',
                 function (Blueprint $table) {
                     $table->dropColumn('deleted_on');
                 }
@@ -64,7 +64,7 @@ class AddDeletedOnColumns extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscription',
                 function (Blueprint $table) {
                     $table->dropColumn('deleted_on');
                 }

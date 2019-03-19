@@ -15,7 +15,7 @@ class UpdateSubscriptionsTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscription',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -26,7 +26,7 @@ class UpdateSubscriptionsTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscription',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -37,7 +37,7 @@ class UpdateSubscriptionsTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscription',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -48,7 +48,7 @@ class UpdateSubscriptionsTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscription',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -67,7 +67,7 @@ class UpdateSubscriptionsTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscription',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -78,7 +78,7 @@ class UpdateSubscriptionsTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscription',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -89,7 +89,7 @@ class UpdateSubscriptionsTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscription',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -100,7 +100,7 @@ class UpdateSubscriptionsTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscription',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint

@@ -8,13 +8,13 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\RefundRepository")
  * @ORM\Table(
- *     name="ecommerce_refund",
+ *     name="ecommerce_refunds",
  *     indexes={
- *         @ORM\Index(name="ecommerce_refund_payment_id_index", columns={"payment_id"}),
- *         @ORM\Index(name="ecommerce_refund_external_provider_index", columns={"external_provider"}),
- *         @ORM\Index(name="ecommerce_refund_external_id_index", columns={"external_id"}),
- *         @ORM\Index(name="ecommerce_refund_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_refund_updated_on_index", columns={"updated_at"}),
+ *         @ORM\Index(name="ecommerce_refunds_payment_id_index", columns={"payment_id"}),
+ *         @ORM\Index(name="ecommerce_refunds_external_provider_index", columns={"external_provider"}),
+ *         @ORM\Index(name="ecommerce_refunds_external_id_index", columns={"external_id"}),
+ *         @ORM\Index(name="ecommerce_refunds_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_refunds_updated_on_index", columns={"updated_at"}),
  *     }
  * )
  */

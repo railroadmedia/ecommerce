@@ -10,16 +10,16 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\DiscountRepository")
  * @ORM\Table(
- *     name="ecommerce_discount",
+ *     name="ecommerce_discounts",
  *     indexes={
- *         @ORM\Index(name="ecommerce_discount_name_index", columns={"name"}),
- *         @ORM\Index(name="ecommerce_discount_type_index", columns={"type"}),
- *         @ORM\Index(name="ecommerce_discount_active_index", columns={"active"}),
- *         @ORM\Index(name="ecommerce_discount_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_discount_updated_on_index", columns={"updated_at"}),
- *         @ORM\Index(name="ecommerce_discount_product_id_index", columns={"product_id"}),
- *         @ORM\Index(name="ecommerce_discount_visible_index", columns={"visible"}),
- *         @ORM\Index(name="ecommerce_discount_product_category_index", columns={"product_category"})
+ *         @ORM\Index(name="ecommerce_discounts_name_index", columns={"name"}),
+ *         @ORM\Index(name="ecommerce_discounts_type_index", columns={"type"}),
+ *         @ORM\Index(name="ecommerce_discounts_active_index", columns={"active"}),
+ *         @ORM\Index(name="ecommerce_discounts_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_discounts_updated_on_index", columns={"updated_at"}),
+ *         @ORM\Index(name="ecommerce_discounts_product_id_index", columns={"product_id"}),
+ *         @ORM\Index(name="ecommerce_discounts_visible_index", columns={"visible"}),
+ *         @ORM\Index(name="ecommerce_discounts_product_category_index", columns={"product_category"})
  *     }
  * )
  */

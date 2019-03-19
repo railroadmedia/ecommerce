@@ -15,7 +15,7 @@ class UpdatePaymentTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                'ecommerce_payment',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -26,7 +26,7 @@ class UpdatePaymentTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                'ecommerce_payment',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -37,7 +37,7 @@ class UpdatePaymentTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                'ecommerce_payment',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -48,7 +48,7 @@ class UpdatePaymentTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                'ecommerce_payment',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -70,7 +70,7 @@ class UpdatePaymentTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                'ecommerce_payment',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -81,7 +81,7 @@ class UpdatePaymentTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                'ecommerce_payment',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -92,7 +92,7 @@ class UpdatePaymentTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                'ecommerce_payment',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -103,7 +103,7 @@ class UpdatePaymentTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tablePayment,
+                'ecommerce_payment',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint

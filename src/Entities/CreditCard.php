@@ -8,14 +8,14 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\CreditCardRepository")
  * @ORM\Table(
- *     name="ecommerce_credit_card",
+ *     name="ecommerce_credit_cards",
  *     indexes={
- *         @ORM\Index(name="ecommerce_credit_card_company_name_index", columns={"company_name"}),
- *         @ORM\Index(name="ecommerce_credit_card_external_id_index", columns={"external_id"}),
- *         @ORM\Index(name="ecommerce_credit_card_external_customer_id_index", columns={"external_customer_id"}),
- *         @ORM\Index(name="ecommerce_credit_card_payment_gateway_name_index", columns={"payment_gateway_name"}),
- *         @ORM\Index(name="ecommerce_credit_card_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_credit_card_updated_on_index", columns={"updated_at"})
+ *         @ORM\Index(name="ecommerce_credit_cards_company_name_index", columns={"company_name"}),
+ *         @ORM\Index(name="ecommerce_credit_cards_external_id_index", columns={"external_id"}),
+ *         @ORM\Index(name="ecommerce_credit_cards_external_customer_id_index", columns={"external_customer_id"}),
+ *         @ORM\Index(name="ecommerce_credit_cards_payment_gateway_name_index", columns={"payment_gateway_name"}),
+ *         @ORM\Index(name="ecommerce_credit_cards_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_credit_cards_updated_on_index", columns={"updated_at"})
  *     }
  * )
  */

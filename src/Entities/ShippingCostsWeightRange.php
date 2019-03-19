@@ -8,18 +8,18 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\ShippingCostsWeightRangeRepository")
  * @ORM\Table(
- *     name="ecommerce_shipping_costs_weight_range",
+ *     name="ecommerce_shipping_costs_weight_ranges",
  *     indexes={
  *         @ORM\Index(
- *             name="ecommerce_shipping_costs_weight_range_shipping_option_id_index",
+ *             name="ecommerce_shipping_costs_weight_ranges_shipping_option_id_index",
  *             columns={"shipping_option_id"}
  *         ),
  *         @ORM\Index(
- *             name="ecommerce_shipping_costs_weight_range_created_on_index",
+ *             name="ecommerce_shipping_costs_weight_ranges_created_on_index",
  *             columns={"created_at"}
  *         ),
  *         @ORM\Index(
- *             name="ecommerce_shipping_costs_weight_range_updated_on_index",
+ *             name="ecommerce_shipping_costs_weight_ranges_updated_on_index",
  *             columns={"updated_at"}
  *         )
  *     }

@@ -9,23 +9,23 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\SubscriptionRepository")
  * @ORM\Table(
- *     name="ecommerce_subscription",
+ *     name="ecommerce_subscriptions",
  *     indexes={
- *         @ORM\Index(name="ecommerce_subscription_brand_index", columns={"brand"}),
- *         @ORM\Index(name="ecommerce_subscription_type_index", columns={"type"}),
- *         @ORM\Index(name="ecommerce_subscription_user_id_index", columns={"user_id"}),
- *         @ORM\Index(name="ecommerce_subscription_customer_id_index", columns={"customer_id"}),
- *         @ORM\Index(name="ecommerce_subscription_order_id_index", columns={"order_id"}),
- *         @ORM\Index(name="ecommerce_subscription_product_id_index", columns={"product_id"}),
- *         @ORM\Index(name="ecommerce_subscription_is_active_index", columns={"is_active"}),
- *         @ORM\Index(name="ecommerce_subscription_start_date_index", columns={"start_date"}),
- *         @ORM\Index(name="ecommerce_subscription_paid_until_index", columns={"paid_until"}),
- *         @ORM\Index(name="ecommerce_subscription_currency_index", columns={"currency"}),
- *         @ORM\Index(name="ecommerce_subscription_interval_type_index", columns={"interval_type"}),
- *         @ORM\Index(name="ecommerce_subscription_payment_method_id_index", columns={"payment_method_id"}),
- *         @ORM\Index(name="ecommerce_subscription_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_subscription_updated_on_index", columns={"updated_at"}),
- *         @ORM\Index(name="ecommerce_subscription_deleted_on_index", columns={"deleted_on"})
+ *         @ORM\Index(name="ecommerce_subscriptions_brand_index", columns={"brand"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_type_index", columns={"type"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_user_id_index", columns={"user_id"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_customer_id_index", columns={"customer_id"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_order_id_index", columns={"order_id"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_product_id_index", columns={"product_id"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_is_active_index", columns={"is_active"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_start_date_index", columns={"start_date"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_paid_until_index", columns={"paid_until"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_currency_index", columns={"currency"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_interval_type_index", columns={"interval_type"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_payment_method_id_index", columns={"payment_method_id"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_updated_on_index", columns={"updated_at"}),
+ *         @ORM\Index(name="ecommerce_subscriptions_deleted_on_index", columns={"deleted_on"})
  *     }
  * )
  */

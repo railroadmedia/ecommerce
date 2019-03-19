@@ -8,14 +8,14 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\PaymentMethodRepository")
  * @ORM\Table(
- *     name="ecommerce_payment_method",
+ *     name="ecommerce_payment_methods",
  *     indexes={
- *         @ORM\Index(name="ecommerce_payment_method_method_id_index", columns={"method_id"}),
- *         @ORM\Index(name="ecommerce_payment_method_method_type_index", columns={"method_type"}),
- *         @ORM\Index(name="ecommerce_payment_method_currency_index", columns={"currency"}),
- *         @ORM\Index(name="ecommerce_payment_method_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_payment_method_updated_on_index", columns={"updated_at"}),
- *         @ORM\Index(name="ecommerce_payment_method_deleted_on_index", columns={"deleted_on"}),
+ *         @ORM\Index(name="ecommerce_payment_methods_method_id_index", columns={"method_id"}),
+ *         @ORM\Index(name="ecommerce_payment_methods_method_type_index", columns={"method_type"}),
+ *         @ORM\Index(name="ecommerce_payment_methods_currency_index", columns={"currency"}),
+ *         @ORM\Index(name="ecommerce_payment_methods_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_payment_methods_updated_on_index", columns={"updated_at"}),
+ *         @ORM\Index(name="ecommerce_payment_methods_deleted_on_index", columns={"deleted_on"}),
  *     }
  * )
  */

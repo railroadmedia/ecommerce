@@ -12,13 +12,13 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  *     repositoryClass="Railroad\Ecommerce\Repositories\ShippingOptionRepository"
  * )
  * @ORM\Table(
- *     name="ecommerce_shipping_option",
+ *     name="ecommerce_shipping_options",
  *     indexes={
- *         @ORM\Index(name="ecommerce_shipping_option_country_index", columns={"country"}),
- *         @ORM\Index(name="ecommerce_shipping_option_active_index", columns={"active"}),
- *         @ORM\Index(name="ecommerce_shipping_option_priority_index", columns={"priority"}),
- *         @ORM\Index(name="ecommerce_shipping_option_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_shipping_option_updated_on_index", columns={"updated_at"})
+ *         @ORM\Index(name="ecommerce_shipping_options_country_index", columns={"country"}),
+ *         @ORM\Index(name="ecommerce_shipping_options_active_index", columns={"active"}),
+ *         @ORM\Index(name="ecommerce_shipping_options_priority_index", columns={"priority"}),
+ *         @ORM\Index(name="ecommerce_shipping_options_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_shipping_options_updated_on_index", columns={"updated_at"})
  *     }
  * )
  */

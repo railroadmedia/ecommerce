@@ -16,7 +16,7 @@ class CreatePaymentTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tablePayment,
+            'ecommerce_payment',
             function(Blueprint $table) {
                 $table->increments('id');
 
@@ -43,6 +43,6 @@ class CreatePaymentTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tablePayment);
+        Schema::dropIfExists('ecommerce_payment');
     }
 }

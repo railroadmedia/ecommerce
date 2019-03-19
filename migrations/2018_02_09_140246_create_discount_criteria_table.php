@@ -16,7 +16,7 @@ class CreateDiscountCriteriaTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableDiscountCriteria,
+            'ecommerce_discount_criteria',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->string('name')->index();
@@ -38,6 +38,6 @@ class CreateDiscountCriteriaTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableDiscountCriteria);
+        Schema::dropIfExists('ecommerce_discount_criteria');
     }
 }

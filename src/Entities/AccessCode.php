@@ -9,16 +9,16 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\AccessCodeRepository")
  * @ORM\Table(
- *     name="ecommerce_access_code",
+ *     name="ecommerce_access_codes",
  *     indexes={
- *         @ORM\Index(name="ecommerce_access_code_code_index", columns={"code"}),
- *         @ORM\Index(name="ecommerce_access_code_product_ids_index", columns={"product_ids"}),
- *         @ORM\Index(name="ecommerce_access_code_is_claimed_index", columns={"is_claimed"}),
- *         @ORM\Index(name="ecommerce_access_code_claimer_id_index", columns={"claimer_id"}),
- *         @ORM\Index(name="ecommerce_access_code_claimed_on_index", columns={"claimed_on"}),
- *         @ORM\Index(name="ecommerce_access_code_brand_index", columns={"brand"}),
- *         @ORM\Index(name="ecommerce_access_code_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_access_code_updated_on_index", columns={"updated_at"})
+ *         @ORM\Index(name="ecommerce_access_codes_code_index", columns={"code"}),
+ *         @ORM\Index(name="ecommerce_access_codes_product_ids_index", columns={"product_ids"}),
+ *         @ORM\Index(name="ecommerce_access_codes_is_claimed_index", columns={"is_claimed"}),
+ *         @ORM\Index(name="ecommerce_access_codes_claimer_id_index", columns={"claimer_id"}),
+ *         @ORM\Index(name="ecommerce_access_codes_claimed_on_index", columns={"claimed_on"}),
+ *         @ORM\Index(name="ecommerce_access_codes_brand_index", columns={"brand"}),
+ *         @ORM\Index(name="ecommerce_access_codes_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_access_codes_updated_on_index", columns={"updated_at"})
  *     }
  * )
  */

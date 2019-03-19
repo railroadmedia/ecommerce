@@ -16,7 +16,7 @@ class CreateSubscriptionPaymentTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableSubscriptionPayment,
+            'ecommerce_subscription_payment',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->integer('subscription_id')->index();
@@ -34,6 +34,6 @@ class CreateSubscriptionPaymentTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableSubscriptionPayment);
+        Schema::dropIfExists('ecommerce_subscription_payment');
     }
 }

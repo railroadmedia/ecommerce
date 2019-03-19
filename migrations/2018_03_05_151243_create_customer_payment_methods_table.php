@@ -16,7 +16,7 @@ class CreateCustomerPaymentMethodsTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableCustomerPaymentMethods,
+            'ecommerce_customer_payment_methods',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->integer('customer_id')->index();
@@ -35,6 +35,6 @@ class CreateCustomerPaymentMethodsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableCustomerPaymentMethods);
+        Schema::dropIfExists('ecommerce_customer_payment_methods');
     }
 }

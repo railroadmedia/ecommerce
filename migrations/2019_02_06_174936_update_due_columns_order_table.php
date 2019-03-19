@@ -15,7 +15,7 @@ class UpdateDueColumnsOrderTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -26,7 +26,7 @@ class UpdateDueColumnsOrderTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -41,7 +41,7 @@ class UpdateDueColumnsOrderTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -52,7 +52,7 @@ class UpdateDueColumnsOrderTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -63,7 +63,7 @@ class UpdateDueColumnsOrderTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -78,7 +78,7 @@ class UpdateDueColumnsOrderTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -97,7 +97,7 @@ class UpdateDueColumnsOrderTable extends Migration
     {
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -108,7 +108,7 @@ class UpdateDueColumnsOrderTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -119,7 +119,7 @@ class UpdateDueColumnsOrderTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -130,7 +130,7 @@ class UpdateDueColumnsOrderTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -141,7 +141,7 @@ class UpdateDueColumnsOrderTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -152,7 +152,7 @@ class UpdateDueColumnsOrderTable extends Migration
 
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
-                ConfigService::$tableOrder,
+                'ecommerce_order',
                 function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint

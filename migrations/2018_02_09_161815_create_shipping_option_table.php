@@ -16,7 +16,7 @@ class CreateShippingOptionTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableShippingOption,
+            'ecommerce_shipping_option',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->string('country')->index();
@@ -35,6 +35,6 @@ class CreateShippingOptionTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableShippingOption);
+        Schema::dropIfExists('ecommerce_shipping_option');
     }
 }

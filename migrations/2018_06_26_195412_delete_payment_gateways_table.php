@@ -14,7 +14,7 @@ class DeletePaymentGatewaysTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)
-            ->dropIfExists(ConfigService::$tablePaymentGateway);
+            ->dropIfExists('ecommerce_payment_gateways');
     }
 
     /**

@@ -16,7 +16,7 @@ class CreateUserProductTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_product',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->integer('user_id')->index();

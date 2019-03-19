@@ -16,7 +16,7 @@ class CreateAddressTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableAddress,
+            'ecommerce_address',
             function(Blueprint $table) {
                 $table->increments('id');
 
@@ -45,6 +45,6 @@ class CreateAddressTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableAddress);
+        Schema::dropIfExists('ecommerce_address');
     }
 }

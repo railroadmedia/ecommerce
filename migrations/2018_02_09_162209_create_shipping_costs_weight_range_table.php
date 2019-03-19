@@ -16,7 +16,7 @@ class CreateShippingCostsWeightRangeTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableShippingCostsWeightRange,
+            'ecommerce_shipping_costs_weight_range',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->integer('shipping_option_id')->index();
@@ -36,6 +36,6 @@ class CreateShippingCostsWeightRangeTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableShippingCostsWeightRange);
+        Schema::dropIfExists('ecommerce_shipping_costs_weight_range');
     }
 }

@@ -8,17 +8,17 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\PaymentRepository")
  * @ORM\Table(
- *     name="ecommerce_payment",
+ *     name="ecommerce_payments",
  *     indexes={
- *         @ORM\Index(name="ecommerce_payment_type_index", columns={"type"}),
- *         @ORM\Index(name="ecommerce_payment_external_id_index", columns={"external_id"}),
- *         @ORM\Index(name="ecommerce_payment_external_provider_index", columns={"external_provider"}),
- *         @ORM\Index(name="ecommerce_payment_status_index", columns={"status"}),
- *         @ORM\Index(name="ecommerce_payment_payment_method_id_index", columns={"payment_method_id"}),
- *         @ORM\Index(name="ecommerce_payment_currency_index", columns={"currency"}),
- *         @ORM\Index(name="ecommerce_payment_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_payment_updated_on_index", columns={"updated_at"}),
- *         @ORM\Index(name="ecommerce_payment_deleted_on_index", columns={"deleted_on"}),
+ *         @ORM\Index(name="ecommerce_payments_type_index", columns={"type"}),
+ *         @ORM\Index(name="ecommerce_payments_external_id_index", columns={"external_id"}),
+ *         @ORM\Index(name="ecommerce_payments_external_provider_index", columns={"external_provider"}),
+ *         @ORM\Index(name="ecommerce_payments_status_index", columns={"status"}),
+ *         @ORM\Index(name="ecommerce_payments_payment_method_id_index", columns={"payment_method_id"}),
+ *         @ORM\Index(name="ecommerce_payments_currency_index", columns={"currency"}),
+ *         @ORM\Index(name="ecommerce_payments_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_payments_updated_on_index", columns={"updated_at"}),
+ *         @ORM\Index(name="ecommerce_payments_deleted_on_index", columns={"deleted_on"}),
  *     }
  * )
  */

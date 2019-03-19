@@ -16,7 +16,7 @@ class CreateCreditCardTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_card',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->string('fingerprint');
@@ -40,6 +40,6 @@ class CreateCreditCardTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableCreditCard);
+        Schema::dropIfExists('ecommerce_credit_card');
     }
 }

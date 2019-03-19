@@ -16,7 +16,7 @@ class CreateRefundTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->create(
-            ConfigService::$tableRefund,
+            'ecommerce_refund',
             function(Blueprint $table) {
                 $table->increments('id');
                 $table->integer('payment_id')->index();
@@ -38,6 +38,6 @@ class CreateRefundTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableRefund);
+        Schema::dropIfExists('ecommerce_refund');
     }
 }

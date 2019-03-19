@@ -10,16 +10,16 @@ use Railroad\Ecommerce\Services\ConfigService;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\AddressRepository")
  * @ORM\Table(
- *     name="ecommerce_address",
+ *     name="ecommerce_addresses",
  *     indexes={
- *         @ORM\Index(name="ecommerce_address_type_index", columns={"type"}),
- *         @ORM\Index(name="ecommerce_address_brand_index", columns={"brand"}),
- *         @ORM\Index(name="ecommerce_address_user_id_index", columns={"user_id"}),
- *         @ORM\Index(name="ecommerce_address_customer_id_index", columns={"customer_id"}),
- *         @ORM\Index(name="ecommerce_address_first_name_index", columns={"first_name"}),
- *         @ORM\Index(name="ecommerce_address_last_name_index", columns={"last_name"}),
- *         @ORM\Index(name="ecommerce_address_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_address_updated_on_index", columns={"updated_at"})
+ *         @ORM\Index(name="ecommerce_addresses_type_index", columns={"type"}),
+ *         @ORM\Index(name="ecommerce_addresses_brand_index", columns={"brand"}),
+ *         @ORM\Index(name="ecommerce_addresses_user_id_index", columns={"user_id"}),
+ *         @ORM\Index(name="ecommerce_addresses_customer_id_index", columns={"customer_id"}),
+ *         @ORM\Index(name="ecommerce_addresses_first_name_index", columns={"first_name"}),
+ *         @ORM\Index(name="ecommerce_addresses_last_name_index", columns={"last_name"}),
+ *         @ORM\Index(name="ecommerce_addresses_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_addresses_updated_on_index", columns={"updated_at"})
  *     }
  * )
  * @ORM\HasLifecycleCallbacks

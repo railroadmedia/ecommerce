@@ -15,7 +15,7 @@ class AddCategoryToProductTable extends Migration
     public function up()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->table(
-            ConfigService::$tableProduct,
+            'ecommerce_product',
             function ($table) {
                 /**
                  * @var $table \Illuminate\Database\Schema\Blueprint
@@ -34,7 +34,7 @@ class AddCategoryToProductTable extends Migration
     public function down()
     {
         Schema::connection(ConfigService::$databaseConnectionName)->table(
-            ConfigService::$tableProduct,
+            'ecommerce_product',
             function ($table) {
                 /**
                  * @var $table \Illuminate\Database\Schema\Blueprint

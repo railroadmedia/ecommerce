@@ -8,11 +8,11 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity()
  * @ORM\Table(
- *     name="ecommerce_customer",
+ *     name="ecommerce_customers",
  *     indexes={
- *         @ORM\Index(name="ecommerce_customer_brand_index", columns={"brand"}),
- *         @ORM\Index(name="ecommerce_customer_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_customer_updated_on_index", columns={"updated_at"})
+ *         @ORM\Index(name="ecommerce_customers_brand_index", columns={"brand"}),
+ *         @ORM\Index(name="ecommerce_customers_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_customers_updated_on_index", columns={"updated_at"})
  *     }
  * )
  */

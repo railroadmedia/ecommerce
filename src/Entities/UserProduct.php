@@ -8,14 +8,14 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\UserProductRepository")
  * @ORM\Table(
- *     name="ecommerce_user_product",
+ *     name="ecommerce_user_products",
  *     indexes={
- *         @ORM\Index(name="ecommerce_user_product_user_id_index", columns={"user_id"}),
- *         @ORM\Index(name="ecommerce_user_product_product_id_index", columns={"product_id"}),
- *         @ORM\Index(name="ecommerce_user_product_quantity_index", columns={"quantity"}),
- *         @ORM\Index(name="ecommerce_user_product_expiration_date_index", columns={"expiration_date"}),
- *         @ORM\Index(name="ecommerce_user_product_created_on_index", columns={"created_at"}),
- *         @ORM\Index(name="ecommerce_user_product_updated_on_index", columns={"updated_at"})
+ *         @ORM\Index(name="ecommerce_user_products_user_id_index", columns={"user_id"}),
+ *         @ORM\Index(name="ecommerce_user_products_product_id_index", columns={"product_id"}),
+ *         @ORM\Index(name="ecommerce_user_products_quantity_index", columns={"quantity"}),
+ *         @ORM\Index(name="ecommerce_user_products_expiration_date_index", columns={"expiration_date"}),
+ *         @ORM\Index(name="ecommerce_user_products_created_on_index", columns={"created_at"}),
+ *         @ORM\Index(name="ecommerce_user_products_updated_on_index", columns={"updated_at"})
  *     }
  * )
  */
