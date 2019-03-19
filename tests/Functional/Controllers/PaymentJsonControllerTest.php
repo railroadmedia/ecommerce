@@ -109,7 +109,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
@@ -239,7 +239,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
@@ -258,7 +258,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment is linked to order
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderPayment,
+            'ecommerce_order_payments',
             [
                 'order_id' => $order['id'],
                 'payment_id' => $decodedResponse['data']['id'],
@@ -270,7 +270,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert order total paied sum
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'id' => $order['id'],
                 'total_paid' => $expectedSum
@@ -353,7 +353,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
@@ -458,7 +458,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
@@ -749,7 +749,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
@@ -766,7 +766,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'id' => $subscription['id'],
                 'total_cycles_paid' => $cycles + 1,
@@ -775,7 +775,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'id' => $subscription['id'],
                 'total_cycles_paid' => $cycles + 1,
@@ -784,7 +784,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscriptionPayment,
+            'ecommerce_subscription_payments',
             [
                 'subscription_id' => $subscription['id'],
                 'payment_id' => $decodedResponse['data']['id']
@@ -856,7 +856,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => 0,
@@ -947,7 +947,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => 0,
@@ -1189,7 +1189,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         $this->assertSoftDeleted(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'id' => $payment['id']
             ]

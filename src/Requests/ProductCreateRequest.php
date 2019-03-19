@@ -52,7 +52,7 @@ class ProductCreateRequest extends FormRequest
     {
         return [
             'data.attributes.name' => 'required|max:255',
-            'data.attributes.sku' => 'required|unique:'.ConfigService::$tableProduct.',sku|max:255',
+            'data.attributes.sku' => 'required|unique:'.'ecommerce_products'.',sku|max:255',
             'data.attributes.price' => 'required|numeric|min:0',
             'data.attributes.type' => 'required|max:255|in:' .
                 implode(

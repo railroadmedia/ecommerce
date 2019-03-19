@@ -53,7 +53,7 @@ class ProductUpdateRequest extends FormRequest
     {
         return [
             'data.attributes.name' => 'max:255',
-            'data.attributes.sku' => 'unique:'.ConfigService::$tableProduct.',sku,'.Request::route('productId').'|max:255',
+            'data.attributes.sku' => 'unique:'.'ecommerce_products'.',sku,'.Request::route('productId').'|max:255',
             'data.attributes.price' => 'numeric|min:0',
             'data.attributes.type' => 'max:255|in:' .
                 implode(

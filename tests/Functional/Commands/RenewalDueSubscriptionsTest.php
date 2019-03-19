@@ -127,7 +127,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
         for ($i = 0; $i < count($initialSubscriptions); $i++) {
             $this->assertDatabaseHas(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscriptions',
                 [
                     'id' => $initialSubscriptions[$i]['id'],
                     'paid_until' => Carbon::now()
@@ -143,7 +143,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
             // assert user products assignation
             $this->assertDatabaseHas(
-                ConfigService::$tableUserProduct,
+                'ecommerce_user_products',
                 [
                     'user_id' => $initialSubscriptions[$i]['user_id'],
                     'product_id' => $initialSubscriptions[$i]['product_id'],
@@ -156,7 +156,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             );
 
             $this->assertDatabaseHas(
-                ConfigService::$tablePayment,
+                'ecommerce_payments',
                 [
                     'total_due' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
                     'total_paid' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
@@ -344,7 +344,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
         foreach ($oldSubscriptions as $deactivatedSubscription) {
             $this->assertDatabaseHas(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscriptions',
                 [
                     'id' => $deactivatedSubscription['id'],
                     'is_active' => false,
@@ -354,7 +354,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             );
 
             $this->assertDatabaseMissing(
-                ConfigService::$tableUserProduct,
+                'ecommerce_user_products',
                 [
                     'user_id' => $deactivatedSubscription['user_id'],
                     'product_id' => $deactivatedSubscription['product_id']
@@ -365,7 +365,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         for ($i = 0; $i < count($initialSubscriptions); $i++) {
 
             $this->assertDatabaseHas(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscriptions',
                 [
                     'id' => $initialSubscriptions[$i]['id'],
                     'paid_until' => Carbon::now()
@@ -380,7 +380,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
             // assert user products assignation
             $this->assertDatabaseHas(
-                ConfigService::$tableUserProduct,
+                'ecommerce_user_products',
                 [
                     'user_id' => $initialSubscriptions[$i]['user_id'],
                     'product_id' => $initialSubscriptions[$i]['product_id'],
@@ -393,7 +393,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             );
 
             $this->assertDatabaseHas(
-                ConfigService::$tablePayment,
+                'ecommerce_payments',
                 [
                     'total_due' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
                     'total_paid' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),

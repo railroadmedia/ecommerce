@@ -335,7 +335,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         //assert that the address exists in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             $address + [
                 'user_id' => $userId
             ]
@@ -432,7 +432,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         //assert that the address was updated in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'id' => $address['id'],
                 'type' => $address['type'],
@@ -451,7 +451,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         //assert that the old address street line 1 data not exist anymore in the database
         $this->assertDatabaseMissing(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'id' => $address['id'],
                 'type' => $address['type'],
@@ -508,7 +508,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         // assert that the address was not modified in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             $address
         );
     }
@@ -537,7 +537,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
 
         // assert that the address was not deleted from the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseHas('ecommerce_addresses', $address);
     }
 
     public function test_user_delete_his_address()
@@ -554,7 +554,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         // assert that the address was deleted
         $this->assertDatabaseMissing(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             $address
         );
     }
@@ -645,7 +645,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         //assert that the address with invalid country was not created
         $this->assertDatabaseMissing(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => $type,
                 'user_id' => $userId,
@@ -697,9 +697,9 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
 
         //assert that the address was not modified in the database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseHas('ecommerce_addresses', $address);
         $this->assertDatabaseMissing(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'id' => $address['id'],
                 'country' => $country,
@@ -766,7 +766,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         //assert that the address exists in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             $address + ['user_id' => $user['id']]
         );
     }
@@ -839,7 +839,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         //assert that the address was updated in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'id' => $address['id'],
                 'type' => $address['type'],
@@ -858,7 +858,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         //assert that the old address street line 1 data not exist anymore in the database
         $this->assertDatabaseMissing(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'id' => $address['id'],
                 'type' => $address['type'],
@@ -889,7 +889,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         // assert that address was deleted from database
-        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseMissing('ecommerce_addresses', $address);
     }
 
     public function test_customer_create_address()
@@ -942,7 +942,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         // assert that the address exists in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             $address + [
                 'customer_id' => $customer['id']
             ]
@@ -1013,7 +1013,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         // assert address row was updated in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'id' => $address['id'],
                 'street_line_1' => $newStreetLine1,
@@ -1024,7 +1024,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         // assert that the old address street line 1 data not exist anymore in the database
         $this->assertDatabaseMissing(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'id' => $address['id'],
                 'customer_id' => $customer['id'],
@@ -1074,7 +1074,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         //assert database content
         $this->assertDatabaseMissing(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'id' => $address['id'],
                 'street_line_1' => $newStreetLine1,
@@ -1100,7 +1100,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         //assert database content
-        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseMissing('ecommerce_addresses', $address);
     }
 
     public function test_customer_can_not_delete_others_address()
@@ -1130,6 +1130,6 @@ class AddressJsonControllerTest extends EcommerceTestCase
         );
 
         // assert database
-        $this->assertDatabaseHas(ConfigService::$tableAddress, $address);
+        $this->assertDatabaseHas('ecommerce_addresses', $address);
     }
 }

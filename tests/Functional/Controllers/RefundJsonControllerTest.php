@@ -189,7 +189,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -203,7 +203,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -348,7 +348,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -362,7 +362,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -542,7 +542,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -556,7 +556,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -565,7 +565,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert shipping fulfillment deleted
         $this->assertDatabaseMissing(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillment['id'],
                 'order_id' => $order['id'],
@@ -574,7 +574,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert user products were not removed on partial refund
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -734,7 +734,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -748,7 +748,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -757,7 +757,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert shipping fulfillment still exists in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillment['id'],
                 'order_id' => $order['id'],
@@ -926,7 +926,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -940,7 +940,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -948,7 +948,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseMissing(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -1125,7 +1125,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -1139,7 +1139,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -1147,7 +1147,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseMissing(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],

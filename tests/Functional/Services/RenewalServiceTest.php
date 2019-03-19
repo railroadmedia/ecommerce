@@ -134,7 +134,7 @@ class RenewalServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'total_due' => $chargePrice,
                 'total_paid' => $chargePrice,
@@ -150,7 +150,7 @@ class RenewalServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscriptionPayment,
+            'ecommerce_subscription_payments',
             [
                 'subscription_id' => $subscription->getId(),
                 'created_at' => Carbon::now()->toDateTimeString(),
@@ -159,7 +159,7 @@ class RenewalServiceTest extends EcommerceTestCase
 
         // assert user products assignation
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $user->getId(),
                 'product_id' => $product->getId(),

@@ -338,7 +338,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         // assert the user product data was saved in the db
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $user['id'],
                 'product_id' => $product['id'],
@@ -351,7 +351,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         // assert access code was set as claimed
         $this->assertDatabaseHas(
-            ConfigService::$tableAccessCode,
+            'ecommerce_access_codes',
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => true,
@@ -413,7 +413,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         // assert access code was set as claimed
         $this->assertDatabaseHas(
-            ConfigService::$tableAccessCode,
+            'ecommerce_access_codes',
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => false,

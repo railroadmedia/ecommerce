@@ -27,7 +27,7 @@ class AccessCodeReleaseRequest extends FormRequest
         return [
             'access_code_id' => 'required|max:24|exists:'
             . ConfigService::$databaseConnectionName . '.'
-            . ConfigService::$tableAccessCode . ',id,is_claimed,1'
+            . 'ecommerce_access_codes' . ',id,is_claimed,1'
         ];
     }
 }

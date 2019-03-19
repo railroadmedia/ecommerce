@@ -209,7 +209,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // assert database records
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productOne['id'],
@@ -220,7 +220,7 @@ class OrderFormControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productTwo['id'],
@@ -232,7 +232,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // billingAddress
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => CartAddressService::BILLING_ADDRESS_TYPE,
                 'brand' => ConfigService::$brand,
@@ -246,7 +246,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // billingAgreement
         $this->assertDatabaseHas(
-            ConfigService::$tablePaypalBillingAgreement,
+            'ecommerce_paypal_billing_agreements',
             [
                 'external_id' => $billingAgreementId,
                 'payment_gateway_name' => ConfigService::$brand,
@@ -256,7 +256,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // paymentMethod
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
                 'created_at' => Carbon::now()->toDateTimeString()
@@ -265,7 +265,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // userPaymentMethods
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $userId,
                 'is_primary' => true,
@@ -282,7 +282,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // payment
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -300,7 +300,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // shippingAddress
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => ConfigService::$shippingAddressType,
                 'brand' => ConfigService::$brand,
@@ -319,7 +319,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // order & based order prices
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'total_due' => round($expectedOrderTotalDue, 2),
                 'product_due' => null,
@@ -335,7 +335,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // orderItem
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $productOne['id'],
                 'quantity' => $productOneQuantity,
@@ -348,7 +348,7 @@ class OrderFormControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $productTwo['id'],
                 'quantity' => $productTwoQuantity,
@@ -362,7 +362,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // orderItemFulfillment
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'status' => 'pending',
                 'company' => null,

@@ -125,7 +125,7 @@ class StatsController extends BaseController
                     '0 as paid, 0 as shippingCosts, 0 as finance, 0 as tax, 0 as refunded, 0 as quantity, 0 as totalNet'
                 )
                 ->whereIn(
-                    ConfigService::$tableProduct . '.brand',
+                    'ecommerce_products' . '.brand',
                     $request->get('brands', [ConfigService::$availableBrands])
                 )
                 ->get()
@@ -134,19 +134,19 @@ class StatsController extends BaseController
         $allPayments =
             $this->paymentRepository->query()
                 ->where(
-                    ConfigService::$tablePayment . '.created_on',
+                    'ecommerce_payments' . '.created_on',
                     '>',
                     Carbon::parse($request->get('start-date', Carbon::now()))
                         ->startOfDay()
                 )
                 ->where(
-                    ConfigService::$tablePayment . '.created_on',
+                    'ecommerce_payments' . '.created_on',
                     '<',
                     Carbon::parse($request->get('end-date', Carbon::now()))
                         ->endOfDay()
                 )
-                ->whereIn(ConfigService::$tablePayment . '.status', ['paid', 1])
-                ->where(ConfigService::$tablePayment . '.paid', '>', 0)
+                ->whereIn('ecommerce_payments' . '.status', ['paid', 1])
+                ->where('ecommerce_payments' . '.paid', '>', 0)
                 ->get()
                 ->groupBy('type');
         if ($allPayments->has(ConfigService::$orderPaymentType)) {
@@ -165,7 +165,7 @@ class StatsController extends BaseController
                 $this->orderRepository->query()
                     ->whereIn('id', $orderPayments->pluck('order_id'))
                     ->whereIn(
-                        ConfigService::$tableOrder . '.brand',
+                        'ecommerce_orders' . '.brand',
                         $request->get('brands', [ConfigService::$availableBrands])
                     )
                     ->orderBy('created_on')
@@ -349,42 +349,42 @@ class StatsController extends BaseController
         $unknownPlans =
             $this->paymentRepository->query()
                 ->select(
-                    ConfigService::$tablePayment . '.id',
-                    ConfigService::$tablePayment . '.paid as payment_paid',
-                    ConfigService::$tablePayment . '.type as payment_type',
-                    ConfigService::$tablePayment . '.refunded',
-                    ConfigService::$tablePayment . '.payment_method_id',
-                    ConfigService::$tableSubscription . '.order_id',
-                    ConfigService::$tableSubscription . '.tax_per_payment',
-                    ConfigService::$tableSubscription . '.type as subscription_type'
+                    'ecommerce_payments' . '.id',
+                    'ecommerce_payments' . '.paid as payment_paid',
+                    'ecommerce_payments' . '.type as payment_type',
+                    'ecommerce_payments' . '.refunded',
+                    'ecommerce_payments' . '.payment_method_id',
+                    'ecommerce_subscriptions' . '.order_id',
+                    'ecommerce_subscriptions' . '.tax_per_payment',
+                    'ecommerce_subscriptions' . '.type as subscription_type'
                 )
                 ->join(
-                    ConfigService::$tableSubscriptionPayment,
-                    ConfigService::$tablePayment . '.id',
+                    'ecommerce_subscription_payments',
+                    'ecommerce_payments' . '.id',
                     '=',
-                    ConfigService::$tableSubscriptionPayment . '.payment_id'
+                    'ecommerce_subscription_payments' . '.payment_id'
                 )
                 ->join(
-                    ConfigService::$tableSubscription,
-                    ConfigService::$tableSubscriptionPayment . '.subscription_id',
+                    'ecommerce_subscriptions',
+                    'ecommerce_subscription_payments' . '.subscription_id',
                     '=',
-                    ConfigService::$tableSubscription . '.id'
+                    'ecommerce_subscriptions' . '.id'
                 )
                 ->where(
-                    ConfigService::$tablePayment . '.created_on',
+                    'ecommerce_payments' . '.created_on',
                     '>',
                     Carbon::parse($request->get('start-date', Carbon::now()))
                         ->startOfDay()
                 )
                 ->where(
-                    ConfigService::$tablePayment . '.created_on',
+                    'ecommerce_payments' . '.created_on',
                     '<',
                     Carbon::parse($request->get('end-date', Carbon::now()))
                         ->endOfDay()
                 )
-                ->whereIn(ConfigService::$tablePayment . '.status', ['succeeded', 'paid', 1])
-                ->whereNull(ConfigService::$tableSubscription . '.product_id')
-                ->whereNull(ConfigService::$tableSubscription . '.order_id')
+                ->whereIn('ecommerce_payments' . '.status', ['succeeded', 'paid', 1])
+                ->whereNull('ecommerce_subscriptions' . '.product_id')
+                ->whereNull('ecommerce_subscriptions' . '.order_id')
                 ->get();
         $quantity = 0;
         $paid = 0;
@@ -451,19 +451,19 @@ class StatsController extends BaseController
 
         $this->paymentRepository->query()
             ->where(
-                ConfigService::$tablePayment . '.created_on',
+                'ecommerce_payments' . '.created_on',
                 '>',
                 Carbon::parse($request->get('start-date', Carbon::now()))
                     ->startOfDay()
             )
             ->where(
-                ConfigService::$tablePayment . '.created_on',
+                'ecommerce_payments' . '.created_on',
                 '<',
                 Carbon::parse($request->get('end-date', Carbon::now()))
                     ->endOfDay()
             )
             ->whereIn(
-                ConfigService::$tablePayment . '.status',
+                'ecommerce_payments' . '.status',
                 ['paid', 1]
             )
             ->orderBy('created_on')
@@ -492,7 +492,7 @@ class StatsController extends BaseController
                     //order stats
                     $this->orderRepository->query()
                         ->whereIn('id', $orderPayments->pluck('order_id'))
-                        ->whereIn(ConfigService::$tableOrder . '.brand', $brand)
+                        ->whereIn('ecommerce_orders' . '.brand', $brand)
                         ->orderBy('created_on')
                         ->chunk(
                             100,
@@ -629,7 +629,7 @@ class StatsController extends BaseController
                             ->keyBy('id');
                     $this->subscriptionRepository->query()
                         ->whereIn('id', $subscriptionRenewalPayments->pluck('subscription_id'))
-                        ->whereIn(ConfigService::$tableSubscription . '.brand', $brand)
+                        ->whereIn('ecommerce_subscriptions' . '.brand', $brand)
                         ->orderBy('created_on')
                         ->chunk(
                             100,
@@ -692,7 +692,7 @@ class StatsController extends BaseController
                                             $orderForPaymentPlansRenewed =
                                                 $this->orderRepository->query()
                                                     ->whereIn('id', [$subscription->order_id])
-                                                    ->whereIn(ConfigService::$tableOrder . '.brand', $brand)
+                                                    ->whereIn('ecommerce_orders' . '.brand', $brand)
                                                     ->get()
                                                     ->keyBy('id');
                                             $itemsForPaymentPlans =

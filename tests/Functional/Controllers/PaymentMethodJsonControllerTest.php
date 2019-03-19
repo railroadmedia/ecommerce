@@ -189,7 +189,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert payment method, credit card, link between user and payment method saved in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'method_type' => $methodType,
                 'currency' => $currency,
@@ -198,7 +198,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'fingerprint' => $card->fingerprint,
                 'last_four_digits' => $card->last4,
@@ -209,7 +209,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $customer['id'],
                 'payment_method_id' => $paymentResponse['data']['id'],
@@ -320,7 +320,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert payment method, credit card, link between user and payment method saved in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'method_type' => $methodType,
                 'currency' => $currency,
@@ -329,7 +329,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'fingerprint' => $card->fingerprint,
                 'last_four_digits' => $card->last4,
@@ -340,7 +340,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $customer['id'],
                 'payment_method_id' => $paymentResponse['data']['id'],
@@ -411,7 +411,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert payment method data not saved in the db
         $this->assertDatabaseMissing(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'currency' => $currency,
@@ -421,7 +421,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert credit card data not saved in the db
         $this->assertDatabaseMissing(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'type' => $cardType,
                 'fingerprint' => $cardFingerprint,
@@ -685,7 +685,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert card was created
         $this->assertDatabaseHas(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'fingerprint' => $updatedCard->fingerprint,
                 'last_four_digits' => $updatedCard->last4,
@@ -756,7 +756,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert credit card data not saved in the db
         $this->assertDatabaseMissing(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'id' => $creditCard['id'],
                 'expiration_date' => $newDate->toDateTimeString(),
@@ -876,7 +876,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert card was created
         $this->assertDatabaseHas(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'fingerprint' => $updatedCardTwo->fingerprint,
                 'last_four_digits' => $updatedCardTwo->last4,
@@ -892,7 +892,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert payment method was set as default
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $customer['id'],
                 'payment_method_id' => $paymentMethodOne['id'],
@@ -901,7 +901,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $customer['id'],
                 'payment_method_id' => $paymentMethodTwo['id'],
@@ -1025,7 +1025,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert card was created
         $this->assertDatabaseHas(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'fingerprint' => $updatedCardTwo->fingerprint,
                 'last_four_digits' => $updatedCardTwo->last4,
@@ -1041,7 +1041,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert payment method was set as default
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $customer['id'],
                 'payment_method_id' => $paymentMethodOne['id'],
@@ -1050,7 +1050,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $customer['id'],
                 'payment_method_id' => $paymentMethodTwo['id'],
@@ -1168,7 +1168,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert card was created
         $this->assertDatabaseHas(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'fingerprint' => $updatedCard->fingerprint,
                 'last_four_digits' => $updatedCard->last4,
@@ -1184,7 +1184,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert the new payment method was set as subscription payment method
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'user_id' => $userId,
                 'payment_method_id' => $paymentMethod['id'],
@@ -1262,7 +1262,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert database updates - old defaultPaymentMethod is not primary
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $userId,
                 'payment_method_id' => $oldPrimaryPaymentMethod['id'],
@@ -1272,7 +1272,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert payment method was set as default
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $userId,
                 'payment_method_id' => $newPrimaryPaymentMethod['id'], // 3
@@ -1358,7 +1358,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert the new payment method was set as subscription payment method
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'user_id' => $userId,
                 'payment_method_id' => $paymentMethodTwo['id'], // 3
@@ -1367,7 +1367,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert payment method was set as default
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $userId,
                 'payment_method_id' => $paymentMethodOne['id'],
@@ -1377,7 +1377,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert database updates - old defaultPaymentMethod is not primary
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $userId,
                 'payment_method_id' => $paymentMethodTwo['id'],
@@ -1425,7 +1425,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $response->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => CartAddressService::BILLING_ADDRESS_TYPE,
                 'brand' => ConfigService::$brand,
@@ -1437,7 +1437,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert database updates
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'id' => $addressId,
                 'type' => CartAddressService::BILLING_ADDRESS_TYPE,
@@ -1449,7 +1449,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $paypalBillingAgreementId = 1;
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePaypalBillingAgreement,
+            'ecommerce_paypal_billing_agreements',
             [
                 'id' => $paypalBillingAgreementId,
                 'external_id' => $agreementId,
@@ -1461,7 +1461,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $paymentMethodId = 1;
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'method_id' => $paymentMethodId,
                 'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
@@ -1471,7 +1471,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $userId,
                 'payment_method_id' => $paymentMethodId,
@@ -1624,7 +1624,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert payment method was not soft deleted
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'id' => $paymentMethod['id'],
                 'deleted_on' => null
@@ -1688,7 +1688,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'id' => $otherPaymentMethod['id'],
                 'method_type' => $otherPaymentMethod['method_type'],
@@ -1754,7 +1754,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'id' => $paypalPaymentMethod['id'],
                 'deleted_on' => Carbon::now()->toDateTimeString(),
@@ -1819,7 +1819,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'id' => $otherPaymentMethod['id'],
                 'method_type' => $otherPaymentMethod['method_type'],
@@ -1879,7 +1879,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'id' => $defaultPaymentMethod['id'],
                 'deleted_on' => null,

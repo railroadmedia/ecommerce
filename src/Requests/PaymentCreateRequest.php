@@ -47,9 +47,9 @@ class PaymentCreateRequest extends FormRequest
             'data.attributes.paid' => 'numeric|nullable',
             'data.attributes.refunded' => 'numeric|nullable',
             'data.relationships.paymentMethod.data.id' =>
-                'numeric|nullable|exists:'.ConfigService::$tablePaymentMethod.',id',
-            'data.relationships.order.data.id' => 'numeric|exists:'.ConfigService::$tableOrder.',id',
-            'data.relationships.subscription.data.id' => 'numeric|exists:'.ConfigService::$tableSubscription.',id',
+                'numeric|nullable|exists:'.'ecommerce_payment_methods'.',id',
+            'data.relationships.order.data.id' => 'numeric|exists:'.'ecommerce_orders'.',id',
+            'data.relationships.subscription.data.id' => 'numeric|exists:'.'ecommerce_subscriptions'.',id',
         ];
     }
 

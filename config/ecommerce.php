@@ -17,7 +17,7 @@ return [
     'database_in_memory' => false,
 
     // host does the db migrations, clients do not
-    'data_mode' => 'client', // 'host' or 'client'
+    'data_mode' => 'host', // 'host' or 'client'
 
     'table_prefix' => 'ecommerce_',
 

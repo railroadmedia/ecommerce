@@ -81,9 +81,9 @@ class SubscriptionUpdateRequest extends FormRequest
             'data.attributes.interval_count' => 'nullable|numeric|min:0',
             'data.attributes.total_cycles_due' => 'nullable|numeric|min:0',
             'data.attributes.total_cycles_paid' => 'nullable|numeric|min:0',
-            'data.relationships.order.data.id' => 'numeric|exists:' . ConfigService::$tableOrder . ',id',
-            'data.relationships.product.data.id' => 'numeric|exists:' . ConfigService::$tableProduct . ',id',
-            'data.relationships.paymentMethod.data.id' => 'numeric|exists:' . ConfigService::$tablePaymentMethod . ',id',
+            'data.relationships.order.data.id' => 'numeric|exists:' . 'ecommerce_orders' . ',id',
+            'data.relationships.product.data.id' => 'numeric|exists:' . 'ecommerce_products' . ',id',
+            'data.relationships.paymentMethod.data.id' => 'numeric|exists:' . 'ecommerce_payment_methods' . ',id',
         ];
     }
 

@@ -36,6 +36,6 @@ class CreateUserProductTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(ConfigService::$tableUserProduct);
+        Schema::dropIfExists('ecommerce_user_product');
     }
 }
