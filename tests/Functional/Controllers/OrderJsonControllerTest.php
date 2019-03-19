@@ -24,7 +24,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(204, $results->getStatusCode());
         $this->assertSoftDeleted(
-            'ecommerce_orders',
+            ConfigService::$tableOrder,
             [
                 'id' => $order['id']
             ]
@@ -112,7 +112,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_orders',
+            ConfigService::$tableOrder,
             array_merge(
                 $order,
                 [

@@ -40,7 +40,7 @@ class AddressUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'data.id' => 'exists:' . 'ecommerce_addresses' . ',id',
+            'data.id' => 'exists:' . ConfigService::$tableAddress . ',id',
             'data.type' => 'in:address',
             'data.attributes.type' => 'max:255|in:' . implode(
                     ',',
@@ -58,7 +58,7 @@ class AddressUpdateRequest extends FormRequest
             'data.attributes.state' => 'nullable|max:255',
             'data.attributes.country' => 'max:255|in:' . implode(',', LocationService::countries()),
             'data.relationships.customer.data.type' => 'nullable|in:customer',
-            'data.relationships.customer.data.id' => 'integer|nullable|exists:' . 'ecommerce_customers' . ',id',
+            'data.relationships.customer.data.id' => 'integer|nullable|exists:' . ConfigService::$tableCustomer . ',id',
             'data.relationships.user.data.type' => 'nullable|in:user',
             'data.relationships.user.data.id' => 'integer|nullable',
         ];

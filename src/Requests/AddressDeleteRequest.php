@@ -25,7 +25,7 @@ class AddressDeleteRequest extends FormRequest
     public function rules()
     {
         return [
-            'customer_id' => 'numeric|exists:'.'ecommerce_customers'.',id'
+            'customer_id' => 'numeric|exists:'.ConfigService::$tableCustomer.',id'
         ];
     }
 }

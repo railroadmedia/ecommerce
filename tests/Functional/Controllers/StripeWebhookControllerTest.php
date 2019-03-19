@@ -58,7 +58,7 @@ class StripeWebhookControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_credit_cards',
+            ConfigService::$tableCreditCard,
             [
                 'external_id' => $externalId,
                 'expiration_date' => Carbon::create(2020,11)->toDateTimeString()

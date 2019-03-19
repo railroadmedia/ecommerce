@@ -19,8 +19,6 @@ return [
     // host does the db migrations, clients do not
     'data_mode' => 'host', // 'host' or 'client'
 
-    'table_prefix' => 'ecommerce_',
-
     // cache
     'redis_host' => 'redis',
     'redis_port' => 6379,

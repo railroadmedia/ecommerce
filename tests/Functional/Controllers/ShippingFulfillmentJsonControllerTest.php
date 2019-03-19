@@ -234,7 +234,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_item_fulfillment',
+            ConfigService::$tableOrderItemFulfillment,
             [
                 'id' => $orderItemFulfillmentOne['id'],
                 'order_id' => $order['id'],
@@ -246,7 +246,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_item_fulfillment',
+            ConfigService::$tableOrderItemFulfillment,
             [
                 'id' => $orderItemFulfillmentTwo['id'],
                 'order_id' => $order['id'],
@@ -305,7 +305,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_item_fulfillment',
+            ConfigService::$tableOrderItemFulfillment,
             [
                 'id' => $orderItemFulfillmentOne['id'],
                 'order_id' => $order['id'],
@@ -317,7 +317,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_item_fulfillment',
+            ConfigService::$tableOrderItemFulfillment,
             [
                 'id' => $orderItemFulfillmentTwo['id'],
                 'order_id' => $order['id'],
@@ -370,7 +370,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseMissing(
-            'ecommerce_order_item_fulfillment',
+            ConfigService::$tableOrderItemFulfillment,
             [
                 'id' => $orderItemFulfillmentOne['id'],
                 'order_id' => $order['id'],
@@ -378,7 +378,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseMissing(
-            'ecommerce_order_item_fulfillment',
+            ConfigService::$tableOrderItemFulfillment,
             [
                 'id' => $orderItemFulfillmentTwo['id'],
                 'order_id' => $order['id'],
@@ -428,7 +428,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseMissing(
-            'ecommerce_order_item_fulfillment',
+            ConfigService::$tableOrderItemFulfillment,
             [
                 'id' => $orderItemFulfillmentOne['id'],
                 'order_id' => $order['id'],
@@ -436,7 +436,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_item_fulfillment',
+            ConfigService::$tableOrderItemFulfillment,
             [
                 'id' => $orderItemFulfillmentTwo['id'],
                 'order_id' => $order['id'],

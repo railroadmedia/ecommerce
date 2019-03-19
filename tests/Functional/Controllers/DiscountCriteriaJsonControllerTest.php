@@ -150,7 +150,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
 
         // assert that the discount criteria exists in the database
         $this->assertDatabaseHas(
-            'ecommerce_discount_criteria',
+            ConfigService::$tableDiscountCriteria,
             array_merge(
                 $discountCriteria,
                 [
@@ -279,7 +279,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
 
         // assert that the discount criteria data has been updated in the database
         $this->assertDatabaseHas(
-            'ecommerce_discount_criteria',
+            ConfigService::$tableDiscountCriteria,
             array_merge(
                 $newDiscountCriteria,
                 [
@@ -330,7 +330,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
 
         // assert that the discount criteria not exists in the database
         $this->assertDatabaseMissing(
-            'ecommerce_discount_criteria',
+            ConfigService::$tableDiscountCriteria,
             ['id' => $discountCriteria['id']]
         );
     }

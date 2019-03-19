@@ -58,7 +58,7 @@ class OrderFormSubmitRequest extends FormRequest
                 'shipping-address-id' => 'required_without_all:shipping-first-name,shipping-last-name,shipping-address-line-1,shipping-city,shipping-region,shipping-zip-or-postal-code,shipping-country|exists:' .
                     ConfigService::$databaseConnectionName .
                     '.' .
-                    'ecommerce_addresses' .
+                    ConfigService::$tableAddress .
                     ',id',
                 'shipping-first-name' => 'required_without:shipping-address-id|regex:/^[a-zA-Z-_\' ]+$/',
                 'shipping-last-name' => 'required_without:shipping-address-id|regex:/^[a-zA-Z-_\' ]+$/',

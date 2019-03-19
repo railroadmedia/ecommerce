@@ -52,7 +52,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         // assert the product was saved in the db
         $this->assertDatabaseHas(
-            'ecommerce_products',
+            ConfigService::$tableProduct,
             $product
         );
     }
@@ -97,7 +97,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         // assert subscription data exist in db
         $this->assertDatabaseHas(
-            'ecommerce_products',
+            ConfigService::$tableProduct,
             $subscription
         );
     }
@@ -225,7 +225,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         // assert product with the same sku was not saved in the db
         $this->assertDatabaseMissing(
-            'ecommerce_products',
+            ConfigService::$tableProduct,
             $productWithExistingSKU
         );
     }
@@ -332,7 +332,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         // assert product updated in the db
         $this->assertDatabaseHas(
-            'ecommerce_products',
+            ConfigService::$tableProduct,
             array_merge(
                 $product,
                 [
@@ -387,7 +387,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         // assert product raw was not modified in db
         $this->assertDatabaseHas(
-            'ecommerce_products',
+            ConfigService::$tableProduct,
             $product
         );
     }
@@ -467,7 +467,7 @@ class ProductControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->status());
 
         // assert product was removed from db
-        $this->assertDatabaseMissing('ecommerce_products', [
+        $this->assertDatabaseMissing(ConfigService::$tableProduct, [
             'id' => $product['id'],
         ]);
     }
@@ -674,7 +674,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         // assert product updated in the db
         $this->assertDatabaseHas(
-            'ecommerce_products',
+            ConfigService::$tableProduct,
             array_merge(
                 $product,
                 [
@@ -720,7 +720,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         // assert product2 was not modified in db
         $this->assertDatabaseHas(
-            'ecommerce_products',
+            ConfigService::$tableProduct,
             $product2
         );
     }
@@ -954,7 +954,7 @@ class ProductControllerTest extends EcommerceTestCase
 
         // assert product updated in the db
         $this->assertDatabaseHas(
-            'ecommerce_products',
+            ConfigService::$tableProduct,
             array_merge(
                 $product,
                 [

@@ -184,7 +184,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_shipping_costs_weight_ranges',
+            ConfigService::$tableShippingCostsWeightRange,
             $shippingCost
         );
     }
@@ -256,7 +256,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseMissing(
-            'ecommerce_shipping_costs_weight_ranges',
+            ConfigService::$tableShippingCostsWeightRange,
             [
                 'id' => $shippingCost['id'],
                 'min' => $minValue,
@@ -313,7 +313,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_shipping_costs_weight_ranges',
+            ConfigService::$tableShippingCostsWeightRange,
             array_merge(
                 $shippingCost,
                 ['price' => $newPrice]
@@ -358,7 +358,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         $this->assertDatabaseMissing(
-            'ecommerce_shipping_costs_weight_ranges',
+            ConfigService::$tableShippingCostsWeightRange,
             [
                 'id' => $shippingCost['id']
             ]

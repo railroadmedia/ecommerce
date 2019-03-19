@@ -49,7 +49,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_shipping_options',
+            ConfigService::$tableShippingOption,
             array_diff_key(
                 $shippingOption,
                 ['updated_at' => true]
@@ -196,7 +196,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_shipping_options',
+            ConfigService::$tableShippingOption,
             array_merge(
                 $shippingOption,
                 $updates,
@@ -244,7 +244,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         $this->assertDatabaseMissing(
-            'ecommerce_shipping_options',
+            ConfigService::$tableShippingOption,
             $shippingOption
         );
     }

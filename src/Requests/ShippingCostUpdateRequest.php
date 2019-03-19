@@ -42,7 +42,7 @@ class ShippingCostUpdateRequest extends FormRequest
     {
         return [
             'data.type' => 'in:shippingCostsWeightRange',
-            'data.relationships.shippingOption.data.id' => 'numeric|exists:'.'ecommerce_shipping_options'.',id',
+            'data.relationships.shippingOption.data.id' => 'numeric|exists:'.ConfigService::$tableShippingOption.',id',
             'data.attributes.min' => 'numeric|min:0',
             'data.attributes.max' =>'numeric|gte:data.attributes.min',
             'data.attributes.price' => 'numeric|min:0'

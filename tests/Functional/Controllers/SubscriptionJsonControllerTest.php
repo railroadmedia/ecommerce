@@ -39,7 +39,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         $this->assertSoftDeleted(
-            'ecommerce_subscriptions',
+            ConfigService::$tableSubscription,
             [
                 'id' => $subscription['id'],
             ]
@@ -445,7 +445,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert that the subscription exists in the database
         $this->assertDatabaseHas(
-            'ecommerce_subscriptions',
+            ConfigService::$tableSubscription,
             array_diff_key(
                 $subscription,
                 ['updated_at' => true]
@@ -454,7 +454,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product was created
         $this->assertDatabaseHas(
-            'ecommerce_user_products',
+            ConfigService::$tableUserProduct,
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -584,7 +584,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_subscriptions',
+            ConfigService::$tableSubscription,
             array_merge(
                 $subscription,
                 [
@@ -596,7 +596,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product
         $this->assertDatabaseHas(
-            'ecommerce_user_products',
+            ConfigService::$tableUserProduct,
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -713,7 +713,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_subscriptions',
+            ConfigService::$tableSubscription,
             array_merge(
                 $subscription,
                 [
@@ -726,7 +726,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product was removed
         $this->assertDatabaseMissing(
-            'ecommerce_user_products',
+            ConfigService::$tableUserProduct,
             $userProduct
         );
     }
@@ -912,7 +912,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_subscriptions',
+            ConfigService::$tableSubscription,
             array_merge(
                 $subscription,
                 [
@@ -924,7 +924,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product was updated
         $this->assertDatabaseHas(
-            'ecommerce_user_products',
+            ConfigService::$tableUserProduct,
             array_merge(
                 $userProduct,
                 [
@@ -979,7 +979,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_user_products',
+            ConfigService::$tableUserProduct,
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -992,7 +992,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_subscriptions',
+            ConfigService::$tableSubscription,
             [
                 'id' => $subscription['id'],
                 'is_active' => 1,
@@ -1044,7 +1044,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_user_products',
+            ConfigService::$tableUserProduct,
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -1057,7 +1057,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_subscriptions',
+            ConfigService::$tableSubscription,
             [
                 'id' => $subscription['id'],
                 'is_active' => 1,
@@ -1140,13 +1140,13 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product data was not updated
         $this->assertDatabaseHas(
-            'ecommerce_user_products',
+            ConfigService::$tableUserProduct,
             $userProduct
         );
 
         // assert subscription data was not updated
         $this->assertDatabaseHas(
-            'ecommerce_subscriptions',
+            ConfigService::$tableSubscription,
             $subscription
         );
     }
@@ -1217,13 +1217,13 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product data was removed
         $this->assertDatabaseMissing(
-            'ecommerce_user_products',
+            ConfigService::$tableUserProduct,
             $userProduct
         );
 
         // assert subscription was set as inactive
         $this->assertDatabaseHas(
-            'ecommerce_subscriptions',
+            ConfigService::$tableSubscription,
             array_merge(
                 $subscription,
                 [

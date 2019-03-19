@@ -42,7 +42,7 @@ class DiscountCriteriaUpdateRequest extends FormRequest
         return [
             'data.attributes.name' => 'required|max:255',
             'data.attributes.type' => 'required|max:255',
-            'data.relationships.product.id' => 'nullable|exists:'.'ecommerce_products'.',id',
+            'data.relationships.product.id' => 'nullable|exists:'.ConfigService::$tableProduct.',id',
             'data.attributes.min' => 'required',
             'data.attributes.max' => 'required'
         ];
