@@ -2,40 +2,35 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get(
-    '/product',
-    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@index'
-)->name('product.index');
+Route::group([
+    'prefix' => config('ecommerce.route_prefix'),
+    'middleware' => config('ecommerce.route_middleware_logged_in_groups'),
+], function () {
 
-Route::get(
-    '/product/{productId}',
-    Railroad\Ecommerce\Controllers\ProductJsonController::class . '@show'
-)->name('product.show');
+    Route::get('/product', Railroad\Ecommerce\Controllers\ProductJsonController::class . '@index')
+        ->name('product.index');
 
-Route::put(
-    '/product',
-    [
-        'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@store',
-    ]
-)->name('product.store');
+    Route::get('/product/{productId}', Railroad\Ecommerce\Controllers\ProductJsonController::class . '@show')
+        ->name('product.show');
 
-Route::patch(
-    '/product/{productId}',
-    [
-        'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@update',
-    ]
-)->name('product.update');
+    Route::put('/product', [
+            'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@store',
+        ])
+        ->name('product.store');
 
-Route::delete(
-    '/product/{productId}',
-    [
-        'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@delete',
-    ]
-)->name('product.delete');
+    Route::patch('/product/{productId}', [
+            'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@update',
+        ])
+        ->name('product.update');
 
-Route::put(
-    '/product/upload/',
-    [
-        'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@uploadThumbnail',
-    ]
-)->name('product.upload');
+    Route::delete('/product/{productId}', [
+            'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@delete',
+        ])
+        ->name('product.delete');
+
+    Route::put('/product/upload/', [
+            'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@uploadThumbnail',
+        ])
+        ->name('product.upload');
+
+});

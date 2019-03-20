@@ -2,6 +2,10 @@
 
 namespace Railroad\Ecommerce\Providers;
 
+use Doctrine\Common\Annotations\AnnotationRegistry;
+use Doctrine\ORM\Mapping\UnderscoreNamingStrategy;
+use Exception;
+use Gedmo\DoctrineExtensions;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Events\GiveContentAccess;
@@ -22,6 +26,7 @@ use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Configuration;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Doctrine\TimestampableListener;
+use Redis;
 
 class EcommerceServiceProvider extends ServiceProvider
 {
@@ -139,9 +144,6 @@ class EcommerceServiceProvider extends ServiceProvider
         //paypal API
         ConfigService::$paymentGateways = config('ecommerce.payment_gateways');
 
-        // middleware
-        ConfigService::$middleware = config('ecommerce.middleware', []);
-
         //product type
         ConfigService::$typeProduct = config('ecommerce.type_product');
 
@@ -197,7 +199,24 @@ class EcommerceServiceProvider extends ServiceProvider
     {
         // temp setup - needs confirmation
 
-        $redisCache = app()->make(RedisCache::class);
+        // set proxy dir to temp folder
+        if (app()->runningUnitTests()) {
+            $proxyDir = sys_get_temp_dir();
+        } else {
+            $proxyDir = sys_get_temp_dir() . '/railroad/ecommerce/proxies';
+        }
+
+        // setup redis
+        $redis = new Redis();
+        $redis->connect(
+            config('ecommerce.redis_host'),
+            config('ecommerce.redis_port')
+        );
+        $redisCache = new RedisCache();
+        $redisCache->setRedis($redis);
+
+        // annotation reader
+        AnnotationRegistry::registerLoader('class_exists');
 
         $annotationReader = new AnnotationReader();
 
@@ -205,8 +224,14 @@ class EcommerceServiceProvider extends ServiceProvider
             $annotationReader, $redisCache
         );
 
-        $driverChain = app()->make(MappingDriverChain::class);
+        $driverChain = new MappingDriverChain();
 
+        DoctrineExtensions::registerAbstractMappingIntoDriverChainORM(
+            $driverChain,
+            $cachedAnnotationReader
+        );
+
+        // entities
         foreach (config('ecommerce.entities') as $driverConfig) {
             $annotationDriver = new AnnotationDriver(
                 $cachedAnnotationReader, $driverConfig['path']
@@ -218,10 +243,30 @@ class EcommerceServiceProvider extends ServiceProvider
             );
         }
 
-        $eventManager = app()->make(EventManager::class);
+        // timestamps
+        $timestampableListener = new TimestampableListener();
+        $timestampableListener->setAnnotationReader($cachedAnnotationReader);
 
-        $ormConfiguration = app()->make(Configuration::class);
+        // event manager
+        $eventManager = new EventManager();
+        $eventManager->addEventSubscriber($timestampableListener);
 
+        // orm config
+        $ormConfiguration = new Configuration();
+        $ormConfiguration->setMetadataCacheImpl($redisCache);
+        $ormConfiguration->setQueryCacheImpl($redisCache);
+        $ormConfiguration->setResultCacheImpl($redisCache);
+        $ormConfiguration->setProxyDir($proxyDir);
+        $ormConfiguration->setProxyNamespace('DoctrineProxies');
+        $ormConfiguration->setAutoGenerateProxyClasses(
+            config('usora.development_mode')
+        );
+        $ormConfiguration->setMetadataDriverImpl($driverChain);
+        $ormConfiguration->setNamingStrategy(
+            new UnderscoreNamingStrategy(CASE_LOWER)
+        );
+
+        // database config
         if (config('ecommerce.database_in_memory') !== true) {
             $databaseOptions = [
                 'driver' => config('ecommerce.database_driver'),

@@ -151,8 +151,6 @@ class PaymentMethodJsonController extends BaseController
         $this->stripePaymentGateway = $stripePaymentGateway;
         $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
         $this->userProvider = $userProvider;
-
-        $this->middleware(ConfigService::$middleware);
     }
 
     /**

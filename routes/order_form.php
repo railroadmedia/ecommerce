@@ -2,24 +2,23 @@
 
 use Illuminate\Support\Facades\Route;
 
-// order form json controller
-Route::get(
-    '/order',
-    Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@index'
-)->name('order.form');
+Route::group([
+    'prefix' => config('ecommerce.route_prefix'),
+    'middleware' => config('ecommerce.route_middleware_logged_in_groups'),
+], function () {
 
-Route::put(
-    '/order',
-    Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@submitOrder'
-)->name('order.submit');
+    // order form json controller
+    Route::get('/order', Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@index')
+        ->name('order.form');
 
-// order form controller with redirect responses
-Route::post(
-    '/submit-order',
-    Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitOrder'
-)->name('order.submit.form');
+    Route::put('/order', Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@submitOrder')
+        ->name('order.submit');
 
-Route::get(
-    '/order-paypal',
-    Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitPaypalOrder'
-)->name('order.submit.paypal');
+    // order form controller with redirect responses
+    Route::post('/submit-order', Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitOrder')
+        ->name('order.submit.form');
+
+    Route::get('/order-paypal', Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitPaypalOrder')
+        ->name('order.submit.paypal');
+
+});
