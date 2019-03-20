@@ -164,7 +164,6 @@ class EcommerceTestCase extends BaseTestCase
         $this->app->instance(DoctrineArrayHydratorUserProviderInterface::class, $userProvider);
         $this->app->instance(DoctrineUserProviderInterface::class, $userProvider);
 
-        // $this->artisan('countries:migration');
         $this->artisan('migrate:fresh');
         $this->artisan('cache:clear');
 
