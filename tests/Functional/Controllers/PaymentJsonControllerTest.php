@@ -157,7 +157,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $payment = $this->fakePayment([
             'total_paid' => $alreadyPaid,
             'total_refunded' => null,
-            'deleted_on' => null,
+            'deleted_at' => null,
             'conversion_rate' => $conversionRate,
         ]);
 
@@ -1015,7 +1015,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'total_paid' => $due,
                 'payment_method_id' => $paymentMethod['id'],
                 'total_refunded' => null,
-                'deleted_on' => null
+                'deleted_at' => null
             ]);
 
             $expected['data'][] = [
@@ -1042,7 +1042,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'total_paid' => $this->faker->numberBetween(0, 1000),
             'payment_method_id' => $paymentMethod['id'],
             'total_refunded' => null,
-            'deleted_on' => null
+            'deleted_at' => null
         ]);
 
         $orderPayment = $this->fakeOrderPayment([
@@ -1121,7 +1121,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'total_paid' => $due,
                 'payment_method_id' => $paymentMethod['id'],
                 'total_refunded' => null,
-                'deleted_on' => null
+                'deleted_at' => null
             ]);
 
             $expected['data'][] = [
@@ -1153,7 +1153,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'total_paid' => $this->faker->numberBetween(0, 1000),
             'payment_method_id' => $paymentMethod['id'],
             'total_refunded' => null,
-            'deleted_on' => null
+            'deleted_at' => null
         ]);
 
         $subscriptionPayment = $this->fakeSubscriptionPayment([

@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Railroad\Ecommerce\Services\ConfigService;
 
@@ -34,6 +33,13 @@ class RenameDatetimeColumns extends Migration
         'ecommerce_user_product',
     ];
 
+    private $deletedOnTables = [
+        'ecommerce_order',
+        'ecommerce_payment',
+        'ecommerce_payment_method',
+        'ecommerce_subscription',
+    ];
+
     /**
      * Run the migrations.
      *
@@ -56,6 +62,16 @@ class RenameDatetimeColumns extends Migration
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
                     $table->renameColumn('updated_on', 'updated_at');
+                });
+        }
+
+        foreach ($this->deletedOnTables as $deletedOnTable) {
+            Schema::connection(ConfigService::$databaseConnectionName)
+                ->table($deletedOnTable, function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
+                    $table->renameColumn('deleted_on', 'deleted_at');
                 });
         }
     }
@@ -82,6 +98,16 @@ class RenameDatetimeColumns extends Migration
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
                     $table->renameColumn('updated_at', 'updated_on');
+                });
+        }
+
+        foreach ($this->deletedOnTables as $deletedOnTable) {
+            Schema::connection(ConfigService::$databaseConnectionName)
+                ->table($deletedOnTable, function ($table) {
+                    /**
+                     * @var $table \Illuminate\Database\Schema\Blueprint
+                     */
+                    $table->renameColumn('deleted_at', 'deleted_on');
                 });
         }
     }

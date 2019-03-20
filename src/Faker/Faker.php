@@ -334,7 +334,7 @@ class Faker extends Generator
                 'payment_method_id' => $this->randomNumber(),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
-                'deleted_on' => null,
+                'deleted_at' => null,
             ],
             $override
         );

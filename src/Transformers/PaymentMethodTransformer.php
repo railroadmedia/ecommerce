@@ -21,7 +21,7 @@ class PaymentMethodTransformer extends TransformerAbstract
             'method_id' => $paymentMethod->getMethodId(),
             'method_type' => $paymentMethod->getMethodType(),
             'currency' => $paymentMethod->getCurrency(),
-            'deleted_on' => $paymentMethod->getDeletedOn() ? $paymentMethod->getDeletedOn()->toDateTimeString() : null,
+            'deleted_at' => $paymentMethod->getDeletedOn() ? $paymentMethod->getDeletedOn()->toDateTimeString() : null,
             'created_at' => $paymentMethod->getCreatedAt() ? $paymentMethod->getCreatedAt()->toDateTimeString() : null,
             'updated_at' => $paymentMethod->getUpdatedAt() ? $paymentMethod->getUpdatedAt()->toDateTimeString() : null,
         ];

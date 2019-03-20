@@ -20,17 +20,6 @@ class UpdateSubscriptionsTable extends Migration
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->dateTime('deleted_at')->nullable();
-                }
-            );
-
-        Schema::connection(ConfigService::$databaseConnectionName)
-            ->table(
-                'ecommerce_subscription',
-                function ($table) {
-                    /**
-                     * @var $table \Illuminate\Database\Schema\Blueprint
-                     */
                     $table->renameColumn('total_price_per_payment', 'total_price');
                 }
             );
@@ -65,17 +54,6 @@ class UpdateSubscriptionsTable extends Migration
      */
     public function down()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
-            ->table(
-                'ecommerce_subscription',
-                function ($table) {
-                    /**
-                     * @var $table \Illuminate\Database\Schema\Blueprint
-                     */
-                    $table->dropColumn('deleted_at');
-                }
-            );
-
         Schema::connection(ConfigService::$databaseConnectionName)
             ->table(
                 'ecommerce_subscription',

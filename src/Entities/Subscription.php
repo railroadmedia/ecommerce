@@ -25,7 +25,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  *         @ORM\Index(name="ecommerce_subscriptions_payment_method_id_index", columns={"payment_method_id"}),
  *         @ORM\Index(name="ecommerce_subscriptions_created_on_index", columns={"created_at"}),
  *         @ORM\Index(name="ecommerce_subscriptions_updated_on_index", columns={"updated_at"}),
- *         @ORM\Index(name="ecommerce_subscriptions_deleted_on_index", columns={"deleted_on"})
+ *         @ORM\Index(name="ecommerce_subscriptions_deleted_on_index", columns={"deleted_at"})
  *     }
  * )
  */

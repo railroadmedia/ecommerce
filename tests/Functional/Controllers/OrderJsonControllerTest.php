@@ -64,7 +64,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             'customer_id' => null,
             'shipping_address_id' => null,
             'billing_address_id' => null,
-            'deleted_on' => null
+            'deleted_at' => null
         ]);
 
         $newDue = $this->faker->numberBetween();
@@ -130,7 +130,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             'customer_id' => null,
             'shipping_address_id' => null,
             'billing_address_id' => null,
-            'deleted_on' => null
+            'deleted_at' => null
         ]);
 
         $response = $this->call(
@@ -174,7 +174,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         ]);
 
         $order = $this->fakeOrder([
-            'deleted_on' => null,
+            'deleted_at' => null,
             'updated_at' => null,
             'billing_address_id' => null,
             'user_id' => null,
@@ -209,7 +209,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             'total_due' => $due,
             'total_paid' => $paid,
             'total_refunded' => $refunded,
-            'deleted_on' => null,
+            'deleted_at' => null,
             'updated_at' => null
         ]);
 
@@ -483,7 +483,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ]);
 
             $order = $this->fakeOrder([
-                'deleted_on' => null,
+                'deleted_at' => null,
                 'updated_at' => null,
                 'billing_address_id' => null,
                 'user_id' => $user['id'],
@@ -568,7 +568,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         $orderOutOfRange = $this->fakeOrder([
             'created_at' => Carbon::now()->subMonth(1),
-            'deleted_on' => null,
+            'deleted_at' => null,
             'updated_at' => null,
             'billing_address_id' => null,
             'user_id' => $user['id'],
@@ -582,7 +582,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         $orderInRange = $this->fakeOrder([
             'created_at' => Carbon::now()->subDay(1),
-            'deleted_on' => null,
+            'deleted_at' => null,
             'updated_at' => null,
             'billing_address_id' => null,
             'user_id' => $user['id'],
@@ -673,7 +673,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ]);
 
             $order = $this->fakeOrder([
-                'deleted_on' => null,
+                'deleted_at' => null,
                 'updated_at' => null,
                 'billing_address_id' => null,
                 'user_id' => $user['id'],
@@ -731,7 +731,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ]);
 
             $order = $this->fakeOrder([
-                'deleted_on' => null,
+                'deleted_at' => null,
                 'updated_at' => null,
                 'billing_address_id' => null,
                 'user_id' => null,
@@ -788,7 +788,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ]);
 
             $order = $this->fakeOrder([
-                'deleted_on' => null,
+                'deleted_at' => null,
                 'updated_at' => null,
                 'billing_address_id' => null,
                 'user_id' => $user['id'],
@@ -845,7 +845,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ]);
 
             $order = $this->fakeOrder([
-                'deleted_on' => null,
+                'deleted_at' => null,
                 'updated_at' => null,
                 'billing_address_id' => null,
                 'user_id' => null,

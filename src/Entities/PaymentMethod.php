@@ -15,7 +15,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  *         @ORM\Index(name="ecommerce_payment_methods_currency_index", columns={"currency"}),
  *         @ORM\Index(name="ecommerce_payment_methods_created_on_index", columns={"created_at"}),
  *         @ORM\Index(name="ecommerce_payment_methods_updated_on_index", columns={"updated_at"}),
- *         @ORM\Index(name="ecommerce_payment_methods_deleted_on_index", columns={"deleted_on"}),
+ *         @ORM\Index(name="ecommerce_payment_methods_deleted_on_index", columns={"deleted_at"}),
  *     }
  * )
  */
@@ -60,7 +60,7 @@ class PaymentMethod
     protected $billingAddress;
 
     /**
-     * @ORM\Column(type="datetime", name="deleted_on", nullable=true)
+     * @ORM\Column(type="datetime", name="deleted_at", nullable=true)
      *
      * @var \DateTime
      */

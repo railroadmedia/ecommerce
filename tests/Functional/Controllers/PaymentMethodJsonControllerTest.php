@@ -1627,7 +1627,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ConfigService::$tablePaymentMethod,
             [
                 'id' => $paymentMethod['id'],
-                'deleted_on' => null
+                'deleted_at' => null
             ]
         );
     }
@@ -1693,7 +1693,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'id' => $otherPaymentMethod['id'],
                 'method_type' => $otherPaymentMethod['method_type'],
                 'method_id' => $otherCreditCard['id'],
-                'deleted_on' => Carbon::now()->toDateTimeString(),
+                'deleted_at' => Carbon::now()->toDateTimeString(),
             ]
         );
     }
@@ -1757,7 +1757,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ConfigService::$tablePaymentMethod,
             [
                 'id' => $paypalPaymentMethod['id'],
-                'deleted_on' => Carbon::now()->toDateTimeString(),
+                'deleted_at' => Carbon::now()->toDateTimeString(),
             ]
         );
     }
@@ -1824,7 +1824,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'id' => $otherPaymentMethod['id'],
                 'method_type' => $otherPaymentMethod['method_type'],
                 'method_id' => $otherCreditCard['id'],
-                'deleted_on' => Carbon::now()->toDateTimeString(),
+                'deleted_at' => Carbon::now()->toDateTimeString(),
             ]
         );
     }
@@ -1882,7 +1882,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ConfigService::$tablePaymentMethod,
             [
                 'id' => $defaultPaymentMethod['id'],
-                'deleted_on' => null,
+                'deleted_at' => null,
             ]
         );
     }

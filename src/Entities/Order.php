@@ -17,7 +17,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  *         @ORM\Index(name="ecommerce_orders_brand_index", columns={"brand"}),
  *         @ORM\Index(name="ecommerce_orders_created_on_index", columns={"created_at"}),
  *         @ORM\Index(name="ecommerce_orders_updated_on_index", columns={"updated_at"}),
- *         @ORM\Index(name="ecommerce_orders_deleted_on_index", columns={"deleted_on"}),
+ *         @ORM\Index(name="ecommerce_orders_deleted_on_index", columns={"deleted_at"}),
  *         @ORM\Index(name="ecommerce_orders_product_due_index", columns={"product_due"}),
  *         @ORM\Index(name="ecommerce_orders_finance_due_index", columns={"finance_due"})
  *     }
@@ -111,7 +111,7 @@ class Order
     protected $billingAddress;
 
     /**
-     * @ORM\Column(type="datetime", name="deleted_on", nullable=true)
+     * @ORM\Column(type="datetime", name="deleted_at", nullable=true)
      *
      * @var \DateTime
      */

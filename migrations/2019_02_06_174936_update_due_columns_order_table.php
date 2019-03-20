@@ -124,7 +124,7 @@ class UpdateDueColumnsOrderTable extends Migration
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->renameColumn('tax_due', 'tax');
+                    $table->renameColumn('taxes_due', 'tax');
                 }
             );
 

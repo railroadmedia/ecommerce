@@ -42,7 +42,7 @@ class OrderTransformer extends TransformerAbstract
             'finance_due' => $order->getFinanceDue(),
             'total_paid' => $order->getTotalPaid(),
             'brand' => $order->getBrand(),
-            'deleted_on' => $order->getDeletedOn() ? $order->getDeletedOn()->toDateTimeString() : null,
+            'deleted_at' => $order->getDeletedOn() ? $order->getDeletedOn()->toDateTimeString() : null,
             'created_at' => $order->getCreatedAt() ? $order->getCreatedAt()->toDateTimeString() : null,
             'updated_at' => $order->getUpdatedAt() ? $order->getUpdatedAt()->toDateTimeString() : null,
         ];

@@ -18,7 +18,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  *         @ORM\Index(name="ecommerce_payments_currency_index", columns={"currency"}),
  *         @ORM\Index(name="ecommerce_payments_created_on_index", columns={"created_at"}),
  *         @ORM\Index(name="ecommerce_payments_updated_on_index", columns={"updated_at"}),
- *         @ORM\Index(name="ecommerce_payments_deleted_on_index", columns={"deleted_on"}),
+ *         @ORM\Index(name="ecommerce_payments_deleted_on_index", columns={"deleted_at"}),
  *     }
  * )
  */
@@ -112,7 +112,7 @@ class Payment
     protected $currency;
 
     /**
-     * @ORM\Column(type="datetime", name="deleted_on", nullable=true)
+     * @ORM\Column(type="datetime", name="deleted_at", nullable=true)
      *
      * @var \DateTime
      */
