@@ -369,6 +369,22 @@ class Cart
     }
 
     /**
+     * @return Address|null
+     */
+    public function getBillingAddress()
+    {
+        return $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+    }
+
+    /**
+     * @return Address|null
+     */
+    public function getShippingAddress()
+    {
+        return $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
+    }
+
+    /**
      * @return string[]
      */
     public function __sleep()

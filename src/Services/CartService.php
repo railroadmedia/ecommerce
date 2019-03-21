@@ -118,7 +118,7 @@ class CartService
     /**
      * Return an array with the cart items.
      *
-     * @return array
+     * @return CartItem[]
      */
     public function getAllCartItems()
     {

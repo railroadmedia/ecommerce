@@ -39,7 +39,8 @@ class CartAddressService
 
     /**
      * Get from the session the address (shipping or billing address - based on address type).
-     * If the billing address it's not set on the session call the method that set on the session the guessed billing address
+     * If the billing address it's not set on the session call the method that set on the session the guessed billing
+     * address
      *
      * @param string $addressType
      * @return Address|null
@@ -50,18 +51,8 @@ class CartAddressService
             return $this->session->get(self::SESSION_KEY . $addressType);
         }
 
-        if ($addressType == self::BILLING_ADDRESS_TYPE) {
-
-            return $this->setAddress(
-                new Address(
-                    $this->locationService->getCountry(),
-                    $this->locationService->getRegion()
-                ),
-                CartAddressService::BILLING_ADDRESS_TYPE
-            );
-        }
-
-        return null;
+        return $this->setAddress(new Address($this->locationService->getCountry(), $this->locationService->getRegion()),
+            $addressType);
     }
 
     /**
@@ -74,10 +65,7 @@ class CartAddressService
      */
     public function setAddress(Address $address, string $addressType)
     {
-        $this->session->put(
-            self::SESSION_KEY . $addressType,
-            $address
-        );
+        $this->session->put(self::SESSION_KEY . $addressType, $address);
 
         return $this->getAddress($addressType);
     }
