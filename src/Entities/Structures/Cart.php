@@ -347,7 +347,7 @@ class Cart
             $totalInitial += $product->getPrice() * $cartItem->getQuantity();
         }
 
-        return $totalInitial;
+        return round($totalInitial, 2);
     }
 
     /**

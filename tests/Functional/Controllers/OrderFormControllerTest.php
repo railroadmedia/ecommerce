@@ -164,6 +164,9 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $expectedProductTwoDiscountedPrice = 0;
 
+
+        $expectedProductDue = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
+
         $expectedTotalFromItems = round($expectedProductOneDiscountedPrice + $expectedProductTwoTotalPrice, 2);
 
         $taxService = $this->app->make(TaxService::class);
@@ -322,7 +325,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             ConfigService::$tableOrder,
             [
                 'total_due' => round($expectedOrderTotalDue, 2),
-                'product_due' => null,
+                'product_due' => $expectedProductDue,
                 'taxes_due' => round($expectedTaxes, 2),
                 'shipping_due' => $shippingCostAmount,
                 'finance_due' => null,

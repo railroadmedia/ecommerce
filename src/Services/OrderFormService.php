@@ -479,6 +479,8 @@ class OrderFormService
      * @param float $paid
      * @param float $shipping
      * @param float $totalDue
+     * @param float $productDue
+     * @param float $financeDue
      * @param float $totalTax
      * @param User $user
      * @param Customer $customer
@@ -495,6 +497,8 @@ class OrderFormService
         $paid,
         $shipping,
         $totalDue,
+        $productDue,
+        $financeDue,
         $totalTax,
         ?User $user,
         ?Customer $customer,
@@ -507,6 +511,8 @@ class OrderFormService
         $order = new Order();
 
         $order->setTotalDue($totalDue)
+            ->setProductDue($productDue)
+            ->setFinanceDue($financeDue)
             ->setTaxesDue($totalTax)
             ->setTotalPaid($paid)
             ->setBrand($brand)
@@ -903,16 +909,20 @@ class OrderFormService
         $payment = $this->createPayment($paymentAmount, $this->cartService->getCart()
             ->getTotalDue(), $charge ?? null, $transactionId ?? null, $paymentMethod, $currency);
 
-        $productsDuePrice = $this->cartService->getCart()
+        $totalDue = $this->cartService->getCart()
             ->getTotalDue();
+        $productsDuePrice = $this->cartService->getCart()
+            ->getTotalInitial();
+        $financeDue = $this->cartService->getCart()
+            ->getPaymentPlanNumberOfPayments() > 1 ? 1 : null;
         $productsShippingPrice = $this->cartService->getCart()
             ->calculateShippingDue();
         $productsTaxPrice = $this->cartService->getCart()
             ->calculateTaxesDue();
 
         // create order
-        $order = $this->createOrder($paymentAmount, $productsShippingPrice, $productsDuePrice, $productsTaxPrice,
-            $user ?? null, $customer ?? null, $billingAddress, $shippingAddress, $payment, $brand);
+        $order = $this->createOrder($paymentAmount, $productsShippingPrice, $totalDue, $productsDuePrice, $financeDue,
+            $productsTaxPrice, $user ?? null, $customer ?? null, $billingAddress, $shippingAddress, $payment, $brand);
 
         // if the order failed; we throw the proper exception
         throw_if(!($order), new UnprocessableEntityException('Order failed.'));

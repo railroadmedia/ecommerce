@@ -759,7 +759,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'type' => 'order',
                     'attributes' => [
                         'total_due' => $expectedOrderTotalDue,
-                        'product_due' => null,
+                        'product_due' => $expectedTotalFromItems,
                         'taxes_due' => $expectedTaxes,
                         'shipping_due' => $shippingCostAmount,
                         'finance_due' => null,
@@ -1266,7 +1266,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'type' => 'order',
                     'attributes' => [
                         'total_due' => $expectedOrderTotalDue,
-                        'product_due' => null,
+                        'product_due' => $expectedTotalFromItems,
                         'taxes_due' => $expectedTaxes,
                         'shipping_due' => $shippingCostAmount,
                         'finance_due' => null,
@@ -1574,7 +1574,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'type' => 'order',
                     'attributes' => [
                         'total_due' => $expectedOrderTotalDue,
-                        'product_due' => null,
+                        'product_due' => $expectedTotalFromItems,
                         'taxes_due' => $expectedTaxes,
                         'shipping_due' => $shippingCostAmount,
                         'finance_due' => null,
@@ -1870,7 +1870,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'type' => 'order',
                     'attributes' => [
                         'total_due' => $expectedOrderTotalDue,
-                        'product_due' => null,
+                        'product_due' => $expectedTotalFromItems,
                         'taxes_due' => $expectedTaxes,
                         'shipping_due' => $shippingCostAmount,
                         'finance_due' => null,
@@ -2254,7 +2254,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'type' => 'order',
                     'attributes' => [
                         'total_due' => $expectedOrderTotalDue,
-                        'product_due' => null,
+                        'product_due' => $expectedProductTotalPrice,
                         'taxes_due' => $expectedTaxes,
                         'shipping_due' => $shippingCostAmount,
                         'finance_due' => null,
@@ -2340,7 +2340,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ConfigService::$tableOrder,
             [
                 'total_due' => round($expectedOrderTotalDue, 2),
-                'product_due' => null,
+                'product_due' => $expectedProductTotalPrice,
                 'taxes_due' => round($expectedTaxes, 2),
                 'shipping_due' => $shippingCostAmount,
                 'finance_due' => null,
@@ -2501,7 +2501,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'type' => 'order',
                     'attributes' => [
                         'total_due' => $expectedOrderTotalDue,
-                        'product_due' => null,
+                        'product_due' => $expectedProductTotalPrice,
                         'taxes_due' => $expectedTaxes,
                         'shipping_due' => $shippingCostAmount,
                         'finance_due' => null,
@@ -2587,7 +2587,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ConfigService::$tableOrder,
             [
                 'total_due' => round($expectedOrderTotalDue, 2),
-                'product_due' => null,
+                'product_due' => $expectedProductTotalPrice,
                 'taxes_due' => round($expectedTaxes, 2),
                 'shipping_due' => $shippingCostAmount,
                 'finance_due' => null,
@@ -4029,7 +4029,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'type' => 'order',
                     'attributes' => [
                         'total_due' => $expectedOrderTotalDue,
-                        'product_due' => null,
+                        'product_due' => $expectedTotalFromItems,
                         'taxes_due' => $expectedTaxes,
                         'shipping_due' => $shippingCostAmount,
                         'finance_due' => null,
@@ -4359,7 +4359,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'type' => 'order',
                     'attributes' => [
                         'total_due' => $expectedOrderTotalDue,
-                        'product_due' => null,
+                        'product_due' => $expectedTotalFromItems,
                         'taxes_due' => $expectedTaxes,
                         'shipping_due' => 0,
                         'finance_due' => null,
@@ -4716,6 +4716,22 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'total_cycles_due' => $paymentPlanOption,
                 'total_cycles_paid' => 1,
                 'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // order & based order prices
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrder,
+            [
+                'total_due' => round($expectedOrderTotalDue, 2),
+                'product_due' => $expectedInitialProductPrice,
+                'taxes_due' => round($expectedTaxes, 2),
+                'shipping_due' => $shippingCostAmount,
+                'finance_due' => $financeCharge,
+                'user_id' => $userId,
+                'customer_id' => null,
+                'brand' => ConfigService::$brand,
+                'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
 

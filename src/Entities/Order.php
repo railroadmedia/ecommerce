@@ -228,7 +228,7 @@ class Order
      *
      * @return Order
      */
-    public function setFinanceDue(float $financeDue): self
+    public function setFinanceDue(?float $financeDue): self
     {
         $this->financeDue = $financeDue;
 
