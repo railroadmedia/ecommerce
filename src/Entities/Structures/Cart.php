@@ -3,9 +3,9 @@
 namespace Railroad\Ecommerce\Entities\Structures;
 
 use Illuminate\Support\Facades\Session;
+use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountService;
-use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\TaxService;
 
 class Cart
@@ -96,23 +96,14 @@ class Cart
         /**
          * @var $billingAddress \Railroad\Ecommerce\Entities\Structures\Address
          */
-        $billingAddress = $this->cartAddressService
-                                ->getAddress(
-                                    CartAddressService::BILLING_ADDRESS_TYPE
-                                );
+        $billingAddress = $this->cartAddressService->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
 
         if ($billingAddress) {
 
             $taxRate = $this->taxService->getTaxRate($billingAddress);
 
             $this->totalTax =
-                round(
-                    (
-                        max($this->getTotalDueForItems() * $taxRate, 0) +
-                        max($this->shippingCosts * $taxRate, 0)
-                    ),
-                    2
-                );
+                round((max($this->getTotalDueForItems() * $taxRate, 0) + max($this->shippingCosts * $taxRate, 0)), 2);
         }
 
         return max((float)($this->totalTax), 0);
@@ -129,14 +120,11 @@ class Cart
 
         $totalDueFromItems = $this->getTotalDueForItems();
 
-        return round(
-            $totalDueFromItems -
+        return round($totalDueFromItems -
             $this->getTotalDiscountAmount() +
             $this->calculateTaxesDue() +
             $this->calculateShippingDue() +
-            $financeCharge,
-            2
-        );
+            $financeCharge, 2);
     }
 
     /**
@@ -150,10 +138,8 @@ class Cart
             /*
              * All shipping should always be paid in the first payment.
              */
-            return round(
-                (($this->getTotalDue() - $this->calculateShippingDue()) / $this->getPaymentPlanNumberOfPayments()),
-                2
-            );
+            return round((($this->getTotalDue() - $this->calculateShippingDue()) /
+                $this->getPaymentPlanNumberOfPayments()), 2);
         }
 
         return $this->getTotalDue();
@@ -211,7 +197,8 @@ class Cart
                 if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
                     $amountDiscounted = round($amountDiscounted + $discount->getAmount(), 2);
                 } elseif ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE) {
-                    $amountDiscounted = round($amountDiscounted + $discount->getAmount() / 100 * $this->shippingCosts, 2);
+                    $amountDiscounted =
+                        round($amountDiscounted + $discount->getAmount() / 100 * $this->shippingCosts, 2);
                 } elseif ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
                     return $discount->getAmount();
                 }
@@ -268,10 +255,9 @@ class Cart
                 ($this->calculatePricePerPayment() * $this->getPaymentPlanNumberOfPayments()) -
                 ($this->getTotalDue() - $this->calculateShippingDue());
 
-            return round(
-                $this->calculatePricePerPayment() - $roundingFirstPaymentAdjustment + $this->calculateShippingDue(),
-                2
-            );
+            return round($this->calculatePricePerPayment() -
+                $roundingFirstPaymentAdjustment +
+                $this->calculateShippingDue(), 2);
         }
 
         return $this->calculatePricePerPayment();
@@ -326,9 +312,8 @@ class Cart
 
         foreach ($this->getItems() as $cartItem) {
 
-            $totalDueFromItems += ($cartItem->getDiscountedPrice()) ?
-                                    $cartItem->getDiscountedPrice() :
-                                    $cartItem->getTotalPrice();
+            $totalDueFromItems += ($cartItem->getDiscountedPrice()) ? $cartItem->getDiscountedPrice() :
+                $cartItem->getTotalPrice();
         }
 
         return $totalDueFromItems;
@@ -381,5 +366,31 @@ class Cart
     public function getBrand()
     {
         return $this->brand ?? ConfigService::$brand;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function __sleep()
+    {
+        return [
+            'items',
+            'shippingCosts',
+            'totalTax',
+            'totalDue',
+            'discounts',
+            'totalDiscountAmount',
+            'appliedDiscounts',
+            'brand',
+        ];
+    }
+
+    /**
+     * @return void
+     */
+    public function __wakeup()
+    {
+        $this->cartAddressService = app()->make(CartAddressService::class);
+        $this->taxService = app()->make(TaxService::class);
     }
 }
