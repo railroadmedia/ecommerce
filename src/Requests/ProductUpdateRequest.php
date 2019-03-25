@@ -29,11 +29,7 @@ class ProductUpdateRequest extends FormRequest
             'data.type' => 'json data type',
             'data.attributes.brand' => 'brand',
             'data.attributes.name' => 'name',
-            'data.attributes.sku' => 'sku|unique:' .
-                ConfigService::$databaseConnectionName .
-                '.' .
-                ConfigService::$tableProduct .
-                ',sku',
+            'data.attributes.sku' => 'sku',
             'data.attributes.price' => 'price',
             'data.attributes.type' => 'type',
             'data.attributes.active' => 'active',
