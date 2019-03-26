@@ -444,7 +444,7 @@ class CartService
         $cartItem->setDescription($description);
         $cartItem->setQuantity($quantity);
         $cartItem->setPrice($price);
-        $cartItem->setTotalPrice($quantity * $price);
+        $cartItem->setTotalPrice(round($quantity * $price, 2));
         $cartItem->setRequiresShippingAddress($requiresShippingAddress);
         $cartItem->setRequiresBillingAddress($requiresBillingAddress);
         $cartItem->setSubscriptionIntervalType($subscriptionIntervalType);
