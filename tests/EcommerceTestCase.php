@@ -240,6 +240,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
 
         $app['config']->set('ecommerce.development_mode', $defaultConfig['development_mode'] ?? true);
+        $app['config']->set('usora.development_mode', $defaultConfig['development_mode'] ?? true);
         $app['config']->set('ecommerce.database_driver', 'pdo_sqlite');
         $app['config']->set('ecommerce.database_user', 'root');
         $app['config']->set('ecommerce.database_password', 'root');

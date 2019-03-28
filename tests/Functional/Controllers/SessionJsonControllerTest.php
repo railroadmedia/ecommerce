@@ -7,6 +7,7 @@ use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use Railroad\Location\Services\LocationService;
 
 class SessionJsonControllerTest extends EcommerceTestCase
 {
@@ -33,6 +34,12 @@ class SessionJsonControllerTest extends EcommerceTestCase
     {
         $this->session->flush();
 
+        $cartAddressService = $this->app->make(CartAddressService::class);
+
+        // get a default location service seeded address or new instance
+        $address = $cartAddressService
+                        ->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE) ?? (new Address());
+
         $shippingAddress = [
             'shipping-address-line-1' => $this->faker->address,
             'shipping-city' => $this->faker->city,
@@ -40,8 +47,6 @@ class SessionJsonControllerTest extends EcommerceTestCase
         ];
 
         $response = $this->call('PUT', '/session/address', $shippingAddress);
-
-        $address = new Address();
 
         $address
             ->setStreetLineOne($shippingAddress['shipping-address-line-1'])
