@@ -54,7 +54,7 @@ class SessionJsonController extends BaseController
 
         $billingKeys = [
             'billing-country' => 'country',
-            'billing-region' => 'region',
+            'billing-region' => 'state',
             'billing-zip-or-postal-code' => 'zipOrPostalCode',
             'billing-email' => 'email',
         ];
