@@ -2,255 +2,80 @@
 
 namespace Railroad\Ecommerce\Entities\Structures;
 
-use Railroad\Ecommerce\Entities\Discount;
-use Railroad\Ecommerce\Entities\Product;
+use Serializable;
 
-class CartItem
+class CartItem implements Serializable
 {
-    public $id;
-    public $name;
-    public $description;
-    public $quantity;
-    public $price;
-    public $totalPrice;
-    public $requiresShippingAddress;
-    public $requiresBillingAddress;
-    public $subscriptionIntervalType;
-    public $subscriptionIntervalCount;
-    public $discountedPrice;
-    public $appliedDiscounts;
-    public $product;
-    public $options = [];
+    /**
+     * @var string
+     */
+    private $sku;
 
     /**
-     * @return mixed
+     * @var integer
      */
-    public function getId()
+    private $quantity;
+
+    /**
+     * CartItem constructor.
+     *
+     * @param string $sku
+     * @param int $quantity
+     */
+    public function __construct(string $sku, int $quantity)
     {
-        return $this->id;
+        $this->sku = $sku;
+        $this->quantity = $quantity;
     }
 
     /**
-     * @param mixed $id
+     * @return string
      */
-    public function setId($id)
+    public function getSku(): string
     {
-        $this->id = $id;
+        return $this->sku;
     }
 
     /**
-     * @return mixed
+     * @param string $sku
      */
-    public function getName()
+    public function setSku(string $sku): void
     {
-        return $this->name;
+        $this->sku = $sku;
     }
 
     /**
-     * @param mixed $name
+     * @return int
      */
-    public function setName($name)
-    {
-        $this->name = $name;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getDescription()
-    {
-        return $this->description;
-    }
-
-    /**
-     * @param mixed $description
-     */
-    public function setDescription($description)
-    {
-        $this->description = $description;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getQuantity()
+    public function getQuantity(): int
     {
         return $this->quantity;
     }
 
     /**
-     * @param mixed $quantity
+     * @param int $quantity
      */
-    public function setQuantity($quantity)
+    public function setQuantity(int $quantity): void
     {
         $this->quantity = $quantity;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getPrice()
+    public function serialize()
     {
-        return $this->price;
+        return serialize(['sku' => $this->getSku(), 'quantity' => $this->getQuantity()]);
     }
 
     /**
-     * @param mixed $price
+     * @param $data
      */
-    public function setPrice($price)
+    public function unserialize($data)
     {
-        $this->price = $price;
-    }
+        $data = unserialize($data);
 
-    /**
-     * @return boolean
-     */
-    public function getRequiresShippingAddress()
-    {
-        return $this->requiresShippingAddress;
-    }
-
-    /**
-     * @param boolean $requiresShippingAddress
-     */
-    public function setRequiresShippingAddress($requiresShippingAddress)
-    {
-        $this->requiresShippingAddress = $requiresShippingAddress;
-    }
-
-    /**
-     * @return boolean
-     */
-    public function getRequiresBillingAddress()
-    {
-        return $this->requiresBillingAddress;
-    }
-
-    /**
-     * @param boolean $requiresBillingAddress
-     */
-    public function setRequiresBillingAddress($requiresBillingAddress)
-    {
-        $this->requiresBillingAddress = $requiresBillingAddress;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getSubscriptionIntervalType()
-    {
-        return $this->subscriptionIntervalType;
-    }
-
-    /**
-     * @param mixed $subscriptionIntervalType
-     */
-    public function setSubscriptionIntervalType($subscriptionIntervalType)
-    {
-        $this->subscriptionIntervalType = $subscriptionIntervalType;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getSubscriptionIntervalCount()
-    {
-        return $this->subscriptionIntervalCount;
-    }
-
-    /**
-     * @param mixed $subscriptionIntervalCount
-     */
-    public function setSubscriptionIntervalCount($subscriptionIntervalCount)
-    {
-        $this->subscriptionIntervalCount = $subscriptionIntervalCount;
-    }
-
-    /**
-     * @return array
-     */
-    public function getOptions()
-    {
-        return $this->options;
-    }
-
-    /**
-     * @param array $options
-     */
-    public function setOptions($options)
-    {
-        $this->options = $options;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getTotalPrice()
-    {
-        return $this->totalPrice;
-    }
-
-    /**
-     * @param mixed $totalPrice
-     */
-    public function setTotalPrice($totalPrice)
-    {
-        $this->totalPrice = $totalPrice;
-    }
-
-    /**
-     * @return Product|null
-     */
-    public function getProduct(): Product
-    {
-        return $this->product;
-    }
-
-    /**
-     * @param Product $product
-     */
-    public function setProduct(Product $product)
-    {
-        $this->product = $product;
-    }
-
-    /**
-     * @param $price
-     */
-    public function setDiscountedPrice($price)
-    {
-        $this->discountedPrice = $price;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getDiscountedPrice()
-    {
-        return $this->discountedPrice;
-    }
-
-    /**
-     * @return array - of Discount
-     */
-    public function getAppliedDiscounts(): array
-    {
-        return $this->appliedDiscounts ?? [];
-    }
-
-    /**
-     * @param Discount $discount
-     */
-    public function addAppliedDiscount(Discount $discount)
-    {
-        $this->appliedDiscounts[] = $discount;
-    }
-
-    /**
-     * Resets the applied discounts
-     */
-    public function removeAppliedDiscounts()
-    {
-        $this->appliedDiscounts = [];
+        $this->setSku($data['sku']);
+        $this->setQuantity($data['quantity']);
     }
 }

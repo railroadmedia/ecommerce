@@ -13,7 +13,7 @@ use Railroad\Ecommerce\Services\PaymentPlanService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Spatie\Fractal\Fractal;
 
-class ShoppingCartController extends BaseController
+class ShoppingCartJsonController extends BaseController
 {
     /**
      * @var EcommerceEntityManager
@@ -276,10 +276,10 @@ class ShoppingCartController extends BaseController
             $cartData['total'] = $cart->getTotalDue();
 
             $isPaymentPlanEligible = $this->paymentPlanService
-                                        ->isPaymentPlanEligible();
+                ->isPaymentPlanEligible();
 
             $paymentPlanPricing = $this->paymentPlanService
-                                        ->getPaymentPlanPricingForCartItems();
+                ->getPaymentPlanPricingForCartItems();
 
             $cartData['isPaymentPlanEligible'] = $isPaymentPlanEligible;
             $cartData['paymentPlanPricing'] = $paymentPlanPricing;

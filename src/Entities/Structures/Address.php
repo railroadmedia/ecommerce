@@ -4,8 +4,9 @@ namespace Railroad\Ecommerce\Entities\Structures;
 
 use Doctrine\Common\Inflector\Inflector;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
+use Serializable;
 
-class Address implements AddressInterface
+class Address implements AddressInterface, Serializable
 {
     /**
      * @var string
@@ -55,7 +56,7 @@ class Address implements AddressInterface
         'streetLineOne' => true,
         'streetLineTwo' => true,
         'zipOrPostalCode' => true,
-        'city' => true
+        'city' => true,
     ];
 
     public function __construct(
@@ -70,7 +71,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getCountry() : ?string
+    public function getCountry(): ?string
     {
         return $this->country;
     }
@@ -80,7 +81,7 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setCountry(?string $country) : AddressInterface
+    public function setCountry(?string $country): AddressInterface
     {
         $this->country = $country;
 
@@ -90,7 +91,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getState() : ?string
+    public function getState(): ?string
     {
         return $this->state;
     }
@@ -100,7 +101,7 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setState(?string $state) : AddressInterface
+    public function setState(?string $state): AddressInterface
     {
         $this->state = $state;
 
@@ -110,7 +111,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getFirstName() : ?string
+    public function getFirstName(): ?string
     {
         return $this->firstName;
     }
@@ -120,7 +121,7 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setFirstName(?string $firstName) : self
+    public function setFirstName(?string $firstName): self
     {
         $this->firstName = $firstName;
 
@@ -130,7 +131,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getLastName() : ?string
+    public function getLastName(): ?string
     {
         return $this->lastName;
     }
@@ -140,7 +141,7 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setLastName(?string $lastName) : self
+    public function setLastName(?string $lastName): self
     {
         $this->lastName = $lastName;
 
@@ -150,7 +151,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getStreetLineOne() : ?string
+    public function getStreetLineOne(): ?string
     {
         return $this->streetLineOne;
     }
@@ -160,7 +161,7 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setStreetLineOne(?string $streetLineOne) : self
+    public function setStreetLineOne(?string $streetLineOne): self
     {
         $this->streetLineOne = $streetLineOne;
 
@@ -170,7 +171,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getStreetLineTwo() : ?string
+    public function getStreetLineTwo(): ?string
     {
         return $this->streetLineTwo;
     }
@@ -180,7 +181,7 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setStreetLineTwo(?string $streetLineTwo) : self
+    public function setStreetLineTwo(?string $streetLineTwo): self
     {
         $this->streetLineTwo = $streetLineTwo;
 
@@ -190,7 +191,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getZipOrPostalCode() : ?string
+    public function getZipOrPostalCode(): ?string
     {
         return $this->zipOrPostalCode;
     }
@@ -200,7 +201,7 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setZipOrPostalCode(?string $zipOrPostalCode) : self
+    public function setZipOrPostalCode(?string $zipOrPostalCode): self
     {
         $this->zipOrPostalCode = $zipOrPostalCode;
 
@@ -210,7 +211,7 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getCity() : ?string
+    public function getCity(): ?string
     {
         return $this->city;
     }
@@ -220,7 +221,7 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setCity(?string $city) : self
+    public function setCity(?string $city): self
     {
         $this->city = $city;
 
@@ -264,10 +265,14 @@ class Address implements AddressInterface
             'first_name' => $this->firstName,
             'state' => $this->state,
             'country' => $this->country,
-            'city' => $this->city
+            'city' => $this->city,
         ];
     }
 
+    /**
+     * @param $array
+     * @return Address
+     */
     public static function createFromArray($array)
     {
         $address = new static;
@@ -281,5 +286,37 @@ class Address implements AddressInterface
         }
 
         return $address;
+    }
+
+    /**
+     * @return string
+     */
+    public function serialize()
+    {
+        return serialize([
+            'zip_or_postal_code' => $this->zipOrPostalCode,
+            'street_line_two' => $this->streetLineTwo,
+            'street_line_one' => $this->streetLineOne,
+            'last_name' => $this->lastName,
+            'first_name' => $this->firstName,
+            'state' => $this->state,
+            'country' => $this->country,
+            'city' => $this->city,
+        ]);
+    }
+
+    /**
+     * @param array $data
+     */
+    public function unserialize($data)
+    {
+        $this->setZipOrPostalCode($data['zip_or_postal_code']);
+        $this->setStreetLineTwo($data['street_line_two']);
+        $this->setStreetLineOne($data['street_line_one']);
+        $this->setLastName($data['last_name']);
+        $this->setFirstName($data['first_name']);
+        $this->setState($data['state']);
+        $this->setCountry($data['country']);
+        $this->setCity($data['city']);
     }
 }
