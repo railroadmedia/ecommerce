@@ -96,6 +96,20 @@ class Cart implements \Serializable
     }
 
     /**
+     * @return array
+     */
+    public function listSkus()
+    {
+        $skus = [];
+
+        foreach ($this->items as $item) {
+            $skus[] = $item->getSku();
+        }
+
+        return $skus;
+    }
+
+    /**
      * @return bool
      */
     public function getLocked(): bool

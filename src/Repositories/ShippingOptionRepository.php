@@ -34,7 +34,7 @@ class ShippingOptionRepository extends EntityRepository
      * @param string  $country
      * @param float $totalWeight
      *
-     * @return mixed
+     * @return ShippingOption|null
      */
     public function getShippingCosts(string $country, float $totalWeight): ?array
     {
@@ -61,7 +61,7 @@ class ShippingOptionRepository extends EntityRepository
             ->setParameter('any', '*')
             ->setParameter('totalWeight', $totalWeight);
 
-        return $qb->getQuery()->getResult();
+        return $qb->getQuery()->getResult()[0] ?? null;
     }
 
     /**

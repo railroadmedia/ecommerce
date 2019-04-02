@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Product;
@@ -21,6 +22,11 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 class ProductRepository extends EntityRepository
 {
     /**
+     * @var ArrayCache
+     */
+    protected $arrayCache;
+
+    /**
      * ProductRepository constructor.
      *
      * @param EcommerceEntityManager $em
@@ -28,6 +34,8 @@ class ProductRepository extends EntityRepository
     public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(Product::class));
+
+        $this->arrayCache = new ArrayCache();
     }
 
     /**
@@ -42,14 +50,13 @@ class ProductRepository extends EntityRepository
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this
-            ->getEntityManager()
+        $qb = $this->getEntityManager()
             ->createQueryBuilder();
 
-        $qb
-            ->select('p')
+        $qb->select('p')
             ->from($this->getClassName(), 'p')
-            ->where($qb->expr()->in('p.id', ':ids'));
+            ->where($qb->expr()
+                ->in('p.id', ':ids'));
 
         /**
          * @var $q \Doctrine\ORM\Query
@@ -81,14 +88,13 @@ class ProductRepository extends EntityRepository
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this
-            ->getEntityManager()
+        $qb = $this->getEntityManager()
             ->createQueryBuilder();
 
-        $qb
-            ->select('p')
+        $qb->select('p')
             ->from($this->getClassName(), 'p')
-            ->where($qb->expr()->in('p.id', ':ids'));
+            ->where($qb->expr()
+                ->in('p.id', ':ids'));
 
         /**
          * @var $q \Doctrine\ORM\Query
@@ -98,5 +104,27 @@ class ProductRepository extends EntityRepository
         $q->setParameter('ids', array_keys($productIds));
 
         return $q->getResult();
+    }
+
+    /**
+     * We use the array cache here since we want to grab entities from the ORM instead of a new query and products
+     * rarely change.
+     *
+     * @param array $skus
+     * @return Product[]
+     */
+    public function findBySkus(array $skus)
+    {
+        $cacheKey = md5(serialize($skus));
+
+        $products = $this->arrayCache->fetch($cacheKey);
+
+        if ($products === false) {
+            $products = $this->findBy(['sky' => $skus]);
+
+            $this->arrayCache->save($cacheKey, $products);
+        }
+
+        return $products;
     }
 }

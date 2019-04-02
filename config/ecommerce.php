@@ -85,6 +85,8 @@ return [
         'GBP' => 0.77,
         'USD' => 1.0,
     ],
+    
+    'financing_cost_per_order' => 1,
 
     'payment_gateways' => [
         'paypal' => [
