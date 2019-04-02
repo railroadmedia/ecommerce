@@ -75,6 +75,7 @@ class ShoppingCartJsonController extends BaseController
      */
     public function addToCart(Request $request)
     {
+        // todo: update to use new cart logic/classes
         $input = $request->all();
         $errors = [];
         $addedProducts = [];
@@ -142,6 +143,8 @@ class ShoppingCartJsonController extends BaseController
             }
         }
 
+        // todo: return json not redirect
+
         /** @var \Illuminate\Http\RedirectResponse $redirectResponse */
         $redirectResponse = $request->get('redirect') ?
             redirect()->away($request->get('redirect')) :
@@ -165,6 +168,8 @@ class ShoppingCartJsonController extends BaseController
      */
     public function removeCartItem($productId)
     {
+        // todo: update to use new cart logic/classes
+
         $cartItems = $this->cartService->getCart()->getItems();
 
         foreach ($cartItems as $cartItem) {
@@ -196,6 +201,8 @@ class ShoppingCartJsonController extends BaseController
      */
     public function updateCartItemQuantity($productId, $quantity)
     {
+        // todo: update to use new cart logic/classes
+
         $product = $this->productRepository->find($productId);
 
         $errors = [];
@@ -261,6 +268,8 @@ class ShoppingCartJsonController extends BaseController
      */
     protected function getCartData()
     {
+        // todo: update to use new cart logic/classes
+
         $cartData = [
             'tax' => 0,
             'total' => 0,
