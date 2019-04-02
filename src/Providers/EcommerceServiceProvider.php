@@ -2,30 +2,28 @@
 
 namespace Railroad\Ecommerce\Providers;
 
+use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
+use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Cache\RedisCache;
+use Doctrine\Common\EventManager;
+use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
+use Doctrine\DBAL\Types\Type;
+use Doctrine\ORM\Configuration;
+use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Doctrine\ORM\Mapping\UnderscoreNamingStrategy;
-use Exception;
 use Gedmo\DoctrineExtensions;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Railroad\Doctrine\TimestampableListener;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
 use Railroad\Ecommerce\Listeners\UserDefaultPaymentMethodListener;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CustomValidationRules;
-
-
-
-use Doctrine\Common\Annotations\AnnotationReader;
-use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
-use Doctrine\Common\Annotations\CachedReader;
-use Doctrine\Common\Cache\RedisCache;
-use Doctrine\Common\EventManager;
-use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
-use Doctrine\ORM\Configuration;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Doctrine\TimestampableListener;
+use Railroad\Ecommerce\Types\UserType;
 use Redis;
 
 class EcommerceServiceProvider extends ServiceProvider
@@ -46,11 +44,9 @@ class EcommerceServiceProvider extends ServiceProvider
 
         $this->setupConfig();
 
-        $this->publishes(
-            [
+        $this->publishes([
                 __DIR__ . '/../../config/ecommerce.php' => config_path('ecommerce.php'),
-            ]
-        );
+            ]);
 
         if (ConfigService::$dataMode == 'host') {
             $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
@@ -79,17 +75,13 @@ class EcommerceServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__ . '/../../routes/stripe_webhook.php');
         $this->loadRoutesFrom(__DIR__ . '/../../routes/subscriptions.php');
 
-        $this->commands(
-            [
+        $this->commands([
                 RenewalDueSubscriptions::class,
-            ]
-        );
+            ]);
 
-        $this->app->validator->resolver(
-            function ($translator, $data, $rules, $messages, $attributes) {
-                return new CustomValidationRules($translator, $data, $rules, $messages, $attributes);
-            }
-        );
+        $this->app->validator->resolver(function ($translator, $data, $rules, $messages, $attributes) {
+            return new CustomValidationRules($translator, $data, $rules, $messages, $attributes);
+        });
     }
 
     private function setupConfig()
@@ -195,9 +187,14 @@ class EcommerceServiceProvider extends ServiceProvider
         $this->setupEntityManager();
     }
 
+    /**
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\ORM\ORMException
+     */
     private function setupEntityManager()
     {
-        // temp setup - needs confirmation
+        !Type::hasType(UserType::USER_TYPE) ? Type::addType(UserType::USER_TYPE, UserType::class) : null;
 
         // set proxy dir to temp folder
         if (app()->runningUnitTests()) {
@@ -208,10 +205,7 @@ class EcommerceServiceProvider extends ServiceProvider
 
         // setup redis
         $redis = new Redis();
-        $redis->connect(
-            config('ecommerce.redis_host'),
-            config('ecommerce.redis_port')
-        );
+        $redis->connect(config('ecommerce.redis_host'), config('ecommerce.redis_port'));
         $redisCache = new RedisCache();
         $redisCache->setRedis($redis);
 
@@ -220,27 +214,18 @@ class EcommerceServiceProvider extends ServiceProvider
 
         $annotationReader = new AnnotationReader();
 
-        $cachedAnnotationReader = new CachedReader(
-            $annotationReader, $redisCache
-        );
+        $cachedAnnotationReader =
+            new CachedReader($annotationReader, $redisCache, config('ecommerce.development_mode'));
 
         $driverChain = new MappingDriverChain();
 
-        DoctrineExtensions::registerAbstractMappingIntoDriverChainORM(
-            $driverChain,
-            $cachedAnnotationReader
-        );
+        DoctrineExtensions::registerAbstractMappingIntoDriverChainORM($driverChain, $cachedAnnotationReader);
 
         // entities
         foreach (config('ecommerce.entities') as $driverConfig) {
-            $annotationDriver = new AnnotationDriver(
-                $cachedAnnotationReader, $driverConfig['path']
-            );
+            $annotationDriver = new AnnotationDriver($cachedAnnotationReader, $driverConfig['path']);
 
-            $driverChain->addDriver(
-                $annotationDriver,
-                $driverConfig['namespace']
-            );
+            $driverChain->addDriver($annotationDriver, $driverConfig['namespace']);
         }
 
         // timestamps
@@ -258,13 +243,9 @@ class EcommerceServiceProvider extends ServiceProvider
         $ormConfiguration->setResultCacheImpl($redisCache);
         $ormConfiguration->setProxyDir($proxyDir);
         $ormConfiguration->setProxyNamespace('DoctrineProxies');
-        $ormConfiguration->setAutoGenerateProxyClasses(
-            config('usora.development_mode')
-        );
+        $ormConfiguration->setAutoGenerateProxyClasses(config('usora.development_mode'));
         $ormConfiguration->setMetadataDriverImpl($driverChain);
-        $ormConfiguration->setNamingStrategy(
-            new UnderscoreNamingStrategy(CASE_LOWER)
-        );
+        $ormConfiguration->setNamingStrategy(new UnderscoreNamingStrategy(CASE_LOWER));
 
         // database config
         if (config('ecommerce.database_in_memory') !== true) {
@@ -284,11 +265,7 @@ class EcommerceServiceProvider extends ServiceProvider
             ];
         }
 
-        $entityManager = EcommerceEntityManager::create(
-            $databaseOptions,
-            $ormConfiguration,
-            $eventManager
-        );
+        $entityManager = EcommerceEntityManager::create($databaseOptions, $ormConfiguration, $eventManager);
 
         app()->instance(EcommerceEntityManager::class, $entityManager);
     }

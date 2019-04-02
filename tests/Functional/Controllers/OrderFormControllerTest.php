@@ -195,11 +195,15 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $paypalToken = $this->faker->word;
 
+        $this->entityManager->clear();
+
         $response = $this->call(
             'GET',
             '/order-paypal',
             ['token' => $paypalToken]
         );
+
+        dd($response->getContent());
 
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());

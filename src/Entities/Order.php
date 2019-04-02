@@ -81,7 +81,7 @@ class Order
     /**
      * @var User
      *
-     * @ORM\Column(type="user_id", name="user_id", nullable=true)
+     * @ORM\Column(type="user", name="user_id", nullable=true)
      */
     protected $user;
 

@@ -19,7 +19,7 @@ Ecommerce
 3. Publish the ecommerce config file: 
 > php artisan vendor:publish
 4. Fill the ecommerce.php config file:
-
+OrderFormJsonController
 ## API Docs
 
 LINK

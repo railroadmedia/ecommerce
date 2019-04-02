@@ -35,7 +35,7 @@ class UserProduct
     /**
      * @var User
      *
-     * @ORM\Column(type="user_id", name="user_id")
+     * @ORM\Column(type="user", name="user_id")
      */
     protected $user;
 

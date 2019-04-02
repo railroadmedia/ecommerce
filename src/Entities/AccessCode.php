@@ -59,7 +59,7 @@ class AccessCode
     /**
      * @var User
      *
-     * @ORM\Column(type="user_id", name="claimer_id", nullable=true)
+     * @ORM\Column(type="user", name="claimer_id", nullable=true)
      */
     protected $claimer;
 
