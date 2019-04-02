@@ -6,11 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Services\CartAddressService;
-use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\PaymentPlanService;
 
 class AddToCartController extends BaseController
 {
@@ -22,10 +18,6 @@ class AddToCartController extends BaseController
     /**
      * ShoppingCartController constructor.
      *
-     * @param CartService $cartService
-     * @param CartAddressService $cartAddressService
-     * @param EcommerceEntityManager $entityManager
-     * @param PaymentPlanService $paymentPlanService
      * @param ProductRepository $productRepository
      */
     public function __construct(ProductRepository $productRepository)
