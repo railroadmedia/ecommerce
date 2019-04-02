@@ -116,6 +116,56 @@ class CartService
     }
 
     /**
+     * Merges the discounts and products entities into entity manager
+     */
+    public function mergeEntities()
+    {
+        $mergedDiscounts = [];
+
+        foreach ($this->getCart()->getDiscounts() as $discount) {
+            /**
+             * @var $discount \Railroad\Ecommerce\Entities\Discount
+             */
+            $mergedDiscounts[] = $this->entityManager->merge($discount);
+        }
+
+        $this->cart->setDiscounts($mergedDiscounts);
+
+        foreach ($this->getCart()->getItems() as $cartItem) {
+            /**
+             * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+             */
+
+            /**
+             * @var $mergedProduct \Railroad\Ecommerce\Entities\Product
+             */
+            $mergedProduct = $this->entityManager->merge($cartItem->getProduct());
+
+            $cartItem->setProduct($mergedProduct);
+        }
+    }
+
+    /**
+     * Detach the discounts and products entities from entity manager
+     */
+    public function detachEntities()
+    {
+        foreach ($this->getCart()->getDiscounts() as $discount) {
+            /**
+             * @var $discount \Railroad\Ecommerce\Entities\Discount
+             */
+            $this->entityManager->detach($discount);
+        }
+
+        foreach ($this->getCart()->getItems() as $cartItem) {
+            /**
+             * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
+             */
+            $this->entityManager->detach($cartItem->getProduct());
+        }
+    }
+
+    /**
      * Return an array with the cart items.
      *
      * @return CartItem[]
@@ -428,6 +478,8 @@ class CartService
                 $cart->setDiscounts($discountsToApply);
 
                 $cartDiscounted = $this->applyDiscounts();
+
+                // $this->detachEntities(); // todo - enable for testing
 
                 $this->session->put(
                     $brand . '-' . self::SESSION_KEY,

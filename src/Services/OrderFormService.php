@@ -772,6 +772,8 @@ class OrderFormService
 
     public function refreshCart()
     {
+        // $this->cartService->mergeEntities(); // todo - enable for testing
+
         $this->cartService->calculateShippingCosts();
 
         $this->cartService->getCart()
