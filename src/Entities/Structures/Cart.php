@@ -88,7 +88,7 @@ class Cart implements \Serializable
      * @param string $sku
      * @return Cart
      */
-    public function removeCartItemBySku(string $sku): Cart
+    public function removeItemBySku(string $sku): Cart
     {
         unset($this->items[$sku]);
 

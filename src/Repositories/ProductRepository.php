@@ -13,7 +13,6 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  *
  * @method Product find($id, $lockMode = null, $lockVersion = null)
  * @method Product findOneBy(array $criteria, array $orderBy = null)
- * @method Product findOneBySku(string $sku)
  * @method Product[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  * @method Product[] findAll()
  *
@@ -29,7 +28,7 @@ class ProductRepository extends EntityRepository
     /**
      * ProductRepository constructor.
      *
-     * @param EcommerceEntityManager $em
+     * @param  EcommerceEntityManager  $em
      */
     public function __construct(EcommerceEntityManager $em)
     {
@@ -41,7 +40,7 @@ class ProductRepository extends EntityRepository
     /**
      * Returns an array of Products from $accessCode productsIds
      *
-     * @param AccessCode $accessCode
+     * @param  AccessCode  $accessCode
      *
      * @return array
      */
@@ -50,12 +49,9 @@ class ProductRepository extends EntityRepository
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->getEntityManager()
-            ->createQueryBuilder();
+        $qb = $this->getEntityManager()->createQueryBuilder();
 
-        $qb->select('p')
-            ->from($this->getClassName(), 'p')
-            ->where($qb->expr()
+        $qb->select('p')->from($this->getClassName(), 'p')->where($qb->expr()
                 ->in('p.id', ':ids'));
 
         /**
@@ -71,7 +67,7 @@ class ProductRepository extends EntityRepository
     /**
      * Returns an array of Products from $accessCodes productsIds
      *
-     * @param array $accessCodes
+     * @param  array  $accessCodes
      *
      * @return array
      */
@@ -88,13 +84,10 @@ class ProductRepository extends EntityRepository
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->getEntityManager()
-            ->createQueryBuilder();
+        $qb = $this->getEntityManager()->createQueryBuilder();
 
-        $qb->select('p')
-            ->from($this->getClassName(), 'p')
-            ->where($qb->expr()
-                ->in('p.id', ':ids'));
+        $qb->select('p')->from($this->getClassName(), 'p')->where($qb->expr()
+            ->in('p.id', ':ids'));
 
         /**
          * @var $q \Doctrine\ORM\Query
@@ -107,24 +100,56 @@ class ProductRepository extends EntityRepository
     }
 
     /**
-     * We use the array cache here since we want to grab entities from the ORM instead of a new query and products
-     * rarely change.
+     * We use the array cache here since we want to grab entities from the ORM
+     * instead of a new query and products rarely change.
      *
-     * @param array $skus
+     * @param  array  $skus
+     *
      * @return Product[]
      */
     public function findBySkus(array $skus)
     {
-        $cacheKey = md5(serialize($skus));
+        $products = [];
+        $skusNotInCache = [];
 
-        $products = $this->arrayCache->fetch($cacheKey);
+        foreach ($skus as $sku) {
+            $product = $this->arrayCache->fetch($sku);
 
-        if ($products === false) {
-            $products = $this->findBy(['sky' => $skus]);
+            if ($product === false) {
+                $skusNotInCache[] = $sku;
+            } else {
+                $products[] = $product;
+            }
+        }
 
-            $this->arrayCache->save($cacheKey, $products);
+        $products = array_merge($products,
+            $this->findBy(['sku' => $skusNotInCache]));
+
+        foreach ($products as $product) {
+            $this->arrayCache->save($product->getSku(), $product);
         }
 
         return $products;
+    }
+
+    /**
+     * @param  string  $sku
+     *
+     * @return null|Product
+     */
+    public function findOneBySku(string $sku)
+    {
+        $product = $this->arrayCache->fetch($sku);
+
+        if ($product === false) {
+            $productFromDatabase = $this->findOneBy(['sku' => $sku]);
+
+            $this->arrayCache->save($productFromDatabase->getSku(),
+                $productFromDatabase);
+
+            $product = $productFromDatabase;
+        }
+
+        return $product;
     }
 }

@@ -2,11 +2,13 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Illuminate\Http\Request;
 use Illuminate\Session\Store;
+use Railroad\Ecommerce\Cart\Exceptions\ProductNotActiveException;
+use Railroad\Ecommerce\Cart\Exceptions\ProductNotFoundException;
+use Railroad\Ecommerce\Cart\Exceptions\ProductOutOfStockException;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Entities\Structures\AddCartItemsResult;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
@@ -54,6 +56,11 @@ class CartService
      */
     private $taxService;
 
+    /**
+     * @var Product[]
+     */
+    private $allProducts = [];
+
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
@@ -69,21 +76,17 @@ class CartService
     /**
      * CartService constructor.
      *
-     * @param CartAddressService $cartAddressService
-     * @param DiscountCriteriaService $discountCriteriaService
-     * @param DiscountRepository $discountRepository
-     * @param DiscountService $discountService
-     * @param EcommerceEntityManager $entityManager
-     * @param PermissionService $permissionService
-     * @param ProductRepository $productRepository
-     * @param ShippingOptionRepository $shippingOptionRepository
-     * @param Store $session
-     * @param TaxService $taxService
+     * @param  DiscountCriteriaService  $discountCriteriaService
+     * @param  DiscountService  $discountService
+     * @param  EcommerceEntityManager  $entityManager
+     * @param  PermissionService  $permissionService
+     * @param  ProductRepository  $productRepository
+     * @param  ShippingOptionRepository  $shippingOptionRepository
+     * @param  Store  $session
+     * @param  TaxService  $taxService
      */
     public function __construct(
-        CartAddressService $cartAddressService,
         DiscountCriteriaService $discountCriteriaService,
-        DiscountRepository $discountRepository,
         DiscountService $discountService,
         EcommerceEntityManager $entityManager,
         PermissionService $permissionService,
@@ -92,105 +95,104 @@ class CartService
         Store $session,
         TaxService $taxService
     ) {
-
-        $this->cartAddressService = $cartAddressService;
         $this->discountCriteriaService = $discountCriteriaService;
         $this->discountService = $discountService;
-        $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
         $this->productRepository = $productRepository;
         $this->shippingOptionRepository = $shippingOptionRepository;
         $this->session = $session;
         $this->taxService = $taxService;
+
+        // lets cache all the products right from the start
+        $allProducts = $this->productRepository->findAll();
+
+        foreach ($allProducts as $product) {
+            $this->allProducts[$product->getSku()] = $product;
+        }
     }
 
     /**
-     * Add products to cart; if the products are active and available(the product stock > requested quantity).
-     * The success field from response it's set to false if at least one product it's not active or available.
+     * Add products to cart; if the products are active and available(the
+     * product stock > requested quantity). The success field from response
+     * it's set to false if at least one product it's not active or available.
      *
-     * @param Request $request
+     * @param          $sku
+     * @param          $quantity
+     * @param  bool  $lock
+     * @param  string  $promoCode
      *
-     * @return AddCartItemResult
+     * @throws ProductNotFoundException
+     * @throws ProductNotActiveException
+     * @throws ProductOutOfStockException
+     *
+     * @return Product
      */
-    public function addToCart(Request $request): AddCartItemsResult
-    {
-        $result = new AddCartItemsResult();
+    public function addToCart(
+        string $sku,
+        int $quantity,
+        bool $lock = false,
+        string $promoCode = ''
+    ): Product {
 
-        $result->setSuccess(true);
-
-        $input = $request->all();
-
-        $cart = Cart::fromSession();
+        $this->refreshCart();
 
         // cart locking
-        if (!empty($input['locked']) && $input['locked'] == "true") {
-            $cart->setLocked(true);
-        } elseif ($cart->getLocked()) {
+        if ($lock) {
+            $this->cart->setLocked(true);
+
+        } elseif ($this->cart->getLocked()) {
 
             // if the cart is locked and a new item is added, we should wipe it first
-            $cart = new Cart();
-            $cart->toSession();
+            $this->cart = new Cart();
+            $this->cart->toSession();
         }
 
         // promo code
-        if (!empty($input['promo-code'])) {
-            $cart->setPromoCode($input['promo-code']);
+        if (!empty($promoCode)) {
+            $this->cart->setPromoCode($promoCode);
         }
 
-        // products
-        if (!empty($input['products'])) {
-            $products = $input['products'];
+        // product
+        $product = $this->allProducts[$sku];
 
-            foreach ($products as $productSku => $productInfo) {
-                $productInfo = explode(',', $productInfo); // todo - clarify where the rest of the $productInfo is used
-
-                $quantityToAdd = $productInfo[0];
-
-                $product = $this->productRepository->findOneBySku($productSku);
-
-                if ($product && $product->isActive() && ($product->getStock() === null || $product->getStock() >= $quantityToAdd)) {
-                    // todo - confirm isActive check
-                    $cart->setItem(new CartItem($productSku, $quantityToAdd));
-
-                    $result->addProduct($product);
-
-                } else {
-                    $result->setSuccess(false);
-
-                    $message = 'Product with SKU:' . $productSku . ' could not be added to cart.';
-                    $message .= (!is_null($product)) ?
-                        ' The product stock(' .
-                        $product->getStock() .
-                        ') is smaller than the quantity you\'ve selected(' .
-                        $quantityToAdd .
-                        ')' : '';
-
-                    $result->addError(['message' => $message, 'product' => $product]);
-                }
-            }
+        if (empty($product)) {
+            throw new ProductNotFoundException($sku);
         }
 
-        // save the cart to the session
-        $cart->toSession();
+        if (!$product->getActive()) {
+            throw new ProductNotActiveException($product);
+        }
 
-        return $result;
+        if ($product->getStock() !== null
+            && $product->getStock() < $quantity
+        ) {
+            throw new ProductOutOfStockException($product);
+        }
+
+        $this->cart->setItem(new CartItem($sku, $quantity));
+
+        $this->cart->toSession();
+
+        return $product;
     }
 
     /**
-     * Removes the cart item, if the product is in cart
+     * Removes the cart item
      *
-     * @param Product $product
+     * @param  string  $sku
+     *
+     * @return bool
      */
-    public function removeProductFromCart(Product $product)
+    public function removeFromCart(string $sku)
     {
         $this->refreshCart();
 
-        if ($this->cart->getItemBySku($product->getSku())) {
-            $this->cart->removeCartItemBySku($product->getSku());
-        }
+        $this->cart->removeItemBySku($sku);
 
         $this->cart->toSession();
+
+        return true;
     }
 
     /**
@@ -198,40 +200,42 @@ class CartService
      * If the operation is successful, null will be returned
      * A string error message will be returned on product active/stock errors
      *
-     * @param Product $product
-     * @param int $quantity
+     * @param  Product  $product
+     * @param  int  $quantity
      *
      * @return string|null
      */
-    public function updateCartItemProductQuantity(Product $product, int $quantity): ?string
-    {
+    public function updateCartItemProductQuantity(
+        Product $product,
+        int $quantity
+    ): ?string {
+        // todo: refactor
         $error = null;
 
         if ($quantity < 0) {
             $error = 'Invalid quantity value.';
 
-        } else if (!$product->isActive() || $product->getStock() < $quantity) {
-            // todo - confirm isActive check
-            $message = 'The quantity can not be updated.';
-            $message .= (is_object($product) && get_class($product) == Product::class) ?
-                ' The product stock(' .
-                $product->getStock() .
-                ') is smaller than the quantity you\'ve selected(' .
-                $quantity .
-                ')' : '';
-
-            $error = $message;
-
         } else {
-            $this->refreshCart();
+            if (!$product->isActive() || $product->getStock() < $quantity) {
+                // todo - confirm isActive check
+                $message = 'The quantity can not be updated.';
+                $message .= (is_object($product)
+                    && get_class($product) == Product::class)
+                    ? ' The product stock('.$product->getStock()
+                    .') is smaller than the quantity you\'ve selected('
+                    .$quantity.')' : '';
 
-            $cartItem = $this->cart->getItemBySku($product->getSku());
+                $error = $message;
 
-            $cartItem->setQuantity($quantity);
+            } else {
+                $this->refreshCart();
 
-            $this->cart
-                ->setItem($cartItem)
-                ->toSession();
+                $cartItem = $this->cart->getItemBySku($product->getSku());
+
+                $cartItem->setQuantity($quantity);
+
+                $this->cart->setItem($cartItem)->toSession();
+            }
         }
 
         return $error;
@@ -247,7 +251,8 @@ class CartService
      */
     public function cartHasAnyPhysicalItems()
     {
-        $products = $this->productRepository->findBySkus(['sku' => $this->cart->listSkus()]);
+        $products
+            = $this->productRepository->findBySkus($this->cart->listSkus());
 
         foreach ($products as $product) {
             if ($product->getIsPhysical()) {
@@ -263,7 +268,8 @@ class CartService
      */
     public function getTotalCartItemWeight()
     {
-        $products = $this->productRepository->findBySkus(['sku' => $this->cart->listSkus()]);
+        $products
+            = $this->productRepository->findBySkus($this->cart->listSkus());
 
         $totalWeight = 0;
 
@@ -277,16 +283,19 @@ class CartService
     /**
      * @return float
      */
-    public function getInitialShippingDue()
+    public function getTotalShippingDue()
     {
         $this->refreshCart();
 
         $shippingAddress = $this->cart->getShippingAddress();
-        $shippingCountry = $shippingAddress ? $shippingAddress->getCountry() : '';
+        $shippingCountry = $shippingAddress ? $shippingAddress->getCountry()
+            : '';
 
         $totalWeight = $this->getTotalCartItemWeight();
 
-        $shippingOption = $this->shippingOptionRepository->getShippingCosts($shippingCountry, $totalWeight);
+        $shippingOption
+            = $this->shippingOptionRepository->getShippingCosts($shippingCountry,
+            $totalWeight);
 
         $initialShippingCost = 0;
 
@@ -297,17 +306,9 @@ class CartService
             $initialShippingCost = $shippingCost->getPrice();
         }
 
+        // todo: fix
+//        return $this->discountService->getDiscountedShippingDue($initialShippingCost);
         return $initialShippingCost;
-    }
-
-    /**
-     * @return float
-     */
-    public function getTotalShippingDue()
-    {
-        $initialShippingCosts = $this->getInitialShippingDue();
-
-        return $this->discountService->getDiscountedShippingDue($initialShippingCosts);
     }
 
     /**
@@ -317,7 +318,8 @@ class CartService
     {
         $this->refreshCart();
 
-        $products = $this->productRepository->findBySkus(['sku' => $this->cart->listSkus()]);
+        $products
+            = $this->productRepository->findBySkus($this->cart->listSkus());
 
         $totalItemCostDue = 0;
 
@@ -328,7 +330,8 @@ class CartService
              */
             $cartItem = $this->cart->getItemBySku($product->getSku());
 
-            $totalItemCostDue += ($product->getPrice() ?? 0) * $cartItem->getQuantity();
+            $totalItemCostDue += ($product->getPrice() ?? 0)
+                * $cartItem->getQuantity();
         }
 
         return $totalItemCostDue;
@@ -341,7 +344,7 @@ class CartService
     {
         $initialProductsDue = $this->getProductsDue();
 
-        return $this->discountService->getDiscountedItemsCostDue($initialProductsDue);
+        return $initialProductsDue;
     }
 
     /**
@@ -354,13 +357,19 @@ class CartService
         $taxableAddress = null;
         $billingAddress = $this->cart->getBillingAddress();
 
-        if ($billingAddress && strtolower($billingAddress->getCountry()) == strtolower(self::TAXABLE_COUNTRY)) {
+        if ($billingAddress
+            && strtolower($billingAddress->getCountry())
+            == strtolower(self::TAXABLE_COUNTRY)
+        ) {
             $taxableAddress = $billingAddress;
         }
 
         $shippingAddress = $this->cart->getShippingAddress();
 
-        if (!$taxableAddress && $shippingAddress && strtolower($billingAddress->getCountry()) == strtolower(self::TAXABLE_COUNTRY)) {
+        if (!$taxableAddress && $shippingAddress
+            && strtolower($billingAddress->getCountry())
+            == strtolower(self::TAXABLE_COUNTRY)
+        ) {
             $taxableAddress = $shippingAddress;
         }
 
@@ -378,9 +387,9 @@ class CartService
      */
     public function getTotalDue()
     {
-        $totalItemCostDue = $this->getDiscountedProductsDue();
+        $totalItemCostDue = $this->getTotalItemCostDue();
 
-        // todo: apply product discounts and subtract from $totalItemCostDue - should be applied in getDiscountedProductsDue
+        // todo: apply product discounts and subtract from $totalItemCostDue - should be applied in getTotalItemCostDue
 
         $shippingDue = $this->getTotalShippingDue();
 
@@ -401,11 +410,11 @@ class CartService
      */
     public function getDueForInitialPayment()
     {
-        $totalItemCostDue = $this->getDiscountedProductsDue();
+        $totalItemCostDue = $this->getTotalItemCostDue();
 
         $shippingDue = $this->getTotalShippingDue();
 
-        // todo: apply product discounts and subtract from $totalItemCostDue - should be applied in getDiscountedProductsDue
+        // todo: apply product discounts and subtract from $totalItemCostDue - should be applied in getTotalItemCostDue
 
         // only item and shipping costs are taxed
         $taxDue = $this->getTotalTaxDue($totalItemCostDue + $shippingDue);
@@ -420,20 +429,25 @@ class CartService
         // All shipping must be paid on the first payment.
         $totalToFinance = $totalItemCostDue + $taxDue + $financeDue;
 
-        $initialTotalDueBeforeShipping = round($totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(), 2);
+        $initialTotalDueBeforeShipping = round($totalToFinance
+            / $this->cart->getPaymentPlanNumberOfPayments(), 2);
 
         // account for any rounded off cents by adding the difference after all payments to the first payment
-        if ($initialTotalDueBeforeShipping * $this->cart->getPaymentPlanNumberOfPayments() != $totalToFinance) {
-            $initialTotalDueBeforeShipping += abs($initialTotalDueBeforeShipping *
-                $this->cart->getPaymentPlanNumberOfPayments() - $totalToFinance);
+        if ($initialTotalDueBeforeShipping
+            * $this->cart->getPaymentPlanNumberOfPayments() != $totalToFinance
+        ) {
+            $initialTotalDueBeforeShipping += abs($initialTotalDueBeforeShipping
+                * $this->cart->getPaymentPlanNumberOfPayments()
+                - $totalToFinance);
         }
 
         return $initialTotalDueBeforeShipping + $shippingDue;
     }
 
     /**
-     * Calculate the discounted price on items and the discounted amount on cart(discounts that should be applied on
-     * order) and set the discounted price on order item and the total discount amount on cart.
+     * Calculate the discounted price on items and the discounted amount on
+     * cart(discounts that should be applied on order) and set the discounted
+     * price on order item and the total discount amount on cart.
      *
      * Return the cart with the discounts applied.
      *
@@ -511,4 +525,94 @@ class CartService
     //    {
     //        $this->cart->setBrand($brand);
     //    }
+
+    /**
+     * @param $productSku
+     *
+     * @throws ProductNotFoundException
+     * @return float
+     */
+    public function getItemPriceBeforeDiscounts($productSku)
+    {
+        $product = $this->allProducts[$productSku];
+
+        if (empty($product)) {
+            throw new ProductNotFoundException($productSku);
+        }
+
+        return $product->getPrice();
+    }
+
+    /**
+     * @param $productSku
+     *
+     * @throws ProductNotFoundException
+     * @return float
+     */
+    public function getItemPriceAfterDiscounts($productSku)
+    {
+        $product = $this->allProducts[$productSku];
+
+        if (empty($product)) {
+            throw new ProductNotFoundException($productSku);
+        }
+
+        return 0;
+    }
+
+    /**
+     * @throws ProductNotFoundException
+     * @return array
+     */
+    public function toArray()
+    {
+        $this->refreshCart();
+
+        $items = [];
+
+        foreach ($this->cart->getItems() as $cartItem) {
+            $product = $this->allProducts[$cartItem->getSku()];
+
+            if (empty($product)) {
+                continue;
+            }
+
+            $items[] = [
+                'name'                        => $product->getName(),
+                'quantity'                    => $cartItem->getQuantity(),
+                'thumbnail_url'               => $product->getThumbnailUrl(),
+                'description'                 => $product->getDescription(),
+                'stock'                       => $product->getStock(),
+                'subscription_interval_type'  => $product->getSubscriptionIntervalType(),
+                'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
+                'price_before_discounts'      => $this->getItemPriceBeforeDiscounts($cartItem->getSku()),
+                'price_after_discounts'       => $this->getItemPriceAfterDiscounts($cartItem->getSku()),
+            ];
+        }
+
+        $shippingAddress = !empty($this->cart->getShippingAddress())
+            ? $this->cart->getShippingAddress()->toArray() : null;
+        $billingAddress = !empty($this->cart->getBillingAddress())
+            ? $this->cart->getBillingAddress()->toArray() : null;
+
+        // todo: discounts, pull all visible discount names that were applied
+        $discounts = [];
+
+        $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments();
+
+        $totals = [
+            'shipping' => $this->getTotalShippingDue(),
+            'tax'      => $this->getTotalTaxDue(),
+            'due'      => $this->getDueForInitialPayment(),
+        ];
+
+        return [
+            'items'              => $items,
+            'discounts'          => $discounts,
+            'shipping_address'   => $shippingAddress,
+            'billing_address'    => $billingAddress,
+            'number_of_payments' => $numberOfPayments,
+            'totals'             => $totals,
+        ];
+    }
 }

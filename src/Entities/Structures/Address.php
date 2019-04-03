@@ -48,16 +48,12 @@ class Address implements AddressInterface, Serializable
      */
     protected $city;
 
-    const PROPS_MAP = [
-        'country' => true,
-        'state' => true,
-        'firstName' => true,
-        'lastName' => true,
-        'streetLineOne' => true,
-        'streetLineTwo' => true,
-        'zipOrPostalCode' => true,
-        'city' => true,
-    ];
+    const PROPS_MAP
+        = [
+            'country'       => true, 'state' => true, 'firstName' => true,
+            'lastName'      => true, 'streetLineOne' => true,
+            'streetLineTwo' => true, 'zipOrPostalCode' => true, 'city' => true,
+        ];
 
     public function __construct(
         ?string $country = null,
@@ -77,7 +73,7 @@ class Address implements AddressInterface, Serializable
     }
 
     /**
-     * @param string $country
+     * @param  string  $country
      *
      * @return Address
      */
@@ -97,7 +93,7 @@ class Address implements AddressInterface, Serializable
     }
 
     /**
-     * @param string $state
+     * @param  string  $state
      *
      * @return Address
      */
@@ -117,7 +113,7 @@ class Address implements AddressInterface, Serializable
     }
 
     /**
-     * @param string $firstName
+     * @param  string  $firstName
      *
      * @return Address
      */
@@ -137,7 +133,7 @@ class Address implements AddressInterface, Serializable
     }
 
     /**
-     * @param string $lastName
+     * @param  string  $lastName
      *
      * @return Address
      */
@@ -157,7 +153,7 @@ class Address implements AddressInterface, Serializable
     }
 
     /**
-     * @param string $streetLineOne
+     * @param  string  $streetLineOne
      *
      * @return Address
      */
@@ -177,7 +173,7 @@ class Address implements AddressInterface, Serializable
     }
 
     /**
-     * @param string $streetLineTwo
+     * @param  string  $streetLineTwo
      *
      * @return Address
      */
@@ -197,7 +193,7 @@ class Address implements AddressInterface, Serializable
     }
 
     /**
-     * @param string $zipOrPostalCode
+     * @param  string  $zipOrPostalCode
      *
      * @return Address
      */
@@ -217,7 +213,7 @@ class Address implements AddressInterface, Serializable
     }
 
     /**
-     * @param string $city
+     * @param  string  $city
      *
      * @return Address
      */
@@ -231,15 +227,15 @@ class Address implements AddressInterface, Serializable
     /**
      * Merges data from $address into current address
      *
-     * @param Address $address
+     * @param  Address  $address
      *
      * @return Address
      */
     public function merge(Address $address): self
     {
         foreach (self::PROPS_MAP as $key => $nil) {
-            $setterName = Inflector::camelize('set' . ucwords($key));
-            $getterName = Inflector::camelize('get' . ucwords($key));
+            $setterName = Inflector::camelize('set'.ucwords($key));
+            $getterName = Inflector::camelize('get'.ucwords($key));
 
             $currentValue = call_user_func([$this, $getterName]);
             $newValue = call_user_func([$address, $getterName]);
@@ -259,18 +255,17 @@ class Address implements AddressInterface, Serializable
     {
         return [
             'zip_or_postal_code' => $this->zipOrPostalCode,
-            'street_line_two' => $this->streetLineTwo,
-            'street_line_one' => $this->streetLineOne,
-            'last_name' => $this->lastName,
-            'first_name' => $this->firstName,
-            'state' => $this->state,
-            'country' => $this->country,
-            'city' => $this->city,
+            'street_line_two'    => $this->streetLineTwo,
+            'street_line_one'    => $this->streetLineOne,
+            'last_name'          => $this->lastName,
+            'first_name'         => $this->firstName, 'state' => $this->state,
+            'country'            => $this->country, 'city' => $this->city,
         ];
     }
 
     /**
      * @param $array
+     *
      * @return Address
      */
     public static function createFromArray($array)
@@ -279,7 +274,7 @@ class Address implements AddressInterface, Serializable
 
         foreach (self::PROPS_MAP as $key => $nil) {
             if (isset($array[$key])) {
-                $setterName = Inflector::camelize('set' . ucwords($key));
+                $setterName = Inflector::camelize('set'.ucwords($key));
 
                 call_user_func([$address, $setterName], $array[$key]);
             }
@@ -293,20 +288,11 @@ class Address implements AddressInterface, Serializable
      */
     public function serialize()
     {
-        return serialize([
-            'zip_or_postal_code' => $this->zipOrPostalCode,
-            'street_line_two' => $this->streetLineTwo,
-            'street_line_one' => $this->streetLineOne,
-            'last_name' => $this->lastName,
-            'first_name' => $this->firstName,
-            'state' => $this->state,
-            'country' => $this->country,
-            'city' => $this->city,
-        ]);
+        return serialize($this->toArray());
     }
 
     /**
-     * @param array $data
+     * @param  array  $data
      */
     public function unserialize($data)
     {

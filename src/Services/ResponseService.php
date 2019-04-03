@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Structures\AddCartItemsResult;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
 use Railroad\Ecommerce\Transformers\CartItemTransformer;
@@ -501,10 +502,8 @@ class ResponseService extends FractalResponseService
         }
 
         foreach ($result->getErrors() as $errorData) {
-            $products[] = $errorData['product'];
             $errors[] = [
                 'message' => $errorData['message'],
-                'productId' => $errorData['product']->getId()
             ];
         }
 

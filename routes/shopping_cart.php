@@ -10,12 +10,16 @@ Route::group([
     Route::get('/add-to-cart', Railroad\Ecommerce\Controllers\AddToCartController::class . '@addToCart')
         ->name('shopping-cart.add-to-cart');
 
-    Route::put('/remove-from-cart/{productId}',
-        Railroad\Ecommerce\Controllers\ShoppingCartJsonController::class . '@removeCartItem')
-        ->name('shopping-cart.remove-from-cart');
+    Route::put('/json/add-to-cart',
+        Railroad\Ecommerce\Controllers\CartJsonController::class . '@addCartItem')
+        ->name('shopping-cart.json.remove-from-cart');
 
-    Route::put('/update-product-quantity/{productId}/{quantity}',
-        Railroad\Ecommerce\Controllers\ShoppingCartJsonController::class . '@updateCartItemQuantity')
-        ->name('shopping-cart.update-cart-item-quantity');
+    Route::delete('/json/remove-from-cart/{productSku}',
+        Railroad\Ecommerce\Controllers\CartJsonController::class . '@removeCartItem')
+        ->name('shopping-cart.json.remove-from-cart');
+
+    Route::patch('/json/update-product-quantity/{productSku}/{quantity}',
+        Railroad\Ecommerce\Controllers\CartJsonController::class . '@updateCartItemQuantity')
+        ->name('shopping-cart.json.update-cart-item-quantity');
 
 });

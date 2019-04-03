@@ -19,10 +19,6 @@ class DiscountCriteriaService
      */
     private $cartAddressService;
 
-    /**
-     * @var CartService
-     */
-    private $cartService;
 
     /**
      * @var EcommerceEntityManager
@@ -58,13 +54,11 @@ class DiscountCriteriaService
      */
     public function __construct(
         CartAddressService $cartAddressService,
-        CartService $cartService,
         EcommerceEntityManager $entityManager,
         UserProductRepository $userProductRepository,
         UserProviderInterface $userProvider
     ) {
         $this->cartAddressService = $cartAddressService;
-        $this->cartService = $cartService;
         $this->entityManager = $entityManager;
         $this->userProductRepository = $userProductRepository;
 
