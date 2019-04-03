@@ -29,4 +29,27 @@ class DiscountRepository extends EntityRepository
     {
         parent::__construct($em, $em->getClassMetadata(Discount::class));
     }
+
+    /**
+     * Returns an array of Discounts with associated DiscountCriteria loaded
+     *
+     * @return array
+     */
+    public function getActiveDiscountsWithCriteria()
+    {
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->getEntityManager()
+            ->createQueryBuilder();
+
+        $qb->select(['d', 'dc'])
+            ->leftJoin('d.discountCriterias', 'dc')
+            ->where($qb->expr()
+                ->eq('d.active', ':active'))
+            ->setParameter('active', true);
+
+        return $qb->getQuery()
+            ->getResult();
+    }
 }

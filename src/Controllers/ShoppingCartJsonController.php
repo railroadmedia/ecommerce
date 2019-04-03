@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Structures\AddCartItemsResult;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\CartAddressService;
@@ -71,92 +72,14 @@ class ShoppingCartJsonController extends BaseController
      *
      * @param Request $request
      *
-     * @return RedirectResponse
+     * @return Fractal
      */
     public function addToCart(Request $request)
     {
-        // todo: update to use new cart logic/classes
-        $input = $request->all();
-        $errors = [];
-        $addedProducts = [];
-        $success = false;
+        /** @var AddCartItemsResult $addCartItemsResult */
+        $addCartItemsResult = $this->cartService->addToCart($request);
 
-        if (!empty($input['locked']) && $input['locked'] == "true") {
-            $this->cartService->lockCart();
-        } elseif ($this->cartService->isLocked()) {
-            $this->cartService->unlockCart();
-        }
-
-        // if the promo code exists on the requests, set it on the session
-        if (!empty($input['promo-code'])) {
-            $this->cartService->setPromoCode($input['promo-code']);
-        }
-
-        $cart = $this->cartService->getCart();
-
-        if (!empty($input['products'])) {
-            $products = $input['products'];
-
-            foreach ($products as $productSku => $productInfo) {
-                $productInfo = explode(',', $productInfo);
-
-                $quantityToAdd = $productInfo[0];
-
-                $product = $this->productRepository->findOneBySku($productSku);
-
-                if (
-                    $product &&
-                    (
-                        $product->getStock() === null ||
-                        $product->getStock() >= $quantityToAdd
-                    )
-                ) {
-                    $success = true;
-                    $addedProducts[] = $product;
-                    $cart = $this->cartService->addCartItem(
-                        $product->getName(),
-                        $product->getDescription(),
-                        $quantityToAdd,
-                        $product->getPrice(),
-                        $product->getIsPhysical(),
-                        $product->getIsPhysical(),
-                        $product->getSubscriptionIntervalType(),
-                        $product->getSubscriptionIntervalCount(),
-                        [
-                            'product-id' => $product->getId(),
-                            'requires-shipping-address' => $product->getIsPhysical(),
-                            'thumbnail_url' => $product->getThumbnailUrl(),
-                            'is_physical' => $product->getIsPhysical(),
-                        ]
-                    );
-
-                } else {
-                    $message = 'Product with SKU:' . $productSku . ' could not be added to cart.';
-                    $message .= (!is_null($product)) ?
-                        ' The product stock(' .
-                        $product->getStock() .
-                        ') is smaller than the quantity you\'ve selected(' .
-                        $quantityToAdd .
-                        ')' : '';
-                    $errors[] = ['message' => $message, 'product' => $product];
-                }
-            }
-        }
-
-        // todo: return json not redirect
-
-        /** @var \Illuminate\Http\RedirectResponse $redirectResponse */
-        $redirectResponse = $request->get('redirect') ?
-            redirect()->away($request->get('redirect')) :
-            redirect()->back();
-
-        $redirectResponse->with('success', $success);
-        $redirectResponse->with('addedProducts', $addedProducts);
-        $redirectResponse->with('cartSubTotal', $cart->getTotalDue());
-        $redirectResponse->with('cartNumberOfItems', count($cart->getItems()));
-        $redirectResponse->with('notAvailableProducts', $errors);
-
-        return $redirectResponse;
+        return ResponseService::addCartItemsResult($addCartItemsResult);
     }
 
     /**
@@ -168,21 +91,12 @@ class ShoppingCartJsonController extends BaseController
      */
     public function removeCartItem($productId)
     {
-        // todo: update to use new cart logic/classes
+        $product = $this->productRepository->find($productId);
 
-        $cartItems = $this->cartService->getCart()->getItems();
+        $this->cartService->removeProductFromCart($product);
 
-        foreach ($cartItems as $cartItem) {
-            /**
-             * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
-             */
-            if ($cartItem->getOptions()['product-id'] == $productId) {
-                $this->cartService->removeCartItem($cartItem->id);
-                $this->cartService->calculateShippingCosts();
-            }
-        }
+        $cartItems = Cart::fromSession()->getItems();
 
-        $cartItems = $this->cartService->getCart()->getItems();
         $cartMetaData = $this->getCartData();
 
         return ResponseService::cartData($cartItems, $cartMetaData);
@@ -201,61 +115,17 @@ class ShoppingCartJsonController extends BaseController
      */
     public function updateCartItemQuantity($productId, $quantity)
     {
-        // todo: update to use new cart logic/classes
-
         $product = $this->productRepository->find($productId);
 
-        $errors = [];
-        $success = true;
+        $error = $this->cartService->updateCartItemProductQuantity($product, $quantity);
 
-        if ($quantity < 0) {
-            $errors = ['Invalid quantity value.'];
-            $success = false;
-        }
-
-        if ($success && (!$product || $product->getStock() < $quantity)) {
-            $message = 'The quantity can not be updated.';
-            $message .= (is_object($product) && get_class($product) == Product::class) ?
-                ' The product stock(' .
-                $product->getStock() .
-                ') is smaller than the quantity you\'ve selected(' .
-                $quantity .
-                ')' : '';
-            $errors[] = $message;
-            $success = false;
-        }
-
-        if ($success) {
-
-            $cartItems = $this->cartService->getAllCartItems();
-
-            foreach ($cartItems as $cartItem) {
-                /**
-                 * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
-                 */
-                if ($cartItem->getOptions()['product-id'] == $productId) {
-                    if ($quantity > 0) {
-                        $this->cartService
-                            ->updateCartItemQuantity(
-                                $cartItem->getId(),
-                                $quantity
-                            );
-                    } else {
-                        $this->cartService->removeCartItem($cartItem->getId());
-                    }
-
-                    $this->cartService->calculateShippingCosts();
-                }
-            }
-        }
-
-        $cartItems = $this->cartService->getAllCartItems();
+        $cartItems = Cart::fromSession()->getItems();
 
         $cartMetaData = array_merge(
             [
-                'success' => $success,
+                'success' => ($error === null),
                 'cartNumberOfItems' => count($cartItems),
-                'notAvailableProducts' => $errors,
+                'notAvailableProducts' => [$error],
             ],
             $this->getCartData()
         );
@@ -268,21 +138,17 @@ class ShoppingCartJsonController extends BaseController
      */
     protected function getCartData()
     {
-        // todo: update to use new cart logic/classes
-
         $cartData = [
             'tax' => 0,
             'total' => 0,
         ];
 
-        $cartItems = $this->cartService->getAllCartItems();
+        $cartItems = Cart::fromSession()->getItems();
 
         if (count($cartItems)) {
 
-            $cart = $this->cartService->getCart();
-
-            $cartData['tax'] = $cart->calculateTaxesDue();
-            $cartData['total'] = $cart->getTotalDue();
+            $cartData['tax'] = $this->cartService->getTotalTaxDue();
+            $cartData['total'] = $this->cartService->getTotalDue();
 
             $isPaymentPlanEligible = $this->paymentPlanService
                 ->isPaymentPlanEligible();

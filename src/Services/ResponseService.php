@@ -6,6 +6,7 @@ use Doctrine\ORM\QueryBuilder;
 use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
 use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Entities\Structures\AddCartItemsResult;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
@@ -486,5 +487,37 @@ class ResponseService extends FractalResponseService
                 new JsonApiSerializer()
             )
             ->addMeta($metaData);
+    }
+
+    public static function addCartItemsResult(AddCartItemsResult $result)
+    {
+        $addedProducts = [];
+        $errors = [];
+        $products = [];
+
+        foreach ($result->getAddedProducts() as $product) {
+            $products[] = $product;
+            $addedProducts[] = ['productId' => $product->getId()];
+        }
+
+        foreach ($result->getErrors() as $errorData) {
+            $products[] = $errorData['product'];
+            $errors[] = [
+                'message' => $errorData['message'],
+                'productId' => $errorData['product']->getId()
+            ];
+        }
+
+        return self::create(
+                $products,
+                'product',
+                new ProductTransformer(),
+                new JsonApiSerializer()
+            )
+            ->addMeta([
+                'success' => $result->getSuccess(),
+                'addedProducts' => $addedProducts,
+                'errors' => $errors
+            ]);
     }
 }

@@ -52,7 +52,7 @@ class Cart implements \Serializable
      * @param string $sku
      * @return CartItem|null
      */
-    public function getItemBySku(string $sku): CartItem
+    public function getItemBySku(string $sku): ?CartItem
     {
         return $this->items[$sku] ?? null;
     }
