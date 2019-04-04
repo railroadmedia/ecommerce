@@ -17,6 +17,11 @@ class CartItem implements Serializable
     private $quantity;
 
     /**
+     * @var float
+     */
+    private $discountAmount;
+
+    /**
      * CartItem constructor.
      *
      * @param string $sku
@@ -58,6 +63,22 @@ class CartItem implements Serializable
     public function setQuantity(int $quantity): void
     {
         $this->quantity = $quantity;
+    }
+
+    /**
+     * @param float $discountAmount
+     */
+    public function setDiscountAmount(float $discountAmount): void
+    {
+        $this->discountAmount = $discountAmount;
+    }
+
+    /**
+     * @return float
+     */
+    public function getDiscountAmount(): float
+    {
+        $this->discountAmount = $discountAmount;
     }
 
     /**

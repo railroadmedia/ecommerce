@@ -1,11 +1,9 @@
 <?php
 
-namespace Railroad\Ecommerce\Cart\Exceptions;
+namespace Railroad\Ecommerce\Exceptions\Cart;
 
 use Exception;
-use Railroad\Ecommerce\Entities\Product;
 
 class AddToCartException extends Exception
 {
-
 }

@@ -3,8 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
-use Railroad\Ecommerce\Cart\Exceptions\AddToCartException;
-use Railroad\Ecommerce\Cart\Exceptions\ProductNotFoundException;
+use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
@@ -88,6 +87,7 @@ class CartJsonController extends BaseController
                 );
             } catch (AddToCartException $addToCartException) {
                 $errors[] = $addToCartException->getMessage();
+                continue;
             }
 
             if (empty($product)) {
@@ -102,7 +102,7 @@ class CartJsonController extends BaseController
             $cartArray['errors'] = $errors;
         }
 
-        return ResponseService::create($cartArray, 'cart', null, null);
+        return ResponseService::cart($cartArray);
     }
 
     /**

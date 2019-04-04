@@ -37,6 +37,21 @@ class Cart implements \Serializable
     private $billingAddress;
 
     /**
+     * @var float
+     */
+    private $orderDiscountAmount;
+
+    /**
+     * @var float
+     */
+    private $shippingDiscountAmount;
+
+    /**
+     * @var string[]
+     */
+    private $cartDiscountNames;
+
+    /**
      * Get cart items
      *
      * @return CartItem[]
@@ -139,6 +154,54 @@ class Cart implements \Serializable
     public function setPromoCode(string $promoCode): void
     {
         $this->promoCode = $promoCode;
+    }
+
+    /**
+     * @return float
+     */
+    public function getOrderDiscountAmount(): float
+    {
+        return $this->orderDiscountAmount;
+    }
+
+    /**
+     * @param float $orderDiscountAmount
+     */
+    public function setOrderDiscountAmount(float $orderDiscountAmount): void
+    {
+        $this->orderDiscountAmount = $orderDiscountAmount;
+    }
+
+    /**
+     * @return float
+     */
+    public function getShippingDiscountAmount(): float
+    {
+        return $this->shippingDiscountAmount;
+    }
+
+    /**
+     * @param float $shippingDiscountAmount
+     */
+    public function setShippingDiscountAmount(float $shippingDiscountAmount): void
+    {
+        $this->shippingDiscountAmount = $shippingDiscountAmount;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCartDiscountNames(): array
+    {
+        return $this->cartDiscountNames;
+    }
+
+    /**
+     * @param array $discountName
+     */
+    public function setCartDiscountNames(array $discountName): void
+    {
+        $this->cartDiscountNames = $discountName;
     }
 
     /**

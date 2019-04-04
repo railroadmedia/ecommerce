@@ -1,6 +1,6 @@
 <?php
 
-namespace Railroad\Ecommerce\Cart\Exceptions;
+namespace Railroad\Ecommerce\Exceptions\Cart;
 
 use Railroad\Ecommerce\Entities\Product;
 
@@ -26,5 +26,4 @@ class ProductNotActiveException extends AddToCartException
             1
         );
     }
-
 }

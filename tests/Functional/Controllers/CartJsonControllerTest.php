@@ -38,16 +38,65 @@ class CartJsonControllerTest extends EcommerceTestCase
             'products' => [$product['sku'] => $initialQuantity],
         ]);
 
-        dd($response->getContent());
+        // response asserts
 
-        // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
 
-        // assert the session has addedProducts key
-        $response->assertSessionHas('addedProducts');
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ]
+                    ]
+                ]
+            ]
+        );
 
-        $response->assertSessionHas('cartNumberOfItems', 1);
+        $decodedResponse = $response->decodeResponseJson();
 
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection count
+        $this->assertEquals(1, count($decodedResponse['meta']['cart']['items']));
+
+        // assert cart item data
+        $this->assertEquals(
+            [
+                'sku'                         => $product['sku'],
+                'name'                        => $product['name'],
+                'quantity'                    => $initialQuantity,
+                'thumbnail_url'               => $product['thumbnail_url'],
+                'description'                 => $product['description'],
+                'stock'                       => $product['stock'],
+                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'subscription_interval_count' => $product['subscription_interval_count'],
+                'price_before_discounts'      => $product['price'],
+                'price_after_discounts'       => 0, // todo - refactor
+            ],
+            $decodedResponse['meta']['cart']['items'][0]
+        );
+
+        $totalDue = $product['price'] * $initialQuantity;
+
+        // assert total due
+        $this->assertEquals(
+            $totalDue,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        // backend asserts
         $cart = Cart::fromSession();
 
         // assert cart items count
@@ -73,58 +122,119 @@ class CartJsonControllerTest extends EcommerceTestCase
         ]);
 
         $quantity = $this->faker->numberBetween(2, 10);
-        $response = $this->call('GET', '/add-to-cart/', [
+
+        $response = $this->call('PUT', '/json/add-to-cart/', [
             'products' => [$product['sku'] => $quantity],
         ]);
 
-        // assert the session has the messages set on false
-        $response->assertSessionHas('success', false);
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
 
-        // assert the items was not added to cart
-        $response->assertSessionHas('addedProducts', []);
-        $response->assertSessionHas('cartNumberOfItems', 0);
-
-        $em = $this->app->make(EcommerceEntityManager::class);
-
-        $productEntity = $em->getRepository(Product::class)
-            ->find($product['id']);
-
-        // assert the session has the error message
-        $response->assertSessionHas('notAvailableProducts', [
+        // assert cart structure
+        $response->assertJsonStructure(
             [
-                'message' => 'Product with SKU:' .
-                    $product['sku'] .
-                    ' could not be added to cart. The product stock(' .
-                    $product['stock'] .
-                    ') is smaller than the quantity you\'ve selected(' .
-                    $quantity .
-                    ')',
-                'product' => $productEntity,
-            ],
-        ]);
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ],
+                        'errors',
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection is empty
+        $this->assertTrue(empty($decodedResponse['meta']['cart']['items']));
+
+        $this->assertEquals(
+            ['Product ' . $product['name'] . ' is currently out of stock, please check back later.'],
+            $decodedResponse['meta']['cart']['errors']
+        );
+
+        $this->assertEquals(
+            0,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items collection is empty
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertTrue(empty($cart->getItems()));
     }
 
     public function test_add_inexistent_product_to_cart()
     {
         $randomSku = $this->faker->word;
-        $response = $this->call('GET', '/add-to-cart', [
+
+        $response = $this->call('PUT', '/json/add-to-cart/', [
             'products' => [$randomSku => 10],
         ]);
 
-        // assert the session has the success message set to false
-        $response->assertSessionHas('success', false);
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
 
-        //assert the item was not added to the cart
-        $response->assertSessionHas('addedProducts', []);
-        $response->assertSessionHas('cartNumberOfItems', 0);
-
-        // assert the session has the error message
-        $response->assertSessionHas('notAvailableProducts', [
+        // assert cart structure
+        $response->assertJsonStructure(
             [
-                'message' => 'Product with SKU:' . $randomSku . ' could not be added to cart.',
-                'product' => null,
-            ],
-        ]);
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ],
+                        'errors',
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection is empty
+        $this->assertTrue(empty($decodedResponse['meta']['cart']['items']));
+
+        $this->assertEquals(
+            ['No product with SKU ' . $randomSku . ' was found.'],
+            $decodedResponse['meta']['cart']['errors']
+        );
+
+        $this->assertEquals(
+            0,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items collection is empty
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertTrue(empty($cart->getItems()));
     }
 
     public function test_add_many_products_to_cart()
@@ -139,24 +249,80 @@ class CartJsonControllerTest extends EcommerceTestCase
             'stock' => $this->faker->numberBetween(5, 100),
         ]);
 
-        $productOneQuantity = 2;
+        $productOneQuantity = 1;
         $productTwoQuantity = 2;
 
-        $response = $this->call('GET', '/add-to-cart/', [
+        $response = $this->call('PUT', '/json/add-to-cart/', [
             'products' => [
                 $productOne['sku'] => $productOneQuantity,
                 $productTwo['sku'] => $productTwoQuantity,
             ],
         ]);
 
-        // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        // response asserts
 
-        //assert the items were added to the cart
-        $response->assertSessionHas('addedProducts');
-        $response->assertSessionHas('cartNumberOfItems', 2);
-        $response->assertSessionHas('notAvailableProducts', []);
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ]
+                    ]
+                ]
+            ]
+        );
 
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection count
+        $this->assertEquals(2, count($decodedResponse['meta']['cart']['items']));
+
+        // assert cart item data
+        $this->assertEquals(
+            [
+                'sku'                         => $productOne['sku'],
+                'name'                        => $productOne['name'],
+                'quantity'                    => $productOneQuantity,
+                'thumbnail_url'               => $productOne['thumbnail_url'],
+                'description'                 => $productOne['description'],
+                'stock'                       => $productOne['stock'],
+                'subscription_interval_type'  => $productOne['subscription_interval_type'],
+                'subscription_interval_count' => $productOne['subscription_interval_count'],
+                'price_before_discounts'      => $productOne['price'],
+                'price_after_discounts'       => 0, // todo - refactor
+            ],
+            $decodedResponse['meta']['cart']['items'][0]
+        );
+
+        $this->assertEquals(
+            [
+                'sku'                         => $productTwo['sku'],
+                'name'                        => $productTwo['name'],
+                'quantity'                    => $productTwoQuantity,
+                'thumbnail_url'               => $productTwo['thumbnail_url'],
+                'description'                 => $productTwo['description'],
+                'stock'                       => $productTwo['stock'],
+                'subscription_interval_type'  => $productTwo['subscription_interval_type'],
+                'subscription_interval_count' => $productTwo['subscription_interval_count'],
+                'price_before_discounts'      => $productTwo['price'],
+                'price_after_discounts'       => 0, // todo - refactor
+            ],
+            $decodedResponse['meta']['cart']['items'][1]
+        );
+
+        // backend asserts
         $cart = Cart::fromSession();
 
         // assert cart items count
@@ -190,35 +356,59 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         $quantity = $this->faker->numberBetween(5, 100);
 
-        $response = $this->call('GET', '/add-to-cart/', [
+        $response = $this->call('PUT', '/json/add-to-cart/', [
             'products' => [$product['sku'] => $quantity],
         ]);
 
-        // assert the session has the success message set to false
-        $response->assertSessionHas('success', false);
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
 
-        // assert the product was not added into the cart
-        $response->assertSessionHas('addedProducts', []);
-        $response->assertSessionHas('cartNumberOfItems', 0);
-
-        $em = $this->app->make(EcommerceEntityManager::class);
-
-        $productEntity = $em->getRepository(Product::class)
-            ->find($product['id']);
-
-        // assert the session has the error message
-        $response->assertSessionHas('notAvailableProducts', [
+        // assert cart structure
+        $response->assertJsonStructure(
             [
-                'message' => 'Product with SKU:' .
-                    $product['sku'] .
-                    ' could not be added to cart. The product stock(' .
-                    $product['stock'] .
-                    ') is smaller than the quantity you\'ve selected(' .
-                    $quantity .
-                    ')',
-                'product' => $productEntity,
-            ],
-        ]);
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ],
+                        'errors',
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection is empty
+        $this->assertTrue(empty($decodedResponse['meta']['cart']['items']));
+
+        $this->assertEquals(
+            ['Product ' . $product['name'] . ' is currently out of stock, please check back later.'],
+            $decodedResponse['meta']['cart']['errors']
+        );
+
+        $this->assertEquals(
+            0,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items collection is empty
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertTrue(empty($cart->getItems()));
     }
 
     public function test_add_products_available_and_not_available_to_cart()
@@ -239,7 +429,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $productOneQuantity = $this->faker->numberBetween(1, 5);
         $productTwoQuantity = $this->faker->numberBetween(1, 5);
 
-        $response = $this->call('GET', '/add-to-cart/', [
+        $response = $this->call('PUT', '/json/add-to-cart/', [
             'products' => [
                 $productOne['sku'] => $productOneQuantity,
                 $randomSku1 => 2,
@@ -248,24 +438,86 @@ class CartJsonControllerTest extends EcommerceTestCase
             ],
         ]);
 
-        // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
 
-        //assert valid items was added into the cart
-        $response->assertSessionHas('addedProducts');
-        $response->assertSessionHas('cartNumberOfItems', 2);
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ],
+                        'errors',
+                    ]
+                ]
+            ]
+        );
 
-        // assert the session has the error messages for the invalid products
-        $response->assertSessionHas('notAvailableProducts', [
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection count
+        $this->assertEquals(2, count($decodedResponse['meta']['cart']['items']));
+
+        // assert cart item data
+        $this->assertEquals(
             [
-                'message' => 'Product with SKU:' . $randomSku1 . ' could not be added to cart.',
-                'product' => null,
+                'sku'                         => $productOne['sku'],
+                'name'                        => $productOne['name'],
+                'quantity'                    => $productOneQuantity,
+                'thumbnail_url'               => $productOne['thumbnail_url'],
+                'description'                 => $productOne['description'],
+                'stock'                       => $productOne['stock'],
+                'subscription_interval_type'  => $productOne['subscription_interval_type'],
+                'subscription_interval_count' => $productOne['subscription_interval_count'],
+                'price_before_discounts'      => $productOne['price'],
+                'price_after_discounts'       => 0, // todo - refactor
             ],
+            $decodedResponse['meta']['cart']['items'][0]
+        );
+
+        $this->assertEquals(
             [
-                'message' => 'Product with SKU:' . $randomSku2 . ' could not be added to cart.',
-                'product' => null,
+                'sku'                         => $productTwo['sku'],
+                'name'                        => $productTwo['name'],
+                'quantity'                    => $productTwoQuantity,
+                'thumbnail_url'               => $productTwo['thumbnail_url'],
+                'description'                 => $productTwo['description'],
+                'stock'                       => $productTwo['stock'],
+                'subscription_interval_type'  => $productTwo['subscription_interval_type'],
+                'subscription_interval_count' => $productTwo['subscription_interval_count'],
+                'price_before_discounts'      => $productTwo['price'],
+                'price_after_discounts'       => 0, // todo - refactor
             ],
-        ]);
+            $decodedResponse['meta']['cart']['items'][1]
+        );
+
+        $totalDue = $productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity;
+
+        // assert total due
+        $this->assertEquals(
+            $totalDue,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        $this->assertEquals(
+            [
+                'No product with SKU ' . $randomSku1 . ' was found.',
+                'No product with SKU ' . $randomSku2 .  ' was found.',
+            ],
+            $decodedResponse['meta']['cart']['errors']
+        );
 
         $cart = Cart::fromSession();
 

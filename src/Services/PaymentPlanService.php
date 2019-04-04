@@ -65,6 +65,7 @@ class PaymentPlanService
      */
     public function getPaymentPlanPricingForCartItems()
     {
+        // todo - refactor
         $paymentPlanPricing = [];
         if ($this->isPaymentPlanEligible()) {
             $initialPaymentPlanOption =

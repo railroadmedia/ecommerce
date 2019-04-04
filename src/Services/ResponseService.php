@@ -6,7 +6,6 @@ use Doctrine\ORM\QueryBuilder;
 use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
 use Railroad\Ecommerce\Entities\AccessCode;
-use Railroad\Ecommerce\Entities\Structures\AddCartItemsResult;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Structures\Cart;
@@ -481,6 +480,7 @@ class ResponseService extends FractalResponseService
         array $cartItems,
         array $metaData
     ) {
+        // todo - deprecated, to be removed
         return self::create(
                 $cartItems,
                 'cartItem',
@@ -490,33 +490,21 @@ class ResponseService extends FractalResponseService
             ->addMeta($metaData);
     }
 
-    public static function addCartItemsResult(AddCartItemsResult $result)
+    /**
+     * @param array $cartArray
+     *
+     * @return Fractal
+     */
+    public static function cart(array $cartArray)
     {
-        $addedProducts = [];
-        $errors = [];
-        $products = [];
-
-        foreach ($result->getAddedProducts() as $product) {
-            $products[] = $product;
-            $addedProducts[] = ['productId' => $product->getId()];
-        }
-
-        foreach ($result->getErrors() as $errorData) {
-            $errors[] = [
-                'message' => $errorData['message'],
-            ];
-        }
-
-        return self::create(
-                $products,
-                'product',
-                new ProductTransformer(),
+        return fractal(
+                null,
+                function() {
+                    return null;
+                },
                 new JsonApiSerializer()
-            )
-            ->addMeta([
-                'success' => $result->getSuccess(),
-                'addedProducts' => $addedProducts,
-                'errors' => $errors
+            )->addMeta([
+                'cart' => $cartArray,
             ]);
     }
 }

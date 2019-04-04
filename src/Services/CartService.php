@@ -3,9 +3,9 @@
 namespace Railroad\Ecommerce\Services;
 
 use Illuminate\Session\Store;
-use Railroad\Ecommerce\Cart\Exceptions\ProductNotActiveException;
-use Railroad\Ecommerce\Cart\Exceptions\ProductNotFoundException;
-use Railroad\Ecommerce\Cart\Exceptions\ProductOutOfStockException;
+use Railroad\Ecommerce\Exceptions\Cart\ProductNotActiveException;
+use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
+use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
@@ -154,7 +154,7 @@ class CartService
         }
 
         // product
-        $product = $this->allProducts[$sku];
+        $product = $this->allProducts[$sku] ?? null;
 
         if (empty($product)) {
             throw new ProductNotFoundException($sku);
@@ -173,6 +173,8 @@ class CartService
         $this->cart->setItem(new CartItem($sku, $quantity));
 
         $this->cart->toSession();
+
+        $this->discountService->applyDiscountForCart();
 
         return $product;
     }
@@ -306,9 +308,7 @@ class CartService
             $initialShippingCost = $shippingCost->getPrice();
         }
 
-        // todo: fix
-//        return $this->discountService->getDiscountedShippingDue($initialShippingCost);
-        return $initialShippingCost;
+        return round($initialShippingCost - $this->cart->getShippingDiscountAmount(), 2);
     }
 
     /**
@@ -344,7 +344,13 @@ class CartService
     {
         $initialProductsDue = $this->getProductsDue();
 
-        return $initialProductsDue;
+        $productsDiscountAmount = 0;
+
+        foreach ($this->cart->getItems() as $cartItem) {
+            $productsDiscountAmount += $cartItem->getDiscountAmount();
+        }
+
+        return round($initialProductsDue - $productsDiscountAmount - $this->cart->getOrderDiscountAmount(), 2);
     }
 
     /**
@@ -352,8 +358,6 @@ class CartService
      */
     public function getTotalTaxDue()
     {
-        // todo - clarify if the tax applies to initial products/shipping costs or to discounted products/shipping costs
-
         $taxableAddress = null;
         $billingAddress = $this->cart->getBillingAddress();
 
@@ -373,6 +377,8 @@ class CartService
             $taxableAddress = $shippingAddress;
         }
 
+        $amountToTax = $this->getTotalItemCostDue() + $this->getTotalShippingDue();
+
         $result = 0;
 
         if ($taxableAddress) {
@@ -388,8 +394,6 @@ class CartService
     public function getTotalDue()
     {
         $totalItemCostDue = $this->getTotalItemCostDue();
-
-        // todo: apply product discounts and subtract from $totalItemCostDue - should be applied in getTotalItemCostDue
 
         $shippingDue = $this->getTotalShippingDue();
 
@@ -414,10 +418,8 @@ class CartService
 
         $shippingDue = $this->getTotalShippingDue();
 
-        // todo: apply product discounts and subtract from $totalItemCostDue - should be applied in getTotalItemCostDue
-
         // only item and shipping costs are taxed
-        $taxDue = $this->getTotalTaxDue($totalItemCostDue + $shippingDue);
+        $taxDue = $this->getTotalTaxDue();
 
         if ($this->cart->getPaymentPlanNumberOfPayments() > 1) {
             $financeDue = config('ecommerce.financing_cost_per_order');
@@ -557,7 +559,9 @@ class CartService
             throw new ProductNotFoundException($productSku);
         }
 
-        return 0;
+        $cartItem = $this->cart->getItemBySku($productSku);
+
+        return $product->getPrice() - $cartItem->getDiscountAmount();
     }
 
     /**
@@ -578,6 +582,7 @@ class CartService
             }
 
             $items[] = [
+                'sku'                         => $product->getSku(),
                 'name'                        => $product->getName(),
                 'quantity'                    => $cartItem->getQuantity(),
                 'thumbnail_url'               => $product->getThumbnailUrl(),
@@ -595,8 +600,7 @@ class CartService
         $billingAddress = !empty($this->cart->getBillingAddress())
             ? $this->cart->getBillingAddress()->toArray() : null;
 
-        // todo: discounts, pull all visible discount names that were applied
-        $discounts = [];
+        $discounts = $this->cart->getCartDiscountNames();
 
         $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments();
 

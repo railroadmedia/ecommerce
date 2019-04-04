@@ -138,28 +138,74 @@ class DiscountService
     }
 
     /**
+     * Applys the cart discounts by populating discount amounts properties on cart and cart items
+     */
+    public function applyDiscountForCart()
+    {
+        // wip
+        $orderDiscountAmount = 0;
+        $shippingDiscountAmount = 0;
+        $shippingOverwrite = false;
+        $productsDiscountAmount = []; // keyd by product sku
+        $discountNames = [];
+        $shippingDiscountNames = []; // ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE will truncate the array, if discount exists
+
+        $cart = Cart::fromSession();
+
+        foreach ($this->getDiscountsForCart() as $discount) {
+
+            switch ($discount->getType()) {
+                case self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE:
+                    if (!$shippingOverwrite) {
+                        $shippingDiscountAmount = round($shippingDiscountAmount + $discount->getAmount(), 2);
+                    }
+                    break;
+
+                case self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE:
+                    if (!$shippingOverwrite) {
+                    }
+                    break;
+
+                default:
+                    # code...
+                    break;
+            }
+        }
+
+        $cart->setOrderDiscountAmount($orderDiscountAmount);
+        $cart->setShippingDiscountAmount($shippingDiscountAmount);
+        $cart->setCartDiscountNames(array_merge($discountNames, $shippingDiscountNames));
+
+        $cart->toSession();
+    }
+
+    /**
      * @return float
      */
-    public function getDiscountedShippingDue($initialShippingDue)
+    public function getShippingDiscountAmount($initialShippingDue)
     {
-        $discountedShippingCosts = $initialShippingDue;
+        // todo - remove after applyDiscountForCart is complete
+
+        $shippingDiscountAmount = 0;
 
         foreach ($this->getDiscountsForCart() as $discount) {
             /**
              * @var $discount \Railroad\Ecommerce\Entities\Discount
              */
             if ($discount->getType() == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
-                $discountedShippingCosts = round($discountedShippingCosts - $discount->getAmount(), 2);
+                $shippingDiscountAmount = round($shippingDiscountAmount + $discount->getAmount(), 2);
             } elseif ($discount->getType() == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE) {
-                $discountedShippingCosts =
-                    round($discountedShippingCosts - $discount->getAmount() / 100 * $initialShippingCosts, 2);
+                $shippingDiscountAmount =
+                    round($shippingDiscountAmount + $discount->getAmount() / 100 * $initialShippingCosts, 2);
             } elseif ($discount->getType() == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
-                $discountedShippingCosts = $discount->getAmount();
+                // this makes the final shipping cost:
+                // $initialShippingDue - ($initialShippingDue - $discount->getAmount()) =  $discount->getAmount()
+                $shippingDiscountAmount = $initialShippingDue - $discount->getAmount();
                 break;
             }
         }
 
-        return $discountedShippingCosts;
+        return $shippingDiscountAmount;
     }
 
     /**
@@ -167,6 +213,8 @@ class DiscountService
      */
     public function getDiscountedItemsCostDue($initialProductsDue)
     {
+        // todo - remove after applyDiscountForCart is complete
+
         $discountedProductsCosts = $initialProductsDue;
 
         $this->cartService->refreshCart();

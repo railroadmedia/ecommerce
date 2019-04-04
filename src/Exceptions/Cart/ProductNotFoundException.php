@@ -1,6 +1,8 @@
 <?php
 
-namespace Railroad\Ecommerce\Cart\Exceptions;
+namespace Railroad\Ecommerce\Exceptions\Cart;
+
+use \Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
 
 class ProductNotFoundException extends AddToCartException
 {
