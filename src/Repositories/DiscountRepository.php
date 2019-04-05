@@ -44,6 +44,7 @@ class DiscountRepository extends EntityRepository
             ->createQueryBuilder();
 
         $qb->select(['d', 'dc'])
+            ->from($this->getClassName(), 'd')
             ->leftJoin('d.discountCriterias', 'dc')
             ->where($qb->expr()
                 ->eq('d.active', ':active'))

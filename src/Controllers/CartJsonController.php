@@ -4,72 +4,40 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
-use Railroad\Ecommerce\Entities\Structures\Cart;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Services\CartAddressService;
+use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
 use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\PaymentPlanService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Spatie\Fractal\Fractal;
+use Throwable;
 
 class CartJsonController extends BaseController
 {
-    /**
-     * @var EcommerceEntityManager
-     */
-    private $entityManager;
-
     /**
      * @var CartService
      */
     private $cartService;
 
     /**
-     * @var ProductRepository
-     */
-    private $productRepository;
-
-    /**
-     * @var CartAddressService
-     */
-    private $cartAddressService;
-
-    /**
-     * @var PaymentPlanService
-     */
-    private $paymentPlanService;
-
-    /**
      * ShoppingCartController constructor.
      *
      * @param  CartService             $cartService
-     * @param  CartAddressService      $cartAddressService
-     * @param  EcommerceEntityManager  $entityManager
-     * @param  ProductRepository       $productRepository
      */
-    public function __construct(
-        CartService $cartService,
-        CartAddressService $cartAddressService,
-        EcommerceEntityManager $entityManager,
-        ProductRepository $productRepository
-    ) {
+    public function __construct(CartService $cartService)
+    {
         parent::__construct();
 
         $this->cartService = $cartService;
-        $this->cartAddressService = $cartAddressService;
-        $this->entityManager = $entityManager;
-        $this->productRepository = $productRepository;
     }
 
     /**
-     * Add products to cart; if the products are active and available(the
-     * product stock > requested quantity). The success field from response
-     * it's set to false if at least one product it's not active or available.
+     * Add products to cart; if the products are active and available (the
+     * product stock > requested quantity).
+     * Errors are set in $response['meta']['cart']['errors']
      *
      * @param  Request  $request
      *
-     * @throws ProductNotFoundException
+     * @throws Throwable
+     *
      * @return Fractal
      */
     public function addCartItem(Request $request)
@@ -110,80 +78,57 @@ class CartJsonController extends BaseController
      *
      * @param  string $productSku
      *
-     * @throws ProductNotFoundException
+     * @throws Throwable
+     *
      * @return Fractal
      */
-    public function removeCartItem(Request $request, $productSku)
+    public function removeCartItem(string $productSku)
     {
-        $this->cartService->removeFromCart($productSku);
+        $errors = [];
 
-        return ResponseService::create($this->cartService->toArray(), 'cart', null, null);
-    }
-
-    /**
-     * Update the cart item quantity.
-     * If the product it's not active or it's not available(the product stock
-     * it's smaller that the quantity) an error message it's returned in
-     * notAvailableProducts, success = false and the cart item quantity it's
-     * not modified.
-     *
-     * @param  int  $productId
-     * @param  int  $quantity
-     *
-     * @throws ProductNotFoundException
-     * @return Fractal
-     */
-    public function updateCartItemQuantity($productSku, $quantity)
-    {
-        $product = $this->productRepository->find($productId);
-
-        $error = $this->cartService->updateCartItemProductQuantity(
-            $product,
-            $quantity
-        );
-
-        $cartItems = Cart::fromSession()->getItems();
-
-        $cartMetaData = array_merge(
-            [
-                'success'              => ($error === null),
-                'cartNumberOfItems'    => count($cartItems),
-                'notAvailableProducts' => [$error],
-            ],
-            $this->getCartData()
-        );
-
-        return ResponseService::create($this->cartService->toArray(), 'cart', null, null);
-    }
-
-    /**
-     * @return array
-     */
-    protected function getCartData()
-    {
-        $cartData = [
-            'tax'   => 0,
-            'total' => 0,
-        ];
-
-        $cartItems = Cart::fromSession()->getItems();
-
-        if (count($cartItems)) {
-
-            $cartData['tax'] = $this->cartService->getTotalTaxDue();
-            $cartData['total'] = $this->cartService->getTotalDue();
-
-            $isPaymentPlanEligible
-                = $this->paymentPlanService->isPaymentPlanEligible();
-
-            $paymentPlanPricing
-                = $this->paymentPlanService->getPaymentPlanPricingForCartItems(
-            );
-
-            $cartData['isPaymentPlanEligible'] = $isPaymentPlanEligible;
-            $cartData['paymentPlanPricing'] = $paymentPlanPricing;
+        try {
+            $this->cartService->removeFromCart($productSku);
+        } catch (ProductNotFoundException $exception) {
+            $errors[] = $exception->getMessage();
         }
 
-        return $cartData;
+        $cartArray = $this->cartService->toArray();
+
+        if (!empty($errors)) {
+            $cartArray['errors'] = $errors;
+        }
+
+        return ResponseService::cart($cartArray);
+    }
+
+    /**
+     * Update the cart item quantity; if the product is active and available (the
+     * product stock > requested quantity).
+     * Errors are set in $response['meta']['cart']['errors']
+     *
+     * @param  string  $productSku
+     * @param  int  $quantity
+     *
+     * @throws Throwable
+     *
+     * @return Fractal
+     */
+    public function updateCartItemQuantity(string $productSku, int $quantity)
+    {
+        $errors = [];
+
+        try {
+            $this->cartService->updateCartItemProductQuantity($productSku, $quantity);
+        } catch (AddToCartException $addToCartException) {
+            $errors[] = $addToCartException->getMessage();
+        }
+
+        $cartArray = $this->cartService->toArray();
+
+        if (!empty($errors)) {
+            $cartArray['errors'] = $errors;
+        }
+
+        return ResponseService::cart($cartArray);
     }
 }

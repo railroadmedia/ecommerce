@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Illuminate\Session\Store;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotActiveException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
@@ -13,14 +12,10 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Permissions\Services\PermissionService;
+use Throwable;
 
 class CartService
 {
-    /**
-     * @var DiscountCriteriaService
-     */
-    private $discountCriteriaService;
-
     /**
      * @var DiscountService
      */
@@ -47,11 +42,6 @@ class CartService
     private $shippingOptionRepository;
 
     /**
-     * @var Store
-     */
-    private $session;
-
-    /**
      * @var TaxService
      */
     private $taxService;
@@ -76,32 +66,26 @@ class CartService
     /**
      * CartService constructor.
      *
-     * @param  DiscountCriteriaService  $discountCriteriaService
      * @param  DiscountService  $discountService
      * @param  EcommerceEntityManager  $entityManager
      * @param  PermissionService  $permissionService
      * @param  ProductRepository  $productRepository
      * @param  ShippingOptionRepository  $shippingOptionRepository
-     * @param  Store  $session
      * @param  TaxService  $taxService
      */
     public function __construct(
-        DiscountCriteriaService $discountCriteriaService,
         DiscountService $discountService,
         EcommerceEntityManager $entityManager,
         PermissionService $permissionService,
         ProductRepository $productRepository,
         ShippingOptionRepository $shippingOptionRepository,
-        Store $session,
         TaxService $taxService
     ) {
-        $this->discountCriteriaService = $discountCriteriaService;
         $this->discountService = $discountService;
         $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
         $this->productRepository = $productRepository;
         $this->shippingOptionRepository = $shippingOptionRepository;
-        $this->session = $session;
         $this->taxService = $taxService;
 
         // lets cache all the products right from the start
@@ -125,6 +109,7 @@ class CartService
      * @throws ProductNotFoundException
      * @throws ProductNotActiveException
      * @throws ProductOutOfStockException
+     * @throws Throwable
      *
      * @return Product
      */
@@ -172,9 +157,7 @@ class CartService
 
         $this->cart->setItem(new CartItem($sku, $quantity));
 
-        $this->cart->toSession();
-
-        $this->discountService->applyDiscountForCart();
+        $this->updateCart();
 
         return $product;
     }
@@ -184,17 +167,24 @@ class CartService
      *
      * @param  string  $sku
      *
-     * @return bool
+     * @throws ProductNotFoundException
+     * @throws Throwable
      */
     public function removeFromCart(string $sku)
     {
         $this->refreshCart();
 
+        $product = $this->allProducts[$sku] ?? null;
+
+        if (empty($product)) {
+            throw new ProductNotFoundException($sku);
+        }
+
         $this->cart->removeItemBySku($sku);
 
-        $this->cart->toSession();
+        $this->updateCart();
 
-        return true;
+        $this->cart->toSession();
     }
 
     /**
@@ -202,50 +192,108 @@ class CartService
      * If the operation is successful, null will be returned
      * A string error message will be returned on product active/stock errors
      *
-     * @param  Product  $product
+     * @param  string  $sku
      * @param  int  $quantity
      *
-     * @return string|null
+     * @throws ProductNotFoundException
+     * @throws ProductNotActiveException
+     * @throws ProductOutOfStockException
+     * @throws Throwable
      */
     public function updateCartItemProductQuantity(
-        Product $product,
+        string $sku,
         int $quantity
-    ): ?string {
-        // todo: refactor
-        $error = null;
+    ) {
+        $this->refreshCart();
 
-        if ($quantity < 0) {
-            $error = 'Invalid quantity value.';
+        // product
+        $product = $this->allProducts[$sku] ?? null;
 
-        } else {
-            if (!$product->isActive() || $product->getStock() < $quantity) {
-                // todo - confirm isActive check
-                $message = 'The quantity can not be updated.';
-                $message .= (is_object($product)
-                    && get_class($product) == Product::class)
-                    ? ' The product stock('.$product->getStock()
-                    .') is smaller than the quantity you\'ve selected('
-                    .$quantity.')' : '';
-
-                $error = $message;
-
-            } else {
-                $this->refreshCart();
-
-                $cartItem = $this->cart->getItemBySku($product->getSku());
-
-                $cartItem->setQuantity($quantity);
-
-                $this->cart->setItem($cartItem)->toSession();
-            }
+        if (empty($product)) {
+            throw new ProductNotFoundException($sku);
         }
 
-        return $error;
+        if (!$product->getActive()) {
+            throw new ProductNotActiveException($product);
+        }
+
+        if ($product->getStock() !== null
+            && $product->getStock() < $quantity
+        ) {
+            throw new ProductOutOfStockException($product);
+        }
+
+        $cartItem = $this->cart->getItemBySku($product->getSku());
+
+        $cartItem->setQuantity($quantity);
+
+        $this->cart->setItem($cartItem);
+
+        $this->updateCart();
+
+        $this->cart->toSession();
     }
 
+    /**
+     * Sets the local cart property from session
+     */
     public function refreshCart()
     {
         $this->cart = Cart::fromSession();
+    }
+
+    /**
+     * Updates the cart initial costs and discount amounts
+     *
+     * @throws Throwable
+     */
+    public function updateCart()
+    {
+        // update initial items cost
+        $products
+            = $this->productRepository->findBySkus($this->cart->listSkus());
+
+        $totalItemsInitialCost = 0;
+
+        foreach ($products as $product) {
+
+            /**
+             * @var $cartItem CartItem
+             */
+            $cartItem = $this->cart->getItemBySku($product->getSku());
+
+            $totalItemsInitialCost += ($product->getPrice() ?? 0)
+                * $cartItem->getQuantity();
+        }
+
+        $this->cart->setItemsCost($totalItemsInitialCost);
+
+        // update initial shipping cost
+        $shippingAddress = $this->cart->getShippingAddress();
+        $shippingCountry = $shippingAddress ? $shippingAddress->getCountry()
+            : '';
+
+        $totalWeight = $this->getTotalCartItemWeight();
+
+        $shippingOption
+            = $this->shippingOptionRepository->getShippingCosts($shippingCountry,
+            $totalWeight);
+
+        $initialShippingCost = 0;
+
+        if (!empty($shippingOption)) {
+            $shippingCost = $shippingOption->getShippingCostsWeightRanges()
+                ->first();
+
+            $initialShippingCost = $shippingCost->getPrice();
+        }
+
+        $this->cart->setShippingCost($initialShippingCost);
+
+        // update discounts
+        $this->discountService->applyDiscountsToCart($this->cart);
+
+        $this->cart->toSession();
     }
 
     /**
@@ -283,77 +331,34 @@ class CartService
     }
 
     /**
+     * Returns the cart items shipping cost with discounts applied
+     *
      * @return float
      */
     public function getTotalShippingDue()
     {
-        $this->refreshCart();
-
-        $shippingAddress = $this->cart->getShippingAddress();
-        $shippingCountry = $shippingAddress ? $shippingAddress->getCountry()
-            : '';
-
-        $totalWeight = $this->getTotalCartItemWeight();
-
-        $shippingOption
-            = $this->shippingOptionRepository->getShippingCosts($shippingCountry,
-            $totalWeight);
-
-        $initialShippingCost = 0;
-
-        if (!empty($shippingOption)) {
-            $shippingCost = $shippingOption->getShippingCostsWeightRanges()
-                ->first();
-
-            $initialShippingCost = $shippingCost->getPrice();
-        }
-
-        return round($initialShippingCost - $this->cart->getShippingDiscountAmount(), 2);
+        return round($this->cart->getShippingCost() - $this->cart->getShippingDiscountAmount(), 2);
     }
 
     /**
-     * @return float
-     */
-    public function getProductsDue()
-    {
-        $this->refreshCart();
-
-        $products
-            = $this->productRepository->findBySkus($this->cart->listSkus());
-
-        $totalItemCostDue = 0;
-
-        foreach ($products as $product) {
-
-            /**
-             * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
-             */
-            $cartItem = $this->cart->getItemBySku($product->getSku());
-
-            $totalItemCostDue += ($product->getPrice() ?? 0)
-                * $cartItem->getQuantity();
-        }
-
-        return $totalItemCostDue;
-    }
-
-    /**
+     * Returns the total cart items cost with discounts applied
+     *
      * @return float
      */
     public function getTotalItemCostDue()
     {
-        $initialProductsDue = $this->getProductsDue();
-
         $productsDiscountAmount = 0;
 
         foreach ($this->cart->getItems() as $cartItem) {
             $productsDiscountAmount += $cartItem->getDiscountAmount();
         }
 
-        return round($initialProductsDue - $productsDiscountAmount - $this->cart->getOrderDiscountAmount(), 2);
+        return round($this->cart->getItemsCost() - $productsDiscountAmount - $this->cart->getOrderDiscountAmount(), 2);
     }
 
     /**
+     * Returns the tax cost of discounted items total cost and shipping cost
+     *
      * @return float
      */
     public function getTotalTaxDue()
@@ -377,6 +382,7 @@ class CartService
             $taxableAddress = $shippingAddress;
         }
 
+        // only item and shipping costs are taxed
         $amountToTax = $this->getTotalItemCostDue() + $this->getTotalShippingDue();
 
         $result = 0;
@@ -389,6 +395,8 @@ class CartService
     }
 
     /**
+     * Returns the total cart cost, including discounts, shipping, tax and finance
+     *
      * @return float
      */
     public function getTotalDue()
@@ -397,7 +405,6 @@ class CartService
 
         $shippingDue = $this->getTotalShippingDue();
 
-        // only item and shipping costs are taxed
         $taxDue = $this->getTotalTaxDue();
 
         if ($this->cart->getPaymentPlanNumberOfPayments() > 1) {
@@ -410,6 +417,8 @@ class CartService
     }
 
     /**
+     * Returns the initial payment cost
+     *
      * @return float
      */
     public function getDueForInitialPayment()
@@ -418,7 +427,6 @@ class CartService
 
         $shippingDue = $this->getTotalShippingDue();
 
-        // only item and shipping costs are taxed
         $taxDue = $this->getTotalTaxDue();
 
         if ($this->cart->getPaymentPlanNumberOfPayments() > 1) {
@@ -447,125 +455,8 @@ class CartService
     }
 
     /**
-     * Calculate the discounted price on items and the discounted amount on
-     * cart(discounts that should be applied on order) and set the discounted
-     * price on order item and the total discount amount on cart.
+     * Returns the current cart data structure
      *
-     * Return the cart with the discounts applied.
-     *
-     * @return Cart
-     */
-    //    public function applyDiscounts()
-    //    {
-    //        foreach (
-    //            $this->getCart()
-    //                ->getDiscounts() as $discount
-    //        ) {
-    //            /**
-    //             * @var $discount \Railroad\Ecommerce\Entities\Discount
-    //             */
-    //            foreach (
-    //                $this->getCart()
-    //                    ->getItems() as $index => $item
-    //            ) {
-    //                /**
-    //                 * @var $item \Railroad\Ecommerce\Entities\Structures\CartItem
-    //                 */
-    //
-    //                /**
-    //                 * @var $cartProduct \Railroad\Ecommerce\Entities\Product
-    //                 */
-    //                $cartProduct = $item->getProduct();
-    //
-    //                /**
-    //                 * @var $discountProduct \Railroad\Ecommerce\Entities\Product
-    //                 */
-    //                $discountProduct = $discount->getProduct();
-    //
-    //                if ($cartProduct &&
-    //                    (($discountProduct && $cartProduct->getId() == $discountProduct->getId()) ||
-    //                        $cartProduct->getCategory() == $discount->getProductCategory())) {
-    //                    $productDiscount = 0;
-    //
-    //                    if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
-    //
-    //                        $productDiscount = $discount->getAmount() * $item->getQuantity();
-    //                    }
-    //
-    //                    if ($discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
-    //                        $productDiscount = $discount->getAmount() / 100 * $item->getPrice() * $item->getQuantity();
-    //                    }
-    //
-    //                    if ($discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
-    //                        $productDiscount = $discount->getAmount() * $item->getQuantity();
-    //                    }
-    //
-    //                    $discountedPrice = round($item->getTotalPrice() - $productDiscount, 2);
-    //
-    //                    /**
-    //                     * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
-    //                     */
-    //                    $cartItem = $this->getCart()
-    //                        ->getItems()[$index];
-    //
-    //                    $cartItem->setDiscountedPrice(max($discountedPrice, 0));
-    //                }
-    //            }
-    //        }
-    //
-    //        $discountedAmount = $this->discountService->getAmountDiscounted($this->getCart()
-    //            ->getDiscounts(), $this->getCart()
-    //            ->getTotalDue());
-    //
-    //        $this->getCart()
-    //            ->setTotalDiscountAmount($discountedAmount);
-    //
-    //        return $this->getCart();
-    //    }
-    //
-    //    public function setBrand($brand)
-    //    {
-    //        $this->cart->setBrand($brand);
-    //    }
-
-    /**
-     * @param $productSku
-     *
-     * @throws ProductNotFoundException
-     * @return float
-     */
-    public function getItemPriceBeforeDiscounts($productSku)
-    {
-        $product = $this->allProducts[$productSku];
-
-        if (empty($product)) {
-            throw new ProductNotFoundException($productSku);
-        }
-
-        return $product->getPrice();
-    }
-
-    /**
-     * @param $productSku
-     *
-     * @throws ProductNotFoundException
-     * @return float
-     */
-    public function getItemPriceAfterDiscounts($productSku)
-    {
-        $product = $this->allProducts[$productSku];
-
-        if (empty($product)) {
-            throw new ProductNotFoundException($productSku);
-        }
-
-        $cartItem = $this->cart->getItemBySku($productSku);
-
-        return $product->getPrice() - $cartItem->getDiscountAmount();
-    }
-
-    /**
-     * @throws ProductNotFoundException
      * @return array
      */
     public function toArray()
@@ -590,8 +481,8 @@ class CartService
                 'stock'                       => $product->getStock(),
                 'subscription_interval_type'  => $product->getSubscriptionIntervalType(),
                 'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
-                'price_before_discounts'      => $this->getItemPriceBeforeDiscounts($cartItem->getSku()),
-                'price_after_discounts'       => $this->getItemPriceAfterDiscounts($cartItem->getSku()),
+                'price_before_discounts'      => $product->getPrice(),
+                'price_after_discounts'       => $product->getPrice() - $cartItem->getDiscountAmount(),
             ];
         }
 
@@ -600,14 +491,16 @@ class CartService
         $billingAddress = !empty($this->cart->getBillingAddress())
             ? $this->cart->getBillingAddress()->toArray() : null;
 
-        $discounts = $this->cart->getCartDiscountNames();
+        $discounts = $this->cart->getCartDiscountNames() ?? [];
 
-        $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments();
+        $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
+
+        $due = ($numberOfPayments > 1) ? $this->getDueForInitialPayment() : $this->getTotalDue();
 
         $totals = [
             'shipping' => $this->getTotalShippingDue(),
             'tax'      => $this->getTotalTaxDue(),
-            'due'      => $this->getDueForInitialPayment(),
+            'due'      => $due,
         ];
 
         return [

@@ -2,7 +2,9 @@
 
 namespace Railroad\Ecommerce\Entities\Structures;
 
-class Cart implements \Serializable
+use Serializable;
+
+class Cart implements Serializable
 {
     const SESSION_KEY = 'railroad-ecommerce-shopping-cart-';
 
@@ -37,6 +39,20 @@ class Cart implements \Serializable
     private $billingAddress;
 
     /**
+     * Initial cart items cost, not discounted
+     *
+     * @var float
+     */
+    private $itemsCost;
+
+    /**
+     * Initial cart items shipping cost, not discounted
+     *
+     * @var float
+     */
+    private $shippingCost;
+
+    /**
      * @var float
      */
     private $orderDiscountAmount;
@@ -50,6 +66,15 @@ class Cart implements \Serializable
      * @var string[]
      */
     private $cartDiscountNames;
+
+    public function __construct()
+    {
+        $this->itemsCost = 0;
+        $this->shippingCost = 0;
+        $this->orderDiscountAmount = 0;
+        $this->shippingDiscountAmount = 0;
+        $this->cartDiscountNames = [];
+    }
 
     /**
      * Get cart items
@@ -154,6 +179,38 @@ class Cart implements \Serializable
     public function setPromoCode(string $promoCode): void
     {
         $this->promoCode = $promoCode;
+    }
+
+    /**
+     * @return float
+     */
+    public function getItemsCost(): float
+    {
+        return $this->itemsCost;
+    }
+
+    /**
+     * @param float $itemsCost
+     */
+    public function setItemsCost(float $itemsCost): void
+    {
+        $this->itemsCost = $itemsCost;
+    }
+
+    /**
+     * @return float
+     */
+    public function getShippingCost(): float
+    {
+        return $this->shippingCost;
+    }
+
+    /**
+     * @param float $shippingCost
+     */
+    public function setShippingCost(float $shippingCost): void
+    {
+        $this->shippingCost = $shippingCost;
     }
 
     /**

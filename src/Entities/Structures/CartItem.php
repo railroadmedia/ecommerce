@@ -78,7 +78,7 @@ class CartItem implements Serializable
      */
     public function getDiscountAmount(): float
     {
-        $this->discountAmount = $discountAmount;
+        return $this->discountAmount;
     }
 
     /**

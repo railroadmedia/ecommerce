@@ -4,7 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Railroad\Ecommerce\Entities\Structures\AddCartItemsResult;
+use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
 use Railroad\Ecommerce\Services\CartService;
 
 class AddToCartController extends BaseController
@@ -27,8 +27,9 @@ class AddToCartController extends BaseController
     }
 
     /**
-     * Add products to cart; if the products are active and available(the product stock > requested quantity).
-     * The success field from response it's set to false if at least one product it's not active or available.
+     * Add products to cart; if the products are active and available (the
+     * product stock > requested quantity).
+     * Errors are set in $response['meta']['cart']['errors']
      *
      * @param Request $request
      *
@@ -36,17 +37,39 @@ class AddToCartController extends BaseController
      */
     public function addToCart(Request $request)
     {
-        /** @var AddCartItemsResult $addCartItemsResult */
-        $addCartItemsResult = $this->cartService->addToCart($request);
+        $errors = [];
+
+        foreach ($request->get('products', []) as $productSku => $quantityToAdd) {
+
+            try {
+                $product = $this->cartService->addToCart(
+                    $productSku,
+                    $quantityToAdd,
+                    $request->get('locked', false) == 'true',
+                    $request->get('promo-code', '')
+                );
+            } catch (AddToCartException $addToCartException) {
+                $errors[] = $addToCartException->getMessage();
+                continue;
+            }
+
+            if (empty($product)) {
+                $errors[] = 'Error adding product SKU '.$productSku
+                    .' to the cart.';
+            }
+        }
+
+        $cartArray = $this->cartService->toArray();
+
+        if (!empty($errors)) {
+            $cartArray['errors'] = $errors;
+        }
 
         /** @var RedirectResponse $redirectResponse */
         $redirectResponse =
             $request->get('redirect') ? redirect()->away($request->get('redirect')) : redirect()->back();
 
-        $redirectResponse->with('success', $addCartItemsResult->getSuccess());
-        $redirectResponse->with('addedProducts', $addCartItemsResult->getAddedProducts());
-        $redirectResponse->with('cartNumberOfItems', count(Cart::fromSession()->getItems()));
-        $redirectResponse->with('notAvailableProducts', $addCartItemsResult->getErrors());
+        $redirectResponse->with('cart', $cartArray);
 
         return $redirectResponse;
     }

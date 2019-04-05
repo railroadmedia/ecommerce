@@ -8,7 +8,7 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\TaxService;
 
-class Cart
+class _Cart
 {
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';

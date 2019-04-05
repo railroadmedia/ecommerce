@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Structures\Address;
+use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
@@ -33,9 +34,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $cartService = $this->app->make(CartService::class);
-
-        $cart = $cartService->getCart();
+        $cart = Cart::fromSession();
 
         $em = $this->app->make(EcommerceEntityManager::class);
 
@@ -50,7 +49,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->discountCriteriaMetForOrder($cart, $discountCriteria);
+            ->discountCriteriaMetForOrder($discountCriteria, $cart);
 
         $this->assertFalse($metCriteria);
     }
@@ -61,61 +60,14 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $cartService = $this->app->make(CartService::class);
-
-        $productOne = $this->fakeProduct();
-
-        $cartItemOneData = [
-            'name' => $this->faker->word,
-            'description' => $this->faker->word,
-            'quantity' => $this->faker->numberBetween(5, 15), // quantity is between discount criteria min/max
-            'price' => $this->faker->numberBetween(20, 100),
-            'requiresShippingAddress' => true,
-            'requiresBillingAddress' => true,
-            'subscriptionIntervalType' => null,
-            'subscriptionIntervalCount' => null,
-            'options' => ['product-id' => $productOne['id']]
-        ];
-
-        $productTwo = $this->fakeProduct();
-
-        $cartItemTwoData = [
-            'name' => $this->faker->word,
-            'description' => $this->faker->word,
-            'quantity' => $this->faker->numberBetween(1, 3),
-            'price' => $this->faker->numberBetween(20, 100),
-            'requiresShippingAddress' => true,
-            'requiresBillingAddress' => true,
-            'subscriptionIntervalType' => null,
-            'subscriptionIntervalCount' => null,
-            'options' => ['product-id' => $productTwo['id']]
-        ];
-
-        $cartService->addCartItem(
-            $cartItemOneData['name'],
-            $cartItemOneData['description'],
-            $cartItemOneData['quantity'],
-            $cartItemOneData['price'],
-            $cartItemOneData['requiresShippingAddress'],
-            $cartItemOneData['requiresBillingAddress'],
-            $cartItemOneData['subscriptionIntervalType'],
-            $cartItemOneData['subscriptionIntervalCount'],
-            $cartItemOneData['options']
-        );
-
-        $cartService->addCartItem(
-            $cartItemTwoData['name'],
-            $cartItemTwoData['description'],
-            $cartItemTwoData['quantity'],
-            $cartItemTwoData['price'],
-            $cartItemTwoData['requiresShippingAddress'],
-            $cartItemTwoData['requiresBillingAddress'],
-            $cartItemTwoData['subscriptionIntervalType'],
-            $cartItemTwoData['subscriptionIntervalCount'],
-            $cartItemTwoData['options']
-        );
-
-        $cart = $cartService->getCart();
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 100),
+        ]);
 
         $discount = $this->fakeDiscount([
             'product_id' => $productOne['id'],
@@ -127,11 +79,32 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         ]);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
             'product_id' => $productOne['id'],
             'min' => $this->faker->numberBetween(1, 5),
             'max' => $this->faker->numberBetween(15, 20)
         ]);
+
+        $productOneQuantity = $this->faker->numberBetween(6, 14); // quantity is between discount criteria min/max
+        $productTwoQuantity = $this->faker->numberBetween(1, 5);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity,
+            false,
+            ''
+        );
+
+        $cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $cart = Cart::fromSession();
 
         $em = $this->app->make(EcommerceEntityManager::class);
 
@@ -141,7 +114,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->productQuantityRequirementMet($cart, $discountCriteria);
+            ->productQuantityRequirementMet($discountCriteria, $cart);
 
         $this->assertTrue($metCriteria);
     }
@@ -152,61 +125,14 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $cartService = $this->app->make(CartService::class);
-
-        $productOne = $this->fakeProduct();
-
-        $cartItemOneData = [
-            'name' => $this->faker->word,
-            'description' => $this->faker->word,
-            'quantity' => 2,
-            'price' => 12.75,
-            'requiresShippingAddress' => true,
-            'requiresBillingAddress' => true,
-            'subscriptionIntervalType' => null,
-            'subscriptionIntervalCount' => null,
-            'options' => ['product-id' => $productOne['id']]
-        ];
-
-        $productTwo = $this->fakeProduct();
-
-        $cartItemTwoData = [
-            'name' => $this->faker->word,
-            'description' => $this->faker->word,
-            'quantity' => 3,
-            'price' => 7.25,
-            'requiresShippingAddress' => true,
-            'requiresBillingAddress' => true,
-            'subscriptionIntervalType' => null,
-            'subscriptionIntervalCount' => null,
-            'options' => ['product-id' => $productTwo['id']]
-        ];
-
-        $cartService->addCartItem(
-            $cartItemOneData['name'],
-            $cartItemOneData['description'],
-            $cartItemOneData['quantity'],
-            $cartItemOneData['price'],
-            $cartItemOneData['requiresShippingAddress'],
-            $cartItemOneData['requiresBillingAddress'],
-            $cartItemOneData['subscriptionIntervalType'],
-            $cartItemOneData['subscriptionIntervalCount'],
-            $cartItemOneData['options']
-        );
-
-        $cartService->addCartItem(
-            $cartItemTwoData['name'],
-            $cartItemTwoData['description'],
-            $cartItemTwoData['quantity'],
-            $cartItemTwoData['price'],
-            $cartItemTwoData['requiresShippingAddress'],
-            $cartItemTwoData['requiresBillingAddress'],
-            $cartItemTwoData['subscriptionIntervalType'],
-            $cartItemTwoData['subscriptionIntervalCount'],
-            $cartItemTwoData['options']
-        );
-
-        $cart = $cartService->getCart();
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 100),
+        ]);
 
         $discount = $this->fakeDiscount([
             'product_id' => $productOne['id'],
@@ -218,11 +144,32 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         ]);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
             'product_id' => $productOne['id'],
             'min' => $this->faker->numberBetween(5, 10),
             'max' => $this->faker->numberBetween(50, 100)
         ]);
+
+        $productOneQuantity = $this->faker->numberBetween(1, 5); // quantity is less than discount criteria min/max
+        $productTwoQuantity = $this->faker->numberBetween(1, 5); // quantity is less than discount criteria min/max
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity,
+            false,
+            ''
+        );
+
+        $cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $cart = Cart::fromSession();
 
         $em = $this->app->make(EcommerceEntityManager::class);
 
@@ -232,7 +179,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->productQuantityRequirementMet($cart, $discountCriteria);
+            ->productQuantityRequirementMet($discountCriteria, $cart);
 
         $this->assertFalse($metCriteria);
     }
@@ -291,61 +238,16 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $cartService = $this->app->make(CartService::class);
-
-        $productOne = $this->fakeProduct();
-
-        $cartItemOneData = [
-            'name' => $this->faker->word,
-            'description' => $this->faker->word,
-            'quantity' => 2,
-            'price' => 9.45,
-            'requiresShippingAddress' => true,
-            'requiresBillingAddress' => true,
-            'subscriptionIntervalType' => null,
-            'subscriptionIntervalCount' => null,
-            'options' => ['product-id' => $productOne['id']]
-        ];
-
-        $productTwo = $this->fakeProduct();
-
-        $cartItemTwoData = [
-            'name' => $this->faker->word,
-            'description' => $this->faker->word,
-            'quantity' => 3,
-            'price' => 3.80,
-            'requiresShippingAddress' => true,
-            'requiresBillingAddress' => true,
-            'subscriptionIntervalType' => null,
-            'subscriptionIntervalCount' => null,
-            'options' => ['product-id' => $productTwo['id']]
-        ];
-
-        $cartService->addCartItem(
-            $cartItemOneData['name'],
-            $cartItemOneData['description'],
-            $cartItemOneData['quantity'],
-            $cartItemOneData['price'],
-            $cartItemOneData['requiresShippingAddress'],
-            $cartItemOneData['requiresBillingAddress'],
-            $cartItemOneData['subscriptionIntervalType'],
-            $cartItemOneData['subscriptionIntervalCount'],
-            $cartItemOneData['options']
-        );
-
-        $cartService->addCartItem(
-            $cartItemTwoData['name'],
-            $cartItemTwoData['description'],
-            $cartItemTwoData['quantity'],
-            $cartItemTwoData['price'],
-            $cartItemTwoData['requiresShippingAddress'],
-            $cartItemTwoData['requiresBillingAddress'],
-            $cartItemTwoData['subscriptionIntervalType'],
-            $cartItemTwoData['subscriptionIntervalCount'],
-            $cartItemTwoData['options']
-        );
-
-        $cart = $cartService->getCart();
+        $productOne = $this->fakeProduct([
+            'price' => 12.5,
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+        $productTwo = $this->fakeProduct([
+            'price' => 12.5,
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 100),
+        ]);
 
         $discount = $this->fakeDiscount([
             'product_id' => $productOne['id'],
@@ -358,10 +260,31 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'product_id' => rand(),
-            'min' => 10,
-            'max' => 100
+            'product_id' => $productOne['id'],
+            'min' => $this->faker->numberBetween(1, 5),
+            'max' => $this->faker->numberBetween(500, 1000)
         ]);
+
+        $productOneQuantity = $this->faker->numberBetween(1, 5);
+        $productTwoQuantity = $this->faker->numberBetween(1, 5);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity,
+            false,
+            ''
+        );
+
+        $cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $cart = Cart::fromSession();
 
         $em = $this->app->make(EcommerceEntityManager::class);
 
@@ -371,7 +294,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->orderTotalRequirement($cart, $discountCriteria);
+            ->orderTotalRequirement($discountCriteria, $cart);
 
         $this->assertTrue($metCriteria);
     }
@@ -382,61 +305,16 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $cartService = $this->app->make(CartService::class);
-
-        $productOne = $this->fakeProduct();
-
-        $cartItemOneData = [
-            'name' => $this->faker->word,
-            'description' => $this->faker->word,
-            'quantity' => $this->faker->numberBetween(1, 3),
-            'price' => $this->faker->numberBetween(20, 100),
-            'requiresShippingAddress' => true,
-            'requiresBillingAddress' => true,
-            'subscriptionIntervalType' => null,
-            'subscriptionIntervalCount' => null,
-            'options' => ['product-id' => $productOne['id']]
-        ];
-
-        $productTwo = $this->fakeProduct();
-
-        $cartItemTwoData = [
-            'name' => $this->faker->word,
-            'description' => $this->faker->word,
-            'quantity' => $this->faker->numberBetween(1, 3),
-            'price' => $this->faker->numberBetween(20, 100),
-            'requiresShippingAddress' => true,
-            'requiresBillingAddress' => true,
-            'subscriptionIntervalType' => null,
-            'subscriptionIntervalCount' => null,
-            'options' => ['product-id' => $productTwo['id']]
-        ];
-
-        $cartService->addCartItem(
-            $cartItemOneData['name'],
-            $cartItemOneData['description'],
-            $cartItemOneData['quantity'],
-            $cartItemOneData['price'],
-            $cartItemOneData['requiresShippingAddress'],
-            $cartItemOneData['requiresBillingAddress'],
-            $cartItemOneData['subscriptionIntervalType'],
-            $cartItemOneData['subscriptionIntervalCount'],
-            $cartItemOneData['options']
-        );
-
-        $cartService->addCartItem(
-            $cartItemTwoData['name'],
-            $cartItemTwoData['description'],
-            $cartItemTwoData['quantity'],
-            $cartItemTwoData['price'],
-            $cartItemTwoData['requiresShippingAddress'],
-            $cartItemTwoData['requiresBillingAddress'],
-            $cartItemTwoData['subscriptionIntervalType'],
-            $cartItemTwoData['subscriptionIntervalCount'],
-            $cartItemTwoData['options']
-        );
-
-        $cart = $cartService->getCart();
+        $productOne = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+        $productTwo = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 100),
+        ]);
 
         $discount = $this->fakeDiscount([
             'product_id' => $productOne['id'],
@@ -449,10 +327,31 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'product_id' => rand(),
+            'product_id' => $productOne['id'],
             'min' => $this->faker->randomFloat(2, 10, 50),
             'max' => $this->faker->randomFloat(2, 50, 100) // cart total will be more than max
         ]);
+
+        $productOneQuantity = $this->faker->numberBetween(1, 5);
+        $productTwoQuantity = $this->faker->numberBetween(1, 5);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity,
+            false,
+            ''
+        );
+
+        $cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $cart = Cart::fromSession();
 
         $em = $this->app->make(EcommerceEntityManager::class);
 
@@ -462,7 +361,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->orderTotalRequirement($cart, $discountCriteria);
+            ->orderTotalRequirement($discountCriteria, $cart);
 
         $this->assertFalse($metCriteria);
     }
@@ -473,7 +372,11 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $em = $this->app->make(EcommerceEntityManager::class);
 
-        $shippingCosts = round($this->faker->randomFloat(2, 100, 200), 2);
+        $cart = Cart::fromSession();
+
+        $shippingCost = $this->faker->randomFloat(2, 100, 200);
+
+        $cart->setShippingCost($shippingCost);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
@@ -487,7 +390,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->orderShippingTotalRequirement($discountCriteria, $shippingCosts);
+            ->orderShippingTotalRequirement($discountCriteria, $cart);
 
         $this->assertTrue($metCriteria);
     }
@@ -498,7 +401,11 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $em = $this->app->make(EcommerceEntityManager::class);
 
-        $shippingCosts = $this->faker->randomFloat(2, 100);
+        $cart = Cart::fromSession();
+
+        $shippingCost = $this->faker->randomFloat(2, 100);;
+
+        $cart->setShippingCost($shippingCost);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
@@ -512,7 +419,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->orderShippingTotalRequirement($discountCriteria, $shippingCosts);
+            ->orderShippingTotalRequirement($discountCriteria, $cart);
 
         $this->assertFalse($metCriteria);
     }
@@ -525,16 +432,11 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $shippingAddress = new Address($this->faker->word, $this->faker->word);
 
-        $cartAddressService = $this->app->make(CartAddressService::class);
+        $cart = Cart::fromSession();
 
-        $cartAddressService->setAddress(
-            $shippingAddress,
-            CartAddressService::SHIPPING_ADDRESS_TYPE
-        );
+        $cart->setShippingAddress($shippingAddress);
 
         $em = $this->app->make(EcommerceEntityManager::class);
-
-        $promoCode = $this->faker->word;
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
@@ -548,7 +450,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->orderShippingCountryRequirement($discountCriteria);
+            ->orderShippingCountryRequirement($discountCriteria, $cart);
 
         $this->assertTrue($metCriteria);
     }
@@ -561,16 +463,11 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $shippingAddress = new Address($this->faker->word, $this->faker->word);
 
-        $cartAddressService = $this->app->make(CartAddressService::class);
+        $cart = Cart::fromSession();
 
-        $cartAddressService->setAddress(
-            $shippingAddress,
-            CartAddressService::SHIPPING_ADDRESS_TYPE
-        );
+        $cart->setShippingAddress($shippingAddress);
 
         $em = $this->app->make(EcommerceEntityManager::class);
-
-        $promoCode = $this->faker->word;
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
@@ -584,7 +481,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->orderShippingCountryRequirement($discountCriteria);
+            ->orderShippingCountryRequirement($discountCriteria, $cart);
 
         $this->assertFalse($metCriteria);
     }
@@ -596,6 +493,10 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $em = $this->app->make(EcommerceEntityManager::class);
 
         $promoCode = $this->faker->word;
+
+        $cart = Cart::fromSession();
+
+        $cart->setPromoCode($promoCode);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
@@ -609,7 +510,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->promoCodeRequirement($discountCriteria, $promoCode);
+            ->promoCodeRequirement($discountCriteria, $cart);
 
         $this->assertTrue($metCriteria);
     }
@@ -621,6 +522,10 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $em = $this->app->make(EcommerceEntityManager::class);
 
         $promoCode = $this->faker->word;
+
+        $cart = Cart::fromSession();
+
+        $cart->setPromoCode($promoCode);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
@@ -634,7 +539,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->promoCodeRequirement($discountCriteria, $promoCode);
+            ->promoCodeRequirement($discountCriteria, $cart);
 
         $this->assertFalse($metCriteria);
     }

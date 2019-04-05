@@ -3,27 +3,23 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Doctrine\ORM\QueryBuilder;
 use Exception;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\User;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Throwable;
 
 class DiscountCriteriaService
 {
     /**
-     * @var CartAddressService
+     * @var ProductRepository
      */
-    private $cartAddressService;
-
-
-    /**
-     * @var EcommerceEntityManager
-     */
-    protected $entityManager;
+    private $productRepository;
 
     /**
      * @var UserProductRepository
@@ -46,20 +42,16 @@ class DiscountCriteriaService
     /**
      * DiscountCriteriaService constructor.
      *
-     * @param CartAddressService $cartAddressService
-     * @param CartService $cartService
-     * @param EcommerceEntityManager $entityManager
+     * @param ProductRepository $productRepository
      * @param UserProductRepository $userProductRepository
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        CartAddressService $cartAddressService,
-        EcommerceEntityManager $entityManager,
+        ProductRepository $productRepository,
         UserProductRepository $userProductRepository,
         UserProviderInterface $userProvider
     ) {
-        $this->cartAddressService = $cartAddressService;
-        $this->entityManager = $entityManager;
+        $this->productRepository = $productRepository;
         $this->userProductRepository = $userProductRepository;
 
         $this->currentUser = $userProvider->getCurrentUser();
@@ -69,7 +61,7 @@ class DiscountCriteriaService
      * Check whether the discount criteria are met.
      *
      * @param DiscountCriteria $discountCriteria
-     * @param string $promoCode
+     * @param Cart $cart
      *
      * @return bool
      *
@@ -77,21 +69,21 @@ class DiscountCriteriaService
      */
     public function discountCriteriaMetForOrder(
         DiscountCriteria $discountCriteria,
-        ?string $promoCode = ''
+        Cart $cart
     ): bool {
         switch ($discountCriteria->getType()) {
             case self::PRODUCT_QUANTITY_REQUIREMENT_TYPE:
-                return $this->productQuantityRequirementMet($discountCriteria);
+                return $this->productQuantityRequirementMet($discountCriteria, $cart);
             case self::DATE_REQUIREMENT_TYPE:
                 return $this->orderDateRequirement($discountCriteria);
             case self::ORDER_TOTAL_REQUIREMENT_TYPE:
-                return $this->orderTotalRequirement($discountCriteria);
+                return $this->orderTotalRequirement($discountCriteria, $cart);
             case self::SHIPPING_TOTAL_REQUIREMENT_TYPE:
-                return $this->orderShippingTotalRequirement($discountCriteria);
+                return $this->orderShippingTotalRequirement($discountCriteria, $cart);
             case self::SHIPPING_COUNTRY_REQUIREMENT_TYPE:
-                return $this->orderShippingCountryRequirement($discountCriteria);
+                return $this->orderShippingCountryRequirement($discountCriteria, $cart);
             case self::PROMO_CODE_REQUIREMENT_TYPE:
-                return $this->promoCodeRequirement($discountCriteria, $promoCode);
+                return $this->promoCodeRequirement($discountCriteria, $cart);
             case self::PRODUCT_OWN_TYPE:
                 return $this->productOwnRequirement($discountCriteria);
             default:
@@ -101,16 +93,13 @@ class DiscountCriteriaService
 
     /**
      * @param DiscountCriteria $discountCriteria
+     * @param Cart $cart
      *
      * @return bool
      */
-    public function productQuantityRequirementMet(DiscountCriteria $discountCriteria): bool
+    public function productQuantityRequirementMet(DiscountCriteria $discountCriteria, Cart $cart): bool
     {
-        $this->cartService->refreshCart();
-
-        $cart = Cart::fromSession();
-
-        $products = $this->productRepository->findBySkus(['sku' => $cart->listSkus()]);
+        $products = $this->productRepository->findBySkus($cart->listSkus());
 
         foreach ($products as $product) {
             $productCartItem = $cart->getItemBySku($product->getSku());
@@ -152,15 +141,14 @@ class DiscountCriteriaService
 
     /**
      * @param DiscountCriteria $discountCriteria
+     * @param Cart $cart
      *
      * @return bool
      */
-    public function orderTotalRequirement(DiscountCriteria $discountCriteria): bool
+    public function orderTotalRequirement(DiscountCriteria $discountCriteria, Cart $cart): bool
     {
-        $cartItemsTotalWithoutTaxAndShipping = $this->cartService->getProductsDue();
-
-        if ($cartItemsTotalWithoutTaxAndShipping >= (float)$discountCriteria->getMin() &&
-            $cartItemsTotalWithoutTaxAndShipping <= (float)$discountCriteria->getMax()) {
+        if ($cart->getItemsCost() >= (float)$discountCriteria->getMin() &&
+            $cart->getItemsCost() <= (float)$discountCriteria->getMax()) {
             return true;
         }
 
@@ -169,16 +157,14 @@ class DiscountCriteriaService
 
     /**
      * @param DiscountCriteria $discountCriteria
-     * @param float $shippingCosts
+     * @param Cart $cart
      *
      * @return bool
      */
-    public function orderShippingTotalRequirement(DiscountCriteria $discountCriteria): bool
+    public function orderShippingTotalRequirement(DiscountCriteria $discountCriteria, Cart $cart): bool
     {
-        $initialShippingCosts = $this->cartService->getInitialShippingDue();
-
-        if ($initialShippingCosts >= (float)$discountCriteria->getMin() &&
-            $initialShippingCosts <= (float)$discountCriteria->getMax()) {
+        if ($cart->getShippingCost() >= (float)$discountCriteria->getMin() &&
+            $cart->getShippingCost() <= (float)$discountCriteria->getMax()) {
             return true;
         }
 
@@ -187,21 +173,22 @@ class DiscountCriteriaService
 
     /**
      * @param DiscountCriteria $discountCriteria
+     * @param Cart $cart
      *
      * @return bool
      */
-    public function orderShippingCountryRequirement(DiscountCriteria $discountCriteria): bool
+    public function orderShippingCountryRequirement(DiscountCriteria $discountCriteria, Cart $cart): bool
     {
         /**
-         * @var $shippingCountry \Railroad\Ecommerce\Entities\Structures\Address
+         * @var $shippingAddress Address
          */
-        $shippingCountry = $this->cartAddressService->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
+        $shippingAddress = $cart->getShippingAddress();
 
-        if (!empty($shippingCountry) &&
-            !empty($shippingCountry->getCountry()) &&
-            (strtolower($shippingCountry->getCountry()) == strtolower($discountCriteria->getMin()) ||
+        if (!empty($shippingAddress) &&
+            !empty($shippingAddress->getCountry()) &&
+            (strtolower($shippingAddress->getCountry()) == strtolower($discountCriteria->getMin()) ||
                 $discountCriteria->getMin() == '*' ||
-                strtolower($shippingCountry->getCountry()) == strtolower($discountCriteria->getMax()) ||
+                strtolower($shippingAddress->getCountry()) == strtolower($discountCriteria->getMax()) ||
                 $discountCriteria->getMax() == '*')) {
             return true;
         }
@@ -211,16 +198,18 @@ class DiscountCriteriaService
 
     /**
      * @param DiscountCriteria $discountCriteria ,
-     * @param string $promoCode
+     * @param Cart $cart
      *
      * @return bool
      */
-    public function promoCodeRequirement(
-        DiscountCriteria $discountCriteria,
-        ?string $promoCode
-    ): bool {
-        if (!empty($promoCode) &&
-            ($discountCriteria->getMin() == $promoCode || $discountCriteria->getMax() == $promoCode)) {
+    public function promoCodeRequirement(DiscountCriteria $discountCriteria, Cart $cart): bool
+    {
+        if (!empty($cart->getPromoCode()) &&
+            (
+                $discountCriteria->getMin() == $cart->getPromoCode() ||
+                $discountCriteria->getMax() == $cart->getPromoCode()
+            )
+        ) {
             return true;
         }
 
@@ -241,7 +230,7 @@ class DiscountCriteriaService
         }
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->userProductRepository->createQueryBuilder('up');
 

@@ -3,10 +3,8 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Illuminate\Session\Store;
-use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class AddToCartControllerTest extends EcommerceTestCase
@@ -38,14 +36,39 @@ class AddToCartControllerTest extends EcommerceTestCase
             'products' => [$product['sku'] => $initialQuantity],
         ]);
 
-        // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        $totalDue = $product['price'] * $initialQuantity;
 
-        // assert the session has addedProducts key
-        $response->assertSessionHas('addedProducts');
+        // assert the session has the cart structure
+        $response->assertSessionHas(
+            'cart',
+            [
+                'items' => [
+                    [
+                        'sku' => $product['sku'],
+                        'name' => $product['name'],
+                        'quantity' => $initialQuantity,
+                        'thumbnail_url' => $product['thumbnail_url'],
+                        'description' => $product['description'],
+                        'stock' => $product['stock'],
+                        'subscription_interval_type' => $product['subscription_interval_type'],
+                        'subscription_interval_count' => $product['subscription_interval_count'],
+                        'price_before_discounts' => $product['price'],
+                        'price_after_discounts' => $product['price'],
+                    ]
+                ],
+                'discounts' => [],
+                'shipping_address' => null,
+                'billing_address' => null,
+                'number_of_payments' => 1,
+                'totals' => [
+                    'shipping' => 0,
+                    'tax' => 0,
+                    'due' => $totalDue
+                ],
+            ]
+        );
 
-        $response->assertSessionHas('cartNumberOfItems', 1);
-
+        // backend asserts
         $cart = Cart::fromSession();
 
         // assert cart items count
@@ -71,58 +94,73 @@ class AddToCartControllerTest extends EcommerceTestCase
         ]);
 
         $quantity = $this->faker->numberBetween(2, 10);
+
         $response = $this->call('GET', '/add-to-cart/', [
             'products' => [$product['sku'] => $quantity],
         ]);
 
-        // assert the session has the messages set on false
-        $response->assertSessionHas('success', false);
-
-        // assert the items was not added to cart
-        $response->assertSessionHas('addedProducts', []);
-        $response->assertSessionHas('cartNumberOfItems', 0);
-
-        $em = $this->app->make(EcommerceEntityManager::class);
-
-        $productEntity = $em->getRepository(Product::class)
-            ->find($product['id']);
-
-        // assert the session has the error message
-        $response->assertSessionHas('notAvailableProducts', [
+        // assert the session has the empty cart structure & error message
+        $response->assertSessionHas(
+            'cart',
             [
-                'message' => 'Product with SKU:' .
-                    $product['sku'] .
-                    ' could not be added to cart. The product stock(' .
-                    $product['stock'] .
-                    ') is smaller than the quantity you\'ve selected(' .
-                    $quantity .
-                    ')',
-                'product' => $productEntity,
-            ],
-        ]);
+                'items' => [],
+                'discounts' => [],
+                'shipping_address' => null,
+                'billing_address' => null,
+                'number_of_payments' => 1,
+                'totals' => [
+                    'shipping' => 0,
+                    'tax' => 0,
+                    'due' => 0
+                ],
+                'errors' => ['Product ' . $product['name'] . ' is currently out of stock, please check back later.']
+            ]
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items collection is empty
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertTrue(empty($cart->getItems()));
     }
 
     public function test_add_inexistent_product_to_cart()
     {
+        $this->session->flush();
+
         $randomSku = $this->faker->word;
+
         $response = $this->call('GET', '/add-to-cart', [
             'products' => [$randomSku => 10],
         ]);
 
-        // assert the session has the success message set to false
-        $response->assertSessionHas('success', false);
-
-        //assert the item was not added to the cart
-        $response->assertSessionHas('addedProducts', []);
-        $response->assertSessionHas('cartNumberOfItems', 0);
-
-        // assert the session has the error message
-        $response->assertSessionHas('notAvailableProducts', [
+        // assert the session has the empty cart structure & error message
+        $response->assertSessionHas(
+            'cart',
             [
-                'message' => 'Product with SKU:' . $randomSku . ' could not be added to cart.',
-                'product' => null,
-            ],
-        ]);
+                'items' => [],
+                'discounts' => [],
+                'shipping_address' => null,
+                'billing_address' => null,
+                'number_of_payments' => 1,
+                'totals' => [
+                    'shipping' => 0,
+                    'tax' => 0,
+                    'due' => 0
+                ],
+                'errors' => ['No product with SKU ' . $randomSku . ' was found.',]
+            ]
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items collection is empty
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertTrue(empty($cart->getItems()));
     }
 
     public function test_add_many_products_to_cart()
@@ -147,13 +185,49 @@ class AddToCartControllerTest extends EcommerceTestCase
             ],
         ]);
 
-        // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        $totalDue = $productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity;
 
-        //assert the items were added to the cart
-        $response->assertSessionHas('addedProducts');
-        $response->assertSessionHas('cartNumberOfItems', 2);
-        $response->assertSessionHas('notAvailableProducts', []);
+        // assert the session has the cart structure
+        $response->assertSessionHas(
+            'cart',
+            [
+                'items' => [
+                    [
+                        'sku' => $productOne['sku'],
+                        'name' => $productOne['name'],
+                        'quantity' => $productOneQuantity,
+                        'thumbnail_url' => $productOne['thumbnail_url'],
+                        'description' => $productOne['description'],
+                        'stock' => $productOne['stock'],
+                        'subscription_interval_type' => $productOne['subscription_interval_type'],
+                        'subscription_interval_count' => $productOne['subscription_interval_count'],
+                        'price_before_discounts' => $productOne['price'],
+                        'price_after_discounts' => $productOne['price'],
+                    ],
+                    [
+                        'sku' => $productTwo['sku'],
+                        'name' => $productTwo['name'],
+                        'quantity' => $productTwoQuantity,
+                        'thumbnail_url' => $productTwo['thumbnail_url'],
+                        'description' => $productTwo['description'],
+                        'stock' => $productTwo['stock'],
+                        'subscription_interval_type' => $productTwo['subscription_interval_type'],
+                        'subscription_interval_count' => $productTwo['subscription_interval_count'],
+                        'price_before_discounts' => $productTwo['price'],
+                        'price_after_discounts' => $productTwo['price'],
+                    ],
+                ],
+                'discounts' => [],
+                'shipping_address' => null,
+                'billing_address' => null,
+                'number_of_payments' => 1,
+                'totals' => [
+                    'shipping' => 0,
+                    'tax' => 0,
+                    'due' => $totalDue
+                ],
+            ]
+        );
 
         $cart = Cart::fromSession();
 
@@ -192,31 +266,31 @@ class AddToCartControllerTest extends EcommerceTestCase
             'products' => [$product['sku'] => $quantity],
         ]);
 
-        // assert the session has the success message set to false
-        $response->assertSessionHas('success', false);
-
-        // assert the product was not added into the cart
-        $response->assertSessionHas('addedProducts', []);
-        $response->assertSessionHas('cartNumberOfItems', 0);
-
-        $em = $this->app->make(EcommerceEntityManager::class);
-
-        $productEntity = $em->getRepository(Product::class)
-            ->find($product['id']);
-
-        // assert the session has the error message
-        $response->assertSessionHas('notAvailableProducts', [
+        // assert the session has the empty cart structure & error message
+        $response->assertSessionHas(
+            'cart',
             [
-                'message' => 'Product with SKU:' .
-                    $product['sku'] .
-                    ' could not be added to cart. The product stock(' .
-                    $product['stock'] .
-                    ') is smaller than the quantity you\'ve selected(' .
-                    $quantity .
-                    ')',
-                'product' => $productEntity,
-            ],
-        ]);
+                'items' => [],
+                'discounts' => [],
+                'shipping_address' => null,
+                'billing_address' => null,
+                'number_of_payments' => 1,
+                'totals' => [
+                    'shipping' => 0,
+                    'tax' => 0,
+                    'due' => 0
+                ],
+                'errors' => ['Product ' . $product['name'] . ' is currently out of stock, please check back later.']
+            ]
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items collection is empty
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertTrue(empty($cart->getItems()));
     }
 
     public function test_add_products_available_and_not_available_to_cart()
@@ -246,24 +320,53 @@ class AddToCartControllerTest extends EcommerceTestCase
             ],
         ]);
 
-        // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        $totalDue = $productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity;
 
-        //assert valid items was added into the cart
-        $response->assertSessionHas('addedProducts');
-        $response->assertSessionHas('cartNumberOfItems', 2);
-
-        // assert the session has the error messages for the invalid products
-        $response->assertSessionHas('notAvailableProducts', [
+        // assert the session has the cart structure
+        $response->assertSessionHas(
+            'cart',
             [
-                'message' => 'Product with SKU:' . $randomSku1 . ' could not be added to cart.',
-                'product' => null,
-            ],
-            [
-                'message' => 'Product with SKU:' . $randomSku2 . ' could not be added to cart.',
-                'product' => null,
-            ],
-        ]);
+                'items' => [
+                    [
+                        'sku' => $productOne['sku'],
+                        'name' => $productOne['name'],
+                        'quantity' => $productOneQuantity,
+                        'thumbnail_url' => $productOne['thumbnail_url'],
+                        'description' => $productOne['description'],
+                        'stock' => $productOne['stock'],
+                        'subscription_interval_type' => $productOne['subscription_interval_type'],
+                        'subscription_interval_count' => $productOne['subscription_interval_count'],
+                        'price_before_discounts' => $productOne['price'],
+                        'price_after_discounts' => $productOne['price'],
+                    ],
+                    [
+                        'sku' => $productTwo['sku'],
+                        'name' => $productTwo['name'],
+                        'quantity' => $productTwoQuantity,
+                        'thumbnail_url' => $productTwo['thumbnail_url'],
+                        'description' => $productTwo['description'],
+                        'stock' => $productTwo['stock'],
+                        'subscription_interval_type' => $productTwo['subscription_interval_type'],
+                        'subscription_interval_count' => $productTwo['subscription_interval_count'],
+                        'price_before_discounts' => $productTwo['price'],
+                        'price_after_discounts' => $productTwo['price'],
+                    ],
+                ],
+                'discounts' => [],
+                'shipping_address' => null,
+                'billing_address' => null,
+                'number_of_payments' => 1,
+                'totals' => [
+                    'shipping' => 0,
+                    'tax' => 0,
+                    'due' => $totalDue
+                ],
+                'errors' => [
+                    'No product with SKU ' . $randomSku1 . ' was found.',
+                    'No product with SKU ' . $randomSku2 .  ' was found.',
+                ]
+            ]
+        );
 
         $cart = Cart::fromSession();
 
