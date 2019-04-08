@@ -52,17 +52,17 @@ class CartService
      */
     private $allProducts = [];
 
+    /**
+     * @var Cart
+     */
+    private $cart;
+
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
     const PAYMENT_PLAN_LOCKED_SESSION_KEY = 'order-form-payment-plan-locked';
     const PROMO_CODE_KEY = 'promo-code';
     const TAXABLE_COUNTRY = 'Canada';
-
-    /**
-     * @var Cart
-     */
-    private $cart;
 
     /**
      * CartService constructor.
@@ -504,6 +504,14 @@ class CartService
         }
 
         return round($initialTotalDueBeforeShipping + $shippingDue, 2);
+    }
+
+    /**
+     * @param Cart $cart
+     */
+    public function setCart(Cart $cart): void
+    {
+        $this->cart = $cart;
     }
 
     /**

@@ -1044,7 +1044,11 @@ class OrderFormService
      * Submit an order.
      *
      * 1: create/get user or customer
-     * 2. set shipping/billing addresses in cart
+     * 2. get cart from request
+     * 3. set cart in the cart service
+     * 4. get calculated totals from cart service
+     * 5. bill the user based on totals
+     * 6. create database records
      *
      * @param Request $request
      *
@@ -1068,6 +1072,10 @@ class OrderFormService
         $currency = $request->get('currency', $this->currencyService->get());
 
         $cart = $request->getCart();
+
+        $this->cartService->setCart($cart);
+
+        // todo
 
         // try to make the payment
         try {
