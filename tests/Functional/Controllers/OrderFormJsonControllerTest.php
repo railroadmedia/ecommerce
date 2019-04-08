@@ -243,17 +243,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'payment_method_type',
-                    'detail' => 'The payment method type field is required when payment_method_id is not present.',
+                    'detail' => 'The payment method type field is required when payment method id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'payment_method_id',
-                    'detail' => 'The payment_method_id field is required when payment method type is not present.',
+                    'detail' => 'The payment method id field is required when payment method type is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'billing_country',
-                    'detail' => 'The billing_country field is required.',
+                    'detail' => 'The billing country field is required.',
                     'title' => 'Validation failed.'
                 ],
                 [
@@ -263,54 +263,53 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 ],
                 [
                     'source' => 'shipping_address_id',
-                    'detail' => 'The shipping_address_id field is required when none of shipping_first_name / shipping_last_name / shipping_address_line_1 / shipping_city / shipping_region / shipping_zip_or_postal_code / shipping_country are present.',
+                    'detail' => 'The shipping address id field is required when none of shipping first name / shipping last name / shipping address line 1 / shipping city / shipping region / shipping zip or postal code / shipping country are present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_first_name',
-                    'detail' => 'The shipping_first_name field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping first name field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_last_name',
-                    'detail' => 'The shipping_last_name field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping last name field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_address_line_1',
-                    'detail' => 'The shipping_address_line_1 field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping address line 1 field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_city',
-                    'detail' => 'The shipping_city field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping city field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_region',
-                    'detail' => 'The shipping_region field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping region field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_zip_or_postal_code',
-                    'detail' => 'The shipping_zip_or_postal_code field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping zip or postal code field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_country',
-                    'detail' => 'The shipping_country field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping country field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-
-                    'source' => 'billing_email',
-                    'detail' => 'The billing_email field is required when account_creation_email is not present.',
-                    'title' => 'Validation failed.'
+                    'source' => 'account_creation_email',
+                    'detail' => 'The account creation email field is required.',
+                    'title' => 'Validation failed.',
                 ],
                 [
                     'title' => 'Validation failed.',
-                    'source' => 'account_creation_email',
-                    'detail' => 'The account_creation_email field is required when billing_email is not present.',
+                    'source' => 'account_creation_password',
+                    'detail' => 'The account creation password field is required.',
                 ]
             ],
             $results->decodeResponseJson('errors')
@@ -423,37 +422,37 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 ],
                 [
                     'source' => 'shipping_first_name',
-                    'detail' => 'The shipping_first_name field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping first name field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_last_name',
-                    'detail' => 'The shipping_last_name field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping last name field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_address_line_1',
-                    'detail' => 'The shipping_address_line_1 field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping address line 1 field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_city',
-                    'detail' => 'The shipping_city field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping city field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_region',
-                    'detail' => 'The shipping_region field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping region field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_zip_or_postal_code',
-                    'detail' => 'The shipping_zip_or_postal_code field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping_zip_or_postal_code field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'shipping_country',
-                    'detail' => 'The shipping_country field is required when shipping_address_id is not present.',
+                    'detail' => 'The shipping_country field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
                 ],
             ],
