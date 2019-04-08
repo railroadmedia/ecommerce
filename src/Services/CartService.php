@@ -2,13 +2,13 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Railroad\Ecommerce\Exceptions\Cart\ProductNotActiveException;
-use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
-use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
+use Railroad\Ecommerce\Exceptions\Cart\ProductNotActiveException;
+use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
+use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
@@ -67,12 +67,12 @@ class CartService
     /**
      * CartService constructor.
      *
-     * @param  DiscountService  $discountService
-     * @param  EcommerceEntityManager  $entityManager
-     * @param  PermissionService  $permissionService
-     * @param  ProductRepository  $productRepository
-     * @param  ShippingOptionRepository  $shippingOptionRepository
-     * @param  TaxService  $taxService
+     * @param DiscountService $discountService
+     * @param EcommerceEntityManager $entityManager
+     * @param PermissionService $permissionService
+     * @param ProductRepository $productRepository
+     * @param ShippingOptionRepository $shippingOptionRepository
+     * @param TaxService $taxService
      */
     public function __construct(
         DiscountService $discountService,
@@ -81,13 +81,21 @@ class CartService
         ProductRepository $productRepository,
         ShippingOptionRepository $shippingOptionRepository,
         TaxService $taxService
-    ) {
+    )
+    {
         $this->discountService = $discountService;
         $this->entityManager = $entityManager;
         $this->permissionService = $permissionService;
         $this->productRepository = $productRepository;
         $this->shippingOptionRepository = $shippingOptionRepository;
         $this->taxService = $taxService;
+
+        $this->refreshProducts();
+    }
+
+    public function refreshProducts()
+    {
+        $this->productRepository->clear();
 
         // lets cache all the products right from the start
         $allProducts = $this->productRepository->findAll();
@@ -104,22 +112,23 @@ class CartService
      *
      * @param          $sku
      * @param          $quantity
-     * @param  bool  $lock
-     * @param  string  $promoCode
+     * @param bool $lock
+     * @param string $promoCode
      *
-     * @throws ProductNotFoundException
+     * @return Product
      * @throws ProductNotActiveException
      * @throws ProductOutOfStockException
      * @throws Throwable
      *
-     * @return Product
+     * @throws ProductNotFoundException
      */
     public function addToCart(
         string $sku,
         int $quantity,
         bool $lock = false,
         string $promoCode = ''
-    ): Product {
+    ): Product
+    {
 
         $this->refreshCart();
 
@@ -127,7 +136,8 @@ class CartService
         if ($lock) {
             $this->cart->setLocked(true);
 
-        } elseif ($this->cart->getLocked()) {
+        }
+        elseif ($this->cart->getLocked()) {
 
             // if the cart is locked and a new item is added, we should wipe it first
             $this->cart = new Cart();
@@ -150,9 +160,7 @@ class CartService
             throw new ProductNotActiveException($product);
         }
 
-        if ($product->getStock() !== null
-            && $product->getStock() < $quantity
-        ) {
+        if ($product->getStock() !== null && $product->getStock() < $quantity) {
             throw new ProductOutOfStockException($product);
         }
 
@@ -166,7 +174,7 @@ class CartService
     /**
      * Removes the cart item
      *
-     * @param  string  $sku
+     * @param string $sku
      *
      * @throws ProductNotFoundException
      * @throws Throwable
@@ -193,8 +201,8 @@ class CartService
      * If the operation is successful, null will be returned
      * A string error message will be returned on product active/stock errors
      *
-     * @param  string  $sku
-     * @param  int  $quantity
+     * @param string $sku
+     * @param int $quantity
      *
      * @throws ProductNotFoundException
      * @throws ProductNotActiveException
@@ -204,7 +212,8 @@ class CartService
     public function updateCartItemProductQuantity(
         string $sku,
         int $quantity
-    ) {
+    )
+    {
         $this->refreshCart();
 
         // product
@@ -218,9 +227,7 @@ class CartService
             throw new ProductNotActiveException($product);
         }
 
-        if ($product->getStock() !== null
-            && $product->getStock() < $quantity
-        ) {
+        if ($product->getStock() !== null && $product->getStock() < $quantity) {
             throw new ProductOutOfStockException($product);
         }
 
@@ -281,8 +288,7 @@ class CartService
     public function updateCart()
     {
         // update initial items cost
-        $products
-            = $this->productRepository->findBySkus($this->cart->listSkus());
+        $products = $this->productRepository->findBySkus($this->cart->listSkus());
 
         $totalItemsInitialCost = 0;
 
@@ -293,28 +299,28 @@ class CartService
              */
             $cartItem = $this->cart->getItemBySku($product->getSku());
 
-            $totalItemsInitialCost += ($product->getPrice() ?? 0)
-                * $cartItem->getQuantity();
+            $totalItemsInitialCost += ($product->getPrice() ?? 0) * $cartItem->getQuantity();
         }
 
         $this->cart->setItemsCost($totalItemsInitialCost);
 
         // update initial shipping cost
         $shippingAddress = $this->cart->getShippingAddress();
-        $shippingCountry = $shippingAddress ? $shippingAddress->getCountry()
-            : '';
+        $shippingCountry = $shippingAddress ? $shippingAddress->getCountry() : '';
 
         $totalWeight = $this->getTotalCartItemWeight();
 
-        $shippingOption
-            = $this->shippingOptionRepository->getShippingCosts($shippingCountry,
-            $totalWeight);
+        $shippingOption = $this->shippingOptionRepository->getShippingCosts(
+            $shippingCountry,
+            $totalWeight
+        );
 
         $initialShippingCost = 0;
 
         if (!empty($shippingOption)) {
-            $shippingCost = $shippingOption->getShippingCostsWeightRanges()
-                ->first();
+            $shippingCost =
+                $shippingOption->getShippingCostsWeightRanges()
+                    ->first();
 
             $initialShippingCost = $shippingCost->getPrice();
         }
@@ -332,8 +338,7 @@ class CartService
      */
     public function cartHasAnyPhysicalItems()
     {
-        $products
-            = $this->productRepository->findBySkus($this->cart->listSkus());
+        $products = $this->productRepository->findBySkus($this->cart->listSkus());
 
         foreach ($products as $product) {
             if ($product->getIsPhysical()) {
@@ -349,8 +354,7 @@ class CartService
      */
     public function cartHasAnyDigitalItems()
     {
-        $products
-            = $this->productRepository->findBySkus($this->cart->listSkus());
+        $products = $this->productRepository->findBySkus($this->cart->listSkus());
 
         foreach ($products as $product) {
             if (!$product->getIsPhysical()) {
@@ -366,8 +370,7 @@ class CartService
      */
     public function getTotalCartItemWeight()
     {
-        $products
-            = $this->productRepository->findBySkus($this->cart->listSkus());
+        $products = $this->productRepository->findBySkus($this->cart->listSkus());
 
         $totalWeight = 0;
 
@@ -418,19 +421,15 @@ class CartService
         $taxableAddress = null;
         $billingAddress = $this->cart->getBillingAddress();
 
-        if ($billingAddress
-            && strtolower($billingAddress->getCountry())
-            == strtolower(self::TAXABLE_COUNTRY)
-        ) {
+        if ($billingAddress && strtolower($billingAddress->getCountry()) == strtolower(self::TAXABLE_COUNTRY)) {
             $taxableAddress = $billingAddress;
         }
 
         $shippingAddress = $this->cart->getShippingAddress();
 
-        if (!$taxableAddress && $shippingAddress
-            && strtolower($billingAddress->getCountry())
-            == strtolower(self::TAXABLE_COUNTRY)
-        ) {
+        if (!$taxableAddress &&
+            $shippingAddress &&
+            strtolower($billingAddress->getCountry()) == strtolower(self::TAXABLE_COUNTRY)) {
             $taxableAddress = $shippingAddress;
         }
 
@@ -461,7 +460,8 @@ class CartService
 
         if ($this->cart->getPaymentPlanNumberOfPayments() > 1) {
             $financeDue = config('ecommerce.financing_cost_per_order');
-        } else {
+        }
+        else {
             $financeDue = 0;
         }
 
@@ -483,7 +483,8 @@ class CartService
 
         if ($this->cart->getPaymentPlanNumberOfPayments() > 1) {
             $financeDue = config('ecommerce.financing_cost_per_order');
-        } else {
+        }
+        else {
             $financeDue = 0;
         }
 
@@ -491,16 +492,16 @@ class CartService
         // All shipping must be paid on the first payment.
         $totalToFinance = $totalItemCostDue + $taxDue + $financeDue;
 
-        $initialTotalDueBeforeShipping = round($totalToFinance
-            / $this->cart->getPaymentPlanNumberOfPayments(), 2);
+        $initialTotalDueBeforeShipping = round(
+            $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(),
+            2
+        );
 
         // account for any rounded off cents by adding the difference after all payments to the first payment
-        if ($initialTotalDueBeforeShipping
-            * $this->cart->getPaymentPlanNumberOfPayments() != $totalToFinance
-        ) {
-            $initialTotalDueBeforeShipping += abs($initialTotalDueBeforeShipping
-                * $this->cart->getPaymentPlanNumberOfPayments()
-                - $totalToFinance);
+        if ($initialTotalDueBeforeShipping * $this->cart->getPaymentPlanNumberOfPayments() != $totalToFinance) {
+            $initialTotalDueBeforeShipping += abs(
+                $initialTotalDueBeforeShipping * $this->cart->getPaymentPlanNumberOfPayments() - $totalToFinance
+            );
         }
 
         return round($initialTotalDueBeforeShipping + $shippingDue, 2);
@@ -512,6 +513,14 @@ class CartService
     public function setCart(Cart $cart): void
     {
         $this->cart = $cart;
+    }
+
+    /**
+     * @return Cart
+     */
+    public function getCart(): Cart
+    {
+        return $this->cart;
     }
 
     /**
@@ -533,23 +542,27 @@ class CartService
             }
 
             $items[] = [
-                'sku'                         => $product->getSku(),
-                'name'                        => $product->getName(),
-                'quantity'                    => $cartItem->getQuantity(),
-                'thumbnail_url'               => $product->getThumbnailUrl(),
-                'description'                 => $product->getDescription(),
-                'stock'                       => $product->getStock(),
-                'subscription_interval_type'  => $product->getSubscriptionIntervalType(),
+                'sku' => $product->getSku(),
+                'name' => $product->getName(),
+                'quantity' => $cartItem->getQuantity(),
+                'thumbnail_url' => $product->getThumbnailUrl(),
+                'description' => $product->getDescription(),
+                'stock' => $product->getStock(),
+                'subscription_interval_type' => $product->getSubscriptionIntervalType(),
                 'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
-                'price_before_discounts'      => $product->getPrice(),
-                'price_after_discounts'       => $product->getPrice() - $cartItem->getDiscountAmount(),
+                'price_before_discounts' => $product->getPrice(),
+                'price_after_discounts' => $product->getPrice() - $cartItem->getDiscountAmount(),
             ];
         }
 
-        $shippingAddress = !empty($this->cart->getShippingAddress())
-            ? $this->cart->getShippingAddress()->toArray() : null;
-        $billingAddress = !empty($this->cart->getBillingAddress())
-            ? $this->cart->getBillingAddress()->toArray() : null;
+        $shippingAddress =
+            !empty($this->cart->getShippingAddress()) ?
+                $this->cart->getShippingAddress()
+                    ->toArray() : null;
+        $billingAddress =
+            !empty($this->cart->getBillingAddress()) ?
+                $this->cart->getBillingAddress()
+                    ->toArray() : null;
 
         $discounts = $this->cart->getCartDiscountNames() ?? [];
 
@@ -559,17 +572,17 @@ class CartService
 
         $totals = [
             'shipping' => $this->getTotalShippingDue(),
-            'tax'      => $this->getTotalTaxDue(),
-            'due'      => $due,
+            'tax' => $this->getTotalTaxDue(),
+            'due' => $due,
         ];
 
         return [
-            'items'              => $items,
-            'discounts'          => $discounts,
-            'shipping_address'   => $shippingAddress,
-            'billing_address'    => $billingAddress,
+            'items' => $items,
+            'discounts' => $discounts,
+            'shipping_address' => $shippingAddress,
+            'billing_address' => $billingAddress,
             'number_of_payments' => $numberOfPayments,
-            'totals'             => $totals,
+            'totals' => $totals,
         ];
     }
 }

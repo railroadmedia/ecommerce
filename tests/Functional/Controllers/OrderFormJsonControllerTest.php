@@ -101,6 +101,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]);
 
         $productOne = $this->fakeProduct([
+            'sku' => 'product-one',
             'price' => 12.95,
             'type' => ConfigService::$typeProduct,
             'active' => 1,
@@ -112,6 +113,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]);
 
         $productTwo = $this->fakeProduct([
+            'sku' => 'product-two',
             'price' => 247,
             'type' => ConfigService::$typeProduct,
             'active' => 1,
@@ -124,34 +126,18 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productOneQuantity = 1;
 
-        $this->cartService->addCartItem(
-            $productOne['name'],
-            $productOne['description'],
-            $productOneQuantity,
-            $productOne['price'],
-            $productOne['is_physical'],
-            $productOne['is_physical'],
-            $productOne['subscription_interval_type'],
-            $productOne['subscription_interval_count'],
-            [
-                'product-id' => $productOne['id'],
-            ]
+        $this->cartService->refreshProducts();
+
+        $this->cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity
         );
 
         $productTwoQuantity = 1;
 
-        $this->cartService->addCartItem(
-            $productTwo['name'],
-            $productTwo['description'],
-            $productTwoQuantity,
-            $productTwo['price'],
-            $productTwo['is_physical'],
-            $productTwo['is_physical'],
-            $productTwo['subscription_interval_type'],
-            $productTwo['subscription_interval_count'],
-            [
-                'product-id' => $productTwo['id'],
-            ]
+        $this->cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity
         );
 
         $results = $this->call('PUT', '/order');
@@ -162,17 +148,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'payment_method_type',
-                    'detail' => 'The payment method type field is required when payment-method-id is not present.',
+                    'detail' => 'The payment method type field is required when payment method id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'payment-method-id',
-                    'detail' => 'The payment-method-id field is required when payment method type is not present.',
+                    'source' => 'payment_method_id',
+                    'detail' => 'The payment method id field is required when payment method type is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'billing-country',
-                    'detail' => 'The billing-country field is required.',
+                    'source' => 'billing_country',
+                    'detail' => 'The billing country field is required.',
                     'title' => 'Validation failed.'
                 ],
                 [
@@ -180,6 +166,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The gateway field is required.',
                     'title' => 'Validation failed.'
                 ],
+                [
+                    "title" => "Validation failed.",
+                    "source" => "account_creation_email",
+                    "detail" => "The account creation email field is required.",
+                ],
+                [
+                    "title" => "Validation failed.",
+                    "source" => "account_creation_password",
+                    "detail" => "The account creation password field is required.",
+                ]
             ],
             $results->decodeResponseJson('errors')
         );
@@ -225,35 +221,18 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]);
 
         $productOneQuantity = 1;
+        $this->cartService->refreshProducts();
 
-        $this->cartService->addCartItem(
-            $productOne['name'],
-            $productOne['description'],
-            $productOneQuantity,
-            $productOne['price'],
-            $productOne['is_physical'],
-            $productOne['is_physical'],
-            $productOne['subscription_interval_type'],
-            $productOne['subscription_interval_count'],
-            [
-                'product-id' => $productOne['id'],
-            ]
+        $this->cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity
         );
 
         $productTwoQuantity = 1;
 
-        $this->cartService->addCartItem(
-            $productTwo['name'],
-            $productTwo['description'],
-            $productTwoQuantity,
-            $productTwo['price'],
-            $productTwo['is_physical'],
-            $productTwo['is_physical'],
-            $productTwo['subscription_interval_type'],
-            $productTwo['subscription_interval_count'],
-            [
-                'product-id' => $productTwo['id'],
-            ]
+        $this->cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity
         );
 
         $results = $this->call('PUT', '/order');
@@ -264,17 +243,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'payment_method_type',
-                    'detail' => 'The payment method type field is required when payment-method-id is not present.',
+                    'detail' => 'The payment method type field is required when payment_method_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'payment-method-id',
-                    'detail' => 'The payment-method-id field is required when payment method type is not present.',
+                    'source' => 'payment_method_id',
+                    'detail' => 'The payment_method_id field is required when payment method type is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'billing-country',
-                    'detail' => 'The billing-country field is required.',
+                    'source' => 'billing_country',
+                    'detail' => 'The billing_country field is required.',
                     'title' => 'Validation failed.'
                 ],
                 [
@@ -283,55 +262,55 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-address-id',
-                    'detail' => 'The shipping-address-id field is required when none of shipping-first-name / shipping-last-name / shipping-address-line-1 / shipping-city / shipping-region / shipping-zip-or-postal-code / shipping-country are present.',
+                    'source' => 'shipping_address_id',
+                    'detail' => 'The shipping_address_id field is required when none of shipping_first_name / shipping_last_name / shipping_address_line_1 / shipping_city / shipping_region / shipping_zip_or_postal_code / shipping_country are present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-first-name',
-                    'detail' => 'The shipping-first-name field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_first_name',
+                    'detail' => 'The shipping_first_name field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-last-name',
-                    'detail' => 'The shipping-last-name field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_last_name',
+                    'detail' => 'The shipping_last_name field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-address-line-1',
-                    'detail' => 'The shipping-address-line-1 field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_address_line_1',
+                    'detail' => 'The shipping_address_line_1 field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-city',
-                    'detail' => 'The shipping-city field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_city',
+                    'detail' => 'The shipping_city field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-region',
-                    'detail' => 'The shipping-region field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_region',
+                    'detail' => 'The shipping_region field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-zip-or-postal-code',
-                    'detail' => 'The shipping-zip-or-postal-code field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_zip_or_postal_code',
+                    'detail' => 'The shipping_zip_or_postal_code field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-country',
-                    'detail' => 'The shipping-country field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_country',
+                    'detail' => 'The shipping_country field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
 
-                    'source' => 'billing-email',
-                    'detail' => 'The billing-email field is required when account-creation-email is not present.',
+                    'source' => 'billing_email',
+                    'detail' => 'The billing_email field is required when account_creation_email is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'title' => 'Validation failed.',
-                    'source' => 'account-creation-email',
-                    'detail' => 'The account-creation-email field is required when billing-email is not present.',
+                    'source' => 'account_creation_email',
+                    'detail' => 'The account_creation_email field is required when billing_email is not present.',
                 ]
             ],
             $results->decodeResponseJson('errors')
@@ -419,17 +398,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'payment_method_type',
-                    'detail' => 'The payment method type field is required when payment-method-id is not present.',
+                    'detail' => 'The payment method type field is required when payment_method_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'payment-method-id',
-                    'detail' => 'The payment-method-id field is required when payment method type is not present.',
+                    'source' => 'payment_method_id',
+                    'detail' => 'The payment_method_id field is required when payment method type is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'billing-country',
-                    'detail' => 'The billing-country field is required.',
+                    'source' => 'billing_country',
+                    'detail' => 'The billing_country field is required.',
                     'title' => 'Validation failed.'
                 ],
                 [
@@ -438,43 +417,43 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-address-id',
-                    'detail' => 'The shipping-address-id field is required when none of shipping-first-name / shipping-last-name / shipping-address-line-1 / shipping-city / shipping-region / shipping-zip-or-postal-code / shipping-country are present.',
+                    'source' => 'shipping_address_id',
+                    'detail' => 'The shipping_address_id field is required when none of shipping_first_name / shipping_last_name / shipping_address_line_1 / shipping_city / shipping_region / shipping_zip_or_postal_code / shipping_country are present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-first-name',
-                    'detail' => 'The shipping-first-name field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_first_name',
+                    'detail' => 'The shipping_first_name field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-last-name',
-                    'detail' => 'The shipping-last-name field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_last_name',
+                    'detail' => 'The shipping_last_name field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-address-line-1',
-                    'detail' => 'The shipping-address-line-1 field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_address_line_1',
+                    'detail' => 'The shipping_address_line_1 field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-city',
-                    'detail' => 'The shipping-city field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_city',
+                    'detail' => 'The shipping_city field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-region',
-                    'detail' => 'The shipping-region field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_region',
+                    'detail' => 'The shipping_region field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-zip-or-postal-code',
-                    'detail' => 'The shipping-zip-or-postal-code field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_zip_or_postal_code',
+                    'detail' => 'The shipping_zip_or_postal_code field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
-                    'source' => 'shipping-country',
-                    'detail' => 'The shipping-country field is required when shipping-address-id is not present.',
+                    'source' => 'shipping_country',
+                    'detail' => 'The shipping_country field is required when shipping_address_id is not present.',
                     'title' => 'Validation failed.'
                 ],
             ],
@@ -525,7 +504,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => $this->faker->country,
+                'billing_country' => $this->faker->country,
                 'gateway' => 'drumeo',
             ]
         );
@@ -578,7 +557,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             '/order',
             [
                 'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-                'billing-country' => 'Canada',
+                'billing_country' => 'Canada',
                 'gateway' => 'drumeo',
             ]
         );
@@ -620,17 +599,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'company_name' => $this->faker->creditCardType,
             'gateway' => $brand,
             'card-token' => $fingerPrint,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => 'ab',
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => 'Canada',
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => 'ab',
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => 'Canada',
             'currency' => $currency
         ];
 
@@ -800,7 +779,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                             'city' => null,
                             'zip' => $requestData['billing-zip-or-postal-code'],
                             'state' => $requestData['billing-region'],
-                            'country' => $requestData['billing-country'],
+                            'country' => $requestData['billing_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -817,14 +796,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         'attributes' => [
                             'type' => ConfigService::$shippingAddressType,
                             'brand' => $brand,
-                            'first_name' => $requestData['shipping-first-name'],
-                            'last_name' => $requestData['shipping-last-name'],
-                            'street_line_1' => $requestData['shipping-address-line-1'],
+                            'first_name' => $requestData['shipping_first_name'],
+                            'last_name' => $requestData['shipping_last_name'],
+                            'street_line_1' => $requestData['shipping_address_line_1'],
                             'street_line_2' => null,
-                            'city' => $requestData['shipping-city'],
-                            'zip' => $requestData['shipping-zip-or-postal-code'],
-                            'state' => $requestData['shipping-region'],
-                            'country' => $requestData['shipping-country'],
+                            'city' => $requestData['shipping_city'],
+                            'zip' => $requestData['shipping_zip_or_postal_code'],
+                            'state' => $requestData['shipping_region'],
+                            'country' => $requestData['shipping_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -907,16 +886,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'company_name' => $this->faker->creditCardType,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => 'ab',
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => 'Canada',
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => 'ab',
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => 'Canada',
             'currency' => $currency
         ];
 
@@ -1043,7 +1022,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $billingData = [
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
         ];
 
         $shippingOption = $this->fakeShippingOption([
@@ -1108,7 +1087,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'type' => ConfigService::$billingAddressType,
             'zip' => $billingData['billing-zip-or-postal-code'],
             'state' => $billingData['billing-region'],
-            'country' => $billingData['billing-country'],
+            'country' => $billingData['billing_country'],
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -1125,16 +1104,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]);
 
         $orderRequestData = [
-            'payment-method-id' => $paymentMethod['id'],
+            'payment_method_id' => $paymentMethod['id'],
             'company_name' => $this->faker->creditCardType,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => 'ab',
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => 'Canada',
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => 'ab',
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => 'Canada',
             'currency' => $currency
         ] + $billingData;
 
@@ -1304,14 +1283,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         'attributes' => [
                             'type' => ConfigService::$shippingAddressType,
                             'brand' => $brand,
-                            'first_name' => $orderRequestData['shipping-first-name'],
-                            'last_name' => $orderRequestData['shipping-last-name'],
-                            'street_line_1' => $orderRequestData['shipping-address-line-1'],
+                            'first_name' => $orderRequestData['shipping_first_name'],
+                            'last_name' => $orderRequestData['shipping_last_name'],
+                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
                             'street_line_2' => null,
-                            'city' => $orderRequestData['shipping-city'],
-                            'zip' => $orderRequestData['shipping-zip-or-postal-code'],
-                            'state' => $orderRequestData['shipping-region'],
-                            'country' => $orderRequestData['shipping-country'],
+                            'city' => $orderRequestData['shipping_city'],
+                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                            'state' => $orderRequestData['shipping_region'],
+                            'country' => $orderRequestData['shipping_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -1386,7 +1365,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $billingData = [
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
         ];
 
         $shippingOption = $this->fakeShippingOption([
@@ -1429,7 +1408,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'type' => ConfigService::$billingAddressType,
             'zip' => $billingData['billing-zip-or-postal-code'],
             'state' => $billingData['billing-region'],
-            'country' => $billingData['billing-country'],
+            'country' => $billingData['billing_country'],
         ]);
 
         $billingAgreementExternalId = 'B-' . $this->faker->password;
@@ -1453,16 +1432,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]);
 
         $orderRequestData = [
-            'payment-method-id' => $paymentMethod['id'],
+            'payment_method_id' => $paymentMethod['id'],
             'company_name' => $this->faker->creditCardType,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => 'ab',
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => 'Canada',
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => 'ab',
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => 'Canada',
             'currency' => $currency
         ] + $billingData;
 
@@ -1612,14 +1591,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         'attributes' => [
                             'type' => ConfigService::$shippingAddressType,
                             'brand' => $brand,
-                            'first_name' => $orderRequestData['shipping-first-name'],
-                            'last_name' => $orderRequestData['shipping-last-name'],
-                            'street_line_1' => $orderRequestData['shipping-address-line-1'],
+                            'first_name' => $orderRequestData['shipping_first_name'],
+                            'last_name' => $orderRequestData['shipping_last_name'],
+                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
                             'street_line_2' => null,
-                            'city' => $orderRequestData['shipping-city'],
-                            'zip' => $orderRequestData['shipping-zip-or-postal-code'],
-                            'state' => $orderRequestData['shipping-region'],
-                            'country' => $orderRequestData['shipping-country'],
+                            'city' => $orderRequestData['shipping_city'],
+                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                            'state' => $orderRequestData['shipping_region'],
+                            'country' => $orderRequestData['shipping_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -1730,11 +1709,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
             'billing-region' => $this->faker->word,
             'billing-zip-or-postal-code' => $this->faker->postcode,
-            'billing-country' => 'Canada',
+            'billing_country' => 'Canada',
             'company_name' => $this->faker->creditCardType,
             'gateway' => $brand,
             'card-token' => $fingerPrint,
-            'shipping-address-id' => $shippingAddress['id'],
+            'shipping_address_id' => $shippingAddress['id'],
             'currency' => $currency
         ];
 
@@ -1914,7 +1893,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                             'city' => null,
                             'zip' => $requestData['billing-zip-or-postal-code'],
                             'state' => $requestData['billing-region'],
-                            'country' => $requestData['billing-country'],
+                            'country' => $requestData['billing_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -2082,7 +2061,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $this->faker->word,
             'billing-zip-or-postal-code' => $this->faker->postcode,
-            'billing-country' => 'Canada',
+            'billing_country' => 'Canada',
             'gateway' => $brand,
         ];
 
@@ -2128,16 +2107,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'company_name' => $this->faker->creditCardType,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => 'ab',
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => 'Canada',
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => 'ab',
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => 'Canada',
             'currency' => $currency
         ];
 
@@ -2295,7 +2274,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                             'city' => null,
                             'zip' => $orderRequestData['billing-zip-or-postal-code'],
                             'state' => $orderRequestData['billing-region'],
-                            'country' => $orderRequestData['billing-country'],
+                            'country' => $orderRequestData['billing_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -2312,14 +2291,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         'attributes' => [
                             'type' => ConfigService::$shippingAddressType,
                             'brand' => $brand,
-                            'first_name' => $orderRequestData['shipping-first-name'],
-                            'last_name' => $orderRequestData['shipping-last-name'],
-                            'street_line_1' => $orderRequestData['shipping-address-line-1'],
+                            'first_name' => $orderRequestData['shipping_first_name'],
+                            'last_name' => $orderRequestData['shipping_last_name'],
+                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
                             'street_line_2' => null,
-                            'city' => $orderRequestData['shipping-city'],
-                            'zip' => $orderRequestData['shipping-zip-or-postal-code'],
-                            'state' => $orderRequestData['shipping-region'],
-                            'country' => $orderRequestData['shipping-country'],
+                            'city' => $orderRequestData['shipping_city'],
+                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                            'state' => $orderRequestData['shipping_region'],
+                            'country' => $orderRequestData['shipping_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -2402,16 +2381,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'company_name' => $this->faker->creditCardType,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => 'ab',
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => 'Canada',
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => 'ab',
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => 'Canada',
             'currency' => $currency
         ];
 
@@ -2542,7 +2521,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                             'city' => null,
                             'zip' => $orderRequestData['billing-zip-or-postal-code'],
                             'state' => $orderRequestData['billing-region'],
-                            'country' => $orderRequestData['billing-country'],
+                            'country' => $orderRequestData['billing_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -2559,14 +2538,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         'attributes' => [
                             'type' => ConfigService::$shippingAddressType,
                             'brand' => $brand,
-                            'first_name' => $orderRequestData['shipping-first-name'],
-                            'last_name' => $orderRequestData['shipping-last-name'],
-                            'street_line_1' => $orderRequestData['shipping-address-line-1'],
+                            'first_name' => $orderRequestData['shipping_first_name'],
+                            'last_name' => $orderRequestData['shipping_last_name'],
+                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
                             'street_line_2' => null,
-                            'city' => $orderRequestData['shipping-city'],
-                            'zip' => $orderRequestData['shipping-zip-or-postal-code'],
-                            'state' => $orderRequestData['shipping-region'],
-                            'country' => $orderRequestData['shipping-country'],
+                            'city' => $orderRequestData['shipping_city'],
+                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                            'state' => $orderRequestData['shipping_region'],
+                            'country' => $orderRequestData['shipping_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -2686,7 +2665,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $this->faker->word,
             'billing-zip-or-postal-code' => $this->faker->postcode,
-            'billing-country' => 'Canada',
+            'billing_country' => 'Canada',
             'gateway' => $brand,
         ];
 
@@ -2818,7 +2797,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'card-token' => $cardToken,
                 'billing-region' => $this->faker->word,
                 'billing-zip-or-postal-code' => $this->faker->postcode,
-                'billing-country' => 'Canada',
+                'billing_country' => 'Canada',
                 'gateway' => 'drumeo',
             ]
         );
@@ -2939,7 +2918,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'card-token' => $cardToken,
                 'billing-region' => $state,
                 'billing-zip-or-postal-code' => $zip,
-                'billing-country' => $country,
+                'billing_country' => $country,
                 'gateway' => 'drumeo',
             ]
         );
@@ -2982,7 +2961,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'gateway' => $brand,
             'currency' => $currency
         ];
@@ -3192,7 +3171,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'card-token' => $cardToken,
                 'billing-region' => $state,
                 'billing-zip-or-postal-code' => $zip,
-                'billing-country' => $country,
+                'billing_country' => $country,
                 'gateway' => 'drumeo',
             ]
         );
@@ -3329,7 +3308,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'card-token' => $cardToken,
                 'billing-region' => $state,
                 'billing-zip-or-postal-code' => $zip,
-                'billing-country' => $country,
+                'billing_country' => $country,
                 'gateway' => 'drumeo',
             ]
         );
@@ -3480,15 +3459,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'card-token' => $cardToken,
                 'billing-region' => $state,
                 'billing-zip-or-postal-code' => $zip,
-                'billing-country' => $country,
+                'billing_country' => $country,
                 'gateway' => 'drumeo',
-                'shipping-first-name' => $this->faker->firstName,
-                'shipping-last-name' => $this->faker->lastName,
-                'shipping-address-line-1' => $this->faker->address,
-                'shipping-city' => $this->faker->city,
-                'shipping-region' => $state,
-                'shipping-zip-or-postal-code' => $this->faker->postcode,
-                'shipping-country' => $country,
+                'shipping_first_name' => $this->faker->firstName,
+                'shipping_last_name' => $this->faker->lastName,
+                'shipping_address_line_1' => $this->faker->address,
+                'shipping_city' => $this->faker->city,
+                'shipping_region' => $state,
+                'shipping_zip_or_postal_code' => $this->faker->postcode,
+                'shipping_country' => $country,
             ]
         );
 
@@ -3643,15 +3622,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'card-token' => $cardToken,
                 'billing-region' => $state,
                 'billing-zip-or-postal-code' => $zip,
-                'billing-country' => $country,
+                'billing_country' => $country,
                 'gateway' => $brand,
-                'shipping-first-name' => $this->faker->firstName,
-                'shipping-last-name' => $this->faker->lastName,
-                'shipping-address-line-1' => $this->faker->address,
-                'shipping-city' => $this->faker->city,
-                'shipping-region' => $state,
-                'shipping-zip-or-postal-code' => $this->faker->postcode,
-                'shipping-country' => $country,
+                'shipping_first_name' => $this->faker->firstName,
+                'shipping_last_name' => $this->faker->lastName,
+                'shipping_address_line_1' => $this->faker->address,
+                'shipping_city' => $this->faker->city,
+                'shipping_region' => $state,
+                'shipping_zip_or_postal_code' => $this->faker->postcode,
+                'shipping_country' => $country,
             ]
         );
 
@@ -3805,15 +3784,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'card-token' => $cardToken,
                 'billing-region' => $state,
                 'billing-zip-or-postal-code' => $zip,
-                'billing-country' => $country,
+                'billing_country' => $country,
                 'gateway' => $brand,
-                'shipping-first-name' => $this->faker->firstName,
-                'shipping-last-name' => $this->faker->lastName,
-                'shipping-address-line-1' => $this->faker->address,
-                'shipping-city' => $this->faker->city,
-                'shipping-region' => $state,
-                'shipping-zip-or-postal-code' => $this->faker->postcode,
-                'shipping-country' => $country,
+                'shipping_first_name' => $this->faker->firstName,
+                'shipping_last_name' => $this->faker->lastName,
+                'shipping_address_line_1' => $this->faker->address,
+                'shipping_city' => $this->faker->city,
+                'shipping_region' => $state,
+                'shipping_zip_or_postal_code' => $this->faker->postcode,
+                'shipping_country' => $country,
             ]
         );
 
@@ -4000,16 +3979,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => $state,
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => $country,
-            'billing-email' => $billingEmailAddress,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $state,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
+            'billing_email' => $billingEmailAddress,
             'currency' => $currency
         ];
 
@@ -4073,7 +4052,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                             'city' => null,
                             'zip' => $requestData['billing-zip-or-postal-code'],
                             'state' => $requestData['billing-region'],
-                            'country' => $requestData['billing-country'],
+                            'country' => $requestData['billing_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -4089,14 +4068,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         'attributes' => [
                             'type' => ConfigService::$shippingAddressType,
                             'brand' => $brand,
-                            'first_name' => $requestData['shipping-first-name'],
-                            'last_name' => $requestData['shipping-last-name'],
-                            'street_line_1' => $requestData['shipping-address-line-1'],
+                            'first_name' => $requestData['shipping_first_name'],
+                            'last_name' => $requestData['shipping_last_name'],
+                            'street_line_1' => $requestData['shipping_address_line_1'],
                             'street_line_2' => null,
-                            'city' => $requestData['shipping-city'],
-                            'zip' => $requestData['shipping-zip-or-postal-code'],
-                            'state' => $requestData['shipping-region'],
-                            'country' => $requestData['shipping-country'],
+                            'city' => $requestData['shipping_city'],
+                            'zip' => $requestData['shipping_zip_or_postal_code'],
+                            'state' => $requestData['shipping_region'],
+                            'country' => $requestData['shipping_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -4142,7 +4121,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'customer_id' => $customerId,
                 'zip' => $requestData['billing-zip-or-postal-code'],
                 'state' => $requestData['billing-region'],
-                'country' => $requestData['billing-country'],
+                'country' => $requestData['billing_country'],
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
@@ -4315,18 +4294,18 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => $state,
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => $country,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $state,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
             'currency' => $currency,
-            'account-creation-email' => $accountCreationMail,
-            'account-creation-password' => $accountCreationPassword,
+            'account_creation_email' => $accountCreationMail,
+            'account_creation_password' => $accountCreationPassword,
         ];
 
         $response = $this->call(
@@ -4397,7 +4376,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                             'city' => null,
                             'zip' => $requestData['billing-zip-or-postal-code'],
                             'state' => $requestData['billing-region'],
-                            'country' => $requestData['billing-country'],
+                            'country' => $requestData['billing_country'],
                             'created_at' => Carbon::now()->toDateTimeString(),
                         ],
                         'relationships' => [
@@ -4527,15 +4506,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => $state,
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => $country
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $state,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country
         ];
 
         $results = $this->call(
@@ -4682,15 +4661,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => $state,
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => $country,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $state,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
             'payment-plan-selector' => $paymentPlanOption,
             'currency' => $currency
         ];
@@ -4927,15 +4906,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => $state,
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => $country,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $state,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
             'currency' => $currency
         ];
 
@@ -5253,15 +5232,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => $state,
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => $country
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $state,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country
         ];
 
         $results = $this->call(
@@ -5375,7 +5354,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'card-token' => $cardToken,
                 'billing-region' => $state,
                 'billing-zip-or-postal-code' => $zip,
-                'billing-country' => $country,
+                'billing_country' => $country,
                 'gateway' => $brand,
             ]
         );
@@ -5550,15 +5529,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'card-token' => $cardToken,
                 'billing-region' => $state,
                 'billing-zip-or-postal-code' => $zip,
-                'billing-country' => $country,
+                'billing_country' => $country,
                 'gateway' => $brand,
-                'shipping-first-name' => $this->faker->firstName,
-                'shipping-last-name' => $this->faker->lastName,
-                'shipping-address-line-1' => $this->faker->address,
-                'shipping-city' => $this->faker->city,
-                'shipping-region' => $state,
-                'shipping-zip-or-postal-code' => $this->faker->postcode,
-                'shipping-country' => $country,
+                'shipping_first_name' => $this->faker->firstName,
+                'shipping_last_name' => $this->faker->lastName,
+                'shipping_address_line_1' => $this->faker->address,
+                'shipping_city' => $this->faker->city,
+                'shipping_region' => $state,
+                'shipping_zip_or_postal_code' => $this->faker->postcode,
+                'shipping_country' => $country,
             ]
         );
 
@@ -5663,15 +5642,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => $state,
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => $country,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $state,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
             'user_id' => $randomUser['id'],
             'brand' => $brand
         ];
@@ -5713,7 +5692,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'customer_id' => null,
                 'zip' => $orderData['billing-zip-or-postal-code'],
                 'state' => $orderData['billing-region'],
-                'country' => $orderData['billing-country'],
+                'country' => $orderData['billing_country'],
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
@@ -5837,15 +5816,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => $state,
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => $country,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $state,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
             'user_id' => $randomUser['id'],
         ];
 
@@ -5886,7 +5865,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'customer_id' => null,
                 'zip' => $orderData['billing-zip-or-postal-code'],
                 'state' => $orderData['billing-region'],
-                'country' => $orderData['billing-country'],
+                'country' => $orderData['billing_country'],
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
@@ -5989,15 +5968,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'card-token' => $cardToken,
             'billing-region' => $state,
             'billing-zip-or-postal-code' => $zip,
-            'billing-country' => $country,
+            'billing_country' => $country,
             'gateway' => $brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => $state,
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => $country,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $state,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
             'user_id' => $randomUser['id'],
             'brand' => $brand
         ];
@@ -6043,7 +6022,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'customer_id' => null,
                 'zip' => $orderData['billing-zip-or-postal-code'],
                 'state' => $orderData['billing-region'],
-                'country' => $orderData['billing-country'],
+                'country' => $orderData['billing_country'],
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );

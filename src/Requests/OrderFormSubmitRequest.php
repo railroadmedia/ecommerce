@@ -18,6 +18,8 @@ class OrderFormSubmitRequest extends FormRequest
     public function __construct(CartService $cartService)
     {
         $this->cartService = $cartService;
+
+        $this->cartService->refreshCart();
     }
 
     /**
