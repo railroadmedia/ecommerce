@@ -87,6 +87,7 @@ return [
     ],
     
     'financing_cost_per_order' => 1,
+    'payment_plan_options' => 1, 2, 5,
 
     'payment_gateways' => [
         'paypal' => [

@@ -36,6 +36,7 @@ use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
+use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Permissions\Services\PermissionService;
 use Stripe\Error\Card as StripeCard;
 use Throwable;
@@ -1040,7 +1041,10 @@ class OrderFormService
     }
 
     /**
-     * Submit an order
+     * Submit an order.
+     *
+     * 1: create/get user or customer
+     * 2. set shipping/billing addresses in cart
      *
      * @param Request $request
      *
@@ -1048,13 +1052,13 @@ class OrderFormService
      *
      * @throws Throwable
      */
-    public function processOrderForm(Request $request): array
+    public function processOrderForm(OrderFormSubmitRequest $request): array
     {
         list($user, $customer, $brand) = $this->getUserCustomerBrand($request);
 
-        $this->cartService->setBrand($brand);
-
+        // if this request is from a paypal redirect we must merge in the old input
         if (!empty($request->get('token'))) {
+
             $orderFormInput = session()->get('order-form-input', []);
             unset($orderFormInput['token']);
             session()->forget('order-form-input');
@@ -1063,16 +1067,7 @@ class OrderFormService
 
         $currency = $request->get('currency', $this->currencyService->get());
 
-        $shippingAddress = $this->getShippingAddress($request, $user, $customer);
-
-        $this->refreshCart();
-
-        $this->setupSessionBillingAddress($request);
-
-        $this->cartService->setPaymentPlanNumberOfPayments($request->get('payment-plan-selector'));
-
-        $paymentAmount = $this->cartService->getCart()
-            ->calculateInitialPricePerPayment();
+        $cart = $request->getCart();
 
         // try to make the payment
         try {
@@ -1081,7 +1076,7 @@ class OrderFormService
             if ($request->get('payment-method-id')) {
 
                 list($charge, $transactionId, $paymentMethod, $billingAddress) =
-                    $this->rebillClient($request, $user, $currency, $paymentAmount);
+                    $this->rebillClient($request, $user, $currency, $this->cartService->getDueForInitialPayment());
 
             } else {
 

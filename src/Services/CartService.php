@@ -345,6 +345,23 @@ class CartService
     }
 
     /**
+     * @return bool
+     */
+    public function cartHasAnyDigitalItems()
+    {
+        $products
+            = $this->productRepository->findBySkus($this->cart->listSkus());
+
+        foreach ($products as $product) {
+            if (!$product->getIsPhysical()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @return float
      */
     public function getTotalCartItemWeight()
