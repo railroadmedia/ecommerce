@@ -57,110 +57,6 @@ class DiscountService
     }
 
     /**
-     * @param array $discountsToApply - array of \Railroad\Ecommerce\Entities\Discount
-     * @param Cart $cart
-     *
-     * @return mixed
-     */
-    public function applyDiscounts(array $discountsToApply, Cart $cart)
-    {
-        // todo - check usage and remove if not used
-        $cartDiscounts = [];
-
-        foreach ($discountsToApply as $discount) {
-            /**
-             * @var $discount \Railroad\Ecommerce\Entities\Discount
-             */
-            // save raw in order item discounts
-            if (
-                $discount->getType() == self::PRODUCT_AMOUNT_OFF_TYPE ||
-                $discount->getType() == self::PRODUCT_PERCENT_OFF_TYPE ||
-                $discount->getType() == self::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE ||
-                $discount->getType() == self::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE
-            ) {
-
-                foreach ($cart->getItems() as $key => $cartItem) {
-
-                    /**
-                     * @var $cartItem \Railroad\Ecommerce\Entities\Structures\CartItem
-                     */
-
-                    /**
-                     * @var $cartProduct \Railroad\Ecommerce\Entities\Product
-                     */
-                    $cartProduct = $cartItem->getProduct();
-
-                    /**
-                     * @var $discountProduct \Railroad\Ecommerce\Entities\Product
-                     */
-                    $discountProduct = $discount->getProduct();
-
-                    if (
-                        $cartProduct &&
-                        (
-                            (
-                                $discountProduct &&
-                                $cartProduct->getId() == $discountProduct->getId()
-                            )
-                            || $cartProduct->getCategory() == $discount->getProductCategory()
-                        )
-                    ) {
-                        $cartItem->addAppliedDiscount($discount);
-                    }
-                }
-            }
-
-            // Order/shipping total discounts
-            if (
-                $discount->getType() == self::ORDER_TOTAL_AMOUNT_OFF_TYPE ||
-                $discount->getType() == self::ORDER_TOTAL_PERCENT_OFF_TYPE ||
-                $discount->getType() == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE ||
-                $discount->getType() == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE ||
-                $discount->getType() == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE
-            ) {
-
-                $cartDiscounts[] = $discount;
-            }
-        }
-
-        $cart->setAppliedDiscounts($cartDiscounts);
-
-        return $cart->getItems();
-    }
-
-    /**
-     * @param array $discountsToApply - array of \Railroad\Ecommerce\Entities\Discount
-     * @param float $cartItemsTotalDue
-     *
-     * @return float
-     */
-    public function getAmountDiscounted(
-        array $discountsToApply,
-        float $cartItemsTotalDue
-    ) {
-        // todo - check usage and remove if not used
-        $amountDiscounted = 0;
-
-        foreach ($discountsToApply as $discount) {
-            /**
-             * @var $discount \Railroad\Ecommerce\Entities\Discount
-             */
-
-            if (
-                $discount->getType() == self::ORDER_TOTAL_AMOUNT_OFF_TYPE
-            ) {
-                $amountDiscounted = round($amountDiscounted + $discount->getAmount(), 2);
-            } elseif (
-                $discount->getType() == self::ORDER_TOTAL_PERCENT_OFF_TYPE
-            ) {
-                $amountDiscounted = round($amountDiscounted + $discount->getAmount() / 100 * $cartItemsTotalDue, 2);
-            }
-        }
-
-        return $amountDiscounted;
-    }
-
-    /**
      * Apply the cart discounts by populating discount amounts properties on cart and cart items
      *
      * @param Cart $cart
@@ -184,37 +80,52 @@ class DiscountService
             if ($discount->getType() == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE && !$shippingOverwrite) {
 
                 $shippingDiscountAmount = round($shippingDiscountAmount + $discount->getAmount(), 2);
-                $shippingDiscountNames[] = $discount->getName();
+
+                if ($discount->getVisible()) {
+                    $shippingDiscountNames[] = $discount->getName();
+                }
 
             } elseif ($discount->getType() == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE && !$shippingOverwrite) {
 
                 $shippingDiscountAmount =
                             round($shippingDiscountAmount + $discount->getAmount() / 100 * $cart->getShippingCost(), 2);
-                $shippingDiscountNames[] = $discount->getName();
+
+                if ($discount->getVisible()) {
+                    $shippingDiscountNames[] = $discount->getName();
+                }
 
             } elseif ($discount->getType() == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
 
                 $shippingDiscountAmount = $cart->getShippingCost() - $discount->getAmount();
-                $shippingDiscountNames = [$discount->getName()];
+
+                if ($discount->getVisible()) {
+                    $shippingDiscountNames = [$discount->getName()];
+                }
+
                 $shippingOverwrite = true;
 
             } elseif ($discount->getType() == self::ORDER_TOTAL_AMOUNT_OFF_TYPE) {
 
-                $orderDiscountAmount = round($orderDiscountAmount - $discount->getAmount(), 2);
-                $discountNames[] = $discount->getName();
+                $orderDiscountAmount = round($orderDiscountAmount + $discount->getAmount(), 2);
+
+                if ($discount->getVisible()) {
+                    $discountNames[] = $discount->getName();
+                }
 
             } else if ($discount->getType() == self::ORDER_TOTAL_PERCENT_OFF_TYPE) {
 
                 $amountDiscounted = $discount->getAmount() / 100 * $cart->getItemsCost();
-                $orderDiscountAmount = round($orderDiscountAmount - $amountDiscounted, 2);
-                $discountNames[] = $discount->getName();
+                $orderDiscountAmount = round($orderDiscountAmount + $amountDiscounted, 2);
 
+                if ($discount->getVisible()) {
+                    $discountNames[] = $discount->getName();
+                }
             }
 
             foreach ($products as $product) {
                 /** @var Product $product */
 
-                /** @var CartItem $cartItem */
+                /** @var CartItem $productCartItem */
                 $productCartItem = $cart->getItemBySku($product->getSku());
 
                 /** @var Product $discountProduct */
@@ -233,18 +144,26 @@ class DiscountService
                         $discountAmount = $discount->getAmount() * $productCartItem->getQuantity();
 
                         $productsDiscountAmount[$product->getSku()] =
-                            round($productsDiscountAmount[$product->getSku()] + $discountAmount, 2);
+                            round(
+                                ($productsDiscountAmount[$product->getSku()] ?? 0) + $discountAmount,
+                            2);
 
-                        $discountNames[] = $discount->getName();
+                        if ($discount->getVisible()) {
+                            $discountNames[] = $discount->getName();
+                        }
 
                     } else if ($discount->getType() == self::PRODUCT_PERCENT_OFF_TYPE) {
 
                         $discountAmount = $productCartItem->getQuantity() * $product->getPrice() * $discount->getAmount() / 100;
 
                         $productsDiscountAmount[$product->getSku()] =
-                            round($productsDiscountAmount[$product->getSku()] + $discountAmount, 2);
+                            round(
+                                ($productsDiscountAmount[$product->getSku()] ?? 0) + $discountAmount,
+                            2);
 
-                        $discountNames[] = $discount->getName();
+                        if ($discount->getVisible()) {
+                            $discountNames[] = $discount->getName();
+                        }
                     }
                 }
 

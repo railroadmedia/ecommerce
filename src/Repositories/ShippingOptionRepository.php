@@ -36,7 +36,7 @@ class ShippingOptionRepository extends EntityRepository
      *
      * @return ShippingOption|null
      */
-    public function getShippingCosts(string $country, float $totalWeight): ?array
+    public function getShippingCosts(string $country, float $totalWeight): ?ShippingOption
     {
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
@@ -57,9 +57,12 @@ class ShippingOptionRepository extends EntityRepository
             )
             ->andWhere($qb->expr()->lte('scwr.min', ':totalWeight'))
             ->andWhere($qb->expr()->gte('scwr.max', ':totalWeight'))
+            ->andWhere($qb->expr()->eq('so.active', ':active'))
             ->setParameter('country', $country)
             ->setParameter('any', '*')
-            ->setParameter('totalWeight', $totalWeight);
+            ->setParameter('totalWeight', $totalWeight)
+            ->setParameter('active', true)
+            ->orderBy('so.priority');
 
         return $qb->getQuery()->getResult()[0] ?? null;
     }

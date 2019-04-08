@@ -6,6 +6,7 @@ use Railroad\Ecommerce\Exceptions\Cart\ProductNotActiveException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -235,6 +236,36 @@ class CartService
     }
 
     /**
+     * Sets the shipping address on cart
+     * proxy method to trigger cart updates when shipping address is set or changes
+     */
+    public function setShippingAddress(Address $shippingAddress)
+    {
+        $this->refreshCart();
+
+        $this->cart->setShippingAddress($shippingAddress);
+
+        $this->updateCart();
+
+        $this->cart->toSession();
+    }
+
+    /**
+     * Sets the billing address on cart
+     * proxy method to trigger cart updates when billing address is set or changes
+     */
+    public function setBillingAddress(Address $billingAddress)
+    {
+        $this->refreshCart();
+
+        $this->cart->setBillingAddress($billingAddress);
+
+        $this->updateCart();
+
+        $this->cart->toSession();
+    }
+
+    /**
      * Sets the local cart property from session
      */
     public function refreshCart()
@@ -324,7 +355,11 @@ class CartService
         $totalWeight = 0;
 
         foreach ($products as $product) {
-            $totalWeight += $product->getWeight() ?? 0;
+
+            /** @var $cartItem CartItem */
+            $cartItem = $this->cart->getItemBySku($product->getSku());
+
+            $totalWeight += ($product->getWeight() ?? 0) * $cartItem->getQuantity();
         }
 
         return $totalWeight;
@@ -451,7 +486,7 @@ class CartService
                 - $totalToFinance);
         }
 
-        return $initialTotalDueBeforeShipping + $shippingDue;
+        return round($initialTotalDueBeforeShipping + $shippingDue, 2);
     }
 
     /**
