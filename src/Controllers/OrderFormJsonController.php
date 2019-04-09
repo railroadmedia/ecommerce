@@ -133,15 +133,14 @@ class OrderFormJsonController extends BaseController
             $brand = $request->get('brand', ConfigService::$brand);
         }
 
-        $this->cartService
-            ->setBrand($brand?? ConfigService::$brand);
+        $this->cartService->refreshCart();
 
         // if the cart it's empty; we throw an exception
         throw_if(
             empty(
                 $this->cartService->getCart()->getItems()
             ),
-            new NotFoundException('The cart it\'s empty')
+            new NotFoundException('The cart is empty')
         );
 
         $result = $this->orderFormService->processOrderForm($request);

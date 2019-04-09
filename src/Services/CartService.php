@@ -243,6 +243,15 @@ class CartService
     }
 
     /**
+     * Removes all cart items - initializes an empty cart - and stores it on session
+     */
+    public function clearCart()
+    {
+        $this->cart = new Cart();
+        $this->cart->toSession();
+    }
+
+    /**
      * Sets the shipping address on cart
      * proxy method to trigger cart updates when shipping address is set or changes
      */
@@ -442,7 +451,7 @@ class CartService
             $result = $this->taxService->vat($amountToTax, $taxableAddress);
         }
 
-        return $result;
+        return round($result, 2);
     }
 
     /**
@@ -465,7 +474,35 @@ class CartService
             $financeDue = 0;
         }
 
-        return $totalItemCostDue + $shippingDue + $taxDue + $financeDue;
+        return round($totalItemCostDue + $shippingDue + $taxDue + $financeDue, 2);
+    }
+
+    /**
+     * Returns the recurring payment cost
+     *
+     * @return float
+     */
+    public function getDueForPayment()
+    {
+        $totalItemCostDue = $this->getTotalItemCostDue();
+
+        $taxDue = $this->getTotalTaxDue();
+
+        if ($this->cart->getPaymentPlanNumberOfPayments() > 1) {
+            $financeDue = config('ecommerce.financing_cost_per_order');
+        }
+        else {
+            $financeDue = 0;
+        }
+
+        // Customers can only finance the order item price, taxes, and finance.
+        // All shipping must be paid on the first payment.
+        $totalToFinance = $totalItemCostDue + $taxDue + $financeDue;
+
+        return round(
+            $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(),
+            2
+        );
     }
 
     /**
@@ -475,9 +512,9 @@ class CartService
      */
     public function getDueForInitialPayment()
     {
-        $totalItemCostDue = $this->getTotalItemCostDue();
-
         $shippingDue = $this->getTotalShippingDue();
+
+        $totalItemCostDue = $this->getTotalItemCostDue();
 
         $taxDue = $this->getTotalTaxDue();
 
@@ -513,6 +550,10 @@ class CartService
     public function setCart(Cart $cart): void
     {
         $this->cart = $cart;
+
+        $this->updateCart();
+
+        $this->cart->toSession();
     }
 
     /**

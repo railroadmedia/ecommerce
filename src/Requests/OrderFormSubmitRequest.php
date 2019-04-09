@@ -2,7 +2,9 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-use Railroad\Ecommerce\Entities\Structures\Address;
+use Railroad\Ecommerce\Contracts\Address as AddressInterface;
+use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -108,11 +110,19 @@ class OrderFormSubmitRequest extends FormRequest
     {
         $cart = Cart::fromSession();
 
-        $cart->setPaymentPlanNumberOfPayments($this->get('payment_plan_number_of_payments'));
-        $cart->setShippingAddress($this->getShippingAddress());
-        $cart->setBillingAddress($this->getBillingAddress());
+        $cart->setPaymentPlanNumberOfPayments($this->get('payment_plan_number_of_payments', 1));
+        $cart->setShippingAddress($this->getShippingAddressStructure());
+        $cart->setBillingAddress($this->getBillingAddressStructure());
 
         return $cart;
+    }
+
+    /**
+     * @return AddressStructure
+     */
+    public function getShippingAddressStructure()
+    {
+        return $this->populateShippingAddress(new AddressStructure());
     }
 
     /**
@@ -120,18 +130,33 @@ class OrderFormSubmitRequest extends FormRequest
      */
     public function getShippingAddress()
     {
-        $address = new Address();
+        $address = $this->populateShippingAddress(new Address());
 
+        $address->setType(ConfigService::$shippingAddressType);
+
+        return $address;
+    }
+
+    protected function populateShippingAddress(AddressInterface $address)
+    {
         $address->setFirstName($this->get('shipping_first_name'));
         $address->setLastName($this->get('shipping_last_name'));
-        $address->setStreetLineOne($this->get('shipping_address_line_1'));
-        $address->setStreetLineTwo($this->get('shipping_address_line_2'));
+        $address->setStreetLine1($this->get('shipping_address_line_1'));
+        $address->setStreetLine2($this->get('shipping_address_line_2'));
         $address->setCity($this->get('shipping_city'));
         $address->setState($this->get('shipping_region'));
         $address->setCountry($this->get('shipping_country'));
-        $address->setZipOrPostalCode($this->get('shipping_zip_or_postal_code'));
+        $address->setZip($this->get('shipping_zip_or_postal_code'));
 
         return $address;
+    }
+
+    /**
+     * @return AddressStructure
+     */
+    public function getBillingAddressStructure()
+    {
+        return $this->populateBillingAddress(new AddressStructure());
     }
 
     /**
@@ -139,16 +164,23 @@ class OrderFormSubmitRequest extends FormRequest
      */
     public function getBillingAddress()
     {
-        $address = new Address();
+        $address = $this->populateBillingAddress(new Address());
 
+        $address->setType(ConfigService::$billingAddressType);
+
+        return $address;
+    }
+
+    protected function populateBillingAddress(AddressInterface $address)
+    {
         $address->setFirstName($this->get('billing_first_name'));
         $address->setLastName($this->get('billing_last_name'));
-        $address->setStreetLineOne($this->get('billing_address_line_1'));
-        $address->setStreetLineTwo($this->get('billing_address_line_2'));
+        $address->setStreetLine1($this->get('billing_address_line_1'));
+        $address->setStreetLine2($this->get('billing_address_line_2'));
         $address->setCity($this->get('billing_city'));
         $address->setState($this->get('billing_region'));
         $address->setCountry($this->get('billing_country'));
-        $address->setZipOrPostalCode($this->get('billing_zip_or_postal_code'));
+        $address->setZip($this->get('billing_zip_or_postal_code'));
 
         return $address;
     }

@@ -31,17 +31,17 @@ class Address implements AddressInterface, Serializable
     /**
      * @var string
      */
-    protected $streetLineOne;
+    protected $streetLine1;
 
     /**
      * @var string
      */
-    protected $streetLineTwo;
+    protected $streetLine2;
 
     /**
      * @var string
      */
-    protected $zipOrPostalCode;
+    protected $zip;
 
     /**
      * @var string
@@ -51,8 +51,8 @@ class Address implements AddressInterface, Serializable
     const PROPS_MAP
         = [
             'country'       => true, 'state' => true, 'firstName' => true,
-            'lastName'      => true, 'streetLineOne' => true,
-            'streetLineTwo' => true, 'zipOrPostalCode' => true, 'city' => true,
+            'lastName'      => true, 'streetLine1' => true,
+            'streetLine2' => true, 'zip' => true, 'city' => true,
         ];
 
     public function __construct(
@@ -147,19 +147,19 @@ class Address implements AddressInterface, Serializable
     /**
      * @return string|null
      */
-    public function getStreetLineOne(): ?string
+    public function getStreetLine1(): ?string
     {
-        return $this->streetLineOne;
+        return $this->streetLine1;
     }
 
     /**
-     * @param  string  $streetLineOne
+     * @param  string  $streetLine1
      *
      * @return Address
      */
-    public function setStreetLineOne(?string $streetLineOne): self
+    public function setStreetLine1(?string $streetLine1): self
     {
-        $this->streetLineOne = $streetLineOne;
+        $this->streetLine1 = $streetLine1;
 
         return $this;
     }
@@ -167,9 +167,9 @@ class Address implements AddressInterface, Serializable
     /**
      * @return string|null
      */
-    public function getStreetLineTwo(): ?string
+    public function getStreetLine2(): ?string
     {
-        return $this->streetLineTwo;
+        return $this->streetLine2;
     }
 
     /**
@@ -177,9 +177,9 @@ class Address implements AddressInterface, Serializable
      *
      * @return Address
      */
-    public function setStreetLineTwo(?string $streetLineTwo): self
+    public function setStreetLine2(?string $streetLine2): self
     {
-        $this->streetLineTwo = $streetLineTwo;
+        $this->streetLine2 = $streetLine2;
 
         return $this;
     }
@@ -187,9 +187,9 @@ class Address implements AddressInterface, Serializable
     /**
      * @return string|null
      */
-    public function getZipOrPostalCode(): ?string
+    public function getZip(): ?string
     {
-        return $this->zipOrPostalCode;
+        return $this->zip;
     }
 
     /**
@@ -197,9 +197,9 @@ class Address implements AddressInterface, Serializable
      *
      * @return Address
      */
-    public function setZipOrPostalCode(?string $zipOrPostalCode): self
+    public function setZip(?string $zip): self
     {
-        $this->zipOrPostalCode = $zipOrPostalCode;
+        $this->zip = $zip;
 
         return $this;
     }
@@ -254,9 +254,9 @@ class Address implements AddressInterface, Serializable
     public function toArray(): array
     {
         return [
-            'zip_or_postal_code' => $this->zipOrPostalCode,
-            'street_line_two'    => $this->streetLineTwo,
-            'street_line_one'    => $this->streetLineOne,
+            'zip_or_postal_code' => $this->zip,
+            'street_line_two'    => $this->streetLine2,
+            'street_line_one'    => $this->streetLine1,
             'last_name'          => $this->lastName,
             'first_name'         => $this->firstName, 'state' => $this->state,
             'country'            => $this->country, 'city' => $this->city,
@@ -296,9 +296,9 @@ class Address implements AddressInterface, Serializable
      */
     public function unserialize($data)
     {
-        $this->setZipOrPostalCode($data['zip_or_postal_code']);
-        $this->setStreetLineTwo($data['street_line_two']);
-        $this->setStreetLineOne($data['street_line_one']);
+        $this->setZip($data['zip_or_postal_code']);
+        $this->setStreetLine2($data['street_line_two']);
+        $this->setStreetLine1($data['street_line_one']);
         $this->setLastName($data['last_name']);
         $this->setFirstName($data['first_name']);
         $this->setState($data['state']);

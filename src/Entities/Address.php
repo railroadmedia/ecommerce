@@ -65,14 +65,14 @@ class Address implements AddressInterface
     protected $customer;
 
     /**
-     * @ORM\Column(type="string", name="first_name")
+     * @ORM\Column(type="string", name="first_name", nullable=true)
      *
      * @var string
      */
     protected $firstName;
 
     /**
-     * @ORM\Column(type="string", name="last_name")
+     * @ORM\Column(type="string", name="last_name", nullable=true)
      *
      * @var string
      */
@@ -93,7 +93,7 @@ class Address implements AddressInterface
     protected $streetLine2;
 
     /**
-     * @ORM\Column(type="string", nullable=true)
+     * @ORM\Column(type="string", nullable=true, nullable=true)
      *
      * @var string
      */
@@ -189,7 +189,7 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setFirstName(string $firstName): self
+    public function setFirstName(?string $firstName): self
     {
         $this->firstName = $firstName;
 
@@ -209,7 +209,7 @@ class Address implements AddressInterface
      *
      * @return Address
      */
-    public function setLastName(string $lastName): self
+    public function setLastName(?string $lastName): self
     {
         $this->lastName = $lastName;
 
