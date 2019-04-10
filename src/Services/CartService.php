@@ -89,21 +89,6 @@ class CartService
         $this->productRepository = $productRepository;
         $this->shippingOptionRepository = $shippingOptionRepository;
         $this->taxService = $taxService;
-
-        $this->refreshProducts();
-    }
-
-    public function refreshProducts()
-    {
-        // todo - temp disable
-        // $this->productRepository->clear();
-
-        // lets cache all the products right from the start
-        $allProducts = $this->productRepository->findAll();
-
-        foreach ($allProducts as $product) {
-            $this->allProducts[$product->getSku()] = $product;
-        }
     }
 
     /**
