@@ -121,8 +121,13 @@ class OrderFormSubmitRequest extends FormRequest
         $cart = Cart::fromSession();
 
         $cart->setPaymentPlanNumberOfPayments($this->get('payment_plan_number_of_payments', 1));
+
         $cart->setShippingAddress($this->getShippingAddressStructure());
         $cart->setBillingAddress($this->getBillingAddressStructure());
+
+        $cart->setBillingAddressId($this->get('billing_address_id'));
+        $cart->setShippingAddressId($this->get('shipping_address_id'));
+        $cart->setPaymentMethodId($this->get('payment_method_id'));
 
         return $cart;
     }

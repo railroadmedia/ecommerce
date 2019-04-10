@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Entities\Structures;
 
-use Railroad\Ecommerce\Entities\Address as AddressEntity;
 use Serializable;
 
 class Cart implements Serializable
@@ -40,42 +39,19 @@ class Cart implements Serializable
     private $billingAddress;
 
     /**
-     * Initial cart items cost, not discounted
-     *
-     * @var float
+     * @var int|null
      */
-    private $itemsCost;
+    private $shippingAddressId;
 
     /**
-     * Initial cart items shipping cost, not discounted
-     *
-     * @var float
+     * @var int|null
      */
-    private $shippingCost;
+    private $billingAddressId;
 
     /**
-     * @var float
+     * @var int|null
      */
-    private $orderDiscountAmount;
-
-    /**
-     * @var float
-     */
-    private $shippingDiscountAmount;
-
-    /**
-     * @var string[]
-     */
-    private $cartDiscountNames;
-
-    public function __construct()
-    {
-        $this->itemsCost = 0;
-        $this->shippingCost = 0;
-        $this->orderDiscountAmount = 0;
-        $this->shippingDiscountAmount = 0;
-        $this->cartDiscountNames = [];
-    }
+    private $paymentMethodId;
 
     /**
      * Get cart items
@@ -183,86 +159,6 @@ class Cart implements Serializable
     }
 
     /**
-     * @return float
-     */
-    public function getItemsCost(): float
-    {
-        return $this->itemsCost;
-    }
-
-    /**
-     * @param float $itemsCost
-     */
-    public function setItemsCost(float $itemsCost): void
-    {
-        $this->itemsCost = $itemsCost;
-    }
-
-    /**
-     * @return float
-     */
-    public function getShippingCost(): float
-    {
-        return $this->shippingCost;
-    }
-
-    /**
-     * @param float $shippingCost
-     */
-    public function setShippingCost(float $shippingCost): void
-    {
-        $this->shippingCost = $shippingCost;
-    }
-
-    /**
-     * @return float
-     */
-    public function getOrderDiscountAmount(): float
-    {
-        return $this->orderDiscountAmount;
-    }
-
-    /**
-     * @param float $orderDiscountAmount
-     */
-    public function setOrderDiscountAmount(float $orderDiscountAmount): void
-    {
-        $this->orderDiscountAmount = $orderDiscountAmount;
-    }
-
-    /**
-     * @return float
-     */
-    public function getShippingDiscountAmount(): float
-    {
-        return $this->shippingDiscountAmount;
-    }
-
-    /**
-     * @param float $shippingDiscountAmount
-     */
-    public function setShippingDiscountAmount(float $shippingDiscountAmount): void
-    {
-        $this->shippingDiscountAmount = $shippingDiscountAmount;
-    }
-
-    /**
-     * @return array
-     */
-    public function getCartDiscountNames(): array
-    {
-        return $this->cartDiscountNames;
-    }
-
-    /**
-     * @param array $discountName
-     */
-    public function setCartDiscountNames(array $discountName): void
-    {
-        $this->cartDiscountNames = $discountName;
-    }
-
-    /**
      * @return int
      */
     public function getPaymentPlanNumberOfPayments(): int
@@ -311,18 +207,71 @@ class Cart implements Serializable
     }
 
     /**
+     * @return int|null
+     */
+    public function getShippingAddressId(): ?int
+    {
+        return $this->shippingAddressId;
+    }
+
+    /**
+     * @param int|null $shippingAddressId
+     */
+    public function setShippingAddressId(?int $shippingAddressId): void
+    {
+        $this->shippingAddressId = $shippingAddressId;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getBillingAddressId(): ?int
+    {
+        return $this->billingAddressId;
+    }
+
+    /**
+     * @param int|null $billingAddressId
+     */
+    public function setBillingAddressId(?int $billingAddressId): void
+    {
+        $this->billingAddressId = $billingAddressId;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getPaymentMethodId(): ?int
+    {
+        return $this->paymentMethodId;
+    }
+
+    /**
+     * @param int|null $paymentMethodId
+     */
+    public function setPaymentMethodId(?int $paymentMethodId): void
+    {
+        $this->paymentMethodId = $paymentMethodId;
+    }
+
+    /**
      * @return string
      */
     public function serialize()
     {
-        return serialize([
-            'items' => $this->getItems(),
-            'locked' => $this->getLocked(),
-            'promo-code' => $this->getPromoCode(),
-            'payment-plan-number-of-payments' => $this->getPaymentPlanNumberOfPayments(),
-            'shipping-address' => $this->getShippingAddress(),
-            'billing-address' => $this->getBillingAddress(),
-        ]);
+        return serialize(
+            [
+                'items' => $this->getItems(),
+                'locked' => $this->getLocked(),
+                'promo-code' => $this->getPromoCode(),
+                'payment-plan-number-of-payments' => $this->getPaymentPlanNumberOfPayments(),
+                'shipping-address' => $this->getShippingAddress(),
+                'billing-address' => $this->getBillingAddress(),
+                'shipping-address-id' => $this->getShippingAddressId(),
+                'billing-address-id' => $this->getBillingAddressId(),
+                'payment-method-id' => $this->getPaymentMethodId(),
+            ]
+        );
     }
 
     /**
@@ -334,8 +283,13 @@ class Cart implements Serializable
         $this->setLocked($data['locked']);
         $this->setPromoCode($data['promo-code']);
         $this->setPaymentPlanNumberOfPayments($data['payment-plan-number-of-payments']);
+
         $this->setShippingAddress($data['shipping-address']);
         $this->setBillingAddress($data['billing-address']);
+        $this->setShippingAddressId($data['shipping-address-id']);
+        $this->setBillingAddressId($data['billing-address-id']);
+
+        $this->setPaymentMethodId($data['payment-method-id']);
     }
 
     public function toSession(): void

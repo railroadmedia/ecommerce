@@ -2,8 +2,8 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 
@@ -22,6 +22,10 @@ class ShippingService
      * @var DiscountService
      */
     private $discountService;
+    /**
+     * @var AddressRepository
+     */
+    private $addressRepository;
 
     /**
      * ShippingService constructor.
@@ -29,16 +33,19 @@ class ShippingService
      * @param ShippingOptionRepository $shippingOptionRepository
      * @param ProductRepository $productRepository
      * @param DiscountService $discountService
+     * @param AddressRepository $addressRepository
      */
     public function __construct(
         ShippingOptionRepository $shippingOptionRepository,
         ProductRepository $productRepository,
-        DiscountService $discountService
+        DiscountService $discountService,
+        AddressRepository $addressRepository
     )
     {
         $this->shippingOptionRepository = $shippingOptionRepository;
         $this->productRepository = $productRepository;
         $this->discountService = $discountService;
+        $this->addressRepository = $addressRepository;
     }
 
     /**
@@ -50,16 +57,26 @@ class ShippingService
     public function getShippingDueForCart(Cart $cart): float
     {
         $weight = $this->getCartWeight($cart);
+        $country = null;
 
-        if (empty($cart->getBillingAddress())) {
+        if (!empty($cart->getShippingAddressId())) {
+            $address = $this->addressRepository->byId($cart->getShippingAddressId());
+
+            if (!empty($address)) {
+                $country = $address->getCountry();
+            }
+        }
+        elseif (!empty($cart->getShippingAddress())) {
+            $country =
+                $cart->getShippingAddress()
+                    ->getCountry();
+        }
+
+        if (empty($country)) {
             return 0;
         }
 
-        $costBeforeDiscounts = $this->shippingOptionRepository->getShippingCosts(
-            $cart->getBillingAddress()
-                ->getCountry(),
-            $weight
-        );
+        $costBeforeDiscounts = $this->shippingOptionRepository->getShippingCosts($country, $weight);
 
         return (float)($costBeforeDiscounts - $this->discountService->getTotalShippingDiscountedForCart($cart));
     }
@@ -87,6 +104,7 @@ class ShippingService
     }
 
     // todo: test
+
     /**
      * @param Cart $cart
      *
@@ -106,6 +124,7 @@ class ShippingService
     }
 
     // todo: test
+
     /**
      * @param Cart $cart
      *

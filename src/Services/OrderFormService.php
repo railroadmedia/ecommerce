@@ -19,7 +19,6 @@ use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Entities\Structures\Address as SessionAddress;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
@@ -1148,12 +1147,9 @@ class OrderFormService
 
         $currency = $request->get('currency', $this->currencyService->get());
 
-        // todo - add support for fetching shipping address from db, when shipping address id is set on request
         $cart = $request->getCart();
 
         $this->cartService->setCart($cart);
-
-        $shippingAddress = $this->getShippingAddress($request, $user, $customer);
 
         $paymentAmount = $this->cartService->getDueForInitialPayment();
 
@@ -1161,17 +1157,19 @@ class OrderFormService
         try {
             $charge = $transactionId = $paymentMethod = $billingAddress = null;
 
-            if ($request->get('payment_method_id')) {
-
+            // use their existing payment method if they chose one
+            // todo: fix
+            if (!empty($cart->getPaymentMethodId())) {
                 list(
                     $charge, $transactionId, $paymentMethod, $billingAddress
                     ) = $this->rebillClient($request, $user, $currency, $paymentAmount);
-
             }
+
+            // otherwise make a new payment method
             else {
 
-                if ($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE &&
-                    empty($request->get('token'))) {
+                // credit cart
+                if ($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
                     list(
                         $charge, $paymentMethod, $billingAddress
                         ) = $this->chargeAndCreatePaymentMethod(
@@ -1184,8 +1182,11 @@ class OrderFormService
                     );
 
                 }
+                // paypal
                 elseif ($request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE ||
                     !empty($request->get('token'))) {
+
+                    // if the paypal token is not set we must first redirect to paypal
                     if (empty($request->get('token'))) {
 
                         $gateway = $request->get('gateway');
