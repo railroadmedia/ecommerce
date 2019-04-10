@@ -15,7 +15,6 @@ class ProductRepository extends RepositoryBase
 {
     /**
      * @return Product[]
-     * @throws ORMException
      */
     public function all()
     {
@@ -34,7 +33,6 @@ class ProductRepository extends RepositoryBase
      * @param array $skus
      *
      * @return Product[]
-     * @throws ORMException
      */
     public function bySkus(array $skus)
     {
@@ -58,7 +56,6 @@ class ProductRepository extends RepositoryBase
      * @param string $sku
      *
      * @return null|Product
-     * @throws ORMException
      */
     public function bySku(string $sku)
     {
@@ -71,7 +68,6 @@ class ProductRepository extends RepositoryBase
      * @param array $accessCodes
      *
      * @return Product[]
-     * @throws ORMException
      */
     public function byAccessCodes(array $accessCodes): array
     {
@@ -105,7 +101,6 @@ class ProductRepository extends RepositoryBase
      * @param AccessCode $accessCode
      *
      * @return Product[]
-     * @throws ORMException
      */
     public function byAccessCode(AccessCode $accessCode): array
     {
@@ -116,7 +111,6 @@ class ProductRepository extends RepositoryBase
      * @param Cart $cart
      *
      * @return Product[]
-     * @throws ORMException
      */
     public function byCart(Cart $cart)
     {

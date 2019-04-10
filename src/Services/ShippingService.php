@@ -46,9 +46,8 @@ class ShippingService
      *
      * @param Cart $cart
      * @return float
-     * @throws ORMException
      */
-    public function getShippingDueForCart(Cart $cart)
+    public function getShippingDueForCart(Cart $cart): float
     {
         $weight = $this->getCartWeight($cart);
 
@@ -62,14 +61,13 @@ class ShippingService
             $weight
         );
 
-        return $costBeforeDiscounts - $this->discountService->getTotalShippingDiscountedForCart($cart);
+        return (float)($costBeforeDiscounts - $this->discountService->getTotalShippingDiscountedForCart($cart));
     }
 
     /**
      * @param Cart $cart
      *
      * @return float
-     * @throws ORMException
      */
     public function getCartWeight(Cart $cart): float
     {
@@ -86,5 +84,24 @@ class ShippingService
         }
 
         return (float)$weight;
+    }
+
+    // todo: test
+    /**
+     * @param Cart $cart
+     *
+     * @return bool
+     */
+    public function doesCartHaveAnyPhysicalItems(Cart $cart): bool
+    {
+        $products = $this->productRepository->byCart($cart);
+
+        foreach ($products as $product) {
+            if ($product->getIsPhysical()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
