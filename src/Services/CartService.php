@@ -130,7 +130,6 @@ class CartService
         string $promoCode = ''
     ): Product
     {
-
         $this->refreshCart();
 
         // cart locking
@@ -151,7 +150,7 @@ class CartService
         }
 
         // product
-        $product = $this->allProducts[$sku] ?? null;
+        $product = $this->productRepository->bySku($sku);
 
         if (empty($product)) {
             throw new ProductNotFoundException($sku);
@@ -298,7 +297,7 @@ class CartService
     public function updateCart()
     {
         // update initial items cost
-        $products = $this->productRepository->findBySkus($this->cart->listSkus());
+        $products = $this->productRepository->bySkus($this->cart->listSkus());
 
         $totalItemsInitialCost = 0;
 
@@ -350,7 +349,7 @@ class CartService
      */
     public function cartHasAnyPhysicalItems()
     {
-        $products = $this->productRepository->findBySkus($this->cart->listSkus());
+        $products = $this->productRepository->bySkus($this->cart->listSkus());
 
         foreach ($products as $product) {
             if ($product->getIsPhysical()) {
@@ -366,7 +365,7 @@ class CartService
      */
     public function cartHasAnyDigitalItems()
     {
-        $products = $this->productRepository->findBySkus($this->cart->listSkus());
+        $products = $this->productRepository->bySkus($this->cart->listSkus());
 
         foreach ($products as $product) {
             if (!$product->getIsPhysical()) {
@@ -382,7 +381,7 @@ class CartService
      */
     public function getTotalCartItemWeight()
     {
-        $products = $this->productRepository->findBySkus($this->cart->listSkus());
+        $products = $this->productRepository->bySkus($this->cart->listSkus());
 
         $totalWeight = 0;
 

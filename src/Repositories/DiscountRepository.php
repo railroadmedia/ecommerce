@@ -2,55 +2,74 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\Discount;
-use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Services\DiscountService;
 
 /**
  * Class DiscountRepository
  *
- * @method Discount find($id, $lockMode = null, $lockVersion = null)
- * @method Discount findOneBy(array $criteria, array $orderBy = null)
- * @method Discount[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- * @method Discount[] findByProduct(Product $product)
- * @method Discount[] findAll()
- *
  * @package Railroad\Ecommerce\Repositories
  */
-class DiscountRepository extends EntityRepository
+class DiscountRepository extends RepositoryBase
 {
     /**
-     * DiscountRepository constructor.
+     * Returns an array of Discounts with associated DiscountCriteria loaded
      *
-     * @param EcommerceEntityManager $em
+     * @return Discount[]
+     * @throws ORMException
      */
-    public function __construct(EcommerceEntityManager $em)
+    public function getActiveDiscounts()
     {
-        parent::__construct($em, $em->getClassMetadata(Discount::class));
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select(['d', 'dc'])
+            ->from(Discount::class, 'd')
+            ->leftJoin('d.discountCriterias', 'dc')
+            ->where(
+                $qb->expr()
+                    ->eq('d.active', ':active')
+            )
+            ->setParameter('active', true);
+
+        return $qb->getQuery()
+            ->setResultCacheDriver($this->arrayCache)
+            ->getResult();
     }
 
     /**
      * Returns an array of Discounts with associated DiscountCriteria loaded
      *
-     * @return array
+     * @return Discount[]
+     * @throws ORMException
      */
-    public function getActiveDiscountsWithCriteria()
+    public function getActiveShippingDiscounts()
     {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
-        $qb = $this->getEntityManager()
-            ->createQueryBuilder();
+        $qb = $this->entityManager->createQueryBuilder();
 
         $qb->select(['d', 'dc'])
-            ->from($this->getClassName(), 'd')
+            ->from(Discount::class, 'd')
             ->leftJoin('d.discountCriterias', 'dc')
-            ->where($qb->expr()
-                ->eq('d.active', ':active'))
-            ->setParameter('active', true);
+            ->where(
+                $qb->expr()
+                    ->eq('d.active', ':active')
+            )
+            ->where(
+                $qb->expr()
+                    ->in('d.type', ':types')
+            )
+            ->setParameter('active', true)
+            ->setParameter(
+                'types',
+                [
+                    DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
+                    DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
+                    DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE
+                ]
+            );
 
         return $qb->getQuery()
+            ->setResultCacheDriver($this->arrayCache)
             ->getResult();
     }
 }

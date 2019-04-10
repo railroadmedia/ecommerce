@@ -1104,6 +1104,7 @@ class OrderFormService
 
         $paymentAmount = $this->cartService->getDueForInitialPayment();
 
+
         // try to make the payment
         try {
             $charge = $transactionId = $paymentMethod = $billingAddress = null;

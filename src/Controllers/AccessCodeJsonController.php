@@ -121,7 +121,7 @@ class AccessCodeJsonController extends BaseController
         $accessCodes = $qb->getQuery()->getResult();
 
         // fetch related products, as a dictionary
-        $products = $this->productRepository->getAccessCodesProducts($accessCodes);
+        $products = $this->productRepository->byAccessCodes($accessCodes);
 
         // map products to ease access
         $productsMap = [];
@@ -177,7 +177,7 @@ class AccessCodeJsonController extends BaseController
 
         // fetch related products, as a dictionary
         $products = $this->productRepository
-                            ->getAccessCodesProducts($accessCodes);
+                            ->byAccessCodes($accessCodes);
 
         // map products to ease access
         $productsMap = [];

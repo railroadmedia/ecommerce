@@ -39,6 +39,11 @@ class DiscountService
     private $productRepository;
 
     /**
+     * @var Discount[]
+     */
+    private static $allActiveDiscounts = [];
+
+    /**
      * PaymentMethodService constructor.
      *
      * @param DiscountCriteriaService $discountCriteriaService
@@ -49,11 +54,28 @@ class DiscountService
         DiscountCriteriaService $discountCriteriaService,
         DiscountRepository $discountRepository,
         ProductRepository $productRepository
-    ) {
-
+    )
+    {
         $this->discountCriteriaService = $discountCriteriaService;
         $this->discountRepository = $discountRepository;
         $this->productRepository = $productRepository;
+
+        self::$allActiveDiscounts = $this->discountRepository->getActiveDiscounts();
+    }
+
+    public function getTotalShippingDiscountedForCart(Cart $cart)
+    {
+        return 0;
+    }
+
+    public function getTotalItemDiscounted(Cart $cart)
+    {
+
+    }
+
+    public function getApplicableDiscounts()
+    {
+
     }
 
     /**
@@ -72,8 +94,9 @@ class DiscountService
         $shippingOverwrite = false;
         $productsDiscountAmount = []; // keyed by product sku
         $discountNames = [];
-        $shippingDiscountNames = []; // if exists and to be applied, ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE discount will truncate the array
-        $products = $this->productRepository->findBySkus($cart->listSkus());
+        $shippingDiscountNames =
+            []; // if exists and to be applied, ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE discount will truncate the array
+        $products = $this->productRepository->bySkus($cart->listSkus());
 
         foreach ($this->getDiscountsForCart($cart) as $discount) {
 
@@ -85,16 +108,18 @@ class DiscountService
                     $shippingDiscountNames[] = $discount->getName();
                 }
 
-            } elseif ($discount->getType() == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE && !$shippingOverwrite) {
+            }
+            elseif ($discount->getType() == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE && !$shippingOverwrite) {
 
                 $shippingDiscountAmount =
-                            round($shippingDiscountAmount + $discount->getAmount() / 100 * $cart->getShippingCost(), 2);
+                    round($shippingDiscountAmount + $discount->getAmount() / 100 * $cart->getShippingCost(), 2);
 
                 if ($discount->getVisible()) {
                     $shippingDiscountNames[] = $discount->getName();
                 }
 
-            } elseif ($discount->getType() == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
+            }
+            elseif ($discount->getType() == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
 
                 $shippingDiscountAmount = $cart->getShippingCost() - $discount->getAmount();
 
@@ -104,7 +129,8 @@ class DiscountService
 
                 $shippingOverwrite = true;
 
-            } elseif ($discount->getType() == self::ORDER_TOTAL_AMOUNT_OFF_TYPE) {
+            }
+            elseif ($discount->getType() == self::ORDER_TOTAL_AMOUNT_OFF_TYPE) {
 
                 $orderDiscountAmount = round($orderDiscountAmount + $discount->getAmount(), 2);
 
@@ -112,13 +138,16 @@ class DiscountService
                     $discountNames[] = $discount->getName();
                 }
 
-            } else if ($discount->getType() == self::ORDER_TOTAL_PERCENT_OFF_TYPE) {
+            }
+            else {
+                if ($discount->getType() == self::ORDER_TOTAL_PERCENT_OFF_TYPE) {
 
-                $amountDiscounted = $discount->getAmount() / 100 * $cart->getItemsCost();
-                $orderDiscountAmount = round($orderDiscountAmount + $amountDiscounted, 2);
+                    $amountDiscounted = $discount->getAmount() / 100 * $cart->getItemsCost();
+                    $orderDiscountAmount = round($orderDiscountAmount + $amountDiscounted, 2);
 
-                if ($discount->getVisible()) {
-                    $discountNames[] = $discount->getName();
+                    if ($discount->getVisible()) {
+                        $discountNames[] = $discount->getName();
+                    }
                 }
             }
 
@@ -131,38 +160,37 @@ class DiscountService
                 /** @var Product $discountProduct */
                 $discountProduct = $discount->getProduct();
 
-                if (
-                    (
-                        $discountProduct &&
-                        $product->getId() == $discountProduct->getId()
-                    )
-                    || $product->getCategory() == $discount->getProductCategory()
-                ) {
+                if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
+                    $product->getCategory() == $discount->getProductCategory()) {
 
                     if ($discount->getType() == self::PRODUCT_AMOUNT_OFF_TYPE) {
 
                         $discountAmount = $discount->getAmount() * $productCartItem->getQuantity();
 
-                        $productsDiscountAmount[$product->getSku()] =
-                            round(
-                                ($productsDiscountAmount[$product->getSku()] ?? 0) + $discountAmount,
-                            2);
+                        $productsDiscountAmount[$product->getSku()] = round(
+                            ($productsDiscountAmount[$product->getSku()] ?? 0) + $discountAmount,
+                            2
+                        );
 
                         if ($discount->getVisible()) {
                             $discountNames[] = $discount->getName();
                         }
 
-                    } else if ($discount->getType() == self::PRODUCT_PERCENT_OFF_TYPE) {
+                    }
+                    else {
+                        if ($discount->getType() == self::PRODUCT_PERCENT_OFF_TYPE) {
 
-                        $discountAmount = $productCartItem->getQuantity() * $product->getPrice() * $discount->getAmount() / 100;
+                            $discountAmount =
+                                $productCartItem->getQuantity() * $product->getPrice() * $discount->getAmount() / 100;
 
-                        $productsDiscountAmount[$product->getSku()] =
-                            round(
+                            $productsDiscountAmount[$product->getSku()] = round(
                                 ($productsDiscountAmount[$product->getSku()] ?? 0) + $discountAmount,
-                            2);
+                                2
+                            );
 
-                        if ($discount->getVisible()) {
-                            $discountNames[] = $discount->getName();
+                            if ($discount->getVisible()) {
+                                $discountNames[] = $discount->getName();
+                            }
                         }
                     }
                 }
@@ -195,7 +223,7 @@ class DiscountService
     {
         $discountsToApply = [];
 
-        $activeDiscounts = $this->discountRepository->getActiveDiscountsWithCriteria();
+        $activeDiscounts = $this->discountRepository->getActiveDiscounts();
 
         foreach ($activeDiscounts as $activeDiscount) {
             /** @var $activeDiscount Discount */
@@ -203,9 +231,10 @@ class DiscountService
 
             foreach ($activeDiscount->getDiscountCriterias() as $discountCriteria) {
                 /** @var $discountCriteria DiscountCriteria */
-                $discountCriteriaMet =
-                    $this->discountCriteriaService->discountCriteriaMetForOrder($discountCriteria,
-                        $cart);
+                $discountCriteriaMet = $this->discountCriteriaService->discountCriteriaMetForOrder(
+                    $discountCriteria,
+                    $cart
+                );
 
                 if ($discountCriteriaMet) {
                     $criteriaMet = true;
@@ -219,5 +248,48 @@ class DiscountService
         }
 
         return $discountsToApply;
+    }
+
+    /**
+     * @param Cart $cart
+     *
+     * @return array
+     * @throws Throwable
+     */
+    public function getShippingDiscountsForCart(Cart $cart)
+    {
+        $discountsToApply = [];
+
+        $activeDiscounts = $this->discountRepository->getActiveDiscounts();
+
+        foreach ($activeDiscounts as $activeDiscount) {
+            $criteriaMet = false;
+
+            foreach ($activeDiscount->getDiscountCriterias() as $discountCriteria) {
+                $discountCriteriaMet = $this->discountCriteriaService->discountCriteriaMetForOrder(
+                    $discountCriteria,
+                    $cart
+                );
+
+                if ($discountCriteriaMet) {
+                    $criteriaMet = true;
+                    break;
+                }
+            }
+
+            if ($criteriaMet) {
+                $discountsToApply[$activeDiscount->getId()] = $activeDiscount;
+            }
+        }
+
+        return $discountsToApply;
+    }
+
+    /**
+     * @return Discount[]
+     */
+    public function getAllActiveDiscounts()
+    {
+        return $this->discountRepository->getActiveDiscounts();
     }
 }

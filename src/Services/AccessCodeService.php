@@ -77,7 +77,7 @@ class AccessCodeService
      */
     public function claim(AccessCode $accessCode, User $user): AccessCode
     {
-        $accessCodeProducts = $this->productRepository->getAccessCodeProducts($accessCode);
+        $accessCodeProducts = $this->productRepository->byAccessCode($accessCode);
 
         $subscriptions = $this->subscriptionRepository->getProductsSubscriptions($accessCodeProducts);
 

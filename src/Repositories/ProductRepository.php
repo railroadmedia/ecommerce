@@ -2,76 +2,78 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\Common\Cache\ArrayCache;
-use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Entities\Structures\Cart;
 
 /**
  * Class ProductRepository
- *
- * @method Product find($id, $lockMode = null, $lockVersion = null)
- * @method Product findOneBy(array $criteria, array $orderBy = null)
- * @method Product[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- * @method Product[] findAll()
- *
  * @package Railroad\Ecommerce\Repositories
  */
-class ProductRepository extends EntityRepository
+class ProductRepository extends RepositoryBase
 {
     /**
-     * @var ArrayCache
+     * @return Product[]
+     * @throws ORMException
      */
-    protected $arrayCache;
-
-    /**
-     * ProductRepository constructor.
-     *
-     * @param  EcommerceEntityManager  $em
-     */
-    public function __construct(EcommerceEntityManager $em)
+    public function all()
     {
-        parent::__construct($em, $em->getClassMetadata(Product::class));
+        $qb = $this->entityManager->createQueryBuilder();
 
-        $this->arrayCache = new ArrayCache();
-    }
-
-    /**
-     * Returns an array of Products from $accessCode productsIds
-     *
-     * @param  AccessCode  $accessCode
-     *
-     * @return array
-     */
-    public function getAccessCodeProducts(AccessCode $accessCode): array
-    {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
-        $qb = $this->getEntityManager()->createQueryBuilder();
-
-        $qb->select('p')->from($this->getClassName(), 'p')->where($qb->expr()
-                ->in('p.id', ':ids'));
-
-        /**
-         * @var $q \Doctrine\ORM\Query
-         */
-        $q = $qb->getQuery();
-
-        $q->setParameter('ids', $accessCode->getProductIds());
+        $q =
+            $qb->select('p')
+                ->from(Product::class, 'p')
+                ->getQuery()
+                ->setResultCacheDriver($this->arrayCache);
 
         return $q->getResult();
     }
 
     /**
+     * @param array $skus
+     *
+     * @return Product[]
+     * @throws ORMException
+     */
+    public function bySkus(array $skus)
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $q =
+            $qb->select('p')
+                ->from(Product::class, 'p')
+                ->where(
+                    $qb->expr()
+                        ->in('p.sku', ':skus')
+                )
+                ->getQuery()
+                ->setParameter('skus', $skus)
+                ->setResultCacheDriver($this->arrayCache);
+
+        return $q->getResult();
+    }
+
+    /**
+     * @param string $sku
+     *
+     * @return null|Product
+     * @throws ORMException
+     */
+    public function bySku(string $sku)
+    {
+        return $this->bySkus([$sku])[0] ?? null;
+    }
+
+    /**
      * Returns an array of Products from $accessCodes productsIds
      *
-     * @param  array  $accessCodes
+     * @param array $accessCodes
      *
-     * @return array
+     * @return Product[]
+     * @throws ORMException
      */
-    public function getAccessCodesProducts(array $accessCodes): array
+    public function byAccessCodes(array $accessCodes): array
     {
         $productIds = [];
 
@@ -81,75 +83,43 @@ class ProductRepository extends EntityRepository
             $productIds += $accessCodeProductIds;
         }
 
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
-        $qb = $this->getEntityManager()->createQueryBuilder();
+        $qb = $this->entityManager->createQueryBuilder();
 
-        $qb->select('p')->from($this->getClassName(), 'p')->where($qb->expr()
-            ->in('p.id', ':ids'));
-
-        /**
-         * @var $q \Doctrine\ORM\Query
-         */
-        $q = $qb->getQuery();
-
-        $q->setParameter('ids', array_keys($productIds));
+        $q =
+            $qb->select('p')
+                ->from(Product::class, 'p')
+                ->where(
+                    $qb->expr()
+                        ->in('p.id', ':ids')
+                )
+                ->getQuery()
+                ->setResultCacheDriver($this->arrayCache)
+                ->setParameter('ids', array_keys($productIds));
 
         return $q->getResult();
     }
 
     /**
-     * We use the array cache here since we want to grab entities from the ORM
-     * instead of a new query and products rarely change.
+     * Returns an array of Products from $accessCode productsIds
      *
-     * @param  array  $skus
+     * @param AccessCode $accessCode
      *
      * @return Product[]
+     * @throws ORMException
      */
-    public function findBySkus(array $skus)
+    public function byAccessCode(AccessCode $accessCode): array
     {
-        $products = [];
-        $skusNotInCache = [];
-
-        foreach ($skus as $sku) {
-            $product = $this->arrayCache->fetch($sku);
-
-            if ($product === false) {
-                $skusNotInCache[] = $sku;
-            } else {
-                $products[] = $product;
-            }
-        }
-
-        $products = array_merge($products,
-            $this->findBy(['sku' => $skusNotInCache]));
-
-        foreach ($products as $product) {
-            $this->arrayCache->save($product->getSku(), $product);
-        }
-
-        return $products;
+        return $this->byAccessCodes([$accessCode]);
     }
 
     /**
-     * @param  string  $sku
+     * @param Cart $cart
      *
-     * @return null|Product
+     * @return Product[]
+     * @throws ORMException
      */
-    public function findOneBySku(string $sku)
+    public function byCart(Cart $cart)
     {
-        $product = $this->arrayCache->fetch($sku);
-
-        if ($product === false) {
-            $productFromDatabase = $this->findOneBy(['sku' => $sku]);
-
-            $this->arrayCache->save($productFromDatabase->getSku(),
-                $productFromDatabase);
-
-            $product = $productFromDatabase;
-        }
-
-        return $product;
+        return $this->bySkus($cart->listSkus());
     }
 }

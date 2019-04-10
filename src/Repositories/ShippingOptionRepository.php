@@ -2,69 +2,70 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\ShippingOption;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
  * Class ShippingOptionRepository
- *
- * @method ShippingOption find($id, $lockMode = null, $lockVersion = null)
- * @method ShippingOption findOneBy(array $criteria, array $orderBy = null)
- * @method ShippingOption[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- * @method ShippingOption[] findAll()
- *
  * @package Railroad\Ecommerce\Repositories
  */
-class ShippingOptionRepository extends EntityRepository
+class ShippingOptionRepository extends RepositoryBase
 {
-    /**
-     * ShippingOptionRepository constructor.
-     *
-     * @param EcommerceEntityManager $em
-     */
-    public function __construct(EcommerceEntityManager $em)
-    {
-        parent::__construct($em, $em->getClassMetadata(ShippingOption::class));
-    }
-
     /**
      * Get the first active shipping cost based on country and total weight
      *
-     * @param string  $country
+     * @param string $country
      * @param float $totalWeight
      *
-     * @return ShippingOption|null
+     * @return float
      */
-    public function getShippingCosts(string $country, float $totalWeight): ?ShippingOption
+    public function getShippingCosts(string $country, float $totalWeight): float
     {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
-        $qb = $this
-            ->getEntityManager()
-            ->createQueryBuilder();
+        $qb = $this->entityManager->createQueryBuilder();
 
-        $qb
-            ->select(['so', 'scwr'])
-            ->from($this->getClassName(), 'so')
+        $qb->select(['so', 'scwr'])
+            ->from(ShippingOption::class, 'so')
             ->join('so.shippingCostsWeightRanges', 'scwr')
             ->andWhere(
-                $qb->expr()->orX(
-                    $qb->expr()->eq('so.country', ':country'),
-                    $qb->expr()->eq('so.country', ':any')
-                )
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->eq('so.country', ':country'),
+                        $qb->expr()
+                            ->eq('so.country', ':any')
+                    )
             )
-            ->andWhere($qb->expr()->lte('scwr.min', ':totalWeight'))
-            ->andWhere($qb->expr()->gte('scwr.max', ':totalWeight'))
-            ->andWhere($qb->expr()->eq('so.active', ':active'))
+            ->andWhere(
+                $qb->expr()
+                    ->lte('scwr.min', ':totalWeight')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->gte('scwr.max', ':totalWeight')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('so.active', ':active')
+            )
             ->setParameter('country', $country)
             ->setParameter('any', '*')
             ->setParameter('totalWeight', $totalWeight)
             ->setParameter('active', true)
-            ->orderBy('so.priority');
+            ->orderBy('so.priority')
+            ->orderBy('scwr.id');
 
-        return $qb->getQuery()->getResult()[0] ?? null;
+        /**
+         * @var $shippingOption ShippingOption
+         */
+        $shippingOption =
+            $qb->getQuery()
+                ->setQueryCacheDriver($this->arrayCache)
+                ->getResult()[0] ?? null;
+
+        if (!empty($shippingOption) && !empty($shippingOption->getShippingCostsWeightRanges()[0])) {
+            return (float) $shippingOption->getShippingCostsWeightRanges()[0]->getPrice();
+        }
+
+        return 0.0;
     }
 
     /**
@@ -75,20 +76,19 @@ class ShippingOptionRepository extends EntityRepository
      */
     public function getShippingCostsForShippingOption($shippingOptionId)
     {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
-        $qb = $this
-            ->getEntityManager()
-            ->createQueryBuilder();
+        $qb = $this->entityManager->createQueryBuilder();
 
-        $qb
-            ->select(['so', 'scwr'])
-            ->from($this->getClassName(), 'so')
+        $qb->select(['so', 'scwr'])
+            ->from(ShippingOption::class, 'so')
             ->leftJoin('so.shippingCostsWeightRanges', 'scwr')
-            ->where($qb->expr()->eq('so.id', ':shippingOptionId'))
+            ->where(
+                $qb->expr()
+                    ->eq('so.id', ':shippingOptionId')
+            )
             ->setParameter('shippingOptionId', $shippingOptionId);
 
-        return $qb->getQuery()->getResult();
+        return $qb->getQuery()
+            ->setQueryCacheDriver($this->arrayCache)
+            ->getResult();
     }
 }

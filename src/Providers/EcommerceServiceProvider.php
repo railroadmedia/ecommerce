@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Providers;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\Common\Cache\RedisCache;
 use Doctrine\Common\EventManager;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
@@ -206,8 +207,12 @@ class EcommerceServiceProvider extends ServiceProvider
         // setup redis
         $redis = new Redis();
         $redis->connect(config('ecommerce.redis_host'), config('ecommerce.redis_port'));
+
         $redisCache = new RedisCache();
         $redisCache->setRedis($redis);
+
+        app()->instance('EcommerceRedisCache', $redisCache);
+        app()->instance('EcommerceArrayCache', new ArrayCache());
 
         // annotation reader
         AnnotationRegistry::registerLoader('class_exists');
