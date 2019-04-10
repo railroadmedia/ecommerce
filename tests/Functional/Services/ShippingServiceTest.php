@@ -2,9 +2,11 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Services;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Services\CartService;
+use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\ShippingService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
@@ -15,11 +17,19 @@ class ShippingServiceTest extends EcommerceTestCase
      */
     protected $shippingService;
 
+    /**
+     * @var MockObject|DiscountService
+     */
+    protected $discountServiceMock;
+
     protected function setUp()
     {
         parent::setUp();
 
-        $this->shippingService = app()->make(ShippingService::class);
+        $this->discountServiceMock =
+            $this->createMock(DiscountService::class);
+
+        $this->shippingService = app()->make(ShippingService::class, ['discountService' => $this->discountServiceMock]);
     }
 
     public function test_get_weight_empty_cart()
@@ -119,6 +129,50 @@ class ShippingServiceTest extends EcommerceTestCase
 
         $this->assertEquals(
             $price,
+            $this->shippingService->getShippingDueForCart($cartService->getCart())
+        );
+    }
+
+    public function test_get_shipping_due_for_single_product_minus_discounted()
+    {
+        $weight = 10;
+        $quantity = 1;
+        $country = 'Canada';
+        $price = 15.5;
+        $discounted = 9.8;
+
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'weight' => $weight,
+            ]
+        );
+
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => $country,
+                'active' => true,
+            ]
+        );
+
+        $shippingCost = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 1,
+                'max' => 100,
+                'price' => $price,
+            ]
+        );
+
+        $this->discountServiceMock->method('getTotalShippingDiscountedForCart')->willReturn($discounted);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart($product['sku'], $quantity);
+        $cartService->setBillingAddress(new Address($country));
+
+        $this->assertEquals(
+            $price - $discounted,
             $this->shippingService->getShippingDueForCart($cartService->getCart())
         );
     }
