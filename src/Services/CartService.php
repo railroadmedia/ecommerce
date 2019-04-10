@@ -2,7 +2,8 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Doctrine\ORM\ORMException;
+use Railroad\Ecommerce\Entities\Address as AddressEntity;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
@@ -68,7 +69,6 @@ class CartService
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
     const PAYMENT_PLAN_LOCKED_SESSION_KEY = 'order-form-payment-plan-locked';
     const PROMO_CODE_KEY = 'promo-code';
-    const TAXABLE_COUNTRY = 'Canada';
 
     /**
      * CartService constructor.
@@ -198,10 +198,7 @@ class CartService
      * @throws ProductOutOfStockException
      * @throws Throwable
      */
-    public function updateCartItemProductQuantity(
-        string $sku,
-        int $quantity
-    )
+    public function updateCartQuantity(string $sku, int $quantity)
     {
         $this->refreshCart();
 
@@ -222,9 +219,11 @@ class CartService
 
         $cartItem = $this->cart->getItemBySku($product->getSku());
 
-        $cartItem->setQuantity($quantity);
+        if (!empty($cartItem)) {
+            $cartItem->setQuantity($quantity);
 
-        $this->cart->setItem($cartItem);
+            $this->cart->setItem($cartItem);
+        }
 
         $this->cart->toSession();
     }
@@ -265,152 +264,80 @@ class CartService
     }
 
     /**
-     * Sets the local cart property from session
-     */
-    public function refreshCart()
-    {
-        $this->cart = Cart::fromSession();
-    }
-
-    /**
-     * @return bool
-     * @throws ORMException
-     */
-    public function cartHasAnyDigitalItems()
-    {
-        $products = $this->productRepository->bySkus($this->cart->listSkus());
-
-        foreach ($products as $product) {
-            if (!$product->getIsPhysical()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Returns the total cart items cost with discounts applied
      *
      * @return float
      */
-    public function getTotalItemCostDue()
+    public function getTotalItemCosts()
     {
-        $productsDiscountAmount = 0;
+        $totalBeforeDiscounts = 0;
 
-        foreach ($this->cart->getItems() as $cartItem) {
-            $productsDiscountAmount += $cartItem->getDiscountAmount();
+        $products = $this->productRepository->byCart($this->getCart());
+
+        foreach ($products as $product) {
+            $cartItem = $this->cart->getItemBySku($product->getSku());
+
+            if (!empty($cartItem)) {
+                $totalBeforeDiscounts += $product->getPrice();
+            }
         }
 
-        return round($this->cart->getItemsCost() - $productsDiscountAmount - $this->cart->getOrderDiscountAmount(), 2);
+        $totalDiscountAmount = $this->discountService->getTotalItemDiscounted($this->cart);
+
+        return round($totalBeforeDiscounts - $totalDiscountAmount, 2);
     }
 
     /**
-     * Should always use the shipping address for cart first, then the billing address if no shipping address is set.
-     *
-     * @return float
-     * @throws ORMException
+     * @return int
      */
-    public function getTotalTaxDue()
+    public function getTotalFinanceCosts()
     {
-        $taxableAddress = null;
-        $billingAddress = $this->cart->getBillingAddress();
-        $shippingAddress = $this->cart->getShippingAddress();
-
-        // use the shipping address if set
-        if ($shippingAddress && strtolower($shippingAddress->getCountry()) == strtolower(self::TAXABLE_COUNTRY)) {
-            $taxableAddress = $shippingAddress;
+        if ($this->cart->getPaymentPlanNumberOfPayments() > 1) {
+            return config('ecommerce.financing_cost_per_order', 1);
         }
 
-        // otherwise use the billing address
-        if (!$taxableAddress &&
-            $billingAddress &&
-            strtolower($billingAddress->getCountry()) == strtolower(self::TAXABLE_COUNTRY)) {
-            $taxableAddress = $billingAddress;
-        }
-
-        // only item and shipping costs are taxed
-        $amountToTax = $this->getTotalItemCostDue() + $this->shippingService->getShippingDueForCart($this->cart);
-
-        $tax = 0;
-
-        if ($taxableAddress) {
-            $tax = $this->taxService->vat($amountToTax, $taxableAddress);
-        }
-
-        return round($tax, 2);
+        return 0;
     }
 
     /**
-     * Returns the total cart cost, including discounts, shipping, tax and finance
+     * Returns the total due for the entire order. If a payment plan is selected their payment should add up to this
+     * total when the monthly billing is finished.
      *
      * @return float
      */
-    public function getTotalDue()
+    public function getDueForOrder()
     {
-        $totalItemCostDue = $this->getTotalItemCostDue();
+        $totalItemCostDue = $this->getTotalItemCosts();
 
         $shippingDue = $this->shippingService->getShippingDueForCart($this->cart);
 
-        $taxDue = $this->getTotalTaxDue();
+        $taxDue = $this->taxService->vat(
+            $totalItemCostDue + $shippingDue,
+            $this->taxService->getAddressForTaxation($this->getCart())
+        );
 
-        if ($this->cart->getPaymentPlanNumberOfPayments() > 1) {
-            $financeDue = config('ecommerce.financing_cost_per_order');
-        }
-        else {
-            $financeDue = 0;
-        }
+        $financeDue = $this->getTotalFinanceCosts();
 
         return round($totalItemCostDue + $shippingDue + $taxDue + $financeDue, 2);
     }
 
     /**
-     * Returns the recurring payment cost
-     *
-     * @return float
-     */
-    public function getDueForPayment()
-    {
-        $totalItemCostDue = $this->getTotalItemCostDue();
-
-        $taxDue = $this->getTotalTaxDue();
-
-        if ($this->cart->getPaymentPlanNumberOfPayments() > 1) {
-            $financeDue = config('ecommerce.financing_cost_per_order');
-        }
-        else {
-            $financeDue = 0;
-        }
-
-        // Customers can only finance the order item price, taxes, and finance.
-        // All shipping must be paid on the first payment.
-        $totalToFinance = $totalItemCostDue + $taxDue + $financeDue;
-
-        return round(
-            $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(),
-            2
-        );
-    }
-
-    /**
-     * Returns the initial payment cost
+     * Returns the initial payment amount that is so be paid immediately on order submit.
      *
      * @return float
      */
     public function getDueForInitialPayment()
     {
-        $shippingDue = $this->getTotalShippingDue();
+        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart);
 
-        $totalItemCostDue = $this->getTotalItemCostDue();
+        $totalItemCostDue = $this->getTotalItemCosts();
 
-        $taxDue = $this->getTotalTaxDue();
+        $taxDue = $this->taxService->vat(
+            $totalItemCostDue + $shippingDue,
+            $this->taxService->getAddressForTaxation($this->getCart())
+        );
 
-        if ($this->cart->getPaymentPlanNumberOfPayments() > 1) {
-            $financeDue = config('ecommerce.financing_cost_per_order');
-        }
-        else {
-            $financeDue = 0;
-        }
+        $financeDue = $this->getTotalFinanceCosts();
 
         // Customers can only finance the order item price, taxes, and finance.
         // All shipping must be paid on the first payment.
@@ -432,6 +359,56 @@ class CartService
     }
 
     /**
+     * Returns the price of the payment plan subscription that will be billed each month for the duration
+     * of the payment plan.
+     *
+     * @return float
+     */
+    public function getDueForPaymentPlanPayments()
+    {
+        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart);
+
+        $totalItemCostDue = $this->getTotalItemCosts();
+
+        $taxDue = $this->taxService->vat(
+            $totalItemCostDue + $shippingDue,
+            $this->taxService->getAddressForTaxation($this->getCart())
+        );
+
+        $financeDue = $this->getTotalFinanceCosts();
+
+        $totalToFinance = $totalItemCostDue + $taxDue + $financeDue;
+
+        return round(
+            $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(),
+            2
+        );
+    }
+
+    /**
+     * @param Order|null $order
+     * @return Order|null
+     */
+    public function populateOrderTotals(?Order $order = null)
+    {
+        if (is_null($order)) {
+            $order = new Order();
+        }
+
+        $order->setFinanceDue($this->getTotalFinanceCosts());
+        $order->setProductDue($this->getTotalItemCosts());
+        $order->setShippingDue($this->shippingService->getShippingDueForCart($this->cart));
+        $order->setTaxesDue(
+            $this->taxService->vat(
+                $order->getProductDue() + $order->getShippingDue(),
+                $this->taxService->getAddressForTaxation($this->getCart())
+            )
+        );
+
+        return $order;
+    }
+
+    /**
      * @param Cart $cart
      */
     public function setCart(Cart $cart): void
@@ -447,6 +424,14 @@ class CartService
     public function getCart(): Cart
     {
         return $this->cart;
+    }
+
+    /**
+     * Sets the local cart property from session
+     */
+    public function refreshCart()
+    {
+        $this->cart = Cart::fromSession();
     }
 
     /**
@@ -494,11 +479,11 @@ class CartService
 
         $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 
-        $due = ($numberOfPayments > 1) ? $this->getDueForInitialPayment() : $this->getTotalDue();
+        $due = ($numberOfPayments > 1) ? $this->getTotalDueForInitialPayment() : $this->getTotalDue();
 
         $totals = [
             'shipping' => $this->getTotalShippingDue(),
-            'tax' => $this->getTotalTaxDue(),
+            'tax' => $this->getTaxDue(),
             'due' => $due,
         ];
 

@@ -104,4 +104,23 @@ class ShippingService
 
         return false;
     }
+
+    // todo: test
+    /**
+     * @param Cart $cart
+     *
+     * @return bool
+     */
+    public function doesCartHaveAnyDigitalItems(Cart $cart): bool
+    {
+        $products = $this->productRepository->byCart($cart);
+
+        foreach ($products as $product) {
+            if (!$product->getIsPhysical()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

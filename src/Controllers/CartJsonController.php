@@ -118,7 +118,7 @@ class CartJsonController extends BaseController
         $errors = [];
 
         try {
-            $this->cartService->updateCartItemProductQuantity($productSku, $quantity);
+            $this->cartService->updateCartQuantity($productSku, $quantity);
         } catch (AddToCartException $addToCartException) {
             $errors[] = $addToCartException->getMessage();
         }

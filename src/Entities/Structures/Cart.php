@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities\Structures;
 
+use Railroad\Ecommerce\Entities\Address as AddressEntity;
 use Serializable;
 
 class Cart implements Serializable

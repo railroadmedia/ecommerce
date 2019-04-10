@@ -97,7 +97,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productOneQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $productOne['sku'],
@@ -192,7 +191,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         ]);
 
         $productOneQuantity = 1;
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $productOne['sku'],
@@ -331,7 +329,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOneQuantity = 1;
         $productTwoQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $productOne['sku'],
@@ -440,7 +437,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -495,7 +491,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -637,7 +632,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productOneQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $productOne['sku'],
@@ -886,7 +880,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOneQuantity = 1;
         $productTwoQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $productOne['sku'],
@@ -1111,7 +1104,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOneQuantity = 1;
         $productTwoQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $productOne['sku'],
@@ -1405,7 +1397,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productTwoQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $productOne['sku'],
@@ -1687,7 +1678,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productTwoQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $productOne['sku'],
@@ -1924,7 +1914,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -2057,7 +2046,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -2299,7 +2287,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 2;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -2515,7 +2502,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -2642,7 +2628,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -2761,7 +2746,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 2;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -2884,7 +2868,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 2;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -2995,7 +2978,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 2;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -3129,7 +3111,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 2;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -3277,7 +3258,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 2;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -3433,7 +3413,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 2;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -3590,7 +3569,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 2;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -3754,7 +3732,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOneQuantity = 2;
         $productTwoQuantity = 1;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $productOne['sku'],
@@ -4089,7 +4066,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 2;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],
@@ -4310,7 +4286,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productQuantity = 2;
 
-        $this->cartService->refreshProducts();
 
         $this->cartService->addToCart(
             $product['sku'],

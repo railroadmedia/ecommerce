@@ -125,7 +125,7 @@ class CartServiceTest extends EcommerceTestCase
 
         // remove product
 
-        $cartService->updateCartItemProductQuantity($product['sku'], $newQuantity);
+        $cartService->updateCartQuantity($product['sku'], $newQuantity);
 
         $cart = Cart::fromSession();
 
@@ -356,7 +356,7 @@ class CartServiceTest extends EcommerceTestCase
             ''
         );
 
-        $this->assertEquals($expectedItemsCostDue, $cartService->getTotalItemCostDue());
+        $this->assertEquals($expectedItemsCostDue, $cartService->getTotalItemCosts());
     }
 
     public function test_get_total_tax_due()
@@ -419,7 +419,7 @@ class CartServiceTest extends EcommerceTestCase
             ''
         );
 
-        $this->assertEquals($exptectedTaxDue, $cartService->getTotalTaxDue());
+        $this->assertEquals($exptectedTaxDue, $cartService->getTaxDue());
     }
 
     public function test_get_total_due()
@@ -566,6 +566,6 @@ class CartServiceTest extends EcommerceTestCase
             ''
         );
 
-        $this->assertEquals($expectedInitialPayment, $cartService->getDueForInitialPayment());
+        $this->assertEquals($expectedInitialPayment, $cartService->getTotalDueForInitialPayment());
     }
 }

@@ -28,6 +28,9 @@ class Address implements AddressInterface
 {
     use TimestampableEntity;
 
+    CONST BILLING_ADDRESS_TYPE = 'billing';
+    CONST SHIPPING_ADDRESS_TYPE = 'shipping';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")

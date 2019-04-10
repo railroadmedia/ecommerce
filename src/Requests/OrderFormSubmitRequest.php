@@ -9,17 +9,26 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Ecommerce\Services\ShippingService;
 
 class OrderFormSubmitRequest extends FormRequest
 {
     /**
-     * @var \Railroad\Ecommerce\Services\CartService
+     * @var CartService
      */
     protected $cartService;
 
-    public function __construct(CartService $cartService)
+    /**
+     * @var ShippingService
+     */
+    protected $shippingService;
+
+    public function __construct(CartService $cartService, ShippingService $shippingService)
     {
+        parent::__construct();
+
         $this->cartService = $cartService;
+        $this->shippingService = $shippingService;
 
         $this->cartService->refreshCart();
     }
@@ -66,13 +75,13 @@ class OrderFormSubmitRequest extends FormRequest
         }
 
         // if the cart has any items that need shipping
-        if ($this->cartService->cartHasAnyPhysicalItems()) {
+        if ($this->shippingService->doesCartHaveAnyPhysicalItems($this->cartService->getCart())) {
             $rules += [
-                'shipping_address_id' => 'required_without_all:shipping_first_name,shipping_last_name,shipping_address_line_1,shipping_city,shipping_region,shipping_zip_or_postal_code,shipping_country|exists:'
-                    . ConfigService::$databaseConnectionName
-                    . '.'
-                    . ConfigService::$tableAddress
-                    . ',id',
+                'shipping_address_id' => 'required_without_all:shipping_first_name,shipping_last_name,shipping_address_line_1,shipping_city,shipping_region,shipping_zip_or_postal_code,shipping_country|exists:' .
+                    ConfigService::$databaseConnectionName .
+                    '.' .
+                    ConfigService::$tableAddress .
+                    ',id',
                 'shipping_first_name' => 'required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
                 'shipping_last_name' => 'required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
                 'shipping_address_line_1' => 'required_without:shipping_address_id',
@@ -86,12 +95,13 @@ class OrderFormSubmitRequest extends FormRequest
 
         // user/customer rules
         if (!auth()->user()) {
-            if ($this->cartService->cartHasAnyDigitalItems()) {
+            if (!$this->shippingService->doesCartHaveAnyDigitalItems($this->cartService->getCart())) {
                 $rules += [
                     'account_creation_email' => 'required|email',
                     'account_creation_password' => 'required|confirmed',
                 ];
-            } else {
+            }
+            else {
                 $rules += [
                     'billing_email' => 'required_without:account_creation_email|email',
                     'account_creation_email' => 'required_without:billing_email|email',

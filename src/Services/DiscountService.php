@@ -39,11 +39,6 @@ class DiscountService
     private $productRepository;
 
     /**
-     * @var Discount[]
-     */
-    private static $allActiveDiscounts = [];
-
-    /**
      * PaymentMethodService constructor.
      *
      * @param DiscountCriteriaService $discountCriteriaService
@@ -59,18 +54,18 @@ class DiscountService
         $this->discountCriteriaService = $discountCriteriaService;
         $this->discountRepository = $discountRepository;
         $this->productRepository = $productRepository;
-
-        self::$allActiveDiscounts = $this->discountRepository->getActiveDiscounts();
     }
 
     public function getTotalShippingDiscountedForCart(Cart $cart)
     {
+        // todo
         return 0;
     }
 
     public function getTotalItemDiscounted(Cart $cart)
     {
-
+        // todo
+        return 0;
     }
 
     public function getApplicableDiscounts()

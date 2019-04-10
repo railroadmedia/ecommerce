@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Entities\Structures;
 
 use Doctrine\Common\Inflector\Inflector;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
+use Railroad\Ecommerce\Entities\Address as AddressEntity;
 use Serializable;
 
 class Address implements AddressInterface, Serializable
@@ -279,6 +280,26 @@ class Address implements AddressInterface, Serializable
                 call_user_func([$address, $setterName], $array[$key]);
             }
         }
+
+        return $address;
+    }
+
+    /**
+     * @return AddressEntity
+     */
+    public function toEntity()
+    {
+        $address = new AddressEntity();
+
+        $address->setCountry($this->getCountry());
+        $address->setState($this->getState());
+        $address->setCity($this->getCity());
+        $address->setLastName($this->getLastName());
+        $address->setFirstName($this->getFirstName());
+        $address->setCity($this->getCity());
+        $address->setStreetLine1($this->getStreetLine1());
+        $address->setStreetLine2($this->getStreetLine2());
+        $address->setZip($this->getZip());
 
         return $address;
     }
