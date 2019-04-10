@@ -666,7 +666,7 @@ class OrderFormService
 
                     } elseif ($discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
                         //calculate subscription price per payment after discount
-                        $subscriptionPricePerPayment = $cartItem->getPrice() - $discount->getAmount();
+                        $subscriptionPricePerPayment = $product->getPrice() - $discount->getAmount();
                     }
                 }
             }
@@ -730,19 +730,19 @@ class OrderFormService
             $brand = $request->get('brand', ConfigService::$brand);
         }
 
-        if (!empty($request->get('account-creation-email')) && empty($user)) {
-            $user = $this->userProvider->createUser($request->get('account-creation-email'),
-                $request->get('account-creation-password'));
+        if (!empty($request->get('account_creation_email')) && empty($user)) {
+            $user = $this->userProvider->createUser($request->get('account_creation_email'),
+                $request->get('account_creation_password'));
         }
 
         $customer = null;
 
         // save customer if billing email exists on request
-        if ($request->has('billing-email')) {
+        if ($request->has('billing_email')) {
 
             $customer = new Customer();
 
-            $customer->setEmail($request->get('billing-email'))
+            $customer->setEmail($request->get('billing_email'))
                 ->setBrand($brand)
                 ->setCreatedAt(Carbon::now());
 
@@ -944,8 +944,7 @@ class OrderFormService
 
         $totalDue = $this->cartService->getTotalDue();
 
-        $productsDuePrice = $this->cartService->getCart()
-            ->getItemsCost();
+        $productsDuePrice = $this->cartService->getTotalItemCostDue();
 
         $financeDue = $this->cartService->getCart()
             ->getPaymentPlanNumberOfPayments() > 1 ? config('ecommerce.financing_cost_per_order') : null;
@@ -1016,7 +1015,12 @@ class OrderFormService
                 ->setWeight($cartItemProduct->getWeight())
                 ->setInitialPrice($cartItemProduct->getPrice())
                 ->setTotalDiscounted($cartItem->getDiscountAmount())
-                ->setFinalPrice(round($cartItemProduct->getPrice() - $cartItem->getDiscountAmount(), 2))
+                ->setFinalPrice(
+                    round(
+                        $cartItemProduct->getPrice() * $cartItem->getQuantity() - $cartItem->getDiscountAmount(),
+                        2
+                    )
+                )
                 ->setCreatedAt(Carbon::now());
 
             $this->entityManager->persist($orderItem);
@@ -1091,6 +1095,7 @@ class OrderFormService
 
         $currency = $request->get('currency', $this->currencyService->get());
 
+        // todo - add support for fetching shipping address from db, when shipping address id is set on request
         $cart = $request->getCart();
 
         $this->cartService->setCart($cart);

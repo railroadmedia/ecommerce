@@ -95,7 +95,8 @@ class CartService
 
     public function refreshProducts()
     {
-        $this->productRepository->clear();
+        // todo - temp disable
+        // $this->productRepository->clear();
 
         // lets cache all the products right from the start
         $allProducts = $this->productRepository->findAll();
@@ -314,24 +315,26 @@ class CartService
         $this->cart->setItemsCost($totalItemsInitialCost);
 
         // update initial shipping cost
-        $shippingAddress = $this->cart->getShippingAddress();
-        $shippingCountry = $shippingAddress ? $shippingAddress->getCountry() : '';
-
-        $totalWeight = $this->getTotalCartItemWeight();
-
-        $shippingOption = $this->shippingOptionRepository->getShippingCosts(
-            $shippingCountry,
-            $totalWeight
-        );
-
         $initialShippingCost = 0;
 
-        if (!empty($shippingOption)) {
-            $shippingCost =
-                $shippingOption->getShippingCostsWeightRanges()
-                    ->first();
+        if ($this->cartHasAnyPhysicalItems()) {
+            $shippingAddress = $this->cart->getShippingAddress();
+            $shippingCountry = $shippingAddress ? $shippingAddress->getCountry() : '';
 
-            $initialShippingCost = $shippingCost->getPrice();
+            $totalWeight = $this->getTotalCartItemWeight();
+
+            $shippingOption = $this->shippingOptionRepository->getShippingCosts(
+                $shippingCountry,
+                $totalWeight
+            );
+
+            if (!empty($shippingOption)) {
+                $shippingCost =
+                    $shippingOption->getShippingCostsWeightRanges()
+                        ->first();
+
+                $initialShippingCost = $shippingCost->getPrice();
+            }
         }
 
         $this->cart->setShippingCost($initialShippingCost);
