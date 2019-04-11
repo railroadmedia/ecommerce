@@ -882,7 +882,7 @@ class OrderFormService
         }
 
         // todo: ended here, we have the payment and payment method
-        // todo: save all over database entities
+        // todo: save all other database entities
         // should we put this logic elsewhere?
         dd($payment);
 
