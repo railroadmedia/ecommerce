@@ -378,4 +378,109 @@ class PaymentService
 
         return $payment;
     }
+
+    /**
+     * @param Purchaser $purchaser
+     * @param Address $billingAddress
+     * @param string $gateway
+     * @param string $currency
+     * @param float $paymentAmountInBaseCurrency
+     * @param string $payPalToken
+     * @param string $paymentType
+     * @param bool $setAsDefault
+     *
+     * @return Payment
+     *
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws PaymentFailedException
+     * @throws \Throwable
+     */
+    public function chargeNewPayPalPaymentMethod(
+        Purchaser $purchaser,
+        Address $billingAddress,
+        string $gateway,
+        string $currency,
+        float $paymentAmountInBaseCurrency,
+        string $payPalToken,
+        string $paymentType,
+        bool $setAsDefault = true
+    )
+    {
+        // do currency conversion
+        $conversionRate = $this->currencyService->getRate($currency);
+        $convertedPaymentAmount = $this->currencyService->convertFromBase($paymentAmountInBaseCurrency, $currency);
+
+        // get the agreement
+        $billingAgreementId = $this->payPalPaymentGateway->createBillingAgreement(
+            $gateway,
+            $convertedPaymentAmount,
+            $currency,
+            $payPalToken
+        );
+
+        $transactionId = $this->payPalPaymentGateway->chargeBillingAgreement(
+            $gateway,
+            $convertedPaymentAmount,
+            $currency,
+            $billingAgreementId
+        );
+
+        // the charge was successful, store necessary data information
+        // billing address
+        $this->entityManager->persist($billingAddress);
+
+        // payment method
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
+
+            // todo: refactor
+            $paymentMethod = $this->paymentMethodService->createPayPalBillingAgreement(
+                $purchaser->getUserObject(),
+                $billingAgreementId,
+                $billingAddress,
+                $gateway,
+                null,
+                $currency,
+                $setAsDefault
+            );
+        }
+        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
+
+            // todo: refactor
+            $paymentMethod = $this->paymentMethodService->createPayPalBillingAgreement(
+                null,
+                $billingAgreementId,
+                $billingAddress,
+                $gateway,
+                $purchaser->getCustomerEntity(),
+                $currency,
+                $setAsDefault
+            );
+        }
+
+        if (empty($paymentMethod)) {
+            throw new PaymentFailedException('Error charging payment method');
+        }
+
+        // store payment in database
+        $payment = new Payment();
+
+        $payment->setTotalDue($convertedPaymentAmount)
+            ->setTotalPaid($convertedPaymentAmount)
+            ->setTotalRefunded(0)
+            ->setConversionRate($conversionRate)
+            ->setType($paymentType)
+            ->setExternalId($transactionId)
+            ->setExternalProvider(Payment::EXTERNAL_PROVIDER_STRIPE)
+            ->setStatus(Payment::STATUS_PAID)
+            ->setPaymentMethod($paymentMethod)
+            ->setCurrency($currency)
+            ->setCreatedAt(Carbon::now());
+
+        $this->entityManager->persist($payment);
+        $this->entityManager->flush();
+
+        return $payment;
+    }
+
 }

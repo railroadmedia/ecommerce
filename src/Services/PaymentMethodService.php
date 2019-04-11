@@ -120,14 +120,10 @@ class PaymentMethodService
         $this->entityManager->persist($paymentMethod);
 
         if ($user) {
-
             $primary = $this->userPaymentMethodsRepository
                     ->getUserPrimaryPaymentMethod($user);
 
             if ($makePrimary && $primary) {
-                /**
-                 * @var $primary \Railroad\Ecommerce\Entities\UserPaymentMethods
-                 */
                 $primary->setIsPrimary(false);
             }
 
@@ -141,19 +137,19 @@ class PaymentMethodService
             $this->entityManager->persist($userPaymentMethods);
 
         } elseif ($customer) {
-
             $customerPaymentMethods = new CustomerPaymentMethods();
 
             $customerPaymentMethods
                 ->setCustomer($customer)
                 ->setPaymentMethod($paymentMethod)
-                ->setIsPrimary(true); // if user has no other payment method, this should be primary
+                ->setIsPrimary(true);
 
             $this->entityManager->persist($customerPaymentMethods);
         }
 
         $this->entityManager->flush();
 
+        // no events for customer
         if ($user && $makePrimary) {
             event(
                 new UserDefaultPaymentMethodEvent(
@@ -161,7 +157,7 @@ class PaymentMethodService
                     $paymentMethod->getId()
                 )
             );
-        } // no events for customer
+        }
 
         return $paymentMethod;
     }
@@ -174,18 +170,21 @@ class PaymentMethodService
      * @param string $billingAgreementExternalId
      * @param Address $billingAddress
      * @param string $paymentGatewayName
+     * @param Customer|null $customer
      * @param string $currency - default null
      * @param bool $makePrimary - default false
      *
      * @return PaymentMethod
-     *
-     * @throws Throwable
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function createPayPalBillingAgreement(
         User $user,
         $billingAgreementExternalId,
         Address $billingAddress,
         $paymentGatewayName,
+        ?Customer $customer,
         $currency = null,
         $makePrimary = false
     ): PaymentMethod {
@@ -203,41 +202,51 @@ class PaymentMethodService
 
         $paymentMethod
             ->setMethodId($billingAgreement->getId())
-            ->setMethodType(self::PAYPAL_PAYMENT_METHOD_TYPE)
+            ->setMethodType(PaymentMethod::TYPE_PAYPAL)
             ->setCurrency($currency ?? ConfigService::$defaultCurrency)
             ->setBillingAddress($billingAddress);
 
         $this->entityManager->persist($paymentMethod);
 
-        $primary = $this->userPaymentMethodsRepository
+        if ($user) {
+            $primary = $this->userPaymentMethodsRepository
                 ->getUserPrimaryPaymentMethod($user);
 
-        if ($makePrimary && $primary) {
-            /**
-             * @var $primary \Railroad\Ecommerce\Entities\UserPaymentMethods
-             */
-            $primary->setIsPrimary(false);
+            if ($makePrimary && $primary) {
+                $primary->setIsPrimary(false);
+            }
+
+            $userPaymentMethods = new UserPaymentMethods();
+
+            $userPaymentMethods
+                ->setUser($user)
+                ->setPaymentMethod($paymentMethod)
+                ->setIsPrimary(($primary == null) || $makePrimary); // if user has no other payment method, this should be primary
+
+            $this->entityManager->persist($userPaymentMethods);
+
+        } elseif ($customer) {
+            $customerPaymentMethods = new CustomerPaymentMethods();
+
+            $customerPaymentMethods
+                ->setCustomer($customer)
+                ->setPaymentMethod($paymentMethod)
+                ->setIsPrimary(true);
+
+            $this->entityManager->persist($customerPaymentMethods);
         }
-
-        $userPaymentMethods = new UserPaymentMethods();
-
-        $userPaymentMethods
-            ->setUser($user)
-            ->setPaymentMethod($paymentMethod)
-            ->setIsPrimary(($primary == null) || $makePrimary); // if user has no other payment method, this should be primary
-
-        $this->entityManager->persist($userPaymentMethods);
 
         $this->entityManager->flush();
 
-        if ($makePrimary) {
+        // no events for customer
+        if ($user && $makePrimary) {
             event(
                 new UserDefaultPaymentMethodEvent(
                     $user->getId(),
                     $paymentMethod->getId()
                 )
             );
-        } // no events for customer
+        }
 
         return $paymentMethod;
     }

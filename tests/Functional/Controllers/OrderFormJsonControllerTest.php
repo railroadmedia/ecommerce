@@ -813,7 +813,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_submit_order_paypal_payment()
+    public function test_submit_order_paypal_payment_get_token_only()
     {
         $userId = $this->createAndLogInNewUser();
 
@@ -826,7 +826,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $orderRequestData = [
-            'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'payment_method_type' => PaymentMethod::TYPE_PAYPAL,
             'billing_region' => $state,
             'billing_zip_or_postal_code' => $zip,
             'billing_country' => $country,
@@ -930,6 +930,239 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
          * the user to be redirected back from paypal site with an agreement token
          * and this is a different action tested in OrderFormControllerTest
          */
+    }
+
+    public function test_submit_order_paypal_payment_with_token()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $currency = $this->getCurrency();
+        $brand = 'drumeo';
+        ConfigService::$brand = $brand;
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $orderRequestData = [
+            'payment_method_type' => PaymentMethod::TYPE_PAYPAL,
+            'token' => $this->faker->word . rand(),
+            'billing_region' => $state,
+            'billing_zip_or_postal_code' => $zip,
+            'billing_country' => $country,
+            'company_name' => $this->faker->creditCardType,
+            'gateway' => $brand,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => 'ab',
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => 'Canada',
+            'currency' => $currency
+        ];
+
+        $shippingOption = $this->fakeShippingOption([
+            'country' => 'Canada',
+            'active' => 1,
+            'priority' => 1,
+        ]);
+
+        $shippingCostAmount = 5.50;
+
+        $shippingCost = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min' => 0,
+            'max' => 10,
+            'price' => $shippingCostAmount,
+        ]);
+
+        $productOne = $this->fakeProduct([
+            'price' => 12.95,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 1,
+            'weight' => 0.20,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'price' => 247,
+            'type' => ConfigService::$typeProduct,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => '',
+            'subscription_interval_count' => '',
+        ]);
+
+        $productOneQuantity = 1;
+        $productTwoQuantity = 1;
+
+
+        $this->cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity,
+            false,
+            ''
+        );
+
+        $this->cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $paypalToken = $orderRequestData['token'];
+
+        $billingAgreementId = 'fakeBillingAgreementId' . rand();
+        $transcationId = 'fakeTransactionId' . rand();
+
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
+            ->willReturn($billingAgreementId);
+
+        $this->paypalExternalHelperMock->method('createReferenceTransaction')
+            ->willReturn($transcationId);
+
+        $expectedProductOneTotalPrice = $productOne['price'] * $productOneQuantity;
+
+        $expectedProductTwoTotalPrice = $productTwo['price'] * $productTwoQuantity;
+
+        $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
+
+        $expectedTaxes = $this->getExpectedTaxes(
+            $expectedTotalFromItems + $shippingCostAmount,
+            $orderRequestData['billing_country'],
+            $orderRequestData['billing_region']
+        );
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+
+        $currencyService = $this->app->make(CurrencyService::class);
+
+        $expectedPaymentTotalDue = $currencyService
+            ->convertFromBase(round($expectedOrderTotalDue, 2), $currency);
+
+        $expectedConversionRate = $currencyService->getRate($currency);
+
+
+        $response = $this->call(
+            'PUT',
+            '/order',
+            $orderRequestData
+        );
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'order',
+                    'attributes' => [
+                        'total_due' => $expectedOrderTotalDue,
+                        'product_due' => $expectedTotalFromItems,
+                        'taxes_due' => $expectedTaxes,
+                        'shipping_due' => $shippingCostAmount,
+                        'finance_due' => null,
+                        'total_paid' => $expectedOrderTotalDue,
+                        'brand' => $brand,
+                        'created_at' => Carbon::now()->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ],
+                        'billingAddress' => [
+                            'data' => ['type' => 'address']
+                        ],
+                        'shippingAddress' => [
+                            'data' => ['type' => 'address']
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'user',
+                        'id' => $userId,
+                        'attributes' => []
+                    ],
+                    [
+                        'type' => 'address',
+                        'attributes' => []
+                    ],
+                    [
+                        'type' => 'address',
+                        'attributes' => [
+                            'type' => ConfigService::$shippingAddressType,
+                            'brand' => $brand,
+                            'first_name' => $orderRequestData['shipping_first_name'],
+                            'last_name' => $orderRequestData['shipping_last_name'],
+                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
+                            'street_line_2' => null,
+                            'city' => $orderRequestData['shipping_city'],
+                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                            'state' => $orderRequestData['shipping_region'],
+                            'country' => $orderRequestData['shipping_country'],
+                            'created_at' => Carbon::now()->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'user' => [
+                                'data' => [
+                                    'type' => 'user',
+                                    'id' => $userId,
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $productOne['id'],
+                'quantity' => $productOneQuantity,
+                'expiration_date' => null,
+            ]
+        );
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $productTwo['id'],
+                'quantity' => $productTwoQuantity,
+                'expiration_date' => null,
+            ]
+        );
+
+        // assert payment
+        $this->assertDatabaseHas(
+            ConfigService::$tablePayment,
+            [
+                'total_due' => round($expectedPaymentTotalDue, 2),
+                'total_paid' => round($expectedPaymentTotalDue, 2),
+                'total_refunded' => 0,
+                'conversion_rate' => $expectedConversionRate,
+                'type' => 'order',
+                'external_id' => $transcationId,
+                'external_provider' => 'paypal',
+                'status' => 'paid',
+                'message' => '',
+                'payment_method_id' => 1,
+                'currency' => $currency,
+                'created_at' => Carbon::now()->toDateTimeString()
+            ]
+        );
     }
 
     public function test_submit_order_existing_payment_method_credit_card()

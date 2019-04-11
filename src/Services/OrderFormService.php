@@ -1070,7 +1070,7 @@ class OrderFormService
                 }
 
                 // paypal
-                elseif ($request->get('payment_method_type') == PaymentMethod::TYPE_CREDIT_CARD ||
+                elseif ($request->get('payment_method_type') == PaymentMethod::TYPE_PAYPAL ||
                     !empty($request->get('token'))) {
 
                     // if the paypal token is not set we must first redirect to paypal
@@ -1088,16 +1088,16 @@ class OrderFormService
                         return ['redirect' => $checkoutUrl];
                     }
 
-                    list (
-                        $transactionId, $paymentMethod, $billingAddress
-                        ) =
-                        $this->transactionAndCreatePaymentMethod(
-                            $request,
-                            $paymentAmountInBaseCurrency,
-                            $currency,
-                            $user,
-                            $brand
-                        );
+                    $payment = $this->paymentService->chargeNewPayPalPaymentMethod(
+                        $purchaser,
+                        $request->getBillingAddress(),
+                        $request->get('gateway', config('ecommerce.default_gateway')),
+                        $cart->getCurrency(),
+                        $paymentAmountInBaseCurrency,
+                        $request->get('token'),
+                        Payment::TYPE_INITIAL_ORDER,
+                        $request->get('set_as_default', true)
+                    );
 
                 }
 
@@ -1148,6 +1148,9 @@ class OrderFormService
 
             throw new PaymentFailedException($paymentFailedException->getMessage());
         }
+
+        // todo: ended here
+        dd($payment);
 
         list(
             $payment, $order
