@@ -197,180 +197,6 @@ class OrderFormService
     }
 
     /**
-     * @param float $price
-     * @param string $currency
-     *
-     * @return float
-     *
-     * @throws Throwable
-     */
-    public function convertPrice(float $price, string $currency)
-    {
-        return $this->currencyService->convertFromBase($price, $currency);
-    }
-
-    /**
-     * @param Request $request
-     * @param User $user
-     * @param Customer $customer
-     * @param float $initialPrice
-     * @param string $currency
-     * @param string $brand
-     *
-     * @return array
-     *
-     * @throws PaymentFailedException
-     * @throws Throwable
-     */
-    private function chargeAndCreatePaymentMethod(
-        Request $request,
-        ?User $user,
-        ?Customer $customer,
-        $initialPrice,
-        $currency,
-        $brand = null
-    ): array
-    {
-        $customerCreditCard = null;
-
-        if ($user) {
-            $userStripeCustomerId = $this->userStripeCustomerIdRepository->findOneByUser($user);
-
-            if (!$userStripeCustomerId) {
-                $customerCreditCard = $this->stripePaymentGateway->createCustomer(
-                    $request->get('gateway'),
-                    $user->getEmail()
-                );
-
-                $userStripeCustomerId = new UserStripeCustomerId();
-
-                $userStripeCustomerId->setUser($user)
-                    ->setStripeCustomerId($customerCreditCard->id);
-
-                $this->entityManager->persist($userStripeCustomerId);
-
-            }
-            else {
-                $customerCreditCard = $this->stripePaymentGateway->getCustomer(
-                    $request->get('gateway'),
-                    $userStripeCustomerId->getStripeCustomerId()
-                );
-            }
-        }
-
-        // todo - handle the customer case
-
-        $card = $this->stripePaymentGateway->createCustomerCard(
-            $request->get('gateway'),
-            $customerCreditCard,
-            $request->get('card-token')
-        );
-
-        $convertedPrice = $this->convertPrice($initialPrice, $currency);
-
-        $charge = $this->stripePaymentGateway->chargeCustomerCard(
-            $request->get('gateway'),
-            $convertedPrice,
-            $currency,
-            $card,
-            $customerCreditCard
-        );
-
-        $billingAddress = $request->getBillingAddress();
-
-        $billingAddress->setBrand($brand ?? ConfigService::$brand)
-            ->setUser($user)
-            ->setCustomer($customer)
-            ->setCreatedAt(Carbon::now());
-
-        $this->entityManager->persist($billingAddress);
-
-        $this->entityManager->flush();
-
-        $paymentMethod = $this->paymentMethodService->createUserCreditCard(
-            $user,
-            $card->fingerprint,
-            $card->last4,
-            '',
-            $card->brand,
-            $card->exp_year,
-            $card->exp_month,
-            $card->id,
-            $card->customer,
-            $request->get('gateway'),
-            $customer,
-            $billingAddress,
-            $currency,
-            false
-        );
-
-        return [$charge, $paymentMethod, $billingAddress];
-    }
-
-    /**
-     * @param Request $request
-     * @param float $price
-     * @param string $currency
-     * @param User $user
-     * @param string $brand
-     *
-     * @return array
-     *
-     * @throws PaymentFailedException
-     * @throws Throwable
-     */
-    private function transactionAndCreatePaymentMethod(
-        Request $request,
-        $price,
-        $currency,
-        User $user,
-        $brand = null
-    ): array
-    {
-
-        $convertedPrice = $this->convertPrice($price, $currency);
-
-        $billingAgreementId = $this->payPalPaymentGateway->createBillingAgreement(
-            $request->get('gateway'),
-            $convertedPrice,
-            $currency,
-            $request->get('token')
-        );
-
-        $transactionId = $this->payPalPaymentGateway->chargeBillingAgreement(
-            $request->get('gateway'),
-            $convertedPrice,
-            $currency,
-            $billingAgreementId
-        );
-
-        $billingAddress = new Address();
-
-        $billingAddress->setType(CartAddressService::BILLING_ADDRESS_TYPE)
-            ->setBrand($brand ?? ConfigService::$brand)
-            ->setUser($user)
-            ->setZip($request->get('billing-zip-or-postal-code'))
-            ->setState($request->get('billing-region'))
-            ->setCountry($request->get('billing-country'))
-            ->setCreatedAt(Carbon::now());
-
-        $this->entityManager->persist($billingAddress);
-
-        $this->entityManager->flush();
-
-        $paymentMethod = $this->paymentMethodService->createPayPalBillingAgreement(
-            $user,
-            $billingAgreementId,
-            $billingAddress,
-            $request->get('gateway'),
-            $currency,
-            false
-        );
-
-        return [$transactionId, $paymentMethod, $billingAddress];
-    }
-
-    /**
      * @param Order $order
      *
      * @return bool
@@ -459,56 +285,6 @@ class OrderFormService
         $this->entityManager->flush();
 
         return $orderItem;
-    }
-
-    /**
-     * @param float $paid
-     * @param float $due
-     * @param mixed $charge
-     * @param $transactionId
-     * @param PaymentMethod $paymentMethod
-     * @param string $currency
-     *
-     * @return Payment
-     *
-     * @throws Throwable
-     */
-    private function createPayment(
-        $paid,
-        $due,
-        $charge,
-        $transactionId,
-        PaymentMethod $paymentMethod,
-        $currency
-    ): Payment
-    {
-
-        $externalProvider = isset($charge['id']) ? 'stripe' : 'paypal';
-
-        $payment = new Payment();
-
-        $conversionRate = $this->currencyService->getRate($currency);
-        $convertedTotalDue = $this->convertPrice($due, $currency);
-        $convertedTotalPaid = $this->convertPrice($paid, $currency);
-
-        $payment->setTotalDue($convertedTotalDue)
-            ->setTotalPaid($convertedTotalPaid)
-            ->setTotalRefunded(0)
-            ->setConversionRate($conversionRate)
-            ->setType('order')
-            ->setExternalId($charge['id'] ?? $transactionId)
-            ->setExternalProvider($externalProvider)
-            ->setStatus('paid')
-            ->setMessage('')
-            ->setPaymentMethod($paymentMethod)
-            ->setCurrency($currency)
-            ->setCreatedAt(Carbon::now());
-
-        $this->entityManager->persist($payment);
-
-        $this->entityManager->flush();
-
-        return $payment;
     }
 
     /**
@@ -709,50 +485,6 @@ class OrderFormService
 
         return $subscription;
     }
-
-    //    /**
-    //     * Returns an array with user, customer and brand
-    //     *
-    //     * @param Request $request
-    //     *
-    //     * @return array
-    //     *
-    //     * @throws Throwable
-    //     */
-    //    public function getUserCustomerBrand(Request $request)
-    //    {
-    //        $user = auth()->user() ? $this->userProvider->getCurrentUser() : null;
-    //        $brand = ConfigService::$brand;
-    //
-    //        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
-    //            $user = $this->userProvider->getUserById($request->get('user_id'));
-    //
-    //            $brand = $request->get('brand', ConfigService::$brand);
-    //        }
-    //
-    //        if (!empty($request->get('account_creation_email')) && empty($user)) {
-    //            $user = $this->userProvider->createUser(
-    //                $request->get('account_creation_email'),
-    //                $request->get('account_creation_password')
-    //            );
-    //        }
-    //
-    //        $customer = null;
-    //
-    //        // save customer if billing email exists on request
-    //        if ($request->has('billing_email')) {
-    //
-    //            $customer = new Customer();
-    //
-    //            $customer->setEmail($request->get('billing_email'))
-    //                ->setBrand($brand)
-    //                ->setCreatedAt(Carbon::now());
-    //
-    //            $this->entityManager->persist($customer);
-    //        }
-    //
-    //        return [$user, $customer, $brand];
-    //    }
 
     /**
      * Returns client shipping address
@@ -1149,7 +881,9 @@ class OrderFormService
             throw new PaymentFailedException($paymentFailedException->getMessage());
         }
 
-        // todo: ended here
+        // todo: ended here, we have the payment and payment method
+        // todo: save all over database entities
+        // should we put this logic elsewhere?
         dd($payment);
 
         list(
@@ -1197,6 +931,7 @@ class OrderFormService
         }
 
         // prepare currency symbol for order invoice
+        // todo: refactor
         switch ($currency) {
             case 'USD':
             case 'CAD':
