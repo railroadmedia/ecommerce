@@ -54,6 +54,11 @@ class Cart implements Serializable
     private $paymentMethodId;
 
     /**
+     * @var string|null
+     */
+    private $currency;
+
+    /**
      * Get cart items
      *
      * @return CartItem[]
@@ -255,6 +260,22 @@ class Cart implements Serializable
     }
 
     /**
+     * @return string|null
+     */
+    public function getCurrency(): ?string
+    {
+        return $this->currency;
+    }
+
+    /**
+     * @param string|null $currency
+     */
+    public function setCurrency(?string $currency): void
+    {
+        $this->currency = $currency;
+    }
+
+    /**
      * @return string
      */
     public function serialize()
@@ -270,6 +291,7 @@ class Cart implements Serializable
                 'shipping-address-id' => $this->getShippingAddressId(),
                 'billing-address-id' => $this->getBillingAddressId(),
                 'payment-method-id' => $this->getPaymentMethodId(),
+                'currency' => $this->getCurrency(),
             ]
         );
     }
@@ -290,6 +312,8 @@ class Cart implements Serializable
         $this->setBillingAddressId($data['billing-address-id']);
 
         $this->setPaymentMethodId($data['payment-method-id']);
+
+        $this->setCurrency($data['currency']);
     }
 
     public function toSession(): void

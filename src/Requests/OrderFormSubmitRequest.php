@@ -2,14 +2,17 @@
 
 namespace Railroad\Ecommerce\Requests;
 
+use Exception;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ShippingService;
+use Railroad\Permissions\Services\PermissionService;
 
 class OrderFormSubmitRequest extends FormRequest
 {
@@ -23,12 +26,22 @@ class OrderFormSubmitRequest extends FormRequest
      */
     protected $shippingService;
 
-    public function __construct(CartService $cartService, ShippingService $shippingService)
+    /**
+     * @var PermissionService
+     */
+    private $permissionService;
+
+    public function __construct(
+        CartService $cartService,
+        ShippingService $shippingService,
+        PermissionService $permissionService
+    )
     {
         parent::__construct();
 
         $this->cartService = $cartService;
         $this->shippingService = $shippingService;
+        $this->permissionService = $permissionService;
 
         $this->cartService->refreshCart();
     }
@@ -128,6 +141,7 @@ class OrderFormSubmitRequest extends FormRequest
         $cart->setBillingAddressId($this->get('billing_address_id'));
         $cart->setShippingAddressId($this->get('shipping_address_id'));
         $cart->setPaymentMethodId($this->get('payment_method_id'));
+        $cart->setCurrency($this->get('currency', config('ecommerce.default_currency')));
 
         return $cart;
     }
@@ -184,6 +198,56 @@ class OrderFormSubmitRequest extends FormRequest
         $address->setType(ConfigService::$billingAddressType);
 
         return $address;
+    }
+
+    /**
+     * @return Purchaser
+     * @throws Exception
+     */
+    public function getPurchaser()
+    {
+        $purchaser = new Purchaser();
+
+        // set the brand
+        $purchaser->setBrand(ConfigService::$brand);
+
+        // user with special permissions can place orders for other users
+        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
+            !empty($this->get('user_id'))) {
+
+            $purchaser->setId($this->get('user_id'));
+            $purchaser->setType(Purchaser::USER_TYPE);
+            $purchaser->setBrand($this->get('brand', ConfigService::$brand));
+
+            return $purchaser;
+        }
+
+        // an existing user
+        if (auth()->check()) {
+            $purchaser->setId(auth()->id());
+            $purchaser->setType(Purchaser::USER_TYPE);
+
+            return $purchaser;
+        }
+
+        // creating a new user
+        if (!empty($this->get('account_creation_email')) && !empty($this->get('account_creation_password'))) {
+            $purchaser->setEmail($this->get('account_creation_email'));
+            $purchaser->setRawPassword($this->get('account_creation_password'));
+            $purchaser->setType(Purchaser::USER_TYPE);
+
+            return $purchaser;
+        }
+
+        // guest customer
+        if (!empty($this->get('billing_email'))) {
+            $purchaser->setEmail($this->get('billing_email'));
+            $purchaser->setType(Purchaser::CUSTOMER_TYPE);
+
+            return $purchaser;
+        }
+
+        throw new Exception('Could not create purchaser for order, there was is no user or customer info submitted.');
     }
 
     protected function populateBillingAddress(AddressInterface $address)

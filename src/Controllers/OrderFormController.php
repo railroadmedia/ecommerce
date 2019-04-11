@@ -47,7 +47,7 @@ class OrderFormController extends BaseController
             new NotFoundException('Invalid request')
         );
 
-        $result = $this->orderFormService->processOrderForm($request);
+        $result = $this->orderFormService->processOrderFormSubmit($request);
 
         if (isset($result['errors']) || !isset($result['order'])) {
 

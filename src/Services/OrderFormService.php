@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Doctrine\ORM\Query\Expr\Join;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -23,7 +22,6 @@ use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
-use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\StripeCardException;
@@ -124,6 +122,10 @@ class OrderFormService
      * @var mixed UserProviderInterface
      */
     private $userProvider;
+    /**
+     * @var PaymentService
+     */
+    private $paymentService;
 
     /**
      * @var mixed UserStripeCustomerIdRepository
@@ -150,6 +152,7 @@ class OrderFormService
      * @param UserProductService $userProductService
      * @param UserProviderInterface $userProvider
      * @param UserStripeCustomerIdRepository $userStripeCustomerIdRepository
+     * @param PaymentService $paymentService
      */
     public function __construct(
         AddressRepository $addressRepository,
@@ -168,7 +171,8 @@ class OrderFormService
         StripePaymentGateway $stripePaymentGateway,
         UserProductService $userProductService,
         UserProviderInterface $userProvider,
-        UserStripeCustomerIdRepository $userStripeCustomerIdRepository
+        UserStripeCustomerIdRepository $userStripeCustomerIdRepository,
+        PaymentService $paymentService
     )
     {
         $this->addressRepository = $addressRepository;
@@ -188,6 +192,7 @@ class OrderFormService
         $this->userProductService = $userProductService;
         $this->userProvider = $userProvider;
         $this->userStripeCustomerIdRepository = $userStripeCustomerIdRepository;
+        $this->paymentService = $paymentService;
     }
 
     /**
@@ -361,88 +366,6 @@ class OrderFormService
         );
 
         return [$transactionId, $paymentMethod, $billingAddress];
-    }
-
-    /**
-     * Re-charge an existing credit card payment method
-     *
-     * @param Request $request
-     * @param PaymentMethod $paymentMethod
-     * @param float $initialPrice
-     * @param string $currency
-     *
-     * @return mixed
-     *
-     * @throws PaymentFailedException
-     * @throws Throwable
-     */
-    private function rechargeCreditCard(
-        Request $request,
-        PaymentMethod $paymentMethod,
-        $initialPrice,
-        $currency
-    )
-    {
-
-        $creditCard = $this->creditCardRepository->find($paymentMethod->getMethodId());
-
-        $customer =
-            $this->stripePaymentGateway->getCustomer($request->get('gateway'), $creditCard->getExternalCustomerId());
-
-        if (!$customer) {
-            return null;
-        }
-
-        $card = $this->stripePaymentGateway->getCard($customer, $creditCard->getExternalId(), $request->get('gateway'));
-
-        if (!$card) {
-            return null;
-        }
-
-        $convertedPrice = $this->convertPrice($initialPrice, $currency);
-
-        $charge = $this->stripePaymentGateway->chargeCustomerCard(
-            $request->get('gateway'),
-            $convertedPrice,
-            $currency,
-            $card,
-            $customer
-        );
-
-        return $charge;
-    }
-
-    /**
-     * Re-charge an existing paypal agreement payment method
-     *
-     * @param Request $request
-     * @param PaymentMethod $paymentMethod
-     * @param float $initialPrice
-     * @param string $currency
-     *
-     * @return mixed
-     *
-     * @throws PaymentFailedException
-     * @throws Throwable
-     */
-    private function rechargeAgreement(
-        Request $request,
-        PaymentMethod $paymentMethod,
-        $initialPrice,
-        $currency
-    )
-    {
-
-        $paypalAgreement = $this->paypalBillingAgreementRepository->find($paymentMethod->getMethodId());
-
-        $convertedPrice = $this->convertPrice($initialPrice, $currency);
-
-        return $this->payPalPaymentGateway->chargeBillingAgreement(
-            $request->get('gateway'),
-            $convertedPrice,
-            $currency,
-            $paypalAgreement->getExternalId()
-        );
     }
 
     /**
@@ -785,49 +708,49 @@ class OrderFormService
         return $subscription;
     }
 
-    /**
-     * Returns an array with user, customer and brand
-     *
-     * @param Request $request
-     *
-     * @return array
-     *
-     * @throws Throwable
-     */
-    public function getUserCustomerBrand(Request $request)
-    {
-        $user = auth()->user() ? $this->userProvider->getCurrentUser() : null;
-        $brand = ConfigService::$brand;
-
-        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
-            $user = $this->userProvider->getUserById($request->get('user_id'));
-
-            $brand = $request->get('brand', ConfigService::$brand);
-        }
-
-        if (!empty($request->get('account_creation_email')) && empty($user)) {
-            $user = $this->userProvider->createUser(
-                $request->get('account_creation_email'),
-                $request->get('account_creation_password')
-            );
-        }
-
-        $customer = null;
-
-        // save customer if billing email exists on request
-        if ($request->has('billing_email')) {
-
-            $customer = new Customer();
-
-            $customer->setEmail($request->get('billing_email'))
-                ->setBrand($brand)
-                ->setCreatedAt(Carbon::now());
-
-            $this->entityManager->persist($customer);
-        }
-
-        return [$user, $customer, $brand];
-    }
+    //    /**
+    //     * Returns an array with user, customer and brand
+    //     *
+    //     * @param Request $request
+    //     *
+    //     * @return array
+    //     *
+    //     * @throws Throwable
+    //     */
+    //    public function getUserCustomerBrand(Request $request)
+    //    {
+    //        $user = auth()->user() ? $this->userProvider->getCurrentUser() : null;
+    //        $brand = ConfigService::$brand;
+    //
+    //        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
+    //            $user = $this->userProvider->getUserById($request->get('user_id'));
+    //
+    //            $brand = $request->get('brand', ConfigService::$brand);
+    //        }
+    //
+    //        if (!empty($request->get('account_creation_email')) && empty($user)) {
+    //            $user = $this->userProvider->createUser(
+    //                $request->get('account_creation_email'),
+    //                $request->get('account_creation_password')
+    //            );
+    //        }
+    //
+    //        $customer = null;
+    //
+    //        // save customer if billing email exists on request
+    //        if ($request->has('billing_email')) {
+    //
+    //            $customer = new Customer();
+    //
+    //            $customer->setEmail($request->get('billing_email'))
+    //                ->setBrand($brand)
+    //                ->setCreatedAt(Carbon::now());
+    //
+    //            $this->entityManager->persist($customer);
+    //        }
+    //
+    //        return [$user, $customer, $brand];
+    //    }
 
     /**
      * Returns client shipping address
@@ -878,90 +801,6 @@ class OrderFormService
         }
 
         return $shippingAddress;
-    }
-
-    /**
-     * Re-bills an existing client
-     * The payment method is looked up in db
-     * If not found, it will throw an exception
-     *
-     * @param Request $request
-     * @param User $user
-     * @param string $currency
-     * @param float $paymentAmount
-     *
-     * @return array
-     *
-     * Returns array [$charge, $transactionId, $paymentMethod, $billingAddress]
-     *
-     * @throws Throwable
-     */
-    public function rebillClient(
-        Request $request,
-        ?User $user,
-        string $currency,
-        float $paymentAmount
-    )
-    {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
-        $qb = $this->paymentMethodRepository->createQueryBuilder('pm');
-
-        $qb->select(['pm', 'upm'])
-            ->join(
-                UserPaymentMethods::class,
-                'upm',
-                Join::WITH,
-                $qb->expr()
-                    ->eq(1, 1)
-            )
-            ->join('upm.paymentMethod', 'pmj')
-            ->where(
-                $qb->expr()
-                    ->eq('upm.user', ':user')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->eq('pmj.id', 'pm.id')
-            )
-            ->setParameter('user', $user);
-
-        // todo - refactor to add payment method id where condition
-
-        $paymentMethodCheck =
-            $qb->getQuery()
-                ->getResult();
-
-        if (empty($paymentMethodCheck)) {
-
-            // throw exception to redirect
-            throw new PaymentFailedException('Invalid Payment Method');
-        }
-
-        /**
-         * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
-         */
-        $paymentMethod = $paymentMethodCheck[0];
-
-        $charge = $transactionId = null;
-
-        if ($paymentMethod->getMethodType() == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-            $charge = $this->rechargeCreditCard($request, $paymentMethod, $paymentAmount, $currency);
-        }
-        else {
-            $transactionId = $this->rechargeAgreement($request, $paymentMethod, $paymentAmount, $currency);
-        }
-
-        if (!$charge && !$transactionId) {
-
-            // throw exception to redirect
-            throw new PaymentFailedException('Could not recharge existing payment method');
-        }
-
-        $billingAddress = $paymentMethod->getBillingAddress();
-
-        return [$charge, $transactionId, $paymentMethod, $billingAddress];
     }
 
     /**
@@ -1163,9 +1002,9 @@ class OrderFormService
      *
      * @throws Throwable
      */
-    public function processOrderForm(OrderFormSubmitRequest $request): array
+    public function processOrderFormSubmit(OrderFormSubmitRequest $request): array
     {
-        list($user, $customer, $brand) = $this->getUserCustomerBrand($request);
+        $purchaser = $request->getPurchaser();
 
         // if this request is from a paypal redirect we must merge in the old input
         if (!empty($request->get('token'))) {
@@ -1175,8 +1014,6 @@ class OrderFormService
             session()->forget('order-form-input');
             $request->merge($orderFormInput);
         }
-
-        $currency = $request->get('currency', $this->currencyService->get());
 
         $cart = $request->getCart();
 
@@ -1189,11 +1026,15 @@ class OrderFormService
             $charge = $transactionId = $paymentMethod = $billingAddress = null;
 
             // use their existing payment method if they chose one
-            // todo: fix
             if (!empty($cart->getPaymentMethodId())) {
-                list(
-                    $charge, $transactionId, $paymentMethod, $billingAddress
-                    ) = $this->rebillClient($request, $user, $currency, $paymentAmount);
+
+                $externalPaymentId = $this->paymentService->chargeUsersExistingPaymentMethod(
+                    $request->get('gateway', config('ecommerce.default_gateway')),
+                    $cart->getPaymentMethodId(),
+                    $cart->getCurrency(),
+                    $paymentAmount,
+                    $purchaser->getId()
+                );
             }
 
             // otherwise make a new payment method
@@ -1280,6 +1121,8 @@ class OrderFormService
             // throw generic
             throw new PaymentFailedException($exception->getMessage());
         } catch (Exception $paymentFailedException) {
+
+            error_log($paymentFailedException);
 
             throw new PaymentFailedException($paymentFailedException->getMessage());
         }

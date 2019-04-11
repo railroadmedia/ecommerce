@@ -2,29 +2,44 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\Query\Expr\Join;
 use Railroad\Ecommerce\Entities\PaymentMethod;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Entities\UserPaymentMethods;
 
 /**
  * Class PaymentMethodRepository
- *
- * @method PaymentMethod find($id, $lockMode = null, $lockVersion = null)
- * @method PaymentMethod findOneBy(array $criteria, array $orderBy = null)
- * @method PaymentMethod[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- * @method PaymentMethod[] findAll()
- *
  * @package Railroad\Ecommerce\Repositories
  */
-class PaymentMethodRepository extends EntityRepository
+class PaymentMethodRepository extends RepositoryBase
 {
     /**
-     * PaymentMethodRepository constructor.
+     * @param $userId
+     * @param $paymentMethodId
      *
-     * @param EcommerceEntityManager $em
+     * @return PaymentMethod|null
      */
-    public function __construct(EcommerceEntityManager $em)
+    public function getUsersPaymentMethodById($userId, $paymentMethodId)
     {
-        parent::__construct($em, $em->getClassMetadata(PaymentMethod::class));
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select(['pm'])
+            ->from(PaymentMethod::class, 'pm')
+            ->join(
+                UserPaymentMethods::class,
+                'upm',
+                Join::WITH,
+                $qb->expr()
+                    ->eq(1, 1)
+            )
+            ->join('upm.paymentMethod', 'pmj')
+            ->where('upm.user = :userId')
+            ->andWhere('pmj.id = pm.id')
+            ->andWhere('pm.id = :paymentMethodId')
+            ->setParameter('userId', $userId)
+            ->setParameter('paymentMethodId', $paymentMethodId);
+
+        return $qb->getQuery()
+            ->useResultCache($this->arrayCache)
+            ->getOneOrNullResult();
     }
 }

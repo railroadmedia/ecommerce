@@ -143,7 +143,7 @@ class OrderFormJsonController extends BaseController
             new NotFoundException('The cart is empty')
         );
 
-        $result = $this->orderFormService->processOrderForm($request);
+        $result = $this->orderFormService->processOrderFormSubmit($request);
 
         if (isset($result['order'])) {
             return ResponseService::order($result['order']);
