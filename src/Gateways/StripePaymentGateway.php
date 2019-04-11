@@ -61,6 +61,26 @@ class StripePaymentGateway
     }
 
     /**
+     * @param $gatewayName
+     * @param $customerEmail
+     * @return Customer
+     * @throws PaymentFailedException
+     */
+    public function createCustomer($gatewayName, $customerEmail)
+    {
+        $config = ConfigService::$paymentGateways['stripe'][$gatewayName] ?? '';
+
+        if(empty($config))
+        {
+            throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
+        }
+
+        $this->stripe->setApiKey($config['stripe_api_secret']);
+
+        return $this->stripe->createCustomer(['email' => $customerEmail]);
+    }
+
+    /**
      * @param          $gatewayName
      * @param Customer $customer
      * @param          $tokenId

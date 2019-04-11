@@ -37,6 +37,7 @@ use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Ecommerce\Repositories\UserStripeCustomerIdRepository;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Permissions\Services\PermissionService;
 use Stripe\Error\Card as StripeCard;
@@ -125,6 +126,11 @@ class OrderFormService
     private $userProvider;
 
     /**
+     * @var mixed UserStripeCustomerIdRepository
+     */
+    private $userStripeCustomerIdRepository;
+
+    /**
      * OrderFormService constructor.
      *
      * @param AddressRepository $addressRepository
@@ -143,6 +149,7 @@ class OrderFormService
      * @param StripePaymentGateway $stripePaymentGateway
      * @param UserProductService $userProductService
      * @param UserProviderInterface $userProvider
+     * @param UserStripeCustomerIdRepository $userStripeCustomerIdRepository
      */
     public function __construct(
         AddressRepository $addressRepository,
@@ -160,7 +167,8 @@ class OrderFormService
         ProductRepository $productRepository,
         StripePaymentGateway $stripePaymentGateway,
         UserProductService $userProductService,
-        UserProviderInterface $userProvider
+        UserProviderInterface $userProvider,
+        UserStripeCustomerIdRepository $userStripeCustomerIdRepository
     )
     {
         $this->addressRepository = $addressRepository;
@@ -179,6 +187,7 @@ class OrderFormService
         $this->stripePaymentGateway = $stripePaymentGateway;
         $this->userProductService = $userProductService;
         $this->userProvider = $userProvider;
+        $this->userStripeCustomerIdRepository = $userStripeCustomerIdRepository;
     }
 
     /**
@@ -216,11 +225,33 @@ class OrderFormService
         $brand = null
     ): array
     {
+        $customerCreditCard = null;
 
-        $customerCreditCard = $this->stripePaymentGateway->getOrCreateCustomer(
-            $request->get('gateway'),
-            $user ? $user->getEmail() : $customer->getEmail()
-        );
+        if ($user) {
+            $userStripeCustomerId = $this->userStripeCustomerIdRepository->findOneByUser($user);
+
+            if (!$userStripeCustomerId) {
+                $customerCreditCard = $this->stripePaymentGateway->createCustomer(
+                    $request->get('gateway'),
+                    $user->getEmail()
+                );
+
+                $userStripeCustomerId = new UserStripeCustomerId();
+
+                $userStripeCustomerId->setUser($user)
+                    ->setStripeCustomerId($customerCreditCard->id);
+
+                $this->entityManager->persist($userStripeCustomerId);
+
+            } else {
+                $customerCreditCard = $this->stripePaymentGateway->getCustomer(
+                    $request->get('gateway'),
+                    $userStripeCustomerId->getStripeCustomerId()
+                );
+            }
+        }
+
+        // todo - handle the customer case
 
         $card = $this->stripePaymentGateway->createCustomerCard(
             $request->get('gateway'),
