@@ -946,6 +946,7 @@ class OrderFormService
                 break;
         }
 
+        // todo: refactor to use events
         try {
             // prepare the order invoice
             $orderInvoiceEmail = new OrderInvoice(
