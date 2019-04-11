@@ -195,7 +195,7 @@ class RenewalService
             }
         } elseif (
             $paymentMethod->getMethodType() ==
-            PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE
+            PaymentMethod::TYPE_CREDIT_CARD
         ) {
 
             try {

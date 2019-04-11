@@ -19,6 +19,7 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
+use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
@@ -248,7 +249,8 @@ class OrderFormService
 
                 $this->entityManager->persist($userStripeCustomerId);
 
-            } else {
+            }
+            else {
                 $customerCreditCard = $this->stripePaymentGateway->getCustomer(
                     $request->get('gateway'),
                     $userStripeCustomerId->getStripeCustomerId()
@@ -1015,11 +1017,21 @@ class OrderFormService
             $request->merge($orderFormInput);
         }
 
-        $cart = $request->getCart();
+        // create and login the user right away
+        if ($purchaser->getType() == Purchaser::USER_TYPE && empty($purchaser->getId())) {
+            $user = $this->userProvider->createUser($purchaser->getEmail(), $purchaser->getRawPassword());
 
+            $purchaser->setId($user->getId());
+            $purchaser->setEmail($user->getEmail());
+            auth()->loginUsingId($user->getId());
+        }
+
+        // setup the cart
+        $cart = $request->getCart();
         $this->cartService->setCart($cart);
 
-        $paymentAmount = $this->cartService->getDueForInitialPayment();
+        // get the total due
+        $paymentAmountInBaseCurrency = $this->cartService->getDueForInitialPayment();
 
         // try to make the payment
         try {
@@ -1028,12 +1040,13 @@ class OrderFormService
             // use their existing payment method if they chose one
             if (!empty($cart->getPaymentMethodId())) {
 
-                $externalPaymentId = $this->paymentService->chargeUsersExistingPaymentMethod(
+                $payment = $this->paymentService->chargeUsersExistingPaymentMethod(
                     $request->get('gateway', config('ecommerce.default_gateway')),
                     $cart->getPaymentMethodId(),
                     $cart->getCurrency(),
-                    $paymentAmount,
-                    $purchaser->getId()
+                    $paymentAmountInBaseCurrency,
+                    $purchaser->getId(),
+                    Payment::TYPE_INITIAL_ORDER
                 );
             }
 
@@ -1041,21 +1054,23 @@ class OrderFormService
             else {
 
                 // credit cart
-                if ($request->get('payment_method_type') == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-                    list(
-                        $charge, $paymentMethod, $billingAddress
-                        ) = $this->chargeAndCreatePaymentMethod(
-                        $request,
-                        $user,
-                        $customer ?? null,
-                        $paymentAmount,
-                        $currency,
-                        $brand
+                if ($request->get('payment_method_type') == PaymentMethod::TYPE_CREDIT_CARD) {
+
+                    $payment = $this->paymentService->chargeNewCreditCartPaymentMethod(
+                        $purchaser,
+                        $request->getBillingAddress(),
+                        $request->get('gateway', config('ecommerce.default_gateway')),
+                        $cart->getCurrency(),
+                        $paymentAmountInBaseCurrency,
+                        $request->get('card_token'),
+                        Payment::TYPE_INITIAL_ORDER,
+                        $request->get('set_as_default', true)
                     );
 
                 }
+
                 // paypal
-                elseif ($request->get('payment_method_type') == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE ||
+                elseif ($request->get('payment_method_type') == PaymentMethod::TYPE_CREDIT_CARD ||
                     !empty($request->get('token'))) {
 
                     // if the paypal token is not set we must first redirect to paypal
@@ -1076,11 +1091,18 @@ class OrderFormService
                     list (
                         $transactionId, $paymentMethod, $billingAddress
                         ) =
-                        $this->transactionAndCreatePaymentMethod($request, $paymentAmount, $currency, $user, $brand);
+                        $this->transactionAndCreatePaymentMethod(
+                            $request,
+                            $paymentAmountInBaseCurrency,
+                            $currency,
+                            $user,
+                            $brand
+                        );
 
                 }
-                else {
 
+                // failure
+                else {
                     throw new PaymentFailedException('Payment method not supported.');
                 }
             }
@@ -1139,7 +1161,7 @@ class OrderFormService
             $transactionId,
             $currency,
             $brand,
-            $paymentAmount
+            $paymentAmountInBaseCurrency
         );
 
         $discounts = $this->discountService->getDiscountsForCart($cart);

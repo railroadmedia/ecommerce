@@ -67,7 +67,7 @@ class UserStripeCustomerId
     /**
      * @param User $user
      *
-     * @return UserProduct
+     * @return User
      */
     public function setUser(?User $user): self
     {

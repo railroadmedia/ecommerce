@@ -57,7 +57,7 @@ class UserDefaultPaymentMethodListener
     public function handle(UserDefaultPaymentMethodEvent $event)
     {
         $paymentMethod = $this->paymentMethodRepository
-                ->find(
+                ->byId(
                     $event->getDefaultPaymentMethodId()
                 );
 

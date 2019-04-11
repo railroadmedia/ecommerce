@@ -4,10 +4,13 @@ namespace Railroad\Ecommerce\Requests;
 
 use Exception;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
+use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
@@ -31,10 +34,22 @@ class OrderFormSubmitRequest extends FormRequest
      */
     private $permissionService;
 
+    /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
+    /**
+     * @var AddressRepository
+     */
+    private $addressRepository;
+
     public function __construct(
         CartService $cartService,
         ShippingService $shippingService,
-        PermissionService $permissionService
+        PermissionService $permissionService,
+        UserProviderInterface $userProvider,
+        AddressRepository $addressRepository
     )
     {
         parent::__construct();
@@ -44,6 +59,8 @@ class OrderFormSubmitRequest extends FormRequest
         $this->permissionService = $permissionService;
 
         $this->cartService->refreshCart();
+        $this->userProvider = $userProvider;
+        $this->addressRepository = $addressRepository;
     }
 
     /**
@@ -70,7 +87,7 @@ class OrderFormSubmitRequest extends FormRequest
 
             'billing_country' => 'required|in:' . implode(',', config('location.countries')),
 
-            'card_token' => 'required_if:payment_method_type,' . PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'card_token' => 'required_if:payment_method_type,' . PaymentMethod::TYPE_CREDIT_CARD,
             'gateway' => 'required',
             'currency' => 'in:' . implode(',', config('ecommerce.supported_currencies')),
             'payment_plan_number_of_payments' => 'in:' . implode(',', config('ecommerce.payment_plan_options')),
@@ -193,9 +210,16 @@ class OrderFormSubmitRequest extends FormRequest
      */
     public function getBillingAddress()
     {
-        $address = $this->populateBillingAddress(new Address());
+        $address = null;
 
-        $address->setType(ConfigService::$billingAddressType);
+        if (!empty($this->get('billing_address_id'))) {
+            $address = $this->addressRepository->byId($this->get('billing_address_id'));
+        }
+
+        if (empty($address)) {
+            $address = $this->populateBillingAddress(new Address());
+            $address->setType(ConfigService::$billingAddressType);
+        }
 
         return $address;
     }
@@ -215,7 +239,10 @@ class OrderFormSubmitRequest extends FormRequest
         if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
             !empty($this->get('user_id'))) {
 
-            $purchaser->setId($this->get('user_id'));
+            $user = $this->userProvider->getUserById($this->get('user_id'));
+
+            $purchaser->setId($user->getId());
+            $purchaser->setEmail($user->getEmail());
             $purchaser->setType(Purchaser::USER_TYPE);
             $purchaser->setBrand($this->get('brand', ConfigService::$brand));
 
@@ -224,7 +251,10 @@ class OrderFormSubmitRequest extends FormRequest
 
         // an existing user
         if (auth()->check()) {
-            $purchaser->setId(auth()->id());
+            $user = $this->userProvider->getCurrentUser();
+
+            $purchaser->setId($user->getId());
+            $purchaser->setEmail($user->getEmail());
             $purchaser->setType(Purchaser::USER_TYPE);
 
             return $purchaser;

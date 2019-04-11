@@ -2,6 +2,9 @@
 
 namespace Railroad\Ecommerce\Entities\Structures;
 
+use Railroad\Ecommerce\Entities\Customer;
+use Railroad\Ecommerce\Entities\User;
+
 /**
  * This class represent either a user or a customer. We use it as an interface instead of having to always
  * use if statements and figure out if an action is for a existing user or a customer (guest).
@@ -118,5 +121,25 @@ class Purchaser
     public function setType(string $type): void
     {
         $this->type = $type;
+    }
+
+    /**
+     * @return User
+     */
+    public function getUserObject()
+    {
+        return new User($this->getId(), $this->getEmail());
+    }
+
+    /**
+     * @return Customer
+     */
+    public function getCustomerEntity()
+    {
+        $customer = new Customer();
+        $customer->setEmail($this->getEmail());
+        $customer->setBrand($this->getBrand());
+
+        return $customer;
     }
 }

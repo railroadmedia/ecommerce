@@ -2,29 +2,31 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityRepository;
-use Railroad\Ecommerce\Entities\UserProduct;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Entities\UserStripeCustomerId;
 
 /**
  * Class UserStripeCustomerIdRepository
- *
- * @method UserProduct find($id, $lockMode = null, $lockVersion = null)
- * @method UserProduct findOneBy(array $criteria, array $orderBy = null)
- * @method UserProduct[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- * @method UserProduct[] findAll()
- *
  * @package Railroad\Ecommerce\Repositories
  */
-class UserStripeCustomerIdRepository extends EntityRepository
+class UserStripeCustomerIdRepository extends RepositoryBase
 {
+
     /**
-     * UserStripeCustomerIdRepository constructor.
+     * @param int $userId
      *
-     * @param EcommerceEntityManager $em
+     * @return UserStripeCustomerId|null
      */
-    public function __construct(EcommerceEntityManager $em)
+    public function getByUserId(int $userId)
     {
-        parent::__construct($em, $em->getClassMetadata(UserProduct::class));
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select(['usci.stripeCustomerId'])
+            ->from(UserStripeCustomerId::class, 'usci')
+            ->where('usci.user = :userId')
+            ->setParameter('userId', $userId);
+
+        return $qb->getQuery()
+            ->useResultCache($this->arrayCache)
+            ->getOneOrNullResult();
     }
 }

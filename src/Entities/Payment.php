@@ -26,6 +26,17 @@ class Payment
 {
     use TimestampableEntity;
 
+    const STATUS_PAID = 'paid';
+    const STATUS_PARTIALLY_PAID = 'partially_paid';
+    const STATUS_FAILED = 'failed';
+
+    const EXTERNAL_PROVIDER_STRIPE = 'stripe';
+    const EXTERNAL_PROVIDER_PAYPAL = 'paypal';
+
+    const TYPE_INITIAL_ORDER = 'initial_order';
+    const TYPE_SUBSCRIPTION_RENEWAL = 'subscription_renewal';
+    const TYPE_PAYMENT_PLAN = 'payment_plan';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")

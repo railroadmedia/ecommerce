@@ -23,6 +23,9 @@ class PaymentMethod
 {
     use TimestampableEntity;
 
+    const TYPE_CREDIT_CARD = 'credit_cart';
+    const TYPE_PAYPAL = 'paypal';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
@@ -172,5 +175,21 @@ class PaymentMethod
         $this->deletedOn = $deletedOn;
 
         return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getExternalProvider()
+    {
+        if ($this->getMethodType() == self::TYPE_CREDIT_CARD) {
+            return Payment::EXTERNAL_PROVIDER_STRIPE;
+        }
+
+        if ($this->getMethodType() == self::TYPE_PAYPAL) {
+            return Payment::EXTERNAL_PROVIDER_PAYPAL;
+        }
+
+        return null;
     }
 }

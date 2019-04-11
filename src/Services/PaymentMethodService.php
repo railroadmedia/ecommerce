@@ -34,9 +34,6 @@ class PaymentMethodService
      */
     private $userPaymentMethodsRepository;
 
-    CONST PAYPAL_PAYMENT_METHOD_TYPE      = 'paypal';
-    CONST CREDIT_CARD_PAYMENT_METHOD_TYPE = 'credit-card';
-
     /**
      * PaymentMethodService constructor.
      *
@@ -116,7 +113,7 @@ class PaymentMethodService
 
         $paymentMethod
             ->setMethodId($creditCard->getId())
-            ->setMethodType(self::CREDIT_CARD_PAYMENT_METHOD_TYPE)
+            ->setMethodType(PaymentMethod::TYPE_CREDIT_CARD)
             ->setCurrency($currency ?? ConfigService::$defaultCurrency)
             ->setBillingAddress($billingAddress);
 
@@ -145,22 +142,12 @@ class PaymentMethodService
 
         } elseif ($customer) {
 
-            $primary = $this->customerPaymentMethodsRepository
-                    ->getCustomerPrimaryPaymentMethod($customer);
-
-            if ($makePrimary && $primary) {
-                /**
-                 * @var $primary \Railroad\Ecommerce\Entities\CustomerPaymentMethods
-                 */
-                $primary->setIsPrimary(false);
-            }
-
             $customerPaymentMethods = new CustomerPaymentMethods();
 
             $customerPaymentMethods
                 ->setCustomer($customer)
                 ->setPaymentMethod($paymentMethod)
-                ->setIsPrimary(($primary == null) || $makePrimary); // if user has no other payment method, this should be primary
+                ->setIsPrimary(true); // if user has no other payment method, this should be primary
 
             $this->entityManager->persist($customerPaymentMethods);
         }

@@ -2,13 +2,22 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Carbon\Carbon;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
+use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Structures\Purchaser;
+use Railroad\Ecommerce\Entities\UserStripeCustomerId;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
+use Railroad\Ecommerce\Repositories\UserStripeCustomerIdRepository;
 
 /**
  * todo: needs testing
@@ -18,6 +27,11 @@ use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
  */
 class PaymentService
 {
+    /**
+     * @var EcommerceEntityManager
+     */
+    private $entityManager;
+
     /**
      * @var PaymentMethodRepository
      */
@@ -29,6 +43,11 @@ class PaymentService
     private $creditCardRepository;
 
     /**
+     * @var UserStripeCustomerIdRepository
+     */
+    private $userStripeCustomerIdRepository;
+
+    /**
      * @var StripePaymentGateway
      */
     private $stripePaymentGateway;
@@ -36,7 +55,7 @@ class PaymentService
     /**
      * @var PaypalBillingAgreementRepository
      */
-    private $paypalBillingAgreementRepository;
+    private $payPalBillingAgreementRepository;
 
     /**
      * @var PayPalPaymentGateway
@@ -47,53 +66,75 @@ class PaymentService
      * @var CurrencyService
      */
     private $currencyService;
+    /**
+     * @var PaymentMethodService
+     */
+    private $paymentMethodService;
 
     /**
      * PaymentService constructor.
      *
+     * @param EcommerceEntityManager $entityManager
      * @param PaymentMethodRepository $paymentMethodRepository
      * @param CreditCardRepository $creditCardRepository
+     * @param UserStripeCustomerIdRepository $userStripeCustomerIdRepository
      * @param StripePaymentGateway $stripePaymentGateway
      * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param CurrencyService $currencyService
+     * @param PaymentMethodService $paymentMethodService
      */
     public function __construct(
+        EcommerceEntityManager $entityManager,
         PaymentMethodRepository $paymentMethodRepository,
         CreditCardRepository $creditCardRepository,
+        UserStripeCustomerIdRepository $userStripeCustomerIdRepository,
         StripePaymentGateway $stripePaymentGateway,
         PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
         PayPalPaymentGateway $payPalPaymentGateway,
-        CurrencyService $currencyService
+        CurrencyService $currencyService,
+        PaymentMethodService $paymentMethodService
     )
     {
+        $this->entityManager = $entityManager;
         $this->paymentMethodRepository = $paymentMethodRepository;
         $this->creditCardRepository = $creditCardRepository;
+        $this->userStripeCustomerIdRepository = $userStripeCustomerIdRepository;
         $this->stripePaymentGateway = $stripePaymentGateway;
-        $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
+        $this->payPalBillingAgreementRepository = $paypalBillingAgreementRepository;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->currencyService = $currencyService;
+        $this->paymentMethodService = $paymentMethodService;
     }
 
     /**
      * @param string $gateway
      * @param int $paymentMethodId
      * @param string $currency
-     * @param float $paymentAmount
+     * @param float $paymentAmountInBaseCurrency
      * @param int $userId
+     * @param string $paymentType
      *
-     * @return string - Returns the external payment id.
+     * @return Payment
      *
+     * @throws ORMException
      * @throws PaymentFailedException
+     * @throws OptimisticLockException
      */
     public function chargeUsersExistingPaymentMethod(
         string $gateway,
         int $paymentMethodId,
         string $currency,
-        float $paymentAmount,
-        int $userId
+        float $paymentAmountInBaseCurrency,
+        int $userId,
+        string $paymentType
     )
     {
+        // do currency conversion
+        $conversionRate = $this->currencyService->getRate($currency);
+        $convertedPaymentAmount = $this->currencyService->convertFromBase($paymentAmountInBaseCurrency, $currency);
+
+        // get payment method
         $paymentMethod = $this->paymentMethodRepository->getUsersPaymentMethodById($userId, $paymentMethodId);
 
         if (empty($paymentMethod)) {
@@ -103,14 +144,42 @@ class PaymentService
         $externalPaymentId = null;
 
         // credit cart
-        if ($paymentMethod->getMethodType() == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
-            $externalPaymentId =
-                $this->chargeCreditCardPaymentMethod($paymentMethod, $paymentAmount, $currency, $gateway);
+        if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
+            $creditCard = $this->creditCardRepository->find($paymentMethod->getMethodId());
+
+            if (empty($creditCard)) {
+                throw new PaymentFailedException('Credit card not found.');
+            }
+
+            $customer = $this->stripePaymentGateway->getCustomer($gateway, $creditCard->getExternalCustomerId());
+            $card = $this->stripePaymentGateway->getCard($customer, $creditCard->getExternalId(), $gateway);
+
+            $charge = $this->stripePaymentGateway->chargeCustomerCard(
+                $gateway,
+                $convertedPaymentAmount,
+                $currency,
+                $card,
+                $customer
+            );
+
+            $externalPaymentId = $charge->id;
         }
 
         // paypal
-        elseif ($paymentMethod->getMethodType() == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
-            $externalPaymentId = $this->chargePayPalPaymentMethod($paymentMethod, $paymentAmount, $currency, $gateway);
+        elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
+
+            $payPalAgreement = $this->payPalBillingAgreementRepository->find($paymentMethod->getMethodId());
+
+            if (empty($payPalAgreement)) {
+                throw new PaymentFailedException('PayPal agreement not found.');
+            }
+
+            $externalPaymentId = $this->payPalPaymentGateway->chargeBillingAgreement(
+                $gateway,
+                $convertedPaymentAmount,
+                $currency,
+                $payPalAgreement->getExternalId()
+            );
         }
 
         // failure
@@ -123,83 +192,190 @@ class PaymentService
             throw new PaymentFailedException('Could not recharge existing payment method.');
         }
 
-        return $externalPaymentId;
+        // store payment in database
+        $conversionRate = $this->currencyService->getRate($currency);
+        $convertedPaymentAmount = $this->currencyService->convertFromBase($paymentAmountInBaseCurrency, $currency);
+
+        $payment = new Payment();
+
+        $payment->setTotalDue($convertedPaymentAmount)
+            ->setTotalPaid($convertedPaymentAmount)
+            ->setTotalRefunded(0)
+            ->setConversionRate($conversionRate)
+            ->setType($paymentType)
+            ->setExternalId($externalPaymentId)
+            ->setExternalProvider($paymentMethod->getExternalProvider())
+            ->setStatus(Payment::STATUS_PAID)
+            ->setPaymentMethod($paymentMethod)
+            ->setCurrency($currency)
+            ->setCreatedAt(Carbon::now());
+
+        $this->entityManager->persist($payment);
+        $this->entityManager->flush();
+
+        return $payment;
     }
 
     /**
-     * Re-charge an existing credit card payment method.
-     *
-     * @param PaymentMethod $paymentMethod
-     * @param float $amount
-     * @param string $currency
+     * @param Purchaser $purchaser
+     * @param Address $billingAddress
      * @param string $gateway
+     * @param string $currency
+     * @param float $paymentAmountInBaseCurrency
+     * @param string $stripeToken
+     * @param string $paymentType
+     * @param bool $setAsDefault
      *
-     * @return string|null - Returns the external payment id.
+     * @return Payment
      *
+     * @throws ORMException
      * @throws PaymentFailedException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws \Throwable
      */
-    private function chargeCreditCardPaymentMethod(
-        PaymentMethod $paymentMethod,
-        float $amount,
+    public function chargeNewCreditCartPaymentMethod(
+        Purchaser $purchaser,
+        Address $billingAddress,
+        string $gateway,
         string $currency,
-        string $gateway
+        float $paymentAmountInBaseCurrency,
+        string $stripeToken,
+        string $paymentType,
+        bool $setAsDefault = true
     )
     {
-        $creditCard = $this->creditCardRepository->find($paymentMethod->getMethodId());
+        // do currency conversion
+        $conversionRate = $this->currencyService->getRate($currency);
+        $convertedPaymentAmount = $this->currencyService->convertFromBase($paymentAmountInBaseCurrency, $currency);
 
-        $customer = $this->stripePaymentGateway->getCustomer($gateway, $creditCard->getExternalCustomerId());
+        // first get the stripe customer
 
-        if (!$customer) {
-            return null;
+        // for users
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
+            $stripeCustomer = null;
+
+            $userStripeCustomerId = $this->userStripeCustomerIdRepository->getByUserId($purchaser->getId());
+
+            // make a new stripe customer if none exist for the user
+            if (empty($userStripeCustomerId)) {
+                $stripeCustomer = $this->stripePaymentGateway->createCustomer(
+                    $gateway,
+                    $purchaser->getEmail()
+                );
+
+                $userStripeCustomerId = new UserStripeCustomerId();
+
+                $userStripeCustomerId->setUser($purchaser->getUserObject())
+                    ->setStripeCustomerId($stripeCustomer->id);
+
+                $this->entityManager->persist($userStripeCustomerId);
+            }
+
+            // otherwise use the users existing stripe customer
+            else {
+                $stripeCustomer = $this->stripePaymentGateway->getCustomer(
+                    $gateway,
+                    $userStripeCustomerId->getStripeCustomerId()
+                );
+            }
         }
 
-        $card = $this->stripePaymentGateway->getCard($customer, $creditCard->getExternalId(), $gateway);
-
-        if (!$card) {
-            return null;
+        // for guest customers, we must always create a new stripe customer for guest orders
+        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
+            $stripeCustomer = $this->stripePaymentGateway->createCustomer(
+                $gateway,
+                $purchaser->getEmail()
+            );
         }
 
-        $convertedPrice = $this->currencyService->convertFromBase($amount, $currency);
+        if (empty($stripeCustomer)) {
+            throw new PaymentFailedException('Could not find or create customer.');
+        }
 
+        // make the stripe card
+        $card = $this->stripePaymentGateway->createCustomerCard(
+            $gateway,
+            $stripeCustomer,
+            $stripeToken
+        );
+
+        // charge the card
         $charge = $this->stripePaymentGateway->chargeCustomerCard(
             $gateway,
-            $convertedPrice,
+            $convertedPaymentAmount,
             $currency,
             $card,
-            $customer
+            $stripeCustomer
         );
 
-        return $charge->id;
-    }
+        // the charge was successful, store necessary data information
+        // billing address
+        $this->entityManager->persist($billingAddress);
 
-    /**
-     * Re-charge an existing paypal agreement payment method.
-     *
-     * @param PaymentMethod $paymentMethod
-     * @param float $amount
-     * @param string $currency
-     * @param string $gateway
-     *
-     * @return string|null - Returns the external payment id.
-     *
-     * @throws PaymentFailedException
-     */
-    private function chargePayPalPaymentMethod(
-        PaymentMethod $paymentMethod,
-        float $amount,
-        string $currency,
-        string $gateway
-    )
-    {
-        $payPalAgreement = $this->paypalBillingAgreementRepository->find($paymentMethod->getMethodId());
+        // payment method
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
 
-        $convertedPrice = $this->currencyService->convertFromBase($amount, $currency);
+            // todo: refactor
+            $paymentMethod = $this->paymentMethodService->createUserCreditCard(
+                $purchaser->getUserObject(),
+                $card->fingerprint,
+                $card->last4,
+                $card->name,
+                $card->brand,
+                $card->exp_year,
+                $card->exp_month,
+                $card->id,
+                $stripeCustomer->id,
+                $gateway,
+                null,
+                $billingAddress,
+                $currency,
+                $setAsDefault
+            );
+        }
+        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
 
-        return $this->payPalPaymentGateway->chargeBillingAgreement(
-            $gateway,
-            $convertedPrice,
-            $currency,
-            $payPalAgreement->getExternalId()
-        );
+            // todo: refactor
+            $paymentMethod = $this->paymentMethodService->createUserCreditCard(
+                null,
+                $card->fingerprint,
+                $card->last4,
+                $card->name,
+                $card->brand,
+                $card->exp_year,
+                $card->exp_month,
+                $card->id,
+                $stripeCustomer->customer,
+                $gateway,
+                $purchaser->getCustomerEntity(),
+                $billingAddress,
+                $currency,
+                false
+            );
+        }
+
+        if (empty($paymentMethod)) {
+            throw new PaymentFailedException('Error charging payment method');
+        }
+
+        // store payment in database
+        $payment = new Payment();
+
+        $payment->setTotalDue($convertedPaymentAmount)
+            ->setTotalPaid($convertedPaymentAmount)
+            ->setTotalRefunded(0)
+            ->setConversionRate($conversionRate)
+            ->setType($paymentType)
+            ->setExternalId($charge['id'])
+            ->setExternalProvider(Payment::EXTERNAL_PROVIDER_STRIPE)
+            ->setStatus(Payment::STATUS_PAID)
+            ->setPaymentMethod($paymentMethod)
+            ->setCurrency($currency)
+            ->setCreatedAt(Carbon::now());
+
+        $this->entityManager->persist($payment);
+        $this->entityManager->flush();
+
+        return $payment;
     }
 }

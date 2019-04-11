@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Session\Store;
 use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Entities\CartItem;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
@@ -505,7 +506,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/order',
             [
-                'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'billing_country' => 'Canada',
                 'account_creation_email' => $this->faker->email,
                 'account_creation_password' => $password,
@@ -546,7 +547,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $requestData = [
-            'payment_method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
             'billing_region' => $state,
             'billing_zip_or_postal_code' => $zip,
             'billing_country' => $country,
@@ -567,6 +568,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn(['data' => '']);
         $fakerCustomer = new Customer();
         $fakerCustomer->email = $this->faker->email;
+        $fakerCustomer->id = $this->faker->word . rand();
         $this->stripeExternalHelperMock->method('createCustomer')
             ->willReturn($fakerCustomer);
 
@@ -824,7 +826,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $orderRequestData = [
-            'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
             'billing_region' => $state,
             'billing_zip_or_postal_code' => $zip,
             'billing_country' => $country,
@@ -1015,7 +1017,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = $this->fakePaymentMethod([
             'method_id' => $creditCard['id'],
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
             'currency' => $currency,
             'billing_address_id' => $billingAddress['id']
         ]);
@@ -1325,7 +1327,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = $this->fakePaymentMethod([
             'method_id' => $paypalAgreement['id'],
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
             'currency' => $currency,
             'billing_address_id' => $billingAddress['id']
         ]);
