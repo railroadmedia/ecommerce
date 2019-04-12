@@ -178,11 +178,20 @@ class PaymentMethodJsonController extends BaseController
          */
         $user = $this->userProvider->getUserById($userId);
 
+        // may be refactored in user provider, then reused in OrderFormSubmitRequest::getPurchaser
+        $purchaser = new Purchaser();
+
+        $purchaser->setId($user->getId());
+        $purchaser->setEmail($user->getEmail());
+        $purchaser->setType(Purchaser::USER_TYPE);
+        $purchaser->setBrand($this->get('gateway', ConfigService::$brand));
+
         try {
             if (
                 $request->get('method_type') ==
                 PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
             ) {
+                // todo - review stripe customer and card retrival (& PaymentService chargeNewCreditCartPaymentMethod possible reuse)
                 $customer = $this->stripePaymentGateway->getOrCreateCustomer(
                     $request->get('gateway'),
                     $user->getEmail()
@@ -194,6 +203,7 @@ class PaymentMethodJsonController extends BaseController
                     $request->get('card_token')
                 );
 
+                // todo - review & update billingAddress creation, if necessary
                 $billingCountry = $card->address_country ?? $card->country;
 
                 // save billing address
@@ -208,27 +218,15 @@ class PaymentMethodJsonController extends BaseController
 
                 $this->entityManager->persist($billingAddress);
 
-                /**
-                 * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
-                 */
-
-                $paymentMethod = $this->paymentMethodService
-                    ->createUserCreditCard(
-                        $user,
-                        $card->fingerprint,
-                        $card->last4,
-                        $card->name,
-                        $card->brand,
-                        $card->exp_year,
-                        $card->exp_month,
-                        $card->id,
-                        $card->customer,
-                        $request->get('gateway'),
-                        null,
-                        $billingAddress,
-                        $request->get('currency', $this->currencyService->get()),
-                        $request->get('set_default', false)
-                    );
+                $paymentMethod = $this->paymentMethodService->createCreditCardPaymentMethod(
+                    $purchaser,
+                    $billingAddress,
+                    $card,
+                    $customer,
+                    $request->get('gateway'),
+                    $request->get('currency', $this->currencyService->get()),
+                    $request->get('set_default', false)
+                );
 
             } else {
                 throw new NotAllowedException('Payment method not supported.');
@@ -289,6 +287,13 @@ class PaymentMethodJsonController extends BaseController
              */
             $user = $this->userProvider->getCurrentUser();
 
+            $purchaser = new Purchaser();
+
+            $purchaser->setId($user->getId());
+            $purchaser->setEmail($user->getEmail());
+            $purchaser->setType(Purchaser::USER_TYPE);
+            $purchaser->setBrand($this->get('gateway', ConfigService::$brand));
+
             $billingAddress = new Address();
 
             $billingAddress
@@ -300,18 +305,14 @@ class PaymentMethodJsonController extends BaseController
 
             $this->entityManager->persist($billingAddress);
 
-            /**
-             * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
-             */
-            $paymentMethod = $this->paymentMethodService
-                ->createPayPalBillingAgreement(
-                    $user,
-                    $billingAgreementId,
-                    $billingAddress,
-                    ConfigService::$brand,
-                    $this->currencyService->get(),
-                    false
-                );
+            $paymentMethod = $this->paymentMethodService->createPayPalPaymentMethod(
+                $purchaser,
+                $billingAddress,
+                $billingAgreementId,
+                ConfigService::$brand,
+                $this->currencyService->get(),
+                false
+            );
 
             event(new PaypalPaymentMethodEvent($paymentMethod->getId()));
         }

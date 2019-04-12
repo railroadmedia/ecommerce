@@ -13,8 +13,11 @@ use Railroad\Ecommerce\Entities\Customer;
 use Railroad\Ecommerce\Entities\CustomerPaymentMethods;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
+use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
+use Stripe\Card;
+use Stripe\Customer as StripeCustomer;
 use Throwable;
 
 class PaymentMethodService
@@ -53,96 +56,74 @@ class PaymentMethodService
     }
 
     /**
-     * Creates $user or $customer credit card and payment method
+     * Creates $purchaser credit card and payment method entities
      * Sets the $makePrimary flag for $user or $customer payment method
      *
      * @param User $user
-     * @param string $fingerPrint
-     * @param int $last4
-     * @param string $cardHolderName
-     * @param string $companyName
-     * @param $expirationYear
-     * @param $expirationMonth
-     * @param string $externalId
-     * @param string $externalCustomerId
-     * @param string $gatewayName
-     * @param Customer $customer
-     * @param Address $billingAddress - default null
-     * @param string $currency - default null
-     * @param bool $makePrimary - default false
+     * @param Purchaser $purchaser
+     * @param Address $billingAddress
+     * @param Card $card
+     * @param StripeCustomer $stripeCustomer
+     * @param string $gateway
+     * @param string $currency
+     * @param bool $setUserDefaultPaymentMethod - default false
      *
      * @return PaymentMethod
      *
      * @throws Throwable
      */
-    public function createUserCreditCard(
-        ?User $user,
-        $fingerPrint,
-        $last4,
-        $cardHolderName,
-        $companyName,
-        $expirationYear,
-        $expirationMonth,
-        $externalId,
-        $externalCustomerId,
-        $gatewayName,
-        ?Customer $customer,
-        ?Address $billingAddress = null,
-        $currency = null,
-        $makePrimary = false
-    ): PaymentMethod {
-
+    public function createCreditCardPaymentMethod(
+        Purchaser $purchaser,
+        Address $billingAddress,
+        Card $card,
+        StripeCustomer $stripeCustomer,
+        string $gateway,
+        string $currency,
+        ?bool $setUserDefaultPaymentMethod = true
+    ): PaymentMethod
+    {
         $creditCard = new CreditCard();
 
         $creditCard
-            ->setFingerprint($fingerPrint)
-            ->setLastFourDigits($last4)
-            ->setCardholderName($cardHolderName)
-            ->setCompanyName($companyName)
+            ->setFingerprint($card->fingerprint)
+            ->setLastFourDigits($card->last4)
+            ->setCardholderName($card->name)
+            ->setCompanyName($card->brand)
             ->setExpirationDate(
-                Carbon::createFromDate($expirationYear, $expirationMonth)
+                Carbon::createFromDate($card->exp_year, $card->exp_month)
             )
-            ->setExternalId($externalId)
-            ->setExternalCustomerId($externalCustomerId)
+            ->setExternalId($card->id)
+            ->setExternalCustomerId($stripeCustomer->id)
             ->setPaymentGatewayName($gatewayName);
 
         $this->entityManager->persist($creditCard);
         $this->entityManager->flush(); // needed to link composite payment method
 
-        $paymentMethod = new PaymentMethod();
-
-        $paymentMethod
-            ->setMethodId($creditCard->getId())
-            ->setMethodType(PaymentMethod::TYPE_CREDIT_CARD)
-            ->setCurrency($currency ?? ConfigService::$defaultCurrency)
-            ->setBillingAddress($billingAddress);
+        $paymentMethod = $this->createPaymentMethod(
+            $billingAddress,
+            $creditCard->getId(),
+            PaymentMethod::TYPE_CREDIT_CARD,
+            $currency ?? ConfigService::$defaultCurrency
+        );
 
         $this->entityManager->persist($paymentMethod);
 
-        if ($user) {
-            $primary = $this->userPaymentMethodsRepository
-                    ->getUserPrimaryPaymentMethod($user);
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
 
-            if ($makePrimary && $primary) {
-                $primary->setIsPrimary(false);
-            }
-
-            $userPaymentMethods = new UserPaymentMethods();
-
-            $userPaymentMethods
-                ->setUser($user)
-                ->setPaymentMethod($paymentMethod)
-                ->setIsPrimary(($primary == null) || $makePrimary); // if user has no other payment method, this should be primary
+            $userPaymentMethods = $this->createUserPaymentMethod(
+                $purchaser->getUserObject(),
+                $paymentMethod,
+                $setUserDefaultPaymentMethod
+            );
 
             $this->entityManager->persist($userPaymentMethods);
+        }
+        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
 
-        } elseif ($customer) {
-            $customerPaymentMethods = new CustomerPaymentMethods();
-
-            $customerPaymentMethods
-                ->setCustomer($customer)
-                ->setPaymentMethod($paymentMethod)
-                ->setIsPrimary(true);
+            $customerPaymentMethods = $this->createCustomerPaymentMethod(
+                $purchaser->getUserObject(),
+                $paymentMethod
+            );
 
             $this->entityManager->persist($customerPaymentMethods);
         }
@@ -150,7 +131,69 @@ class PaymentMethodService
         $this->entityManager->flush();
 
         // no events for customer
-        if ($user && $makePrimary) {
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId()) && $makePrimary) {
+            event(
+                new UserDefaultPaymentMethodEvent(
+                    $user->getId(),
+                    $paymentMethod->getId()
+                )
+            );
+        }
+
+        return $paymentMethod;
+    }
+
+    public function createPayPalPaymentMethod(
+        Purchaser $purchaser,
+        Address $billingAddress,
+        string $billingAgreementId,
+        string $gateway,
+        string $currency,
+        ?bool $setUserDefaultPaymentMethod = true
+    ): PaymentMethod
+    {
+        $billingAgreement = new PaypalBillingAgreement();
+
+        $billingAgreement
+            ->setExternalId($billingAgreementExternalId)
+            ->setPaymentGatewayName($gateway);
+
+        $this->entityManager->persist($billingAgreement);
+        $this->entityManager->flush(); // needed to link composite payment method
+
+        $paymentMethod = $this->createPaymentMethod(
+            $billingAddress,
+            $billingAgreement->getId(),
+            PaymentMethod::TYPE_PAYPAL,
+            $currency ?? ConfigService::$defaultCurrency
+        );
+
+        $this->entityManager->persist($paymentMethod);
+
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
+
+            $userPaymentMethods = $this->createUserPaymentMethod(
+                $purchaser->getUserObject(),
+                $paymentMethod,
+                $setUserDefaultPaymentMethod
+            );
+
+            $this->entityManager->persist($userPaymentMethods);
+        }
+        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
+
+            $customerPaymentMethods = $this->createCustomerPaymentMethod(
+                $purchaser->getUserObject(),
+                $paymentMethod
+            );
+
+            $this->entityManager->persist($customerPaymentMethods);
+        }
+
+        $this->entityManager->flush();
+
+        // no events for customer
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId()) && $makePrimary) {
             event(
                 new UserDefaultPaymentMethodEvent(
                     $user->getId(),
@@ -163,91 +206,87 @@ class PaymentMethodService
     }
 
     /**
-     * Creates $user paypal billing agreement and payment method
-     * Sets the $makePrimary flag for $user payment method
+     * Creates payment method entity
      *
-     * @param User $user
-     * @param string $billingAgreementExternalId
      * @param Address $billingAddress
-     * @param string $paymentGatewayName
-     * @param Customer|null $customer
-     * @param string $currency - default null
-     * @param bool $makePrimary - default false
+     * @param int $methodId
+     * @param string $methodType
+     * @param string $currency
      *
      * @return PaymentMethod
-     * @throws \Doctrine\ORM\NonUniqueResultException
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function createPayPalBillingAgreement(
-        User $user,
-        $billingAgreementExternalId,
+    public function createPaymentMethod(
         Address $billingAddress,
-        $paymentGatewayName,
-        ?Customer $customer,
-        $currency = null,
-        $makePrimary = false
-    ): PaymentMethod {
-
-        $billingAgreement = new PaypalBillingAgreement();
-
-        $billingAgreement
-            ->setExternalId($billingAgreementExternalId)
-            ->setPaymentGatewayName($paymentGatewayName);
-
-        $this->entityManager->persist($billingAgreement);
-        $this->entityManager->flush(); // needed to link composite payment method
-
+        int $methodId,
+        string $methodType,
+        string $currency
+    ): PaymentMethod
+    {
         $paymentMethod = new PaymentMethod();
 
         $paymentMethod
-            ->setMethodId($billingAgreement->getId())
-            ->setMethodType(PaymentMethod::TYPE_PAYPAL)
-            ->setCurrency($currency ?? ConfigService::$defaultCurrency)
+            ->setMethodId($methodId)
+            ->setMethodType($methodType)
+            ->setCurrency($currency)
             ->setBillingAddress($billingAddress);
 
-        $this->entityManager->persist($paymentMethod);
-
-        if ($user) {
-            $primary = $this->userPaymentMethodsRepository
-                ->getUserPrimaryPaymentMethod($user);
-
-            if ($makePrimary && $primary) {
-                $primary->setIsPrimary(false);
-            }
-
-            $userPaymentMethods = new UserPaymentMethods();
-
-            $userPaymentMethods
-                ->setUser($user)
-                ->setPaymentMethod($paymentMethod)
-                ->setIsPrimary(($primary == null) || $makePrimary); // if user has no other payment method, this should be primary
-
-            $this->entityManager->persist($userPaymentMethods);
-
-        } elseif ($customer) {
-            $customerPaymentMethods = new CustomerPaymentMethods();
-
-            $customerPaymentMethods
-                ->setCustomer($customer)
-                ->setPaymentMethod($paymentMethod)
-                ->setIsPrimary(true);
-
-            $this->entityManager->persist($customerPaymentMethods);
-        }
-
-        $this->entityManager->flush();
-
-        // no events for customer
-        if ($user && $makePrimary) {
-            event(
-                new UserDefaultPaymentMethodEvent(
-                    $user->getId(),
-                    $paymentMethod->getId()
-                )
-            );
-        }
-
         return $paymentMethod;
+    }
+
+    /**
+     * Creates user payment method entity
+     *
+     * @param User $user
+     * @param PaymentMethod $paymentMethod
+     * @param bool $setUserDefaultPaymentMethod
+     *
+     * @return UserPaymentMethods
+     */
+    public function createUserPaymentMethod(
+        User $user,
+        PaymentMethod $paymentMethod,
+        ?bool $setUserDefaultPaymentMethod = true
+    ): UserPaymentMethods
+    {
+        $existingPrimaryMethod = $this->userPaymentMethodsRepository
+                    ->getUserPrimaryPaymentMethod($user);
+
+        if ($setUserDefaultPaymentMethod && $existingPrimaryMethod) {
+            $existingPrimaryMethod->setIsPrimary(false);
+        }
+
+        $userPaymentMethods = new UserPaymentMethods();
+
+        $userPaymentMethods
+            ->setUser($user)
+            ->setPaymentMethod($paymentMethod)
+            ->setIsPrimary(
+                ($existingPrimaryMethod == null) || $setUserDefaultPaymentMethod
+            ); // if user has no other payment method, this should be primary
+
+        return $userPaymentMethods;
+    }
+
+    /**
+     * Creates customer payment method entity
+     *
+     * @param Customer $customer
+     * @param PaymentMethod $paymentMethod
+     *
+     * @return CustomerPaymentMethods
+     */
+    public function createCustomerPaymentMethod(
+        Customer $customer,
+        PaymentMethod $paymentMethod
+    ): CustomerPaymentMethods
+    {
+        $customerPaymentMethods = new CustomerPaymentMethods();
+
+        $customerPaymentMethods
+            ->setCustomer($customer)
+            ->setPaymentMethod($paymentMethod)
+            ->setIsPrimary(true);
+
+        return $customerPaymentMethods;
     }
 }

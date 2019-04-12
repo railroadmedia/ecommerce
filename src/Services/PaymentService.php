@@ -193,9 +193,6 @@ class PaymentService
         }
 
         // store payment in database
-        $conversionRate = $this->currencyService->getRate($currency);
-        $convertedPaymentAmount = $this->currencyService->convertFromBase($paymentAmountInBaseCurrency, $currency);
-
         $payment = new Payment();
 
         $payment->setTotalDue($convertedPaymentAmount)
@@ -313,46 +310,15 @@ class PaymentService
         $this->entityManager->persist($billingAddress);
 
         // payment method
-        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
-
-            // todo: refactor
-            $paymentMethod = $this->paymentMethodService->createUserCreditCard(
-                $purchaser->getUserObject(),
-                $card->fingerprint,
-                $card->last4,
-                $card->name,
-                $card->brand,
-                $card->exp_year,
-                $card->exp_month,
-                $card->id,
-                $stripeCustomer->id,
-                $gateway,
-                null,
-                $billingAddress,
-                $currency,
-                $setAsDefault
-            );
-        }
-        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
-
-            // todo: refactor
-            $paymentMethod = $this->paymentMethodService->createUserCreditCard(
-                null,
-                $card->fingerprint,
-                $card->last4,
-                $card->name,
-                $card->brand,
-                $card->exp_year,
-                $card->exp_month,
-                $card->id,
-                $stripeCustomer->customer,
-                $gateway,
-                $purchaser->getCustomerEntity(),
-                $billingAddress,
-                $currency,
-                false
-            );
-        }
+        $paymentMethod = $this->paymentMethodService->createCreditCardPaymentMethod(
+            $purchaser,
+            $billingAddress,
+            $card,
+            $stripeCustomer,
+            $gateway,
+            $currency,
+            $setAsDefault
+        );
 
         if (empty($paymentMethod)) {
             throw new PaymentFailedException('Error charging payment method');
@@ -431,32 +397,14 @@ class PaymentService
         $this->entityManager->persist($billingAddress);
 
         // payment method
-        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
-
-            // todo: refactor
-            $paymentMethod = $this->paymentMethodService->createPayPalBillingAgreement(
-                $purchaser->getUserObject(),
-                $billingAgreementId,
-                $billingAddress,
-                $gateway,
-                null,
-                $currency,
-                $setAsDefault
-            );
-        }
-        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
-
-            // todo: refactor
-            $paymentMethod = $this->paymentMethodService->createPayPalBillingAgreement(
-                null,
-                $billingAgreementId,
-                $billingAddress,
-                $gateway,
-                $purchaser->getCustomerEntity(),
-                $currency,
-                $setAsDefault
-            );
-        }
+        $paymentMethod = $this->paymentMethodService->createPayPalPaymentMethod(
+            $purchaser,
+            $billingAddress,
+            $billingAgreementId,
+            $gateway,
+            $currency,
+            $setAsDefault
+        );
 
         if (empty($paymentMethod)) {
             throw new PaymentFailedException('Error charging payment method');
