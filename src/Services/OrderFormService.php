@@ -901,7 +901,7 @@ class OrderFormService
             $paymentAmountInBaseCurrency
         );
 
-        $discounts = $this->discountService->getDiscountsForCart($cart);
+        $discounts = $this->discountService->getNonShippingDiscountsForCart($cart);
 
         // apply order discounts
         $this->createOrderDiscounts($order, $discounts);

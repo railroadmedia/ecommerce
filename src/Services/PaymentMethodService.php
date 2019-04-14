@@ -94,7 +94,7 @@ class PaymentMethodService
             )
             ->setExternalId($card->id)
             ->setExternalCustomerId($stripeCustomer->id)
-            ->setPaymentGatewayName($gatewayName);
+            ->setPaymentGatewayName($gateway);
 
         $this->entityManager->persist($creditCard);
         $this->entityManager->flush(); // needed to link composite payment method
@@ -131,10 +131,10 @@ class PaymentMethodService
         $this->entityManager->flush();
 
         // no events for customer
-        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId()) && $makePrimary) {
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId()) && $setUserDefaultPaymentMethod) {
             event(
                 new UserDefaultPaymentMethodEvent(
-                    $user->getId(),
+                    $purchaser->getId(),
                     $paymentMethod->getId()
                 )
             );

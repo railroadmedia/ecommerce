@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Railroad\Ecommerce\Entities\Address as AddressEntity;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
@@ -267,6 +266,8 @@ class CartService
      * Returns the total cart items cost with discounts applied
      *
      * @return float
+     * @throws Throwable
+     * @throws \Doctrine\ORM\ORMException
      */
     public function getTotalItemCosts()
     {
@@ -282,7 +283,11 @@ class CartService
             }
         }
 
-        $totalDiscountAmount = $this->discountService->getTotalItemDiscounted($this->cart);
+        $totalDiscountAmount = $this->discountService->getTotalItemDiscounted(
+            $this->cart,
+            $totalBeforeDiscounts,
+            $this->shippingService->getShippingDueForCart($this->cart, $totalBeforeDiscounts)
+        );
 
         return round($totalBeforeDiscounts - $totalDiscountAmount, 2);
     }
@@ -328,9 +333,9 @@ class CartService
      */
     public function getDueForInitialPayment()
     {
-        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart);
-
         $totalItemCostDue = $this->getTotalItemCosts();
+
+        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
         $taxDue = $this->taxService->vat(
             $totalItemCostDue + $shippingDue,

@@ -54,7 +54,7 @@ class DiscountRepository extends RepositoryBase
                 $qb->expr()
                     ->eq('d.active', ':active')
             )
-            ->where(
+            ->andWhere(
                 $qb->expr()
                     ->in('d.type', ':types')
             )

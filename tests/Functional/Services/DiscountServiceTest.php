@@ -295,7 +295,7 @@ class DiscountServiceTest extends EcommerceTestCase
             $discountThree['id'],
         ];
 
-        $discounts = $this->discountService->getDiscountsForCart($cart);
+        $discounts = $this->discountService->getNonShippingDiscountsForCart($cart);
 
         // assert discounts count
         $this->assertEquals(3, count($discounts));

@@ -50,7 +50,8 @@ class DiscountCriteriaService
         ProductRepository $productRepository,
         UserProductRepository $userProductRepository,
         UserProviderInterface $userProvider
-    ) {
+    )
+    {
         $this->productRepository = $productRepository;
         $this->userProductRepository = $userProductRepository;
 
@@ -63,23 +64,28 @@ class DiscountCriteriaService
      * @param DiscountCriteria $discountCriteria
      * @param Cart $cart
      *
+     * @param float $totalDueInItems
+     * @param float $totalDueInShipping
      * @return bool
      *
      * @throws Throwable
      */
     public function discountCriteriaMetForOrder(
         DiscountCriteria $discountCriteria,
-        Cart $cart
-    ): bool {
+        Cart $cart,
+        float $totalDueInItems,
+        float $totalDueInShipping
+    ): bool
+    {
         switch ($discountCriteria->getType()) {
             case self::PRODUCT_QUANTITY_REQUIREMENT_TYPE:
                 return $this->productQuantityRequirementMet($discountCriteria, $cart);
             case self::DATE_REQUIREMENT_TYPE:
                 return $this->orderDateRequirement($discountCriteria);
             case self::ORDER_TOTAL_REQUIREMENT_TYPE:
-                return $this->orderTotalRequirement($discountCriteria, $cart);
+                return $this->orderTotalRequirement($discountCriteria, $totalDueInItems);
             case self::SHIPPING_TOTAL_REQUIREMENT_TYPE:
-                return $this->orderShippingTotalRequirement($discountCriteria, $cart);
+                return $this->orderShippingTotalRequirement($discountCriteria, $totalDueInShipping);
             case self::SHIPPING_COUNTRY_REQUIREMENT_TYPE:
                 return $this->orderShippingCountryRequirement($discountCriteria, $cart);
             case self::PROMO_CODE_REQUIREMENT_TYPE:
@@ -99,12 +105,14 @@ class DiscountCriteriaService
      */
     public function productQuantityRequirementMet(DiscountCriteria $discountCriteria, Cart $cart): bool
     {
-        $products = $this->productRepository->findBySkus($cart->listSkus());
+        $products = $this->productRepository->bySkus($cart->listSkus());
 
         foreach ($products as $product) {
             $productCartItem = $cart->getItemBySku($product->getSku());
 
-            if ($product->getId() == $discountCriteria->getProduct()->getId() &&
+            if ($product->getId() ==
+                $discountCriteria->getProduct()
+                    ->getId() &&
                 ($productCartItem->getQuantity() >= (integer)$discountCriteria->getMin()) &&
                 ($productCartItem->getQuantity() <= (integer)$discountCriteria->getMax())) {
                 return true;
@@ -141,14 +149,13 @@ class DiscountCriteriaService
 
     /**
      * @param DiscountCriteria $discountCriteria
-     * @param Cart $cart
-     *
+     * @param float $totalDueInShipping
      * @return bool
      */
-    public function orderTotalRequirement(DiscountCriteria $discountCriteria, Cart $cart): bool
+    public function orderTotalRequirement(DiscountCriteria $discountCriteria, float $totalDueInShipping): bool
     {
-        if ($cart->getItemsCost() >= (float)$discountCriteria->getMin() &&
-            $cart->getItemsCost() <= (float)$discountCriteria->getMax()) {
+        if ($totalDueInShipping >= (float)$discountCriteria->getMin() &&
+            $totalDueInShipping <= (float)$discountCriteria->getMax()) {
             return true;
         }
 
@@ -157,14 +164,13 @@ class DiscountCriteriaService
 
     /**
      * @param DiscountCriteria $discountCriteria
-     * @param Cart $cart
-     *
+     * @param float $totalDueInShipping
      * @return bool
      */
-    public function orderShippingTotalRequirement(DiscountCriteria $discountCriteria, Cart $cart): bool
+    public function orderShippingTotalRequirement(DiscountCriteria $discountCriteria, float $totalDueInShipping): bool
     {
-        if ($cart->getShippingCost() >= (float)$discountCriteria->getMin() &&
-            $cart->getShippingCost() <= (float)$discountCriteria->getMax()) {
+        if ($totalDueInShipping >= (float)$discountCriteria->getMin() &&
+            $totalDueInShipping <= (float)$discountCriteria->getMax()) {
             return true;
         }
 
@@ -205,11 +211,8 @@ class DiscountCriteriaService
     public function promoCodeRequirement(DiscountCriteria $discountCriteria, Cart $cart): bool
     {
         if (!empty($cart->getPromoCode()) &&
-            (
-                $discountCriteria->getMin() == $cart->getPromoCode() ||
-                $discountCriteria->getMax() == $cart->getPromoCode()
-            )
-        ) {
+            ($discountCriteria->getMin() == $cart->getPromoCode() ||
+                $discountCriteria->getMax() == $cart->getPromoCode())) {
             return true;
         }
 
@@ -235,16 +238,27 @@ class DiscountCriteriaService
         $qb = $this->userProductRepository->createQueryBuilder('up');
 
         $qb->select('COUNT(up)')
-            ->where($qb->expr()
-                ->eq('up.user', ':user'))
-            ->andWhere($qb->expr()
-                ->eq('up.product', ':product'))
-            ->andWhere($qb->expr()
-                ->orX($qb->expr()
-                    ->gte('up.expirationDate', ':now'), $qb->expr()
-                    ->isNull('up.expirationDate')))
-            ->andWhere($qb->expr()
-                ->between('up.quantity', ':min', ':max'))
+            ->where(
+                $qb->expr()
+                    ->eq('up.user', ':user')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('up.product', ':product')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->gte('up.expirationDate', ':now'),
+                        $qb->expr()
+                            ->isNull('up.expirationDate')
+                    )
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->between('up.quantity', ':min', ':max')
+            )
             ->setParameter('user', $this->currentUser)
             ->setParameter('product', $discountCriteria->getProduct())
             ->setParameter('now', Carbon::now())

@@ -52,9 +52,10 @@ class ShippingService
      * Shipping costs always ignore the payment plan number since all shipping must be paid on the first payment.
      *
      * @param Cart $cart
+     * @param $totalDueInItems
      * @return float
      */
-    public function getShippingDueForCart(Cart $cart): float
+    public function getShippingDueForCart(Cart $cart, float $totalDueInItems): float
     {
         $weight = $this->getCartWeight($cart);
         $country = null;
@@ -78,7 +79,8 @@ class ShippingService
 
         $costBeforeDiscounts = $this->shippingOptionRepository->getShippingCosts($country, $weight);
 
-        return (float)($costBeforeDiscounts - $this->discountService->getTotalShippingDiscountedForCart($cart));
+        return (float)($costBeforeDiscounts -
+            $this->discountService->getTotalShippingDiscounted($cart, $totalDueInItems, $costBeforeDiscounts));
     }
 
     /**
