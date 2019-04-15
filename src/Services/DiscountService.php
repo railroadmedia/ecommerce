@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Product;
@@ -62,7 +63,7 @@ class DiscountService
      * @param $totalDueInShipping
      * @return int
      * @throws Throwable
-     * @throws \Doctrine\ORM\ORMException
+     * @throws ORMException
      */
     public function getTotalShippingDiscounted(Cart $cart, $totalDueInItems, $totalDueInShipping)
     {
@@ -83,7 +84,7 @@ class DiscountService
      * @param $totalDueInShipping
      * @return float
      * @throws Throwable
-     * @throws \Doctrine\ORM\ORMException
+     * @throws ORMException
      */
     public function getTotalItemDiscounted(Cart $cart, $totalDueInItems, $totalDueInShipping)
     {
@@ -92,142 +93,44 @@ class DiscountService
         $totalItemDiscounts = 0;
 
         foreach ($applicableDiscounts as $applicableDiscount) {
-            $totalItemDiscounts += $applicableDiscount->getAmount();
+            if ($applicableDiscount->getType() == DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE) {
+                $totalItemDiscounts = round($totalItemDiscounts + $applicableDiscount->getAmount(), 2);
+            }
+            elseif ($applicableDiscount->getType() == DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE) {
+                $amountDiscounted = $applicableDiscount->getAmount() / 100 * $totalDueInItems;
+                $totalItemDiscounts = round($totalItemDiscounts + $amountDiscounted, 2);
+            }
+            elseif (
+                $applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
+                $applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE
+            ) {
+                $products = $this->productRepository->bySkus($cart->listSkus());
+
+                foreach ($products as $product) {
+                    /** @var Product $product */
+                    /** @var CartItem $productCartItem */
+                    $productCartItem = $cart->getItemBySku($product->getSku());
+
+                    /** @var Product $discountProduct */
+                    $discountProduct = $applicableDiscount->getProduct();
+
+                    if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
+                        $product->getCategory() == $applicableDiscount->getProductCategory()) {
+                        if ($applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
+                            $discountAmount = $applicableDiscount->getAmount() * $productCartItem->getQuantity();
+                            $totalItemDiscounts = round($totalItemDiscounts + $discountAmount, 2);
+                        }
+                        elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+                            $discountAmount =
+                                $productCartItem->getQuantity() * $product->getPrice() * $applicableDiscount->getAmount() / 100;
+                            $totalItemDiscounts = round($totalItemDiscounts + $discountAmount, 2);
+                        }
+                    }
+                }
+            }
         }
 
         return (float)$totalItemDiscounts;
-    }
-
-    /**
-     * Apply the cart discounts by populating discount amounts properties on cart and cart items
-     *
-     * @param Cart $cart
-     *
-     * @return Cart
-     *
-     * @throws Throwable
-     */
-    public function applyDiscountsToCart(Cart $cart): Cart
-    {
-        $orderDiscountAmount = 0;
-        $shippingDiscountAmount = 0;
-        $shippingOverwrite = false;
-        $productsDiscountAmount = []; // keyed by product sku
-        $discountNames = [];
-        $shippingDiscountNames =
-            []; // if exists and to be applied, ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE discount will truncate the array
-        $products = $this->productRepository->bySkus($cart->listSkus());
-
-        foreach ($this->getNonShippingDiscountsForCart($cart) as $discount) {
-
-            if ($discount->getType() == self::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE && !$shippingOverwrite) {
-
-                $shippingDiscountAmount = round($shippingDiscountAmount + $discount->getAmount(), 2);
-
-                if ($discount->getVisible()) {
-                    $shippingDiscountNames[] = $discount->getName();
-                }
-
-            }
-            elseif ($discount->getType() == self::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE && !$shippingOverwrite) {
-
-                $shippingDiscountAmount =
-                    round($shippingDiscountAmount + $discount->getAmount() / 100 * $cart->getShippingCost(), 2);
-
-                if ($discount->getVisible()) {
-                    $shippingDiscountNames[] = $discount->getName();
-                }
-
-            }
-            elseif ($discount->getType() == self::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
-
-                $shippingDiscountAmount = $cart->getShippingCost() - $discount->getAmount();
-
-                if ($discount->getVisible()) {
-                    $shippingDiscountNames = [$discount->getName()];
-                }
-
-                $shippingOverwrite = true;
-
-            }
-            elseif ($discount->getType() == self::ORDER_TOTAL_AMOUNT_OFF_TYPE) {
-
-                $orderDiscountAmount = round($orderDiscountAmount + $discount->getAmount(), 2);
-
-                if ($discount->getVisible()) {
-                    $discountNames[] = $discount->getName();
-                }
-
-            }
-            else {
-                if ($discount->getType() == self::ORDER_TOTAL_PERCENT_OFF_TYPE) {
-
-                    $amountDiscounted = $discount->getAmount() / 100 * $cart->getItemsCost();
-                    $orderDiscountAmount = round($orderDiscountAmount + $amountDiscounted, 2);
-
-                    if ($discount->getVisible()) {
-                        $discountNames[] = $discount->getName();
-                    }
-                }
-            }
-
-            foreach ($products as $product) {
-                /** @var Product $product */
-
-                /** @var CartItem $productCartItem */
-                $productCartItem = $cart->getItemBySku($product->getSku());
-
-                /** @var Product $discountProduct */
-                $discountProduct = $discount->getProduct();
-
-                if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
-                    $product->getCategory() == $discount->getProductCategory()) {
-
-                    if ($discount->getType() == self::PRODUCT_AMOUNT_OFF_TYPE) {
-
-                        $discountAmount = $discount->getAmount() * $productCartItem->getQuantity();
-
-                        $productsDiscountAmount[$product->getSku()] = round(
-                            ($productsDiscountAmount[$product->getSku()] ?? 0) + $discountAmount,
-                            2
-                        );
-
-                        if ($discount->getVisible()) {
-                            $discountNames[] = $discount->getName();
-                        }
-
-                    }
-                    else {
-                        if ($discount->getType() == self::PRODUCT_PERCENT_OFF_TYPE) {
-
-                            $discountAmount =
-                                $productCartItem->getQuantity() * $product->getPrice() * $discount->getAmount() / 100;
-
-                            $productsDiscountAmount[$product->getSku()] = round(
-                                ($productsDiscountAmount[$product->getSku()] ?? 0) + $discountAmount,
-                                2
-                            );
-
-                            if ($discount->getVisible()) {
-                                $discountNames[] = $discount->getName();
-                            }
-                        }
-                    }
-                }
-
-                // todo - add subscription type discount handling in order form service / subscription creation
-            }
-        }
-
-        $cart->setOrderDiscountAmount($orderDiscountAmount);
-        $cart->setShippingDiscountAmount($shippingDiscountAmount);
-        $cart->setCartDiscountNames(array_merge($discountNames, $shippingDiscountNames));
-
-        foreach ($cart->getItems() as $cartItem) {
-            $cartItem->setDiscountAmount($productsDiscountAmount[$cartItem->getSku()] ?? 0);
-        }
-
-        return $cart;
     }
 
     /**
@@ -240,7 +143,7 @@ class DiscountService
      * @return array
      *
      * @throws Throwable
-     * @throws \Doctrine\ORM\ORMException
+     * @throws ORMException
      */
     public function getNonShippingDiscountsForCart(Cart $cart, float $totalDueInItems, float $totalDueInShipping)
     {
@@ -296,7 +199,7 @@ class DiscountService
      * @param $totalDueInShipping
      * @return Discount[]
      * @throws Throwable
-     * @throws \Doctrine\ORM\ORMException
+     * @throws ORMException
      */
     public function getShippingDiscountsForCart(Cart $cart, $totalDueInItems, $totalDueInShipping)
     {
@@ -316,13 +219,5 @@ class DiscountService
         }
 
         return $discountsToApply;
-    }
-
-    /**
-     * @return Discount[]
-     */
-    public function getAllActiveDiscounts()
-    {
-        return $this->discountRepository->getActiveDiscounts();
     }
 }

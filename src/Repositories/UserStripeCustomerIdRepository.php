@@ -20,7 +20,7 @@ class UserStripeCustomerIdRepository extends RepositoryBase
     {
         $qb = $this->entityManager->createQueryBuilder();
 
-        $qb->select(['usci.stripeCustomerId'])
+        $qb->select('usci')
             ->from(UserStripeCustomerId::class, 'usci')
             ->where('usci.user = :userId')
             ->setParameter('userId', $userId);

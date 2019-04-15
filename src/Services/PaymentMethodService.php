@@ -59,7 +59,6 @@ class PaymentMethodService
      * Creates $purchaser credit card and payment method entities
      * Sets the $makePrimary flag for $user or $customer payment method
      *
-     * @param User $user
      * @param Purchaser $purchaser
      * @param Address $billingAddress
      * @param Card $card
@@ -121,7 +120,7 @@ class PaymentMethodService
         elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
 
             $customerPaymentMethods = $this->createCustomerPaymentMethod(
-                $purchaser->getUserObject(),
+                $purchaser->getCustomerEntity(),
                 $paymentMethod
             );
 
@@ -143,6 +142,21 @@ class PaymentMethodService
         return $paymentMethod;
     }
 
+    /**
+     * Creates $purchaser paypal billing agreements and payment method entities
+     * Sets the $makePrimary flag for $user or $customer payment method
+     *
+     * @param Purchaser $purchaser
+     * @param Address $billingAddress
+     * @param string $billingAgreementId
+     * @param string $gateway
+     * @param string $currency
+     * @param bool $setUserDefaultPaymentMethod - default false
+     *
+     * @return PaymentMethod
+     *
+     * @throws Throwable
+     */
     public function createPayPalPaymentMethod(
         Purchaser $purchaser,
         Address $billingAddress,
@@ -155,7 +169,7 @@ class PaymentMethodService
         $billingAgreement = new PaypalBillingAgreement();
 
         $billingAgreement
-            ->setExternalId($billingAgreementExternalId)
+            ->setExternalId($billingAgreementId)
             ->setPaymentGatewayName($gateway);
 
         $this->entityManager->persist($billingAgreement);
@@ -183,7 +197,7 @@ class PaymentMethodService
         elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
 
             $customerPaymentMethods = $this->createCustomerPaymentMethod(
-                $purchaser->getUserObject(),
+                $purchaser->getCustomerEntity(),
                 $paymentMethod
             );
 
@@ -193,10 +207,10 @@ class PaymentMethodService
         $this->entityManager->flush();
 
         // no events for customer
-        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId()) && $makePrimary) {
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId()) && $setUserDefaultPaymentMethod) {
             event(
                 new UserDefaultPaymentMethodEvent(
-                    $user->getId(),
+                    $purchaser->getUserObject()->getId(),
                     $paymentMethod->getId()
                 )
             );
@@ -241,6 +255,8 @@ class PaymentMethodService
      * @param bool $setUserDefaultPaymentMethod
      *
      * @return UserPaymentMethods
+     *
+     * @throws Throwable
      */
     public function createUserPaymentMethod(
         User $user,

@@ -419,7 +419,7 @@ class PaymentService
             ->setConversionRate($conversionRate)
             ->setType($paymentType)
             ->setExternalId($transactionId)
-            ->setExternalProvider(Payment::EXTERNAL_PROVIDER_STRIPE)
+            ->setExternalProvider(Payment::EXTERNAL_PROVIDER_PAYPAL)
             ->setStatus(Payment::STATUS_PAID)
             ->setPaymentMethod($paymentMethod)
             ->setCurrency($currency)

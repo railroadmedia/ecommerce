@@ -51,6 +51,7 @@ class EcommerceTestCase extends BaseTestCase
         'subscriptionPayments' => 'ecommerce_subscription_payments',
         'orderItemFulfillments' => 'ecommerce_order_item_fulfillment',
         'refunds' => 'ecommerce_refunds',
+        'userStripeCustomerId' => 'ecommerce_user_stripe_customer_ids'
     ];
 
     /**
@@ -744,6 +745,28 @@ class EcommerceTestCase extends BaseTestCase
         $refund['id'] = $refundId;
 
         return $refund;
+    }
+
+    /**
+     * Helper method to seed a test user stripe customer id record
+     *
+     * @return array
+     */
+    public function fakeUserStripeCustomerId($dataStub = []): array
+    {
+        $data = $dataStub + [
+                'user_id' => $this->faker->randomNumber(2, true),
+                'stripe_customer_id' => $this->faker->randomNumber(2, true),
+                'created_at' => Carbon::now(),
+                'updated_at' => null,
+            ];
+
+        $newRecordId = $this->databaseManager->table(self::TABLES['userStripeCustomerId'])
+            ->insertGetId($data);
+
+        $data['id'] = $newRecordId;
+
+        return $data;
     }
 
     public function getCurrency()

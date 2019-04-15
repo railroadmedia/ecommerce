@@ -149,13 +149,13 @@ class DiscountCriteriaService
 
     /**
      * @param DiscountCriteria $discountCriteria
-     * @param float $totalDueInShipping
+     * @param float $totalDueInItems
      * @return bool
      */
-    public function orderTotalRequirement(DiscountCriteria $discountCriteria, float $totalDueInShipping): bool
+    public function orderTotalRequirement(DiscountCriteria $discountCriteria, float $totalDueInItems): bool
     {
-        if ($totalDueInShipping >= (float)$discountCriteria->getMin() &&
-            $totalDueInShipping <= (float)$discountCriteria->getMax()) {
+        if ($totalDueInItems >= (float)$discountCriteria->getMin() &&
+            $totalDueInItems <= (float)$discountCriteria->getMax()) {
             return true;
         }
 

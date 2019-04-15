@@ -36,6 +36,9 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $cart = Cart::fromSession();
 
+        $totalDueInItems = $this->faker->randomFloat(2, 100, 200);
+        $totalDueInShipping = $this->faker->randomFloat(2, 10, 20);
+
         $em = $this->app->make(EcommerceEntityManager::class);
 
         // all discountCriteriaMetForOrder switch cases are tested below, except default
@@ -49,7 +52,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->discountCriteriaMetForOrder($discountCriteria, $cart);
+            ->discountCriteriaMetForOrder($discountCriteria, $cart, $totalDueInItems, $totalDueInShipping);
 
         $this->assertFalse($metCriteria);
     }
@@ -268,6 +271,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $productOneQuantity = $this->faker->numberBetween(1, 5);
         $productTwoQuantity = $this->faker->numberBetween(1, 5);
 
+        $totalDueInItems = $productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity;
+
         $cartService = $this->app->make(CartService::class);
 
         $cartService->addToCart(
@@ -294,7 +299,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->orderTotalRequirement($discountCriteria, $cart);
+            ->orderTotalRequirement($discountCriteria, $totalDueInItems);
 
         $this->assertTrue($metCriteria);
     }
@@ -337,6 +342,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $cartService = $this->app->make(CartService::class);
 
+        $totalDueInItems = $productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity;
+
         $cartService->addToCart(
             $productOne['sku'],
             $productOneQuantity,
@@ -361,7 +368,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->orderTotalRequirement($discountCriteria, $cart);
+            ->orderTotalRequirement($discountCriteria, $totalDueInItems);
 
         $this->assertFalse($metCriteria);
     }
@@ -376,8 +383,6 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $shippingCost = $this->faker->randomFloat(2, 100, 200);
 
-        $cart->setShippingCost($shippingCost);
-
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
             'min' => round($this->faker->randomFloat(2, 10, 90), 2),
@@ -390,7 +395,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->orderShippingTotalRequirement($discountCriteria, $cart);
+            ->orderShippingTotalRequirement($discountCriteria, $shippingCost);
 
         $this->assertTrue($metCriteria);
     }
@@ -405,8 +410,6 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $shippingCost = $this->faker->randomFloat(2, 100);;
 
-        $cart->setShippingCost($shippingCost);
-
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'product_id' => rand(),
             'min' => $this->faker->randomFloat(2, 10, 20),
@@ -419,7 +422,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
 
         $metCriteria = $discountCriteriaService
-            ->orderShippingTotalRequirement($discountCriteria, $cart);
+            ->orderShippingTotalRequirement($discountCriteria, $shippingCost);
 
         $this->assertFalse($metCriteria);
     }
