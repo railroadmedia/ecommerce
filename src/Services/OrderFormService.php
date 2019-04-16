@@ -19,7 +19,6 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
-use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
@@ -134,6 +133,16 @@ class OrderFormService
     private $userStripeCustomerIdRepository;
 
     /**
+     * @var PurchaserService
+     */
+    private $purchaserService;
+
+    /**
+     * @var OrderClaimingService
+     */
+    private $orderClaimingService;
+
+    /**
      * OrderFormService constructor.
      *
      * @param AddressRepository $addressRepository
@@ -154,6 +163,8 @@ class OrderFormService
      * @param UserProviderInterface $userProvider
      * @param UserStripeCustomerIdRepository $userStripeCustomerIdRepository
      * @param PaymentService $paymentService
+     * @param PurchaserService $purchaserService
+     * @param OrderClaimingService $orderClaimingService
      */
     public function __construct(
         AddressRepository $addressRepository,
@@ -173,7 +184,9 @@ class OrderFormService
         UserProductService $userProductService,
         UserProviderInterface $userProvider,
         UserStripeCustomerIdRepository $userStripeCustomerIdRepository,
-        PaymentService $paymentService
+        PaymentService $paymentService,
+        PurchaserService $purchaserService,
+        OrderClaimingService $orderClaimingService
     )
     {
         $this->addressRepository = $addressRepository;
@@ -194,6 +207,8 @@ class OrderFormService
         $this->userProvider = $userProvider;
         $this->userStripeCustomerIdRepository = $userStripeCustomerIdRepository;
         $this->paymentService = $paymentService;
+        $this->purchaserService = $purchaserService;
+        $this->orderClaimingService = $orderClaimingService;
     }
 
     /**
@@ -749,14 +764,8 @@ class OrderFormService
             $request->merge($orderFormInput);
         }
 
-        // create and login the user right away
-        if ($purchaser->getType() == Purchaser::USER_TYPE && empty($purchaser->getId())) {
-            $user = $this->userProvider->createUser($purchaser->getEmail(), $purchaser->getRawPassword());
-
-            $purchaser->setId($user->getId());
-            $purchaser->setEmail($user->getEmail());
-            auth()->loginUsingId($user->getId());
-        }
+        // create and login the user or create the customer
+        $this->purchaserService->persist($purchaser);
 
         // setup the cart
         $cart = $request->getCart();
@@ -880,6 +889,9 @@ class OrderFormService
 
             throw new PaymentFailedException($paymentFailedException->getMessage());
         }
+
+        // WIP
+        $order = $this->orderClaimingService->claimOrder($purchaser, $payment, $cart);
 
         // todo: ended here, we have the payment and payment method
         // todo: save all other database entities

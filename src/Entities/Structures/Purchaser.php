@@ -34,6 +34,11 @@ class Purchaser
     private $brand;
 
     /**
+     * @var Customer
+     */
+    private $existingCustomerEntity;
+
+    /**
      * Default to customer.
      *
      * @var string
@@ -136,10 +141,23 @@ class Purchaser
      */
     public function getCustomerEntity()
     {
+        if (!empty($this->existingCustomerEntity)) {
+            return $this->existingCustomerEntity;
+        }
+
         $customer = new Customer();
+
         $customer->setEmail($this->getEmail());
         $customer->setBrand($this->getBrand());
 
         return $customer;
+    }
+
+    /**
+     * @param Customer $customer
+     */
+    public function setCustomerEntity(Customer $customer)
+    {
+        $this->existingCustomerEntity = $customer;
     }
 }

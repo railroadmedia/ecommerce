@@ -2,7 +2,9 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
@@ -266,8 +268,6 @@ class CartService
      * Returns the total cart items cost with discounts applied
      *
      * @return float
-     * @throws Throwable
-     * @throws \Doctrine\ORM\ORMException
      */
     public function getTotalItemCosts()
     {
@@ -290,6 +290,43 @@ class CartService
         );
 
         return round($totalBeforeDiscounts - $totalDiscountAmount, 2);
+    }
+
+    // todo: needs some work
+    /**
+     * @return array
+     */
+    public function getOrderItemEntities()
+    {
+        $orderItems = [];
+        $products = $this->productRepository->byCart($this->getCart());
+
+        foreach ($products as $product) {
+            $cartItem = $this->cart->getItemBySku($product->getSku());
+
+            if (!empty($cartItem)) {
+                $orderItem = new OrderItem();
+
+                $orderItem->setProduct($product)
+                    ->setQuantity($cartItem->getQuantity())
+                    ->setWeight($product->getWeight())
+                    ->setInitialPrice($product->getPrice())
+                    ->setTotalDiscounted(0) // todo: fix
+                    ->setFinalPrice(
+                        round(
+                            $product->getPrice() * $cartItem->getQuantity() - 0, // todo: discount amount
+                            2
+                        )
+                    )
+                    ->setCreatedAt(Carbon::now());
+
+                // todo: we should attach the discounts here as well
+
+                $orderItems[] = $orderItem;
+            }
+        }
+
+        return $orderItems;
     }
 
     /**
@@ -324,6 +361,23 @@ class CartService
         $financeDue = $this->getTotalFinanceCosts();
 
         return round($totalItemCostDue + $shippingDue + $taxDue + $financeDue, 2);
+    }
+
+    /**
+     * @return float
+     */
+    public function getTaxDueForOrder()
+    {
+        $totalItemCostDue = $this->getTotalItemCosts();
+
+        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart);
+
+        $taxDue = $this->taxService->vat(
+            $totalItemCostDue + $shippingDue,
+            $this->taxService->getAddressForTaxation($this->getCart())
+        );
+
+        return $taxDue;
     }
 
     /**
@@ -497,7 +551,8 @@ class CartService
                 'subscription_interval_type' => $product->getSubscriptionIntervalType(),
                 'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
                 'price_before_discounts' => $product->getPrice(),
-                'price_after_discounts' => $product->getPrice() - $this->discountService->getItemDiscountedAmount($this->cart, $cartItem->getSku()),
+                'price_after_discounts' => $product->getPrice() -
+                    $this->discountService->getItemDiscountedAmount($this->cart, $cartItem->getSku()),
             ];
         }
 
