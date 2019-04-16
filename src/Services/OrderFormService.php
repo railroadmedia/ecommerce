@@ -264,7 +264,6 @@ class OrderFormService
         array $discounts
     ): OrderItem
     {
-
         $orderItemDiscountTypes = [
             DiscountService::PRODUCT_AMOUNT_OFF_TYPE => true,
             DiscountService::PRODUCT_PERCENT_OFF_TYPE => true,

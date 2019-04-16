@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Order;
-use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Structures\Cart;
@@ -49,9 +48,12 @@ class OrderClaimingService
      * @param Purchaser $purchaser
      * @param Payment $payment
      * @param Cart $cart
+     *
      * @return Order
+     *
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws \Throwable
      */
     public function claimOrder(Purchaser $purchaser, Payment $payment, Cart $cart)
     {

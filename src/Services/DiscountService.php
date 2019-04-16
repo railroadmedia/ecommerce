@@ -114,10 +114,8 @@ class DiscountService
                 $amountDiscounted = $applicableDiscount->getAmount() / 100 * $totalDueInItems;
                 $totalItemDiscounts = round($totalItemDiscounts + $amountDiscounted, 2);
             }
-            elseif (
-                $applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
-                $applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE
-            ) {
+            elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
+                $applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
                 $products = $this->productRepository->bySkus($cart->listSkus());
 
                 foreach ($products as $product) {
@@ -136,7 +134,10 @@ class DiscountService
                         }
                         elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
                             $discountAmount =
-                                $productCartItem->getQuantity() * $product->getPrice() * $applicableDiscount->getAmount() / 100;
+                                $productCartItem->getQuantity() *
+                                $product->getPrice() *
+                                $applicableDiscount->getAmount() /
+                                100;
                             $totalItemDiscounts = round($totalItemDiscounts + $discountAmount, 2);
                         }
                     }
@@ -196,7 +197,8 @@ class DiscountService
                 elseif (!$shippingOverwrite) {
                     $shippingDiscountNames[] = $discount->getName();
                 }
-            } else {
+            }
+            else {
                 $discountNames[] = $discount->getName();
             }
         }
@@ -322,6 +324,57 @@ class DiscountService
     }
 
     /**
+     * @param Cart $cart
+     * @param string $itemSku
+     * @param float $totalDueInItems
+     * @param float $totalDueInShipping
+     *
+     * @return Discount[]
+     *
+     * @throws ORMException
+     * @throws Throwable
+     */
+    public function getItemDiscounts(
+        Cart $cart,
+        string $itemSku,
+        float $totalDueInItems,
+        float $totalDueInShipping
+    ): array
+    {
+        $activeDiscounts = $this->getApplicableDiscounts(
+            $this->discountRepository->getActiveCartItemDiscounts(),
+            $cart,
+            $totalDueInItems,
+            $totalDueInShipping
+        );
+
+        $product = $this->productRepository->bySku($itemSku);
+
+        $itemDiscounts = [];
+
+        if (!empty($product) && $product->getActive()) {
+
+            foreach ($activeDiscounts as $discount) {
+
+                $discountProduct = $discount->getProduct();
+
+                if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
+                    $product->getCategory() == $discount->getProductCategory()) {
+
+                    if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
+                        $discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE ||
+                        $discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+
+                        $itemDiscounts[] = $discount;
+                    }
+                }
+            }
+        }
+
+        return $itemDiscounts;
+    }
+
+    /**
      * Filters an active discounts array using discount criteria service
      *
      * @param Discount[] $activeDiscounts
@@ -333,7 +386,7 @@ class DiscountService
      *
      * @throws Throwable
      */
-    protected function getApplicableDiscounts(
+    public function getApplicableDiscounts(
         array $activeDiscounts,
         Cart $cart,
         float $totalDueInItems,

@@ -292,14 +292,19 @@ class CartService
         return round($totalBeforeDiscounts - $totalDiscountAmount, 2);
     }
 
-    // todo: needs some work
     /**
-     * @return array
+     * @return OrderItem[]
+     * @throws Throwable
+     * @throws \Doctrine\ORM\ORMException
      */
     public function getOrderItemEntities()
     {
         $orderItems = [];
+
         $products = $this->productRepository->byCart($this->getCart());
+
+        $totalItemCosts = $this->getTotalItemCosts();
+        $totalShippingCosts = $this->shippingService->getShippingDueForCart($this->getCart(), $totalItemCosts);
 
         foreach ($products as $product) {
             $cartItem = $this->cart->getItemBySku($product->getSku());
@@ -307,20 +312,28 @@ class CartService
             if (!empty($cartItem)) {
                 $orderItem = new OrderItem();
 
+                $discountAmount = $this->discountService->getItemDiscountedAmount(
+                    $this->getCart(),
+                    $product->getSku(),
+                    $totalItemCosts,
+                    $totalShippingCosts
+                );
+
                 $orderItem->setProduct($product)
                     ->setQuantity($cartItem->getQuantity())
                     ->setWeight($product->getWeight())
                     ->setInitialPrice($product->getPrice())
-                    ->setTotalDiscounted(0) // todo: fix
+                    ->setTotalDiscounted($discountAmount)
                     ->setFinalPrice(
                         round(
-                            $product->getPrice() * $cartItem->getQuantity() - 0, // todo: discount amount
+                            $product->getPrice() * $cartItem->getQuantity() - $discountAmount,
                             2
                         )
                     )
                     ->setCreatedAt(Carbon::now());
 
-                // todo: we should attach the discounts here as well
+                // todo: we should attach the discounts here as well,
+                // do we need a new one to many relationship with order item discounts?
 
                 $orderItems[] = $orderItem;
             }
