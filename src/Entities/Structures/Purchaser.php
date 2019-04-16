@@ -159,5 +159,6 @@ class Purchaser
     public function setCustomerEntity(Customer $customer)
     {
         $this->existingCustomerEntity = $customer;
+        $this->id = $customer->getId();
     }
 }
