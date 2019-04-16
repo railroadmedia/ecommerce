@@ -59,20 +59,32 @@ class DiscountService
 
     /**
      * @param Cart $cart
-     * @param $totalDueInItems
-     * @param $totalDueInShipping
-     * @return int
+     * @param float $totalDueInItems
+     * @param float $totalDueInShipping
+     *
+     * @return float
+     *
      * @throws Throwable
      * @throws ORMException
      */
-    public function getTotalShippingDiscounted(Cart $cart, $totalDueInItems, $totalDueInShipping)
+    public function getTotalShippingDiscounted(Cart $cart, float $totalDueInItems, float $totalDueInShipping): float
     {
         $applicableShippingDiscounts = $this->getShippingDiscountsForCart($cart, $totalDueInItems, $totalDueInShipping);
 
         $totalShippingDiscount = 0;
 
         foreach ($applicableShippingDiscounts as $applicableShippingDiscount) {
-            $totalShippingDiscount += $applicableShippingDiscount->getAmount();
+            if ($applicableShippingDiscount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
+                $totalShippingDiscount = round($totalShippingDiscount + $applicableShippingDiscount->getAmount(), 2);
+            }
+            elseif ($applicableShippingDiscount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE) {
+                $amountDiscounted = $applicableShippingDiscount->getAmount() * $totalDueInShipping / 100;
+                $totalShippingDiscount = round($totalShippingDiscount + $amountDiscounted, 2);
+            }
+            elseif ($applicableShippingDiscount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
+                $totalShippingDiscount = round($totalDueInShipping - $applicableShippingDiscount->getAmount(), 2);
+                break;
+            }
         }
 
         return (float)$totalShippingDiscount;
@@ -80,13 +92,15 @@ class DiscountService
 
     /**
      * @param Cart $cart
-     * @param $totalDueInItems
-     * @param $totalDueInShipping
+     * @param float $totalDueInItems
+     * @param float $totalDueInShipping
+     *
      * @return float
+     *
      * @throws Throwable
      * @throws ORMException
      */
-    public function getTotalItemDiscounted(Cart $cart, $totalDueInItems, $totalDueInShipping)
+    public function getTotalItemDiscounted(Cart $cart, float $totalDueInItems, float $totalDueInShipping): float
     {
         $applicableDiscounts = $this->getNonShippingDiscountsForCart($cart, $totalDueInItems, $totalDueInShipping);
 
@@ -134,22 +148,199 @@ class DiscountService
     }
 
     /**
-     * Returns the active discounts that meet criteria for $cart
-     *
      * @param Cart $cart
-     *
      * @param float $totalDueInItems
      * @param float $totalDueInShipping
+     *
      * @return array
      *
      * @throws Throwable
      * @throws ORMException
      */
-    public function getNonShippingDiscountsForCart(Cart $cart, float $totalDueInItems, float $totalDueInShipping)
+    public function getApplicableDiscountsNames(Cart $cart, float $totalDueInItems, float $totalDueInShipping): array
+    {
+        $applicableDiscounts = $this->getApplicableDiscounts(
+            $this->discountRepository->getActiveDiscounts(),
+            $cart,
+            $totalDueInItems,
+            $totalDueInShipping
+        );
+
+        $discountNames = [];
+        $shippingDiscountNames = [];
+        $shippingOverwrite = false;
+
+        foreach ($applicableDiscounts as $discount) {
+
+            if (!$discount->getVisible()) {
+                if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
+                    $shippingDiscountNames = [];
+                    $shippingOverwrite = true;
+                }
+
+                continue;
+            }
+
+            if (in_array(
+                $discount->getType(),
+                [
+                    DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
+                    DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
+                    DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE
+                ]
+            )) {
+                if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
+                    $shippingDiscountNames = [$discount->getName()];
+                    $shippingOverwrite = true;
+                }
+                elseif (!$shippingOverwrite) {
+                    $shippingDiscountNames[] = $discount->getName();
+                }
+            } else {
+                $discountNames[] = $discount->getName();
+            }
+        }
+
+        return array_merge($discountNames, $shippingDiscountNames);
+    }
+
+    /**
+     * Returns the active discounts that meet criteria for $cart
+     *
+     * @param Cart $cart
+     * @param float $totalDueInItems
+     * @param float $totalDueInShipping
+     *
+     * @return array
+     *
+     * @throws Throwable
+     * @throws ORMException
+     */
+    public function getNonShippingDiscountsForCart(Cart $cart, float $totalDueInItems, float $totalDueInShipping): array
+    {
+        $discountsToApply = $this->getApplicableDiscounts(
+            $this->discountRepository->getActiveDiscounts(),
+            $cart,
+            $totalDueInItems,
+            $totalDueInShipping
+        );
+
+        // we don't want the shipping discount
+        foreach ($discountsToApply as $discountToApplyIndex => $discountToApply) {
+            if (in_array(
+                $discountToApply->getType(),
+                [
+                    DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
+                    DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
+                    DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE
+                ]
+            )) {
+                unset($discountsToApply[$discountToApplyIndex]);
+            }
+        }
+
+        return array_values($discountsToApply);
+    }
+
+    /**
+     * @param Cart $cart
+     * @param float $totalDueInItems
+     * @param float $totalDueInShipping
+     *
+     * @return Discount[]
+     *
+     * @throws Throwable
+     * @throws ORMException
+     */
+    public function getShippingDiscountsForCart(Cart $cart, float $totalDueInItems, float $totalDueInShipping): array
+    {
+        return $this->getApplicableDiscounts(
+            $this->discountRepository->getActiveShippingDiscounts(),
+            $cart,
+            $totalDueInItems,
+            $totalDueInShipping
+        );
+    }
+
+    /**
+     * @param Cart $cart
+     * @param string $itemSku
+     * @param float $totalDueInItems
+     * @param float $totalDueInShipping
+     *
+     * @return float
+     *
+     * @throws Throwable
+     * @throws ORMException
+     */
+    public function getItemDiscountedAmount(
+        Cart $cart,
+        string $itemSku,
+        float $totalDueInItems,
+        float $totalDueInShipping
+    ): float
+    {
+        $activeDiscounts = $this->getApplicableDiscounts(
+            $this->discountRepository->getActiveCartItemDiscounts(),
+            $cart,
+            $totalDueInItems,
+            $totalDueInShipping
+        );
+
+        $product = $this->productRepository->bySku($itemSku);
+
+        /** @var CartItem $productCartItem */
+        $productCartItem = $cart->getItemBySku($product->getSku());
+
+        $discountedAmount = 0;
+
+        if (!empty($product) && $product->getActive()) {
+
+            foreach ($activeDiscounts as $discount) {
+
+                /** @var Product $discountProduct */
+                $discountProduct = $discount->getProduct();
+
+                if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
+                    $product->getCategory() == $discount->getProductCategory()) {
+                    if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
+                        $discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
+                        $discountAmount = $discount->getAmount() * $productCartItem->getQuantity();
+                        $discountedAmount = round($discountedAmount + $discountAmount, 2);
+
+                    }
+                    elseif ($discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+                        $discountAmount =
+                            $productCartItem->getQuantity() * $product->getPrice() * $discount->getAmount() / 100;
+                        $discountedAmount = round($discountedAmount + $discountAmount, 2);
+                    }
+                }
+            }
+        }
+
+        return $discountedAmount;
+    }
+
+    /**
+     * Filters an active discounts array using discount criteria service
+     *
+     * @param Discount[] $activeDiscounts
+     * @param Cart $cart
+     * @param float $totalDueInItems
+     * @param float $totalDueInShipping
+     *
+     * @return Discount[]
+     *
+     * @throws Throwable
+     */
+    protected function getApplicableDiscounts(
+        array $activeDiscounts,
+        Cart $cart,
+        float $totalDueInItems,
+        float $totalDueInShipping
+    ): array
     {
         $discountsToApply = [];
-
-        $activeDiscounts = $this->discountRepository->getActiveDiscounts();
 
         foreach ($activeDiscounts as $activeDiscount) {
             /** @var $activeDiscount Discount */
@@ -172,49 +363,6 @@ class DiscountService
 
             if ($criteriaMet) {
                 $discountsToApply[$activeDiscount->getId()] = $activeDiscount;
-            }
-        }
-
-        // we don't want the shipping discount
-        foreach ($discountsToApply as $discountToApplyIndex => $discountToApply) {
-            if (in_array(
-                $discountToApply->getType(),
-                [
-                    DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
-                    DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
-                    DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE
-                ]
-            )) {
-                unset($discountsToApply[$discountToApplyIndex]);
-            }
-        }
-
-        return $discountsToApply;
-    }
-
-    /**
-     * @param Cart $cart
-     *
-     * @param $totalDueInItems
-     * @param $totalDueInShipping
-     * @return Discount[]
-     * @throws Throwable
-     * @throws ORMException
-     */
-    public function getShippingDiscountsForCart(Cart $cart, $totalDueInItems, $totalDueInShipping)
-    {
-        $discountsToApply = $this->getNonShippingDiscountsForCart($cart, $totalDueInItems, $totalDueInShipping);
-
-        foreach ($discountsToApply as $discountToApplyIndex => $discountToApply) {
-            if (!in_array(
-                $discountToApply->getType(),
-                [
-                    DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
-                    DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
-                    DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE
-                ]
-            )) {
-                unset($discountsToApply[$discountToApplyIndex]);
             }
         }
 

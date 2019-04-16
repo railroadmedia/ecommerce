@@ -448,6 +448,36 @@ class CartService
     {
         $this->refreshCart();
 
+        $shippingAddress =
+            !empty($this->cart->getShippingAddress()) ?
+                $this->cart->getShippingAddress()
+                    ->toArray() : null;
+        $billingAddress =
+            !empty($this->cart->getBillingAddress()) ?
+                $this->cart->getBillingAddress()
+                    ->toArray() : null;
+
+        $discounts = $this->cart->getApplicableDiscountsNames() ?? [];
+
+        $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
+
+        $due = ($numberOfPayments > 1) ? $this->getTotalDueForInitialPayment() : $this->getTotalDue();
+
+        $totalItemCostDue = $this->getTotalItemCosts();
+
+        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
+
+        $taxDue = $this->taxService->vat(
+            $totalItemCostDue + $shippingDue,
+            $this->taxService->getAddressForTaxation($this->getCart())
+        );
+
+        $totals = [
+            'shipping' => $shippingDue,
+            'tax' => $taxDue,
+            'due' => $due,
+        ];
+
         $items = [];
 
         foreach ($this->cart->getItems() as $cartItem) {
@@ -467,30 +497,9 @@ class CartService
                 'subscription_interval_type' => $product->getSubscriptionIntervalType(),
                 'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
                 'price_before_discounts' => $product->getPrice(),
-                'price_after_discounts' => $product->getPrice() - $cartItem->getDiscountAmount(),
+                'price_after_discounts' => $product->getPrice() - $this->discountService->getItemDiscountedAmount($this->cart, $cartItem->getSku()),
             ];
         }
-
-        $shippingAddress =
-            !empty($this->cart->getShippingAddress()) ?
-                $this->cart->getShippingAddress()
-                    ->toArray() : null;
-        $billingAddress =
-            !empty($this->cart->getBillingAddress()) ?
-                $this->cart->getBillingAddress()
-                    ->toArray() : null;
-
-        $discounts = $this->cart->getCartDiscountNames() ?? [];
-
-        $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
-
-        $due = ($numberOfPayments > 1) ? $this->getTotalDueForInitialPayment() : $this->getTotalDue();
-
-        $totals = [
-            'shipping' => $this->getTotalShippingDue(),
-            'tax' => $this->getTaxDue(),
-            'due' => $due,
-        ];
 
         return [
             'items' => $items,

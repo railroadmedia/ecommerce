@@ -72,4 +72,40 @@ class DiscountRepository extends RepositoryBase
             ->setResultCacheDriver($this->arrayCache)
             ->getResult();
     }
+
+    /**
+     * Returns an array of Discounts with associated DiscountCriteria loaded
+     *
+     * @return Discount[]
+     * @throws ORMException
+     */
+    public function getActiveCartItemDiscounts()
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select(['d', 'dc'])
+            ->from(Discount::class, 'd')
+            ->leftJoin('d.discountCriterias', 'dc')
+            ->where(
+                $qb->expr()
+                    ->eq('d.active', ':active')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->in('d.type', ':types')
+            )
+            ->setParameter('active', true)
+            ->setParameter(
+                'types',
+                [
+                    DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+                    DiscountService::PRODUCT_PERCENT_OFF_TYPE,
+                    DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE
+                ]
+            );
+
+        return $qb->getQuery()
+            ->setResultCacheDriver($this->arrayCache)
+            ->getResult();
+    }
 }
