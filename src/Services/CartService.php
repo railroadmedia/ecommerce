@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
@@ -175,7 +176,7 @@ class CartService
     {
         $this->refreshCart();
 
-        $product = $this->allProducts[$sku] ?? null;
+        $product = $this->productRepository->bySku($sku);
 
         if (empty($product)) {
             throw new ProductNotFoundException($sku);
@@ -204,7 +205,7 @@ class CartService
         $this->refreshCart();
 
         // product
-        $product = $this->allProducts[$sku] ?? null;
+        $product = $this->productRepository->bySku($sku);
 
         if (empty($product)) {
             throw new ProductNotFoundException($sku);
@@ -239,32 +240,6 @@ class CartService
     }
 
     /**
-     * Sets the shipping address on cart
-     * proxy method to trigger cart updates when shipping address is set or changes
-     */
-    public function setShippingAddress(Address $shippingAddress)
-    {
-        $this->refreshCart();
-
-        $this->cart->setShippingAddress($shippingAddress);
-
-        $this->cart->toSession();
-    }
-
-    /**
-     * Sets the billing address on cart
-     * proxy method to trigger cart updates when billing address is set or changes
-     */
-    public function setBillingAddress(Address $billingAddress)
-    {
-        $this->refreshCart();
-
-        $this->cart->setBillingAddress($billingAddress);
-
-        $this->cart->toSession();
-    }
-
-    /**
      * Returns the total cart items cost with discounts applied
      *
      * @return float
@@ -279,7 +254,7 @@ class CartService
             $cartItem = $this->cart->getItemBySku($product->getSku());
 
             if (!empty($cartItem)) {
-                $totalBeforeDiscounts += $product->getPrice();
+                $totalBeforeDiscounts += $product->getPrice() * $cartItem->getQuantity();
             }
         }
 
@@ -334,6 +309,22 @@ class CartService
 
                 // todo: we should attach the discounts here as well,
                 // do we need a new one to many relationship with order item discounts?
+
+                $orderItemDiscounts = $this->discountService->getItemDiscounts(
+                    $this->getCart(),
+                    $product->getSku(),
+                    $totalItemCosts,
+                    $totalShippingCosts
+                );
+
+                foreach ($orderItemDiscounts as $discount) {
+                    $orderItemDiscount = new OrderDiscount();
+
+                    $orderItemDiscount->setDiscount($discount)
+                        ->setOrderItem($orderItem);
+
+                    $orderItem->addOrderItemDiscounts($orderItemDiscount);
+                }
 
                 $orderItems[] = $orderItem;
             }

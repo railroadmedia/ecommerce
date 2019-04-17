@@ -3,8 +3,13 @@
 namespace Railroad\Ecommerce\Tests\Functional\Services;
 
 use Carbon\Carbon;
+use Doctrine\Common\Collections\ArrayCollection;
+use Railroad\Ecommerce\Entities\OrderDiscount;
+use Railroad\Ecommerce\Entities\OrderItem;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
@@ -37,11 +42,7 @@ class CartServiceTest extends EcommerceTestCase
             ''
         );
 
-        $expectedItemsCost = round($product['price'] * $quantity, 2);
-
         $cart = Cart::fromSession();
-
-        $this->assertEquals($expectedItemsCost, $cart->getItemsCost());
 
         $this->assertTrue(is_array($cart->getItems()));
 
@@ -62,26 +63,14 @@ class CartServiceTest extends EcommerceTestCase
 
         $quantity = $this->faker->numberBetween(1, 10);
 
-        $cartService = $this->app->make(CartService::class);
-
-        $cartService->addToCart(
-            $product['sku'],
-            $quantity,
-            false,
-            ''
-        );
-
         $cart = Cart::fromSession();
 
-        $this->assertTrue(is_array($cart->getItems()));
+        $cart->setItem(new CartItem($product['sku'], $quantity));
 
-        $this->assertEquals(1, count($cart->getItems()));
-
-        $cartItem = $cart->getItemBySku($product['sku']);
-
-        $this->assertEquals($quantity, $cartItem->getQuantity());
+        $cart->toSession();
 
         // remove product
+        $cartService = $this->app->make(CartService::class);
 
         $cartService->removeFromCart($product['sku']);
 
@@ -102,28 +91,15 @@ class CartServiceTest extends EcommerceTestCase
 
         $initialQuantity = $this->faker->numberBetween(1, 10);
 
-        $cartService = $this->app->make(CartService::class);
-
-        $cartService->addToCart(
-            $product['sku'],
-            $initialQuantity,
-            false,
-            ''
-        );
-
         $cart = Cart::fromSession();
 
-        $this->assertTrue(is_array($cart->getItems()));
+        $cart->setItem(new CartItem($product['sku'], $initialQuantity));
 
-        $this->assertEquals(1, count($cart->getItems()));
-
-        $cartItem = $cart->getItemBySku($product['sku']);
-
-        $this->assertEquals($initialQuantity, $cartItem->getQuantity());
+        $cart->toSession();
 
         $newQuantity = $this->faker->numberBetween(10, 15);
 
-        // remove product
+        $cartService = $this->app->make(CartService::class);
 
         $cartService->updateCartQuantity($product['sku'], $newQuantity);
 
@@ -138,6 +114,275 @@ class CartServiceTest extends EcommerceTestCase
         $this->assertEquals($newQuantity, $cartItem->getQuantity());
     }
 
+    public function test_clear_cart()
+    {
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+            'price' => $this->faker->randomFloat(2, 15, 20)
+        ]);
+
+        $initialQuantity = $this->faker->numberBetween(1, 10);
+
+        $cart = Cart::fromSession();
+
+        $cart->setItem(new CartItem($product['sku'], $initialQuantity));
+
+        $cart->toSession();
+
+        $newQuantity = $this->faker->numberBetween(10, 15);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->clearCart();
+
+        $cart = Cart::fromSession();
+
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertEquals(0, count($cart->getItems()));
+    }
+
+    public function test_get_total_item_costs_no_discounts()
+    {
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+            'price' => $this->faker->randomFloat(2, 15, 20)
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+            'price' => $this->faker->randomFloat(2, 15, 20)
+        ]);
+
+        $quantityTwo = $this->faker->numberBetween(1, 10);
+        $quantityOne = $this->faker->numberBetween(1, 10);
+
+        $expectedTotalItemCosts = round($productOne['price'] * $quantityOne + $productTwo['price'] * $quantityTwo, 2);
+
+        $cart = Cart::fromSession();
+
+        $cart->setItem(new CartItem($productOne['sku'], $quantityOne));
+        $cart->setItem(new CartItem($productTwo['sku'], $quantityTwo));
+
+        $cart->toSession();
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->refreshCart();
+
+        $totalItemCosts = $cartService->getTotalItemCosts();
+
+        $this->assertEquals($expectedTotalItemCosts, $totalItemCosts);
+    }
+
+    public function test_get_total_item_costs_with_discounts()
+    {
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+            'price' => $this->faker->randomFloat(2, 15, 20),
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+            'price' => $this->faker->randomFloat(2, 15, 20),
+            'category' => $this->faker->word,
+        ]);
+
+        $productOneQuantity = $this->faker->numberBetween(5, 10);
+        $productTwoQuantity = $this->faker->numberBetween(1, 10);
+
+        $discountOne = $this->fakeDiscount([
+            'product_id' => $productOne['id'],
+            'product_category' => null,
+            'updated_at' => null,
+            'active' => true,
+            'visible' => true,
+            'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(1, 5)
+        ]);
+
+        $discountCriteriaOne = $this->fakeDiscountCriteria([
+            'discount_id' => $discountOne['id'],
+            'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
+            'product_id' => $productOne['id'],
+            'min' => $this->faker->numberBetween(1, 3),
+            'max' => $this->faker->numberBetween(15, 20)
+        ]);
+
+        $cartItemOneDiscountAmount = round($discountOne['amount'] * $productOneQuantity, 2);
+
+        $discountTwo = $this->fakeDiscount([
+            'product_id' => null,
+            'product_category' => $productTwo['category'],
+            'updated_at' => null,
+            'active' => true,
+            'visible' => false, // name not visible
+            'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(1, 10)
+        ]);
+
+        $discountCriteriaTwo = $this->fakeDiscountCriteria([
+            'discount_id' => $discountTwo['id'],
+            'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
+            'min' => Carbon::now()->subDay(1),
+            'max' => Carbon::now()->addDays(3),
+        ]);
+
+        $cartItemTwoDiscountAmount = round($discountTwo['amount'] * $productTwo['price'] * $productTwoQuantity / 100, 2);
+
+        $totalItemCosts = $productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity;
+
+        $expectedTotalItemCosts = round($totalItemCosts - ($cartItemOneDiscountAmount + $cartItemTwoDiscountAmount), 2);
+
+        $cart = Cart::fromSession();
+
+        $cart->setItem(new CartItem($productOne['sku'], $productOneQuantity));
+        $cart->setItem(new CartItem($productTwo['sku'], $productTwoQuantity));
+
+        $cart->toSession();
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->refreshCart();
+
+        $totalItemCosts = $cartService->getTotalItemCosts();
+
+        $this->assertEquals($expectedTotalItemCosts, $totalItemCosts);
+    }
+
+    public function test_get_order_item_entities()
+    {
+        $productOne = $this->fakeProduct([
+            'sku' => 'a' . $this->faker->word, // cart items are keyed by sku, this enables the order
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+            'price' => $this->faker->randomFloat(2, 15, 20),
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'sku' => 'b' . $this->faker->word, // cart items are keyed by sku, this enables the order
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+            'price' => $this->faker->randomFloat(2, 15, 20),
+            'category' => $this->faker->word,
+        ]);
+
+        $productOneQuantity = $this->faker->numberBetween(5, 10);
+        $productTwoQuantity = $this->faker->numberBetween(1, 10);
+
+        $discountOne = $this->fakeDiscount([
+            'product_id' => $productOne['id'],
+            'product_category' => null,
+            'updated_at' => null,
+            'active' => true,
+            'visible' => true,
+            'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(1, 5)
+        ]);
+
+        $discountCriteriaOne = $this->fakeDiscountCriteria([
+            'discount_id' => $discountOne['id'],
+            'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
+            'product_id' => $productOne['id'],
+            'min' => $this->faker->numberBetween(1, 3),
+            'max' => $this->faker->numberBetween(15, 20)
+        ]);
+
+        $discountTwo = $this->fakeDiscount([
+            'product_id' => null,
+            'product_category' => $productTwo['category'],
+            'updated_at' => null,
+            'active' => true,
+            'visible' => false,
+            'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(1, 10)
+        ]);
+
+        $discountCriteriaTwo = $this->fakeDiscountCriteria([
+            'discount_id' => $discountTwo['id'],
+            'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
+            'min' => Carbon::now()->subDay(1),
+            'max' => Carbon::now()->addDays(3),
+        ]);
+
+        $expectedProductOneDiscountAmount = round($discountOne['amount'] * $productOneQuantity, 2);
+        $expectedProductTwoDiscountAmount = round($discountTwo['amount'] * $productTwo['price'] * $productTwoQuantity / 100, 2);
+
+        $expectedProductOnePrice = round($productOne['price'] * $productOneQuantity - $expectedProductOneDiscountAmount, 2);
+        $expectedProductTwoPrice = round($productTwo['price'] * $productTwoQuantity - $expectedProductTwoDiscountAmount, 2);
+
+        $cart = Cart::fromSession();
+
+        $cart->setItem(new CartItem($productOne['sku'], $productOneQuantity));
+        $cart->setItem(new CartItem($productTwo['sku'], $productTwoQuantity));
+
+        $cart->toSession();
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->refreshCart();
+
+        $result = $cartService->getOrderItemEntities();
+
+        $this->assertTrue(is_array($result));
+
+        $this->assertEquals(2, count($result));
+
+        $orderItemOne = $result[0];
+
+        $this->assertTrue(is_object($orderItemOne));
+        $this->assertEquals(OrderItem::class, get_class($orderItemOne));
+
+        // assert order item product
+        $this->assertTrue(is_object($orderItemOne->getProduct()));
+        $this->assertEquals(Product::class, get_class($orderItemOne->getProduct()));
+        $this->assertEquals($productOne['id'], $orderItemOne->getProduct()->getId());
+
+        // assert order item discount
+        $this->assertTrue(is_object($orderItemOne->getOrderItemDiscounts()));
+        $this->assertEquals(ArrayCollection::class, get_class($orderItemOne->getOrderItemDiscounts()));
+        $this->assertEquals(1, count($orderItemOne->getOrderItemDiscounts()));
+        $orderItemOneDiscount = $orderItemOne->getOrderItemDiscounts()->first();
+        $this->assertEquals($discountOne['id'], $orderItemOneDiscount->getDiscount()->getId());
+
+        // assert order item data
+        $this->assertEquals($productOneQuantity, $orderItemOne->getQuantity());
+        $this->assertEquals($productOne['weight'], $orderItemOne->getWeight());
+        $this->assertEquals($productOne['price'], $orderItemOne->getInitialPrice());
+        $this->assertEquals($expectedProductOneDiscountAmount, $orderItemOne->getTotalDiscounted());
+        $this->assertEquals($expectedProductOnePrice, $orderItemOne->getFinalPrice());
+
+        $orderItemTwo = $result[1];
+
+        $this->assertTrue(is_object($orderItemTwo));
+        $this->assertEquals(OrderItem::class, get_class($orderItemTwo));
+
+        // assert order item product
+        $this->assertTrue(is_object($orderItemTwo->getProduct()));
+        $this->assertEquals(Product::class, get_class($orderItemTwo->getProduct()));
+        $this->assertEquals($productTwo['id'], $orderItemTwo->getProduct()->getId());
+
+        // assert order item discount
+        $this->assertTrue(is_object($orderItemTwo->getOrderItemDiscounts()));
+        $this->assertEquals(ArrayCollection::class, get_class($orderItemTwo->getOrderItemDiscounts()));
+        $this->assertEquals(1, count($orderItemTwo->getOrderItemDiscounts()));
+        $orderItemTwoDiscount = $orderItemTwo->getOrderItemDiscounts()->first();
+        $this->assertEquals($discountTwo['id'], $orderItemTwoDiscount->getDiscount()->getId());
+
+        // assert order item data
+        $this->assertEquals($productTwoQuantity, $orderItemTwo->getQuantity());
+        $this->assertEquals($productTwo['weight'], $orderItemTwo->getWeight());
+        $this->assertEquals($productTwo['price'], $orderItemTwo->getInitialPrice());
+        $this->assertEquals($expectedProductTwoDiscountAmount, $orderItemTwo->getTotalDiscounted());
+        $this->assertEquals($expectedProductTwoPrice, $orderItemTwo->getFinalPrice());
+    }
+
+    /*
     public function test_get_total_shipping_due()
     {
         $productWeight = $this->faker->randomFloat(2, 5, 10);
@@ -568,4 +813,5 @@ class CartServiceTest extends EcommerceTestCase
 
         $this->assertEquals($expectedInitialPayment, $cartService->getTotalDueForInitialPayment());
     }
+    */
 }

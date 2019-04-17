@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -43,6 +45,11 @@ class OrderItem
     protected $product;
 
     /**
+     * @ORM\OneToMany(targetEntity="OrderDiscounts", mappedBy="orderItem")
+     */
+    protected $orderItemDiscounts;
+
+    /**
      * @ORM\Column(type="integer")
      *
      * @var int
@@ -76,6 +83,11 @@ class OrderItem
      * @var float
      */
     protected $finalPrice;
+
+    public function __construct()
+    {
+        $this->orderItemDiscounts = new ArrayCollection();
+    }
 
     /**
      * @return int|null
@@ -221,6 +233,49 @@ class OrderItem
     public function setProduct(?Product $product): self
     {
         $this->product = $product;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|OrderDiscount[]
+     */
+    public function getOrderItemDiscounts(): Collection
+    {
+        return $this->orderItemDiscounts;
+    }
+
+    /**
+     * @param OrderDiscount $orderDiscount
+     *
+     * @return OrderItem
+     */
+    public function addOrderItemDiscounts(OrderDiscount $orderDiscount): self
+    {
+        if (!$this->orderItemDiscounts->contains($orderDiscount)) {
+            $this->orderItemDiscounts[] = $orderDiscount;
+            $orderDiscount->setOrderItem($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param OrderDiscount $orderDiscount
+     *
+     * @return OrderItem
+     */
+    public function removeOrderItemDiscounts(OrderDiscount $orderDiscount): self
+    {
+        if ($this->orderItemDiscounts->contains($orderDiscount)) {
+
+            $this->orderItemDiscounts->removeElement($orderDiscount);
+
+            // set the owning side to null (unless already changed)
+            if ($orderDiscount->getOrderItem() === $this) {
+                $orderDiscount->setOrderItem(null);
+            }
+        }
 
         return $this;
     }

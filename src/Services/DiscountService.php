@@ -325,6 +325,49 @@ class DiscountService
 
     /**
      * @param Cart $cart
+     * @param float $totalDueInItems
+     * @param float $totalDueInShipping
+     *
+     * @return Discount[]
+     *
+     * @throws Throwable
+     * @throws ORMException
+     */
+    public function getOrderDiscounts(
+        Cart $cart,
+        float $totalDueInItems,
+        float $totalDueInShipping
+    ): float
+    {
+        $applicableDiscounts = $this->getApplicableDiscounts(
+            $this->discountRepository->getActiveDiscounts(),
+            $cart,
+            $totalDueInItems,
+            $totalDueInShipping
+        );
+
+        $orderDiscounts = [];
+
+        foreach ($applicableDiscounts as $applicableDiscount) {
+            if (in_array(
+                $applicableDiscount->getType(),
+                [
+                    DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
+                    DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE,
+                    DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
+                    DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE,
+                    DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
+                ]
+            )) {
+                $orderDiscounts[] = $applicableDiscount;
+            }
+        }
+
+        return $orderDiscounts;
+    }
+
+    /**
+     * @param Cart $cart
      * @param string $itemSku
      * @param float $totalDueInItems
      * @param float $totalDueInShipping
