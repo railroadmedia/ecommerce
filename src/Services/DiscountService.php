@@ -337,7 +337,7 @@ class DiscountService
         Cart $cart,
         float $totalDueInItems,
         float $totalDueInShipping
-    ): float
+    ): array
     {
         $applicableDiscounts = $this->getApplicableDiscounts(
             $this->discountRepository->getActiveDiscounts(),

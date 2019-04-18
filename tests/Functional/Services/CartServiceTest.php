@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Services;
 
 use Carbon\Carbon;
 use Doctrine\Common\Collections\ArrayCollection;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
@@ -382,8 +383,7 @@ class CartServiceTest extends EcommerceTestCase
         $this->assertEquals($expectedProductTwoPrice, $orderItemTwo->getFinalPrice());
     }
 
-    /*
-    public function test_get_total_shipping_due()
+    public function test_get_tax_due_for_order()
     {
         $productWeight = $this->faker->randomFloat(2, 5, 10);
 
@@ -394,217 +394,62 @@ class CartServiceTest extends EcommerceTestCase
             'weight' => $productWeight
         ]);
 
-        $quantity = $this->faker->numberBetween(1, 3);
+        $shippingCountry = 'canada';
 
-        $countries = ['Canada', 'Serbia', 'Aruba', 'Greece'];
-
-        $shippingCountry = $this->faker->randomElement($countries);
-
-        // option not active
-        $shippingOptionOne = $this->fakeShippingOption([
-            'country' => $shippingCountry,
-            'active' => false,
-            'priority' => 1
-        ]);
-
-        $shippingCostsOneOne = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOptionOne['id'],
-            'min' => 1,
-            'max' => 50,
-            'price' => $this->faker->randomFloat(2, 3, 5),
-        ]);
-
-        $shippingCostsOneTwo = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOptionOne['id'],
-            'min' => 51,
-            'max' => 100,
-            'price' => $this->faker->randomFloat(2, 3, 5),
-        ]);
-
-        // option expected to be selected
-        $shippingOptionTwo = $this->fakeShippingOption([
+        $shippingOption = $this->fakeShippingOption([
             'country' => $shippingCountry,
             'active' => true,
             'priority' => 1
         ]);
 
-        // shipping option costs less than order weight
-        $shippingCostsTwoOne = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOptionTwo['id'],
-            'min' => 1,
-            'max' => 4,
-            'price' => $this->faker->randomFloat(2, 1, 3),
-        ]);
-
-        // shipping option costs expected to be selected
-        $shippingCostsTwoTwo = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOptionTwo['id'],
+        $shippingCosts = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id'],
             'min' => 5,
             'max' => 50,
             'price' => $this->faker->randomFloat(2, 3, 5),
         ]);
 
-        // shipping option costs greater than order weight
-        $shippingCostsTwoThree = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOptionTwo['id'],
-            'min' => 51,
-            'max' => 100,
-            'price' => $this->faker->randomFloat(2, 5, 15),
-        ]);
+        $quantity = $this->faker->numberBetween(1, 3);
 
-        // option matches, but lower priority
-        $shippingOptionTwo = $this->fakeShippingOption([
-            'country' => '*',
-            'active' => true,
-            'priority' => 10
-        ]);
-
-        $shippingCostsThree = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOptionTwo['id'],
-            'min' => 1,
-            'max' => 100,
-            'price' => $this->faker->randomFloat(2, 5, 10),
-        ]);
-
-        $expectedShippingCost = $shippingCostsTwoTwo['price'];
-
-        $cartService = $this->app->make(CartService::class);
-
-        $cartService->addToCart(
-            $product['sku'],
-            $quantity,
-            false,
-            ''
-        );
+        $shippingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$shippingCountry]));
 
         $shippingAddress = new Address();
-        $shippingAddress->setCountry($shippingCountry);
+        $shippingAddress->setCountry($shippingCountry)
+            ->setState($shippingState);
 
-        $cartService->setShippingAddress($shippingAddress);
+        $billingCountry = 'canada';
+        $billingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$billingCountry]));
+
+        $billingAddress = new Address();
+        $billingAddress
+            ->setCountry($billingCountry)
+            ->setState($billingState);
+
+        $expectedItemsCost = $product['price'] * $quantity;
+        $expectedShippingCost = $shippingCosts['price'];
+
+        $exptectedTaxRate = ConfigService::$taxRate[$shippingCountry][$shippingState];
+
+        $exptectedTaxDue = round($exptectedTaxRate * ($expectedItemsCost + $expectedShippingCost), 2);
 
         $cart = Cart::fromSession();
 
-        $this->assertEquals($expectedShippingCost, $cart->getShippingCost());
-    }
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setBillingAddress($billingAddress);
+        $cart->setItem(new CartItem($product['sku'], $quantity));
 
-    public function test_get_total_item_cost_due()
-    {
-        // add product discount linked to product
-        $productOne = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20)
-        ]);
-
-        // add product discount linked by product category
-        $productCategory = $this->faker->word;
-
-        $productTwo = $this->fakeProduct([
-            'category' => $productCategory,
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(10, 100),
-            'price' => $this->faker->randomFloat(2, 10, 20)
-        ]);
-
-        $productOneQuantity = $this->faker->numberBetween(4, 7);
-        $productTwoQuantity = $this->faker->numberBetween(1, 3);
-
-        $discountOne = $this->fakeDiscount([
-            'product_id' => $productOne['id'],
-            'product_category' => null,
-            'updated_at' => null,
-            'active' => true,
-            'visible' => true,
-            'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
-            'amount' => $this->faker->numberBetween(1, 5)
-        ]);
-
-        $discountCriteriaOne = $this->fakeDiscountCriteria([
-            'discount_id' => $discountOne['id'],
-            'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
-            'min' => $this->faker->numberBetween(1, 3),
-            'max' => $this->faker->numberBetween(15, 20)
-        ]);
-
-        $expectedCartItemOneDiscountAmount = round($discountOne['amount'] * $productOneQuantity, 2);
-
-        $discountTwo = $this->fakeDiscount([
-            'product_id' => null,
-            'product_category' => $productCategory,
-            'updated_at' => null,
-            'active' => true,
-            'visible' => false, // name not visible
-            'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
-            'amount' => $this->faker->numberBetween(1, 10)
-        ]);
-
-        $discountCriteriaTwo = $this->fakeDiscountCriteria([
-            'discount_id' => $discountTwo['id'],
-            'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
-            'min' => Carbon::now()->subDay(1),
-            'max' => Carbon::now()->addDays(3),
-        ]);
-
-        $expectedCartItemTwoDiscountAmount = round($discountTwo['amount'] * $productTwo['price'] * $productTwoQuantity / 100, 2);
-
-        // add order total discount
-        $discountThree = $this->fakeDiscount([
-            'product_id' => null,
-            'product_category' => null,
-            'updated_at' => null,
-            'active' => true,
-            'visible' => true,
-            'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
-            'amount' => $this->faker->numberBetween(1, 10)
-        ]);
-
-        $discountCriteriaThree = $this->fakeDiscountCriteria([
-            'discount_id' => $discountThree['id'],
-            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'min' => $this->faker->numberBetween(1, 5),
-            'max' => $this->faker->numberBetween(5000, 10000)
-        ]);
-
-        $expectedOrderDiscountAmount = $discountThree['amount'];
-
-        // initial products cost
-        $expectedItemsCost = round($productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity, 2);
-
-        // includes discounts
-        $expectedItemsCostDue = round($expectedItemsCost - $expectedCartItemOneDiscountAmount - $expectedCartItemTwoDiscountAmount - $expectedOrderDiscountAmount, 2);
-
-        // this discount will be ignored
-        $discountFour = $this->fakeDiscount([
-            'product_id' => null,
-            'product_category' => null,
-            'updated_at' => null,
-            'active' => true,
-            'visible' => true,
-            'type' => $this->faker->word . $this->faker->word,
-            'amount' => $this->faker->numberBetween(1, 10)
-        ]);
+        $cart->toSession();
 
         $cartService = $this->app->make(CartService::class);
 
-        $cartService->addToCart(
-            $productOne['sku'],
-            $productOneQuantity,
-            false,
-            ''
-        );
+        $cartService->refreshCart();
 
-        $cartService->addToCart(
-            $productTwo['sku'],
-            $productTwoQuantity,
-            false,
-            ''
-        );
+        $taxDue = $cartService->getTaxDueForOrder();
 
-        $this->assertEquals($expectedItemsCostDue, $cartService->getTotalItemCosts());
+        $this->assertEquals($exptectedTaxDue, $taxDue);
     }
 
-    public function test_get_total_tax_due()
+    public function test_get_due_for_order()
     {
         $productWeight = $this->faker->randomFloat(2, 5, 10);
 
@@ -615,9 +460,7 @@ class CartServiceTest extends EcommerceTestCase
             'weight' => $productWeight
         ]);
 
-        $countries = ['Canada', 'Serbia', 'Aruba', 'Greece'];
-
-        $shippingCountry = $this->faker->randomElement($countries);
+        $shippingCountry = 'canada';
 
         $shippingOption = $this->fakeShippingOption([
             'country' => $shippingCountry,
@@ -634,8 +477,11 @@ class CartServiceTest extends EcommerceTestCase
 
         $quantity = $this->faker->numberBetween(1, 3);
 
+        $shippingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$shippingCountry]));
+
         $shippingAddress = new Address();
-        $shippingAddress->setCountry($shippingCountry);
+        $shippingAddress->setCountry($shippingCountry)
+            ->setState($shippingState);
 
         $billingCountry = 'canada';
         $billingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$billingCountry]));
@@ -648,88 +494,27 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $exptectedTaxRate = ConfigService::$taxRate[$billingCountry][$billingState];
+        $exptectedTaxRate = ConfigService::$taxRate[$shippingCountry][$shippingState];
 
         $exptectedTaxDue = $exptectedTaxRate * ($expectedItemsCost + $expectedShippingCost);
 
-        $cartService = $this->app->make(CartService::class);
+        $expectedTotalDue = round($expectedItemsCost + $expectedShippingCost + $exptectedTaxDue, 2);
 
-        $cartService->setShippingAddress($shippingAddress);
-        $cartService->setBillingAddress($billingAddress);
+        $cart = Cart::fromSession();
 
-        $cartService->addToCart(
-            $product['sku'],
-            $quantity,
-            false,
-            ''
-        );
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setBillingAddress($billingAddress);
+        $cart->setItem(new CartItem($product['sku'], $quantity));
 
-        $this->assertEquals($exptectedTaxDue, $cartService->getTaxDue());
-    }
-
-    public function test_get_total_due()
-    {
-        $productWeight = $this->faker->randomFloat(2, 5, 10);
-
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20),
-            'weight' => $productWeight
-        ]);
-
-        $countries = ['Canada', 'Serbia', 'Aruba', 'Greece'];
-
-        $shippingCountry = $this->faker->randomElement($countries);
-
-        $shippingOption = $this->fakeShippingOption([
-            'country' => $shippingCountry,
-            'active' => true,
-            'priority' => 1
-        ]);
-
-        $shippingCosts = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOption['id'],
-            'min' => 5,
-            'max' => 50,
-            'price' => $this->faker->randomFloat(2, 3, 5),
-        ]);
-
-        $quantity = $this->faker->numberBetween(1, 3);
-
-        $shippingAddress = new Address();
-        $shippingAddress->setCountry($shippingCountry);
-
-        $billingCountry = 'canada';
-        $billingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$billingCountry]));
-
-        $billingAddress = new Address();
-        $billingAddress
-            ->setCountry($billingCountry)
-            ->setState($billingState);
-
-        $expectedItemsCost = $product['price'] * $quantity;
-        $expectedShippingCost = $shippingCosts['price'];
-
-        $exptectedTaxRate = ConfigService::$taxRate[$billingCountry][$billingState];
-
-        $exptectedTaxDue = $exptectedTaxRate * ($expectedItemsCost + $expectedShippingCost);
-
-        $expectedTotalDue = $expectedItemsCost + $expectedShippingCost + $exptectedTaxDue;
+        $cart->toSession();
 
         $cartService = $this->app->make(CartService::class);
 
-        $cartService->setShippingAddress($shippingAddress);
-        $cartService->setBillingAddress($billingAddress);
+        $cartService->refreshCart();
 
-        $cartService->addToCart(
-            $product['sku'],
-            $quantity,
-            false,
-            ''
-        );
+        $dueForOrder = $cartService->getDueForOrder();
 
-        $this->assertEquals($expectedTotalDue, $cartService->getTotalDue());
+        $this->assertEquals($expectedTotalDue, $dueForOrder);
     }
 
     public function test_get_due_for_initial_payment()
@@ -743,9 +528,7 @@ class CartServiceTest extends EcommerceTestCase
             'weight' => $productWeight
         ]);
 
-        $countries = ['Canada', 'Serbia', 'Aruba', 'Greece'];
-
-        $shippingCountry = $this->faker->randomElement($countries);
+        $shippingCountry = 'canada';
 
         $shippingOption = $this->fakeShippingOption([
             'country' => $shippingCountry,
@@ -762,8 +545,11 @@ class CartServiceTest extends EcommerceTestCase
 
         $quantity = $this->faker->numberBetween(1, 3);
 
+        $shippingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$shippingCountry]));
+
         $shippingAddress = new Address();
-        $shippingAddress->setCountry($shippingCountry);
+        $shippingAddress->setCountry($shippingCountry)
+            ->setState($shippingState);
 
         $billingCountry = 'canada';
         $billingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$billingCountry]));
@@ -776,7 +562,7 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $exptectedTaxRate = ConfigService::$taxRate[$billingCountry][$billingState];
+        $exptectedTaxRate = ConfigService::$taxRate[$shippingCountry][$shippingState];
 
         $exptectedTaxDue = $exptectedTaxRate * ($expectedItemsCost + $expectedShippingCost);
 
@@ -793,25 +579,157 @@ class CartServiceTest extends EcommerceTestCase
 
         $expectedInitialPayment = round($initialTotalDueBeforeShipping + $expectedShippingCost, 2);
 
-        $cartService = $this->app->make(CartService::class);
-
-        $cartService->setShippingAddress($shippingAddress);
-        $cartService->setBillingAddress($billingAddress);
-
         $cart = Cart::fromSession();
 
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setBillingAddress($billingAddress);
+        $cart->setItem(new CartItem($product['sku'], $quantity));
         $cart->setPaymentPlanNumberOfPayments($numberOfPayments);
 
         $cart->toSession();
 
-        $cartService->addToCart(
-            $product['sku'],
-            $quantity,
-            false,
-            ''
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->refreshCart();
+
+        $dueForInitialPayment = $cartService->getDueForInitialPayment();
+
+        $this->assertEquals($expectedInitialPayment, $dueForInitialPayment);
+    }
+
+    public function test_get_due_for_payment_plan_payments()
+    {
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+            'price' => $this->faker->randomFloat(2, 15, 20),
+        ]);
+
+        $quantity = $this->faker->numberBetween(1, 3);
+
+        $expectedItemsCost = $product['price'] * $quantity;
+
+        $shippingCountry = 'canada';
+        $shippingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$shippingCountry]));
+
+        $shippingAddress = new Address();
+        $shippingAddress->setCountry($shippingCountry)
+            ->setState($shippingState);
+
+        $exptectedTaxRate = ConfigService::$taxRate[$shippingCountry][$shippingState];
+
+        $exptectedTaxDue = $exptectedTaxRate * $expectedItemsCost;
+
+        $financeDue = config('ecommerce.financing_cost_per_order');
+
+        $numberOfPayments = 2;
+
+        $expectedDueForPayment = round(
+            ($expectedItemsCost + $exptectedTaxDue + $financeDue) / $numberOfPayments,
+            2
         );
 
-        $this->assertEquals($expectedInitialPayment, $cartService->getTotalDueForInitialPayment());
+        $cart = Cart::fromSession();
+
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setItem(new CartItem($product['sku'], $quantity));
+        $cart->setPaymentPlanNumberOfPayments($numberOfPayments);
+
+        $cart->toSession();
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->refreshCart();
+
+        $dueForPayment = $cartService->getDueForPaymentPlanPayments();
+
+        $this->assertEquals($expectedDueForPayment, $dueForPayment);
     }
-    */
+
+    public function test_populate_order_totals()
+    {
+        $productWeight = $this->faker->randomFloat(2, 5, 10);
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+            'price' => $this->faker->randomFloat(2, 15, 20),
+            'weight' => $productWeight
+        ]);
+
+        $shippingCountry = 'canada';
+
+        $shippingOption = $this->fakeShippingOption([
+            'country' => $shippingCountry,
+            'active' => true,
+            'priority' => 1
+        ]);
+
+        $shippingCosts = $this->fakeShippingCost([
+            'shipping_option_id' => $shippingOption['id'],
+            'min' => 5,
+            'max' => 50,
+            'price' => $this->faker->randomFloat(2, 3, 5),
+        ]);
+
+        $quantity = $this->faker->numberBetween(1, 3);
+
+        $shippingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$shippingCountry]));
+
+        $shippingAddress = new Address();
+        $shippingAddress->setCountry($shippingCountry)
+            ->setState($shippingState);
+
+        $billingCountry = 'canada';
+        $billingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$billingCountry]));
+
+        $billingAddress = new Address();
+        $billingAddress
+            ->setCountry($billingCountry)
+            ->setState($billingState);
+
+        $expectedItemsCost = $product['price'] * $quantity;
+        $expectedShippingCost = $shippingCosts['price'];
+
+        $exptectedTaxRate = ConfigService::$taxRate[$shippingCountry][$shippingState];
+
+        $exptectedTaxDue = $exptectedTaxRate * ($expectedItemsCost + $expectedShippingCost);
+
+        $finance = config('ecommerce.financing_cost_per_order');
+
+        $totalToFinance = $expectedItemsCost + $exptectedTaxDue + $finance;
+
+        $numberOfPayments = 2;
+
+        $initialTotalDueBeforeShipping = round($totalToFinance / $numberOfPayments, 2);
+
+        if ($initialTotalDueBeforeShipping * $numberOfPayments != $totalToFinance) {
+
+            $initialTotalDueBeforeShipping += abs($initialTotalDueBeforeShipping * $numberOfPayments - $totalToFinance);
+        }
+
+        $expectedInitialPayment = round($initialTotalDueBeforeShipping + $expectedShippingCost, 2);
+
+        $cart = Cart::fromSession();
+
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setBillingAddress($billingAddress);
+        $cart->setItem(new CartItem($product['sku'], $quantity));
+        $cart->setPaymentPlanNumberOfPayments($numberOfPayments);
+
+        $cart->toSession();
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->refreshCart();
+
+        $order = $cartService->populateOrderTotals();
+
+        $this->assertEquals(Order::class, get_class($order));
+
+        $this->assertEquals($expectedItemsCost, $order->getProductDue());
+        $this->assertEquals($expectedShippingCost, $order->getShippingDue());
+        $this->assertEquals($exptectedTaxDue, $order->getTaxesDue());
+        $this->assertEquals($finance, $order->getFinanceDue());
+    }
 }

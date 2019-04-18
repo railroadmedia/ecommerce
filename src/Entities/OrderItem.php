@@ -45,7 +45,7 @@ class OrderItem
     protected $product;
 
     /**
-     * @ORM\OneToMany(targetEntity="OrderDiscounts", mappedBy="orderItem")
+     * @ORM\OneToMany(targetEntity="OrderDiscount", mappedBy="orderItem")
      */
     protected $orderItemDiscounts;
 

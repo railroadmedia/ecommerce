@@ -4,8 +4,10 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -71,6 +73,11 @@ class OrderClaimingService
         $totalItemsCosts = $this->cartService->getTotalItemCosts();
         $shippingCosts = $this->shippingService->getShippingDueForCart($cart, $totalItemsCosts);
 
+        $shippingAddress = $cart->getShippingAddress()
+                                ->toEntity();
+
+        $shippingAddress->setType(ConfigService::$shippingAddressType);
+
         // create the order
         $order = new Order();
 
@@ -81,12 +88,9 @@ class OrderClaimingService
             ->setTotalPaid($payment->getTotalPaid())
             ->setBrand($purchaser->getBrand())
             ->setUser($purchaser->getType() == Purchaser::USER_TYPE ? $purchaser->getUserObject() : null)
-            ->setCustomer($purchaser->getType() == Purchaser::USER_TYPE ? $purchaser->getCustomerEntity() : null)
+            ->setCustomer($purchaser->getType() == Purchaser::CUSTOMER_TYPE ? $purchaser->getCustomerEntity() : null)
             ->setShippingDue($shippingCosts)
-            ->setShippingAddress(
-                $cart->getShippingAddress()
-                    ->toEntity()
-            )
+            ->setShippingAddress($shippingAddress)
             ->setBillingAddress(
                 $payment->getPaymentMethod()
                     ->getBillingAddress()
@@ -100,6 +104,7 @@ class OrderClaimingService
             ->setPayment($payment)
             ->setCreatedAt(Carbon::now());
 
+        $this->entityManager->persist($shippingAddress);
         $this->entityManager->persist($order);
         $this->entityManager->persist($orderPayment);
 
@@ -126,6 +131,8 @@ class OrderClaimingService
                     $order,
                     $orderItem
                 );
+
+                $this->entityManager->persist($subscription);
             }
         }
 

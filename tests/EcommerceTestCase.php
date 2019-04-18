@@ -206,6 +206,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.invoice_email_subject', $defaultConfig['invoice_email_subject']);
         $app['config']->set('ecommerce.payment_plan_minimum_price', $defaultConfig['payment_plan_minimum_price']);
         $app['config']->set('ecommerce.payment_plan_options', $defaultConfig['payment_plan_options']);
+        $app['config']->set('ecommerce.financing_cost_per_order', $defaultConfig['financing_cost_per_order']);
         $app['config']->set('ecommerce.type_product', $defaultConfig['type_product']);
         $app['config']->set('ecommerce.type_subscription', $defaultConfig['type_subscription']);
         $app['config']->set('ecommerce.type_payment_plan', $defaultConfig['type_payment_plan']);

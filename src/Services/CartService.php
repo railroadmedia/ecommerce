@@ -355,7 +355,7 @@ class CartService
     {
         $totalItemCostDue = $this->getTotalItemCosts();
 
-        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart);
+        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
         $taxDue = $this->taxService->vat(
             $totalItemCostDue + $shippingDue,
@@ -374,14 +374,14 @@ class CartService
     {
         $totalItemCostDue = $this->getTotalItemCosts();
 
-        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart);
+        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
         $taxDue = $this->taxService->vat(
             $totalItemCostDue + $shippingDue,
             $this->taxService->getAddressForTaxation($this->getCart())
         );
 
-        return $taxDue;
+        return round($taxDue, 2);
     }
 
     /**
@@ -429,9 +429,9 @@ class CartService
      */
     public function getDueForPaymentPlanPayments()
     {
-        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart);
-
         $totalItemCostDue = $this->getTotalItemCosts();
+
+        $shippingDue = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
         $taxDue = $this->taxService->vat(
             $totalItemCostDue + $shippingDue,
@@ -458,9 +458,11 @@ class CartService
             $order = new Order();
         }
 
+        $totalItemCostDue = $this->getTotalItemCosts();
+
         $order->setFinanceDue($this->getTotalFinanceCosts());
-        $order->setProductDue($this->getTotalItemCosts());
-        $order->setShippingDue($this->shippingService->getShippingDueForCart($this->cart));
+        $order->setProductDue($totalItemCostDue);
+        $order->setShippingDue($this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue));
         $order->setTaxesDue(
             $this->taxService->vat(
                 $order->getProductDue() + $order->getShippingDue(),
