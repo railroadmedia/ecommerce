@@ -18,9 +18,12 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use Railroad\Doctrine\TimestampableListener;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Events\GiveContentAccess;
+use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
+use Railroad\Ecommerce\Listeners\OrderShippingFulfilmentListener;
 use Railroad\Ecommerce\Listeners\UserDefaultPaymentMethodListener;
+use Railroad\Ecommerce\Listeners\OrderUserProductListener;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CustomValidationRules;
@@ -39,6 +42,10 @@ class EcommerceServiceProvider extends ServiceProvider
         $this->listen = [
             GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
             UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class],
+            OrderEvent::class => [
+                OrderShippingFulfilmentListener::class,
+                OrderUserProductListener::class
+            ],
         ];
 
         parent::boot();

@@ -307,9 +307,6 @@ class CartService
                     )
                     ->setCreatedAt(Carbon::now());
 
-                // todo: we should attach the discounts here as well,
-                // do we need a new one to many relationship with order item discounts?
-
                 $orderItemDiscounts = $this->discountService->getItemDiscounts(
                     $this->getCart(),
                     $product->getSku(),

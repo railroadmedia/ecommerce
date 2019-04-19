@@ -5,6 +5,8 @@ namespace Railroad\Ecommerce\Tests\Functional\Services;
 use Carbon\Carbon;
 use PHPUnit\Framework\MockObject\MockObject;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
@@ -14,6 +16,7 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Services\CartService;
+use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\OrderClaimingService;
@@ -93,12 +96,15 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $state = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$country]));
         $currency = 'USD';
 
-        $quantityOne = $this->faker->numberBetween(1, 3);
-        $quantityTwo = $this->faker->numberBetween(1, 3);
+        $userId = $this->faker->numberBetween(20, 100);
+
+        $quantityOne = $this->faker->numberBetween(2, 4);
+        $quantityTwo = 1;
+        $discountOneAmount = $this->faker->randomFloat(2, 3, 5);
 
         $purchaser = new Purchaser();
 
-        $purchaser->setId($this->faker->numberBetween(20, 100));
+        $purchaser->setId($userId);
         $purchaser->setEmail($this->faker->email);
         $purchaser->setBrand($brand);
         $purchaser->setType(Purchaser::USER_TYPE);
@@ -165,14 +171,43 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             ->setType(ConfigService::$typeSubscription)
             ->setActive(true)
             ->setIsPhysical(false)
-            ->setSubscriptionIntervalType(ConfigService::$intervalTypeDaily)
+            ->setSubscriptionIntervalType(ConfigService::$intervalTypeMonthly)
             ->setSubscriptionIntervalCount($this->faker->numberBetween(0, 12))
             ->setCreatedAt(Carbon::now());
 
+        $discountOne = new Discount();
+
+        $discountOne
+            ->setName($this->faker->word)
+            ->setDescription($this->faker->word)
+            ->setType(DiscountService::PRODUCT_AMOUNT_OFF_TYPE)
+            ->setAmount($discountOneAmount)
+            ->setActive(true)
+            ->setVisible(true)
+            ->setProduct($productOne)
+            ->setCreatedAt(Carbon::now());
+
+        $discountCriteriaOne = new DiscountCriteria();
+
+        $discountCriteriaOne
+            ->setName($this->faker->word)
+            ->setType(DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE)
+            ->setProduct($productOne)
+            ->setMin(1)
+            ->setMax(5)
+            ->setDiscount($discountOne)
+            ->setCreatedAt(Carbon::now());
+
+        $discountOne->addDiscountCriteria($discountCriteriaOne);
+
         $this->entityManager->persist($productOne);
         $this->entityManager->persist($productTwo);
+        $this->entityManager->persist($discountOne);
+        $this->entityManager->persist($discountCriteriaOne);
 
         $this->entityManager->flush();
+
+        $orderItemOneFinalPrice = round(($productOne->getPrice() - $discountOneAmount) * $quantityOne, 2);
 
         $orderItemOne = new OrderItem();
 
@@ -180,8 +215,9 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             ->setProduct($productOne)
             ->setQuantity($quantityOne)
             ->setInitialPrice($productOne->getPrice())
-            ->setTotalDiscounted(0) // todo - update after adding discounts
-            ->setFinalPrice($productOne->getPrice() * $quantityOne); // todo - update after adding discounts
+            ->setTotalDiscounted($discountOneAmount)
+            ->setFinalPrice($orderItemOneFinalPrice)
+            ->setWeight($productOne->getWeight());
 
         $orderItemTwo = new OrderItem();
 
@@ -212,6 +248,108 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $this->orderClaimingService->claimOrder($purchaser, $payment, $cart);
 
-        $this->assertTrue(true); // todo - replace with db asserts
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrder,
+            [
+                'brand' => $brand,
+                'user_id' => $userId,
+                'customer_id' => null,
+                'total_due' => $dueForOrder,
+                'product_due' => $totalItemCosts,
+                'taxes_due' => $taxDueForOrder,
+                'shipping_due' => $shippingDueForOrder,
+                'total_paid' => $dueForOrder,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrderItem,
+            [
+                'product_id' => $productOne->getId(),
+                'quantity' => $quantityOne,
+                'weight' => $productOne->getWeight(),
+                'initial_price' => $productOne->getPrice(),
+                'total_discounted' => $discountOneAmount,
+                'final_price' => $orderItemOneFinalPrice,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrderItem,
+            [
+                'product_id' => $productOne->getId(),
+                'quantity' => $quantityOne,
+                'weight' => $productOne->getWeight(),
+                'initial_price' => $productOne->getPrice(),
+                'total_discounted' => $discountOneAmount,
+                'final_price' => $orderItemOneFinalPrice,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrderItem,
+            [
+                'product_id' => $productTwo->getId(),
+                'quantity' => $quantityTwo,
+                'weight' => $productTwo->getWeight(),
+                'initial_price' => $productTwo->getPrice(),
+                'total_discounted' => 0,
+                'final_price' => $productTwo->getPrice() * $quantityTwo,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableOrderItemFulfillment,
+            [
+                'order_id' => 1,
+                'order_item_id' => 1,
+                'status' => ConfigService::$fulfillmentStatusPending,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableSubscription,
+            [
+                'brand' => $brand,
+                'product_id' => $productTwo->getId(),
+                'user_id' => $userId,
+                'is_active' => true,
+                'start_date' => Carbon::now()
+                    ->toDateTimeString(),
+                'paid_until' => Carbon::now()
+                    ->addMonth($productTwo->getSubscriptionIntervalCount())
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $productOne->getId(),
+                'quantity' => $quantityOne,
+                'expiration_date' => null,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $productTwo->getId(),
+                'quantity' => $quantityTwo,
+                'expiration_date' => Carbon::now()
+                    ->addMonth($productTwo->getSubscriptionIntervalCount())
+                    ->toDateTimeString(),
+            ]
+        );
     }
 }

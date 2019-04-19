@@ -10,6 +10,7 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
+use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 class OrderClaimingService
@@ -113,7 +114,7 @@ class OrderClaimingService
 
         foreach ($orderItems as $orderItem) {
 
-            $orderItem->setOrder($order);
+            $order->addOrderItem($orderItem);
 
             foreach ($orderItem->getOrderItemDiscounts() as $orderItemDiscount) {
                 $orderItemDiscount->setOrder($order);
@@ -160,13 +161,11 @@ class OrderClaimingService
             );
         }
 
-        // order shipping fulfilment via event
+        $this->entityManager->flush();
 
-        // create user product via event
+        event(new OrderEvent($order));
 
         // product access via event?
-
-        $this->entityManager->flush();
     }
 
     public function createSubscription(
