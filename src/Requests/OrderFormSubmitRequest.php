@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Requests;
 
 use Exception;
+use Illuminate\Contracts\Validation\Validator;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
@@ -71,6 +72,23 @@ class OrderFormSubmitRequest extends FormRequest
     public function authorize()
     {
         return true;
+    }
+
+    /**
+     * @return Validator
+     */
+    public function getValidatorInstance()
+    {
+        // if this request is from a paypal redirect we must merge in the old input
+        if (!empty($this->get('token'))) {
+
+            $orderFormInput = session()->get('order-form-input', []);
+            unset($orderFormInput['token']);
+            session()->forget('order-form-input');
+            $this->merge($orderFormInput);
+        }
+
+        return parent::getValidatorInstance();
     }
 
     /**

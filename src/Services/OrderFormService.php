@@ -758,15 +758,6 @@ class OrderFormService
      */
     public function processOrderFormSubmit(OrderFormSubmitRequest $request): array
     {
-        // if this request is from a paypal redirect we must merge in the old input
-        if (!empty($request->get('token'))) {
-
-            $orderFormInput = session()->get('order-form-input', []);
-            unset($orderFormInput['token']);
-            session()->forget('order-form-input');
-            $request->merge($orderFormInput);
-        }
-
         $purchaser = $request->getPurchaser();
 
         // create and login the user or create the customer

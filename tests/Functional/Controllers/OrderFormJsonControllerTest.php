@@ -1047,7 +1047,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
          */
     }
 
-    /*
     public function test_submit_order_paypal_payment_with_token() // todo - review & update
     {
         $userId = $this->createAndLogInNewUser();
@@ -1171,10 +1170,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedConversionRate = $currencyService->getRate($currency);
 
+        $this->session(['order-form-input' => $orderRequestData]);
+
         $response = $this->call(
             'PUT',
             '/order',
-            $orderRequestData
+            ['token' => $paypalToken]
         );
 
         $this->assertArraySubset(
@@ -1288,7 +1289,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
-    */
 
     public function test_submit_order_existing_payment_method_credit_card()
     {
