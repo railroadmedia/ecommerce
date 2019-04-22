@@ -4,12 +4,14 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Session\Store;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Address;
+use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
@@ -34,7 +36,7 @@ class OrderFormControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
 
         $orderData = [
-            'payment_method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'payment_method_type' => PaymentMethod::TYPE_PAYPAL,
             'billing-region' => $this->faker->word,
             'billing-zip-or-postal-code' => $this->faker->postcode,
             'billing-country' => 'Canada',
@@ -56,22 +58,24 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $this->session(['order-form-input' => $orderData]);
 
-        $cartAddressService = $this->app->make(CartAddressService::class);
+        $shippingCountry = 'canada';
 
-        $sessionBillingAddress = new Address();
+        $shippingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$shippingCountry]));
 
-        $sessionBillingAddress
-            ->setCountry($orderData['billing-country'])
-            ->setState($orderData['billing-region'])
-            ->setZipOrPostalCode($orderData['billing-zip-or-postal-code']);
+        $shippingAddress = new Address();
+        $shippingAddress->setCountry($shippingCountry)
+            ->setState($shippingState);
 
-        $cartAddressService->setAddress(
-            $sessionBillingAddress,
-            CartAddressService::BILLING_ADDRESS_TYPE
-        );
+        $billingCountry = 'canada';
+        $billingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$billingCountry]));
+
+        $billingAddress = new Address();
+        $billingAddress
+            ->setCountry($billingCountry)
+            ->setState($billingState);
 
         $shippingOption = $this->fakeShippingOption([
-            'country' => 'Canada',
+            'country' => $shippingCountry,
             'active' => 1,
             'priority' => 1,
         ]);
@@ -124,20 +128,6 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $productOneQuantity = 1;
 
-        $this->cartService->addCartItem(
-            $productOne['name'],
-            $productOne['description'],
-            $productOneQuantity,
-            $productOne['price'],
-            $productOne['is_physical'],
-            $productOne['is_physical'],
-            $this->faker->word,
-            rand(),
-            [
-                'product-id' => $productOne['id'],
-            ]
-        );
-
         $expectedProductOneTotalPrice = $productOne['price'] * $productOneQuantity;
 
         $expectedProductOneDiscountAmount = round($discount['amount'] * $productOneQuantity, 2);
@@ -146,24 +136,9 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $productTwoQuantity = 1;
 
-        $this->cartService->addCartItem(
-            $productTwo['name'],
-            $productTwo['description'],
-            $productTwoQuantity,
-            $productTwo['price'],
-            $productTwo['is_physical'],
-            $productTwo['is_physical'],
-            $this->faker->word,
-            rand(),
-            [
-                'product-id' => $productTwo['id'],
-            ]
-        );
-
         $expectedProductTwoTotalPrice = round($productTwo['price'] * $productTwoQuantity, 2);
 
         $expectedProductTwoDiscountedPrice = 0;
-
 
         $expectedProductDue = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
 
@@ -171,15 +146,21 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $taxService = $this->app->make(TaxService::class);
 
-        $billingAddress = $cartAddressService->getAddress(
-                                    CartAddressService::BILLING_ADDRESS_TYPE
-                                );
-
         $taxRate = $taxService->getTaxRate($billingAddress);
 
         $expectedTaxes = $expectedTotalFromItems * $taxRate + $shippingCostAmount * $taxRate;
 
         $expectedOrderTotalDue = $expectedTotalFromItems + $shippingCostAmount + $expectedTaxes;
+
+        $cart = Cart::fromSession();
+
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->setItem(new CartItem($productOne['sku'], $productOneQuantity));
+        $cart->setItem(new CartItem($productTwo['sku'], $productTwoQuantity));
+
+        $cart->toSession();
 
         $billingAgreementId = rand(1,100);
 
@@ -265,7 +246,7 @@ class OrderFormControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'method_type' => PaymentMethod::TYPE_PAYPAL,
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );

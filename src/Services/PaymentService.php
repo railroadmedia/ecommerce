@@ -307,6 +307,17 @@ class PaymentService
 
         // the charge was successful, store necessary data information
         // billing address
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
+            $user = $purchaser->getUserObject();
+
+            $billingAddress->setUser($user);
+        }
+        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
+            $customer = $purchaser->getCustomerEntity();
+
+            $billingAddress->setCustomer($customer);
+        }
+
         $this->entityManager->persist($billingAddress);
 
         // payment method

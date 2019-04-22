@@ -88,6 +88,8 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             ->willReturn($totalFinanceCosts);
         $this->cartServiceMock->method('getTaxDueForOrder')
             ->willReturn($taxDueForOrder);
+        $this->cartServiceMock->method('getDueForInitialPayment')
+            ->willReturn($dueForOrder);
         $this->shippingServiceMock->method('getShippingDueForCart')
             ->willReturn($shippingDueForOrder);
 
@@ -114,6 +116,12 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             ->setCountry($country)
             ->setState($state)
             ->setType(ConfigService::$billingAddressType);
+
+        $shippingAddress = new Address();
+        $shippingAddress
+            ->setCountry($country)
+            ->setState($state)
+            ->setType(ConfigService::$shippingAddressType);
 
         $shippingAddressStructure = new AddressStructure();
         $shippingAddressStructure->setCountry($country)
@@ -246,7 +254,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $cart->toSession();
 
-        $this->orderClaimingService->claimOrder($purchaser, $payment, $cart);
+        $this->orderClaimingService->claimOrder($purchaser, $payment, $cart, $shippingAddress);
 
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,

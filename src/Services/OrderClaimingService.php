@@ -3,7 +3,9 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
@@ -60,6 +62,7 @@ class OrderClaimingService
      * @param Purchaser $purchaser
      * @param Payment $payment
      * @param Cart $cart
+     * @param Cart $cart
      *
      * @return Order
      *
@@ -67,17 +70,12 @@ class OrderClaimingService
      * @throws \Doctrine\ORM\OptimisticLockException
      * @throws \Throwable
      */
-    public function claimOrder(Purchaser $purchaser, Payment $payment, Cart $cart)
+    public function claimOrder(Purchaser $purchaser, Payment $payment, Cart $cart, Address $shippingAddress): Order
     {
         $this->cartService->setCart($cart);
 
         $totalItemsCosts = $this->cartService->getTotalItemCosts();
         $shippingCosts = $this->shippingService->getShippingDueForCart($cart, $totalItemsCosts);
-
-        $shippingAddress = $cart->getShippingAddress()
-                                ->toEntity();
-
-        $shippingAddress->setType(ConfigService::$shippingAddressType);
 
         // create the order
         $order = new Order();
@@ -86,7 +84,7 @@ class OrderClaimingService
             ->setProductDue($totalItemsCosts)
             ->setFinanceDue($this->cartService->getTotalFinanceCosts())
             ->setTaxesDue($this->cartService->getTaxDueForOrder())
-            ->setTotalPaid($payment->getTotalPaid())
+            ->setTotalPaid($this->cartService->getDueForInitialPayment())
             ->setBrand($purchaser->getBrand())
             ->setUser($purchaser->getType() == Purchaser::USER_TYPE ? $purchaser->getUserObject() : null)
             ->setCustomer($purchaser->getType() == Purchaser::CUSTOMER_TYPE ? $purchaser->getCustomerEntity() : null)
@@ -146,7 +144,7 @@ class OrderClaimingService
             $orderDiscount->setOrder($order)
                 ->setDiscount($discount);
 
-            $this->entityManager->persist($orderItemDiscount);
+            $this->entityManager->persist($orderDiscount);
         }
 
         // create the payment plan subscription if required
@@ -166,6 +164,8 @@ class OrderClaimingService
         event(new OrderEvent($order));
 
         // product access via event?
+
+        return $order;
     }
 
     public function createSubscription(

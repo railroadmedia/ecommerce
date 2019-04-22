@@ -21,7 +21,7 @@ class AddressRepository extends RepositoryBase
         $q =
             $qb->select('a')
                 ->from(Address::class, 'a')
-                ->where('p.id = :id')
+                ->where('a.id = :id')
                 ->getQuery()
                 ->setParameter('id', $id)
                 ->setResultCacheDriver($this->arrayCache);

@@ -176,9 +176,16 @@ class OrderFormSubmitRequest extends FormRequest
      */
     public function getShippingAddress()
     {
-        $address = $this->populateShippingAddress(new Address());
+        $address = null;
 
-        $address->setType(ConfigService::$shippingAddressType);
+        if (!empty($this->get('shipping_address_id'))) {
+            $address = $this->addressRepository->byId($this->get('shipping_address_id'));
+        }
+
+        if (empty($address)) {
+            $address = $this->populateShippingAddress(new Address());
+            $address->setType(ConfigService::$shippingAddressType);
+        }
 
         return $address;
     }

@@ -8,8 +8,8 @@ use Railroad\Ecommerce\Entities\OrderItem;
 
 class OrderItemTransformer extends TransformerAbstract
 {
-    protected static $transformedOrders = [];
-    protected static $transformedProducts = [];
+    public static $transformedOrders = [];
+    public static $transformedProducts = [];
 
     public function transform(OrderItem $orderItem)
     {

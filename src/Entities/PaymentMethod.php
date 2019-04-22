@@ -23,7 +23,7 @@ class PaymentMethod
 {
     use TimestampableEntity;
 
-    const TYPE_CREDIT_CARD = 'credit_cart';
+    const TYPE_CREDIT_CARD = 'credit_card';
     const TYPE_PAYPAL = 'paypal';
 
     /**

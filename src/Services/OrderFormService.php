@@ -19,6 +19,7 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
+use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
@@ -220,6 +221,7 @@ class OrderFormService
      */
     private function createOrderDiscounts(Order $order, array $discounts)
     {
+        // todo - deprecated, to be removed
         $orderDiscountTypes = [
             DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE => true,
             DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE => true,
@@ -264,6 +266,7 @@ class OrderFormService
         array $discounts
     ): OrderItem
     {
+        // todo - deprecated, to be removed
         $orderItemDiscountTypes = [
             DiscountService::PRODUCT_AMOUNT_OFF_TYPE => true,
             DiscountService::PRODUCT_PERCENT_OFF_TYPE => true,
@@ -334,7 +337,7 @@ class OrderFormService
         $brand
     ): Order
     {
-
+        // todo - deprecated, to be removed
         $order = new Order();
 
         $order->setTotalDue($totalDue)
@@ -393,6 +396,7 @@ class OrderFormService
         $totalCyclesDue = null
     ): Subscription
     {
+        // todo - deprecated, to be removed
         $type = ConfigService::$typeSubscription;
 
         // if the product it's not defined we should create a payment plan.
@@ -520,7 +524,7 @@ class OrderFormService
         ?Customer $customer
     ): ?Address
     {
-
+        // todo - review and update/remove
         $shippingAddress = null;
 
         if ($request->get('shipping_address_id')) {
@@ -584,6 +588,7 @@ class OrderFormService
         float $paymentAmount
     )
     {
+        // todo - deprecated, to be removed
         // create Payment
         $payment = $this->createPayment(
             $paymentAmount,
@@ -645,6 +650,7 @@ class OrderFormService
         string $brand
     ): array
     {
+        // todo - deprecated, to be removed
         // order items
         $orderItems = [];
 
@@ -752,8 +758,6 @@ class OrderFormService
      */
     public function processOrderFormSubmit(OrderFormSubmitRequest $request): array
     {
-        $purchaser = $request->getPurchaser();
-
         // if this request is from a paypal redirect we must merge in the old input
         if (!empty($request->get('token'))) {
 
@@ -762,6 +766,8 @@ class OrderFormService
             session()->forget('order-form-input');
             $request->merge($orderFormInput);
         }
+
+        $purchaser = $request->getPurchaser();
 
         // create and login the user or create the customer
         $this->purchaserService->persist($purchaser);
@@ -889,61 +895,29 @@ class OrderFormService
             throw new PaymentFailedException($paymentFailedException->getMessage());
         }
 
-        // WIP
-        $order = $this->orderClaimingService->claimOrder($purchaser, $payment, $cart);
+        $shippingAddress = $request->getShippingAddress();
 
-        // todo: ended here, we have the payment and payment method
-        // todo: save all other database entities
-        // should we put this logic elsewhere?
-        dd($payment);
+        if (!$shippingAddress->getId()) {
+            // if a new address entity is used (shipping_address_id not specified in request)
+            // user or customer must be linked with shipping address
+            if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
+                $user = $purchaser->getUserObject();
 
-        list(
-            $payment, $order
-            ) = $this->createPaymentAndOrder(
-            $paymentMethod,
-            $user,
-            $customer,
-            $billingAddress,
-            $shippingAddress,
-            $charge,
-            $transactionId,
-            $currency,
-            $brand,
-            $paymentAmountInBaseCurrency
-        );
+                $shippingAddress->setUser($user);
+            }
+            elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
+                $customer = $purchaser->getCustomerEntity();
 
-        $discounts = $this->discountService->getNonShippingDiscountsForCart($cart);
-
-        // apply order discounts
-        $this->createOrderDiscounts($order, $discounts);
-
-        $orderItems =
-            $this->createAndProcessOrderItems($user, $order, $paymentMethod, $payment, $discounts, $currency, $brand);
-
-        // create payment plan
-        $paymentPlanNumbersOfPayments =
-            $this->cartService->getCart()
-                ->getPaymentPlanNumberOfPayments();
-
-        if ($paymentPlanNumbersOfPayments > 1) {
-            $this->createSubscription(
-                $this->cartService->getCart()
-                    ->getBrand(),
-                null,
-                $order,
-                null,
-                [],
-                $user,
-                $currency,
-                $paymentMethod,
-                $payment,
-                $paymentPlanNumbersOfPayments
-            );
+                $shippingAddress->setCustomer($customer);
+            }
         }
 
+        $order = $this->orderClaimingService->claimOrder($purchaser, $payment, $cart, $shippingAddress);
+
+        /*
         // prepare currency symbol for order invoice
         // todo: refactor
-        switch ($currency) {
+        switch ($cart->getCurrency()) {
             case 'USD':
             case 'CAD':
             default:
@@ -957,13 +931,13 @@ class OrderFormService
                 break;
         }
 
-        // todo: refactor to use events
+        // // todo: refactor to use events
         try {
             // prepare the order invoice
             $orderInvoiceEmail = new OrderInvoice(
                 [
                     'order' => $order,
-                    'orderItems' => $orderItems,
+                    'orderItems' => $order->getOrderItems(),
                     'payment' => $payment,
                     'currencySymbol' => $currencySymbol,
                 ]
@@ -977,6 +951,7 @@ class OrderFormService
         } catch (Exception $e) {
             error_log('Failed to send invoice for order: ' . $order->getId());
         }
+        */
 
         event(new GiveContentAccess($order)); // todo - refactor listeners to order entity param
 
