@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Repositories;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
 
 /**
  * Class AccessCodeRepository
@@ -26,5 +27,20 @@ class AccessCodeRepository extends EntityRepository
     public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(AccessCode::class));
+    }
+
+    /**
+     * @param string $alias
+     * @param null $indexBy
+     * @return FromRequestEcommerceQueryBuilder
+     */
+    public function createQueryBuilder($alias, $indexBy = null)
+    {
+        $queryBuilder = new FromRequestEcommerceQueryBuilder($this->_em);
+
+        $queryBuilder->select($alias)
+            ->from($this->_entityName, $alias, $indexBy);
+
+        return $queryBuilder;
     }
 }

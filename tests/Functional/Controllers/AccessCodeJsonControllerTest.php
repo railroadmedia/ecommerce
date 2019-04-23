@@ -132,6 +132,9 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $nrAccessCodes = 10;
+        $page = 1;
+        $limit = 3;
+        $sort = 'id';
         $accessCodes = [];
 
         for($i = 0; $i < $nrAccessCodes; $i++) {
@@ -162,9 +165,17 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             $this->faker->numberBetween(3, intdiv($selectedCodeLength, 2))
         );
 
-        $response = $this->call('GET', '/access-codes/search', [
-            'term' => $codeFragment
-        ]);
+        $response = $this->call(
+            'GET',
+            '/access-codes/search',
+            [
+                'term' => $codeFragment,
+                'page' => $page,
+                'limit' => $limit,
+                'order_by_column' => $sort,
+                'order_by_direction' => 'asc'
+            ]
+        );
 
         $this->assertArraySubset(
             [
@@ -360,7 +371,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
-    
+
     public function test_release()
     {
         $userId  = $this->createAndLogInNewUser();

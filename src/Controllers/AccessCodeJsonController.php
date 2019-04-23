@@ -68,7 +68,8 @@ class AccessCodeJsonController extends BaseController
         PermissionService $permissionService,
         ProductRepository $productRepository,
         UserProviderInterface $userProvider
-    ) {
+    )
+    {
         parent::__construct();
 
         $this->accessCodeRepository = $accessCodeRepository;
@@ -92,33 +93,18 @@ class AccessCodeJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
-        // parse request params and prepare db query parms
         $alias = 'a';
-        $orderBy = $request->get('order_by_column', 'created_at');
-        if (
-            strpos($orderBy, '_') !== false
-            || strpos($orderBy, '-') !== false
-        ) {
-            $orderBy = camel_case($orderBy);
-        }
-        $orderBy = $alias . '.' . $orderBy;
-        $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
-        $brands = $request->get('brands', [ConfigService::$availableBrands]);
 
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
         $qb = $this->accessCodeRepository->createQueryBuilder($alias);
 
-        $qb
-            ->select($alias)
-            ->setMaxResults($request->get('limit', 10))
-            ->setFirstResult($first)
-            ->where($qb->expr()->in($alias . '.brand', ':brands'))
-            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
-            ->setParameter('brands', $brands);
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->restrictBrandsByRequest($request, $alias)
+            ->select($alias);
 
-        $accessCodes = $qb->getQuery()->getResult();
+        $accessCodes =
+            $qb->getQuery()
+                ->getResult();
 
         // fetch related products, as a dictionary
         $products = $this->productRepository->byAccessCodes($accessCodes);
@@ -154,30 +140,25 @@ class AccessCodeJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
         $alias = 'a';
-        $brands = $request->get('brands', [ConfigService::$availableBrands]);
 
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
         $qb = $this->accessCodeRepository->createQueryBuilder($alias);
-        $qb
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->restrictBrandsByRequest($request, $alias)
             ->select($alias)
-            ->where($qb->expr()->in($alias . '.brand', ':brands'))
-            ->andWhere($qb->expr()->like($alias . '.code', ':term'));
+            ->andWhere(
+                $qb->expr()
+                    ->like($alias . '.code', ':term')
+            );
 
-        /**
-         * @var $q \Doctrine\ORM\Query
-         */
-        $q = $qb->getQuery();
-
-        $q->setParameter('brands', $brands);
-        $q->setParameter('term', '%' . $request->get('term') . '%');
-
-        $accessCodes = $q->getResult();
+        $accessCodes =
+            $qb->getQuery()
+                ->setParameter('term', '%' . $request->get('term') . '%')
+                ->getResult();
 
         // fetch related products, as a dictionary
-        $products = $this->productRepository
-                            ->byAccessCodes($accessCodes);
+        $products = $this->productRepository->byAccessCodes($accessCodes);
 
         // map products to ease access
         $productsMap = [];
@@ -212,23 +193,22 @@ class AccessCodeJsonController extends BaseController
          * @var $user \Railroad\Ecommerce\Entities\User
          */
         $user = $this->userProvider->getUserById(
-                $request->get('claim_for_user_id')
-            );
+            $request->get('claim_for_user_id')
+        );
 
         throw_if(
             is_null($user),
             new NotFoundException(
-                'Claim failed, user not found with id: '
-                . $request->get('claim_for_user_id')
+                'Claim failed, user not found with id: ' . $request->get('claim_for_user_id')
             )
         );
 
-        $accessCode = $this->accessCodeRepository
-            ->findOneBy(['code' => $request->get('access_code')]);
+        $accessCode = $this->accessCodeRepository->findOneBy(['code' => $request->get('access_code')]);
 
         $this->accessCodeService->claim($accessCode, $user);
 
-        return ResponseService::accessCode($accessCode)->respond(200);
+        return ResponseService::accessCode($accessCode)
+            ->respond(200);
     }
 
     /**
@@ -244,16 +224,15 @@ class AccessCodeJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'release.access_codes');
 
-        $accessCode = $this->accessCodeRepository
-                        ->find($request->get('access_code_id'));
-        $accessCode
-            ->setIsClaimed(false)
+        $accessCode = $this->accessCodeRepository->find($request->get('access_code_id'));
+        $accessCode->setIsClaimed(false)
             ->setClaimer(null)
             ->setClaimedOn(null)
             ->setUpdatedAt(Carbon::now());
 
         $this->entityManager->flush();
 
-        return ResponseService::accessCode($accessCode)->respond(200);
+        return ResponseService::accessCode($accessCode)
+            ->respond(200);
     }
 }
