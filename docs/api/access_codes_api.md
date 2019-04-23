@@ -1,7 +1,7 @@
 # Access Codes API
 
 ## Form Endpoints
-### { POST /*/access-codes/redeem }
+### `{ POST /*/access-codes/redeem }`
 
 Used to claim an action code for an existing or new user.
 
@@ -10,10 +10,10 @@ Used to claim an action code for an existing or new user.
 |Type|Key|Required|Default|Notes|
 |----|---|--------|-------|-----|
 |body|access_code|true||The exact access code without dashes or spaces.|
-|body|email|true|if not logged in|Email for the new user to be created.|
-|body|password|true|if not logged in|Raw password for the new user to be created.|
-|body|password_confirmation|true|if not logged in|Confirm password|
-|query/body|redirect|true|back with session message: \['success' => true\]|Where to redirect after the request is processed.|
+|body|email|if not logged in||Email for the new user to be created.|
+|body|password|if not logged in||Raw password for the new user to be created.|
+|body|password_confirmation|if not logged in||Confirm password.|
+|query/body|redirect|true|previous url|Where to redirect after the request is processed.|
 
 
 ### Request Example
