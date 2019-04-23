@@ -4,10 +4,12 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Auth\AuthManager;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Session\Store;
 use Illuminate\Support\Facades\Mail;
+use PHPUnit\Framework\MockObject\MockObject;
 use Railroad\Ecommerce\Entities\CartItem;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
@@ -42,9 +44,20 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
      */
     protected $cartAddressService;
 
+    /**
+     * @var MockObject|AuthManager
+     */
+    protected $authManagerMock;
+
+    /**
+     * @var MockObject|SessionGuard
+     */
+    protected $sessionGuardMock;
+
     protected function setUp()
     {
         parent::setUp();
+
         $this->cartService = $this->app->make(CartService::class);
         $this->cartAddressService = $this->app->make(CartAddressService::class);
 
@@ -4944,17 +4957,22 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_submit_order_new_user()
     {
-        // todo - reviw & update
-        // vendor/laravel/framework/src/Illuminate/Auth/AuthManager.php:84 - InvalidArgumentException: Auth guard [] is not defined.
-        $authManagerMock =
+        $this->authManagerMock =
             $this->getMockBuilder(AuthManager::class)
                 ->disableOriginalConstructor()
-                ->setMethods(['loginUsingId'])
+                ->setMethods(['guard'])
                 ->getMock();
 
-        $authManagerMock->method('loginUsingId')->willReturn(true);
+        $this->sessionGuardMock =
+            $this->getMockBuilder(SessionGuard::class)
+                ->disableOriginalConstructor()
+                ->getMock();
 
-        $this->app->instance(Factory::class, $authManagerMock);
+        $this->authManagerMock->method('guard')->willReturn($this->sessionGuardMock);
+
+        $this->app->instance(Factory::class, $this->authManagerMock);
+
+        $this->sessionGuardMock->method('loginUsingId')->willReturn(true);
 
         $cardToken = $this->faker->word;
 
