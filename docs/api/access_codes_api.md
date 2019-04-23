@@ -49,6 +49,9 @@ List access codes.
 
 ### Request Parameters
 
+[Paginated](request_pagination_parameters.md) | [Ordered](request_ordering_parameters.md) | [Branded](request_brand_filtering_parameters.md)
+<br>
+
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |query|order_by_column|false|created_at|id, code, is_claimed, claimer_id, claimed_on, created_at, updated_at|The column to order the code using.|
@@ -174,6 +177,9 @@ Search for access codes based on any part of the code.
 - Must have the 'pull.access_codes' permission
 
 ### Request Parameters
+
+[Paginated](request_pagination_parameters.md) | [Ordered](request_ordering_parameters.md) | [Branded](request_brand_filtering_parameters.md)
+<br>
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
