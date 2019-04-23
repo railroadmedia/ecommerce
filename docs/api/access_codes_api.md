@@ -43,7 +43,8 @@ List access codes.
 
 ### Permissions
 
-Must be logged in and have the 'pull.access_codes' permission.
+- Must be logged in
+- Must have the 'pull.access_codes' permission
 
 ### Request Parameters
 
@@ -62,7 +63,13 @@ Must be logged in and have the 'pull.access_codes' permission.
 $.ajax({
     url: 'https://www.musora.com' +
         '/ecommerce/access-codes',
-    data: {order_by_column: 'id', order_by_direction: 'desc', page: 3, limit: 1, brands: ['drumeo', 'pianote']}, 
+    data: {
+        order_by_column: 'id', 
+        order_by_direction: 'desc', 
+        page: 3, 
+        limit: 1, 
+        brands: ['drumeo', 'pianote']
+    }, 
     success: function(response) {},
     error: function(response) {}
 });
