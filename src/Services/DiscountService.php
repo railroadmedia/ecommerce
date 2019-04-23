@@ -406,7 +406,8 @@ class DiscountService
 
                     if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
                         $discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE ||
-                        $discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+                        $discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE ||
+                        $discount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
 
                         $itemDiscounts[] = $discount;
                     }

@@ -570,7 +570,7 @@ class CartServiceTest extends EcommerceTestCase
 
         $numberOfPayments = 2;
 
-        $initialTotalDueBeforeShipping = round($totalToFinance / $numberOfPayments, 2);
+        $initialTotalDueBeforeShipping = $totalToFinance / $numberOfPayments;
 
         if ($initialTotalDueBeforeShipping * $numberOfPayments != $totalToFinance) {
 

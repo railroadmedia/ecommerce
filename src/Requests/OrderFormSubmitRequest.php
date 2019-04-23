@@ -145,8 +145,7 @@ class OrderFormSubmitRequest extends FormRequest
         if (!auth()->user()) {
             if (!$this->shippingService->doesCartHaveAnyDigitalItems($this->cartService->getCart())) {
                 $rules += [
-                    'account_creation_email' => 'required|email',
-                    'account_creation_password' => 'required|confirmed',
+                    'billing_email' => 'required_without:account_creation_email|email',
                 ];
             }
             else {

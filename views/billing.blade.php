@@ -338,7 +338,7 @@
                                                             </tr>
                                                         @endforeach
 
-                                                        @if($order['tax'] > 0)
+                                                        @if($order->getTaxesDue() > 0)
                                                             <tr>
                                                                 <td>Tax</td>
                                                                 <td class="alignright">

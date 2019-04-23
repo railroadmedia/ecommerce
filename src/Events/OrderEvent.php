@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Events;
 
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\Payment;
 
 class OrderEvent
 {
@@ -12,13 +13,20 @@ class OrderEvent
     protected $order;
 
     /**
+     * @var Payment
+     */
+    protected $payment;
+
+    /**
      * Create a new event instance.
      *
-     * @param $id
+     * @param Order $order
+     * @param Payment $payment
      */
-    public function __construct(Order $order)
+    public function __construct(Order $order, Payment $payment)
     {
         $this->order = $order;
+        $this->payment = $payment;
     }
 
     /**
@@ -27,5 +35,13 @@ class OrderEvent
     public function getOrder(): Order
     {
         return $this->order;
+    }
+
+    /**
+     * @return Payment
+     */
+    public function getPayment(): Payment
+    {
+        return $this->payment;
     }
 }

@@ -21,6 +21,7 @@ use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
+use Railroad\Ecommerce\Listeners\OrderInvoiceListener;
 use Railroad\Ecommerce\Listeners\OrderShippingFulfilmentListener;
 use Railroad\Ecommerce\Listeners\UserDefaultPaymentMethodListener;
 use Railroad\Ecommerce\Listeners\OrderUserProductListener;
@@ -44,7 +45,8 @@ class EcommerceServiceProvider extends ServiceProvider
             UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class],
             OrderEvent::class => [
                 OrderShippingFulfilmentListener::class,
-                OrderUserProductListener::class
+                OrderUserProductListener::class,
+                OrderInvoiceListener::class,
             ],
         ];
 

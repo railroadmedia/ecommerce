@@ -55,7 +55,9 @@ class DiscountCriteriaService
         $this->productRepository = $productRepository;
         $this->userProductRepository = $userProductRepository;
 
-        $this->currentUser = $userProvider->getCurrentUser();
+        if (auth()->check()) {
+            $this->currentUser = $userProvider->getCurrentUser();
+        }
     }
 
     /**

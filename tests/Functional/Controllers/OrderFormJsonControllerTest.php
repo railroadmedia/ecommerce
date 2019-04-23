@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Auth\AuthManager;
+use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Session\Store;
 use Illuminate\Support\Facades\Mail;
@@ -1047,7 +1049,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
          */
     }
 
-    public function test_submit_order_paypal_payment_with_token() // todo - review & update
+    public function test_submit_order_paypal_payment_with_token()
     {
         $userId = $this->createAndLogInNewUser();
 
@@ -1106,6 +1108,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'weight' => 0.20,
                 'subscription_interval_type' => '',
                 'subscription_interval_count' => '',
+                'sku' => 'a' . $this->faker->word,
             ]
         );
 
@@ -1119,6 +1122,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'weight' => 0,
                 'subscription_interval_type' => '',
                 'subscription_interval_count' => '',
+                'sku' => 'b' . $this->faker->word,
             ]
         );
 
@@ -1210,9 +1214,69 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'product',
+                        'id' => $productOne['id'],
+                        'attributes' => array_diff_key(
+                            $productOne,
+                            [
+                                'id' => true,
+                            ]
+                        )
+                    ],
+                    [
+                        'type' => 'product',
+                        'id' => $productTwo['id'],
+                        'attributes' => array_diff_key(
+                            $productTwo,
+                            [
+                                'id' => true,
+                            ]
+                        )
+                    ],
+                    [
                         'type' => 'user',
                         'id' => $userId,
                         'attributes' => []
+                    ],
+                    [
+                        'type' => 'orderItem',
+                        'attributes' => [
+                            'quantity' => $productOneQuantity,
+                            'weight' => $productOne['weight'],
+                            'initial_price' => $productOne['price'],
+                            'total_discounted' => 0,
+                            'final_price' => $productOne['price'],
+                            'created_at' => Carbon::now()
+                                ->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'product' => [
+                                'data' => [
+                                    'type' => 'product',
+                                    'id' => $productOne['id']
+                                ]
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'orderItem',
+                        'attributes' => [
+                            'quantity' => $productTwoQuantity,
+                            'weight' => $productTwo['weight'],
+                            'initial_price' => $productTwo['price'],
+                            'total_discounted' => 0,
+                            'final_price' => $productTwo['price'],
+                            'created_at' => Carbon::now()
+                                ->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'product' => [
+                                'data' => [
+                                    'type' => 'product',
+                                    'id' => $productTwo['id']
+                                ]
+                            ]
+                        ],
                     ],
                     [
                         'type' => 'address',
@@ -1277,11 +1341,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'total_paid' => round($expectedPaymentTotalDue, 2),
                 'total_refunded' => 0,
                 'conversion_rate' => $expectedConversionRate,
-                'type' => 'order',
+                'type' => Payment::TYPE_INITIAL_ORDER,
                 'external_id' => $transcationId,
                 'external_provider' => 'paypal',
-                'status' => 'paid',
-                'message' => '',
+                'status' => Payment::STATUS_PAID,
+                'message' => null,
                 'payment_method_id' => 1,
                 'currency' => $currency,
                 'created_at' => Carbon::now()
@@ -2474,7 +2538,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    /*
     public function test_submit_order_subscription()
     {
         $userId = $this->createAndLogInNewUser();
@@ -2693,8 +2756,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedProductTotalPrice = $product['price'] * $productQuantity;
 
+        $expectedDiscountAmount = round($discount['amount'] * $productQuantity, 2);
+
         $expectedProductDiscountedPrice = round(
-            $expectedProductTotalPrice - ($discount['amount'] * $productQuantity),
+            $expectedProductTotalPrice - $expectedDiscountAmount,
             2
         );
 
@@ -2748,9 +2813,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'product',
+                        'id' => $product['id'],
+                        'attributes' => array_diff_key(
+                            $product,
+                            [
+                                'id' => true,
+                            ]
+                        )
+                    ],
+                    [
                         'type' => 'user',
                         'id' => $userId,
                         'attributes' => []
+                    ],
+                    [
+                        'type' => 'orderItem',
+                        'attributes' => [
+                            'quantity' => $productQuantity,
+                            'weight' => $product['weight'],
+                            'initial_price' => $product['price'],
+                            'total_discounted' => $expectedDiscountAmount,
+                            'final_price' => $expectedProductDiscountedPrice,
+                            'created_at' => Carbon::now()
+                                ->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'product' => [
+                                'data' => [
+                                    'type' => 'product',
+                                    'id' => $product['id']
+                                ]
+                            ]
+                        ],
                     ],
                     [
                         'type' => 'address',
@@ -2814,7 +2909,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product_due' => $expectedProductDiscountedPrice,
                 'taxes_due' => $expectedTaxes,
                 'shipping_due' => $shippingCostAmount,
-                'finance_due' => null,
+                'finance_due' => 0,
                 'user_id' => $userId,
                 'customer_id' => null,
                 'brand' => ConfigService::$brand,
@@ -2949,8 +3044,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedProductTotalPrice = $product['price'] * $productQuantity;
 
+        $expectedDiscountAmount = round($discount['amount'] * $productQuantity, 2);
+
         $expectedProductDiscountedPrice = round(
-            $expectedProductTotalPrice - ($discount['amount'] * $productQuantity),
+            $expectedProductTotalPrice - $expectedDiscountAmount,
             2
         );
 
@@ -3004,9 +3101,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'product',
+                        'id' => $product['id'],
+                        'attributes' => array_diff_key(
+                            $product,
+                            [
+                                'id' => true,
+                            ]
+                        )
+                    ],
+                    [
                         'type' => 'user',
                         'id' => $userId,
                         'attributes' => []
+                    ],
+                    [
+                        'type' => 'orderItem',
+                        'attributes' => [
+                            'quantity' => $productQuantity,
+                            'weight' => $product['weight'],
+                            'initial_price' => $product['price'],
+                            'total_discounted' => $expectedDiscountAmount,
+                            'final_price' => $expectedProductDiscountedPrice,
+                            'created_at' => Carbon::now()
+                                ->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'product' => [
+                                'data' => [
+                                    'type' => 'product',
+                                    'id' => $product['id']
+                                ]
+                            ]
+                        ],
                     ],
                     [
                         'type' => 'address',
@@ -3070,7 +3197,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product_due' => $expectedProductDiscountedPrice,
                 'taxes_due' => $expectedTaxes,
                 'shipping_due' => $shippingCostAmount,
-                'finance_due' => null,
+                'finance_due' => 0,
                 'user_id' => $userId,
                 'customer_id' => null,
                 'brand' => ConfigService::$brand,
@@ -3419,7 +3546,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ''
         );
 
-        $expectedTotalFromItems = $product['price'] * $productQuantity - $discount['amount'];
+        $expectedTotalFromItems = round($product['price'] * $productQuantity - $discount['amount'], 2);
 
         $expectedTaxes = $this->getExpectedTaxes(
             $expectedTotalFromItems,
@@ -3441,12 +3568,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tableOrder,
             [
-                'brand' => ConfigService::$brand,
-                'user_id' => $userId,
                 'total_due' => $expectedPrice,
+                'product_due' => $expectedTotalFromItems,
                 'taxes_due' => $expectedTaxes,
                 'shipping_due' => 0,
+                'finance_due' => 0,
                 'total_paid' => $expectedPrice,
+                'user_id' => $userId,
+                'customer_id' => null,
+                'brand' => ConfigService::$brand,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
     }
@@ -3994,8 +4126,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        dd($results->getContent());
-
         $this->assertEquals(200, $results->getStatusCode());
 
         // assert the discount amount it's included in order due
@@ -4425,6 +4555,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'weight' => 2,
                 'subscription_interval_type' => '',
                 'subscription_interval_count' => '',
+                'sku' => 'a' . $this->faker->word,
             ]
         );
 
@@ -4456,6 +4587,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'weight' => 2,
                 'subscription_interval_type' => '',
                 'subscription_interval_count' => '',
+                'sku' => 'b' . $this->faker->word,
             ]
         );
 
@@ -4566,6 +4698,26 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'product',
+                        'id' => $productOne['id'],
+                        'attributes' => array_diff_key(
+                            $productOne,
+                            [
+                                'id' => true,
+                            ]
+                        )
+                    ],
+                    [
+                        'type' => 'product',
+                        'id' => $productTwo['id'],
+                        'attributes' => array_diff_key(
+                            $productTwo,
+                            [
+                                'id' => true,
+                            ]
+                        )
+                    ],
+                    [
                         'type' => 'customer',
                         'attributes' => [
                             'brand' => $brand,
@@ -4574,6 +4726,46 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                             'created_at' => Carbon::now()
                                 ->toDateTimeString(),
                         ]
+                    ],
+                    [
+                        'type' => 'orderItem',
+                        'attributes' => [
+                            'quantity' => $productOneQuantity,
+                            'weight' => $productOne['weight'],
+                            'initial_price' => $productOne['price'],
+                            'total_discounted' => 0,
+                            'final_price' => $expectedInitialProductOnePrice,
+                            'created_at' => Carbon::now()
+                                ->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'product' => [
+                                'data' => [
+                                    'type' => 'product',
+                                    'id' => $productOne['id']
+                                ]
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'orderItem',
+                        'attributes' => [
+                            'quantity' => $productTwoQuantity,
+                            'weight' => $productTwo['weight'],
+                            'initial_price' => $productTwo['price'],
+                            'total_discounted' => 0,
+                            'final_price' => $expectedInitialProductTwoPrice,
+                            'created_at' => Carbon::now()
+                                ->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'product' => [
+                                'data' => [
+                                    'type' => 'product',
+                                    'id' => $productTwo['id']
+                                ]
+                            ]
+                        ],
                     ],
                     [
                         'type' => 'address',
@@ -4696,11 +4888,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'total_paid' => $expectedPaymentTotalDue,
                 'total_refunded' => 0,
                 'conversion_rate' => $expectedConversionRate,
-                'type' => 'order',
+                'type' => Payment::TYPE_INITIAL_ORDER,
                 'external_id' => $fakerCharge->id,
                 'external_provider' => 'stripe',
-                'status' => 'paid',
-                'message' => '',
+                'status' => Payment::STATUS_PAID,
+                'message' => null,
                 'currency' => $currency,
                 'created_at' => Carbon::now()
                     ->toDateTimeString()
@@ -4740,7 +4932,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tableOrderItemFulfillment,
             [
-                'status' => 'pending',
+                'status' => ConfigService::$fulfillmentStatusPending,
                 'company' => null,
                 'tracking_number' => null,
                 'fulfilled_on' => null,
@@ -4752,6 +4944,18 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_submit_order_new_user()
     {
+        // todo - reviw & update
+        // vendor/laravel/framework/src/Illuminate/Auth/AuthManager.php:84 - InvalidArgumentException: Auth guard [] is not defined.
+        $authManagerMock =
+            $this->getMockBuilder(AuthManager::class)
+                ->disableOriginalConstructor()
+                ->setMethods(['loginUsingId'])
+                ->getMock();
+
+        $authManagerMock->method('loginUsingId')->willReturn(true);
+
+        $this->app->instance(Factory::class, $authManagerMock);
+
         $cardToken = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
@@ -4906,9 +5110,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'product',
+                        'id' => $product['id'],
+                        'attributes' => array_diff_key(
+                            $product,
+                            [
+                                'id' => true,
+                            ]
+                        )
+                    ],
+                    [
                         'type' => 'user',
                         'id' => $userId,
                         'attributes' => []
+                    ],
+                    [
+                        'type' => 'orderItem',
+                        'attributes' => [
+                            'quantity' => $productQuantity,
+                            'weight' => $product['weight'],
+                            'initial_price' => $product['price'],
+                            'total_discounted' => 0,
+                            'final_price' => $expectedInitialProductPrice,
+                            'created_at' => Carbon::now()
+                                ->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'product' => [
+                                'data' => [
+                                    'type' => 'product',
+                                    'id' => $product['id']
+                                ]
+                            ]
+                        ],
                     ],
                     [
                         'type' => 'address',
@@ -5089,6 +5323,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    /*
     public function test_payment_plan()
     {
         $userId = $this->createAndLogInNewUser();

@@ -161,7 +161,7 @@ class OrderClaimingService
 
         $this->entityManager->flush();
 
-        event(new OrderEvent($order));
+        event(new OrderEvent($order, $payment));
 
         // product access via event?
 
@@ -219,7 +219,9 @@ class OrderClaimingService
 
             foreach ($orderItem->getOrderItemDiscounts() as $orderItemDiscount) {
 
-                if ($orderItemDiscount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
+                $discount = $orderItemDiscount->getDiscount();
+
+                if ($discount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
                     $nextBillDate = $nextBillDate->addDays($discount->getAmount());
 
                 }

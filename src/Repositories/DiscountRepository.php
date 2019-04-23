@@ -100,7 +100,8 @@ class DiscountRepository extends RepositoryBase
                 [
                     DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
                     DiscountService::PRODUCT_PERCENT_OFF_TYPE,
-                    DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE
+                    DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE,
+                    DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE
                 ]
             );
 

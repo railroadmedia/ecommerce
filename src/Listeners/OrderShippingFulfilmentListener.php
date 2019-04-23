@@ -33,6 +33,8 @@ class OrderShippingFulfilmentListener
 
         $orderItems = $order->getOrderItems();
 
+        $persisted = false;
+
         foreach ($orderItems as $orderItem) {
 
             if ($orderItem->getProduct()->getIsPhysical()) {
@@ -45,7 +47,13 @@ class OrderShippingFulfilmentListener
                     ->setCreatedAt(Carbon::now());
 
                 $this->entityManager->persist($orderItemFulfillment);
+
+                $persisted = true;
             }
+        }
+
+        if ($persisted) {
+            $this->entityManager->flush();
         }
     }
 }

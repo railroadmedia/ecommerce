@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Customer;
@@ -29,7 +28,6 @@ use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
-use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
@@ -904,45 +902,6 @@ class OrderFormService
         }
 
         $order = $this->orderClaimingService->claimOrder($purchaser, $payment, $cart, $shippingAddress);
-
-        /*
-        // prepare currency symbol for order invoice
-        // todo: refactor
-        switch ($cart->getCurrency()) {
-            case 'USD':
-            case 'CAD':
-            default:
-                $currencySymbol = '$';
-                break;
-            case 'GBP':
-                $currencySymbol = '£';
-                break;
-            case 'EUR':
-                $currencySymbol = '€';
-                break;
-        }
-
-        // // todo: refactor to use events
-        try {
-            // prepare the order invoice
-            $orderInvoiceEmail = new OrderInvoice(
-                [
-                    'order' => $order,
-                    'orderItems' => $order->getOrderItems(),
-                    'payment' => $payment,
-                    'currencySymbol' => $currencySymbol,
-                ]
-            );
-
-            $emailAddress = $user ? $user->getEmail() : $customer->getEmail();
-
-            Mail::to($emailAddress)
-                ->send($orderInvoiceEmail);
-
-        } catch (Exception $e) {
-            error_log('Failed to send invoice for order: ' . $order->getId());
-        }
-        */
 
         event(new GiveContentAccess($order)); // todo - refactor listeners to order entity param
 

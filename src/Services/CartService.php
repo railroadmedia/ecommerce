@@ -403,10 +403,7 @@ class CartService
         // All shipping must be paid on the first payment.
         $totalToFinance = $totalItemCostDue + $taxDue + $financeDue;
 
-        $initialTotalDueBeforeShipping = round(
-            $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(),
-            2
-        );
+        $initialTotalDueBeforeShipping = $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments();
 
         // account for any rounded off cents by adding the difference after all payments to the first payment
         if ($initialTotalDueBeforeShipping * $this->cart->getPaymentPlanNumberOfPayments() != $totalToFinance) {
