@@ -471,26 +471,6 @@ class ResponseService extends FractalResponseService
     }
 
     /**
-     * @param array $cartItems
-     * @param array $metaData
-     *
-     * @return Fractal
-     */
-    public static function cartData(
-        array $cartItems,
-        array $metaData
-    ) {
-        // todo - deprecated, to be removed
-        return self::create(
-                $cartItems,
-                'cartItem',
-                new CartItemTransformer(),
-                new JsonApiSerializer()
-            )
-            ->addMeta($metaData);
-    }
-
-    /**
      * @param array $cartArray
      *
      * @return Fractal

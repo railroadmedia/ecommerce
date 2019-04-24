@@ -899,6 +899,8 @@ class OrderFormService
 
                 $shippingAddress->setCustomer($customer);
             }
+
+            $shippingAddress->setBrand($purchaser->getBrand());
         }
 
         $order = $this->orderClaimingService->claimOrder($purchaser, $payment, $cart, $shippingAddress);

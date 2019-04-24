@@ -2,9 +2,9 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Throwable;
@@ -38,7 +38,7 @@ class OrderFormController extends BaseController
      *
      * @throws Throwable
      */
-    public function submitPaypalOrder(Request $request)
+    public function submitPaypalOrder(OrderFormSubmitRequest $request)
     {
 
         //if the cart it's empty; we throw an exception

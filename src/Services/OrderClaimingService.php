@@ -157,6 +157,8 @@ class OrderClaimingService
                 null,
                 $cart->getPaymentPlanNumberOfPayments()
             );
+
+            $this->entityManager->persist($subscription);
         }
 
         $this->entityManager->flush();
@@ -180,6 +182,7 @@ class OrderClaimingService
 
         $nextBillDate = null;
         $subscriptionPricePerPayment = 0;
+        $product = null;
 
         if (is_null($orderItem)) {
 

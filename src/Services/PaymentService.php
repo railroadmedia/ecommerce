@@ -318,6 +318,8 @@ class PaymentService
             $billingAddress->setCustomer($customer);
         }
 
+        $billingAddress->setBrand($purchaser->getBrand());
+
         $this->entityManager->persist($billingAddress);
 
         // payment method
@@ -405,6 +407,7 @@ class PaymentService
 
         // the charge was successful, store necessary data information
         // billing address
+        $billingAddress->setBrand($purchaser->getBrand());
         $this->entityManager->persist($billingAddress);
 
         // payment method

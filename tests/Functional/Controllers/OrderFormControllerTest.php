@@ -37,18 +37,18 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $orderData = [
             'payment_method_type' => PaymentMethod::TYPE_PAYPAL,
-            'billing-region' => $this->faker->word,
-            'billing-zip-or-postal-code' => $this->faker->postcode,
-            'billing-country' => 'Canada',
+            'billing_region' => $this->faker->word,
+            'billing_zip_or_postal_code' => $this->faker->postcode,
+            'billing_country' => 'Canada',
             'company_name' => $this->faker->creditCardType,
             'gateway' => ConfigService::$brand,
-            'shipping-first-name' => $this->faker->firstName,
-            'shipping-last-name' => $this->faker->lastName,
-            'shipping-address-line-1' => $this->faker->address,
-            'shipping-city' => $this->faker->city,
-            'shipping-region' => 'ab',
-            'shipping-zip-or-postal-code' => $this->faker->postcode,
-            'shipping-country' => 'Canada',
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => 'ab',
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => 'Canada',
             'currency' => $currency
         ];
 
@@ -184,8 +184,6 @@ class OrderFormControllerTest extends EcommerceTestCase
             ['token' => $paypalToken]
         );
 
-        dd($response->getContent());
-
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());
 
@@ -225,9 +223,9 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'type' => CartAddressService::BILLING_ADDRESS_TYPE,
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId,
-                'zip' => $orderData['billing-zip-or-postal-code'],
-                'state' => $orderData['billing-region'],
-                'country' => $orderData['billing-country'],
+                'zip' => $orderData['billing_zip_or_postal_code'],
+                'state' => $orderData['billing_region'],
+                'country' => $orderData['billing_country'],
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
@@ -293,14 +291,14 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'type' => ConfigService::$shippingAddressType,
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId,
-                'first_name' => $orderData['shipping-first-name'],
-                'last_name' => $orderData['shipping-last-name'],
-                'street_line_1' => $orderData['shipping-address-line-1'],
+                'first_name' => $orderData['shipping_first_name'],
+                'last_name' => $orderData['shipping_last_name'],
+                'street_line_1' => $orderData['shipping_address_line_1'],
                 'street_line_2' => null,
-                'city' => $orderData['shipping-city'],
-                'zip' => $orderData['shipping-zip-or-postal-code'],
-                'state' => $orderData['shipping-region'],
-                'country' => $orderData['shipping-country'],
+                'city' => $orderData['shipping_city'],
+                'zip' => $orderData['shipping_zip_or_postal_code'],
+                'state' => $orderData['shipping_region'],
+                'country' => $orderData['shipping_country'],
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );

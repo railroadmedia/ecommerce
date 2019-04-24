@@ -52,11 +52,6 @@ class CartService
     private $taxService;
 
     /**
-     * @var Product[]
-     */
-    private $allProducts = [];
-
-    /**
      * @var Cart
      */
     private $cart;
@@ -511,11 +506,9 @@ class CartService
                 $this->cart->getBillingAddress()
                     ->toArray() : null;
 
-        $discounts = $this->cart->getApplicableDiscountsNames() ?? [];
-
         $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 
-        $due = ($numberOfPayments > 1) ? $this->getTotalDueForInitialPayment() : $this->getTotalDue();
+        $due = ($numberOfPayments > 1) ? $this->getTotalDueForInitialPayment() : $this->getDueForOrder();
 
         $totalItemCostDue = $this->getTotalItemCosts();
 
@@ -528,14 +521,16 @@ class CartService
 
         $totals = [
             'shipping' => $shippingDue,
-            'tax' => $taxDue,
+            'tax' => round($taxDue, 2),
             'due' => $due,
         ];
+
+        $discounts = $this->discountService->getApplicableDiscountsNames($this->cart, $totalItemCostDue, $shippingDue) ?? [];
 
         $items = [];
 
         foreach ($this->cart->getItems() as $cartItem) {
-            $product = $this->allProducts[$cartItem->getSku()];
+            $product = $this->productRepository->bySku($cartItem->getSku());
 
             if (empty($product)) {
                 continue;
@@ -552,7 +547,7 @@ class CartService
                 'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
                 'price_before_discounts' => $product->getPrice(),
                 'price_after_discounts' => $product->getPrice() -
-                    $this->discountService->getItemDiscountedAmount($this->cart, $cartItem->getSku()),
+                    $this->discountService->getItemDiscountedAmount($this->cart, $cartItem->getSku(), $totalItemCostDue, $shippingDue),
             ];
         }
 

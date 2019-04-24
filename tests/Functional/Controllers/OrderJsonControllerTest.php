@@ -3,10 +3,10 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Controllers\OrderJsonController;
 use PHPUnit\Framework\TestCase;
+use Railroad\Ecommerce\Controllers\OrderJsonController;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class OrderJsonControllerTest extends EcommerceTestCase
@@ -200,7 +200,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = $this->fakePaymentMethod([
             'method_id' => $creditCard['id'],
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
             'billing_address_id' => $billingAddress['id']
         ]);
 

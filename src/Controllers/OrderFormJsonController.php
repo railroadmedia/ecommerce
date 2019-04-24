@@ -82,8 +82,7 @@ class OrderFormJsonController extends BaseController
      */
     public function index()
     {
-        $this->cartService
-            ->setBrand(ConfigService::$brand);
+        $this->cartService->refreshCart();
 
         // if the cart it's empty; we throw an exception
         throw_if(
@@ -94,23 +93,9 @@ class OrderFormJsonController extends BaseController
             new NotFoundException('The cart it\'s empty')
         );
 
-        $billingAddress = $this->cartAddressService
-            ->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+        $cartArray = $this->cartService->toArray();
 
-        $shippingAddress = $this->cartAddressService
-            ->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
-
-        $cartItems = $this->cartService->getCart()->getItems();
-        $totalDue = $this->cartService->getCart()->getTotalDue();
-        $paymentPlansPricing = $this->paymentPlanService->getPaymentPlanPricingForCartItems();
-
-        return ResponseService::orderForm(
-            $cartItems,
-            $billingAddress,
-            $shippingAddress,
-            $paymentPlansPricing,
-            $totalDue
-        );
+        return ResponseService::cart($cartArray);
     }
 
     /**
