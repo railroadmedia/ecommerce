@@ -137,17 +137,9 @@ class AccessCodeJsonController extends Controller
      */
     public function claim(AccessCodeJsonClaimRequest $request)
     {
-        $this->permissionService->canOrThrow(
-            auth()->id(),
-            'claim.access_codes'
-        );
+        $this->permissionService->canOrThrow(auth()->id(), 'claim.access_codes');
 
-        /**
-         * @var $user \Railroad\Ecommerce\Entities\User
-         */
-        $user = $this->userProvider->getUserById(
-            $request->get('claim_for_user_id')
-        );
+        $user = $this->userProvider->getUserById($request->get('claim_for_user_id'));
 
         throw_if(
             is_null($user),
