@@ -2,37 +2,19 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
-use Railroad\Ecommerce\Entities\User;
-use Railroad\Ecommerce\Repositories\AccessCodeRepository;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Requests\AccessCodeClaimRequest;
 use Railroad\Ecommerce\Services\AccessCodeService;
 use Throwable;
 
-class AccessCodeController extends BaseController
+class AccessCodeController extends Controller
 {
-    /**
-     * @var AccessCodeRepository
-     */
-    private $accessCodeRepository;
-
     /**
      * @var AccessCodeService
      */
     private $accessCodeService;
-
-    /**
-     * @var EcommerceEntityManager
-     */
-    private $entityManager;
-
-     /**
-     * @var Hasher
-     */
-    private $hasher;
 
     /**
      * @var UserProviderInterface
@@ -42,25 +24,15 @@ class AccessCodeController extends BaseController
     /**
      * AccessCodeController constructor.
      *
-     * @param AccessCodeRepository $accessCodeRepository
      * @param AccessCodeService $accessCodeService
-     * @param EcommerceEntityManager $entityManager
-     * @param Hasher $hasher
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        AccessCodeRepository $accessCodeRepository,
         AccessCodeService $accessCodeService,
-        EcommerceEntityManager $entityManager,
-        Hasher $hasher,
         UserProviderInterface $userProvider
-    ) {
-        parent::__construct();
-
-        $this->accessCodeRepository = $accessCodeRepository;
+    )
+    {
         $this->accessCodeService = $accessCodeService;
-        $this->entityManager = $entityManager;
-        $this->hasher = $hasher;
         $this->userProvider = $userProvider;
     }
 
@@ -78,35 +50,26 @@ class AccessCodeController extends BaseController
         $user = null;
 
         if ($request->has('email')) {
-            // add new user
-
-            $password = $this->hasher->make($request->get('password'));
-
-            /**
-             * @var $user User
-             */
-            $user = $this->userProvider
-                        ->createUser($request->get('email'), $password);
+            // create new user
+            $user = $this->userProvider->createUser($request->get('email'), $request->get('password'));
 
             auth()->loginUsingId($user->getId(), true);
-
-        } else {
-
-            /**
-             * @var $user User
-             */
+        }
+        else {
+            // use existing user
             $user = $this->userProvider->getCurrentUser();
         }
 
-        $accessCode = $this->accessCodeRepository
-                        ->findOneBy(['code' => $request->get('access_code')]);
-
-        $this->accessCodeService->claim($accessCode, $user);
+        $this->accessCodeService->claim($request->get('access_code'), $user);
 
         $message = ['success' => true];
 
         return $request->has('redirect') ?
-            redirect()->away($request->get('redirect'))->with($message) :
-            redirect()->back()->with($message);
+            redirect()
+                ->away($request->get('redirect'))
+                ->with($message) :
+            redirect()
+                ->back()
+                ->with($message);
     }
 }

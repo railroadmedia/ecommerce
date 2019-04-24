@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Tests\Fixtures;
 
 use Doctrine\Common\Inflector\Inflector;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\User;
@@ -20,8 +21,9 @@ class UserProvider implements UserProviderInterface
      */
     public function getUserById(int $id): ?User
     {
-        $user = DB::table(EcommerceTestCase::TABLES['users'])
-            ->find($id);
+        $user =
+            DB::table(EcommerceTestCase::TABLES['users'])
+                ->find($id);
 
         if ($user) {
             return new User($id, $user->email);
@@ -101,17 +103,20 @@ class UserProvider implements UserProviderInterface
 
     /**
      * @param string $email
-     * @param string $password
+     * @param string $rawPassword
      * @return User|null
      */
-    public function createUser(string $email, string $password): ?User
+    public function createUser(string $email, string $rawPassword): ?User
     {
-        $userId = DB::table(EcommerceTestCase::TABLES['users'])
-            ->insertGetId([
-                'email' => $email,
-                'password' => $password,
-                'display_name' => $email,
-            ]);
+        $userId =
+            DB::table(EcommerceTestCase::TABLES['users'])
+                ->insertGetId(
+                    [
+                        'email' => $email,
+                        'password' => Hash::make($rawPassword),
+                        'display_name' => $email,
+                    ]
+                );
 
         return $this->getUserById($userId);
     }

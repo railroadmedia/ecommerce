@@ -36,8 +36,8 @@ interface UserProviderInterface
 
     /**
      * @param string $email
-     * @param string $password
+     * @param string $rawPassword
      * @return User|null
      */
-    public function createUser(string $email, string $password): ?User;
+    public function createUser(string $email, string $rawPassword): ?User;
 }

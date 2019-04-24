@@ -148,9 +148,7 @@ class AccessCodeJsonController extends Controller
             )
         );
 
-        $accessCode = $this->accessCodeRepository->findOneBy(['code' => $request->get('access_code')]);
-
-        $this->accessCodeService->claim($accessCode, $user);
+        $accessCode = $this->accessCodeService->claim($request->get('access_code'), $user);
 
         return ResponseService::accessCode($accessCode)
             ->respond(200);

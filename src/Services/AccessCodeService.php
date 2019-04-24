@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\AccessCodeRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Throwable;
@@ -41,6 +42,11 @@ class AccessCodeService
     private $userProductService;
 
     /**
+     * @var AccessCodeRepository
+     */
+    private $accessCodeRepository;
+
+    /**
      * AccessCodeService constructor.
      *
      * @param CurrencyService $currencyService
@@ -48,19 +54,23 @@ class AccessCodeService
      * @param ProductRepository $productRepository
      * @param SubscriptionRepository $subscriptionRepository
      * @param UserProductService $userProductService
+     * @param AccessCodeRepository $accessCodeRepository
      */
     public function __construct(
         CurrencyService $currencyService,
         EcommerceEntityManager $entityManager,
         ProductRepository $productRepository,
         SubscriptionRepository $subscriptionRepository,
-        UserProductService $userProductService
-    ) {
+        UserProductService $userProductService,
+        AccessCodeRepository $accessCodeRepository
+    )
+    {
         $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;
         $this->productRepository = $productRepository;
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
+        $this->accessCodeRepository = $accessCodeRepository;
     }
 
     /**
@@ -68,15 +78,17 @@ class AccessCodeService
      * extends $accessCode associated subscriptions
      * adds user products
      *
-     * @param AccessCode $accessCode
+     * @param string $rawAccessCode
      * @param User $user
      *
      * @return AccessCode
      *
      * @throws Throwable
      */
-    public function claim(AccessCode $accessCode, User $user): AccessCode
+    public function claim(string $rawAccessCode, User $user): AccessCode
     {
+        $accessCode = $this->accessCodeRepository->findOneBy(['code' => $rawAccessCode]);
+
         $accessCodeProducts = $this->productRepository->byAccessCode($accessCode);
 
         $subscriptions = $this->subscriptionRepository->getProductsSubscriptions($accessCodeProducts);
@@ -166,21 +178,24 @@ class AccessCodeService
 
             switch ($product->getSubscriptionIntervalType()) {
                 case ConfigService::$intervalTypeMonthly:
-                    $expirationDate = Carbon::now()
-                        ->addMonths($intervalCount)
-                        ->startOfDay();
+                    $expirationDate =
+                        Carbon::now()
+                            ->addMonths($intervalCount)
+                            ->startOfDay();
                     break;
 
                 case ConfigService::$intervalTypeYearly:
-                    $expirationDate = Carbon::now()
-                        ->addYears($intervalCount)
-                        ->startOfDay();
+                    $expirationDate =
+                        Carbon::now()
+                            ->addYears($intervalCount)
+                            ->startOfDay();
                     break;
 
                 case ConfigService::$intervalTypeDaily:
-                    $expirationDate = Carbon::now()
-                        ->addDays($intervalCount)
-                        ->startOfDay();
+                    $expirationDate =
+                        Carbon::now()
+                            ->addDays($intervalCount)
+                            ->startOfDay();
                     break;
             }
 
