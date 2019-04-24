@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\EntityRepository;
+use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
@@ -42,5 +43,68 @@ class AccessCodeRepository extends EntityRepository
             ->from($this->_entityName, $alias, $indexBy);
 
         return $queryBuilder;
+    }
+
+    /**
+     * @param $request
+     * @return AccessCode[]
+     */
+    public function indexByRequest(Request $request)
+    {
+        return $this->indexQueryBuilderByRequest($request)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @param $request
+     * @return FromRequestEcommerceQueryBuilder
+     */
+    public function indexQueryBuilderByRequest(Request $request)
+    {
+        $alias = 'a';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->restrictBrandsByRequest($request, $alias)
+            ->select($alias);
+
+        return $qb;
+    }
+
+    /**
+     * @param Request $request
+     * @return AccessCode[]
+     */
+    public function searchByRequest(Request $request)
+    {
+        return $this->searchQueryBuilderByRequest($request)
+            ->getQuery()
+            ->setParameter('term', '%' . $request->get('term') . '%')
+            ->getResult();
+    }
+
+    /**
+     * @param Request $request
+     * @return FromRequestEcommerceQueryBuilder
+     */
+    public function searchQueryBuilderByRequest(Request $request)
+    {
+        $alias = 'a';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->restrictBrandsByRequest($request, $alias)
+            ->select($alias)
+            ->andWhere(
+                $qb->expr()
+                    ->like($alias . '.code', ':term')
+            );
+
+        return $qb;
     }
 }

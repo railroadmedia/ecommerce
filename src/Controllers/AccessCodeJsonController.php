@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -13,13 +14,12 @@ use Railroad\Ecommerce\Requests\AccessCodeReleaseRequest;
 use Railroad\Ecommerce\Repositories\AccessCodeRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\AccessCodeService;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class AccessCodeJsonController extends BaseController
+class AccessCodeJsonController extends Controller
 {
     /**
      * @var AccessCodeRepository
@@ -70,8 +70,6 @@ class AccessCodeJsonController extends BaseController
         UserProviderInterface $userProvider
     )
     {
-        parent::__construct();
-
         $this->accessCodeRepository = $accessCodeRepository;
         $this->accessCodeService = $accessCodeService;
         $this->entityManager = $entityManager;
@@ -93,36 +91,14 @@ class AccessCodeJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
-        $alias = 'a';
+        $accessCodes = $this->accessCodeRepository->indexByRequest($request);
 
-        $qb = $this->accessCodeRepository->createQueryBuilder($alias);
-
-        $qb->paginateByRequest($request)
-            ->orderByRequest($request, $alias)
-            ->restrictBrandsByRequest($request, $alias)
-            ->select($alias);
-
-        $accessCodes =
-            $qb->getQuery()
-                ->getResult();
-
-        // fetch related products, as a dictionary
         $products = $this->productRepository->byAccessCodes($accessCodes);
-
-        // map products to ease access
-        $productsMap = [];
-
-        /**
-         * @var $product \Railroad\Ecommerce\Entities\Product
-         */
-        foreach ($products as $product) {
-            $productsMap[$product->getId()] = $product;
-        }
 
         return ResponseService::decoratedAccessCode(
             $accessCodes,
-            $productsMap,
-            $qb
+            key_array_of_entities_by($products),
+            $this->accessCodeRepository->indexQueryBuilderByRequest($request)
         );
     }
 
@@ -139,38 +115,15 @@ class AccessCodeJsonController extends BaseController
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
-        $alias = 'a';
+        $accessCodes = $this->accessCodeRepository->searchByRequest($request);
 
-        $qb = $this->accessCodeRepository->createQueryBuilder($alias);
-
-        $qb->paginateByRequest($request)
-            ->orderByRequest($request, $alias)
-            ->restrictBrandsByRequest($request, $alias)
-            ->select($alias)
-            ->andWhere(
-                $qb->expr()
-                    ->like($alias . '.code', ':term')
-            );
-
-        $accessCodes =
-            $qb->getQuery()
-                ->setParameter('term', '%' . $request->get('term') . '%')
-                ->getResult();
-
-        // fetch related products, as a dictionary
         $products = $this->productRepository->byAccessCodes($accessCodes);
 
-        // map products to ease access
-        $productsMap = [];
-
-        /**
-         * @var $product \Railroad\Ecommerce\Entities\Product
-         */
-        foreach ($products as $product) {
-            $productsMap[$product->getId()] = $product;
-        }
-
-        return ResponseService::decoratedAccessCode($accessCodes, $productsMap);
+        return ResponseService::decoratedAccessCode(
+            $accessCodes,
+            key_array_of_entities_by($products),
+            $this->accessCodeRepository->indexQueryBuilderByRequest($request)
+        );
     }
 
     /**
@@ -225,6 +178,7 @@ class AccessCodeJsonController extends BaseController
         $this->permissionService->canOrThrow(auth()->id(), 'release.access_codes');
 
         $accessCode = $this->accessCodeRepository->find($request->get('access_code_id'));
+
         $accessCode->setIsClaimed(false)
             ->setClaimer(null)
             ->setClaimedOn(null)
