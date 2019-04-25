@@ -14,10 +14,10 @@ use Railroad\Ecommerce\Entities\UserPaymentMethods;
 class PaymentMethodRepository extends RepositoryBase
 {
     /**
-     * @param $id
-     * @return Address|null
+     * @param int $id
+     * @return PaymentMethod|null
      */
-    public function byId($id)
+    public function byId(int $id): ?PaymentMethod
     {
         $qb = $this->entityManager->createQueryBuilder();
 

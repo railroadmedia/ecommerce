@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
@@ -184,13 +186,10 @@ class PaymentMethodJsonController extends BaseController
         $purchaser->setId($user->getId());
         $purchaser->setEmail($user->getEmail());
         $purchaser->setType(Purchaser::USER_TYPE);
-        $purchaser->setBrand($this->get('gateway', ConfigService::$brand));
+        $purchaser->setBrand($request->get('gateway', ConfigService::$brand));
 
         try {
-            if (
-                $request->get('method_type') ==
-                PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
-            ) {
+            if ($request->get('method_type') == PaymentMethod::TYPE_CREDIT_CARD) {
                 // todo - review stripe customer and card retrival (& PaymentService chargeNewCreditCartPaymentMethod possible reuse)
                 $customer = $this->stripePaymentGateway->getOrCreateCustomer(
                     $request->get('gateway'),
@@ -203,14 +202,13 @@ class PaymentMethodJsonController extends BaseController
                     $request->get('card_token')
                 );
 
-                // todo - review & update billingAddress creation, if necessary
                 $billingCountry = $card->address_country ?? $card->country;
 
                 // save billing address
                 $billingAddress = new Address();
 
                 $billingAddress
-                    ->setType(CartAddressService::BILLING_ADDRESS_TYPE)
+                    ->setType(ConfigService::$billingAddressType)
                     ->setBrand(ConfigService::$brand)
                     ->setUser($user)
                     ->setState($card->address_state ?? '')
@@ -292,12 +290,12 @@ class PaymentMethodJsonController extends BaseController
             $purchaser->setId($user->getId());
             $purchaser->setEmail($user->getEmail());
             $purchaser->setType(Purchaser::USER_TYPE);
-            $purchaser->setBrand($this->get('gateway', ConfigService::$brand));
+            $purchaser->setBrand($request->get('gateway', ConfigService::$brand));
 
             $billingAddress = new Address();
 
             $billingAddress
-                ->setType(CartAddressService::BILLING_ADDRESS_TYPE)
+                ->setType(ConfigService::$billingAddressType)
                 ->setBrand(ConfigService::$brand)
                 ->setUser($user)
                 ->setState('')
@@ -396,7 +394,7 @@ class PaymentMethodJsonController extends BaseController
     public function update(PaymentMethodUpdateRequest $request, $paymentMethodId)
     {
         $paymentMethod = $this->paymentMethodRepository
-                                ->find($paymentMethodId);
+                                ->byId($paymentMethodId);
 
         $message = 'Update failed, payment method not found with id: '
             . $paymentMethodId;
@@ -406,7 +404,7 @@ class PaymentMethodJsonController extends BaseController
         $message = 'Only credit card payment methods may be updated';
 
         throw_if(
-            (PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE != $paymentMethod->getMethodType()),
+            (PaymentMethod::TYPE_CREDIT_CARD != $paymentMethod->getMethodType()),
             new PaymentMethodException($message)
         );
 
@@ -490,7 +488,7 @@ class PaymentMethodJsonController extends BaseController
             $billingCountry = $card->address_country ?? $card->country;
 
             $address = $this->addressRepository
-                                ->find($paymentMethod->getBillingAddress());
+                                ->byId($paymentMethod->getBillingAddress());
 
             $address
                 ->setState($card->address_state ?? '')
@@ -537,7 +535,7 @@ class PaymentMethodJsonController extends BaseController
     public function delete($paymentMethodId)
     {
         $paymentMethod = $this->paymentMethodRepository
-                            ->find($paymentMethodId);
+                            ->byId($paymentMethodId);
 
         throw_if(
             is_null($paymentMethod),
@@ -637,7 +635,7 @@ class PaymentMethodJsonController extends BaseController
 
             $type = $paymentMethod->getMethodType();
 
-            if ($type == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+            if ($type == PaymentMethod::TYPE_PAYPAL) {
                 $paypalIds[] = $paymentMethod->getMethodId();
             } else {
                 $creditCardIds[] = $paymentMethod->getMethodId();

@@ -11,6 +11,7 @@ use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Exceptions\TransactionFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
@@ -23,7 +24,6 @@ use Railroad\Ecommerce\Requests\PaymentCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentIndexRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
@@ -290,7 +290,7 @@ class PaymentJsonController extends BaseController
                 ->setCurrency($currency)
                 ->setCreatedAt(Carbon::now());
 
-        } else if ($paymentMethod->getMethodType() == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+        } else if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
             try {
 
                 /**
@@ -342,7 +342,7 @@ class PaymentJsonController extends BaseController
                     ->setCurrency($currency);
 
             }
-        } else if ($paymentMethod->getMethodType() == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+        } else if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
             try {
 
                 /**

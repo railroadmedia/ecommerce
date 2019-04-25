@@ -14,7 +14,7 @@ class AddressRepository extends RepositoryBase
      * @param $id
      * @return Address|null
      */
-    public function byId($id)
+    public function byId($id): ?Address
     {
         $qb = $this->entityManager->createQueryBuilder();
 

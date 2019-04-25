@@ -89,10 +89,11 @@ class DiscountJsonController extends BaseController
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->discountRepository->createQueryBuilder($alias);
+        $qb = $this->entityManager->createQueryBuilder($alias);
 
         $qb
             ->select([$alias, $aliasProduct])
+            ->from(Discount::class, $alias)
             ->join($alias . '.product', $aliasProduct)
             ->setMaxResults($request->get('limit', 10))
             ->setFirstResult($first)
@@ -119,10 +120,11 @@ class DiscountJsonController extends BaseController
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->discountRepository->createQueryBuilder('d');
+        $qb = $this->entityManager->createQueryBuilder('d');
 
         $qb
             ->select(['d', 'p'])
+            ->from(Discount::class, 'd')
             ->join('d.product', 'p')
             ->where($qb->expr()->eq('d.id', ':id'));
 

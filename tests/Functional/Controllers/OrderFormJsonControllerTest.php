@@ -2707,7 +2707,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard = new Card();
         $fakerCard->fingerprint = $this->faker->word;
         $fakerCard->brand = $this->faker->word;
-        $fakerCard->last4 = $this->faker->randomNumber(3);
+        $fakerCard->last4 = $this->faker->randomNumber(4);
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
@@ -5614,7 +5614,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePayment,
             [
-                'total_due' => $expectedPaymentTotalPaid, // todo - review & update after specs clarification // $expectedPaymentTotalDue
+                'total_due' => $expectedPaymentTotalPaid,
                 'total_paid' => $expectedPaymentTotalPaid,
                 'total_refunded' => 0,
                 'conversion_rate' => $expectedConversionRate,

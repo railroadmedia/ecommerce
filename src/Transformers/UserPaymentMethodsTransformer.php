@@ -4,8 +4,8 @@ namespace Railroad\Ecommerce\Transformers;
 
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
-use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Transformers\CreditCardTransformer;
 use Railroad\Ecommerce\Transformers\PaymentMethodTransformer;
 use Railroad\Ecommerce\Transformers\PaypalBillingAgreementTransformer;
@@ -65,7 +65,7 @@ class UserPaymentMethodsTransformer extends TransformerAbstract
         $paymentMethod = $userPaymentMethod->getPaymentMethod();
 
         // composite method handling
-        if ($paymentMethod->getMethodType() == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+        if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
             return $this->item(
                 $this->paypalAgreementsMap[$paymentMethod->getMethodId()],
                 new PaypalBillingAgreementTransformer(),

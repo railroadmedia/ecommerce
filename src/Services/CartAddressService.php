@@ -9,83 +9,107 @@ use Railroad\Location\Services\LocationService;
 class CartAddressService
 {
     /**
-     * @var Store
+     * @var CartService
      */
-    private $session;
+    private $cartService;
 
     /**
      * @var LocationService
      */
     private $locationService;
 
-    CONST SESSION_KEY = 'cart-address-';
-
-    CONST BILLING_ADDRESS_TYPE = 'billing';
-    CONST SHIPPING_ADDRESS_TYPE = 'shipping';
-
     /**
      * CartAddressService constructor.
      *
-     * @param Store $session
+     * @param CartService $cartService
      * @param LocationService $locationService
      */
     public function __construct(
-        Store $session,
+        CartService $cartService,
         LocationService $locationService
-    ) {
-        $this->session = $session;
+    )
+    {
+        $this->cartService = $cartService;
         $this->locationService = $locationService;
+
+        $this->cartService->refreshCart();
     }
 
     /**
-     * Get from the session the address (shipping or billing address - based on address type).
-     * If the billing address it's not set on the session call the method that set on the session the guessed billing
-     * address
-     *
-     * @param string $addressType
-     * @return Address|null
-     */
-    public function getAddress(string $addressType)
-    {
-        if ($this->session->has(self::SESSION_KEY . $addressType)) {
-            return $this->session->get(self::SESSION_KEY . $addressType);
-        }
-
-        return $this->setAddress(new Address($this->locationService->getCountry(), $this->locationService->getRegion()),
-            $addressType);
-    }
-
-    /**
-     * Set the address on the session and return it
-     *
-     * @param Address $address
-     * @param string $addressType
-     *
      * @return Address
      */
-    public function setAddress(Address $address, string $addressType)
+    public function getShippingAddress(): Address
     {
-        $this->session->put(self::SESSION_KEY . $addressType, $address);
+        $cart = $this->cartService->getCart();
 
-        return $this->getAddress($addressType);
+        $address = $cart->getShippingAddress();
+
+        if (!$address) {
+
+            $address = new Address($this->locationService->getCountry(), $this->locationService->getRegion());
+
+            $cart->setShippingAddress($address);
+
+            $cart->toSession();
+        }
+
+        return $address;
     }
 
     /**
-     * Update the address stored on the session and return it
-     *
-     * @param Address $address
-     * @param string $addressType
-     *
      * @return Address
      */
-    public function updateAddress(Address $address, string $addressType)
+    public function getBillingAddress(): Address
     {
-        if ($currentAddress = $this->getAddress($addressType)) {
-            $address->merge($currentAddress);
+        $cart = $this->cartService->getCart();
+
+        $address = $cart->getBillingAddress();
+
+        if (!$address) {
+
+            $address = new Address($this->locationService->getCountry(), $this->locationService->getRegion());
+
+            $cart->setBillingAddress($address);
+
+            $cart->toSession();
         }
 
-        $this->session->put(self::SESSION_KEY . $addressType, $address);
+        return $address;
+    }
 
-        return $this->getAddress($addressType);
+    /**
+     * @return Address
+     */
+    public function updateShippingAddress(Address $address): Address
+    {
+        $currentAddress = $this->getShippingAddress();
+
+        $address->merge($currentAddress);
+
+        $cart = $this->cartService->getCart();
+
+        $cart->setShippingAddress($address);
+
+        $cart->toSession();
+
+        return $address;
+    }
+
+    /**
+     * @return Address
+     */
+    public function updateBillingAddress(Address $address): Address
+    {
+        $currentAddress = $this->getBillingAddress();
+
+        $address->merge($currentAddress);
+
+        $cart = $this->cartService->getCart();
+
+        $cart->setBillingAddress($address);
+
+        $cart->toSession();
+
+        return $address;
     }
 }

@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Structures\Address;
+use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -36,12 +37,10 @@ class SessionJsonControllerTest extends EcommerceTestCase
 
         $cartAddressService = $this->app->make(CartAddressService::class);
 
-        // get a default location service seeded address or new instance
-        $address = $cartAddressService
-                        ->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE) ?? (new Address());
+        $address = $cartAddressService->getShippingAddress();
 
         $shippingAddress = [
-            'shipping-address-line-1' => $this->faker->address,
+            'shipping-address-line-1' => $this->faker->streetName,
             'shipping-city' => $this->faker->city,
             'shipping-first-name' => $this->faker->word
         ];
@@ -49,15 +48,15 @@ class SessionJsonControllerTest extends EcommerceTestCase
         $response = $this->call('PUT', '/session/address', $shippingAddress);
 
         $address
-            ->setStreetLineOne($shippingAddress['shipping-address-line-1'])
+            ->setStreetLine1($shippingAddress['shipping-address-line-1'])
             ->setCity($shippingAddress['shipping-city'])
             ->setFirstName($shippingAddress['shipping-first-name']);
 
-        // assert session has the address data
-        $response->assertSessionHas(
-            CartAddressService::SESSION_KEY . ConfigService::$shippingAddressType,
-            $address
-        );
+        $cart = Cart::fromSession();
+
+        $addressFromSession = $cart->getShippingAddress();
+
+        $this->assertEquals($address, $addressFromSession);
 
         // assert response has the address data
         $this->assertArraySubset(
@@ -78,16 +77,13 @@ class SessionJsonControllerTest extends EcommerceTestCase
         $address = new Address();
 
         $address
-            ->setStreetLineOne($this->faker->address)
+            ->setStreetLine1($this->faker->address)
             ->setCity($this->faker->city)
             ->setLastName($this->faker->word)
-            ->setZipOrPostalCode($this->faker->postcode);
+            ->setZip($this->faker->postcode);
 
         $this->cartAddressService
-            ->updateAddress(
-                $address,
-                ConfigService::$shippingAddressType
-            );
+            ->updateShippingAddress($address);
 
         // some default faker countries fail the backend validation, such as: 'Svalbard & Jan Mayen Islands'
         $countries = ['Canada', 'Serbia', 'Aruba', 'Greece'];
@@ -103,11 +99,11 @@ class SessionJsonControllerTest extends EcommerceTestCase
             ->setCountry($supplementAddress['shipping-country'])
             ->setFirstName($supplementAddress['shipping-first-name']);
 
-        // assert session has the address data
-        $response->assertSessionHas(
-            CartAddressService::SESSION_KEY . ConfigService::$shippingAddressType,
-            $address
-        );
+        $cart = Cart::fromSession();
+
+        $addressFromSession = $cart->getShippingAddress();
+
+        $this->assertEquals($address, $addressFromSession);
 
         // assert response has the address data
         $this->assertArraySubset(
@@ -128,16 +124,13 @@ class SessionJsonControllerTest extends EcommerceTestCase
         $address = new Address();
 
         $address
-            ->setStreetLineOne($this->faker->address)
+            ->setStreetLine1($this->faker->address)
             ->setCity($this->faker->city)
             ->setLastName($this->faker->word)
-            ->setZipOrPostalCode($this->faker->postcode);
+            ->setZip($this->faker->postcode);
 
         $this->cartAddressService
-            ->updateAddress(
-                $address,
-                ConfigService::$shippingAddressType
-            );
+            ->updateShippingAddress($address);
 
         // setup additional address data with field overwritten
         $supplementAddress = [
@@ -152,10 +145,11 @@ class SessionJsonControllerTest extends EcommerceTestCase
             ->setFirstName($supplementAddress['shipping-first-name']);
 
         // assert session has the address data
-        $response->assertSessionHas(
-            CartAddressService::SESSION_KEY . ConfigService::$shippingAddressType,
-            $address
-        );
+        $cart = Cart::fromSession();
+
+        $addressFromSession = $cart->getShippingAddress();
+
+        $this->assertEquals($address, $addressFromSession);
 
         // assert response has the address data
         $this->assertArraySubset(

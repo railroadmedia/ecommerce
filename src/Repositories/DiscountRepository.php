@@ -14,6 +14,30 @@ use Railroad\Ecommerce\Services\DiscountService;
 class DiscountRepository extends RepositoryBase
 {
     /**
+     * Returns Discount with specified id
+     *
+     * @param int $id
+     * @return Discount[]
+     * @throws ORMException
+     */
+    public function find(int $id): ?Discount
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select(['d'])
+            ->from(Discount::class, 'd')
+            ->where(
+                $qb->expr()
+                    ->eq('d.id', ':id')
+            )
+            ->setParameter('id', $id);
+
+        return $qb->getQuery()
+            ->setResultCacheDriver($this->arrayCache)
+            ->getOneOrNullResult();
+    }
+
+    /**
      * Returns an array of Discounts with associated DiscountCriteria loaded
      *
      * @return Discount[]

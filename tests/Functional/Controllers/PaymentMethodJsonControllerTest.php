@@ -4,12 +4,12 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Stripe\Card;
@@ -29,7 +29,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/payment-method',
             [
-                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'user_email' => $this->faker->email
             ]
         );
@@ -40,7 +40,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'card_token',
-                    'detail' => 'The card token field is required when method type is credit-card.',
+                    'detail' => 'The card token field is required when method type is credit_card.',
                     'title' => 'Validation failed.'
                 ],
                 [
@@ -107,28 +107,26 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->faker->currencyCode;
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = 'recordeo';
 
-        $card = (object)[
-            'country' => 'US',
-            'fingerprint' => $this->faker->word,
-            'last4' => $this->faker->randomNumber(4),
-            'name' => $this->faker->word,
-            'brand' => $this->faker->creditCardType,
-            'exp_year' => $cardExpirationDate->format('Y'),
-            'exp_month' => $cardExpirationDate->format('m'),
-            'id' => $this->faker->word,
-            'customer' => $this->faker->word,
-        ];
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->word;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
             ->willReturn(['data' => [new Customer()]]);
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn(new Token());
         $this->stripeExternalHelperMock->method('createCard')
-            ->willReturn($card);
+            ->willReturn($fakerCard);
 
         $payload = [
             'card_token' => 'tok_mastercard',
@@ -200,9 +198,9 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tableCreditCard,
             [
-                'fingerprint' => $card->fingerprint,
-                'last_four_digits' => $card->last4,
-                'company_name' => $card->brand,
+                'fingerprint' => $fakerCard->fingerprint,
+                'last_four_digits' => $fakerCard->last4,
+                'company_name' => $fakerCard->brand,
                 'payment_gateway_name' => $gateway,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
@@ -238,28 +236,26 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->faker->currencyCode;
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = 'recordeo';
 
-        $card = (object)[
-            'country' => 'US',
-            'fingerprint' => $this->faker->word,
-            'last4' => $this->faker->randomNumber(4),
-            'name' => $this->faker->word,
-            'brand' => $this->faker->creditCardType,
-            'exp_year' => $cardExpirationDate->format('Y'),
-            'exp_month' => $cardExpirationDate->format('m'),
-            'id' => $this->faker->word,
-            'customer' => $this->faker->word,
-        ];
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->word;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
             ->willReturn(['data' => [new Customer()]]);
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn(new Token());
         $this->stripeExternalHelperMock->method('createCard')
-            ->willReturn($card);
+            ->willReturn($fakerCard);
 
         $payload = [
             'card_token' => 'tok_mastercard',
@@ -331,9 +327,9 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tableCreditCard,
             [
-                'fingerprint' => $card->fingerprint,
-                'last_four_digits' => $card->last4,
-                'company_name' => $card->brand,
+                'fingerprint' => $fakerCard->fingerprint,
+                'last_four_digits' => $fakerCard->last4,
+                'company_name' => $fakerCard->brand,
                 'payment_gateway_name' => $gateway,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
@@ -390,7 +386,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'PUT',
             '/payment-method',
             [
-                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'card_token' => $this->faker->creditCardNumber,
                 'currency' => $currency,
                 'user_id' => $userId,
@@ -413,7 +409,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseMissing(
             ConfigService::$tablePaymentMethod,
             [
-                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'currency' => $currency,
                 'created_on' => Carbon::now()->toDateTimeString(),
             ]
@@ -480,7 +476,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->faker->currencyCode;
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $expirationDate = $this->faker->creditCardExpirationDate;
 
@@ -519,7 +515,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = $this->fakePaymentMethod([
             'method_id' => $creditCard['id'],
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD
         ]);
 
         $userPaymentMethod = $this->fakeUserPaymentMethod([
@@ -591,7 +587,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $actualDate = Carbon::now()->startOfMonth();
 
@@ -706,7 +702,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $customer = $this->fakeUser();
 
-        $methodType = PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_PAYPAL;
 
         $actualDate = Carbon::now()->startOfMonth();
 
@@ -733,7 +729,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = $this->fakePaymentMethod([
             'method_id' => $creditCard['id'],
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_PAYPAL,
             'billing_address_id' => $address['id'],
         ]);
 
@@ -772,7 +768,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $actualDate = Carbon::now()->startOfMonth();
 
@@ -920,7 +916,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $actualDate = Carbon::now()->startOfMonth();
 
@@ -1074,7 +1070,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $actualDate = Carbon::now()->startOfMonth();
 
@@ -1199,7 +1195,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $address = $this->fakeAddress([
-            'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+            'type' => ConfigService::$billingAddressType,
             'brand' => 'recordeo',
             'user_id' => $userId,
             'state' => '',
@@ -1215,7 +1211,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'payment_gateway_name' => 'recordeo',
         ]);
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $oldPrimaryPaymentMethod = $this->fakePaymentMethod([
             'method_type' => $methodType,
@@ -1287,7 +1283,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $expirationDate = Carbon::now()->startOfMonth();
 
@@ -1427,7 +1423,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tableAddress,
             [
-                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+                'type' => ConfigService::$billingAddressType,
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId
             ]
@@ -1440,7 +1436,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ConfigService::$tableAddress,
             [
                 'id' => $addressId,
-                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+                'type' => ConfigService::$billingAddressType,
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId
             ]
@@ -1464,7 +1460,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ConfigService::$tablePaymentMethod,
             [
                 'method_id' => $paymentMethodId,
-                'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+                'method_type' => PaymentMethod::TYPE_PAYPAL,
                 'billing_address_id' => 1,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
@@ -1493,7 +1489,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
@@ -1528,7 +1524,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             '/payment-method/' . $paymentMethod['id'],
             [
                 'update_method' => 'update-current-credit-card',
-                'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'user_id' => $userId,
             ]
         );
@@ -1569,7 +1565,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $customer = $this->fakeUser();
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
@@ -1636,7 +1632,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
@@ -1702,7 +1698,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
@@ -1730,7 +1726,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $paypalPaymentMethod = $this->fakePaymentMethod([
             'method_id' => $paypalBillingAgreement['id'],
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_PAYPAL,
             'billing_address_id' => $address['id'],
         ]);
 
@@ -1768,7 +1764,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $customer = $this->fakeUser();
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $this->permissionServiceMock->method('canOrThrow')
             ->willReturn(true);
@@ -1833,7 +1829,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
@@ -1892,7 +1888,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $address = $this->fakeAddress([
-            'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+            'type' => ConfigService::$billingAddressType,
             'brand' => 'recordeo',
             'user_id' => $userId,
             'state' => '',
@@ -1912,7 +1908,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'payment_gateway_name' => 'recordeo',
         ]);
 
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $paymentMethodsCc = [];
 
@@ -1933,7 +1929,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $paymentMethodsCc[$paymentMethodTwo['id']] = $paymentMethodTwo;
 
         $paymentMethodThree = $this->fakePaymentMethod([
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_PAYPAL,
             'method_id' => $paypalAgreement['id'],
             'billing_address_id' => $address['id'],
         ]);

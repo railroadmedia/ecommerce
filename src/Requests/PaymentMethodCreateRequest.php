@@ -2,7 +2,7 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 
 class PaymentMethodCreateRequest extends FormRequest
 {
@@ -25,10 +25,10 @@ class PaymentMethodCreateRequest extends FormRequest
     {
         return [
             'method_type' => 'required|max:255',
-            'card_token'  => 'required_if:method_type,' . PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'card_token'  => 'required_if:method_type,' . PaymentMethod::TYPE_CREDIT_CARD,
             'gateway'     => 'required',
-            'token'       => 'required_if:method_type,' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
-            'address_id'  => 'required_if:method_type,' . PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'token'       => 'required_if:method_type,' . PaymentMethod::TYPE_PAYPAL,
+            'address_id'  => 'required_if:method_type,' . PaymentMethod::TYPE_PAYPAL,
             'user_id'     => 'required_without:customer_id',
             'customer_id' => 'required_without:user_id'
         ];

@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
@@ -15,7 +16,7 @@ use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
+// use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
@@ -161,14 +162,14 @@ class RefundJsonController extends BaseController
 
         $refundExternalId = null;
 
-        if ($paymentMethod->getMethodType() == PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE) {
+        if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
             $refundExternalId = $this->stripePaymentGateway->refund(
                 $request->input('data.attributes.gateway_name'),
                 $request->input('data.attributes.refund_amount'),
                 $payment->getExternalId(),
                 $request->input('data.attributes.note')
             );
-        } else if ($paymentMethod->getMethodType() == PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE) {
+        } else if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
             $refundExternalId = $this->payPalPaymentGateway->refund(
                 $request->input('data.attributes.refund_amount'),
                 $payment->getCurrency(),

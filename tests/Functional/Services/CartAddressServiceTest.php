@@ -1,9 +1,10 @@
 <?php
 
 use Illuminate\Session\Store;
+use Railroad\Ecommerce\Entities\Structures\Address;
+use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
-use Railroad\Ecommerce\Entities\Structures\Address;
 
 class CartAddressServiceTest extends EcommerceTestCase
 {
@@ -19,72 +20,38 @@ class CartAddressServiceTest extends EcommerceTestCase
         $this->session = $this->app->make(Store::class);
     }
 
-    public function test_get_address_null()
-    {
-        $srv = $this->app->make(CartAddressService::class);
-
-        $this->session->flush();
-
-        $address = $srv->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
-
-        $this->assertEquals(null, $address);
-    }
-
     public function test_get_address_location_default()
     {
-        $srv = $this->app->make(CartAddressService::class);
-
         $this->session->flush();
 
-        $address = $srv->getAddress(CartAddressService::BILLING_ADDRESS_TYPE);
+        $srv = $this->app->make(CartAddressService::class);
+
+        $address = $srv->getBillingAddress();
 
         $this->assertEquals(Address::class, get_class($address));
     }
 
     public function test_get_address_stored()
     {
-        $srv = $this->app->make(CartAddressService::class);
-
         $this->session->flush();
 
         $storedAddress = new Address($this->faker->word, $this->faker->word);
 
-        $addressType = CartAddressService::SHIPPING_ADDRESS_TYPE;
+        $cart = Cart::fromSession();
 
-        $this->session->put(
-            CartAddressService::SESSION_KEY . $addressType,
-            $storedAddress
-        );
+        $cart->setShippingAddress($storedAddress);
 
-        $address = $srv->getAddress(CartAddressService::SHIPPING_ADDRESS_TYPE);
+        $cart->toSession();
+
+        $srv = $this->app->make(CartAddressService::class);
+
+        $address = $srv->getShippingAddress();
 
         $this->assertEquals($storedAddress, $address);
     }
 
-    public function test_set_address()
-    {
-        $srv = $this->app->make(CartAddressService::class);
-
-        $this->session->flush();
-
-        $address = new Address($this->faker->word, $this->faker->word);
-
-        $addressType = CartAddressService::SHIPPING_ADDRESS_TYPE;
-
-        $srv->setAddress($address, $addressType);
-
-        $sessionKey = CartAddressService::SESSION_KEY . $addressType;
-
-        $sessionAddress = $this->session->has($sessionKey) ?
-                            $this->session->get($sessionKey) : null;
-
-        $this->assertEquals($address, $sessionAddress);
-    }
-
     public function test_update_address_merge()
     {
-        $srv = $this->app->make(CartAddressService::class);
-
         $this->session->flush();
 
         $storedCountry = $this->faker->word;
@@ -92,24 +59,24 @@ class CartAddressServiceTest extends EcommerceTestCase
 
         $storedAddress = new Address($storedCountry, $storedState);
 
-        $addressType = CartAddressService::SHIPPING_ADDRESS_TYPE;
+        $cart = Cart::fromSession();
 
-        $this->session->put(
-            CartAddressService::SESSION_KEY . $addressType,
-            $storedAddress
-        );
+        $cart->setShippingAddress($storedAddress);
+
+        $cart->toSession();
 
         $newCountry = null;
         $newState = $this->faker->word;
 
         $newAddress = new Address($newCountry, $newState);
 
-        $srv->updateAddress($newAddress, $addressType);
+        $srv = $this->app->make(CartAddressService::class);
 
-        $sessionKey = CartAddressService::SESSION_KEY . $addressType;
+        $srv->updateShippingAddress($newAddress);
 
-        $sessionAddress = $this->session->has($sessionKey) ?
-                            $this->session->get($sessionKey) : null;
+        $cart = Cart::fromSession();
+
+        $sessionAddress = $cart->getShippingAddress();
 
         $this->assertEquals(Address::class, get_class($sessionAddress));
 
@@ -120,8 +87,6 @@ class CartAddressServiceTest extends EcommerceTestCase
 
     public function test_update_address_new()
     {
-        $srv = $this->app->make(CartAddressService::class);
-
         $this->session->flush();
 
         $storedCountry = $this->faker->word;
@@ -129,24 +94,24 @@ class CartAddressServiceTest extends EcommerceTestCase
 
         $storedAddress = new Address($storedCountry, $storedState);
 
-        $addressType = CartAddressService::SHIPPING_ADDRESS_TYPE;
+        $cart = Cart::fromSession();
 
-        $this->session->put(
-            CartAddressService::SESSION_KEY . $addressType,
-            $storedAddress
-        );
+        $cart->setShippingAddress($storedAddress);
+
+        $cart->toSession();
 
         $newCountry = $this->faker->word;
         $newState = $this->faker->word;
 
         $newAddress = new Address($newCountry, $newState);
 
-        $srv->updateAddress($newAddress, $addressType);
+        $srv = $this->app->make(CartAddressService::class);
 
-        $sessionKey = CartAddressService::SESSION_KEY . $addressType;
+        $srv->updateShippingAddress($newAddress);
 
-        $sessionAddress = $this->session->has($sessionKey) ?
-                            $this->session->get($sessionKey) : null;
+        $cart = Cart::fromSession();
+
+        $sessionAddress = $cart->getShippingAddress();
 
         $this->assertEquals(Address::class, get_class($sessionAddress));
 

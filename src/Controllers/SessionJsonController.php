@@ -30,8 +30,8 @@ class SessionJsonController extends BaseController
     public function storeAddress(SessionStoreAddressRequest $request)
     {
         $shippingKeys = [
-            'shipping-address-line-1' => 'streetLineOne',
-            'shipping-address-line-2' => 'streetLineTwo',
+            'shipping-address-line-1' => 'streetLine1',
+            'shipping-address-line-2' => 'streetLine2',
             'shipping-city' => 'city',
             'shipping-country' => 'country',
             'shipping-first-name' => 'firstName',
@@ -42,14 +42,13 @@ class SessionJsonController extends BaseController
 
         $requestShippingAddress = $request->only(array_keys($shippingKeys));
 
-        $shippingAddress = $this->cartAddressService->updateAddress(
+        $shippingAddress = $this->cartAddressService->updateShippingAddress(
             Address::createFromArray(
                 array_combine(
                     array_intersect_key($shippingKeys, $requestShippingAddress),
                     $requestShippingAddress
                 )
-            ),
-            ConfigService::$shippingAddressType
+            )
         );
 
         $billingKeys = [
@@ -61,14 +60,13 @@ class SessionJsonController extends BaseController
 
         $requestBillingAddress = $request->only(array_keys($billingKeys));
 
-        $billingAddress = $this->cartAddressService->updateAddress(
+        $billingAddress = $this->cartAddressService->updateBillingAddress(
             Address::createFromArray(
                 array_combine(
                     array_intersect_key($billingKeys, $requestBillingAddress),
                     $requestBillingAddress
                 )
-            ),
-            CartAddressService::BILLING_ADDRESS_TYPE
+            )
         );
 
         return ResponseService::sessionAddresses(

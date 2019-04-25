@@ -7,6 +7,7 @@ use Exception;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
@@ -128,10 +129,8 @@ class RenewalService
 
         $chargePrice = null;
 
-        if (
-            $paymentMethod->getMethodType() ==
-            PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE
-        ) {
+        if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
+
             try {
 
                 $vat = $this->taxService->vat(
