@@ -3,8 +3,8 @@
 namespace Railroad\Ecommerce\Tests\Functional\Services;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Services\TaxService;
-use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Ecommerce\Services\ConfigService;
 
@@ -25,9 +25,6 @@ class TaxServiceTest extends EcommerceTestCase
         $address = new Address();
 
         $address
-            ->setType($this->faker->word)
-            ->setBrand($this->faker->word)
-            ->setCreatedAt(Carbon::now())
             ->setCountry($country)
             ->setState($state);
 
@@ -44,9 +41,6 @@ class TaxServiceTest extends EcommerceTestCase
         $address = new Address();
 
         $address
-            ->setType($this->faker->word)
-            ->setBrand($this->faker->word)
-            ->setCreatedAt(Carbon::now())
             ->setCountry($country)
             ->setState($state);
 
@@ -66,9 +60,6 @@ class TaxServiceTest extends EcommerceTestCase
         $address = new Address();
 
         $address
-            ->setType($this->faker->word)
-            ->setBrand($this->faker->word)
-            ->setCreatedAt(Carbon::now())
             ->setCountry($country)
             ->setState($state);
 
@@ -86,9 +77,6 @@ class TaxServiceTest extends EcommerceTestCase
         $address = new Address();
 
         $address
-            ->setType($this->faker->word)
-            ->setBrand($this->faker->word)
-            ->setCreatedAt(Carbon::now())
             ->setCountry($country)
             ->setState($state);
 
