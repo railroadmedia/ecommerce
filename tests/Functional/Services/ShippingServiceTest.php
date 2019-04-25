@@ -89,7 +89,7 @@ class ShippingServiceTest extends EcommerceTestCase
 
     public function test_get_shipping_due_for_empty_cart()
     {
-        $this->assertEmpty($this->shippingService->getShippingDueForCart(new Cart()));
+        $this->assertEmpty($this->shippingService->getShippingDueForCart(new Cart(), 0));
     }
 
     public function test_get_shipping_due_for_single_product()
@@ -125,11 +125,11 @@ class ShippingServiceTest extends EcommerceTestCase
         $cartService = $this->app->make(CartService::class);
 
         $cartService->addToCart($product['sku'], $quantity);
-        $cartService->setBillingAddress(new Address($country));
+        $cartService->getCart()->setShippingAddress(new Address($country));
 
         $this->assertEquals(
             $price,
-            $this->shippingService->getShippingDueForCart($cartService->getCart())
+            $this->shippingService->getShippingDueForCart($cartService->getCart(), $cartService->getTotalItemCosts())
         );
     }
 
@@ -164,16 +164,16 @@ class ShippingServiceTest extends EcommerceTestCase
             ]
         );
 
-        $this->discountServiceMock->method('getTotalShippingDiscountedForCart')->willReturn($discounted);
+        $this->discountServiceMock->method('getTotalShippingDiscounted')->willReturn($discounted);
 
         $cartService = $this->app->make(CartService::class);
 
         $cartService->addToCart($product['sku'], $quantity);
-        $cartService->setBillingAddress(new Address($country));
+        $cartService->getCart()->setShippingAddress(new Address($country));
 
         $this->assertEquals(
             $price - $discounted,
-            $this->shippingService->getShippingDueForCart($cartService->getCart())
+            $this->shippingService->getShippingDueForCart($cartService->getCart(), $cartService->getTotalItemCosts())
         );
     }
 
@@ -229,11 +229,11 @@ class ShippingServiceTest extends EcommerceTestCase
 
         $cartService->addToCart($product1['sku'], $quantity);
         $cartService->addToCart($product2['sku'], $quantity);
-        $cartService->setBillingAddress(new Address($country));
+        $cartService->getCart()->setShippingAddress(new Address($country));
 
         $this->assertEquals(
             $price,
-            $this->shippingService->getShippingDueForCart($cartService->getCart())
+            $this->shippingService->getShippingDueForCart($cartService->getCart(), $cartService->getTotalItemCosts())
         );
     }
 
@@ -287,11 +287,11 @@ class ShippingServiceTest extends EcommerceTestCase
         $cartService = $this->app->make(CartService::class);
 
         $cartService->addToCart($product['sku'], $quantity);
-        $cartService->setBillingAddress(new Address($country));
+        $cartService->getCart()->setShippingAddress(new Address($country));
 
         $this->assertEquals(
             $price1,
-            $this->shippingService->getShippingDueForCart($cartService->getCart())
+            $this->shippingService->getShippingDueForCart($cartService->getCart(), $cartService->getTotalItemCosts())
         );
     }
 
