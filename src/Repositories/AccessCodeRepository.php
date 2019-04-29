@@ -5,8 +5,10 @@ namespace Railroad\Ecommerce\Repositories;
 use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
+use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 
 /**
  * Class AccessCodeRepository
@@ -18,60 +20,18 @@ use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
  *
  * @package Railroad\Ecommerce\Repositories
  */
-class AccessCodeRepository extends EntityRepository
+class AccessCodeRepository extends RepositoryBase
 {
+    use UseFormRequestQueryBuilder;
+
     /**
-     * AccessCodeRepository constructor.
+     * CreditCardRepository constructor.
      *
-     * @param EcommerceEntityManager $em
+     * @param EcommerceEntityManager $entityManager
      */
-    public function __construct(EcommerceEntityManager $em)
+    public function __construct(EcommerceEntityManager $entityManager)
     {
-        parent::__construct($em, $em->getClassMetadata(AccessCode::class));
-    }
-
-    /**
-     * @param string $alias
-     * @param null $indexBy
-     * @return FromRequestEcommerceQueryBuilder
-     */
-    public function createQueryBuilder($alias, $indexBy = null)
-    {
-        $queryBuilder = new FromRequestEcommerceQueryBuilder($this->_em);
-
-        $queryBuilder->select($alias)
-            ->from($this->_entityName, $alias, $indexBy);
-
-        return $queryBuilder;
-    }
-
-    /**
-     * @param $request
-     * @return AccessCode[]
-     */
-    public function indexByRequest(Request $request)
-    {
-        return $this->indexQueryBuilderByRequest($request)
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @param $request
-     * @return FromRequestEcommerceQueryBuilder
-     */
-    public function indexQueryBuilderByRequest(Request $request)
-    {
-        $alias = 'a';
-
-        $qb = $this->createQueryBuilder($alias);
-
-        $qb->paginateByRequest($request)
-            ->orderByRequest($request, $alias)
-            ->restrictBrandsByRequest($request, $alias)
-            ->select($alias);
-
-        return $qb;
+        parent::__construct($entityManager, $entityManager->getClassMetadata(AccessCode::class));
     }
 
     /**

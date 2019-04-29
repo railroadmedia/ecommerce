@@ -6,6 +6,7 @@ use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
  * Class ProductRepository
@@ -13,6 +14,16 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
  */
 class ProductRepository extends RepositoryBase
 {
+    /**
+     * CreditCardRepository constructor.
+     *
+     * @param EcommerceEntityManager $entityManager
+     */
+    public function __construct(EcommerceEntityManager $entityManager)
+    {
+        parent::__construct($entityManager, $entityManager->getClassMetadata(Product::class));
+    }
+    
     /**
      * @return Product[]
      */

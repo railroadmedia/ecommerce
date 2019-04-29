@@ -2,7 +2,9 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\ShippingOption;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
  * Class ShippingOptionRepository
@@ -10,6 +12,16 @@ use Railroad\Ecommerce\Entities\ShippingOption;
  */
 class ShippingOptionRepository extends RepositoryBase
 {
+    /**
+     * CreditCardRepository constructor.
+     *
+     * @param EcommerceEntityManager $entityManager
+     */
+    public function __construct(EcommerceEntityManager $entityManager)
+    {
+        parent::__construct($entityManager, $entityManager->getClassMetadata(ShippingOption::class));
+    }
+
     /**
      * Get the first active shipping cost based on country and total weight
      *

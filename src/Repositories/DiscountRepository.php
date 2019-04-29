@@ -3,7 +3,9 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\ORMException;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\DiscountService;
 
 /**
@@ -13,6 +15,16 @@ use Railroad\Ecommerce\Services\DiscountService;
  */
 class DiscountRepository extends RepositoryBase
 {
+    /**
+     * CreditCardRepository constructor.
+     *
+     * @param EcommerceEntityManager $entityManager
+     */
+    public function __construct(EcommerceEntityManager $entityManager)
+    {
+        parent::__construct($entityManager, $entityManager->getClassMetadata(Discount::class));
+    }
+
     /**
      * Returns Discount with specified id
      *

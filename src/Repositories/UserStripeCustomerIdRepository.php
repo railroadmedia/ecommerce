@@ -2,7 +2,9 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\UserStripeCustomerId;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
  * Class UserStripeCustomerIdRepository
@@ -10,7 +12,15 @@ use Railroad\Ecommerce\Entities\UserStripeCustomerId;
  */
 class UserStripeCustomerIdRepository extends RepositoryBase
 {
-
+    /**
+     * CreditCardRepository constructor.
+     *
+     * @param EcommerceEntityManager $entityManager
+     */
+    public function __construct(EcommerceEntityManager $entityManager)
+    {
+        parent::__construct($entityManager, $entityManager->getClassMetadata(UserStripeCustomerId::class));
+    }
     /**
      * @param int $userId
      *

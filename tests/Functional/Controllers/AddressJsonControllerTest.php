@@ -71,6 +71,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
             ],
             $response->decodeResponseJson()
         );
+
     }
 
     public function test_pull_multiple_brands()

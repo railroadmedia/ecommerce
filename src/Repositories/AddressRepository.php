@@ -2,7 +2,9 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
  * Class AddressRepository
@@ -10,6 +12,16 @@ use Railroad\Ecommerce\Entities\Address;
  */
 class AddressRepository extends RepositoryBase
 {
+    /**
+     * CreditCardRepository constructor.
+     *
+     * @param EcommerceEntityManager $entityManager
+     */
+    public function __construct(EcommerceEntityManager $entityManager)
+    {
+        parent::__construct($entityManager, $entityManager->getClassMetadata(Address::class));
+    }
+
     /**
      * @param $id
      * @return Address|null
