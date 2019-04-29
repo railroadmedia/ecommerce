@@ -554,7 +554,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $response->getStatusCode());
 
         // assert that the address was deleted
-        $this->assertDatabaseMissing(
+        $this->assertSoftDeleted(
             ConfigService::$tableAddress,
             $address
         );
@@ -890,7 +890,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         // assert that address was deleted from database
-        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
+        $this->assertSoftDeleted(ConfigService::$tableAddress, $address);
     }
 
     public function test_customer_create_address()
@@ -1101,7 +1101,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         //assert database content
-        $this->assertDatabaseMissing(ConfigService::$tableAddress, $address);
+        $this->assertSoftDeleted(ConfigService::$tableAddress, $address);
     }
 
     public function test_customer_can_not_delete_others_address()

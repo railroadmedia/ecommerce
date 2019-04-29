@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -23,10 +24,11 @@ use Railroad\Ecommerce\Services\ConfigService;
  *     }
  * )
  * @ORM\HasLifecycleCallbacks
+ * @Gedmo\Mapping\Annotation\SoftDeleteable(fieldName="deletedAt", timeAware=false)
  */
 class Address implements AddressInterface
 {
-    use TimestampableEntity;
+    use TimestampableEntity, SoftDeleteableEntity;
 
     CONST BILLING_ADDRESS_TYPE = 'billing';
     CONST SHIPPING_ADDRESS_TYPE = 'shipping';

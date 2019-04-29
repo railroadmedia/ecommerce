@@ -14,6 +14,8 @@ use Doctrine\ORM\Configuration;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Doctrine\ORM\Mapping\UnderscoreNamingStrategy;
 use Gedmo\DoctrineExtensions;
+use Gedmo\SoftDeleteable\Filter\SoftDeleteableFilter;
+use Gedmo\SoftDeleteable\SoftDeleteableListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Railroad\Doctrine\TimestampableListener;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
@@ -246,9 +248,14 @@ class EcommerceServiceProvider extends ServiceProvider
         $timestampableListener = new TimestampableListener();
         $timestampableListener->setAnnotationReader($cachedAnnotationReader);
 
+        // soft deletes
+        $softDeletesListener = new SoftDeleteableListener();
+        $softDeletesListener->setAnnotationReader($cachedAnnotationReader);
+
         // event manager
         $eventManager = new EventManager();
         $eventManager->addEventSubscriber($timestampableListener);
+        $eventManager->addEventSubscriber($softDeletesListener);
 
         // orm config
         $ormConfiguration = new Configuration();
@@ -260,6 +267,7 @@ class EcommerceServiceProvider extends ServiceProvider
         $ormConfiguration->setAutoGenerateProxyClasses(config('usora.development_mode'));
         $ormConfiguration->setMetadataDriverImpl($driverChain);
         $ormConfiguration->setNamingStrategy(new UnderscoreNamingStrategy(CASE_LOWER));
+        $ormConfiguration->addFilter('soft-deleteable', SoftDeleteableFilter::class);
 
         // database config
         if (config('ecommerce.database_in_memory') !== true) {
@@ -280,6 +288,8 @@ class EcommerceServiceProvider extends ServiceProvider
         }
 
         $entityManager = EcommerceEntityManager::create($databaseOptions, $ormConfiguration, $eventManager);
+
+        $entityManager->getFilters()->enable('soft-deleteable');
 
         app()->instance(EcommerceEntityManager::class, $entityManager);
     }

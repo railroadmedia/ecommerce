@@ -94,12 +94,12 @@ class AddressJsonController extends Controller
         $currentUserId = $this->userProvider->getCurrentUserId();
 
         if ($request->get('user_id') !== $currentUserId) {
-            $this->permissionService->canOrThrow($currentUserId, 'pull.address');
+            $this->permissionService->canOrThrow($currentUserId, 'pull.addresses');
         }
 
         if (!empty($request->get('customer_id'))) {
             // todo: customers
-            $this->permissionService->canOrThrow($currentUserId, 'pull.address');
+            $this->permissionService->canOrThrow($currentUserId, 'pull.addresses');
 
         } else {
             $user = $this->userProvider->getUserById(
@@ -172,6 +172,7 @@ class AddressJsonController extends Controller
             )
         );
 
+        // todo: make this more readable
         throw_if(
             ((!$this->permissionService->canOrThrow(
                     auth()->id(),
