@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\ShippingOption;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -16,7 +17,7 @@ use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class ShippingOptionController extends BaseController
+class ShippingOptionController extends Controller
 {
     /**
      * @var EcommerceEntityManager
@@ -52,8 +53,6 @@ class ShippingOptionController extends BaseController
         PermissionService $permissionService,
         ShippingOptionRepository $shippingOptionRepository
     ) {
-        parent::__construct();
-
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->permissionService = $permissionService;

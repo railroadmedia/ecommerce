@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Services\CartAddressService;
@@ -15,7 +16,7 @@ use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class OrderFormJsonController extends BaseController
+class OrderFormJsonController extends Controller
 {
     /**
      * @var CartService
@@ -65,8 +66,6 @@ class OrderFormJsonController extends BaseController
         PaymentPlanService $paymentPlanService,
         PermissionService $permissionService
     ) {
-        parent::__construct();
-
         $this->cartAddressService = $cartAddressService;
         $this->cartService = $cartService;
         $this->currencyService = $currencyService;

@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
@@ -23,7 +24,7 @@ use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class RefundJsonController extends BaseController
+class RefundJsonController extends Controller
 {
     /**
      * @var EcommerceEntityManager
@@ -108,8 +109,6 @@ class RefundJsonController extends BaseController
         UserProductService $userProductService,
         UserProductRepository $userProductRepository
     ) {
-        parent::__construct();
-
         $this->entityManager = $entityManager;
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->orderItemRepository = $orderItemRepository;

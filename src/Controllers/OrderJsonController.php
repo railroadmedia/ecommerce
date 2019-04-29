@@ -7,6 +7,7 @@ use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query\Expr\Join;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -23,7 +24,7 @@ use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class OrderJsonController extends BaseController
+class OrderJsonController extends Controller
 {
     /**
      * @var EcommerceEntityManager
@@ -81,8 +82,6 @@ class OrderJsonController extends BaseController
         RefundRepository $refundRepository,
         SubscriptionRepository $subscriptionRepository
     ) {
-        parent::__construct();
-
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->orderRepository = $orderRepository;

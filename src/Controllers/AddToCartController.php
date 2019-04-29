@@ -4,10 +4,11 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
 use Railroad\Ecommerce\Services\CartService;
 
-class AddToCartController extends BaseController
+class AddToCartController extends Controller
 {
     /**
      * @var CartService
@@ -21,8 +22,6 @@ class AddToCartController extends BaseController
      */
     public function __construct(CartService $cartService)
     {
-        parent::__construct();
-
         $this->cartService = $cartService;
     }
 
@@ -34,6 +33,7 @@ class AddToCartController extends BaseController
      * @param Request $request
      *
      * @return RedirectResponse
+     * @throws \Throwable
      */
     public function addToCart(Request $request)
     {

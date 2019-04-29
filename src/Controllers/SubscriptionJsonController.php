@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -22,7 +23,7 @@ use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class SubscriptionJsonController extends BaseController
+class SubscriptionJsonController extends Controller
 {
     /**
      * @var EcommerceEntityManager
@@ -79,8 +80,6 @@ class SubscriptionJsonController extends BaseController
         UserProductService $userProductService,
         UserProviderInterface $userProvider
     ) {
-        parent::__construct();
-
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->permissionService = $permissionService;

@@ -3,13 +3,14 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Throwable;
 
-class OrderFormController extends BaseController
+class OrderFormController extends Controller
 {
     /**
      * @var \Railroad\Ecommerce\Services\OrderFormService
@@ -24,8 +25,6 @@ class OrderFormController extends BaseController
     public function __construct(
         OrderFormService $orderFormService
     ) {
-        parent::__construct();
-
         $this->orderFormService = $orderFormService;
     }
 

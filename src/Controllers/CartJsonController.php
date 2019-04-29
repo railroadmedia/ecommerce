@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
 use Railroad\Ecommerce\Services\CartService;
@@ -10,7 +11,7 @@ use Railroad\Ecommerce\Services\ResponseService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class CartJsonController extends BaseController
+class CartJsonController extends Controller
 {
     /**
      * @var CartService
@@ -24,8 +25,6 @@ class CartJsonController extends BaseController
      */
     public function __construct(CartService $cartService)
     {
-        parent::__construct();
-
         $this->cartService = $cartService;
     }
 

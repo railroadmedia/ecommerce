@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
@@ -16,7 +17,7 @@ use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class ShippingFulfillmentJsonController extends BaseController
+class ShippingFulfillmentJsonController extends Controller
 {
     /**
      * @var EcommerceEntityManager
@@ -45,8 +46,6 @@ class ShippingFulfillmentJsonController extends BaseController
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         PermissionService $permissionService
     ) {
-        parent::__construct();
-
         $this->entityManager = $entityManager;
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->permissionService = $permissionService;

@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Repositories\OrderItemRepository;
@@ -18,9 +19,8 @@ use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\Resora\Decorators\Decorator;
 use Railroad\Resora\Entities\Entity;
-// use Railroad\Usora\Repositories\UserRepository;
 
-class StatsController extends BaseController
+class StatsController extends Controller
 {
     /**
      * @var PaymentRepository

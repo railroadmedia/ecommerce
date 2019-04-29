@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -16,7 +17,7 @@ use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class DiscountCriteriaJsonController extends BaseController
+class DiscountCriteriaJsonController extends Controller
 {
     /**
      * @var DiscountCriteriaRepository
@@ -59,8 +60,6 @@ class DiscountCriteriaJsonController extends BaseController
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService
     ) {
-        parent::__construct();
-
         $this->discountCriteriaRepository = $discountCriteriaRepository;
         $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;

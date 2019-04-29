@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -21,7 +22,7 @@ use Railroad\RemoteStorage\Services\RemoteStorageService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class ProductJsonController extends BaseController
+class ProductJsonController extends Controller
 {
     /**
      * @var DiscountRepository
@@ -78,8 +79,6 @@ class ProductJsonController extends BaseController
         ProductRepository $productRepository,
         RemoteStorageService $remoteStorageService
     ) {
-        parent::__construct();
-
         $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;

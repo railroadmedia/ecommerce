@@ -4,13 +4,14 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Services\ResponseService;
 use Throwable;
 
-class StripeWebhookController extends BaseController
+class StripeWebhookController extends Controller
 {
     /**
      * @var CreditCardRepository

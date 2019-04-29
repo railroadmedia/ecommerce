@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
@@ -30,7 +31,7 @@ use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class PaymentJsonController extends BaseController
+class PaymentJsonController extends Controller
 {
     /**
      * @var CreditCardRepository
@@ -120,8 +121,6 @@ class PaymentJsonController extends BaseController
         SubscriptionRepository $subscriptionRepository,
         UserPaymentMethodsRepository $userPaymentMethodsRepository
     ) {
-        parent::__construct();
-
         $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;

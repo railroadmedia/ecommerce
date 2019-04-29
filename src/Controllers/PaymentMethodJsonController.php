@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
@@ -39,7 +40,7 @@ use Stripe\Error\Card;
 use Exception;
 use Throwable;
 
-class PaymentMethodJsonController extends BaseController
+class PaymentMethodJsonController extends Controller
 {
     /**
      * @var AddressRepository
@@ -138,8 +139,6 @@ class PaymentMethodJsonController extends BaseController
         UserPaymentMethodsRepository $userPaymentMethodsRepository,
         UserProviderInterface $userProvider
     ) {
-        parent::__construct();
-
         $this->addressRepository = $addressRepository;
         $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;

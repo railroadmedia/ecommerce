@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\ShippingCostsWeightRange;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -15,7 +16,7 @@ use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
-class ShippingCostsWeightRangeController extends BaseController
+class ShippingCostsWeightRangeController extends Controller
 {
     /**
      * @var EcommerceEntityManager
@@ -51,8 +52,6 @@ class ShippingCostsWeightRangeController extends BaseController
         PermissionService $permissionService,
         ShippingCostsWeightRangeRepository $shippingCostsWeightRangeRepository
     ) {
-        parent::__construct();
-
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->permissionService = $permissionService;
