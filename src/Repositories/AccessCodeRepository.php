@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
+use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -36,21 +37,9 @@ class AccessCodeRepository extends RepositoryBase
 
     /**
      * @param Request $request
-     * @return AccessCode[]
+     * @return ResultsQueryBuilderComposite
      */
     public function searchByRequest(Request $request)
-    {
-        return $this->searchQueryBuilderByRequest($request)
-            ->getQuery()
-            ->setParameter('term', '%' . $request->get('term') . '%')
-            ->getResult();
-    }
-
-    /**
-     * @param Request $request
-     * @return FromRequestEcommerceQueryBuilder
-     */
-    public function searchQueryBuilderByRequest(Request $request)
     {
         $alias = 'a';
 
@@ -63,8 +52,13 @@ class AccessCodeRepository extends RepositoryBase
             ->andWhere(
                 $qb->expr()
                     ->like($alias . '.code', ':term')
-            );
+            )
+            ->setParameter('term', '%' . $request->get('term') . '%');
 
-        return $qb;
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
     }
 }

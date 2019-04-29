@@ -74,7 +74,8 @@ class AddressJsonController extends Controller
         PermissionService $permissionService,
         JsonApiHydrator $jsonApiHydrator,
         UserProviderInterface $userProvider
-    ) {
+    )
+    {
         $this->addressRepository = $addressRepository;
         $this->entityManager = $entityManager;
         $this->orderRepository = $orderRepository;
@@ -93,31 +94,19 @@ class AddressJsonController extends Controller
         $currentUserId = $this->userProvider->getCurrentUserId();
 
         if ($request->get('user_id') !== $currentUserId) {
-            $this->permissionService->canOrThrow($currentUserId, 'pull.user.payment.method');
+            $this->permissionService->canOrThrow($currentUserId, 'pull.user.address');
         }
 
         $user = $this->userProvider->getUserById(
-                $request->get('user_id', $currentUserId)
-            );
+            $request->get('user_id', $currentUserId)
+        );
 
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
-        $qb = $this->addressRepository->createQueryBuilder('a');
+        $addressesAndQueryBuilder = $this->addressRepository->indexByRequest($request, $user);
 
-        $qb
-            ->select(['a'])
-            ->where($qb->expr()->in('a.brand', ':brands'))
-            ->andWhere($qb->expr()->eq('a.user', ':user'))
-            ->setParameter(
-                'brands',
-                $request->get('brands', [ConfigService::$availableBrands])
-            )
-            ->setParameter('user', $user);
-
-        $addresses = $qb->getQuery()->getResult();
-
-        return ResponseService::address($addresses);
+        return ResponseService::address(
+            $addressesAndQueryBuilder->getResults(),
+            $addressesAndQueryBuilder->getQueryBuilder()
+        );
     }
 
     /**
@@ -135,13 +124,10 @@ class AddressJsonController extends Controller
     public function store(AddressCreateRequest $request)
     {
         throw_if(
-            (
-                !$this->permissionService->canOrThrow(
+            (!$this->permissionService->canOrThrow(
                     auth()->id(),
                     'store.address'
-                ) &&
-                $request->input('data.relationships.user.data.id') != auth()->id()
-            ),
+                ) && $request->input('data.relationships.user.data.id') != auth()->id()),
             new NotAllowedException('This action is unauthorized.')
         );
 
@@ -181,29 +167,21 @@ class AddressJsonController extends Controller
         );
 
         throw_if(
-            (
-                (
-                    !$this->permissionService->canOrThrow(
-                        auth()->id(),
-                        'update.address'
-                    )
-                ) &&
-                (
-                    (
-                        $address->getUser() &&
-                        auth()->id() !== intval($address->getUser()->getId())
-                    ) ||
-                    (
-                        $address->getCustomer() &&
+            ((!$this->permissionService->canOrThrow(
+                    auth()->id(),
+                    'update.address'
+                )) &&
+                (($address->getUser() &&
+                        auth()->id() !==
+                        intval(
+                            $address->getUser()
+                                ->getId()
+                        )) ||
+                    ($address->getCustomer() &&
                         $request->input('data.relationships.customer.data.id') !==
-                            $address->getCustomer()->getId()
-                    ) ||
-                    (
-                        is_null($address->getUser()) &&
-                        is_null($address->getCustomer())
-                    )
-                )
-            ),
+                        $address->getCustomer()
+                            ->getId()) ||
+                    (is_null($address->getUser()) && is_null($address->getCustomer())))),
             new NotAllowedException('This action is unauthorized.')
         );
 
@@ -239,28 +217,21 @@ class AddressJsonController extends Controller
         );
 
         throw_if(
-            (
-                (
-                    !$this->permissionService->canOrThrow(
-                        auth()->id(),
-                        'delete.address'
-                    )
-                ) &&
-                (
-                    (
-                        $address->getUser() &&
-                        auth()->id() !== intval($address->getUser()->getId())
-                    ) ||
-                    (
-                        $address->getCustomer() &&
-                        $request->get('customer_id', 0) !== $address->getCustomer()->getId()
-                    ) ||
-                    (
-                        is_null($address->getUser()) &&
-                        is_null($address->getCustomer())
-                    )
-                )
-            ),
+            ((!$this->permissionService->canOrThrow(
+                    auth()->id(),
+                    'delete.address'
+                )) &&
+                (($address->getUser() &&
+                        auth()->id() !==
+                        intval(
+                            $address->getUser()
+                                ->getId()
+                        )) ||
+                    ($address->getCustomer() &&
+                        $request->get('customer_id', 0) !==
+                        $address->getCustomer()
+                            ->getId()) ||
+                    (is_null($address->getUser()) && is_null($address->getCustomer())))),
             new NotAllowedException('This action is unauthorized.')
         );
 

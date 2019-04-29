@@ -91,14 +91,14 @@ class AccessCodeJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
-        $accessCodes = $this->accessCodeRepository->indexByRequest($request);
+        $accessCodesAndBuilder = $this->accessCodeRepository->indexByRequest($request);
 
-        $products = $this->productRepository->byAccessCodes($accessCodes);
+        $products = $this->productRepository->byAccessCodes($accessCodesAndBuilder->getResults());
 
         return ResponseService::decoratedAccessCode(
-            $accessCodes,
+            $accessCodesAndBuilder->getResults(),
             key_array_of_entities_by($products),
-            $this->accessCodeRepository->indexQueryBuilderByRequest($request)
+            $accessCodesAndBuilder->getQueryBuilder()
         );
     }
 
@@ -115,14 +115,14 @@ class AccessCodeJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.access_codes');
 
-        $accessCodes = $this->accessCodeRepository->searchByRequest($request);
+        $accessCodesAndBuilder = $this->accessCodeRepository->searchByRequest($request);
 
-        $products = $this->productRepository->byAccessCodes($accessCodes);
+        $products = $this->productRepository->byAccessCodes($accessCodesAndBuilder->getResults());
 
         return ResponseService::decoratedAccessCode(
-            $accessCodes,
+            $accessCodesAndBuilder->getResults(),
             key_array_of_entities_by($products),
-            $this->accessCodeRepository->indexQueryBuilderByRequest($request)
+            $accessCodesAndBuilder->getQueryBuilder()
         );
     }
 

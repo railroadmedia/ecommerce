@@ -186,6 +186,8 @@ return [
             'pull.access_codes',
             'claim.access_codes',
             'release.access_codes',
+
+            'pull.user.address',
         ],
     ],
 

@@ -2,9 +2,15 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Illuminate\Http\Request;
+use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
+use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
+use Railroad\Ecommerce\Services\ConfigService;
 
 /**
  * Class AddressRepository
@@ -12,6 +18,10 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  */
 class AddressRepository extends RepositoryBase
 {
+    use UseFormRequestQueryBuilder {
+        indexByRequest as baseIndexByRequest;
+    }
+
     /**
      * CreditCardRepository constructor.
      *
@@ -39,5 +49,33 @@ class AddressRepository extends RepositoryBase
                 ->setResultCacheDriver($this->arrayCache);
 
         return $q->getResult()[0] ?? null;
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return ResultsQueryBuilderComposite
+     */
+    public function indexByRequest(Request $request, User $user)
+    {
+        $alias = 'a';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->restrictBrandsByRequest($request, $alias)
+            ->select($alias)
+            ->andWhere(
+                $qb->expr()
+                    ->eq('a.user', ':user')
+            )
+            ->setParameter('user', $user);
+
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
     }
 }

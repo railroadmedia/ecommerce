@@ -7,7 +7,6 @@ use Doctrine\Common\Cache\RedisCache;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\Entity;
 use Doctrine\ORM\QueryBuilder;
-use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
