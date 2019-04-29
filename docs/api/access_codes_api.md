@@ -1,6 +1,7 @@
 # Access Codes API
 
 [Table Schema](../schema/table-schema.md#table-ecommerce_access_codes)
+
 The column names should be used as the keys for requests.
 
 # Form Endpoints
