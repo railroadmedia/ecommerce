@@ -107,7 +107,7 @@ Returns the entire cart.
 
 <!--- -------------------------------------------------------------------------------------------------------------- -->
 
-### `{ PUT /*/json/remove-from-cart/{PRODUCT SKU} }`
+### `{ DELETE /*/json/remove-from-cart/{PRODUCT SKU} }`
 
 Remove item from the cart.
 
