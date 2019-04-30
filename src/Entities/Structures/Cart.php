@@ -301,6 +301,8 @@ class Cart implements Serializable
      */
     public function unserialize($data)
     {
+        $data = unserialize($data);
+
         $this->replaceItems($data['items']);
         $this->setLocked($data['locked']);
         $this->setPromoCode($data['promo-code']);

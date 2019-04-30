@@ -317,6 +317,8 @@ class Address implements AddressInterface, Serializable
      */
     public function unserialize($data)
     {
+        $data = unserialize($data);
+
         $this->setZip($data['zip_or_postal_code']);
         $this->setStreetLine2($data['street_line_two']);
         $this->setStreetLine1($data['street_line_one']);

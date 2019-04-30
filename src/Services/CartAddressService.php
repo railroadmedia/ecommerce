@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Location\Services\LocationService;
 
@@ -31,8 +30,6 @@ class CartAddressService
     {
         $this->cartService = $cartService;
         $this->locationService = $locationService;
-
-        $this->cartService->refreshCart();
     }
 
     /**
@@ -40,6 +37,8 @@ class CartAddressService
      */
     public function getShippingAddress(): Address
     {
+        $this->cartService->refreshCart();
+
         $cart = $this->cartService->getCart();
 
         $address = $cart->getShippingAddress();
@@ -61,6 +60,8 @@ class CartAddressService
      */
     public function getBillingAddress(): Address
     {
+        $this->cartService->refreshCart();
+
         $cart = $this->cartService->getCart();
 
         $address = $cart->getBillingAddress();
@@ -78,10 +79,14 @@ class CartAddressService
     }
 
     /**
+     * @param Address $address
+     *
      * @return Address
      */
     public function updateShippingAddress(Address $address): Address
     {
+        $this->cartService->refreshCart();
+
         $currentAddress = $this->getShippingAddress();
 
         $address->merge($currentAddress);
@@ -96,10 +101,14 @@ class CartAddressService
     }
 
     /**
+     * @param Address $address
+     *
      * @return Address
      */
     public function updateBillingAddress(Address $address): Address
     {
+        $this->cartService->refreshCart();
+
         $currentAddress = $this->getBillingAddress();
 
         $address->merge($currentAddress);

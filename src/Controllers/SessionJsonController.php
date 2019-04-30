@@ -36,7 +36,7 @@ class SessionJsonController extends Controller
             'shipping-first-name' => 'firstName',
             'shipping-last-name' => 'lastName',
             'shipping-region' => 'state',
-            'shipping-zip-or-postal-code' => 'zipOrPostalCode',
+            'shipping-zip-or-postal-code' => 'zip',
         ];
 
         $requestShippingAddress = $request->only(array_keys($shippingKeys));
@@ -53,7 +53,7 @@ class SessionJsonController extends Controller
         $billingKeys = [
             'billing-country' => 'country',
             'billing-region' => 'state',
-            'billing-zip-or-postal-code' => 'zipOrPostalCode',
+            'billing-zip-or-postal-code' => 'zip',
             'billing-email' => 'email',
         ];
 

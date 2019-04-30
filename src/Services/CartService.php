@@ -546,8 +546,9 @@ class CartService
                 'subscription_interval_type' => $product->getSubscriptionIntervalType(),
                 'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
                 'price_before_discounts' => $product->getPrice(),
-                'price_after_discounts' => $product->getPrice() -
-                    $this->discountService->getItemDiscountedAmount($this->cart, $cartItem->getSku(), $totalItemCostDue, $shippingDue),
+                'price_after_discounts' => round($product->getPrice() -
+                    $this->discountService->getItemDiscountedAmount($this->cart, $cartItem->getSku(), $totalItemCostDue, $shippingDue), 2),
+                'requires_shipping' => ($product->getWeight() != null && $product->getWeight() > 0)
             ];
         }
 
