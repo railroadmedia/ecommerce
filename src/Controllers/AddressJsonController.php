@@ -223,6 +223,7 @@ class AddressJsonController extends Controller
             )
         );
 
+        // todo: make this more readable
         throw_if(
             ((!$this->permissionService->canOrThrow(
                     auth()->id(),

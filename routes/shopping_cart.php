@@ -7,7 +7,7 @@ Route::group([
     'middleware' => config('ecommerce.route_middleware_public_groups'),
 ], function () {
 
-    Route::get('/add-to-cart', Railroad\Ecommerce\Controllers\AddToCartController::class . '@addToCart')
+    Route::get('/add-to-cart', Railroad\Ecommerce\Controllers\CartController::class . '@addToCart')
         ->name('shopping-cart.add-to-cart');
 
     Route::put('/json/add-to-cart',

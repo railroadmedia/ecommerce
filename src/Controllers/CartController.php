@@ -8,7 +8,7 @@ use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
 use Railroad\Ecommerce\Services\CartService;
 
-class AddToCartController extends Controller
+class CartController extends Controller
 {
     /**
      * @var CartService

@@ -7,7 +7,7 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
-class AddToCartControllerTest extends EcommerceTestCase
+class CartControllerTest extends EcommerceTestCase
 {
     /**
      * @var Store
