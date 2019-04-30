@@ -154,6 +154,84 @@ class PaymentMethodJsonController extends Controller
         $this->userProvider = $userProvider;
     }
 
+    // todo: add func to get customers payment methods
+
+    // todo: move database logic to repository
+    /**
+     * Get all user's payment methods with all the method details: credit card or paypal billing agreement
+     *
+     * @param int $userId
+     *
+     * @return Fractal
+     *
+     * @throws Throwable
+     */
+    public function getUserPaymentMethods($userId)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.user.payment.method');
+
+        /**
+         * @var $user \Railroad\Ecommerce\Entities\User
+         */
+        $user = $this->userProvider->getUserById($userId);
+
+        throw_if(
+            is_null($user),
+            new NotFoundException(
+                'Pull failed, user not found with id: ' .
+                $userId
+            )
+        );
+
+        /**
+         * @var $qb \Doctrine\ORM\QueryBuilder
+         */
+        $qb = $this->userPaymentMethodsRepository->createQueryBuilder('upm');
+
+        $userPaymentMethods = $qb
+            ->select(['upm', 'pm'])
+            ->join('upm.paymentMethod', 'pm')
+            ->where($qb->expr()->eq('upm.user', ':user'))
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+
+        $creditCardIds = [];
+        $paypalIds = [];
+
+        /**
+         * @var $userPaymentMethod \Railroad\Ecommerce\Entities\UserPaymentMethods
+         */
+        foreach ($userPaymentMethods as $userPaymentMethod) {
+
+            /**
+             * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
+             */
+            $paymentMethod = $userPaymentMethod->getPaymentMethod();
+
+            $type = $paymentMethod->getMethodType();
+
+            if ($type == PaymentMethod::TYPE_PAYPAL) {
+                $paypalIds[] = $paymentMethod->getMethodId();
+            } else {
+                $creditCardIds[] = $paymentMethod->getMethodId();
+            }
+        }
+
+        $creditCardsMap = $this->creditCardRepository
+            ->getCreditCardsMap($creditCardIds);
+
+        $paypalAgreementsMap = $this->paypalBillingAgreementRepository
+            ->getPaypalAgreementsMap($paypalIds);
+
+        return ResponseService::userPaymentMethods(
+            $userPaymentMethods,
+            $creditCardsMap,
+            $paypalAgreementsMap
+        );
+    }
+
+    // todo: refactor
     /**
      * Call the service method to create a new payment method based on request parameters.
      * Return - NotFoundException if the request method type parameter it's not defined (paypal or credit card)
@@ -170,7 +248,6 @@ class PaymentMethodJsonController extends Controller
         $userId = auth()->id();
 
         if ($this->permissionService->can(auth()->id(), 'create.payment.method')) {
-
             $userId = $request->get('user_id');
         }
 
@@ -578,79 +655,5 @@ class PaymentMethodJsonController extends Controller
         $this->entityManager->flush();
 
         return ResponseService::empty(204);
-    }
-
-    /**
-     * Get all user's payment methods with all the method details: credit card or paypal billing agreement
-     *
-     * @param int $userId
-     *
-     * @return Fractal
-     *
-     * @throws Throwable
-     */
-    public function getUserPaymentMethods($userId)
-    {
-        $this->permissionService->canOrThrow(auth()->id(), 'pull.user.payment.method');
-
-        /**
-         * @var $user \Railroad\Ecommerce\Entities\User
-         */
-        $user = $this->userProvider->getUserById($userId);
-
-        throw_if(
-            is_null($user),
-            new NotFoundException(
-                'Pull failed, user not found with id: ' .
-                $userId
-            )
-        );
-
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
-        $qb = $this->userPaymentMethodsRepository->createQueryBuilder('upm');
-
-        $userPaymentMethods = $qb
-            ->select(['upm', 'pm'])
-            ->join('upm.paymentMethod', 'pm')
-            ->where($qb->expr()->eq('upm.user', ':user'))
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->getResult();
-
-        $creditCardIds = [];
-        $paypalIds = [];
-
-        /**
-         * @var $userPaymentMethod \Railroad\Ecommerce\Entities\UserPaymentMethods
-         */
-        foreach ($userPaymentMethods as $userPaymentMethod) {
-
-            /**
-             * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
-             */
-            $paymentMethod = $userPaymentMethod->getPaymentMethod();
-
-            $type = $paymentMethod->getMethodType();
-
-            if ($type == PaymentMethod::TYPE_PAYPAL) {
-                $paypalIds[] = $paymentMethod->getMethodId();
-            } else {
-                $creditCardIds[] = $paymentMethod->getMethodId();
-            }
-        }
-
-        $creditCardsMap = $this->creditCardRepository
-                                    ->getCreditCardsMap($creditCardIds);
-
-        $paypalAgreementsMap = $this->paypalBillingAgreementRepository
-                                        ->getPaypalAgreementsMap($paypalIds);
-
-        return ResponseService::userPaymentMethods(
-            $userPaymentMethods,
-            $creditCardsMap,
-            $paypalAgreementsMap
-        );
     }
 }

@@ -40,13 +40,18 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'card_token',
-                    'detail' => 'The card token field is required when method type is credit_card.',
+                    'detail' => 'The card token field is required.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'gateway',
                     'detail' => 'The gateway field is required.',
                     'title' => 'Validation failed.'
+                ],
+                [
+                    'source' => 'address_id',
+                    'detail' => 'The address id field is required.',
+                    'title' => 'Validation failed.',
                 ],
                 [
                     'source' => 'user_id',
@@ -82,6 +87,16 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     'source' => 'method_type',
                     'detail' => 'The method type field is required.',
                     'title' => 'Validation failed.'
+                ],
+                [
+                    "title" => "Validation failed.",
+                    "source" => "card_token",
+                    "detail" => "The card token field is required.",
+                ],
+                [
+                    "title" => "Validation failed.",
+                    "source" => "address_id",
+                    "detail" => "The address id field is required.",
                 ]
             ],
             $results->decodeResponseJson('errors')
@@ -128,6 +143,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
+        $address = $this->fakeAddress();
+
         $payload = [
             'card_token' => 'tok_mastercard',
             'gateway' => $gateway,
@@ -135,7 +152,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'currency' => $currency,
             'set_default' => true,
             'user_email' => $customer['email'],
-            'user_id' => $customer['id']
+            'user_id' => $customer['id'],
+            'address_id' => $address['id'],
         ];
 
         $results = $this->call(
@@ -257,6 +275,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
+        $address = $this->fakeAddress();
+
         $payload = [
             'card_token' => 'tok_mastercard',
             'gateway' => $gateway,
@@ -264,7 +284,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'currency' => $currency,
             'set_default' => false,
             'user_email' => $customer['email'],
-            'user_id' => $customer['id']
+            'user_id' => $customer['id'],
+            'address_id' => $address['id'],
         ];
 
         $results = $this->call(
@@ -380,6 +401,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 )
             );
 
+        $address = $this->fakeAddress();
+
         $this->expectException(PaymentFailedException::class);
 
         $results = $this->call(
@@ -392,6 +415,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'user_id' => $userId,
                 'gateway' => 'drumeo',
                 'user_email' => $this->faker->email,
+                'address_id' => $address['id'],
             ]
         );
 
@@ -2010,7 +2034,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $results = $this->call('GET', '/user-payment-method/' . $userId);
 
         $decodedResult = $results->decodeResponseJson();
-
 
         // assert 'data' response block, including related ids
         // the 'included' associated data is not assert here
