@@ -54,6 +54,7 @@ class CartControllerTest extends EcommerceTestCase
                         'subscription_interval_count' => $product['subscription_interval_count'],
                         'price_before_discounts' => $product['price'],
                         'price_after_discounts' => $product['price'],
+                        'requires_shipping' => true,
                     ]
                 ],
                 'discounts' => [],
@@ -203,6 +204,7 @@ class CartControllerTest extends EcommerceTestCase
                         'subscription_interval_count' => $productOne['subscription_interval_count'],
                         'price_before_discounts' => $productOne['price'],
                         'price_after_discounts' => $productOne['price'],
+                        'requires_shipping' => true,
                     ],
                     [
                         'sku' => $productTwo['sku'],
@@ -215,6 +217,7 @@ class CartControllerTest extends EcommerceTestCase
                         'subscription_interval_count' => $productTwo['subscription_interval_count'],
                         'price_before_discounts' => $productTwo['price'],
                         'price_after_discounts' => $productTwo['price'],
+                        'requires_shipping' => true,
                     ],
                 ],
                 'discounts' => [],
@@ -338,6 +341,7 @@ class CartControllerTest extends EcommerceTestCase
                         'subscription_interval_count' => $productOne['subscription_interval_count'],
                         'price_before_discounts' => $productOne['price'],
                         'price_after_discounts' => $productOne['price'],
+                        'requires_shipping' => true,
                     ],
                     [
                         'sku' => $productTwo['sku'],
@@ -350,6 +354,7 @@ class CartControllerTest extends EcommerceTestCase
                         'subscription_interval_count' => $productTwo['subscription_interval_count'],
                         'price_before_discounts' => $productTwo['price'],
                         'price_after_discounts' => $productTwo['price'],
+                        'requires_shipping' => true,
                     ],
                 ],
                 'discounts' => [],
