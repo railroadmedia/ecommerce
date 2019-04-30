@@ -42,7 +42,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         // response asserts
 
         // assert response status code
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(201, $response->getStatusCode());
 
         // assert cart structure
         $response->assertJsonStructure(
@@ -85,6 +85,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'price_before_discounts'      => $product['price'],
                 'price_after_discounts'       => $product['price'],
+                'requires_shipping'           => true,
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -129,7 +130,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         ]);
 
         // assert response status code
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(403, $response->getStatusCode());
 
         // assert cart structure
         $response->assertJsonStructure(
@@ -188,7 +189,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         ]);
 
         // assert response status code
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(403, $response->getStatusCode());
 
         // assert cart structure
         $response->assertJsonStructure(
@@ -305,6 +306,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'subscription_interval_count' => $productOne['subscription_interval_count'],
                 'price_before_discounts'      => $productOne['price'],
                 'price_after_discounts'       => $productOne['price'],
+                'requires_shipping'           => true,
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -321,6 +323,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'subscription_interval_count' => $productTwo['subscription_interval_count'],
                 'price_before_discounts'      => $productTwo['price'],
                 'price_after_discounts'       => $productTwo['price'],
+                'requires_shipping'           => true,
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );
@@ -364,7 +367,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         ]);
 
         // assert response status code
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(403, $response->getStatusCode());
 
         // assert cart structure
         $response->assertJsonStructure(
@@ -444,7 +447,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         ]);
 
         // assert response status code
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(403, $response->getStatusCode());
 
         // assert cart structure
         $response->assertJsonStructure(
@@ -488,6 +491,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'subscription_interval_count' => $productOne['subscription_interval_count'],
                 'price_before_discounts'      => $productOne['price'],
                 'price_after_discounts'       => $productOne['price'],
+                'requires_shipping'           => true,
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -504,6 +508,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'subscription_interval_count' => $productTwo['subscription_interval_count'],
                 'price_before_discounts'      => $productTwo['price'],
                 'price_after_discounts'       => $productTwo['price'],
+                'requires_shipping'           => true,
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );
@@ -628,6 +633,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'subscription_interval_count' => $productTwo['subscription_interval_count'],
                 'price_before_discounts'      => $productTwo['price'],
                 'price_after_discounts'       => $productTwo['price'],
+                'requires_shipping'           => true,
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -736,6 +742,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'price_before_discounts'      => $product['price'],
                 'price_after_discounts'       => $product['price'],
+                'requires_shipping'           => true,
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -909,6 +916,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'price_before_discounts'      => $product['price'],
                 'price_after_discounts'       => $product['price'],
+                'requires_shipping'           => true,
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1017,6 +1025,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'price_before_discounts'      => $product['price'],
                 'price_after_discounts'       => $product['price'],
+                'requires_shipping'           => true,
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1126,6 +1135,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'price_before_discounts'      => $product['price'],
                 'price_after_discounts'       => $product['price'],
+                'requires_shipping'           => true,
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );

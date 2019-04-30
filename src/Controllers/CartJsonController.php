@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Illuminate\Http\JsonResponse as JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
@@ -35,9 +36,9 @@ class CartJsonController extends Controller
      *
      * @param  Request  $request
      *
+     * @return JsonResponse
      * @throws Throwable
      *
-     * @return Fractal
      */
     public function addCartItem(Request $request)
     {
@@ -67,9 +68,11 @@ class CartJsonController extends Controller
 
         if (!empty($errors)) {
             $cartArray['errors'] = $errors;
+
+            return ResponseService::cart($cartArray)->respond(403);
         }
 
-        return ResponseService::cart($cartArray);
+        return ResponseService::cart($cartArray)->respond(201);
     }
 
     /**
@@ -77,9 +80,9 @@ class CartJsonController extends Controller
      *
      * @param  string $productSku
      *
+     * @return JsonResponse
      * @throws Throwable
      *
-     * @return Fractal
      */
     public function removeCartItem(string $productSku)
     {
@@ -97,7 +100,7 @@ class CartJsonController extends Controller
             $cartArray['errors'] = $errors;
         }
 
-        return ResponseService::cart($cartArray);
+        return ResponseService::cart($cartArray)->respond(200);
     }
 
     /**
@@ -108,9 +111,9 @@ class CartJsonController extends Controller
      * @param  string  $productSku
      * @param  int  $quantity
      *
-     * @throws Throwable
+     * @return JsonResponse
+     *@throws Throwable
      *
-     * @return Fractal
      */
     public function updateCartItemQuantity(string $productSku, int $quantity)
     {
@@ -128,6 +131,6 @@ class CartJsonController extends Controller
             $cartArray['errors'] = $errors;
         }
 
-        return ResponseService::cart($cartArray);
+        return ResponseService::cart($cartArray)->respond(200);
     }
 }

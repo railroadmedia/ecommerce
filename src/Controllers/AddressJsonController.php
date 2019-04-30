@@ -86,7 +86,7 @@ class AddressJsonController extends Controller
 
     /**
      * @param Request $request
-     * @return Fractal
+     * @return JsonResponse
      * @throws NotAllowedException
      */
     public function index(Request $request)
@@ -101,7 +101,8 @@ class AddressJsonController extends Controller
             // todo: customers
             $this->permissionService->canOrThrow($currentUserId, 'pull.addresses');
 
-        } else {
+        }
+        else {
             $user = $this->userProvider->getUserById(
                 $request->get('user_id', $currentUserId)
             );
@@ -112,7 +113,8 @@ class AddressJsonController extends Controller
         return ResponseService::address(
             $addressesAndBuilder->getResults(),
             $addressesAndBuilder->getQueryBuilder()
-        );
+        )
+            ->respond(200);
     }
 
     /**
@@ -177,10 +179,7 @@ class AddressJsonController extends Controller
             ((!$this->permissionService->canOrThrow(
                     auth()->id(),
                     'update.address'
-                )) &&
-                (($address->getUser() &&
-                        auth()->id() !==
-                        intval(
+                )) && (($address->getUser() && auth()->id() !== intval(
                             $address->getUser()
                                 ->getId()
                         )) ||
@@ -228,10 +227,7 @@ class AddressJsonController extends Controller
             ((!$this->permissionService->canOrThrow(
                     auth()->id(),
                     'delete.address'
-                )) &&
-                (($address->getUser() &&
-                        auth()->id() !==
-                        intval(
+                )) && (($address->getUser() && auth()->id() !== intval(
                             $address->getUser()
                                 ->getId()
                         )) ||

@@ -71,7 +71,7 @@ class DiscountCriteriaJsonController extends Controller
      * @param \Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest $request
      * @param int $discountId
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws Throwable
      */
@@ -99,14 +99,14 @@ class DiscountCriteriaJsonController extends Controller
 
         $this->entityManager->flush();
 
-        return ResponseService::discountCriteria($discountCriteria);
+        return ResponseService::discountCriteria($discountCriteria)->respond(201);
     }
 
     /**
      * @param \Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest $request
      * @param int $discountCriteriaId
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws Throwable
      */
@@ -132,7 +132,7 @@ class DiscountCriteriaJsonController extends Controller
 
         $this->entityManager->flush();
 
-        return ResponseService::discountCriteria($discountCriteria);
+        return ResponseService::discountCriteria($discountCriteria)->respond(200);
     }
 
     /**

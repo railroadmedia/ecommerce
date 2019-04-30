@@ -83,7 +83,7 @@ class AccessCodeJsonController extends Controller
      *
      * @param Request $request
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws Throwable
      */
@@ -99,7 +99,8 @@ class AccessCodeJsonController extends Controller
             $accessCodesAndBuilder->getResults(),
             key_array_of_entities_by($products),
             $accessCodesAndBuilder->getQueryBuilder()
-        );
+        )
+            ->respond(200);
     }
 
     /**
@@ -107,7 +108,7 @@ class AccessCodeJsonController extends Controller
      *
      * @param Request $request
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws Throwable
      */
@@ -123,7 +124,8 @@ class AccessCodeJsonController extends Controller
             $accessCodesAndBuilder->getResults(),
             key_array_of_entities_by($products),
             $accessCodesAndBuilder->getQueryBuilder()
-        );
+        )
+            ->respond(200);
     }
 
     /**

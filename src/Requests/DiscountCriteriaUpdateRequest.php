@@ -40,11 +40,11 @@ class DiscountCriteriaUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'data.attributes.name' => 'required|max:255',
-            'data.attributes.type' => 'required|max:255',
+            'data.attributes.name' => 'max:255',
+            'data.attributes.type' => 'max:255',
             'data.relationships.product.id' => 'nullable|exists:'.ConfigService::$tableProduct.',id',
-            'data.attributes.min' => 'required',
-            'data.attributes.max' => 'required'
+            'data.attributes.min' => '',
+            'data.attributes.max' => ''
         ];
     }
 
