@@ -186,6 +186,7 @@ class ProductJsonController extends Controller
         return ResponseService::product($product)->respond();
     }
 
+    // todo: use soft delete
     /**
      * Delete a product that it's not connected to orders or discounts and return a JsonResponse.
      *
@@ -206,20 +207,6 @@ class ProductJsonController extends Controller
                 'Delete failed, product not found with id: ' . $productId
             );
         }
-
-        $orderItems = $this->orderItemRepository->findByProduct($product);
-
-        throw_if(
-            (count($orderItems) > 0),
-            new NotAllowedException('Delete failed, exists orders that contain the selected product.')
-        );
-
-        $discounts = $this->discountRepository->findByProduct($product);
-
-        throw_if(
-            (count($discounts) > 0),
-            new NotAllowedException('Delete failed, exists discounts defined for the selected product.')
-        );
 
         $this->entityManager->remove($product);
         $this->entityManager->flush();

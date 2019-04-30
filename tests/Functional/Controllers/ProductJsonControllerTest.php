@@ -7,7 +7,7 @@ use Illuminate\Http\UploadedFile;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
-class ProductControllerTest extends EcommerceTestCase
+class ProductJsonControllerTest extends EcommerceTestCase
 {
     protected function setUp()
     {
@@ -426,30 +426,6 @@ class ProductControllerTest extends EcommerceTestCase
         // assert that the proper error messages are received
         $errors = [
             'detail' => 'Delete failed, exists orders that contain the selected product.',
-            'title' => 'Not allowed.'
-        ];
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
-    }
-
-    public function test_delete_product_when_exists_product_discounts()
-    {
-        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
-
-        $userId = $this->createAndLogInNewUser();
-
-        $product = $this->fakeProduct();
-
-        $discount = $this->fakeDiscount([
-            'product_id' => $product['id']
-        ]);
-
-        $results = $this->call('DELETE', '/product/' . $product['id']);
-
-        $this->assertEquals(403, $results->status());
-
-        // assert that the proper error messages are received
-        $errors = [
-            'detail' => 'Delete failed, exists discounts defined for the selected product.',
             'title' => 'Not allowed.'
         ];
         $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
