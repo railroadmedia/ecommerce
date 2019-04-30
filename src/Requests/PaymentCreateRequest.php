@@ -26,8 +26,6 @@ class PaymentCreateRequest extends FormRequest
         return [
             'data.type' => 'json data type',
             'data.attributes.due' => 'due',
-            'data.attributes.paid' => 'paid',
-            'data.attributes.refunded' => 'refunded',
             'data.relationships.paymentMethod.data.id' => 'payment method',
             'data.relationships.order.data.id' => 'order',
             'data.relationships.subscription.data.id' => 'subscription'
@@ -44,8 +42,6 @@ class PaymentCreateRequest extends FormRequest
         return [
             'data.type' => 'in:payment',
             'data.attributes.due' => 'required|numeric',
-            'data.attributes.paid' => 'numeric|nullable',
-            'data.attributes.refunded' => 'numeric|nullable',
             'data.relationships.paymentMethod.data.id' =>
                 'numeric|nullable|exists:'.ConfigService::$tablePaymentMethod.',id',
             'data.relationships.order.data.id' => 'numeric|exists:'.ConfigService::$tableOrder.',id',
@@ -61,8 +57,6 @@ class PaymentCreateRequest extends FormRequest
         return $this->only(
             [
                 'data.attributes.due',
-                'data.attributes.paid',
-                'data.attributes.refunded',
                 'data.relationships.paymentMethod',
                 'data.relationships.order',
                 'data.relationships.subscription'

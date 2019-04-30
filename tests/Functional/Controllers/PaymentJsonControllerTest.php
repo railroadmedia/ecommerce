@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
@@ -31,7 +32,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $due = $this->faker->numberBetween(0, 1000);
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
@@ -134,7 +135,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $due = $this->faker->numberBetween(0, 1000);
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
@@ -378,7 +379,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $customer = $this->fakeUser();
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
         );
@@ -481,7 +482,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->createAndLogInNewUser();
 
         $due = $this->faker->numberBetween(0, 1000);
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $currency = $this->getCurrency();
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
@@ -540,7 +541,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
         $due = $this->faker->numberBetween(0, 1000);
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $currency = $this->getCurrency();
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
@@ -597,7 +598,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
         $due = $this->faker->numberBetween(0, 1000);
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $currency = $this->getCurrency();
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
@@ -656,7 +657,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
         $due = $this->faker->numberBetween(0, 1000);
         $currency = $this->getCurrency();
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
         );
@@ -880,7 +881,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
         $due = $this->faker->numberBetween(0, 1000);
         $currency = $this->getCurrency();
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $message = 'charge failed';
 
         $gateway = $this->faker->randomElement(
@@ -971,7 +972,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
         $due = $this->faker->numberBetween(0, 1000);
         $currency = $this->getCurrency();
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = $this->faker->randomElement(
             array_keys(ConfigService::$paymentGateways['stripe'])
@@ -1061,6 +1062,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
+        dd($response->getContent());
+
         $decodedResponse = $response->decodeResponseJson();
 
         $this->assertArraySubset(
@@ -1075,7 +1078,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
         $due = $this->faker->numberBetween(0, 1000);
         $currency = $this->getCurrency();
-        $methodType = PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE;
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $cycles = 1;
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());

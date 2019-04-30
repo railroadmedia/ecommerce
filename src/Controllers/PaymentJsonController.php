@@ -134,6 +134,7 @@ class PaymentJsonController extends Controller
         $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
     }
 
+    // todo: refactor database logic to repository
     /**
      * @param PaymentIndexRequest $request
      *
@@ -206,6 +207,7 @@ class PaymentJsonController extends Controller
         return ResponseService::payment($payments, $qb);
     }
 
+    // todo: refactor database logic to repository
     /**
      * Call the method that save a new payment and create the links with subscription or order if it's necessary.
      * Return a JsonResponse with the new created payment record, in JSON format
