@@ -52,11 +52,12 @@ class DiscountJsonController extends Controller
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService
-    ) {
+    )
+    {
         $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
-        $this->permissionService  = $permissionService;
+        $this->permissionService = $permissionService;
     }
 
     /**
@@ -64,7 +65,7 @@ class DiscountJsonController extends Controller
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws Throwable
      */
@@ -72,35 +73,10 @@ class DiscountJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.discounts');
 
-        // parse request params and prepare db query parms
-        $alias = 'd';
-        $aliasProduct = 'p';
-        $orderBy = $request->get('order_by_column', 'created_at');
-        if (
-            strpos($orderBy, '_') !== false
-            || strpos($orderBy, '-') !== false
-        ) {
-            $orderBy = camel_case($orderBy);
-        }
-        $orderBy = $alias . '.' . $orderBy;
-        $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
+        $discountsAndBuilder = $this->discountRepository->indexByRequest($request);
 
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
-        $qb = $this->entityManager->createQueryBuilder($alias);
-
-        $qb
-            ->select([$alias, $aliasProduct])
-            ->from(Discount::class, $alias)
-            ->join($alias . '.product', $aliasProduct)
-            ->setMaxResults($request->get('limit', 10))
-            ->setFirstResult($first)
-            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'));
-
-        $discounts = $qb->getQuery()->getResult();
-
-        return ResponseService::discount($discounts, $qb);
+        return ResponseService::discount($discountsAndBuilder->getResults(), $discountsAndBuilder->getQueryBuilder())
+            ->respond(200);
     }
 
     /**
@@ -108,7 +84,7 @@ class DiscountJsonController extends Controller
      *
      * @param int $discountId
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws Throwable
      */
@@ -116,41 +92,21 @@ class DiscountJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.discounts');
 
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
-        $qb = $this->entityManager->createQueryBuilder('d');
-
-        $qb
-            ->select(['d', 'p'])
-            ->from(Discount::class, 'd')
-            ->join('d.product', 'p')
-            ->where($qb->expr()->eq('d.id', ':id'));
-
-        /**
-         * @var $q \Doctrine\ORM\Query
-         */
-        $q = $qb->getQuery();
-
-        $q->setParameter('id', $discountId);
-
-        /**
-         * @var $discount Discount
-         */
-        $discount = $q->getOneOrNullResult();
+        $discount = $this->discountRepository->find($discountId);
 
         throw_if(
             is_null($discount),
             new NotFoundException('Pull failed, discount not found with id: ' . $discountId)
         );
 
-        return ResponseService::discount($discount);
+        return ResponseService::discount($discount)
+            ->respond(200);
     }
 
     /**
      * @param DiscountCreateRequest $request
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws Throwable
      */
@@ -165,14 +121,14 @@ class DiscountJsonController extends Controller
         $this->entityManager->persist($discount);
         $this->entityManager->flush();
 
-        return ResponseService::discount($discount);
+        return ResponseService::discount($discount)->respond(201);
     }
 
     /**
      * @param DiscountUpdateRequest $request
      * @param int $discountId
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws Throwable
      */
@@ -191,7 +147,7 @@ class DiscountJsonController extends Controller
 
         $this->entityManager->flush();
 
-        return ResponseService::discount($discount);
+        return ResponseService::discount($discount)->respond(200);
     }
 
     /**

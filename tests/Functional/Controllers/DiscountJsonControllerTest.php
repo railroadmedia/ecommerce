@@ -82,7 +82,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         );
 
         // assert the response status code
-        $this->assertEquals(200, $results->getStatusCode());
+        $this->assertEquals(201, $results->getStatusCode());
 
         // assert that the new created discount it's returned in response in JSON format
         $this->assertArraySubset(

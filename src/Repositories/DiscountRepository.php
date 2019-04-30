@@ -3,9 +3,12 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\ORMException;
+use Illuminate\Http\Request;
+use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 use Railroad\Ecommerce\Services\DiscountService;
 
 /**
@@ -15,6 +18,8 @@ use Railroad\Ecommerce\Services\DiscountService;
  */
 class DiscountRepository extends RepositoryBase
 {
+    use UseFormRequestQueryBuilder;
+    
     /**
      * CreditCardRepository constructor.
      *
@@ -26,18 +31,42 @@ class DiscountRepository extends RepositoryBase
     }
 
     /**
+     * @param $request
+     * @return ResultsQueryBuilderComposite
+     */
+    public function indexByRequest(Request $request)
+    {
+        $alias = 'd';
+        $aliasProduct = 'p';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->select([$alias, $aliasProduct])
+            ->join($alias . '.product', $aliasProduct);
+
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
+    }
+
+    /**
      * Returns Discount with specified id
      *
      * @param int $id
-     * @return Discount[]
+     * @return Discount
      * @throws ORMException
      */
     public function find(int $id): ?Discount
     {
         $qb = $this->entityManager->createQueryBuilder();
 
-        $qb->select(['d'])
+        $qb->select(['d', 'p'])
             ->from(Discount::class, 'd')
+            ->leftJoin('d.product', 'p')
             ->where(
                 $qb->expr()
                     ->eq('d.id', ':id')

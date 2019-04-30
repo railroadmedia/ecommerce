@@ -57,7 +57,6 @@ class DiscountCreateRequest extends FormRequest
     {
         return $this->only(
             [
-                'data.attributes.type',
                 'data.attributes.name',
                 'data.attributes.description',
                 'data.attributes.type',
