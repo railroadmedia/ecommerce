@@ -1,6 +1,6 @@
 # Addresses API
 
-[Table Schema](../schema/table-schema.md#table-ecommerce_discount_criteria)
+[Table Schema](../schema/table-schema.md#table-ecommerce_discounts)
 
 The column names should be used as the keys for requests.
 
@@ -17,7 +17,7 @@ List discounts.
 
 ### Request Parameters
 
-[Paginated](request_pagination_parameters.md) | [Ordered](request_ordering_parameters.md) | [Branded](request_brand_filtering_parameters.md)
+[Paginated](request_pagination_parameters.md) | [Ordered](request_ordering_parameters.md)
 <br>
 
 |Type|Key|Required|Default|Options|Notes|
