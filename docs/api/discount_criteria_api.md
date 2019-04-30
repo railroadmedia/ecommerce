@@ -1,4 +1,4 @@
-# Addresses API
+# Discount Criteria API
 
 [Table Schema](../schema/table-schema.md#table-ecommerce_discount_criteria)
 

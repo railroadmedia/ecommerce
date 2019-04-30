@@ -91,6 +91,7 @@ class OrderJsonController extends Controller
         $this->subscriptionRepository = $subscriptionRepository;
     }
 
+    // todo: refactor query logic to repository
     /**
      * Pull orders between two dates
      *
@@ -160,6 +161,7 @@ class OrderJsonController extends Controller
         return ResponseService::order($orders, $qb);
     }
 
+    // todo: refactor query logic to repository
     /**
      * Show order
      *
