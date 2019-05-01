@@ -264,7 +264,7 @@ class EcommerceServiceProvider extends ServiceProvider
         $ormConfiguration->setResultCacheImpl($redisCache);
         $ormConfiguration->setProxyDir($proxyDir);
         $ormConfiguration->setProxyNamespace('DoctrineProxies');
-        $ormConfiguration->setAutoGenerateProxyClasses(config('usora.development_mode'));
+        $ormConfiguration->setAutoGenerateProxyClasses(config('ecommerce.development_mode'));
         $ormConfiguration->setMetadataDriverImpl($driverChain);
         $ormConfiguration->setNamingStrategy(new UnderscoreNamingStrategy(CASE_LOWER));
         $ormConfiguration->addFilter('soft-deleteable', SoftDeleteableFilter::class);
