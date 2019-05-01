@@ -7,7 +7,7 @@ Route::group([
     'middleware' => config('ecommerce.route_middleware_logged_in_groups'),
 ], function () {
 
-    Route::get('/product', Railroad\Ecommerce\Controllers\ProductJsonController::class . '@index')
+    Route::get('/products', Railroad\Ecommerce\Controllers\ProductJsonController::class . '@index')
         ->name('product.index');
 
     Route::get('/product/{productId}', Railroad\Ecommerce\Controllers\ProductJsonController::class . '@show')

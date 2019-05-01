@@ -82,8 +82,6 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        dd($response->getContent());
-
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertEquals(

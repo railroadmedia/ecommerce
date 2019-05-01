@@ -94,8 +94,6 @@ class StatsController extends Controller
         OrderPaymentRepository $orderPaymentRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         SubscriptionRepository $subscriptionRepository,
-        CustomerRepository $customerRepository,
-        UserRepository $userRepository,
         AddressRepository $addressRepository,
         PaymentMethodRepository $paymentMethodRepository,
         PermissionService $permissionService
@@ -107,8 +105,6 @@ class StatsController extends Controller
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->subscriptionRepository = $subscriptionRepository;
-        $this->customerRepository = $customerRepository;
-        $this->userRepository = $userRepository;
         $this->addressRepository = $addressRepository;
         $this->paymentMethodRepository = $paymentMethodRepository;
         $this->permissionService = $permissionService;
