@@ -407,30 +407,6 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
     }
 
-    public function test_delete_product_when_exists_product_order()
-    {
-        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
-
-        $userId = $this->createAndLogInNewUser();
-
-        $product = $this->fakeProduct();
-
-        $orderItem = $this->fakeOrderItem([
-            'product_id' => $product['id']
-        ]);
-
-        $results = $this->call('DELETE', '/product/' . $product['id']);
-
-        $this->assertEquals(403, $results->status());
-
-        // assert that the proper error messages are received
-        $errors = [
-            'detail' => 'Delete failed, exists orders that contain the selected product.',
-            'title' => 'Not allowed.'
-        ];
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
-    }
-
     public function test_delete_product()
     {
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
@@ -493,7 +469,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'GET',
-            '/product',
+            '/products',
             [
                 'page' => $page,
                 'limit' => $limit,
@@ -525,7 +501,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         $filenameRelative = $this->getFilenameRelativeFromAbsolute($filenameAbsolute);
 
-        $response = $this->call('PUT', '/product/upload/', [
+        $response = $this->call('PUT', '/product/upload', [
             'target' => $filenameRelative,
             'file'   => new UploadedFile($filenameAbsolute, $filenameRelative)
         ]);
@@ -588,7 +564,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'GET',
-            '/product',
+            '/products',
             [
                 'page' => $page,
                 'limit' => $limit,
@@ -834,7 +810,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'GET',
-            '/product?brands[]='.$productFirstBrand['brand'].'&brands[]='.$productSecondBrand['brand']
+            '/products?brands[]='.$productFirstBrand['brand'].'&brands[]='.$productSecondBrand['brand']
         );
 
         //assert response status code
@@ -855,7 +831,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
             'brand' => $this->faker->word
         ]);
 
-        $results = $this->call('GET','/product');
+        $results = $this->call('GET','/products');
 
         //assert response status code
         $this->assertEquals(200, $results->getStatusCode());

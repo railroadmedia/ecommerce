@@ -2200,10 +2200,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->setStreetLine1($shippingAddress['street_line_1'])
             ->setCity($shippingAddress['city']);
 
-        $this->cartAddressService->setAddress(
-            $sessionShippingAddress,
-            CartAddressService::SHIPPING_ADDRESS_TYPE
-        );
+        $this->cartService->refreshCart();
+        $this->cartService->getCart()
+            ->setShippingAddress($sessionShippingAddress);
 
         $requestData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
@@ -4858,7 +4857,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tableAddress,
             [
-                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+                'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                 'brand' => ConfigService::$brand,
                 'user_id' => null,
                 'customer_id' => $customerId,
@@ -6531,7 +6530,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tableAddress,
             [
-                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+                'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                 'brand' => ConfigService::$brand,
                 'user_id' => $randomUser['id'],
                 'customer_id' => null,
@@ -6701,7 +6700,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tableAddress,
             [
-                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+                'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                 'brand' => ConfigService::$brand,
                 'user_id' => $randomUser['id'],
                 'customer_id' => null,
@@ -6854,7 +6853,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tableAddress,
             [
-                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+                'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                 'brand' => $brand,
                 'user_id' => $randomUser['id'],
                 'customer_id' => null,

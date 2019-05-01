@@ -220,7 +220,7 @@ class OrderFormControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tableAddress,
             [
-                'type' => CartAddressService::BILLING_ADDRESS_TYPE,
+                'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                 'brand' => ConfigService::$brand,
                 'user_id' => $userId,
                 'zip' => $orderData['billing_zip_or_postal_code'],

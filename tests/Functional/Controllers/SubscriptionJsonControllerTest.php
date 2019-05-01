@@ -1044,8 +1044,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             '/subscription-renew/' . $subscription['id']
         );
 
-        dd($results->getContent());
-
         $this->assertDatabaseHas(
             ConfigService::$tableUserProduct,
             [

@@ -28,7 +28,7 @@ Route::group([
         ])
         ->name('product.delete');
 
-    Route::put('/product/upload/', [
+    Route::put('/product/upload', [
             'uses' => Railroad\Ecommerce\Controllers\ProductJsonController::class . '@uploadThumbnail',
         ])
         ->name('product.upload');

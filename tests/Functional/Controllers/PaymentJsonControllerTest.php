@@ -297,7 +297,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = $this->fakePaymentMethod([
             'method_id' => $paypalAgreement['id'],
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_PAYPAL,
             'currency' => $currency
         ]);
 
@@ -814,7 +814,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = $this->fakePaymentMethod([
             'method_id' => $paypalAgreement['id'],
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_PAYPAL,
             'currency' => $currency
         ]);
 
@@ -1061,8 +1061,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'order_id' => $order['id']
             ]
         );
-
-        dd($response->getContent());
 
         $decodedResponse = $response->decodeResponseJson();
 
