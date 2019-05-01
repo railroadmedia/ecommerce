@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -957,7 +958,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
             'method_id' => $creditCard['id'],
         ]);
 
@@ -1022,7 +1023,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_PAYPAL,
             'method_id' => $paypalBillingAgreement['id'],
         ]);
 
@@ -1042,6 +1043,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'POST',
             '/subscription-renew/' . $subscription['id']
         );
+
+        dd($results->getContent());
 
         $this->assertDatabaseHas(
             ConfigService::$tableUserProduct,
@@ -1096,7 +1099,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_type' => PaymentMethodService::CREDIT_CARD_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
             'method_id' => $creditCard['id'],
         ]);
 
@@ -1173,7 +1176,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_type' => PaymentMethodService::PAYPAL_PAYMENT_METHOD_TYPE,
+            'method_type' => PaymentMethod::TYPE_PAYPAL,
             'method_id' => $paypalBillingAgreement['id'],
         ]);
 

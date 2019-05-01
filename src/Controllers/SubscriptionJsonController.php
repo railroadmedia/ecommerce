@@ -89,6 +89,7 @@ class SubscriptionJsonController extends Controller
         $this->userProvider = $userProvider;
     }
 
+    // todo: refactor database logic to repository
     /**
      * Pull subscriptions paginated
      *

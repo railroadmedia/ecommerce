@@ -194,7 +194,7 @@ class RenewalService
             }
         } elseif (
             $paymentMethod->getMethodType() ==
-            PaymentMethod::TYPE_CREDIT_CARD
+            PaymentMethod::TYPE_PAYPAL
         ) {
 
             try {
@@ -247,6 +247,15 @@ class RenewalService
 
                 $paymentException = $exception;
             }
+        } else {
+            $payment
+                ->setTotalPaid(0)
+                ->setExternalProvider('unknown')
+                ->setExternalId($transactionId ?? null)
+                ->setStatus('failed')
+                ->setMessage('Invalid payment method.')
+                ->setCurrency($currency)
+                ->setConversionRate(ConfigService::$defaultCurrencyConversionRates[$currency] ?? 0);
         }
 
         // save payment data in DB
