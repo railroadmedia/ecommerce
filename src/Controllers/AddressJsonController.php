@@ -174,22 +174,28 @@ class AddressJsonController extends Controller
             )
         );
 
-        // todo: make this more readable
-        throw_if(
-            ((!$this->permissionService->canOrThrow(
-                    auth()->id(),
-                    'update.address'
-                )) && (($address->getUser() && auth()->id() !== intval(
-                            $address->getUser()
-                                ->getId()
-                        )) ||
-                    ($address->getCustomer() &&
-                        $request->input('data.relationships.customer.data.id') !==
-                        $address->getCustomer()
-                            ->getId()) ||
-                    (is_null($address->getUser()) && is_null($address->getCustomer())))),
-            new NotAllowedException('This action is unauthorized.')
-        );
+        if (!$this->permissionService->can(auth()->id(), 'update.address')) {
+            if (($address->getUser() && auth()->id() !== intval(
+                    $address->getUser()
+                        ->getId()
+                ))) {
+
+                throw new NotAllowedException('This action is unauthorized, only the owning user can update this address.');
+            }
+
+            if (($address->getCustomer() &&
+                $request->input('data.relationships.customer.data.id') !==
+                $address->getCustomer()
+                    ->getId())) {
+
+                throw new NotAllowedException('This action is unauthorized. You must pass the correct customer id.');
+            }
+
+            if (is_null($address->getUser()) && is_null($address->getCustomer())) {
+
+                throw new NotAllowedException('This action is unauthorized, no user or customer is linked to the address.');
+            }
+        }
 
         $this->jsonApiHydrator->hydrate($address, $request->onlyAllowed());
 
