@@ -274,7 +274,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(
            [
                'title' => 'Not allowed.',
-               'detail' => 'This action is unauthorized.',
+               'detail' => 'This action is unauthorized, users can only create addresses for themselves.',
            ],
            $response->decodeResponseJson('error')
        );
@@ -712,6 +712,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         //mock permission
         $this->permissionServiceMock->method('canOrThrow')
+            ->willReturn(true);
+        $this->permissionServiceMock->method('can')
             ->willReturn(true);
 
         $user = $this->fakeUser();

@@ -131,13 +131,14 @@ class AddressJsonController extends Controller
      */
     public function store(AddressCreateRequest $request)
     {
-        throw_if(
-            (!$this->permissionService->canOrThrow(
-                    auth()->id(),
-                    'store.address'
-                ) && $request->input('data.relationships.user.data.id') != auth()->id()),
-            new NotAllowedException('This action is unauthorized.')
-        );
+        if (!$this->permissionService->can(auth()->id(), 'store.address')) {
+            if ($request->input('data.relationships.user.data.id') != auth()->id()) {
+
+                throw new NotAllowedException(
+                    'This action is unauthorized, users can only create addresses for themselves.'
+                );
+            }
+        }
 
         $address = new Address();
 
@@ -180,7 +181,9 @@ class AddressJsonController extends Controller
                         ->getId()
                 ))) {
 
-                throw new NotAllowedException('This action is unauthorized, only the owning user can update this address.');
+                throw new NotAllowedException(
+                    'This action is unauthorized, only the owning user can update this address.'
+                );
             }
 
             if (($address->getCustomer() &&
@@ -193,7 +196,9 @@ class AddressJsonController extends Controller
 
             if (is_null($address->getUser()) && is_null($address->getCustomer())) {
 
-                throw new NotAllowedException('This action is unauthorized, no user or customer is linked to the address.');
+                throw new NotAllowedException(
+                    'This action is unauthorized, no user or customer is linked to the address.'
+                );
             }
         }
 
