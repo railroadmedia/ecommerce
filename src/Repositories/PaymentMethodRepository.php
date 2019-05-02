@@ -22,7 +22,7 @@ class PaymentMethodRepository extends RepositoryBase
      */
     public function __construct(EcommerceEntityManager $entityManager)
     {
-        parent::__construct($entityManager, $entityManager->getClassMetadata(Payment::class));
+        parent::__construct($entityManager, $entityManager->getClassMetadata(PaymentMethod::class));
     }
     /**
      * @param int $id
