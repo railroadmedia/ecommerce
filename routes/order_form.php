@@ -8,17 +8,17 @@ Route::group([
 ], function () {
 
     // order form json controller
-    Route::get('/order', Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@index')
-        ->name('order.form');
+    Route::get('/json/order-form', Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@index')
+        ->name('json.order-form.index');
 
-    Route::put('/order', Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@submitOrder')
-        ->name('order.submit');
+    Route::put('/json/order-form/submit', Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@submitOrder')
+        ->name('json.order-form.submit');
 
     // order form controller with redirect responses
-    Route::post('/submit-order', Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitOrder')
-        ->name('order.submit.form');
+    Route::post('/order-form/submit', Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitOrder')
+        ->name('order-form.submit');
 
-    Route::get('/order-paypal', Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitPaypalOrder')
-        ->name('order.submit.paypal');
+    Route::get('/order-form/submit-paypal', Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitPaypalOrder')
+        ->name('order-form.submit-paypal');
 
 });

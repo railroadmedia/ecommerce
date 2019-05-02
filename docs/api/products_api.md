@@ -145,10 +145,8 @@ Create a new product.
 
 ### Request Example
 
-```js   
-$.ajax({
-    url: 'https://www.domain.com' +
-        '/ecommerce/product',
+```json
+{   
     data: {
         type: "product",
         attributes: {
@@ -166,12 +164,10 @@ $.ajax({
             subscription_interval_count: 8,
             stock: 620,
             brand: "brand",
-            created_at: "2019-04-30 21:37:04",
-        },
-    }, 
-    success: function(response) {},
-    error: function(response) {}
-});
+            created_at: "2019-04-30 21:37:04"
+        }
+    }
+}
 ```
 
 ### Response Example
@@ -268,11 +264,13 @@ $.ajax({
         '/ecommerce/product/1',
     type: 'patch', 
     data: {
-        type: "product",
-        attributes: {
-            name: "new-name",
-            price: 199.22,
-        },
+        data: {
+            type: "product",
+            attributes: {
+                name: "new-name",
+                price: 199.22,
+            },
+        }, 
     }, 
     success: function(response) {},
     error: function(response) {}

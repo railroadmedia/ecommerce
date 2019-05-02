@@ -153,7 +153,7 @@ class OrderJsonController extends Controller
 
         if ($request->has('user_id')) {
             $qb
-                ->where('IDENTITY(o.user)', ':userId')
+                ->andWhere('o.user = :userId')
                 ->setParameter('userId', $request->get('user_id'));
         }
 

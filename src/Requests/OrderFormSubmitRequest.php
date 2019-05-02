@@ -102,9 +102,7 @@ class OrderFormSubmitRequest extends FormRequest
         $rules = [
             'payment_method_type' => 'required_without:payment_method_id',
             'payment_method_id' => 'required_without:payment_method_type',
-
             'billing_country' => 'required|in:' . implode(',', config('location.countries')),
-
             'card_token' => 'required_if:payment_method_type,' . PaymentMethod::TYPE_CREDIT_CARD,
             'gateway' => 'required',
             'currency' => 'in:' . implode(',', config('ecommerce.supported_currencies')),
@@ -118,7 +116,7 @@ class OrderFormSubmitRequest extends FormRequest
         if (request()->get('billing_country') == 'Canada') {
             $rules += [
                 'billing_region' => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
-                'billing_zip_or_postal_code' => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'billing_zip_or_postal_code' => 'regex:/^[0-9a-zA-Z-_ ]+$/',
             ];
         }
 
@@ -150,7 +148,6 @@ class OrderFormSubmitRequest extends FormRequest
             }
             else {
                 $rules += [
-                    'billing_email' => 'required_without:account_creation_email|email',
                     'account_creation_email' => 'required_without:billing_email|email',
                     'account_creation_password' => 'required_with:account_creation_email|confirmed',
                 ];

@@ -139,7 +139,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwoQuantity
         );
 
-        $results = $this->call('PUT', '/order');
+        $results = $this->call('PUT', '/json/order-form/submit');
 
         $this->assertEquals(422, $results->getStatusCode());
 
@@ -164,11 +164,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'source' => 'gateway',
                     'detail' => 'The gateway field is required.',
                     'title' => 'Validation failed.'
-                ],
-                [
-                    'title' => 'Validation failed.',
-                    'source' => 'billing_email',
-                    'detail' => 'The billing email field is required when account creation email is not present.',
                 ],
                 [
                     'title' => 'Validation failed.',
@@ -241,7 +236,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $productTwoQuantity
         );
 
-        $results = $this->call('PUT', '/order');
+        $results = $this->call('PUT', '/json/order-form/submit');
 
         $this->assertEquals(422, $results->getStatusCode());
 
@@ -306,11 +301,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'source' => 'shipping_country',
                     'detail' => 'The shipping country field is required when shipping address id is not present.',
                     'title' => 'Validation failed.'
-                ],
-                [
-                    'title' => 'Validation failed.',
-                    'source' => 'billing_email',
-                    'detail' => 'The billing email field is required when account creation email is not present.',
                 ],
                 [
                     'title' => 'Validation failed.',
@@ -388,7 +378,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ''
         );
 
-        $results = $this->call('PUT', '/order');
+        $results = $this->call('PUT', '/json/order-form/submit');
 
         $this->assertEquals(422, $results->getStatusCode());
 
@@ -494,7 +484,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             [
                 'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'billing_region' => $this->faker->word,
@@ -549,7 +539,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             [
                 'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'card_token' => $this->faker->word,
@@ -568,11 +558,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 [
                     'source' => 'billing_region',
                     'detail' => 'The billing region field is required.',
-                    'title' => 'Validation failed.'
-                ],
-                [
-                    'source' => 'billing_zip_or_postal_code',
-                    'detail' => 'The billing zip or postal code field is required.',
                     'title' => 'Validation failed.'
                 ],
             ],
@@ -726,7 +711,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -1032,7 +1017,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $orderRequestData
         );
 
@@ -1191,7 +1176,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             ['token' => $paypalToken]
         );
 
@@ -1605,7 +1590,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $orderRequestData
         );
 
@@ -2418,7 +2403,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $orderRequestData
         );
 
@@ -2770,7 +2755,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -3059,7 +3044,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -3251,7 +3236,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $orderRequestData
         );
 
@@ -3539,7 +3524,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $orderRequestData
         );
 
@@ -3778,7 +3763,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -3901,7 +3886,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             [
                 'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'card_token' => $cardToken,
@@ -4034,7 +4019,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -4170,7 +4155,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -4290,7 +4275,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             [
                 'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'card_token' => $cardToken,
@@ -4429,7 +4414,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             [
                 'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'card_token' => $cardToken,
@@ -4584,7 +4569,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             [
                 'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'card_token' => $cardToken,
@@ -4751,7 +4736,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             [
                 'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'card_token' => $cardToken,
@@ -4915,7 +4900,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             [
                 'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'card_token' => $cardToken,
@@ -5135,7 +5120,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -5538,7 +5523,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -5776,7 +5761,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -5943,7 +5928,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -6271,7 +6256,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -6311,7 +6296,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     {
         $session = $this->app->make(Store::class);
         $session->flush();
-        $results = $this->call('GET', '/order');
+        $results = $this->call('GET', '/json/order-form');
         $this->assertEquals(404, $results->getStatusCode());
     }
 
@@ -6383,13 +6368,30 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'sku' => 'b' . $this->faker->word,
         ]);
 
+        $promoCode = rand();
+
+        $discount = $this->fakeDiscount([
+            'active' => true,
+            'product_id' => $productOne['id'],
+            'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
+            'amount' => 10,
+        ]);
+
+        $discountCriteria = $this->fakeDiscountCriteria([
+            'discount_id' => $discount['id'],
+            'product_id' => $productTwo['id'],
+            'type' => DiscountCriteriaService::PROMO_CODE_REQUIREMENT_TYPE,
+            'min' => $promoCode,
+            'max' => $promoCode,
+        ]);
+
         $productOneQuantity = 2;
 
         $this->cartService->addToCart(
             $productOne['sku'],
             $productOneQuantity,
             false,
-            ''
+            $promoCode
         );
 
         $productTwoQuantity = 1;
@@ -6411,7 +6413,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $totalDueExpected = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
 
-        $response = $this->call('GET', '/order');
+        $response = $this->call('GET', '/json/order-form');
 
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -6571,7 +6573,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $requestData
         );
 
@@ -6670,7 +6672,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             [
                 'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'card_token' => $cardToken,
@@ -6834,7 +6836,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             [
                 'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'card_token' => $cardToken,
@@ -6965,7 +6967,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $orderData
         );
 
@@ -7135,7 +7137,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $orderData
         );
 
@@ -7288,7 +7290,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $orderData
         );
 
