@@ -1781,6 +1781,441 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_submit_order_existing_credit_card_customer()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $currency = $this->getCurrency();
+        $brand = 'drumeo';
+        ConfigService::$brand = $brand;
+
+        $country = 'Canada';
+        $state = $this->faker->word;
+        $zip = $this->faker->postcode;
+
+        $billingData = [
+            'billing_region' => $state,
+            'billing_zip_or_postal_code' => $zip,
+            'billing_country' => $country,
+        ];
+
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => 'Canada',
+                'active' => 1,
+                'priority' => 1,
+            ]
+        );
+
+        $shippingCostAmount = 5.50;
+
+        $shippingCost = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 0,
+                'max' => 10,
+                'price' => $shippingCostAmount,
+            ]
+        );
+
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => 'Canada',
+                'active' => 1,
+                'priority' => 1,
+            ]
+        );
+
+        $shippingCostAmount = 5.50;
+
+        $shippingCost = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 0,
+                'max' => 10,
+                'price' => $shippingCostAmount,
+            ]
+        );
+
+        $fingerPrint = $this->faker->word;
+        $externalId = 'card_' . $this->faker->password;
+        $externalCustomerId = 'cus_' . $this->faker->password;
+        $cardExpirationYear = 2019;
+        $cardExpirationMonth = 12;
+        $cardExpirationDate = Carbon::createFromDate(
+            $cardExpirationYear,
+            $cardExpirationMonth
+        )
+            ->toDateTimeString();
+
+        $creditCard = $this->fakeCreditCard(
+            [
+                'fingerprint' => $fingerPrint,
+                'last_four_digits' => $this->faker->randomNumber(4),
+                'cardholder_name' => $this->faker->name,
+                'company_name' => $this->faker->creditCardType,
+                'expiration_date' => $cardExpirationDate,
+                'external_id' => $externalId,
+                'external_customer_id' => $externalCustomerId,
+                'payment_gateway_name' => $brand
+            ]
+        );
+
+        $userStripeCustomerId = $this->fakeUserStripeCustomerId(
+            [
+                'user_id' => $userId,
+                'stripe_customer_id' => $externalCustomerId,
+            ]
+        );
+
+        $billingAddress = $this->fakeAddress(
+            [
+                'user_id' => $userId,
+                'first_name' => null,
+                'last_name' => null,
+                'street_line_1' => null,
+                'street_line_2' => null,
+                'city' => null,
+                'type' => ConfigService::$billingAddressType,
+                'zip' => $billingData['billing_zip_or_postal_code'],
+                'state' => $billingData['billing_region'],
+                'country' => $billingData['billing_country'],
+            ]
+        );
+
+        $paymentMethod = $this->fakePaymentMethod(
+            [
+                'method_id' => $creditCard['id'],
+                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'currency' => $currency,
+                'billing_address_id' => $billingAddress['id']
+            ]
+        );
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod(
+            [
+                'user_id' => $userId,
+                'payment_method_id' => $paymentMethod['id'],
+                'is_primary' => true
+            ]
+        );
+
+        $cardToken = $this->faker->word;
+
+        $orderRequestData = [
+                'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'card_token' => $cardToken,
+                'company_name' => $this->faker->creditCardType,
+                'gateway' => $brand,
+                'shipping_first_name' => $this->faker->firstName,
+                'shipping_last_name' => $this->faker->lastName,
+                'shipping_address_line_1' => $this->faker->address,
+                'shipping_city' => $this->faker->city,
+                'shipping_region' => 'ab',
+                'shipping_zip_or_postal_code' => $this->faker->postcode,
+                'shipping_country' => 'Canada',
+                'currency' => $currency
+            ] + $billingData;
+
+        $fakerCustomer = new Customer();
+        $fakerCustomer->email = $this->faker->email;
+        $fakerCustomer->id = $this->faker->word . rand();
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn($fakerCustomer);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $fingerPrint;
+        $fakerCard->brand = $creditCard['company_name'];
+        $fakerCard->last4 = $creditCard['last_four_digits'];
+        $fakerCard->exp_year = $cardExpirationYear;
+        $fakerCard->exp_month = $cardExpirationMonth;
+        $fakerCard->id = $externalId;
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $chargeAmount = $this->faker->numberBetween(100, 200);
+
+        $fakerCharge = new Charge();
+        $fakerCharge->id = $this->faker->word;
+        $fakerCharge->currency = $currency;
+        $fakerCharge->amount = $chargeAmount;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $productOne = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'type' => ConfigService::$typeProduct,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 1,
+                'weight' => 0.20,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+                'sku' => 'a' . $this->faker->word,
+            ]
+        );
+
+        $productTwo = $this->fakeProduct(
+            [
+                'price' => 247,
+                'type' => ConfigService::$typeProduct,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+                'sku' => 'b' . $this->faker->word,
+            ]
+        );
+
+        $discount = $this->fakeDiscount(
+            [
+                'active' => true,
+                'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
+                'amount' => 10
+            ]
+        );
+
+        $discountCriteria = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discount['id'],
+                'product_id' => $productOne['id'],
+                'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+                'min' => '2',
+                'max' => '2000000',
+            ]
+        );
+
+        $productOneQuantity = 1;
+        $productTwoQuantity = 1;
+
+        $this->cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity,
+            false,
+            ''
+        );
+
+        $this->cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $expectedProductOneTotalPrice = $productOne['price'] * $productOneQuantity;
+
+        $expectedProductTwoTotalPrice = $productTwo['price'] * $productTwoQuantity;
+
+        $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice - $discount['amount'];
+
+        $expectedTaxes = $this->getExpectedTaxes(
+            $expectedTotalFromItems + $shippingCostAmount,
+            $billingData['billing_country'],
+            $billingData['billing_region']
+        );
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+
+        $currencyService = $this->app->make(CurrencyService::class);
+
+        $expectedPaymentTotalDue = $currencyService->convertFromBase(round($expectedOrderTotalDue, 2), $currency);
+
+        $expectedConversionRate = $currencyService->getRate($currency);
+
+        $response = $this->call(
+            'PUT',
+            '/order',
+            $orderRequestData
+        );
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'order',
+                    'attributes' => [
+                        'total_due' => $expectedOrderTotalDue,
+                        'product_due' => $expectedTotalFromItems,
+                        'taxes_due' => $expectedTaxes,
+                        'shipping_due' => $shippingCostAmount,
+                        'finance_due' => null,
+                        'total_paid' => $expectedOrderTotalDue,
+                        'brand' => $brand,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ],
+                        'billingAddress' => [
+                            'data' => ['type' => 'address']
+                        ],
+                        'shippingAddress' => [
+                            'data' => ['type' => 'address']
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'product',
+                        'id' => $productOne['id'],
+                        'attributes' => array_diff_key(
+                            $productOne,
+                            [
+                                'id' => true,
+                            ]
+                        )
+                    ],
+                    [
+                        'type' => 'product',
+                        'id' => $productTwo['id'],
+                        'attributes' => array_diff_key(
+                            $productTwo,
+                            [
+                                'id' => true,
+                            ]
+                        )
+                    ],
+                    [
+                        'type' => 'user',
+                        'id' => $userId,
+                        'attributes' => []
+                    ],
+                    [
+                        'type' => 'orderItem',
+                        'attributes' => [
+                            'quantity' => $productOneQuantity,
+                            'weight' => $productOne['weight'],
+                            'initial_price' => $productOne['price'],
+                            'total_discounted' => 0,
+                            'final_price' => $productOne['price'],
+                            'created_at' => Carbon::now()
+                                ->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'product' => [
+                                'data' => [
+                                    'type' => 'product',
+                                    'id' => $productOne['id']
+                                ]
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'orderItem',
+                        'attributes' => [
+                            'quantity' => $productTwoQuantity,
+                            'weight' => $productTwo['weight'],
+                            'initial_price' => $productTwo['price'],
+                            'total_discounted' => 0,
+                            'final_price' => $productTwo['price'],
+                            'created_at' => Carbon::now()
+                                ->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'product' => [
+                                'data' => [
+                                    'type' => 'product',
+                                    'id' => $productTwo['id']
+                                ]
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'address',
+                        'attributes' => []
+                    ],
+                    [
+                        'type' => 'address',
+                        'attributes' => [
+                            'type' => ConfigService::$shippingAddressType,
+                            'brand' => $brand,
+                            'first_name' => $orderRequestData['shipping_first_name'],
+                            'last_name' => $orderRequestData['shipping_last_name'],
+                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
+                            'street_line_2' => null,
+                            'city' => $orderRequestData['shipping_city'],
+                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                            'state' => $orderRequestData['shipping_region'],
+                            'country' => $orderRequestData['shipping_country'],
+                            'created_at' => Carbon::now()
+                                ->toDateTimeString(),
+                        ],
+                        'relationships' => [
+                            'user' => [
+                                'data' => [
+                                    'type' => 'user',
+                                    'id' => $userId,
+                                ]
+                            ]
+                        ],
+                    ]
+                ]
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertDatabaseMissing(
+            ConfigService::$tableUserStripeCustomerId,
+            [
+                'id' => ($userStripeCustomerId['id'] + 1),
+                'user_id' => $userId,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $productOne['id'],
+                'quantity' => $productOneQuantity,
+                'expiration_date' => null,
+            ]
+        );
+        $this->assertDatabaseHas(
+            ConfigService::$tableUserProduct,
+            [
+                'user_id' => $userId,
+                'product_id' => $productTwo['id'],
+                'quantity' => $productTwoQuantity,
+                'expiration_date' => null,
+            ]
+        );
+
+        // assert payment
+        $this->assertDatabaseHas(
+            ConfigService::$tablePayment,
+            [
+                'total_due' => round($expectedPaymentTotalDue, 2),
+                'total_paid' => round($expectedPaymentTotalDue, 2),
+                'total_refunded' => 0,
+                'conversion_rate' => $expectedConversionRate,
+                'type' => Payment::TYPE_INITIAL_ORDER,
+                'external_id' => $fakerCharge->id,
+                'external_provider' => 'stripe',
+                'status' => Payment::STATUS_PAID,
+                'message' => null,
+                'currency' => $currency,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+    }
+
     public function test_submit_order_existing_payment_method_paypal()
     {
         $userId = $this->createAndLogInNewUser();
@@ -2638,6 +3073,35 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'quantity' => 1,
                 'expiration_date' => Carbon::now()
                     ->addYear(1)
+                    ->toDateTimeString()
+            ]
+        );
+
+        // billingAddress
+        $this->assertDatabaseHas(
+            ConfigService::$tableAddress,
+            [
+                'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                'brand' => ConfigService::$brand,
+                'user_id' => $userId,
+                'customer_id' => null,
+                'zip' => $requestData['billing_zip_or_postal_code'],
+                'state' => $requestData['billing_region'],
+                'country' => $requestData['billing_country'],
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        // assert missing shipping address
+        $this->assertDatabaseMissing(
+            ConfigService::$tableAddress,
+            [
+                'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
+                'brand' => ConfigService::$brand,
+                'user_id' => $userId,
+                'customer_id' => null,
+                'created_at' => Carbon::now()
                     ->toDateTimeString()
             ]
         );

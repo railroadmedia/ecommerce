@@ -14,7 +14,6 @@ use Railroad\Ecommerce\Requests\DiscountUpdateRequest;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
-use Spatie\Fractal\Fractal;
 use Throwable;
 
 class DiscountJsonController extends Controller
@@ -35,7 +34,7 @@ class DiscountJsonController extends Controller
     private $jsonApiHydrator;
 
     /**
-     * @var \Railroad\Permissions\Services\PermissionService
+     * @var PermissionService
      */
     private $permissionService;
 
@@ -63,7 +62,7 @@ class DiscountJsonController extends Controller
     /**
      * Pull discounts
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      *
      * @return JsonResponse
      *

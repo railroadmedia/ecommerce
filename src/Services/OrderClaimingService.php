@@ -70,7 +70,7 @@ class OrderClaimingService
      * @throws \Doctrine\ORM\OptimisticLockException
      * @throws \Throwable
      */
-    public function claimOrder(Purchaser $purchaser, Payment $payment, Cart $cart, Address $shippingAddress): Order
+    public function claimOrder(Purchaser $purchaser, Payment $payment, Cart $cart, ?Address $shippingAddress): Order
     {
         $this->cartService->setCart($cart);
 
@@ -103,7 +103,10 @@ class OrderClaimingService
             ->setPayment($payment)
             ->setCreatedAt(Carbon::now());
 
-        $this->entityManager->persist($shippingAddress);
+        if ($shippingAddress) {
+            $this->entityManager->persist($shippingAddress);
+        }
+
         $this->entityManager->persist($order);
         $this->entityManager->persist($orderPayment);
 

@@ -3,12 +3,16 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
+use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
@@ -28,7 +32,6 @@ use Railroad\Ecommerce\Requests\PaymentMethodCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodUpdateRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodCreatePaypalRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodSetDefaultRequest;
-use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
@@ -171,7 +174,7 @@ class PaymentMethodJsonController extends Controller
         $this->permissionService->canOrThrow(auth()->id(), 'pull.user.payment.method');
 
         /**
-         * @var $user \Railroad\Ecommerce\Entities\User
+         * @var $user User
          */
         $user = $this->userProvider->getUserById($userId);
 
@@ -184,7 +187,7 @@ class PaymentMethodJsonController extends Controller
         );
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->userPaymentMethodsRepository->createQueryBuilder('upm');
 
@@ -200,12 +203,12 @@ class PaymentMethodJsonController extends Controller
         $paypalIds = [];
 
         /**
-         * @var $userPaymentMethod \Railroad\Ecommerce\Entities\UserPaymentMethods
+         * @var $userPaymentMethod UserPaymentMethods
          */
         foreach ($userPaymentMethods as $userPaymentMethod) {
 
             /**
-             * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
+             * @var $paymentMethod PaymentMethod
              */
             $paymentMethod = $userPaymentMethod->getPaymentMethod();
 
@@ -252,7 +255,7 @@ class PaymentMethodJsonController extends Controller
         }
 
         /**
-         * @var $user \Railroad\Ecommerce\Entities\User
+         * @var $user User
          */
         $user = $this->userProvider->getUserById($userId);
 
@@ -323,8 +326,8 @@ class PaymentMethodJsonController extends Controller
     }
 
     /**
-     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
-     * @return \Illuminate\Http\JsonResponse
+     * @throws PaymentFailedException
+     * @return JsonResponse
      */
     public function getPaypalUrl()
     {
@@ -408,7 +411,7 @@ class PaymentMethodJsonController extends Controller
     public function setDefault(PaymentMethodSetDefaultRequest $request)
     {
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->userPaymentMethodsRepository->createQueryBuilder('p');
 
@@ -419,12 +422,12 @@ class PaymentMethodJsonController extends Controller
             ->getOneOrNullResult();
 
         /**
-         * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
+         * @var $paymentMethod PaymentMethod
          */
         $paymentMethod = $userPaymentMethod->getPaymentMethod();
 
         /**
-         * @var $user \Railroad\Ecommerce\Entities\User
+         * @var $user User
          */
         $user = $userPaymentMethod->getUser();
 
@@ -485,7 +488,7 @@ class PaymentMethodJsonController extends Controller
         );
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->userPaymentMethodsRepository->createQueryBuilder('upm');
 
@@ -511,7 +514,7 @@ class PaymentMethodJsonController extends Controller
                 ->getUserPrimaryPaymentMethod($userPaymentMethod->getUser())
         ) {
             /**
-             * @var $primary \Railroad\Ecommerce\Entities\UserPaymentMethods
+             * @var $primary UserPaymentMethods
              */
             $primary->setIsPrimary(false);
 
@@ -520,7 +523,7 @@ class PaymentMethodJsonController extends Controller
 
         try {
             /**
-             * @var $method \Railroad\Ecommerce\Entities\CreditCard
+             * @var $method CreditCard
              */
             $method = $this->creditCardRepository
                             ->find($paymentMethod->getMethodId());
@@ -622,7 +625,7 @@ class PaymentMethodJsonController extends Controller
         );
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->userPaymentMethodsRepository->createQueryBuilder('upm');
 

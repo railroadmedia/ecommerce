@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query\Expr\Join;
+use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -116,7 +117,7 @@ class OrderJsonController extends Controller
         $first = ($request->get('page', 1) - 1) * $request->get('limit', 100);
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->orderRepository->createQueryBuilder('o');
 
@@ -176,7 +177,7 @@ class OrderJsonController extends Controller
         $this->permissionService->canOrThrow(auth()->id(), 'pull.orders');
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->orderRepository->createQueryBuilder('o');
 
@@ -196,7 +197,7 @@ class OrderJsonController extends Controller
         );
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->paymentRepository->createQueryBuilder('p');
 
@@ -219,7 +220,7 @@ class OrderJsonController extends Controller
 
         if (count($payments)) {
             /**
-             * @var $qb \Doctrine\ORM\QueryBuilder
+             * @var $qb QueryBuilder
              */
             $qb = $this->refundRepository->createQueryBuilder('r');
 
@@ -232,7 +233,7 @@ class OrderJsonController extends Controller
         }
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->subscriptionRepository->createQueryBuilder('s');
 

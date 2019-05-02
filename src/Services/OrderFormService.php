@@ -22,9 +22,9 @@ class OrderFormService
     private $cartService;
 
     /**
-     * @var PayPalPaymentGateway
+     * @var OrderClaimingService
      */
-    private $payPalPaymentGateway;
+    private $orderClaimingService;
 
     /**
      * @var PaymentService
@@ -32,37 +32,45 @@ class OrderFormService
     private $paymentService;
 
     /**
+     * @var PayPalPaymentGateway
+     */
+    private $payPalPaymentGateway;
+
+    /**
      * @var PurchaserService
      */
     private $purchaserService;
 
     /**
-     * @var OrderClaimingService
+     * @var ShippingService
      */
-    private $orderClaimingService;
+    private $shippingService;
 
     /**
      * OrderFormService constructor.
      *
-     * @param CartService $cartService
-     * @param PayPalPaymentGateway $payPalPaymentGateway
-     * @param PaymentService $paymentService
-     * @param PurchaserService $purchaserService
-     * @param OrderClaimingService $orderClaimingService
+     * @param CartService $cartService,
+     * @param OrderClaimingService $orderClaimingService,
+     * @param PaymentService $paymentService,
+     * @param PayPalPaymentGateway $payPalPaymentGateway,
+     * @param PurchaserService $purchaserService,
+     * @param ShippingService $shippingService
      */
     public function __construct(
         CartService $cartService,
-        PayPalPaymentGateway $payPalPaymentGateway,
+        OrderClaimingService $orderClaimingService,
         PaymentService $paymentService,
+        PayPalPaymentGateway $payPalPaymentGateway,
         PurchaserService $purchaserService,
-        OrderClaimingService $orderClaimingService
+        ShippingService $shippingService
     )
     {
         $this->cartService = $cartService;
-        $this->payPalPaymentGateway = $payPalPaymentGateway;
-        $this->paymentService = $paymentService;
-        $this->purchaserService = $purchaserService;
         $this->orderClaimingService = $orderClaimingService;
+        $this->paymentService = $paymentService;
+        $this->payPalPaymentGateway = $payPalPaymentGateway;
+        $this->purchaserService = $purchaserService;
+        $this->shippingService = $shippingService;
     }
 
     /**
@@ -211,23 +219,28 @@ class OrderFormService
             throw new PaymentFailedException($paymentFailedException->getMessage());
         }
 
-        $shippingAddress = $request->getShippingAddress();
+        $shippingAddress = null;
 
-        if (!$shippingAddress->getId()) {
-            // if a new address entity is used (shipping_address_id not specified in request)
-            // user or customer must be linked with shipping address
-            if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
-                $user = $purchaser->getUserObject();
+        if ($this->shippingService->doesCartHaveAnyPhysicalItems($cart)) {
 
-                $shippingAddress->setUser($user);
+            $shippingAddress = $request->getShippingAddress();
+
+            if (!$shippingAddress->getId()) {
+                // if a new address entity is used (shipping_address_id not specified in request)
+                // user or customer must be linked with shipping address
+                if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
+                    $user = $purchaser->getUserObject();
+
+                    $shippingAddress->setUser($user);
+                }
+                elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
+                    $customer = $purchaser->getCustomerEntity();
+
+                    $shippingAddress->setCustomer($customer);
+                }
+
+                $shippingAddress->setBrand($purchaser->getBrand());
             }
-            elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
-                $customer = $purchaser->getCustomerEntity();
-
-                $shippingAddress->setCustomer($customer);
-            }
-
-            $shippingAddress->setBrand($purchaser->getBrand());
         }
 
         $order = $this->orderClaimingService->claimOrder($purchaser, $payment, $cart, $shippingAddress);

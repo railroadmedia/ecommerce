@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
 use Railroad\Ecommerce\Services\CartService;
+use Throwable;
 
 class CartController extends Controller
 {
@@ -33,7 +34,7 @@ class CartController extends Controller
      * @param Request $request
      *
      * @return RedirectResponse
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function addToCart(Request $request)
     {

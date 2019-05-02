@@ -5,21 +5,20 @@ namespace Railroad\Ecommerce\Controllers;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Services\CartAddressService;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Requests\SessionStoreAddressRequest;
 use Railroad\Ecommerce\Services\ResponseService;
 
 class SessionJsonController extends Controller
 {
     /**
-     * @var \Railroad\Ecommerce\Services\CartAddressService
+     * @var CartAddressService
      */
     private $cartAddressService;
 
     /**
      * SessionJsonController constructor.
      *
-     * @param \Railroad\Ecommerce\Services\CartAddressService $cartAddressService
+     * @param CartAddressService $cartAddressService
      */
     public function __construct(CartAddressService $cartAddressService)
     {

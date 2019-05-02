@@ -7,7 +7,6 @@ use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\PaymentPlanService;
@@ -24,7 +23,7 @@ class OrderFormJsonController extends Controller
     private $cartService;
 
     /**
-     * @var \Railroad\Ecommerce\Services\CartAddressService
+     * @var CartAddressService
      */
     private $cartAddressService;
 
@@ -34,12 +33,12 @@ class OrderFormJsonController extends Controller
     private $currencyService;
 
     /**
-     * @var \Railroad\Ecommerce\Services\PaymentPlanService
+     * @var PaymentPlanService
      */
     private $paymentPlanService;
 
     /**
-     * @var \Railroad\Ecommerce\Services\OrderFormService
+     * @var OrderFormService
      */
     private $orderFormService;
 
@@ -108,15 +107,6 @@ class OrderFormJsonController extends Controller
      */
     public function submitOrder(OrderFormSubmitRequest $request)
     {
-        if (
-            $this->permissionService->can(
-                auth()->id(),
-                'place-orders-for-other-users'
-            )
-        ) {
-            $brand = $request->get('brand', ConfigService::$brand);
-        }
-
         $this->cartService->refreshCart();
 
         // if the cart it's empty; we throw an exception

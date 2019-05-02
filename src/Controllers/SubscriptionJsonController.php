@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\QueryBuilder;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,7 +42,7 @@ class SubscriptionJsonController extends Controller
     private $subscriptionRepository;
 
     /**
-     * @var \Railroad\Permissions\Services\PermissionService
+     * @var PermissionService
      */
     private $permissionService;
 
@@ -65,7 +66,7 @@ class SubscriptionJsonController extends Controller
      *
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
-     * @param \Railroad\Permissions\Services\PermissionService $permissionService
+     * @param PermissionService $permissionService
      * @param RenewalService $renewalService
      * @param SubscriptionRepository $subscriptionRepository
      * @param UserProductService $userProductService
@@ -93,7 +94,7 @@ class SubscriptionJsonController extends Controller
     /**
      * Pull subscriptions paginated
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      *
      * @return Fractal
      *
@@ -116,7 +117,7 @@ class SubscriptionJsonController extends Controller
         $brands = $request->get('brands', [ConfigService::$availableBrands]);
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->subscriptionRepository->createQueryBuilder($alias);
 
@@ -175,7 +176,7 @@ class SubscriptionJsonController extends Controller
     /**
      * Store a subscription and return data in JSON format
      *
-     * @param \Railroad\Ecommerce\Requests\SubscriptionCreateRequest $request
+     * @param SubscriptionCreateRequest $request
      *
      * @return Fractal
      *

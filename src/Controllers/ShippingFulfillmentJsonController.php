@@ -3,9 +3,11 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
@@ -30,7 +32,7 @@ class ShippingFulfillmentJsonController extends Controller
     private $orderItemFulfillmentRepository;
 
     /**
-     * @var \Railroad\Permissions\Services\PermissionService
+     * @var PermissionService
      */
     private $permissionService;
 
@@ -54,7 +56,7 @@ class ShippingFulfillmentJsonController extends Controller
     /**
      * Pull shipping fulfillments. If the status it's set on the requests the results are filtered by status.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      *
      * @return Fractal
      *
@@ -83,7 +85,7 @@ class ShippingFulfillmentJsonController extends Controller
         $orderBy = 'oif.' . $orderBy;
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->orderItemFulfillmentRepository->createQueryBuilder('oif');
 
@@ -114,7 +116,7 @@ class ShippingFulfillmentJsonController extends Controller
         $this->permissionService->canOrThrow(auth()->id(), 'fulfilled.fulfillment');
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->orderItemFulfillmentRepository->createQueryBuilder('oif');
 
@@ -134,7 +136,7 @@ class ShippingFulfillmentJsonController extends Controller
 
         foreach ($fulfillments as $fulfillment) {
             /**
-             * @var $fulfillment \Railroad\Ecommerce\Entities\OrderItemFulfillment
+             * @var $fulfillment OrderItemFulfillment
              */
             $found = true;
 
@@ -169,7 +171,7 @@ class ShippingFulfillmentJsonController extends Controller
         $this->permissionService->canOrThrow(auth()->id(), 'delete.fulfillment');
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->orderItemFulfillmentRepository->createQueryBuilder('oif');
 

@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
@@ -62,7 +63,7 @@ class ShippingOptionController extends Controller
     /**
      * Pull shipping options
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      *
      * @return Fractal
      *
@@ -84,7 +85,7 @@ class ShippingOptionController extends Controller
         $orderBy = $alias . '.' . $orderBy;
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->shippingOptionRepository->createQueryBuilder($alias);
 
@@ -174,6 +175,9 @@ class ShippingOptionController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.shipping.option');
 
+        /**
+         * @var $shippingOption ShippingOption
+         */
         $shippingOption = $this->shippingOptionRepository
                                 ->find($shippingOptionId);
 

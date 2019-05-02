@@ -3,16 +3,22 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\QueryBuilder;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
+use Railroad\Ecommerce\Entities\CreditCard;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
-use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
+use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\SubscriptionPayment;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Exceptions\TransactionFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
@@ -158,7 +164,7 @@ class PaymentJsonController extends Controller
         $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->paymentRepository->createQueryBuilder('p');
 
@@ -224,7 +230,7 @@ class PaymentJsonController extends Controller
         $this->permissionService->canOrThrow(auth()->id(), 'create.payment');
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->userPaymentMethodsRepository->createQueryBuilder('p');
 
@@ -238,7 +244,7 @@ class PaymentJsonController extends Controller
             ->getOneOrNullResult();
 
         /**
-         * @var $user \Railroad\Ecommerce\Entities\User
+         * @var $user User
          */
         $user = $userPaymentMethod->getUser();
 
@@ -259,7 +265,7 @@ class PaymentJsonController extends Controller
         $gateway = $request->input('data.attributes.payment_gateway');
 
         /**
-         * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
+         * @var $paymentMethod PaymentMethod
          */
         $paymentMethod = $userPaymentMethod->getPaymentMethod();
 
@@ -295,7 +301,7 @@ class PaymentJsonController extends Controller
             try {
 
                 /**
-                 * @var $method \Railroad\Ecommerce\Entities\CreditCard
+                 * @var $method CreditCard
                  */
                 $method = $this->creditCardRepository
                                 ->find($paymentMethod->getMethodId());
@@ -347,7 +353,7 @@ class PaymentJsonController extends Controller
             try {
 
                 /**
-                 * @var $method \Railroad\Ecommerce\Entities\PaypalBillingAgreement
+                 * @var $method PaypalBillingAgreement
                  */
                 $method = $this->paypalBillingAgreementRepository
                                 ->find($paymentMethod->getMethodId());
@@ -408,7 +414,7 @@ class PaymentJsonController extends Controller
             );
 
             /**
-             * @var $subscription \Railroad\Ecommerce\Entities\Subscription
+             * @var $subscription Subscription
              */
             $subscription = $this->subscriptionRepository
                             ->find($subscriptionId);
@@ -437,7 +443,7 @@ class PaymentJsonController extends Controller
             $oderId = $request->input('data.relationships.order.data.id');
 
             /**
-             * @var $order \Railroad\Ecommerce\Entities\Order
+             * @var $order Order
              */
             $order = $this->orderRepository->find($oderId);
 
@@ -452,11 +458,11 @@ class PaymentJsonController extends Controller
             foreach ($orderPayments as $pastOrderPayment) {
 
                 /**
-                 * @var $pastOrderPayment \Railroad\Ecommerce\Entities\OrderPayment
+                 * @var $pastOrderPayment OrderPayment
                  */
 
                 /**
-                 * @var $pastPayment \Railroad\Ecommerce\Entities\Payment
+                 * @var $pastPayment Payment
                  */
                 $pastPayment = $pastOrderPayment->getPayment();
 
@@ -490,7 +496,7 @@ class PaymentJsonController extends Controller
      *
      * @param string $intervalType
      * @param int $intervalCount
-     * @return \Carbon\Carbon
+     * @return Carbon
      */
     private function calculateNextBillDate($intervalType, $intervalCount)
     {

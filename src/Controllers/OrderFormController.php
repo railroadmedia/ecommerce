@@ -13,7 +13,7 @@ use Throwable;
 class OrderFormController extends Controller
 {
     /**
-     * @var \Railroad\Ecommerce\Services\OrderFormService
+     * @var OrderFormService
      */
     private $orderFormService;
 
@@ -68,7 +68,7 @@ class OrderFormController extends Controller
             $redirectResponse->with('order', $result['order']);
         }
 
-        /** @var \Illuminate\Http\RedirectResponse $redirectResponse */
+        /** @var RedirectResponse $redirectResponse */
 
         return $redirectResponse;
     }

@@ -3,11 +3,11 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotActiveException;
@@ -15,7 +15,6 @@ use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
 use Railroad\Permissions\Services\PermissionService;
 use Throwable;
 
@@ -40,11 +39,6 @@ class CartService
      * @var ProductRepository
      */
     private $productRepository;
-
-    /**
-     * @var ShippingOptionRepository
-     */
-    private $shippingOptionRepository;
 
     /**
      * @var TaxService
@@ -238,6 +232,8 @@ class CartService
      * Returns the total cart items cost with discounts applied
      *
      * @return float
+     *
+     * @throws Throwable
      */
     public function getTotalItemCosts()
     {
@@ -265,7 +261,7 @@ class CartService
     /**
      * @return OrderItem[]
      * @throws Throwable
-     * @throws \Doctrine\ORM\ORMException
+     * @throws ORMException
      */
     public function getOrderItemEntities()
     {
@@ -342,6 +338,8 @@ class CartService
      * total when the monthly billing is finished.
      *
      * @return float
+     *
+     * @throws Throwable
      */
     public function getDueForOrder()
     {
@@ -361,6 +359,8 @@ class CartService
 
     /**
      * @return float
+     *
+     * @throws Throwable
      */
     public function getTaxDueForOrder()
     {
@@ -380,6 +380,8 @@ class CartService
      * Returns the initial payment amount that is so be paid immediately on order submit.
      *
      * @return float
+     *
+     * @throws Throwable
      */
     public function getDueForInitialPayment()
     {
@@ -415,6 +417,8 @@ class CartService
      * of the payment plan.
      *
      * @return float
+     *
+     * @throws Throwable
      */
     public function getDueForPaymentPlanPayments()
     {
@@ -439,7 +443,10 @@ class CartService
 
     /**
      * @param Order|null $order
+     *
      * @return Order|null
+     *
+     * @throws Throwable
      */
     public function populateOrderTotals(?Order $order = null)
     {
@@ -492,6 +499,8 @@ class CartService
      * Returns the current cart data structure
      *
      * @return array
+     *
+     * @throws Throwable
      */
     public function toArray()
     {
@@ -508,7 +517,7 @@ class CartService
 
         $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 
-        $due = ($numberOfPayments > 1) ? $this->getTotalDueForInitialPayment() : $this->getDueForOrder();
+        $due = ($numberOfPayments > 1) ? $this->getDueForInitialPayment() : $this->getDueForOrder();
 
         $totalItemCostDue = $this->getTotalItemCosts();
 

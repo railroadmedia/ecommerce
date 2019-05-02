@@ -2,11 +2,12 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Exceptions\NotAllowedException;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
@@ -112,7 +113,7 @@ class ProductJsonController extends Controller
         $brands = $request->get('brands', [ConfigService::$availableBrands]);
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->productRepository->createQueryBuilder($alias);
 
@@ -256,7 +257,7 @@ class ProductJsonController extends Controller
         ) ? [0, 1] : [1];
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->productRepository->createQueryBuilder('p');
 
@@ -265,7 +266,7 @@ class ProductJsonController extends Controller
             ->andWhere($qb->expr()->eq('p.id', ':id'));
 
         /**
-         * @var $q \Doctrine\ORM\Query
+         * @var $q Query
          */
         $q = $qb->getQuery();
 

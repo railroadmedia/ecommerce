@@ -33,10 +33,15 @@ class UserStripeCustomerIdRepository extends RepositoryBase
         $qb->select('usci')
             ->from(UserStripeCustomerId::class, 'usci')
             ->where('usci.user = :userId')
-            ->setParameter('userId', $userId);
+            ->setParameter('userId', $userId)
+            ->orderBy('usci.id', 'DESC');
 
-        return $qb->getQuery()
-            ->useResultCache($this->arrayCache)
-            ->getOneOrNullResult();
+        $result = $qb->getQuery()
+            // ->useResultCache($this->arrayCache)
+            ->getResult();
+
+        if ($result) {
+            return $result[0];
+        }
     }
 }

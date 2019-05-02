@@ -3,9 +3,17 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\QueryBuilder;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\OrderItem;
+use Railroad\Ecommerce\Entities\OrderPayment;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Refund;
+use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -17,7 +25,6 @@ use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
-// use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
@@ -57,7 +64,7 @@ class RefundJsonController extends Controller
     private $payPalPaymentGateway;
 
     /**
-     * @var \Railroad\Permissions\Services\PermissionService
+     * @var PermissionService
      */
     private $permissionService;
 
@@ -139,7 +146,7 @@ class RefundJsonController extends Controller
         $paymentId = $request->input('data.relationships.payment.data.id');
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->paymentRepository->createQueryBuilder('p');
 
@@ -150,12 +157,12 @@ class RefundJsonController extends Controller
             ->setParameter('id', $paymentId);
 
         /**
-         * @var $payment \Railroad\Ecommerce\Entities\Payment
+         * @var $payment Payment
          */
         $payment = $qb->getQuery()->getOneOrNullResult();
 
         /**
-         * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
+         * @var $paymentMethod PaymentMethod
          */
         $paymentMethod = $payment->getPaymentMethod();
 
@@ -198,7 +205,7 @@ class RefundJsonController extends Controller
         // cancel shipping fulfillment
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->orderPaymentRepository->createQueryBuilder('op');
 
@@ -214,18 +221,18 @@ class RefundJsonController extends Controller
         $distinctOrders = [];
 
         /**
-         * @var $orderPayment \Railroad\Ecommerce\Entities\OrderPayment
+         * @var $orderPayment OrderPayment
          */
         foreach ($orderPayments as $orderPayment) {
             /**
-             * @var $order \Railroad\Ecommerce\Entities\Order
+             * @var $order Order
              */
             $order = $orderPayment->getOrder();
             $distinctOrders[$order->getId()] = $order;
         }
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->orderItemFulfillmentRepository->createQueryBuilder('oif');
 
@@ -246,7 +253,7 @@ class RefundJsonController extends Controller
         if ($refund->getPaymentAmount() == $refund->getRefundedAmount()) {
             if (count($orderPayments)) {
                 /**
-                 * @var $qb \Doctrine\ORM\QueryBuilder
+                 * @var $qb QueryBuilder
                  */
                 $qb = $this->orderItemRepository->createQueryBuilder('oi');
 
@@ -261,11 +268,11 @@ class RefundJsonController extends Controller
                 $distinctProducts = [];
 
                 /**
-                 * @var $orderItem \Railroad\Ecommerce\Entities\OrderItem
+                 * @var $orderItem OrderItem
                  */
                 foreach ($orderItems as $orderItem) {
                     /**
-                     * @var $product \Railroad\Ecommerce\Entities\Product
+                     * @var $product Product
                      */
                     $product = $orderItem->getProduct();
 
@@ -273,7 +280,7 @@ class RefundJsonController extends Controller
                 }
 
                 /**
-                 * @var $qb \Doctrine\ORM\QueryBuilder
+                 * @var $qb QueryBuilder
                  */
                 $qb = $this->userProductRepository->createQueryBuilder('up');
 
@@ -288,7 +295,7 @@ class RefundJsonController extends Controller
                 }
             } else {
                 /**
-                 * @var $qb \Doctrine\ORM\QueryBuilder
+                 * @var $qb QueryBuilder
                  */
                 $qb = $this->subscriptionPaymentRepository
                                 ->createQueryBuilder('sp');
@@ -302,11 +309,11 @@ class RefundJsonController extends Controller
                 $subscriptionPayments = $qb->getQuery()->getResult();
 
                 /**
-                 * @var $subscriptionPayment \Railroad\Ecommerce\Entities\SubscriptionPayment
+                 * @var $subscriptionPayment SubscriptionPayment
                  */
                 foreach ($subscriptionPayments as $subscriptionPayment) {
                     /**
-                     * @var $subscription \Railroad\Ecommerce\Entities\Subscription
+                     * @var $subscription Subscription
                      */
                     $subscription = $subscriptionPayment->getSubscription();
 

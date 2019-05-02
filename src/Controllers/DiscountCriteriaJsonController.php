@@ -14,7 +14,6 @@ use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
-use Spatie\Fractal\Fractal;
 use Throwable;
 
 class DiscountCriteriaJsonController extends Controller
@@ -40,7 +39,7 @@ class DiscountCriteriaJsonController extends Controller
     private $jsonApiHydrator;
 
     /**
-     * @var \Railroad\Permissions\Services\PermissionService
+     * @var PermissionService
      */
     private $permissionService;
 
@@ -68,7 +67,7 @@ class DiscountCriteriaJsonController extends Controller
     }
 
     /**
-     * @param \Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest $request
+     * @param DiscountCriteriaCreateRequest $request
      * @param int $discountId
      *
      * @return JsonResponse
@@ -103,7 +102,7 @@ class DiscountCriteriaJsonController extends Controller
     }
 
     /**
-     * @param \Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest $request
+     * @param DiscountCriteriaUpdateRequest $request
      * @param int $discountCriteriaId
      *
      * @return JsonResponse

@@ -9,7 +9,6 @@ use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ResponseService;
-use Spatie\Fractal\Fractal;
 use Throwable;
 
 class CartJsonController extends Controller

@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
@@ -26,6 +27,7 @@ class StripeWebhookController extends Controller
     /**
      * StripeWebhookController constructor.
      *
+     * @param CreditCardRepository $creditCardRepository
      * @param EcommerceEntityManager $entityManager
      */
     public function __construct(
@@ -73,7 +75,7 @@ class StripeWebhookController extends Controller
 
         foreach ($creditCards as $creditCard) {
             /**
-             * @var $creditCard \Railroad\Ecommerce\Entities\CreditCard
+             * @var $creditCard CreditCard
              */
             $creditCard
                 ->setExpirationDate($expirationDate)

@@ -3,7 +3,10 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Datetime;
 use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionAccessCode;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserProduct;
@@ -99,16 +102,16 @@ class AccessCodeService
 
         foreach ($subscriptions as $subscription) {
             /**
-             * @var $subscription \Railroad\Ecommerce\Entities\Subscription
+             * @var $subscription Subscription
              */
 
             /**
-             * @var $paidUntil \Datetime
+             * @var $paidUntil Datetime
              */
             $paidUntil = $subscription->getPaidUntil();
 
             /**
-             * @var $subscriptionEndDate \Carbon\Carbon
+             * @var $subscriptionEndDate Carbon
              */
             $subscriptionEndDate = Carbon::instance($paidUntil);
 
@@ -118,7 +121,7 @@ class AccessCodeService
             }
 
             /**
-             * @var $product \Railroad\Ecommerce\Entities\Product
+             * @var $product Product
              */
             $product = $subscription->getProduct();
             $intervalCount = $product->getSubscriptionIntervalCount();
@@ -165,7 +168,7 @@ class AccessCodeService
         // add user products
 
         /**
-         * @var $product \Railroad\Ecommerce\Entities\Product
+         * @var $product Product
          */
         foreach ($accessCodeProducts as $product) {
 

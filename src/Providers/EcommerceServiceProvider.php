@@ -128,8 +128,7 @@ class EcommerceServiceProvider extends ServiceProvider
         ConfigService::$tablePaypalBillingAgreement = 'ecommerce_paypal_billing_agreements';
         ConfigService::$tableCustomerPaymentMethods = 'ecommerce_customer_payment_methods';
         ConfigService::$tableUserPaymentMethods = 'ecommerce_user_payment_methods';
-        ConfigService::$tableCustomerStripeCustomer = 'ecommerce_customer_stripe_customers';
-        ConfigService::$tableUserStripeCustomer = 'ecommerce_user_stripe_customers';
+        ConfigService::$tableUserStripeCustomerId = 'ecommerce_user_stripe_customer_ids';
         ConfigService::$tablePaymentGateway = 'ecommerce_payment_gateways';
         ConfigService::$tableUserProduct = 'ecommerce_user_products';
         ConfigService::$tableAccessCode = 'ecommerce_access_codes';

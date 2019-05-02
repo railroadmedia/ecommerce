@@ -16,8 +16,8 @@ use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\AccessCodeService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
-use Spatie\Fractal\Fractal;
 use Throwable;
+use function key_array_of_entities_by;
 
 class AccessCodeJsonController extends Controller
 {
