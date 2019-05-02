@@ -72,6 +72,7 @@ class AddressCreateRequest extends FormRequest
         return array_merge(
             $this->only(
                 [
+                    'data.attributes.brand',
                     'data.attributes.type',
                     'data.attributes.first_name',
                     'data.attributes.last_name',
