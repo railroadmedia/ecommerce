@@ -2018,7 +2018,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'PUT',
-            '/order',
+            '/json/order-form/submit',
             $orderRequestData
         );
 
@@ -6406,12 +6406,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems = round($productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity, 2);
 
         $expectedTaxes = $this->getExpectedTaxes(
-            $expectedTotalFromItems + $shippingCostAmount,
+            $expectedTotalFromItems - $discount['amount'] + $shippingCostAmount,
             $country,
             $state
         );
 
-        $totalDueExpected = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+        $totalDueExpected = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes - $discount['amount'], 2);
 
         $response = $this->call('GET', '/json/order-form');
 
