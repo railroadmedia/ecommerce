@@ -17,11 +17,18 @@ class StripeCardException extends \Exception
 
     public function render()
     {
+        $user = current_user();
+
         return response()->json(
             [
                 'errors' => [
                     'title' => 'Unprocessable Card.',
                     'detail' => $this->stripeError
+                ],
+                'meta' => [
+                    'user' => $user ? [
+                        'email' =>  $user->getEmail()
+                    ] : null,
                 ]
             ],
             422

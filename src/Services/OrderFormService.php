@@ -147,7 +147,7 @@ class OrderFormService
 
                         $gateway = $request->get('gateway');
                         $config = ConfigService::$paymentGateways['paypal'];
-                        $url = $config[$gateway]['paypal_api_checkout_return_url'];
+                        $url = route($config[$gateway]['paypal_api_checkout_return_route']);
 
                         $checkoutUrl =
                             $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl($gateway, $url);

@@ -191,15 +191,24 @@ class DiscountService
                 ]
             )) {
                 if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
-                    $shippingDiscountNames = [$discount->getName()];
+                    $shippingDiscountNames = [
+                        'id' => $discount->getId(),
+                        'name' => $discount->getName()
+                    ];
                     $shippingOverwrite = true;
                 }
                 elseif (!$shippingOverwrite) {
-                    $shippingDiscountNames[] = $discount->getName();
+                    $shippingDiscountNames[] = [
+                        'id' => $discount->getId(),
+                        'name' => $discount->getName()
+                    ];
                 }
             }
             else {
-                $discountNames[] = $discount->getName();
+                $discountNames[] = [
+                    'id' => $discount->getId(),
+                    'name' => $discount->getName()
+                ];
             }
         }
 

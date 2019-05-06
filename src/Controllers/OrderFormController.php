@@ -60,7 +60,7 @@ class OrderFormController extends Controller
 
         } else {
 
-            $redirectResponse = redirect()->away(
+            $redirectResponse = redirect()->route(
                 ConfigService::$paypalAgreementFulfilledRoute
             );
 
