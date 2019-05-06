@@ -122,8 +122,9 @@ class OrderJsonController extends Controller
         $qb = $this->orderRepository->createQueryBuilder('o');
 
         $qb
-            ->select(['o', 'oi', 'ba', 'sa'])
+            ->select(['o', 'oi', 'ba', 'sa', 'p'])
             ->leftJoin('o.orderItems', 'oi')
+            ->leftJoin('oi.product', 'p')
             ->leftJoin('o.billingAddress', 'ba')
             ->leftJoin('o.shippingAddress', 'sa')
             ->where($qb->expr()->in('o.brand', ':brands'))
@@ -132,7 +133,7 @@ class OrderJsonController extends Controller
                 $request->get('brands', [ConfigService::$availableBrands])
             )
             ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
-            ->setMaxResults($request->get('limit', 100))
+            ->setMaxResults($request->get('limit', 15))
             ->setFirstResult($first);
 
         if ($request->has('start-date')) {
@@ -182,8 +183,9 @@ class OrderJsonController extends Controller
         $qb = $this->orderRepository->createQueryBuilder('o');
 
         $qb
-            ->select(['o', 'oi', 'ba', 'sa'])
+            ->select(['o', 'oi', 'ba', 'sa', 'p'])
             ->leftJoin('o.orderItems', 'oi')
+            ->leftJoin('oi.product', 'p')
             ->leftJoin('o.billingAddress', 'ba')
             ->leftJoin('o.shippingAddress', 'sa')
             ->where($qb->expr()->in('o.id', ':orderId'))
