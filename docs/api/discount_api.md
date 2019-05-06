@@ -215,7 +215,7 @@ Create a new discount.
 |body|data.type|yes||must be 'discount'||
 |body|data.attributes.name|yes||||
 |body|data.attributes.description|yes||||
-|body|data.attributes.type|yes||||
+|body|data.attributes.type|yes||'product amount off', 'product percent off', 'subscription free trial days', 'subscription recurring price amount off', 'order total amount off', 'order total percent off', 'order total shipping amount off', 'order total shipping percent off', 'order total shipping overwrite'||
 |body|data.attributes.product_category|yes||||
 |body|data.attributes.amount|yes||||
 |body|data.attributes.active|yes||||
@@ -345,7 +345,7 @@ Update an existing discount.
 |body|data.type|yes||must be 'discount'||
 |body|data.attributes.name|||||
 |body|data.attributes.description|||||
-|body|data.attributes.type|||||
+|body|data.attributes.type|||'product amount off', 'product percent off', 'subscription free trial days', 'subscription recurring price amount off', 'order total amount off', 'order total percent off', 'order total shipping amount off', 'order total shipping percent off', 'order total shipping overwrite'||
 |body|data.attributes.product_category|||||
 |body|data.attributes.amount|||||
 |body|data.attributes.active|||||
