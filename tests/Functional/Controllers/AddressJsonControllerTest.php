@@ -18,15 +18,19 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $address = $this->fakeAddress([
-            'user_id' => $userId
-        ]);
+        $address = $this->fakeAddress(
+            [
+                'user_id' => $userId
+            ]
+        );
 
         $otherUserId = rand();
 
-        $otherAddress = $this->fakeAddress([
-            'user_id' => $otherUserId
-        ]);
+        $otherAddress = $this->fakeAddress(
+            [
+                'user_id' => $otherUserId
+            ]
+        );
 
         $response = $this->call(
             'GET',
@@ -85,25 +89,31 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $brandOne = $this->faker->word;
 
-        $addressOne = $this->fakeAddress([
-            'user_id' => $user['id'],
-            'brand' => $brandOne
-        ]);
+        $addressOne = $this->fakeAddress(
+            [
+                'user_id' => $user['id'],
+                'brand' => $brandOne
+            ]
+        );
 
         $brandTwo = $this->faker->word;
 
-        $addressTwo = $this->fakeAddress([
-            'user_id' => $user['id'],
-            'brand' => $brandTwo
-        ]);
+        $addressTwo = $this->fakeAddress(
+            [
+                'user_id' => $user['id'],
+                'brand' => $brandTwo
+            ]
+        );
 
         $otherUserId = rand();
         $otherBrand = $this->faker->word;
 
-        $otherAddress = $this->fakeAddress([
-            'user_id' => $otherUserId,
-            'brand' => $otherBrand
-        ]);
+        $otherAddress = $this->fakeAddress(
+            [
+                'user_id' => $otherUserId,
+                'brand' => $otherBrand
+            ]
+        );
 
         $response = $this->call(
             'GET',
@@ -186,6 +196,11 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(
             [
                 [
+                    'source' => 'data.attributes.brand',
+                    'detail' => 'The brand field is required.',
+                    'title' => 'Validation failed.',
+                ],
+                [
                     'source' => 'data.attributes.type',
                     'detail' => 'The type field is required.',
                     'title' => 'Validation failed.',
@@ -210,6 +225,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'data' => [
                     'type' => 'address',
                     'attributes' => [
+                        'brand' => $this->faker->word,
                         'type' => $this->faker->word,
                         'user_id' => rand(),
                         'first_name' => $this->faker->firstName,
@@ -272,12 +288,12 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(403, $response->getStatusCode());
 
         $this->assertEquals(
-           [
-               'title' => 'Not allowed.',
-               'detail' => 'This action is unauthorized, users can only create addresses for themselves.',
-           ],
-           $response->decodeResponseJson('error')
-       );
+            [
+                'title' => 'Not allowed.',
+                'detail' => 'This action is unauthorized, users can only create addresses for themselves.',
+            ],
+            $response->decodeResponseJson('error')
+        );
     }
 
     public function test_store_response()
@@ -409,7 +425,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
                         ),
                         [
                             'street_line_1' => $newStreetLine1,
-                            'updated_at' => Carbon::now()->toDateTimeString()
+                            'updated_at' => Carbon::now()
+                                ->toDateTimeString()
                         ]
                     ),
                     'relationships' => [
@@ -566,10 +583,12 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $address = $this->fakeAddress(['user_id' => $userId]);
 
-        $order = $this->fakeOrder([
-            'user_id' => $userId,
-            'shipping_address_id' => $address['id']
-        ]);
+        $order = $this->fakeOrder(
+            [
+                'user_id' => $userId,
+                'shipping_address_id' => $address['id']
+            ]
+        );
 
         $results = $this->call('DELETE', '/address/' . $address['id']);
 
@@ -608,6 +627,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'data' => [
                     'type' => 'address',
                     'attributes' => [
+                        'brand' => 'drumeo',
                         'type' => $type,
                         'first_name' => $firstName,
                         'last_name' => $lastName,
@@ -883,7 +903,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_delete_user_address()
     {
-        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $this->permissionServiceMock->method('canOrThrow')
+            ->willReturn(true);
 
         $userId = rand();
 
@@ -1000,7 +1021,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
                         ),
                         [
                             'street_line_1' => $newStreetLine1,
-                            'updated_at' => Carbon::now()->toDateTimeString()
+                            'updated_at' => Carbon::now()
+                                ->toDateTimeString()
                         ]
                     ),
                     'relationships' => [
@@ -1023,7 +1045,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'id' => $address['id'],
                 'street_line_1' => $newStreetLine1,
                 'customer_id' => $customer['id'],
-                'updated_at' => Carbon::now()->toDateTimeString(),
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -1115,7 +1138,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $address = $this->fakeAddress(['customer_id' => $customerAddress['id']]);
 
-        $response  = $this->call(
+        $response = $this->call(
             'DELETE',
             '/address/' . $address['id'],
             [

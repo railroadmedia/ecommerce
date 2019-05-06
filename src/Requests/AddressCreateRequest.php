@@ -16,6 +16,7 @@ class AddressCreateRequest extends FormRequest
     {
         return [
             'data.type' => 'json data type',
+            'data.attributes.brand' => 'brand',
             'data.attributes.type' => 'type',
             'data.attributes.first_name' => 'first name',
             'data.attributes.last_name' => 'last name',
@@ -42,6 +43,7 @@ class AddressCreateRequest extends FormRequest
     {
         return [
             'data.type' => 'in:address',
+            'data.attributes.brand' => 'required',
             'data.attributes.type' => 'required|max:255|in:' . implode(
                     ',',
                     [
