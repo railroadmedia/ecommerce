@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 /**
@@ -18,10 +19,11 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  *         @ORM\Index(name="ecommerce_payment_methods_deleted_on_index", columns={"deleted_at"}),
  *     }
  * )
+ * @Gedmo\Mapping\Annotation\SoftDeleteable(fieldName="deletedAt", timeAware=false)
  */
 class PaymentMethod
 {
-    use TimestampableEntity;
+    use TimestampableEntity, SoftDeleteableEntity;
 
     const TYPE_CREDIT_CARD = 'credit_card';
     const TYPE_PAYPAL = 'paypal';
@@ -61,13 +63,6 @@ class PaymentMethod
      * @ORM\JoinColumn(name="billing_address_id", referencedColumnName="id")
      */
     protected $billingAddress;
-
-    /**
-     * @ORM\Column(type="datetime", name="deleted_at", nullable=true)
-     *
-     * @var \DateTime
-     */
-    protected $deletedOn;
 
     /**
      * @return int|null
@@ -153,26 +148,6 @@ class PaymentMethod
     public function setBillingAddress(?Address $billingAddress): self
     {
         $this->billingAddress = $billingAddress;
-
-        return $this;
-    }
-
-    /**
-     * @return \DateTimeInterface|null
-     */
-    public function getDeletedOn(): ?\DateTimeInterface
-    {
-        return $this->deletedOn;
-    }
-
-    /**
-     * @param \DateTimeInterface $deletedOn
-     *
-     * @return PaymentMethod
-     */
-    public function setDeletedOn(?\DateTimeInterface $deletedOn): self
-    {
-        $this->deletedOn = $deletedOn;
 
         return $this;
     }

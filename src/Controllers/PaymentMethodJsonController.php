@@ -652,8 +652,7 @@ class PaymentMethodJsonController extends Controller
             );
         }
 
-        $paymentMethod->setDeletedOn(Carbon::now());
-
+        $this->entityManager->remove($paymentMethod);
         $this->entityManager->flush();
 
         return ResponseService::empty(204);

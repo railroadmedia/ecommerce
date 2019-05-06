@@ -1707,13 +1707,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(204, $results->getStatusCode());
 
-        $this->assertDatabaseHas(
+        $this->assertSoftDeleted(
             ConfigService::$tablePaymentMethod,
             [
                 'id' => $otherPaymentMethod['id'],
-                'method_type' => $otherPaymentMethod['method_type'],
-                'method_id' => $otherCreditCard['id'],
-                'deleted_at' => Carbon::now()->toDateTimeString(),
             ]
         );
     }
@@ -1773,11 +1770,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(204, $results->getStatusCode());
 
-        $this->assertDatabaseHas(
+        $this->assertSoftDeleted(
             ConfigService::$tablePaymentMethod,
             [
                 'id' => $paypalPaymentMethod['id'],
-                'deleted_at' => Carbon::now()->toDateTimeString(),
             ]
         );
     }
@@ -1838,13 +1834,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(204, $results->getStatusCode());
 
-        $this->assertDatabaseHas(
+        $this->assertSoftDeleted(
             ConfigService::$tablePaymentMethod,
             [
                 'id' => $otherPaymentMethod['id'],
-                'method_type' => $otherPaymentMethod['method_type'],
-                'method_id' => $otherCreditCard['id'],
-                'deleted_at' => Carbon::now()->toDateTimeString(),
             ]
         );
     }
