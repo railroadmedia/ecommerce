@@ -44,7 +44,7 @@ class DiscountRepository extends RepositoryBase
         $qb->paginateByRequest($request)
             ->orderByRequest($request, $alias)
             ->select([$alias, $aliasProduct])
-            ->join($alias . '.product', $aliasProduct);
+            ->leftJoin($alias . '.product', $aliasProduct);
 
         $results =
             $qb->getQuery()
