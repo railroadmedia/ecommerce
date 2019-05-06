@@ -150,7 +150,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'page' => $page,
                 'limit' => $limit,
                 'order_by_column' => 'id',
-                'order_by_direction' => 'asc'
+                'order_by_direction' => 'asc',
+                'includes' => 'product',
             ]
         );
 

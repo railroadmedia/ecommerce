@@ -104,7 +104,6 @@ class SubscriptionJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.subscriptions');
 
-        $alias = 's';
         $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
         $orderBy = $request->get('order_by_column', 'created_at');
         if (
@@ -113,18 +112,22 @@ class SubscriptionJsonController extends Controller
         ) {
             $orderBy = camel_case($orderBy);
         }
-        $orderBy = $alias . '.' . $orderBy;
+        $orderBy = 's' . '.' . $orderBy;
         $brands = $request->get('brands', [ConfigService::$availableBrands]);
 
         /**
          * @var $qb QueryBuilder
          */
-        $qb = $this->subscriptionRepository->createQueryBuilder($alias);
+        $qb = $this->subscriptionRepository->createQueryBuilder('s');
 
         $qb
-            ->where($qb->expr()->in($alias . '.brand', ':brands'))
+            ->select(['s', 'p', 'o', 'pm'])
+            ->leftJoin('s.product', 'p')
+            ->leftJoin('s.order', 'o')
+            ->leftJoin('s.paymentMethod', 'pm')
+            ->where($qb->expr()->in('s' . '.brand', ':brands'))
             ->andWhere(
-                $qb->expr()->isNull($alias . '.deletedAt')
+                $qb->expr()->isNull('s' . '.deletedAt')
             )
             ->setMaxResults($request->get('limit', 10))
             ->setFirstResult($first)
@@ -137,7 +140,7 @@ class SubscriptionJsonController extends Controller
 
             $qb
                 ->andWhere(
-                    $qb->expr()->eq($alias . '.user', ':user')
+                    $qb->expr()->eq('s' . '.user', ':user')
                 )
                 ->setParameter('user', $user);
         }
