@@ -20,8 +20,8 @@ Create a new discount criteria for a discount.
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |body|data.type|yes||must be 'discountCriteria'||
-|body|data.attributes.name|yes||'product quantity requirement', 'date requirement', 'order total requirement', 'shipping total requirement', 'shipping country requirement', 'promo code requirement', 'product own requirement'||
-|body|data.attributes.type|yes||||
+|body|data.attributes.name|yes||||
+|body|data.attributes.type|yes||'product quantity requirement', 'date requirement', 'order total requirement', 'shipping total requirement', 'shipping country requirement', 'promo code requirement', 'product own requirement'||
 |body|data.relationships.product.id|yes||||
 |body|data.attributes.min|yes|||to be set depending on the type|
 |body|data.attributes.max|yes|||to be set depending on the type|
