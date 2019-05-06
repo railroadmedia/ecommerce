@@ -121,6 +121,7 @@ Create a new address.
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |body|data.type|yes||should be 'address'||
+|body|data.attributes.brand|yes||||
 |body|data.attributes.type|yes||'billing' or 'shipping'||
 |body|data.attributes.first_name|||||
 |body|data.attributes.last_name|||||
@@ -258,6 +259,7 @@ Update an existing address.
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
+|body|data.attributes.brand|||||
 |body|data.attributes.type|yes||'billing' or 'shipping'||
 |body|data.attributes.first_name|||||
 |body|data.attributes.last_name|||||
