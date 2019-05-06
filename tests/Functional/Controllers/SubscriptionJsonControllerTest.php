@@ -4,6 +4,10 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -33,11 +37,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
+
         $subscription = $this->fakeSubscription();
+
+        $this->expectsEvents([SubscriptionDeleted::class]);
 
         $results = $this->call('DELETE', '/subscription/' . $subscription['id']);
 
         $this->assertEquals(204, $results->getStatusCode());
+
 
         $this->assertSoftDeleted(
             ConfigService::$tableSubscription,
@@ -54,6 +62,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $randomId = $this->faker->randomNumber();
+
+        $this->doesntExpectEvents([SubscriptionDeleted::class]);
 
         $results = $this->call('DELETE', '/subscription/' . $randomId);
 
@@ -352,6 +362,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'updated_at' => null
         ]);
 
+        $this->expectsEvents([SubscriptionCreated::class]);
+
         $results  = $this->call(
             'PUT',
             '/subscription',
@@ -512,6 +524,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $newPrice = $this->faker->numberBetween();
 
+        $this->expectsEvents([SubscriptionUpdated::class]);
+
         $results = $this->call(
             'PATCH',
             '/subscription/' . $subscription['id'],
@@ -639,6 +653,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'product_id' => $product['id'],
             'expiration_date' => $subscription['paid_until']
         ]);
+
+        $this->expectsEvents([SubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -838,6 +854,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'expiration_date' => $subscription['paid_until']
         ]);
 
+        $this->expectsEvents([SubscriptionUpdated::class]);
+
         $results = $this->call(
             'PATCH',
             '/subscription/' . $subscription['id'],
@@ -975,6 +993,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'interval_type' => ConfigService::$intervalTypeYearly,
         ]);
 
+        $this->expectsEvents([SubscriptionRenewed::class, SubscriptionUpdated::class]);
+
         $results = $this->call(
             'POST',
             '/subscription-renew/' . $subscription['id']
@@ -1039,6 +1059,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'interval_count' => 1,
             'interval_type' => ConfigService::$intervalTypeYearly,
         ]);
+
+        $this->expectsEvents([SubscriptionRenewed::class, SubscriptionUpdated::class]);
 
         $results = $this->call(
             'POST',

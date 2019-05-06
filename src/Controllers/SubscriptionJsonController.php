@@ -10,6 +10,10 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
@@ -80,7 +84,8 @@ class SubscriptionJsonController extends Controller
         SubscriptionRepository $subscriptionRepository,
         UserProductService $userProductService,
         UserProviderInterface $userProvider
-    ) {
+    )
+    {
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->permissionService = $permissionService;
@@ -91,6 +96,7 @@ class SubscriptionJsonController extends Controller
     }
 
     // todo: refactor database logic to repository
+
     /**
      * Pull subscriptions paginated
      *
@@ -106,10 +112,7 @@ class SubscriptionJsonController extends Controller
 
         $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
         $orderBy = $request->get('order_by_column', 'created_at');
-        if (
-            strpos($orderBy, '_') !== false
-            || strpos($orderBy, '-') !== false
-        ) {
+        if (strpos($orderBy, '_') !== false || strpos($orderBy, '-') !== false) {
             $orderBy = camel_case($orderBy);
         }
         $orderBy = 's' . '.' . $orderBy;
@@ -120,14 +123,17 @@ class SubscriptionJsonController extends Controller
          */
         $qb = $this->subscriptionRepository->createQueryBuilder('s');
 
-        $qb
-            ->select(['s', 'p', 'o', 'pm'])
+        $qb->select(['s', 'p', 'o', 'pm'])
             ->leftJoin('s.product', 'p')
             ->leftJoin('s.order', 'o')
             ->leftJoin('s.paymentMethod', 'pm')
-            ->where($qb->expr()->in('s' . '.brand', ':brands'))
+            ->where(
+                $qb->expr()
+                    ->in('s' . '.brand', ':brands')
+            )
             ->andWhere(
-                $qb->expr()->isNull('s' . '.deletedAt')
+                $qb->expr()
+                    ->isNull('s' . '.deletedAt')
             )
             ->setMaxResults($request->get('limit', 10))
             ->setFirstResult($first)
@@ -138,14 +144,16 @@ class SubscriptionJsonController extends Controller
 
             $user = $this->userProvider->getUserById($request->get('user_id'));
 
-            $qb
-                ->andWhere(
-                    $qb->expr()->eq('s' . '.user', ':user')
+            $qb->andWhere(
+                    $qb->expr()
+                        ->eq('s' . '.user', ':user')
                 )
                 ->setParameter('user', $user);
         }
 
-        $subscriptions = $qb->getQuery()->getResult();
+        $subscriptions =
+            $qb->getQuery()
+                ->getResult();
 
         return ResponseService::subscription($subscriptions, $qb);
     }
@@ -171,6 +179,9 @@ class SubscriptionJsonController extends Controller
         );
 
         $subscription->setDeletedAt(Carbon::now());
+
+        event(new SubscriptionDeleted($subscription));
+
         $this->entityManager->flush();
 
         return ResponseService::empty(204);
@@ -199,6 +210,8 @@ class SubscriptionJsonController extends Controller
         $this->entityManager->persist($subscription);
         $this->entityManager->flush();
 
+        event(new SubscriptionCreated($subscription));
+
         $this->userProductService->updateSubscriptionProducts($subscription);
 
         return ResponseService::subscription($subscription);
@@ -223,20 +236,18 @@ class SubscriptionJsonController extends Controller
         throw_if(
             is_null($subscription),
             new NotFoundException(
-                'Update failed, subscription not found with id: ' .
-                $subscriptionId
+                'Update failed, subscription not found with id: ' . $subscriptionId
             )
         );
+
+        $oldSubscription = clone $subscription;
 
         $this->jsonApiHydrator->hydrate(
             $subscription,
             $request->onlyAllowed()
         );
 
-        if (
-            $subscription->getIsActive() === false &&
-            !$subscription->getCanceledOn()
-        ) {
+        if ($subscription->getIsActive() === false && !$subscription->getCanceledOn()) {
             $subscription->setCanceledOn(Carbon::now());
         }
 
@@ -246,6 +257,8 @@ class SubscriptionJsonController extends Controller
                 round($subscription->getTotalPrice(), 2)
             );
         }
+
+        event(new SubscriptionUpdated($oldSubscription, $subscription));
 
         $this->entityManager->flush();
 
@@ -270,16 +283,19 @@ class SubscriptionJsonController extends Controller
         throw_if(
             is_null($subscription),
             new NotFoundException(
-                'Renew failed, subscription not found with id: ' .
-                $subscriptionId
+                'Renew failed, subscription not found with id: ' . $subscriptionId
             )
         );
 
+        $oldSubscription = clone $subscription;
         $response = null;
 
         try {
 
             $this->renewalService->renew($subscription);
+
+            event(new SubscriptionRenewed($subscription));
+            event(new SubscriptionUpdated($oldSubscription, $subscription));
 
             $response = ResponseService::subscription($subscription);
 
