@@ -133,7 +133,7 @@ class SubscriptionJsonController extends Controller
 
         if ($request->has('user_id')) {
 
-            $user = $this->userProvider->getUserById($request->has('user_id'));
+            $user = $this->userProvider->getUserById($request->get('user_id'));
 
             $qb
                 ->andWhere(
