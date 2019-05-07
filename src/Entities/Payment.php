@@ -427,4 +427,28 @@ class Payment
 
         return $this;
     }
+
+    /**
+     * @return Order|null
+     */
+    public function getOrder()
+    {
+        if (!empty($this->getOrderPayment())) {
+            return $this->getOrderPayment()->getOrder();
+        }
+
+        return null;
+    }
+
+    /**
+     * @return Subscription|null
+     */
+    public function getSubscription()
+    {
+        if (!empty($this->getSubscriptionPayment())) {
+            return $this->getSubscriptionPayment()->getSubscription();
+        }
+
+        return null;
+    }
 }
