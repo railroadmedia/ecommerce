@@ -9,6 +9,7 @@ use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\Common\Cache\RedisCache;
 use Doctrine\Common\EventManager;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
+use Doctrine\DBAL\Logging\EchoSQLLogger;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
@@ -289,6 +290,12 @@ class EcommerceServiceProvider extends ServiceProvider
         $entityManager = EcommerceEntityManager::create($databaseOptions, $ormConfiguration, $eventManager);
 
         $entityManager->getFilters()->enable('soft-deleteable');
+
+        if (config('ecommerce.enable_query_log')) {
+            $logger = new EchoSQLLogger();
+            
+            $entityManager->getConnection()->getConfiguration()->setSQLLogger( $logger);
+        }
 
         app()->instance(EcommerceEntityManager::class, $entityManager);
     }

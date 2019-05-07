@@ -15,6 +15,7 @@ return [
     'database_host' => env('DB_HOST'),
     'database_driver' => 'pdo_mysql',
     'database_in_memory' => false,
+    'enable_query_log' => false,
 
     // host does the db migrations, clients do not
     'data_mode' => 'host', // 'host' or 'client'

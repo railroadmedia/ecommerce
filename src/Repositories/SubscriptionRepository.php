@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Carbon\Carbon;
 use Doctrine\ORM\EntityRepository;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Product;
@@ -42,14 +43,16 @@ class SubscriptionRepository extends EntityRepository
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this
-            ->getEntityManager()
-            ->createQueryBuilder();
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
 
-        $qb
-            ->select('s')
+        $qb->select('s')
             ->from($this->getClassName(), 's')
-            ->where($qb->expr()->in('s.product', ':products'));
+            ->where(
+                $qb->expr()
+                    ->in('s.product', ':products')
+            );
 
         /**
          * @var $q \Doctrine\ORM\Query
@@ -77,25 +80,82 @@ class SubscriptionRepository extends EntityRepository
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this
-            ->getEntityManager()
-            ->createQueryBuilder();
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
 
-        $qb
-            ->select('s')
+        $qb->select('s')
             ->from($this->getClassName(), 's')
-            ->where($qb->expr()->eq('s.order', ':order'))
-            ->andWhere($qb->expr()->eq('s.product', ':product'));
+            ->where(
+                $qb->expr()
+                    ->eq('s.order', ':order')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.product', ':product')
+            );
 
         /**
          * @var $q \Doctrine\ORM\Query
          */
         $q = $qb->getQuery();
 
-        $q
-            ->setParameter('order', $order)
+        $q->setParameter('order', $order)
             ->setParameter('product', $product);
 
         return $q->getOneOrNullResult();
+    }
+
+    /**
+     * @param $userId
+     * @param array $productIds
+     * @return Subscription|null
+     */
+    public function getActiveUserSubscriptionForProducts($userId, array $productIds)
+    {
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $subscriptions =
+            $qb->select('s')
+                ->from($this->getClassName(), 's')
+                ->where(
+                    $qb->expr()
+                        ->eq('s.user', ':userId')
+                )
+                ->andWhere(
+                    $qb->expr()
+                        ->in('IDENTITY(s.product)', ':productIds')
+                )
+                ->andWhere('s.isActive = true')
+                ->andWhere(
+                    $qb->expr()
+                        ->gt('s.paidUntil', ':now')
+                )
+                ->andWhere(
+                    $qb->expr()
+                        ->isNull('s.canceledOn')
+                )
+                ->setParameter('userId', $userId)
+                ->setParameter('productIds', $productIds)
+                ->setParameter(
+                    'now',
+                    Carbon::now()
+                        ->toDateTimeString()
+                )
+                ->getQuery()
+                ->getResult();
+
+        if (count($subscriptions) > 1) {
+            error_log(
+                'User ' .
+                $userId .
+                ' has more than 1 active subscription for the given products ' .
+                implode(',', $productIds)
+            );
+        }
+        
+        return $subscriptions[0] ?? null;
     }
 }

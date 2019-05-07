@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use DateTimeInterface;
+use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\ORM\EntityRepository;
 use Illuminate\Support\Collection;
 use Railroad\Ecommerce\Entities\Product;
@@ -27,6 +28,11 @@ class UserProductService
     protected $userProductRepository;
 
     /**
+     * @var ArrayCache
+     */
+    protected $arrayCache;
+
+    /**
      * UserProductService constructor.
      *
      * @param EcommerceEntityManager $entityManager
@@ -35,9 +41,104 @@ class UserProductService
     public function __construct(
         EcommerceEntityManager $entityManager,
         UserProductRepository $userProductRepository
-    ) {
+    )
+    {
         $this->entityManager = $entityManager;
         $this->userProductRepository = $userProductRepository;
+
+        $this->arrayCache = app()->make('EcommerceArrayCache');
+    }
+
+    /**
+     * @param $userId
+     * @param $productId
+     * @return bool
+     */
+    public function hasProduct($userId, $productId)
+    {
+        $userProducts = $this->getAllUsersProducts($userId);
+
+        foreach ($userProducts as $userProduct) {
+            if ($userProduct->getProduct()
+                    ->getId() == $productId &&
+                ($userProduct->getExpirationDate() == null ||
+                    Carbon::parse($userProduct->getExpirationDate()) > Carbon::now())) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param $userId
+     * @param array $productIds
+     * @return bool
+     */
+    public function hasAnyOfProducts($userId, array $productIds)
+    {
+        $userProducts = $this->getAllUsersProducts($userId);
+
+        foreach ($userProducts as $userProduct) {
+            if (in_array(
+                    $userProduct->getProduct()
+                        ->getId(),
+                    $productIds
+                ) &&
+                ($userProduct->getExpirationDate() == null ||
+                    Carbon::parse($userProduct->getExpirationDate()) > Carbon::now())) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param $userId
+     * @param $productId
+     * @return bool|Carbon|null
+     */
+    public function getProductExpirationDate($userId, $productId)
+    {
+        $userProducts = $this->getAllUsersProducts($userId);
+
+        foreach ($userProducts as $userProduct) {
+
+            if ($userProduct->getProduct()
+                    ->getId() == $productId) {
+
+                if ($userProduct->getExpirationDate() == null) {
+                    return null;
+                }
+
+                return Carbon::parse($userProduct->getExpirationDate());
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param $userId
+     * @param $productId
+     * @return UserProduct[]
+     */
+    public function getAllUsersProducts($userId)
+    {
+        $qb = $this->userProductRepository->createQueryBuilder('up');
+
+        $qb->where(
+            $qb->expr()
+                ->eq('up.user', ':userId')
+        )
+            ->setParameter('userId', $userId);
+
+        return $qb->getQuery()
+            ->setResultCacheDriver($this->arrayCache)
+            ->getResult();
     }
 
     /**
@@ -53,17 +154,22 @@ class UserProductService
     public function getUserProduct(
         User $user,
         Product $product
-    ): ?UserProduct {
+    ): ?UserProduct
+    {
 
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
         $qb = $this->userProductRepository->createQueryBuilder('up');
 
-        $qb->where($qb->expr()
-                ->eq('up.user', ':user'))
-            ->andWhere($qb->expr()
-                ->eq('up.product', ':product'))
+        $qb->where(
+            $qb->expr()
+                ->eq('up.user', ':user')
+        )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('up.product', ':product')
+            )
             ->setParameter('user', $user)
             ->setParameter('product', $product);
 
@@ -82,21 +188,27 @@ class UserProductService
     public function getUserProducts(
         User $user,
         $products
-    ): array {
+    ): array
+    {
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
         $qb = $this->userProductRepository->createQueryBuilder('up');
 
-        $qb->where($qb->expr()
-                ->eq('up.user', ':user'))
-            ->andWhere($qb->expr()
-                ->in('up.product', ':products'))
+        $qb->where(
+            $qb->expr()
+                ->eq('up.user', ':user')
+        )
+            ->andWhere(
+                $qb->expr()
+                    ->in('up.product', ':products')
+            )
             ->setParameter('user', $user)
             ->setParameter('products', $products);
 
-        $collection = $qb->getQuery()
-            ->getResult();
+        $collection =
+            $qb->getQuery()
+                ->getResult();
 
         $map = [];
 
@@ -127,7 +239,8 @@ class UserProductService
         Product $product,
         ?DateTimeInterface $expirationDate,
         $quantity
-    ): UserProduct {
+    ): UserProduct
+    {
 
         $userProduct = new UserProduct();
 
@@ -157,7 +270,8 @@ class UserProductService
         UserProduct $userProduct,
         ?DateTimeInterface $expirationDate,
         $quantity
-    ) {
+    )
+    {
         $userProduct->setExpirationDate($expirationDate)
             ->setQuantity($quantity)
             ->setUpdatedAt(Carbon::now());
@@ -196,7 +310,8 @@ class UserProductService
         Product $product,
         ?DateTimeInterface $expirationDate,
         $quantity = 0
-    ) {
+    )
+    {
 
         /**
          * @var $userProduct UserProduct
@@ -206,7 +321,8 @@ class UserProductService
         if (!$userProduct) {
             $productQuantity = ($quantity == 0) ? 1 : $quantity;
             $this->createUserProduct($user, $product, $expirationDate, $productQuantity);
-        } else {
+        }
+        else {
             $this->updateUserProduct($userProduct, $expirationDate, ($userProduct->getQuantity() + $quantity));
         }
     }
@@ -226,9 +342,13 @@ class UserProductService
     public function removeUserProducts(
         User $user,
         $products
-    ) {
-        $userProducts = $this->getUserProducts($user, $products->pluck('product')
-            ->all());
+    )
+    {
+        $userProducts = $this->getUserProducts(
+            $user,
+            $products->pluck('product')
+                ->all()
+        );
 
         foreach ($products as $productData) {
 
@@ -247,7 +367,8 @@ class UserProductService
 
             if (($userProduct->getQuantity() == 1) || ($userProduct->getQuantity() - $productData['quantity'] <= 0)) {
                 $this->entityManager->remove($userProduct);
-            } else {
+            }
+            else {
 
                 $quantity = $userProduct->getQuantity() - $productData['quantity'];
 
@@ -277,8 +398,11 @@ class UserProductService
                 return collect([]);
             }
 
-            return collect($subscription->getOrder()
-                ->getOrderItems())->map(function ($orderItem) {
+            return collect(
+                $subscription->getOrder()
+                    ->getOrderItems()
+            )->map(
+                function ($orderItem) {
                     /**
                      * @var $orderItem \Railroad\Ecommerce\Entities\OrderItem
                      */
@@ -286,16 +410,20 @@ class UserProductService
                         'product' => $orderItem->getProduct(),
                         'quantity' => $orderItem->getQuantity(),
                     ];
-                });
+                }
+            );
 
-        } else {
+        }
+        else {
 
-            return collect([
+            return collect(
                 [
-                    'product' => $subscription->getProduct(),
-                    'quantity' => 1,
-                ],
-            ]);
+                    [
+                        'product' => $subscription->getProduct(),
+                        'quantity' => 1,
+                    ],
+                ]
+            );
         }
     }
 
@@ -314,10 +442,14 @@ class UserProductService
 
             foreach ($products as $productData) {
 
-                $this->assignUserProduct($subscription->getUser(), $productData['product'],
-                    $subscription->getPaidUntil());
+                $this->assignUserProduct(
+                    $subscription->getUser(),
+                    $productData['product'],
+                    $subscription->getPaidUntil()
+                );
             }
-        } else {
+        }
+        else {
             $this->removeUserProducts($subscription->getUser(), $products);
         }
     }
