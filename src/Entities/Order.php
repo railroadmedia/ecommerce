@@ -122,9 +122,19 @@ class Order
      */
     protected $orderItems;
 
+    /**
+     * @ORM\ManyToMany(targetEntity="Railroad\Ecommerce\Entities\Payment")
+     * @ORM\JoinTable(name="ecommerce_order_payments",
+     *      joinColumns={@ORM\JoinColumn(name="order_id", referencedColumnName="id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="payment_id", referencedColumnName="id", unique=true)}
+     *      )
+     */
+    protected $payments;
+
     public function __construct()
     {
         $this->orderItems = new ArrayCollection();
+        $this->payments = new ArrayCollection();
     }
 
     /**
@@ -420,5 +430,21 @@ class Order
         }
 
         return $this;
+    }
+
+    /**
+     * @return ArrayCollection|Payment[]
+     */
+    public function getPayments()
+    {
+        return $this->payments;
+    }
+
+    /**
+     * @param ArrayCollection $payments
+     */
+    public function setPayments(ArrayCollection $payments): void
+    {
+        $this->payments = $payments;
     }
 }

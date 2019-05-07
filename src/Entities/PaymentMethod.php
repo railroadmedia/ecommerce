@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Proxy\Proxy;
 use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -63,6 +64,18 @@ class PaymentMethod
      * @ORM\JoinColumn(name="billing_address_id", referencedColumnName="id")
      */
     protected $billingAddress;
+
+    /**
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\CreditCard", fetch="LAZY")
+     * @ORM\JoinColumn(name="method_id", referencedColumnName="id")
+     */
+    protected $creditCard;
+
+    /**
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\PaypalBillingAgreement", fetch="LAZY")
+     * @ORM\JoinColumn(name="method_id", referencedColumnName="id")
+     */
+    protected $payPalBillingAgreement;
 
     /**
      * @return int|null
@@ -163,6 +176,26 @@ class PaymentMethod
 
         if ($this->getMethodType() == self::TYPE_PAYPAL) {
             return Payment::EXTERNAL_PROVIDER_PAYPAL;
+        }
+
+        return null;
+    }
+
+    /**
+     * @return CreditCard|PaypalBillingAgreement|null
+     */
+    public function getMethod()
+    {
+        if ($this->getMethodType() == self::TYPE_CREDIT_CARD) {
+            $this->creditCard->getCreatedAt();
+
+            return $this->creditCard;
+        }
+
+        if ($this->getMethodType() == self::TYPE_PAYPAL) {
+            $this->payPalBillingAgreement->getCreatedAt();
+
+            return $this->payPalBillingAgreement;
         }
 
         return null;

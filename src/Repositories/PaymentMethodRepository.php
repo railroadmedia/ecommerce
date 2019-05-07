@@ -73,4 +73,32 @@ class PaymentMethodRepository extends RepositoryBase
             ->useResultCache($this->arrayCache)
             ->getOneOrNullResult();
     }
+
+    /**
+     * @param $userId
+     * @return PaymentMethod|null
+     */
+    public function getUsersPrimaryPaymentMethod($userId)
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select(['pm'])
+            ->from(PaymentMethod::class, 'pm')
+            ->join(
+                UserPaymentMethods::class,
+                'upm',
+                Join::WITH,
+                $qb->expr()
+                    ->eq(1, 1)
+            )
+            ->join('upm.paymentMethod', 'pmj')
+            ->where('upm.user = :userId')
+            ->andWhere('pmj.id = pm.id')
+            ->andWhere('upm.isPrimary = true')
+            ->setParameter('userId', $userId);
+
+        return $qb->getQuery()
+            ->useResultCache($this->arrayCache)
+            ->getOneOrNullResult();
+    }
 }

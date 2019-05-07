@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Entities;
 
 use DateTimeInterface;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -175,6 +176,20 @@ class Subscription
      * @var \DateTime
      */
     protected $deletedAt;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="Railroad\Ecommerce\Entities\Payment")
+     * @ORM\JoinTable(name="ecommerce_order_payments",
+     *      joinColumns={@ORM\JoinColumn(name="order_id", referencedColumnName="id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="payment_id", referencedColumnName="id", unique=true)}
+     *      )
+     */
+    protected $payments;
+
+    public function __construct()
+    {
+        $this->payments = new ArrayCollection();
+    }
 
     /**
      * @return int|null
@@ -562,5 +577,21 @@ class Subscription
         $this->product = $product;
 
         return $this;
+    }
+
+    /**
+     * @return ArrayCollection|Payment[]
+     */
+    public function getPayments()
+    {
+        return $this->payments;
+    }
+
+    /**
+     * @param ArrayCollection $payments
+     */
+    public function setPayments(ArrayCollection $payments): void
+    {
+        $this->payments = $payments;
     }
 }
