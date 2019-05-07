@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
+use Railroad\Ecommerce\Exceptions\Cart\UpdateNumberOfPaymentsCartException;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Throwable;
@@ -111,7 +112,7 @@ class CartJsonController extends Controller
      * @param  int  $quantity
      *
      * @return JsonResponse
-     *@throws Throwable
+     * @throws Throwable
      *
      */
     public function updateCartItemQuantity(string $productSku, int $quantity)
@@ -122,6 +123,34 @@ class CartJsonController extends Controller
             $this->cartService->updateCartQuantity($productSku, $quantity);
         } catch (AddToCartException $addToCartException) {
             $errors[] = $addToCartException->getMessage();
+        }
+
+        $cartArray = $this->cartService->toArray();
+
+        if (!empty($errors)) {
+            $cartArray['errors'] = $errors;
+        }
+
+        return ResponseService::cart($cartArray)->respond(200);
+    }
+
+    /**
+     * Update number of payments
+     *
+     * @param int $numberOfPayments
+     *
+     * @return JsonResponse
+     * @throws Throwable
+     *
+     */
+    public function updateNumberOfPayments(int $numberOfPayments)
+    {
+        $errors = [];
+
+        try {
+            $this->cartService->updateNumberOfPayments($numberOfPayments);
+        } catch (UpdateNumberOfPaymentsCartException $updateNumberOfPaymentsCartException) {
+            $errors[] = $updateNumberOfPaymentsCartException->getMessage();
         }
 
         $cartArray = $this->cartService->toArray();

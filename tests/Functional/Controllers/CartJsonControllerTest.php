@@ -1163,4 +1163,79 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals($productQuantity, $cartItemOne->getQuantity());
     }
+
+    public function test_update_number_of_payments()
+    {
+        $this->session->flush();
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 100),
+        ]);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $productQuantity = $this->faker->numberBetween(1, 5);
+
+        $cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
+        );
+
+        $numberOfPayments = $this->getPaymentPlanOption();
+
+        $response = $this->call(
+            'PUT',
+            '/json/update-number-of-payments/' . $numberOfPayments
+        );
+
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ],
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        $financeCharge = 1;
+
+        $totalDue = (($product['price'] * $productQuantity + $financeCharge) / $numberOfPayments);
+
+        // assert total due
+        $this->assertEquals(
+            $totalDue,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        // assert response cart number of payments
+        $this->assertEquals(
+            $numberOfPayments,
+            $decodedResponse['meta']['cart']['number_of_payments']
+        );
+
+        // backend assert
+        $cart = Cart::fromSession();
+
+        // assert session cart number of payments
+        $this->assertEquals($numberOfPayments, $cart->getPaymentPlanNumberOfPayments());
+    }
 }

@@ -13,6 +13,7 @@ use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotActiveException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
+use Railroad\Ecommerce\Exceptions\Cart\UpdateNumberOfPaymentsCartException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Permissions\Services\PermissionService;
@@ -225,6 +226,31 @@ class CartService
     public function clearCart()
     {
         $this->cart = new Cart();
+        $this->cart->toSession();
+    }
+
+    /**
+     * Update number of payments
+     *
+     * @param int $numberOfPayments
+     *
+     * @throws UpdateNumberOfPaymentsCartException
+     * @throws Throwable
+     */
+    public function updateNumberOfPayments(int $numberOfPayments)
+    {
+        $this->refreshCart();
+
+        $due = $this->getDueForOrder();
+
+        if ($due < config('ecommerce.payment_plan_minimum_price') ||
+            !in_array($numberOfPayments, config('ecommerce.payment_plan_options'))) {
+
+            throw new UpdateNumberOfPaymentsCartException($numberOfPayments);
+        }
+
+        $this->cart->setPaymentPlanNumberOfPayments($numberOfPayments);
+
         $this->cart->toSession();
     }
 
@@ -517,7 +543,9 @@ class CartService
 
         $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 
-        $due = ($numberOfPayments > 1) ? $this->getDueForInitialPayment() : $this->getDueForOrder();
+        $orderDue = $this->getDueForOrder();
+
+        $due = ($numberOfPayments > 1) ? $this->getDueForInitialPayment() : $orderDue;
 
         $totalItemCostDue = $this->getTotalItemCosts();
 
@@ -561,12 +589,41 @@ class CartService
             ];
         }
 
+        $paymentPlanOptions = [];
+
+        if ($orderDue > config('ecommerce.payment_plan_minimum_price')) {
+
+            foreach (config('ecommerce.payment_plan_options') as $paymentPlanOption) {
+
+                $label = null;
+
+                if ($paymentPlanOption == 1) {
+                    $label = '1 payment of $' . $orderDue;
+                } else {
+                    $financeDue = config('ecommerce.financing_cost_per_order', 1);
+                    $format = '%s payments of $%s ($%s finance charge)';
+                    $label = sprintf(
+                        $format,
+                        $paymentPlanOption,
+                        round(($orderDue - $shippingDue) / $paymentPlanOption, 2),
+                        number_format($financeDue, 2)
+                    );
+                }
+
+                $paymentPlanOptions[] = [
+                    'value' => $paymentPlanOption,
+                    'label' => $label,
+                ];
+            }
+        }
+
         return [
             'items' => $items,
             'discounts' => $discounts,
             'shipping_address' => $shippingAddress,
             'billing_address' => $billingAddress,
             'number_of_payments' => $numberOfPayments,
+            'payment_plan_options' => $paymentPlanOptions,
             'totals' => $totals,
         ];
     }

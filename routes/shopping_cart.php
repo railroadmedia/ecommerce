@@ -22,4 +22,7 @@ Route::group([
         Railroad\Ecommerce\Controllers\CartJsonController::class . '@updateCartItemQuantity')
         ->name('shopping-cart.json.update-cart-item-quantity');
 
+    Route::put('/json/update-number-of-payments/{numberOfPayments}',
+        Railroad\Ecommerce\Controllers\CartJsonController::class . '@updateNumberOfPayments')
+        ->name('shopping-cart.json.update-number-of-payments');
 });

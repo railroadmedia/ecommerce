@@ -87,7 +87,8 @@ return [
     ],
     
     'financing_cost_per_order' => 1,
-    'payment_plan_options' => 1, 2, 5,
+    'payment_plan_options' => [1, 2, 5],
+    'payment_plan_minimum_price' => 20,
 
     'default_gateway' => 'drumeo',
     'payment_gateways' => [
@@ -197,9 +198,6 @@ return [
     'invoice_sender_name' => 'Drumeo',
     'invoice_address' => 'Drumeo 107-31265 Wheel Avenue - Abbotsford BC, Canada',
     'invoice_email_subject' => 'Order Invoice - Thank You!',
-
-    'payment_plan_options' => [1, 2, 5],
-    'payment_plan_minimum_price' => 20,
 
     'billing_address' => 'billing',
     'shipping_address' => 'shipping',
