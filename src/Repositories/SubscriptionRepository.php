@@ -111,24 +111,25 @@ class SubscriptionRepository extends EntityRepository
      * @param array $productIds
      * @return Subscription|null
      */
-    public function getActiveUserSubscriptionForProducts($userId, array $productIds)
+    public function getUserSubscriptionForProducts($userId, array $productIds, $activeOnly = false)
     {
         $qb =
             $this->getEntityManager()
                 ->createQueryBuilder();
 
-        $subscriptions =
-            $qb->select('s')
-                ->from($this->getClassName(), 's')
-                ->where(
-                    $qb->expr()
-                        ->eq('s.user', ':userId')
-                )
-                ->andWhere(
-                    $qb->expr()
-                        ->in('IDENTITY(s.product)', ':productIds')
-                )
-                ->andWhere('s.isActive = true')
+        $qb->select('s')
+            ->from($this->getClassName(), 's')
+            ->where(
+                $qb->expr()
+                    ->eq('s.user', ':userId')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->in('IDENTITY(s.product)', ':productIds')
+            );
+
+        if ($activeOnly) {
+            $qb->andWhere('s.isActive = true')
                 ->andWhere(
                     $qb->expr()
                         ->gt('s.paidUntil', ':now')
@@ -137,17 +138,21 @@ class SubscriptionRepository extends EntityRepository
                     $qb->expr()
                         ->isNull('s.canceledOn')
                 )
-                ->setParameter('userId', $userId)
-                ->setParameter('productIds', $productIds)
                 ->setParameter(
                     'now',
                     Carbon::now()
                         ->toDateTimeString()
-                )
+                );
+        }
+
+        $subscriptions =
+            $qb->setParameter('userId', $userId)
+                ->setParameter('productIds', $productIds)
+                ->orderBy('s.createdAt', 'desc')
                 ->getQuery()
                 ->getResult();
 
-        if (count($subscriptions) > 1) {
+        if (count($subscriptions) > 1 && $activeOnly) {
             error_log(
                 'User ' .
                 $userId .
@@ -155,7 +160,7 @@ class SubscriptionRepository extends EntityRepository
                 implode(',', $productIds)
             );
         }
-        
+
         return $subscriptions[0] ?? null;
     }
 }
