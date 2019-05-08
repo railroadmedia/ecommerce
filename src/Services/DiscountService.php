@@ -191,7 +191,7 @@ class DiscountService
                 ]
             )) {
                 if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
-                    $shippingDiscountNames = [
+                    $shippingDiscountNames[] = [
                         'id' => $discount->getId(),
                         'name' => $discount->getName()
                     ];
