@@ -41,6 +41,7 @@ class SubscriptionUpdateRequest extends FormRequest
             'data.relationships.order.data.id' => 'order',
             'data.relationships.product.data.id' => 'product',
             'data.relationships.paymentMethod.data.id' => 'paymentMethod',
+            'data.relationships.user.data.id' => 'user_id',
         ];
     }
 
@@ -84,6 +85,7 @@ class SubscriptionUpdateRequest extends FormRequest
             'data.relationships.order.data.id' => 'numeric|exists:' . ConfigService::$tableOrder . ',id',
             'data.relationships.product.data.id' => 'numeric|exists:' . ConfigService::$tableProduct . ',id',
             'data.relationships.paymentMethod.data.id' => 'numeric|exists:' . ConfigService::$tablePaymentMethod . ',id',
+            'data.relationships.user.data.id' => 'integer',
         ];
     }
 

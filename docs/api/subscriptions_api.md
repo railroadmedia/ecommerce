@@ -178,6 +178,7 @@ Create a new subscription.
 |body|data.relationships.order.data.id|||||
 |body|data.relationships.product.data.id|yes||||
 |body|data.relationships.paymentMethod.data.id|yes||||
+|body|data.relationships.user.data.id|yes||||
 
 ### Validation Rules
 
@@ -212,6 +213,7 @@ Create a new subscription.
     'data.attributes.interval_count' => 'required|numeric|min:0',
     'data.attributes.total_cycles_due' => 'nullable|numeric|min:0',
     'data.attributes.total_cycles_paid' => 'required|numeric|min:0',
+    'data.relationships.user.data.id' => 'required|integer',
     'data.relationships.order.data.id' => 'numeric|exists:' . ConfigService::$tableOrder . ',id',
     'data.relationships.product.data.id' => 'numeric|exists:' . ConfigService::$tableProduct . ',id',
     'data.relationships.paymentMethod.data.id' => 'numeric|exists:' . ConfigService::$tablePaymentMethod . ',id',
@@ -399,6 +401,7 @@ Update an existing subscription.
 |body|data.relationships.order.data.id|||||
 |body|data.relationships.product.data.id|||||
 |body|data.relationships.paymentMethod.data.id|||||
+|body|data.relationships.user.data.id|yes||||
 
 ### Validation Rules
 
@@ -436,6 +439,8 @@ Update an existing subscription.
     'data.relationships.order.data.id' => 'numeric|exists:' . ConfigService::$tableOrder . ',id',
     'data.relationships.product.data.id' => 'numeric|exists:' . ConfigService::$tableProduct . ',id',
     'data.relationships.paymentMethod.data.id' => 'numeric|exists:' . ConfigService::$tablePaymentMethod . ',id',
+    'data.relationships.user.data.id' => 'integer',
+
 ];
 ```
 
