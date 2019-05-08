@@ -6,23 +6,32 @@ use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Requests\SessionStoreAddressRequest;
+use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ResponseService;
 
+// todo: I think this controller can probably be removed,
+// todo: the update address endpoint should go in the cart json controller
 class SessionJsonController extends Controller
 {
     /**
      * @var CartAddressService
      */
     private $cartAddressService;
+    /**
+     * @var CartService
+     */
+    private $cartService;
 
     /**
      * SessionJsonController constructor.
      *
      * @param CartAddressService $cartAddressService
+     * @param CartService $cartService
      */
-    public function __construct(CartAddressService $cartAddressService)
+    public function __construct(CartAddressService $cartAddressService, CartService $cartService)
     {
         $this->cartAddressService = $cartAddressService;
+        $this->cartService = $cartService;
     }
 
     public function storeAddress(SessionStoreAddressRequest $request)
@@ -67,9 +76,6 @@ class SessionJsonController extends Controller
             )
         );
 
-        return ResponseService::sessionAddresses(
-            $billingAddress,
-            $shippingAddress
-        );
+        return ResponseService::cart($this->cartService->toArray())->respond(200);
     }
 }
