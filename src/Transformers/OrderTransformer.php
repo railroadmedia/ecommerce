@@ -103,7 +103,7 @@ class OrderTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'address'
             );
-        } else {
+        } elseif (!empty($order->getBillingAddress())) {
             return $this->item(
                 $order->getBillingAddress(),
                 new AddressTransformer(),
@@ -120,7 +120,7 @@ class OrderTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'address'
             );
-        } else {
+        } elseif (!empty($order->getShippingAddress())) {
             return $this->item(
                 $order->getShippingAddress(),
                 new AddressTransformer(),

@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
+use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
 use Railroad\Ecommerce\Services\ConfigService;
 
 /**
@@ -379,5 +380,24 @@ class Address implements AddressInterface
         $this->customer = $customer;
 
         return $this;
+    }
+
+    /**
+     * @return AddressStructure
+     */
+    public function toStructure()
+    {
+        $addressStructure = new AddressStructure();
+
+        $addressStructure->setCountry($this->getCountry());
+        $addressStructure->setState($this->getState());
+        $addressStructure->setFirstName($this->getFirstName());
+        $addressStructure->setLastName($this->getLastName());
+        $addressStructure->setStreetLine1($this->getStreetLine1());
+        $addressStructure->setStreetLine2($this->getStreetLine2());
+        $addressStructure->setZip($this->getZip());
+        $addressStructure->setCity($this->getCity());
+
+        return $addressStructure;
     }
 }
