@@ -8,9 +8,25 @@ use Railroad\Ecommerce\Entities\DiscountCriteria;
 
 class DiscountCriteriaTransformer extends TransformerAbstract
 {
+    /**
+     * @var bool
+     */
+    private $disableDiscountInclude;
+
+    /**
+     * DiscountCriteriaTransformer constructor.
+     * @param bool $disableDiscountInclude
+     */
+    public function __construct($disableDiscountInclude = false)
+    {
+        $this->disableDiscountInclude = $disableDiscountInclude;
+    }
+
     public function transform(DiscountCriteria $discountCriteria)
     {
-        $this->defaultIncludes[] = 'discount';
+        if ($discountCriteria->getDiscount() && !$this->disableDiscountInclude) {
+            $this->defaultIncludes[] = 'discount';
+        }
 
         if ($discountCriteria->getProduct()) {
             // product relation is nullable

@@ -64,10 +64,11 @@ class DiscountRepository extends RepositoryBase
     {
         $qb = $this->entityManager->createQueryBuilder();
 
-        $qb->select(['d', 'p'])
+        $qb->select(['d', 'p', 'dc'])
             ->from(Discount::class, 'd')
             ->leftJoin('d.product', 'p')
-            ->where(
+            ->leftJoin('d.discountCriterias', 'dc')
+            ->andWhere(
                 $qb->expr()
                     ->eq('d.id', ':id')
             )

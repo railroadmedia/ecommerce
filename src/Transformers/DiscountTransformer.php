@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Transformers;
 use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Entities\Order;
 
 class DiscountTransformer extends TransformerAbstract
 {
@@ -13,6 +14,10 @@ class DiscountTransformer extends TransformerAbstract
         if ($discount->getProduct()) {
             // product relation is nullable
             $this->defaultIncludes[] = 'product';
+        }
+        if ($discount->getDiscountCriterias()) {
+            // product relation is nullable
+            $this->defaultIncludes[] = 'discountCriterias';
         }
 
         return [
@@ -42,6 +47,23 @@ class DiscountTransformer extends TransformerAbstract
                 $discount->getProduct(),
                 new ProductTransformer(),
                 'product'
+            );
+        }
+    }
+
+    public function includeDiscountCriterias(Discount $discount)
+    {
+        if ($discount->getDiscountCriterias()->first() instanceof Proxy) {
+            return $this->collection(
+                $discount->getDiscountCriterias(),
+                new EntityReferenceTransformer(),
+                'discountCriterias'
+            );
+        } else {
+            return $this->collection(
+                $discount->getDiscountCriterias(),
+                new DiscountCriteriaTransformer(true),
+                'discountCriterias'
             );
         }
     }
