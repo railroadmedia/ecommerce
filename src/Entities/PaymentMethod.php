@@ -68,6 +68,12 @@ class PaymentMethod
     protected $billingAddress;
 
     /**
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\UserPaymentMethods", inversedBy="paymentMethod")
+     * @ORM\JoinColumn(name="id", referencedColumnName="payment_method_id")
+     */
+    protected $userPaymentMethod;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -197,5 +203,13 @@ class PaymentMethod
         }
 
         return null;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUserPaymentMethod()
+    {
+        return $this->userPaymentMethod;
     }
 }

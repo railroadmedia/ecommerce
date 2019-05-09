@@ -189,11 +189,11 @@ class PaymentMethodJsonController extends Controller
         /**
          * @var $qb QueryBuilder
          */
-        $qb = $this->userPaymentMethodsRepository->createQueryBuilder('upm');
+        $qb = $this->paymentMethodRepository->createQueryBuilder('pm');
 
-        $userPaymentMethods =
+        $paymentMethods =
             $qb->select(['upm', 'pm', 'cc', 'ppba'])
-                ->join('upm.paymentMethod', 'pm')
+                ->join('pm.userPaymentMethod', 'upm')
                 ->leftJoin('pm.creditCard', 'cc')
                 ->leftJoin('pm.paypalBillingAgreement', 'ppba')
                 ->where(
@@ -208,14 +208,9 @@ class PaymentMethodJsonController extends Controller
         $paypalIds = [];
 
         /**
-         * @var $userPaymentMethod UserPaymentMethods
+         * @var $paymentMethods PaymentMethod
          */
-        foreach ($userPaymentMethods as $userPaymentMethod) {
-
-            /**
-             * @var $paymentMethod PaymentMethod
-             */
-            $paymentMethod = $userPaymentMethod->getPaymentMethod();
+        foreach ($paymentMethods as $paymentMethod) {
 
             $type = $paymentMethod->getMethodType();
 
@@ -231,10 +226,8 @@ class PaymentMethodJsonController extends Controller
 
         $paypalAgreementsMap = $this->paypalBillingAgreementRepository->getPaypalAgreementsMap($paypalIds);
 
-        return ResponseService::userPaymentMethods(
-            $userPaymentMethods,
-            $creditCardsMap,
-            $paypalAgreementsMap
+        return ResponseService::paymentMethod(
+            $paymentMethods
         );
     }
 

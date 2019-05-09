@@ -13,7 +13,7 @@ use Railroad\Ecommerce\Transformers\PaypalBillingAgreementTransformer;
 class UserPaymentMethodsTransformer extends TransformerAbstract
 {
     protected $creditCardsMap;
-    protected $defaultIncludes = ['paymentMethod', 'user', 'method'];
+    protected $defaultIncludes = ['user'];
     protected $paypalAgreementsMap;
 
     public function __construct(
@@ -48,35 +48,5 @@ class UserPaymentMethodsTransformer extends TransformerAbstract
             $userTransformer,
             'user'
         );
-    }
-
-    public function includePaymentMethod(
-        UserPaymentMethods $userPaymentMethod
-    ) {
-        return $this->item(
-            $userPaymentMethod->getPaymentMethod(),
-            new PaymentMethodTransformer(),
-            'paymentMethod'
-        );
-    }
-
-    public function includeMethod(UserPaymentMethods $userPaymentMethod)
-    {
-        $paymentMethod = $userPaymentMethod->getPaymentMethod();
-
-        // composite method handling
-        if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
-            return $this->item(
-                $this->paypalAgreementsMap[$paymentMethod->getMethod()->getId()],
-                new PaypalBillingAgreementTransformer(),
-                'paypalAgreement'
-            );
-        } else {
-            return $this->item(
-                $this->creditCardsMap[$paymentMethod->getMethod()->getId()],
-                new CreditCardTransformer(),
-                'creditCard'
-            );
-        }
     }
 }

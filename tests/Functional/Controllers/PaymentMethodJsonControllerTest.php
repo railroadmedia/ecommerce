@@ -1940,6 +1940,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'credit_card_id' => $creditCardOne['id'],
             'billing_address_id' => $address['id'],
         ]);
+        $paymentMethodOne['credit_card_id'] = $creditCardOne['id'];
 
         $paymentMethodsCc[$paymentMethodOne['id']] = $paymentMethodOne;
 
@@ -1947,6 +1948,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'credit_card_id' => $creditCardTwo['id'],
             'billing_address_id' => $address['id'],
         ]);
+        $paymentMethodTwo['credit_card_id'] = $creditCardTwo['id'];
 
         $paymentMethodsCc[$paymentMethodTwo['id']] = $paymentMethodTwo;
 
@@ -1954,6 +1956,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'paypal_billing_agreement_id' => $paymentMethodOne['id'],
             'billing_address_id' => $address['id'],
         ]);
+        $paymentMethodThree['paypal_billing_agreement_id'] = $paypalAgreement['id'];
 
         $userPaymentMethods = [];
 

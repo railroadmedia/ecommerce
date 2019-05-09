@@ -12,6 +12,7 @@ class PaymentMethodTransformer extends TransformerAbstract
     public function transform(PaymentMethod $paymentMethod)
     {
         $this->defaultIncludes[] = 'method';
+        $this->defaultIncludes[] = 'userPaymentMethod';
 
         if ($paymentMethod->getBillingAddress()) {
             $this->defaultIncludes[] = 'billingAddress';
@@ -41,6 +42,23 @@ class PaymentMethodTransformer extends TransformerAbstract
                 $paymentMethod->getBillingAddress(),
                 new AddressTransformer(),
                 'address'
+            );
+        }
+    }
+
+    public function includeUserPaymentMethod(PaymentMethod $paymentMethod)
+    {
+        if ($paymentMethod->getUserPaymentMethod() instanceof Proxy) {
+            return $this->item(
+                $paymentMethod->getUserPaymentMethod(),
+                new EntityReferenceTransformer(),
+                'userPaymentMethod'
+            );
+        } else {
+            return $this->item(
+                $paymentMethod->getUserPaymentMethod(),
+                new UserPaymentMethodsTransformer(),
+                'userPaymentMethod'
             );
         }
     }
