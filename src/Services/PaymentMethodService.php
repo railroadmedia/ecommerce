@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Exception;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
@@ -100,8 +101,7 @@ class PaymentMethodService
 
         $paymentMethod = $this->createPaymentMethod(
             $billingAddress,
-            $creditCard->getId(),
-            PaymentMethod::TYPE_CREDIT_CARD,
+            $creditCard,
             $currency ?? ConfigService::$defaultCurrency
         );
 
@@ -177,8 +177,7 @@ class PaymentMethodService
 
         $paymentMethod = $this->createPaymentMethod(
             $billingAddress,
-            $billingAgreement->getId(),
-            PaymentMethod::TYPE_PAYPAL,
+            $billingAgreement,
             $currency ?? ConfigService::$defaultCurrency
         );
 
@@ -223,26 +222,31 @@ class PaymentMethodService
      * Creates payment method entity
      *
      * @param Address $billingAddress
-     * @param int $methodId
-     * @param string $methodType
+     * @param CreditCard|PaypalBillingAgreement $method
      * @param string $currency
      *
      * @return PaymentMethod
+     * @throws Exception
      */
     public function createPaymentMethod(
         Address $billingAddress,
-        int $methodId,
-        string $methodType,
+        $method,
         string $currency
     ): PaymentMethod
     {
         $paymentMethod = new PaymentMethod();
 
         $paymentMethod
-            ->setMethodId($methodId)
-            ->setMethodType($methodType)
             ->setCurrency($currency)
             ->setBillingAddress($billingAddress);
+
+        if ($method instanceof CreditCard) {
+            $paymentMethod->setCreditCard($method);
+        } elseif ($method instanceof PaypalBillingAgreement) {
+            $paymentMethod->setPayPalBillingAgreement($method);
+        } else {
+            throw new Exception('Invalid payment method type on create.');
+        }
 
         return $paymentMethod;
     }

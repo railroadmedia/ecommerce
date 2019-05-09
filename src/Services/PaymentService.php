@@ -145,7 +145,7 @@ class PaymentService
 
         // credit cart
         if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
-            $creditCard = $this->creditCardRepository->find($paymentMethod->getMethodId());
+            $creditCard = $paymentMethod->getMethod();
 
             if (empty($creditCard)) {
                 throw new PaymentFailedException('Credit card not found.');
@@ -168,7 +168,7 @@ class PaymentService
         // paypal
         elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
 
-            $payPalAgreement = $this->payPalBillingAgreementRepository->find($paymentMethod->getMethodId());
+            $payPalAgreement = $paymentMethod->getMethod();
 
             if (empty($payPalAgreement)) {
                 throw new PaymentFailedException('PayPal agreement not found.');

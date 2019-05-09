@@ -59,8 +59,7 @@ class PaymentServiceTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'credit_card_id' => $creditCard['id'],
             'currency' => $currency,
             'billing_address_id' => $billingAddress['id']
         ]);
@@ -162,8 +161,7 @@ class PaymentServiceTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $paypalAgreement['id'],
-            'method_type' => PaymentMethod::TYPE_PAYPAL,
+            'paypal_billing_agreement_id' => $paypalAgreement['id'],
             'currency' => $currency,
             'billing_address_id' => $billingAddress['id']
         ]);
@@ -263,8 +261,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $paymentMethod = $this->fakePaymentMethod(
             [
-                'method_id' => $creditCard['id'],
-                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'credit_card_id' => $creditCard['id'],
                 'currency' => $this->faker->word,
                 'billing_address_id' => $billingAddressData['id'],
             ]
@@ -375,7 +372,7 @@ class PaymentServiceTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'credit_card_id' => 2,
                 'currency' => $currency,
                 'created_at' => Carbon::now()
                     ->toDateTimeString()
@@ -508,7 +505,7 @@ class PaymentServiceTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'credit_card_id' => 1,
                 'currency' => $currency,
                 'created_at' => Carbon::now()
                     ->toDateTimeString()
@@ -599,7 +596,7 @@ class PaymentServiceTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'method_type' => PaymentMethod::TYPE_PAYPAL,
+                'paypal_billing_agreement_id' => 1,
                 'currency' => $currency,
                 'created_at' => Carbon::now()
                     ->toDateTimeString()

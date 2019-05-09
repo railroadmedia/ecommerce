@@ -303,8 +303,7 @@ class PaymentJsonController extends Controller
                 /**
                  * @var $method CreditCard
                  */
-                $method = $this->creditCardRepository
-                                ->find($paymentMethod->getMethodId());
+                $method = $paymentMethod->getMethod();
 
                 $customer = $this->stripePaymentGateway->getCustomer(
                     $gateway,
@@ -355,8 +354,7 @@ class PaymentJsonController extends Controller
                 /**
                  * @var $method PaypalBillingAgreement
                  */
-                $method = $this->paypalBillingAgreementRepository
-                                ->find($paymentMethod->getMethodId());
+                $method = $paymentMethod->getMethod();
 
                 $transactionId = $this->payPalPaymentGateway
                                     ->chargeBillingAgreement(

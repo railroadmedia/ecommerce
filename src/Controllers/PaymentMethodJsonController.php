@@ -192,8 +192,10 @@ class PaymentMethodJsonController extends Controller
         $qb = $this->userPaymentMethodsRepository->createQueryBuilder('upm');
 
         $userPaymentMethods =
-            $qb->select(['upm', 'pm'])
+            $qb->select(['upm', 'pm', 'cc', 'ppba'])
                 ->join('upm.paymentMethod', 'pm')
+                ->leftJoin('pm.creditCard', 'cc')
+                ->leftJoin('pm.payPalBillingAgreement', 'ppba')
                 ->where(
                     $qb->expr()
                         ->eq('upm.user', ':user')
@@ -218,10 +220,10 @@ class PaymentMethodJsonController extends Controller
             $type = $paymentMethod->getMethodType();
 
             if ($type == PaymentMethod::TYPE_PAYPAL) {
-                $paypalIds[] = $paymentMethod->getMethodId();
+                $paypalIds[] = $paymentMethod->getMethod()->getId();
             }
             else {
-                $creditCardIds[] = $paymentMethod->getMethodId();
+                $creditCardIds[] = $paymentMethod->getMethod()->getId();
             }
         }
 
@@ -524,7 +526,7 @@ class PaymentMethodJsonController extends Controller
             /**
              * @var $method CreditCard
              */
-            $method = $this->creditCardRepository->find($paymentMethod->getMethodId());
+            $method = $this->creditCardRepository->find($paymentMethod->getMethod()->getId());
 
             $customer = $this->stripePaymentGateway->getCustomer(
                 $request->get('gateway'),

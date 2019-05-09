@@ -187,6 +187,9 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                         'id' => $customer['id']
                     ],
                     [
+                        'type' => 'creditCard',
+                    ],
+                    [
                         'type' => 'address',
                     ]
                 ]
@@ -207,7 +210,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'method_type' => $methodType,
+                'credit_card_id' => 1,
+                'paypal_billing_agreement_id' => null,
                 'currency' => $currency,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
@@ -319,6 +323,9 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                         'id' => $customer['id']
                     ],
                     [
+                        'type' => 'creditCard',
+                    ],
+                    [
                         'type' => 'address',
                     ]
                 ]
@@ -339,7 +346,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'method_type' => $methodType,
+                'credit_card_id' => 1,
+                'paypal_billing_agreement_id' => null,
                 'currency' => $currency,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
@@ -538,8 +546,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ->willReturn($updatedCard);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => PaymentMethod::TYPE_CREDIT_CARD
+            'credit_card_id' => $creditCard['id'],
         ]);
 
         $userPaymentMethod = $this->fakeUserPaymentMethod([
@@ -660,8 +667,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 
@@ -685,6 +691,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         // assert respons status code
         $this->assertEquals(200, $response->getStatusCode());
+
+        unset($paymentMethod['credit_card_id']);
 
         $this->assertArraySubset(
             [
@@ -845,7 +853,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethodOne = $this->fakePaymentMethod([
-            'method_id' => $creditCardOne['id'],
+            'credit_card_id' => $creditCardOne['id'],
             'method_type' => $methodType,
             'billing_address_id' => $address['id'],
         ]);
@@ -857,8 +865,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethodTwo = $this->fakePaymentMethod([
-            'method_id' => $creditCardTwo['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCardTwo['id'],
             'billing_address_id' => $address['id'],
         ]);
 
@@ -873,6 +880,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             '/payment-method/' . $paymentMethodTwo['id'],
             $payload
         );
+
+        unset($paymentMethodTwo['credit_card_id']);
 
         // assert respons status code
         $this->assertEquals(200, $response->getStatusCode());
@@ -994,8 +1003,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethodOne = $this->fakePaymentMethod([
-            'method_id' => $creditCardOne['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCardOne['id'],
             'billing_address_id' => $address['id'],
         ]);
 
@@ -1006,8 +1014,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethodTwo = $this->fakePaymentMethod([
-            'method_id' => $creditCardTwo['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCardTwo['id'],
             'billing_address_id' => $address['id'],
         ]);
 
@@ -1022,6 +1029,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             '/payment-method/' . $paymentMethodTwo['id'],
             $payload
         );
+
+        unset($paymentMethodTwo['credit_card_id']);
 
         // assert respons status code
         $this->assertEquals(200, $response->getStatusCode());
@@ -1143,8 +1152,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id'],
         ]);
 
@@ -1165,6 +1173,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             '/payment-method/' . $paymentMethod['id'],
             $payload
         );
+
+        unset($paymentMethod['credit_card_id']);
 
         // assert respons status code
         $this->assertEquals(200, $response->getStatusCode());
@@ -1238,16 +1248,14 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $oldPrimaryPaymentMethod = $this->fakePaymentMethod([
-            'method_type' => $methodType,
-            'method_id' => $creditCardOne['id'],
+            'credit_card_id' => $creditCardOne['id'],
             'billing_address_id' => $address['id'],
         ]);
 
         $this->fakePaymentMethod();
 
         $newPrimaryPaymentMethod = $this->fakePaymentMethod([
-            'method_type' => $methodType,
-            'method_id' => $creditCardTwo['id'],
+            'credit_card_id' => $creditCardTwo['id'],
             'billing_address_id' => $address['id'],
         ]);
 
@@ -1483,8 +1491,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'method_id' => $paymentMethodId,
-                'method_type' => PaymentMethod::TYPE_PAYPAL,
+                'paypal_billing_agreement_id' => $paymentMethodId,
                 'billing_address_id' => 1,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
@@ -1930,24 +1937,21 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $paymentMethodsCc = [];
 
         $paymentMethodOne = $this->fakePaymentMethod([
-            'method_type' => $methodType,
-            'method_id' => $creditCardOne['id'],
+            'credit_card_id' => $creditCardOne['id'],
             'billing_address_id' => $address['id'],
         ]);
 
         $paymentMethodsCc[$paymentMethodOne['id']] = $paymentMethodOne;
 
         $paymentMethodTwo = $this->fakePaymentMethod([
-            'method_type' => $methodType,
-            'method_id' => $creditCardTwo['id'],
+            'credit_card_id' => $creditCardTwo['id'],
             'billing_address_id' => $address['id'],
         ]);
 
         $paymentMethodsCc[$paymentMethodTwo['id']] = $paymentMethodTwo;
 
         $paymentMethodThree = $this->fakePaymentMethod([
-            'method_type' => PaymentMethod::TYPE_PAYPAL,
-            'method_id' => $paypalAgreement['id'],
+            'paypal_billing_agreement_id' => $paymentMethodOne['id'],
             'billing_address_id' => $address['id'],
         ]);
 
@@ -1988,8 +1992,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                                 'paypalAgreement';
 
             $methodId = isset($paymentMethodsCc[$paymentMethodId]) ?
-                                $paymentMethodsCc[$paymentMethodId]['method_id'] :
-                                $paymentMethodThree['method_id'];
+                                $paymentMethodsCc[$paymentMethodId]['credit_card_id'] :
+                                $paymentMethodThree['paypal_billing_agreement_id'];
 
             $methodRelation = [
                 'data' => [

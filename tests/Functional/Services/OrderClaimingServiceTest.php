@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Services;
 use Carbon\Carbon;
 use PHPUnit\Framework\MockObject\MockObject;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\OrderItem;
@@ -132,12 +133,21 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             ->setCountry($country)
             ->setState($state);
 
+        $creditCard = new CreditCard();
+        $creditCard->setCardholderName($this->faker->name);
+        $creditCard->setCompanyName($this->faker->name);
+        $creditCard->setExpirationDate($this->faker->dateTime());
+        $creditCard->setExternalCustomerId($this->faker->shuffleString());
+        $creditCard->setExternalId($this->faker->shuffleString());
+        $creditCard->setFingerprint($this->faker->shuffleString());
+        $creditCard->setLastFourDigits(rand(1000, 9999));
+        $creditCard->setPaymentGatewayName($this->faker->word);
+
         $paymentMethod = new PaymentMethod();
 
         $paymentMethod
             ->setBillingAddress($billingAddress)
-            ->setMethodId($this->faker->numberBetween(1, 50))
-            ->setMethodType(ConfigService::$creditCartPaymentMethodType)
+            ->setCreditCard($creditCard)
             ->setCurrency($currency);
 
         $payment = new Payment();
@@ -152,6 +162,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             ->setCreatedAt(Carbon::now());
 
         $this->entityManager->persist($billingAddress);
+        $this->entityManager->persist($creditCard);
         $this->entityManager->persist($paymentMethod);
         $this->entityManager->persist($payment);
 

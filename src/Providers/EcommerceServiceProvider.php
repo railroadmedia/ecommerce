@@ -20,6 +20,7 @@ use Gedmo\SoftDeleteable\SoftDeleteableListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Railroad\Doctrine\TimestampableListener;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
+use Railroad\Ecommerce\Commands\SplitPaymentMethodIdsToColumns;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
@@ -90,6 +91,7 @@ class EcommerceServiceProvider extends ServiceProvider
 
         $this->commands([
                 RenewalDueSubscriptions::class,
+                SplitPaymentMethodIdsToColumns::class,
             ]);
 
         $this->app->validator->resolver(function ($translator, $data, $rules, $messages, $attributes) {

@@ -72,8 +72,7 @@ class RenewalServiceTest extends EcommerceTestCase
         $paymentMethod = new PaymentMethod();
 
         $paymentMethod
-            ->setMethodId($creditCard->getId())
-            ->setMethodType(PaymentMethod::TYPE_CREDIT_CARD)
+            ->setCreditCard($creditCard)
             ->setCurrency($this->getCurrency())
             ->setCreatedAt(Carbon::now());
 

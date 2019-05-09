@@ -146,9 +146,7 @@ class RenewalService
                 /**
                  * @var $method \Railroad\Ecommerce\Entities\CreditCard
                  */
-                $method = $this->creditCardRepository->find(
-                    $paymentMethod->getMethodId()
-                );
+                $method = $paymentMethod->getCreditCard();
 
                 $customer = $this->stripePaymentGateway->getCustomer(
                     $method->getPaymentGatewayName(),
@@ -212,9 +210,7 @@ class RenewalService
                 /**
                  * @var $method \Railroad\Ecommerce\Entities\PaypalBillingAgreement
                  */
-                $method = $this->paypalRepository->find(
-                    $paymentMethod->getMethodId()
-                );
+                $method = $paymentMethod->getMethod();
 
                 $transactionId = $this->paypalPaymentGateway
                     ->chargeBillingAgreement(

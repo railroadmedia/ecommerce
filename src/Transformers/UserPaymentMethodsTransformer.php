@@ -67,13 +67,13 @@ class UserPaymentMethodsTransformer extends TransformerAbstract
         // composite method handling
         if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
             return $this->item(
-                $this->paypalAgreementsMap[$paymentMethod->getMethodId()],
+                $this->paypalAgreementsMap[$paymentMethod->getMethod()->getId()],
                 new PaypalBillingAgreementTransformer(),
                 'paypalAgreement'
             );
         } else {
             return $this->item(
-                $this->creditCardsMap[$paymentMethod->getMethodId()],
+                $this->creditCardsMap[$paymentMethod->getMethod()->getId()],
                 new CreditCardTransformer(),
                 'creditCard'
             );

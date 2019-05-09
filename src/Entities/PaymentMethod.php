@@ -39,18 +39,20 @@ class PaymentMethod
     protected $id;
 
     /**
-     * @ORM\Column(type="integer", name="method_id")
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\CreditCard", fetch="EAGER")
+     * @ORM\JoinColumn(name="credit_card_id", referencedColumnName="id")
      *
-     * @var int
+     * @var CreditCard|null
      */
-    protected $methodId;
+    protected $creditCard;
 
     /**
-     * @ORM\Column(type="string", name="method_type")
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\PaypalBillingAgreement", fetch="EAGER")
+     * @ORM\JoinColumn(name="paypal_billing_agreement_id", referencedColumnName="id")
      *
-     * @var string
+     * @var PaypalBillingAgreement|null
      */
-    protected $methodType;
+    protected $payPalBillingAgreement;
 
     /**
      * @ORM\Column(type="string")
@@ -66,18 +68,6 @@ class PaymentMethod
     protected $billingAddress;
 
     /**
-     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\CreditCard", fetch="LAZY")
-     * @ORM\JoinColumn(name="method_id", referencedColumnName="id")
-     */
-    protected $creditCard; // sets $this->methodId null if not commented out
-
-    /**
-     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\PaypalBillingAgreement", fetch="LAZY")
-     * @ORM\JoinColumn(name="method_id", referencedColumnName="id")
-     */
-    protected $payPalBillingAgreement; // sets $this->methodId null if not commented out
-
-    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -86,43 +76,71 @@ class PaymentMethod
     }
 
     /**
-     * @return int|null
+     * @return CreditCard|null
      */
-    public function getMethodId(): ?int
+    public function getCreditCard(): ?CreditCard
     {
-        return $this->methodId;
+        return $this->creditCard;
     }
 
     /**
-     * @param int $methodId
-     *
-     * @return PaymentMethod
+     * @param CreditCard|null $creditCard
      */
-    public function setMethodId(int $methodId): self
+    public function setCreditCard(?CreditCard $creditCard): PaymentMethod
     {
-        $this->methodId = $methodId;
+        $this->creditCard = $creditCard;
 
         return $this;
     }
 
     /**
-     * @return string|null
+     * @return PaypalBillingAgreement|null
+     */
+    public function getPayPalBillingAgreement(): ?PaypalBillingAgreement
+    {
+        return $this->payPalBillingAgreement;
+    }
+
+    /**
+     * @param PaypalBillingAgreement|null $payPalBillingAgreement
+     */
+    public function setPayPalBillingAgreement(?PaypalBillingAgreement $payPalBillingAgreement): PaymentMethod
+    {
+        $this->payPalBillingAgreement = $payPalBillingAgreement;
+
+        return $this;
+    }
+
+    /**
+     * @return string
      */
     public function getMethodType(): ?string
     {
-        return $this->methodType;
+        if (!empty($this->creditCard)) {
+            return self::TYPE_CREDIT_CARD;
+        }
+        elseif (!empty($this->payPalBillingAgreement)) {
+            return self::TYPE_PAYPAL;
+        }
+        else {
+            return 'unknown';
+        }
     }
 
     /**
-     * @param string $methodType
-     *
-     * @return PaymentMethod
+     * @return CreditCard|PaypalBillingAgreement|null
      */
-    public function setMethodType(string $methodType): self
+    public function getMethod()
     {
-        $this->methodType = $methodType;
+        if ($this->getMethodType() == self::TYPE_CREDIT_CARD) {
+            return $this->creditCard;
+        }
 
-        return $this;
+        if ($this->getMethodType() == self::TYPE_PAYPAL) {
+            return $this->payPalBillingAgreement;
+        }
+
+        return null;
     }
 
     /**
@@ -176,26 +194,6 @@ class PaymentMethod
 
         if ($this->getMethodType() == self::TYPE_PAYPAL) {
             return Payment::EXTERNAL_PROVIDER_PAYPAL;
-        }
-
-        return null;
-    }
-
-    /**
-     * @return CreditCard|PaypalBillingAgreement|null
-     */
-    public function getMethod()
-    {
-        if ($this->getMethodType() == self::TYPE_CREDIT_CARD) {
-            $this->creditCard->getCreatedAt();
-
-            return $this->creditCard;
-        }
-
-        if ($this->getMethodType() == self::TYPE_PAYPAL) {
-            $this->payPalBillingAgreement->getCreatedAt();
-
-            return $this->payPalBillingAgreement;
         }
 
         return null;

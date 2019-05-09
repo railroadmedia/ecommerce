@@ -33,8 +33,10 @@ class PaymentMethodRepository extends RepositoryBase
         $qb = $this->entityManager->createQueryBuilder();
 
         $q =
-            $qb->select('pm')
+            $qb->select(['pm', 'cc', 'ppba'])
                 ->from(PaymentMethod::class, 'pm')
+                ->leftJoin('pm.creditCard', 'cc')
+                ->leftJoin('pm.payPalBillingAgreement', 'ppba')
                 ->where('pm.id = :id')
                 ->getQuery()
                 ->setParameter('id', $id)
@@ -53,7 +55,7 @@ class PaymentMethodRepository extends RepositoryBase
     {
         $qb = $this->entityManager->createQueryBuilder();
 
-        $qb->select(['pm'])
+        $qb->select(['pm', 'cc', 'ppba'])
             ->from(PaymentMethod::class, 'pm')
             ->join(
                 UserPaymentMethods::class,
@@ -63,6 +65,8 @@ class PaymentMethodRepository extends RepositoryBase
                     ->eq(1, 1)
             )
             ->join('upm.paymentMethod', 'pmj')
+            ->leftJoin('pm.creditCard', 'cc')
+            ->leftJoin('pm.payPalBillingAgreement', 'ppba')
             ->where('upm.user = :userId')
             ->andWhere('pmj.id = pm.id')
             ->andWhere('pm.id = :paymentMethodId')
@@ -82,7 +86,7 @@ class PaymentMethodRepository extends RepositoryBase
     {
         $qb = $this->entityManager->createQueryBuilder();
 
-        $qb->select(['pm'])
+        $qb->select(['pm', 'cc', 'ppba'])
             ->from(PaymentMethod::class, 'pm')
             ->join(
                 UserPaymentMethods::class,
@@ -92,6 +96,8 @@ class PaymentMethodRepository extends RepositoryBase
                     ->eq(1, 1)
             )
             ->join('upm.paymentMethod', 'pmj')
+            ->leftJoin('pm.creditCard', 'cc')
+            ->leftJoin('pm.payPalBillingAgreement', 'ppba')
             ->where('upm.user = :userId')
             ->andWhere('pmj.id = pm.id')
             ->andWhere('upm.isPrimary = true')

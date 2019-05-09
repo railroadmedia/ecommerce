@@ -163,8 +163,6 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'method_id' => $this->randomNumber(),
-                'method_type' => $this->word,
                 'currency' => $this->currencyCode,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
