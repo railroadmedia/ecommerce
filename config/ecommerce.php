@@ -101,6 +101,7 @@ return [
                 'paypal_api_currency_code' => '',
                 'paypal_api_version' => '',
                 'paypal_api_nvp_curl_url' => '',
+                'paypal_api_checkout_return_route' => 'order-form.submit-paypal',
                 'paypal_api_checkout_redirect_url' => 'https://www.sandbox.paypal.com/checkoutnow/2?useraction=commit&token=',
                 'paypal_api_checkout_return_url' => '',
                 'paypal_api_checkout_cancel_url' => '',

@@ -69,13 +69,13 @@ class PaymentMethod
      * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\CreditCard", fetch="LAZY")
      * @ORM\JoinColumn(name="method_id", referencedColumnName="id")
      */
-    protected $creditCard;
+    protected $creditCard; // sets $this->methodId null if not commented out
 
     /**
      * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\PaypalBillingAgreement", fetch="LAZY")
      * @ORM\JoinColumn(name="method_id", referencedColumnName="id")
      */
-    protected $payPalBillingAgreement;
+    protected $payPalBillingAgreement; // sets $this->methodId null if not commented out
 
     /**
      * @return int|null
