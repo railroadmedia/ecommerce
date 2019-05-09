@@ -912,7 +912,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'credit_card_id' => 1,
                 'created_at' => Carbon::now()
                     ->toDateTimeString()
             ]

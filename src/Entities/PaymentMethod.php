@@ -52,7 +52,7 @@ class PaymentMethod
      *
      * @var PaypalBillingAgreement|null
      */
-    protected $payPalBillingAgreement;
+    protected $paypalBillingAgreement;
 
     /**
      * @ORM\Column(type="string")
@@ -96,17 +96,17 @@ class PaymentMethod
     /**
      * @return PaypalBillingAgreement|null
      */
-    public function getPayPalBillingAgreement(): ?PaypalBillingAgreement
+    public function getPaypalBillingAgreement(): ?PaypalBillingAgreement
     {
-        return $this->payPalBillingAgreement;
+        return $this->paypalBillingAgreement;
     }
 
     /**
-     * @param PaypalBillingAgreement|null $payPalBillingAgreement
+     * @param PaypalBillingAgreement|null $paypalBillingAgreement
      */
-    public function setPayPalBillingAgreement(?PaypalBillingAgreement $payPalBillingAgreement): PaymentMethod
+    public function setPaypalBillingAgreement(?PaypalBillingAgreement $paypalBillingAgreement): PaymentMethod
     {
-        $this->payPalBillingAgreement = $payPalBillingAgreement;
+        $this->paypalBillingAgreement = $paypalBillingAgreement;
 
         return $this;
     }
@@ -119,7 +119,7 @@ class PaymentMethod
         if (!empty($this->creditCard)) {
             return self::TYPE_CREDIT_CARD;
         }
-        elseif (!empty($this->payPalBillingAgreement)) {
+        elseif (!empty($this->paypalBillingAgreement)) {
             return self::TYPE_PAYPAL;
         }
         else {
@@ -137,7 +137,7 @@ class PaymentMethod
         }
 
         if ($this->getMethodType() == self::TYPE_PAYPAL) {
-            return $this->payPalBillingAgreement;
+            return $this->paypalBillingAgreement;
         }
 
         return null;

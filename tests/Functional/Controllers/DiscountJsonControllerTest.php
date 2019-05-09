@@ -302,8 +302,9 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                                 'type' => 'product',
                                 'id' => $product['id']
                             ]
-                        ]
-                    ]
+                        ],
+                        'discountCriterias' => ['data' => []]
+                    ],
                 ];
 
                 $products[] = [
@@ -378,7 +379,8 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                             'type' => 'product',
                             'id' => $product['id']
                         ]
-                    ]
+                    ],
+                    'discountCriterias' => ['data' => []]
                 ]
             ],
             $parsedResults['data']

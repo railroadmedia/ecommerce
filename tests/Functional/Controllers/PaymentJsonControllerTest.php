@@ -53,8 +53,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 
@@ -174,8 +173,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id'],
             'currency' => $currency
         ]);
@@ -296,8 +294,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $paypalAgreement = $this->fakePaypalBillingAgreement();
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $paypalAgreement['id'],
-            'method_type' => PaymentMethod::TYPE_PAYPAL,
+            'paypal_billing_agreement_id' => $paypalAgreement['id'],
             'currency' => $currency
         ]);
 
@@ -402,8 +399,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 
@@ -493,8 +489,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
         ]);
 
         $userPaymentMethod = $this->fakeUserPaymentMethod([
@@ -548,8 +543,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         );
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => rand(),
-            'method_type' => $methodType,
+            'credit_card_id' => rand(),
         ]);
 
         $response = $this->call(
@@ -605,8 +599,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         );
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => rand(),
-            'method_type' => $methodType,
+            'credit_card_id' => rand(),
         ]);
 
         $response = $this->call(
@@ -685,8 +678,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 
@@ -813,8 +805,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $paypalAgreement = $this->fakePaypalBillingAgreement();
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $paypalAgreement['id'],
-            'method_type' => PaymentMethod::TYPE_PAYPAL,
+            'paypal_billing_agreement_id' => $paypalAgreement['id'],
             'currency' => $currency
         ]);
 
@@ -903,8 +894,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 
@@ -995,8 +985,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 
@@ -1101,8 +1090,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 

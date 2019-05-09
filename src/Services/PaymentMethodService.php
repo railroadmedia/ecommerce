@@ -243,7 +243,7 @@ class PaymentMethodService
         if ($method instanceof CreditCard) {
             $paymentMethod->setCreditCard($method);
         } elseif ($method instanceof PaypalBillingAgreement) {
-            $paymentMethod->setPayPalBillingAgreement($method);
+            $paymentMethod->setPaypalBillingAgreement($method);
         } else {
             throw new Exception('Invalid payment method type on create.');
         }

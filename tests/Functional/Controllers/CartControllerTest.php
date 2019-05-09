@@ -27,7 +27,9 @@ class CartControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(15, 100),
+            'is_physical' => false,
+            'stock' => $this->faker->numberBetween(5, 100),
+            'price' => 92.22,
         ]);
 
         $initialQuantity = 2;
@@ -65,6 +67,20 @@ class CartControllerTest extends EcommerceTestCase
                     'shipping' => 0,
                     'tax' => 0,
                     'due' => $totalDue
+                ],
+                'payment_plan_options' => [
+                    [
+                        "value" => 1,
+                        "label" => "1 payment of $184.44",
+                    ],
+                    [
+                        "value" => 2,
+                        "label" => "2 payments of $92.22 ($1.00 finance charge)",
+                    ],
+                    [
+                        "value" => 5,
+                        "label" => "5 payments of $36.89 ($1.00 finance charge)",
+                    ]
                 ],
             ]
         );
@@ -114,7 +130,8 @@ class CartControllerTest extends EcommerceTestCase
                     'tax' => 0,
                     'due' => 0
                 ],
-                'errors' => ['Product ' . $product['name'] . ' is currently out of stock, please check back later.']
+                'errors' => ['Product ' . $product['name'] . ' is currently out of stock, please check back later.'],
+                'payment_plan_options' => [],
             ]
         );
 
@@ -151,7 +168,9 @@ class CartControllerTest extends EcommerceTestCase
                     'tax' => 0,
                     'due' => 0
                 ],
-                'errors' => ['No product with SKU ' . $randomSku . ' was found.',]
+                'errors' => [
+                    'No product with SKU ' . $randomSku . ' was found.',],
+                'payment_plan_options' => [],
             ]
         );
 
@@ -168,12 +187,16 @@ class CartControllerTest extends EcommerceTestCase
     {
         $productOne = $this->fakeProduct([
             'active' => 1,
+            'is_physical' => false,
             'stock' => $this->faker->numberBetween(5, 100),
+            'price' => 47.07,
         ]);
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
+            'is_physical' => false,
             'stock' => $this->faker->numberBetween(5, 100),
+            'price' => 100.92,
         ]);
 
         $productOneQuantity = 2;
@@ -229,6 +252,20 @@ class CartControllerTest extends EcommerceTestCase
                     'tax' => 0,
                     'due' => $totalDue
                 ],
+                'payment_plan_options' => [
+                    [
+                        "value" => 1,
+                        "label" => "1 payment of $295.98",
+                    ],
+                    [
+                        "value" => 2,
+                        "label" => "2 payments of $147.99 ($1.00 finance charge)",
+                    ],
+                    [
+                        "value" => 5,
+                        "label" => "5 payments of $59.2 ($1.00 finance charge)",
+                    ]
+                ],
             ]
         );
 
@@ -283,7 +320,8 @@ class CartControllerTest extends EcommerceTestCase
                     'tax' => 0,
                     'due' => 0
                 ],
-                'errors' => ['Product ' . $product['name'] . ' is currently out of stock, please check back later.']
+                'errors' => ['Product ' . $product['name'] . ' is currently out of stock, please check back later.'],
+                'payment_plan_options' => [],
             ]
         );
 
@@ -300,19 +338,23 @@ class CartControllerTest extends EcommerceTestCase
     {
         $productOne = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => false,
+            'stock' => $this->faker->numberBetween(5, 100),
+            'price' => 22.82,
         ]);
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => false,
+            'stock' => $this->faker->numberBetween(5, 100),
+            'price' => 1.02,
         ]);
 
         $randomSku1 = $this->faker->word . 'sku1';
         $randomSku2 = $this->faker->word . 'sku2';
 
-        $productOneQuantity = $this->faker->numberBetween(1, 5);
-        $productTwoQuantity = $this->faker->numberBetween(1, 5);
+        $productOneQuantity = 3;
+        $productTwoQuantity = 4;
 
         $response = $this->call('GET', '/add-to-cart/', [
             'products' => [
@@ -369,7 +411,21 @@ class CartControllerTest extends EcommerceTestCase
                 'errors' => [
                     'No product with SKU ' . $randomSku1 . ' was found.',
                     'No product with SKU ' . $randomSku2 .  ' was found.',
-                ]
+                ],
+                'payment_plan_options' => [
+                    [
+                        "value" => 1,
+                        "label" => "1 payment of $72.54",
+                    ],
+                    [
+                        "value" => 2,
+                        "label" => "2 payments of $36.27 ($1.00 finance charge)",
+                    ],
+                    [
+                        "value" => 5,
+                        "label" => "5 payments of $14.51 ($1.00 finance charge)",
+                    ]
+                ],
             ]
         );
 

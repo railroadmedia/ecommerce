@@ -195,7 +195,7 @@ class PaymentMethodJsonController extends Controller
             $qb->select(['upm', 'pm', 'cc', 'ppba'])
                 ->join('upm.paymentMethod', 'pm')
                 ->leftJoin('pm.creditCard', 'cc')
-                ->leftJoin('pm.payPalBillingAgreement', 'ppba')
+                ->leftJoin('pm.paypalBillingAgreement', 'ppba')
                 ->where(
                     $qb->expr()
                         ->eq('upm.user', ':user')

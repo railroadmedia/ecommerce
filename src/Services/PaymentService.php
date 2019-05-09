@@ -55,7 +55,7 @@ class PaymentService
     /**
      * @var PaypalBillingAgreementRepository
      */
-    private $payPalBillingAgreementRepository;
+    private $paypalBillingAgreementRepository;
 
     /**
      * @var PayPalPaymentGateway
@@ -101,7 +101,7 @@ class PaymentService
         $this->creditCardRepository = $creditCardRepository;
         $this->userStripeCustomerIdRepository = $userStripeCustomerIdRepository;
         $this->stripePaymentGateway = $stripePaymentGateway;
-        $this->payPalBillingAgreementRepository = $paypalBillingAgreementRepository;
+        $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->currencyService = $currencyService;
         $this->paymentMethodService = $paymentMethodService;

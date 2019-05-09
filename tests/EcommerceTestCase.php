@@ -562,6 +562,9 @@ class EcommerceTestCase extends BaseTestCase
 
         $paymentMethod['id'] = $paymentMethodId;
 
+        unset($paymentMethod['credit_card_id']);
+        unset($paymentMethod['paypal_billing_agreement_id']);
+
         return $paymentMethod;
     }
 

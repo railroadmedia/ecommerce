@@ -74,8 +74,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 
@@ -96,7 +95,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
             'total_refunded' => 0,
             'conversion_rate' => $conversionRate
         ]);
-
+        
         $response = $this->call(
             'PUT',
             '/refund',
@@ -144,6 +143,11 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
                 'included' => [
+                    [
+                        'type' => 'creditCard',
+                        'id' => $creditCard['id'],
+                        'attributes' => []
+                    ],
                     [
                         'type' => 'address',
                         'id' => $address['id'],
@@ -233,7 +237,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $paypalBillingAgreement['id'],
+            'paypal_billing_agreement_id' => $paypalBillingAgreement['id'],
             'method_type' => $methodType,
             'billing_address_id' => $address['id']
         ]);
@@ -304,6 +308,11 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'paypalBillingAgreement',
+                        'id' => $paypalBillingAgreement['id'],
+                        'attributes' => []
+                    ],
+                    [
                         'type' => 'address',
                         'id' => $address['id'],
                         'attributes' => []
@@ -325,7 +334,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                                     'type' => 'address',
                                     'id' => $address['id']
                                 ]
-                            ]
+                            ],
                         ]
                     ],
                     [
@@ -393,8 +402,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 
@@ -497,6 +505,11 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
                 'included' => [
+                    [
+                        'type' => 'creditCard',
+                        'id' => $creditCard['id'],
+                        'attributes' => []
+                    ],
                     [
                         'type' => 'address',
                         'id' => $address['id'],
@@ -605,8 +618,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 
@@ -689,6 +701,11 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
                 'included' => [
+                    [
+                        'type' => 'creditCard',
+                        'id' => $creditCard['id'],
+                        'attributes' => []
+                    ],
                     [
                         'type' => 'address',
                         'id' => $address['id'],
@@ -788,8 +805,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 
@@ -881,6 +897,11 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
                 'included' => [
+                    [
+                        'type' => 'creditCard',
+                        'id' => $creditCard['id'],
+                        'attributes' => []
+                    ],
                     [
                         'type' => 'address',
                         'id' => $address['id'],
@@ -979,8 +1000,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => $methodType,
+            'credit_card_id' => $creditCard['id'],
             'billing_address_id' => $address['id']
         ]);
 
@@ -1080,6 +1100,11 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
                 'included' => [
+                    [
+                        'type' => 'creditCard',
+                        'id' => $creditCard['id'],
+                        'attributes' => []
+                    ],
                     [
                         'type' => 'address',
                         'id' => $address['id'],

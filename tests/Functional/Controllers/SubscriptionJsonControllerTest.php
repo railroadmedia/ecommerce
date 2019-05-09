@@ -97,7 +97,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $subscriptions = [];
 
         for ($i = 0; $i < $nrSubscriptions; $i++) {
-            $paymentMethod = $this->fakePaymentMethod();
+            $creditCard = $this->fakeCreditCard();
+            $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
             $order = $this->fakeOrder();
 
             $subscription = $this->fakeSubscription([
@@ -190,7 +191,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $subscriptions = [];
 
         for ($i = 0; $i < $nrSubscriptions; $i++) {
-            $paymentMethod = $this->fakePaymentMethod();
+            $creditCard = $this->fakeCreditCard();
+            $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
             $order = $this->fakeOrder();
 
             $subscription = $this->fakeSubscription([
@@ -330,6 +332,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'source' => 'data.attributes.total_cycles_paid',
                     'detail' => 'The total_cycles_paid field is required.',
                     'title' => 'Validation failed.'
+                ],
+                [
+                    "title" => "Validation failed.",
+                    "source" => "data.relationships.user.data.id",
+                    "detail" => "The user id field is required.",
                 ]
             ],
             $results->decodeResponseJson('errors')
@@ -977,8 +984,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
-            'method_id' => $creditCard['id'],
+            'credit_card_id' => $creditCard['id'],
         ]);
 
         $subscription = $this->fakeSubscription([
@@ -1044,8 +1050,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_type' => PaymentMethod::TYPE_PAYPAL,
-            'method_id' => $paypalBillingAgreement['id'],
+            'paypal_billing_agreement_id' => $paypalBillingAgreement['id'],
         ]);
 
         $subscription = $this->fakeSubscription([
@@ -1120,8 +1125,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
-            'method_id' => $creditCard['id'],
+            'credit_card_id' => $creditCard['id'],
         ]);
 
         $subscription = $this->fakeSubscription([
@@ -1197,8 +1201,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
 
         $paymentMethod = $this->fakePaymentMethod([
-            'method_type' => PaymentMethod::TYPE_PAYPAL,
-            'method_id' => $paypalBillingAgreement['id'],
+            'paypal_billing_agreement_id' => $paypalBillingAgreement['id'],
         ]);
 
         $subscription = $this->fakeSubscription([
@@ -1279,7 +1282,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $subscriptions = [];
 
         for ($i = 0; $i < $nrSubscriptions; $i++) {
-            $paymentMethod = $this->fakePaymentMethod();
+            $creditCard = $this->fakeCreditCard();
+            $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
             $order = $this->fakeOrder();
 
             if ($i < $limit) {
