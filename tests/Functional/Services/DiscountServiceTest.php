@@ -895,8 +895,8 @@ class DiscountServiceTest extends EcommerceTestCase
         $totalDueInShipping = $this->faker->randomFloat(2, 10, 20);
 
         $expectedDiscountNames = [
-            $discountOne['name'],
-            $discountTwo['name'],
+            ['id' => $discountOne['id'], 'name' => $discountOne['name']],
+            ['id' => $discountTwo['id'], 'name' => $discountTwo['name']],
         ];
 
         $cart = Cart::fromSession();
@@ -1038,8 +1038,8 @@ class DiscountServiceTest extends EcommerceTestCase
         $totalDueInShipping = $this->faker->randomFloat(2, 10, 20);
 
         $expectedDiscountNames = [
-            $discountThree['name'],
-            $discountFour['name'],
+            ['id' => $discountThree['id'], 'name' => $discountThree['name']],
+            ['id' => $discountFour['id'], 'name' => $discountFour['name']],
         ];
 
         $cart = Cart::fromSession();

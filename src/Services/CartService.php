@@ -536,6 +536,11 @@ class CartService
             !empty($this->cart->getShippingAddress()) ?
                 $this->cart->getShippingAddress()
                     ->toArray() : null;
+
+        if (!$this->shippingService->doesCartHaveAnyPhysicalItems($this->cart)) {
+            $shippingAddress = null;
+        }
+
         $billingAddress =
             !empty($this->cart->getBillingAddress()) ?
                 $this->cart->getBillingAddress()
