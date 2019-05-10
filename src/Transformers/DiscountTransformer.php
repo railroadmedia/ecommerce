@@ -11,7 +11,7 @@ class DiscountTransformer extends TransformerAbstract
 {
     public function transform(Discount $discount)
     {
-        if ($discount->getProduct()) {
+        if (!empty($discount->getProduct())) {
             // product relation is nullable
             $this->defaultIncludes[] = 'product';
         }

@@ -28,7 +28,7 @@ class DiscountCriteriaTransformer extends TransformerAbstract
             $this->defaultIncludes[] = 'discount';
         }
 
-        if ($discountCriteria->getProduct()) {
+        if (!empty($discountCriteria->getProduct())) {
             // product relation is nullable
             $this->defaultIncludes[] = 'product';
         }
