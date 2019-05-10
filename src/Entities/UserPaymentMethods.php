@@ -38,7 +38,7 @@ class UserPaymentMethods
     protected $user;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\PaymentMethod")
+     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\PaymentMethod", inversedBy="userPaymentMethod")
      * @ORM\JoinColumn(name="payment_method_id", referencedColumnName="id")
      */
     protected $paymentMethod;

@@ -68,8 +68,7 @@ class PaymentMethod
     protected $billingAddress;
 
     /**
-     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\UserPaymentMethods", inversedBy="paymentMethod")
-     * @ORM\JoinColumn(name="id", referencedColumnName="payment_method_id")
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\UserPaymentMethods", mappedBy="paymentMethod")
      */
     protected $userPaymentMethod;
 
