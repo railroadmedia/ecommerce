@@ -12,7 +12,10 @@ class PaymentMethodTransformer extends TransformerAbstract
     public function transform(PaymentMethod $paymentMethod)
     {
         $this->defaultIncludes[] = 'method';
-        $this->defaultIncludes[] = 'userPaymentMethod';
+
+        if (!empty($paymentMethod->getUserPaymentMethod())) {
+            $this->defaultIncludes[] = 'userPaymentMethod';
+        }
 
         if ($paymentMethod->getBillingAddress()) {
             $this->defaultIncludes[] = 'billingAddress';

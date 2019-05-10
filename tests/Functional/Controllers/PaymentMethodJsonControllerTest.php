@@ -111,8 +111,15 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $customer = $this->fakeUser();
 
+        $creditCard = $this->fakeCreditCard();
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCard['id'],
+        ]);
+
         $this->fakeUserPaymentMethod([
             'user_id' => $customer['id'],
+            'payment_method_id' => $paymentMethod['id'],
             'is_primary' => true
         ]);
 
@@ -210,7 +217,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'credit_card_id' => 1,
+                'credit_card_id' => 2,
                 'paypal_billing_agreement_id' => null,
                 'currency' => $currency,
                 'created_at' => Carbon::now()->toDateTimeString(),
@@ -247,11 +254,17 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $customer = $this->fakeUser();
 
-        $this->fakeUserPaymentMethod([
-            'user_id' => $customer['id'],
-            'is_primary' => true
+        $creditCard = $this->fakeCreditCard();
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCard['id'],
         ]);
 
+        $this->fakeUserPaymentMethod([
+            'user_id' => $customer['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
         $this->permissionServiceMock->method('can')->willReturn(true);
 
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
@@ -346,7 +359,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             ConfigService::$tablePaymentMethod,
             [
-                'credit_card_id' => 1,
+                'credit_card_id' => 2,
                 'paypal_billing_agreement_id' => null,
                 'currency' => $currency,
                 'created_at' => Carbon::now()->toDateTimeString(),
