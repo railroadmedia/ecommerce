@@ -13,6 +13,9 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
+use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodCreated;
+use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodDeleted;
+use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodUpdated;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Exceptions\NotAllowedException;
@@ -215,10 +218,14 @@ class PaymentMethodJsonController extends Controller
             $type = $paymentMethod->getMethodType();
 
             if ($type == PaymentMethod::TYPE_PAYPAL) {
-                $paypalIds[] = $paymentMethod->getMethod()->getId();
+                $paypalIds[] =
+                    $paymentMethod->getMethod()
+                        ->getId();
             }
             else {
-                $creditCardIds[] = $paymentMethod->getMethod()->getId();
+                $creditCardIds[] =
+                    $paymentMethod->getMethod()
+                        ->getId();
             }
         }
 
@@ -330,9 +337,9 @@ class PaymentMethodJsonController extends Controller
     public function getPaypalUrl()
     {
         $url = $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl(
-                ConfigService::$brand,
-                url()->route(ConfigService::$paypalAgreementRoute)
-            );
+            ConfigService::$brand,
+            url()->route(ConfigService::$paypalAgreementRoute)
+        );
 
         return response()->json(['url' => $url]);
     }
@@ -410,14 +417,13 @@ class PaymentMethodJsonController extends Controller
          */
         $qb = $this->userPaymentMethodsRepository->createQueryBuilder('p');
 
-        $userPaymentMethod =
-            $qb->where(
-                    $qb->expr()
-                        ->eq('IDENTITY(p.paymentMethod)', ':id')
-                )
-                ->setParameter('id', $request->get('id'))
-                ->getQuery()
-                ->getOneOrNullResult();
+        $userPaymentMethod = $qb->where(
+            $qb->expr()
+                ->eq('IDENTITY(p.paymentMethod)', ':id')
+        )
+            ->setParameter('id', $request->get('id'))
+            ->getQuery()
+            ->getOneOrNullResult();
 
         /**
          * @var $paymentMethod PaymentMethod
@@ -519,7 +525,12 @@ class PaymentMethodJsonController extends Controller
             /**
              * @var $method CreditCard
              */
-            $method = $this->creditCardRepository->find($paymentMethod->getMethod()->getId());
+            $method =
+                $this->creditCardRepository->find(
+                    $paymentMethod->getMethod()
+                        ->getId()
+                );
+            $oldPaymentMethod = clone($paymentMethod);
 
             $customer = $this->stripePaymentGateway->getCustomer(
                 $request->get('gateway'),
@@ -565,6 +576,8 @@ class PaymentMethodJsonController extends Controller
                 ->setUpdatedAt(Carbon::now());
 
             $this->entityManager->flush();
+
+            event(new PaymentMethodUpdated($paymentMethod, $oldPaymentMethod));
 
             event(
                 new UserDefaultPaymentMethodEvent(
@@ -649,6 +662,8 @@ class PaymentMethodJsonController extends Controller
 
         $this->entityManager->remove($paymentMethod);
         $this->entityManager->flush();
+
+        event(new PaymentMethodDeleted($paymentMethod));
 
         return ResponseService::empty(204);
     }

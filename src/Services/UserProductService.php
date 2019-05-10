@@ -11,6 +11,9 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserProduct;
+use Railroad\Ecommerce\Events\UserProducts\UserProductCreated;
+use Railroad\Ecommerce\Events\UserProducts\UserProductDeleted;
+use Railroad\Ecommerce\Events\UserProducts\UserProductUpdated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Throwable;
@@ -252,6 +255,8 @@ class UserProductService
         $this->entityManager->persist($userProduct);
         $this->entityManager->flush();
 
+        event(new UserProductCreated($userProduct));
+
         return $userProduct;
     }
 
@@ -272,12 +277,16 @@ class UserProductService
         $quantity
     )
     {
+        $oldUserProduct = clone($userProduct);
+
         $userProduct->setExpirationDate($expirationDate)
             ->setQuantity($quantity)
             ->setUpdatedAt(Carbon::now());
 
         $this->entityManager->persist($userProduct);
         $this->entityManager->flush();
+
+        event(new UserProductUpdated($userProduct, $oldUserProduct));
 
         return $userProduct;
     }
@@ -293,6 +302,8 @@ class UserProductService
     {
         $this->entityManager->remove($userProduct);
         $this->entityManager->flush();
+
+        event(new UserProductDeleted($userProduct));
     }
 
     /**
@@ -367,6 +378,8 @@ class UserProductService
 
             if (($userProduct->getQuantity() == 1) || ($userProduct->getQuantity() - $productData['quantity'] <= 0)) {
                 $this->entityManager->remove($userProduct);
+
+                event(new UserProductDeleted($userProduct));
             }
             else {
 

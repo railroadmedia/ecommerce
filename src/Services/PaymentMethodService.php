@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Exception;
 use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodCreated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
@@ -139,6 +140,8 @@ class PaymentMethodService
             );
         }
 
+        event(new PaymentMethodCreated($paymentMethod));
+
         return $paymentMethod;
     }
 
@@ -214,6 +217,8 @@ class PaymentMethodService
                 )
             );
         }
+
+        event(new PaymentMethodCreated($paymentMethod));
 
         return $paymentMethod;
     }
