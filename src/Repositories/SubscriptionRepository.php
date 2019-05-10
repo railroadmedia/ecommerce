@@ -163,4 +163,39 @@ class SubscriptionRepository extends EntityRepository
 
         return $subscriptions[0] ?? null;
     }
+
+    /**
+     * @param $userId
+     * @param array $limitToProductIds
+     * @return Subscription[]
+     */
+    public function getAllUsersSubscriptions($userId, array $limitToProductIds = [])
+    {
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select('s')
+            ->from($this->getClassName(), 's')
+            ->where(
+                $qb->expr()
+                    ->eq('s.user', ':userId')
+            );
+
+        if (!empty($limitToProductIds)) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->in('IDENTITY(s.product)', ':productIds')
+            )
+                ->setParameter('productIds', $limitToProductIds);
+        }
+
+        $subscriptions =
+            $qb->setParameter('userId', $userId)
+                ->orderBy('s.createdAt', 'desc')
+                ->getQuery()
+                ->getResult();
+
+        return $subscriptions;
+    }
 }

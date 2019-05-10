@@ -205,7 +205,7 @@ class PaymentMethod
     }
 
     /**
-     * @return mixed
+     * @return UserPaymentMethods
      */
     public function getUserPaymentMethod()
     {

@@ -285,6 +285,11 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                 'updated_at' => null
             ]);
 
+            $discountCriteria = $this->fakeDiscountCriteria([
+                'discount_id' => $discount['id'],
+                'product_id' => null,
+            ]);
+
             if ($i < $limit) {
                 $discounts[] = [
                     'type' => 'discount',
@@ -333,6 +338,8 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                 'order_by_direction' => 'asc'
             ]
         );
+
+        dd($results->decodeResponseJson());
 
         // assert response status code
         $this->assertEquals(200, $results->getStatusCode());
