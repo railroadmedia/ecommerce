@@ -169,6 +169,10 @@ class PaymentJsonController extends Controller
         $qb = $this->paymentRepository->createQueryBuilder('p');
 
         $qb
+            ->select(['p', 'pm', 'cc', 'ppba'])
+            ->leftJoin('p.paymentMethod', 'pm')
+            ->leftJoin('pm.creditCard', 'cc')
+            ->leftJoin('pm.paypalBillingAgreement', 'ppba')
             ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
             ->setMaxResults($request->get('limit', 100))
             ->setFirstResult($first);
@@ -215,7 +219,7 @@ class PaymentJsonController extends Controller
 
     // todo: refactor database logic to repository
     /**
-     * Call the method that save a new payment and create the links with subscription or order if it's necessary.
+     * Call the method that save a new payment and create the linksluanhc tho with subscription or order if it's necessary.
      * Return a JsonResponse with the new created payment record, in JSON format
      *
      * @param PaymentCreateRequest $request
