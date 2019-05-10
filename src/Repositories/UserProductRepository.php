@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Repositories;
 use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -20,18 +21,20 @@ use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
  *
  * @package Railroad\Ecommerce\Repositories
  */
-class UserProductRepository extends EntityRepository
+class UserProductRepository extends RepositoryBase
 {
-    use UseFormRequestQueryBuilder;
+    use UseFormRequestQueryBuilder {
+        indexByRequest as baseIndexByRequest;
+    }
 
     /**
-     * UserProductRepository constructor.
+     * CreditCardRepository constructor.
      *
-     * @param EcommerceEntityManager $em
+     * @param EcommerceEntityManager $entityManager
      */
-    public function __construct(EcommerceEntityManager $em)
+    public function __construct(EcommerceEntityManager $entityManager)
     {
-        parent::__construct($em, $em->getClassMetadata(UserProduct::class));
+        parent::__construct($entityManager, $entityManager->getClassMetadata(UserProduct::class));
     }
 
     /**

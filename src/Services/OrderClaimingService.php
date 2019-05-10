@@ -13,6 +13,7 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Events\OrderEvent;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 class OrderClaimingService
@@ -135,6 +136,8 @@ class OrderClaimingService
                 );
 
                 $this->entityManager->persist($subscription);
+
+                event(new SubscriptionCreated($subscription));
             }
         }
 
@@ -162,6 +165,8 @@ class OrderClaimingService
             );
 
             $this->entityManager->persist($subscription);
+
+            event(new SubscriptionCreated($subscription));
         }
 
         $this->entityManager->flush();
