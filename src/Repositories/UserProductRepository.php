@@ -3,8 +3,12 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\EntityRepository;
+use Illuminate\Http\Request;
+use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 
 /**
  * Class UserProductRepository
@@ -18,6 +22,8 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  */
 class UserProductRepository extends EntityRepository
 {
+    use UseFormRequestQueryBuilder;
+
     /**
      * UserProductRepository constructor.
      *
@@ -26,5 +32,32 @@ class UserProductRepository extends EntityRepository
     public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(UserProduct::class));
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return ResultsQueryBuilderComposite
+     */
+    public function indexByRequest(Request $request, User $user)
+    {
+        $alias = 'a';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->select($alias)
+            ->andWhere(
+                $qb->expr()
+                    ->eq('a.user', ':user')
+            )
+            ->setParameter('user', $user);
+
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
     }
 }

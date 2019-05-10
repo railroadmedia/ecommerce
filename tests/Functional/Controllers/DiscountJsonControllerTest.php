@@ -339,8 +339,6 @@ class DiscountJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        dd($results->decodeResponseJson());
-
         // assert response status code
         $this->assertEquals(200, $results->getStatusCode());
 
