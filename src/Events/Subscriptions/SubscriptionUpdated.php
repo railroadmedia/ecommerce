@@ -26,4 +26,20 @@ class SubscriptionUpdated
         $this->oldSubscription = $oldSubscription;
         $this->newSubscription = $newSubscription;
     }
+
+    /**
+     * @return Subscription
+     */
+    public function getOldSubscription(): Subscription
+    {
+        return $this->oldSubscription;
+    }
+
+    /**
+     * @return Subscription
+     */
+    public function getNewSubscription(): Subscription
+    {
+        return $this->newSubscription;
+    }
 }

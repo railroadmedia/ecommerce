@@ -26,4 +26,20 @@ class UserProductUpdated
         $this->newUserProduct = $newUserProduct;
         $this->oldUserProduct = $oldUserProduct;
     }
+
+    /**
+     * @return UserProduct
+     */
+    public function getNewUserProduct(): UserProduct
+    {
+        return $this->newUserProduct;
+    }
+
+    /**
+     * @return UserProduct
+     */
+    public function getOldUserProduct(): UserProduct
+    {
+        return $this->oldUserProduct;
+    }
 }

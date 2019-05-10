@@ -19,4 +19,12 @@ class SubscriptionRenewed
     {
         $this->subscription = $subscription;
     }
+
+    /**
+     * @return Subscription
+     */
+    public function getSubscription(): Subscription
+    {
+        return $this->subscription;
+    }
 }

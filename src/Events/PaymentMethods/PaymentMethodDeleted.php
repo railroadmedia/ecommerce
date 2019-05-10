@@ -18,4 +18,12 @@ class PaymentMethodDeleted
     {
         $this->paymentMethod = $paymentMethod;
     }
+
+    /**
+     * @return PaymentMethod
+     */
+    public function getPaymentMethod(): PaymentMethod
+    {
+        return $this->paymentMethod;
+    }
 }

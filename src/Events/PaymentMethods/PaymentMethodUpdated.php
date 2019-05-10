@@ -24,4 +24,20 @@ class PaymentMethodUpdated
         $this->newPaymentMethod = $newPaymentMethod;
         $this->oldPaymentMethod = $oldPaymentMethod;
     }
+
+    /**
+     * @return PaymentMethod
+     */
+    public function getNewPaymentMethod(): PaymentMethod
+    {
+        return $this->newPaymentMethod;
+    }
+
+    /**
+     * @return PaymentMethod
+     */
+    public function getOldPaymentMethod(): PaymentMethod
+    {
+        return $this->oldPaymentMethod;
+    }
 }

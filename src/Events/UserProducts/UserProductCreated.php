@@ -19,4 +19,12 @@ class UserProductCreated
     {
         $this->userProduct = $userProduct;
     }
+
+    /**
+     * @return UserProduct
+     */
+    public function getUserProduct(): UserProduct
+    {
+        return $this->userProduct;
+    }
 }
