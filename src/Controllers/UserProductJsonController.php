@@ -135,7 +135,7 @@ class UserProductJsonController extends Controller
      */
     public function store(UserProductCreateRequest $request)
     {
-        $this->permissionService->canOrThrow(auth()->id(), 'create.user-product');
+        $this->permissionService->canOrThrow(auth()->id(), 'create.user-products');
 
         $userProduct = new UserProduct();
 
@@ -211,7 +211,7 @@ class UserProductJsonController extends Controller
             )
         );
 
-        $this->permissionService->canOrThrow(auth()->id(), 'update.user-products');
+        $this->permissionService->canOrThrow(auth()->id(), 'delete.user-products');
 
         $this->entityManager->remove($userProduct);
         $this->entityManager->flush();
