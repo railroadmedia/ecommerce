@@ -195,11 +195,15 @@ return [
             'delete.address',
         ],
     ],
-
-    'invoice_sender' => 'support@drumeo.com',
-    'invoice_sender_name' => 'Drumeo',
-    'invoice_address' => 'Drumeo 107-31265 Wheel Avenue - Abbotsford BC, Canada',
-    'invoice_email_subject' => 'Order Invoice - Thank You!',
+    
+    'invoice_gateway_details' => [
+        'pianote' => [
+            'invoice_sender' => 'support@pianote.com',
+            'invoice_sender_name' => 'Pianote',
+            'invoice_address' => 'Pianote 107-31265 Wheel Avenue - Abbotsford BC, Canada',
+            'invoice_email_subject' => 'Pianote Invoice - Thank You!',
+        ],
+    ],
 
     'billing_address' => 'billing',
     'shipping_address' => 'shipping',

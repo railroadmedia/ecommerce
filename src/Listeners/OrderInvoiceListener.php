@@ -52,7 +52,8 @@ class OrderInvoiceListener
                 'orderItems' => $order->getOrderItems(),
                 'payment' => $payment,
                 'currencySymbol' => $currencySymbol,
-            ]
+            ],
+            $payment->getGatewayName()
         );
 
         $emailAddress = $order->getUser() ? $order->getUser()->getEmail() : $order->getCustomer()->getEmail();
