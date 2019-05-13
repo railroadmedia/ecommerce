@@ -14,7 +14,6 @@ use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 /**
  * Class UserProductRepository
  *
- * @method UserProduct find($id, $lockMode = null, $lockVersion = null)
  * @method UserProduct findOneBy(array $criteria, array $orderBy = null)
  * @method UserProduct[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  * @method UserProduct[] findAll()
@@ -38,6 +37,28 @@ class UserProductRepository extends RepositoryBase
     }
 
     /**
+     * Finds an entity by its primary key / identifier.
+     *
+     * @param int $id The identifier.
+     *
+     * @return UserProduct
+     */
+    public function find(int $id)
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $q =
+            $qb->from($this->entityName, 'a')
+                ->select(['a', 'p'])
+                ->join('a.product', 'p')
+                ->where('a.id = :id')
+                ->getQuery()
+                ->setParameter('id', $id);
+
+        return $q->getOneOrNullResult();
+    }
+
+    /**
      * @param Request $request
      * @param User $user
      * @return ResultsQueryBuilderComposite
@@ -50,7 +71,8 @@ class UserProductRepository extends RepositoryBase
 
         $qb->paginateByRequest($request)
             ->orderByRequest($request, $alias)
-            ->select($alias)
+            ->select([$alias, 'p'])
+            ->join('a.product', 'p')
             ->andWhere(
                 $qb->expr()
                     ->eq('a.user', ':user')

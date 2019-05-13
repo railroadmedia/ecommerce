@@ -9,22 +9,30 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
+use Railroad\Ecommerce\Events\UserProducts\UserProductCreated;
+use Railroad\Ecommerce\Events\UserProducts\UserProductDeleted;
+use Railroad\Ecommerce\Events\UserProducts\UserProductUpdated;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
 use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Requests\UserProductCreateRequest;
+use Railroad\Ecommerce\Requests\UserProductUpdateRequest;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\UserProductService;
+use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
@@ -57,6 +65,11 @@ class UserProductJsonController extends Controller
     private $userProvider;
 
     /**
+     * @var JsonApiHydrator
+     */
+    private $jsonApiHydrator;
+
+    /**
      * SubscriptionJsonController constructor.
      *
      * @param EcommerceEntityManager $entityManager
@@ -64,13 +77,15 @@ class UserProductJsonController extends Controller
      * @param UserProductRepository $userProductRepository
      * @param PermissionService $permissionService
      * @param UserProviderInterface $userProvider
+     * @param JsonApiHydrator $jsonApiHydrator
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
         UserProductService $userProductService,
         UserProductRepository $userProductRepository,
         PermissionService $permissionService,
-        UserProviderInterface $userProvider
+        UserProviderInterface $userProvider,
+        JsonApiHydrator $jsonApiHydrator
     )
     {
         $this->entityManager = $entityManager;
@@ -78,6 +93,7 @@ class UserProductJsonController extends Controller
         $this->userProductRepository = $userProductRepository;
         $this->permissionService = $permissionService;
         $this->userProvider = $userProvider;
+        $this->jsonApiHydrator = $jsonApiHydrator;
     }
 
     /**
@@ -88,6 +104,7 @@ class UserProductJsonController extends Controller
      * @return Fractal
      *
      * @throws Throwable
+     * @throws NotAllowedException
      */
     public function index(Request $request)
     {
@@ -97,11 +114,110 @@ class UserProductJsonController extends Controller
             $request->get('user_id', $this->userProvider->getCurrentUserId())
         );
 
-        $subscriptionsAndBuilder = $this->userProductRepository->indexByRequest($request, $user);
+        $userProductsAndBuilder = $this->userProductRepository->indexByRequest($request, $user);
 
-        return ResponseService::subscription(
-            $subscriptionsAndBuilder->getResults(),
-            $subscriptionsAndBuilder->getQueryBuilder()
+        return ResponseService::userProduct(
+            $userProductsAndBuilder->getResults(),
+            $userProductsAndBuilder->getQueryBuilder()
         );
+    }
+
+    /**
+     * @param UserProductCreateRequest $request
+     *
+     * @return JsonResponse
+     *
+     * @throws NotAllowedException
+     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws \ReflectionException
+     */
+    public function store(UserProductCreateRequest $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'create.user-product');
+
+        $userProduct = new UserProduct();
+
+        $this->jsonApiHydrator->hydrate($userProduct, $request->onlyAllowed());
+
+        $this->entityManager->persist($userProduct);
+
+        $this->entityManager->flush();
+
+        $userProduct = $this->userProductRepository->find($userProduct->getId());
+
+        event(new UserProductCreated($userProduct));
+
+        return ResponseService::userProduct($userProduct)
+            ->respond(201);
+    }
+
+    /**
+     * @param UserProductUpdateRequest $request
+     * @param $userProductId
+     * @return JsonResponse
+     * @throws NotAllowedException
+     * @throws Throwable
+     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws \ReflectionException
+     */
+    public function update(UserProductUpdateRequest $request, $userProductId)
+    {
+        $userProduct = $this->userProductRepository->find($userProductId);
+        $oldUserProduct = clone ($userProduct);
+
+        throw_if(
+            is_null($userProduct),
+            new NotFoundException(
+                'Update failed, user product not found with id: ' . $userProductId
+            )
+        );
+
+        if (!$this->permissionService->can(auth()->id(), 'update.user-products')) {
+            throw new NotAllowedException(
+                'This action is unauthorized.'
+            );
+        }
+
+        $this->jsonApiHydrator->hydrate($userProduct, $request->onlyAllowed());
+
+        $this->entityManager->flush();
+
+        event(new UserProductUpdated($userProduct, $oldUserProduct));
+
+        return ResponseService::userProduct($userProduct)
+            ->respond(200);
+    }
+
+    /**
+     * @param Request $request
+     * @param $userProductId
+     * @return JsonResponse
+     * @throws Throwable
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function delete(Request $request, $userProductId)
+    {
+        $userProduct = $this->userProductRepository->find($userProductId);
+
+        throw_if(
+            is_null($userProduct),
+            new NotFoundException(
+                'Delete failed, user product not found with id: ' . $userProductId
+            )
+        );
+
+        $this->permissionService->canOrThrow(auth()->id(), 'update.user-products');
+
+        $this->entityManager->remove($userProduct);
+        $this->entityManager->flush();
+
+        event(new UserProductDeleted($userProduct));
+
+        return ResponseService::empty(204);
     }
 }

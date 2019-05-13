@@ -40,7 +40,7 @@ class UserProduct
     protected $user;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Product")
+     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Product", fetch="EAGER")
      * @ORM\JoinColumn(name="product_id", referencedColumnName="id")
      */
     protected $product;

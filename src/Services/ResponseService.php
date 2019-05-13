@@ -25,6 +25,7 @@ use Railroad\Ecommerce\Transformers\ShippingCostsWeightRangeTransformer;
 use Railroad\Ecommerce\Transformers\ShippingOptionTransformer;
 use Railroad\Ecommerce\Transformers\SubscriptionTransformer;
 use Railroad\Ecommerce\Transformers\UserPaymentMethodsTransformer;
+use Railroad\Ecommerce\Transformers\UserProductTransformer;
 use Spatie\Fractal\Fractal;
 
 class ResponseService extends FractalResponseService
@@ -37,7 +38,31 @@ class ResponseService extends FractalResponseService
      */
     public static function address($entityOrEntities, QueryBuilder $queryBuilder = null, array $includes = [])
     {
-        return self::create($entityOrEntities, 'address', new AddressTransformer(), new JsonApiSerializer(), $queryBuilder)
+        return self::create(
+            $entityOrEntities,
+            'address',
+            new AddressTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
+    }
+
+    /**
+     * @param $entityOrEntities
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     * @return Fractal
+     */
+    public static function userProduct($entityOrEntities, QueryBuilder $queryBuilder = null, array $includes = [])
+    {
+        return self::create(
+            $entityOrEntities,
+            'userProduct',
+            new UserProductTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
             ->parseIncludes($includes);
     }
 

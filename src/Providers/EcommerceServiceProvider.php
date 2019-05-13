@@ -89,6 +89,7 @@ class EcommerceServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__ . '/../../routes/stats.php');
         $this->loadRoutesFrom(__DIR__ . '/../../routes/stripe_webhook.php');
         $this->loadRoutesFrom(__DIR__ . '/../../routes/subscriptions.php');
+        $this->loadRoutesFrom(__DIR__ . '/../../routes/user_product.php');
 
         $this->commands(
             [
