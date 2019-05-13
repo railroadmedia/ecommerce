@@ -19,6 +19,7 @@ use Gedmo\SoftDeleteable\Filter\SoftDeleteableFilter;
 use Gedmo\SoftDeleteable\SoftDeleteableListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Railroad\Doctrine\TimestampableListener;
+use Railroad\Ecommerce\Commands\FillPaymentGatewayColumnFromPaymentMethod;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Commands\SplitPaymentMethodIdsToColumns;
 use Railroad\Ecommerce\Events\GiveContentAccess;
@@ -89,10 +90,13 @@ class EcommerceServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__ . '/../../routes/stripe_webhook.php');
         $this->loadRoutesFrom(__DIR__ . '/../../routes/subscriptions.php');
 
-        $this->commands([
+        $this->commands(
+            [
                 RenewalDueSubscriptions::class,
                 SplitPaymentMethodIdsToColumns::class,
-            ]);
+                FillPaymentGatewayColumnFromPaymentMethod::class,
+            ]
+        );
 
         $this->app->validator->resolver(function ($translator, $data, $rules, $messages, $attributes) {
             return new CustomValidationRules($translator, $data, $rules, $messages, $attributes);
@@ -295,7 +299,7 @@ class EcommerceServiceProvider extends ServiceProvider
 
         if (config('ecommerce.enable_query_log')) {
             $logger = new EchoSQLLogger();
-            
+
             $entityManager->getConnection()->getConfiguration()->setSQLLogger( $logger);
         }
 

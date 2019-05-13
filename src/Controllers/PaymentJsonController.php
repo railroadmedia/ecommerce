@@ -297,6 +297,7 @@ class PaymentJsonController extends Controller
                 ->setTotalDue($paymentPrice)
                 ->setTotalPaid($paymentPrice)
                 ->setExternalProvider(ConfigService::$manualPaymentType)
+                ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
                 ->setStatus(true)
                 ->setCurrency($currency)
                 ->setCreatedAt(Carbon::now());
@@ -332,6 +333,7 @@ class PaymentJsonController extends Controller
                 $payment
                     ->setTotalPaid($paymentPrice)
                     ->setExternalProvider('stripe')
+                    ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
                     ->setExternalId($charge->id)
                     ->setStatus(($charge->status == 'succeeded') ? '1' : '0')
                     ->setMessage('')
@@ -346,6 +348,7 @@ class PaymentJsonController extends Controller
                 $payment
                     ->setTotalPaid(0)
                     ->setExternalProvider('stripe')
+                    ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
                     ->setExternalId($charge->id ?? null)
                     ->setStatus('failed')
                     ->setMessage($paymentFailedException->getMessage())
@@ -373,6 +376,7 @@ class PaymentJsonController extends Controller
                     ->setTotalPaid($paymentPrice)
                     ->setExternalProvider('paypal')
                     ->setExternalId($transactionId)
+                    ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
                     ->setStatus('1')
                     ->setMessage('')
                     ->setCurrency($currency);
@@ -387,6 +391,7 @@ class PaymentJsonController extends Controller
                     ->setTotalPaid(0)
                     ->setExternalProvider('paypal')
                     ->setExternalId($transactionId ?? null)
+                    ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
                     ->setStatus('failed')
                     ->setMessage($paymentFailedException->getMessage())
                     ->setCurrency($currency);

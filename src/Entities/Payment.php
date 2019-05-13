@@ -96,6 +96,13 @@ class Payment
     protected $externalProvider;
 
     /**
+     * @ORM\Column(type="string", length=64, name="gateway_name", nullable=true)
+     *
+     * @var string
+     */
+    protected $gatewayName;
+
+    /**
      * @ORM\Column(type="string", length=64)
      *
      * @var string
@@ -283,6 +290,25 @@ class Payment
     public function setExternalProvider(?string $externalProvider): self
     {
         $this->externalProvider = $externalProvider;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getGatewayName(): string
+    {
+        return $this->gatewayName;
+    }
+
+    /**
+     * @param string $gatewayName
+     * @return Payment
+     */
+    public function setGatewayName(string $gatewayName)
+    {
+        $this->gatewayName = $gatewayName;
 
         return $this;
     }

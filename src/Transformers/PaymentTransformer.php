@@ -24,6 +24,7 @@ class PaymentTransformer extends TransformerAbstract
             'type' => $payment->getType(),
             'external_id' => $payment->getExternalId(),
             'external_provider' => $payment->getExternalProvider(),
+            'gateway_name' => $payment->getGatewayName(),
             'status' => $payment->getStatus(),
             'message' => $payment->getMessage(),
             'currency' => $payment->getCurrency(),

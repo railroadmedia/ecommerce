@@ -148,6 +148,7 @@ class Faker extends Generator
                 'type' => $this->randomElement([ConfigService::$orderPaymentType, ConfigService::$renewalPaymentType]),
                 'external_provider' => $this->word,
                 'external_id' => $this->word,
+                'gateway_name' => $this->word,
                 'status' => 1,
                 'message' => null,
                 'payment_method_id' => $this->randomNumber(),
