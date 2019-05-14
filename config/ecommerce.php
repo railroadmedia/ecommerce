@@ -33,6 +33,7 @@ return [
     ],
 
     // routes
+    'route_prefix' => 'ecommerce',
     'autoload_all_routes' => true,
     'route_middleware_public_groups' => ['ecommerce_public'],
     'route_middleware_logged_in_groups' => ['ecommerce_logged_in'],
