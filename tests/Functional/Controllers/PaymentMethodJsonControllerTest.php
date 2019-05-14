@@ -2004,7 +2004,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
             $methodType = isset($paymentMethodsCc[$paymentMethodId]) ?
                                 'creditCard' :
-                                'paypalAgreement';
+                                'paypalBillingAgreement';
 
             $methodId = isset($paymentMethodsCc[$paymentMethodId]) ?
                                 $paymentMethodsCc[$paymentMethodId]['credit_card_id'] :
@@ -2018,24 +2018,18 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ];
 
             $relations = [
-                'paymentMethod' => [
-                    'data' => [
-                        'type' => 'paymentMethod',
-                        'id' => $userPaymentMethod['payment_method_id']
-                    ]
-                ],
-                'user' => $userRelation,
                 'method' => $methodRelation
             ];
 
             $expected['data'][] = [
-                'type' => 'userPaymentMethods',
+                'type' => 'paymentMethod',
                 'id' => $userPaymentMethod['id'],
                 'attributes' => array_diff_key(
                     $userPaymentMethod,
                     [
                         'id' => true,
                         'payment_method_id' => true,
+                        'is_primary' => true,
                         'user_id' => true
                     ]
                 ),

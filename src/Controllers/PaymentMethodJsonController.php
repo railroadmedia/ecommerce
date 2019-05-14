@@ -394,8 +394,8 @@ class PaymentMethodJsonController extends Controller
             event(new PaypalPaymentMethodEvent($paymentMethod->getId()));
         }
 
-        if (config('ecommerce.paypal.agreement_fulfilled_route')) {
-            return redirect()->route(config('ecommerce.paypal.agreement_fulfilled_route'));
+        if (config('ecommerce.paypal.agreement_fulfilled_path')) {
+            return redirect()->to(config('ecommerce.paypal.agreement_fulfilled_path'));
         }
 
         return ResponseService::empty(204);

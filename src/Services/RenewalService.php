@@ -203,8 +203,9 @@ class RenewalService
                 $totalTaxDue = $this->taxService->getTaxesDueTotal(
                     $subscription->getTotalPrice(),
                     0,
-                    $paymentMethod->getBillingAddress()
-                        ->toStructure()
+                    !empty($paymentMethod->getBillingAddress()) ?
+                        $paymentMethod->getBillingAddress()
+                            ->toStructure() : null
                 );
 
                 $chargePrice = $this->currencyService->convertFromBase(

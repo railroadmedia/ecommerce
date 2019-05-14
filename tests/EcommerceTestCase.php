@@ -226,8 +226,8 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.fulfillment_status_fulfilled', $defaultConfig['fulfillment_status_fulfilled']);
 
         $app['config']->set('ecommerce.paypal.agreement_route', $defaultConfig['paypal']['agreement_route']);
-        $app['config']->set('ecommerce.paypal.agreement_fulfilled_route',
-            $defaultConfig['paypal']['agreement_fulfilled_route']);
+        $app['config']->set('ecommerce.paypal.agreement_fulfilled_path',
+            $defaultConfig['paypal']['agreement_fulfilled_path']);
 
         $app['config']->set('ecommerce.subscription_renewal_date', $defaultConfig['subscription_renewal_date']);
         $app['config']->set('ecommerce.failed_payments_before_de_activation',

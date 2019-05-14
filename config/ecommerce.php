@@ -174,8 +174,7 @@ return [
     // paypal
     'paypal' => [
         'agreement_route' => 'payment-method.paypal.agreement',
-        'agreement_fulfilled_route' => ''
-        // route to redirect after handling a paypal agreement, eg for recordeo 'account.settings.payments'
+        'agreement_fulfilled_path' => '/test'
     ],
 
     // permissions
