@@ -1462,7 +1462,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         // assert respons status code and response
-        $this->assertEquals(204, $response->getStatusCode());
+        $this->assertEquals(302, $response->getStatusCode());
 
         $this->assertDatabaseHas(
             'ecommerce_addresses',
