@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Repositories;
 use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
-use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
@@ -19,7 +18,7 @@ use Railroad\Ecommerce\Services\DiscountService;
 class DiscountRepository extends RepositoryBase
 {
     use UseFormRequestQueryBuilder;
-    
+
     /**
      * CreditCardRepository constructor.
      *

@@ -64,7 +64,8 @@ class OrderFormJsonController extends Controller
         OrderFormService $orderFormService,
         PaymentPlanService $paymentPlanService,
         PermissionService $permissionService
-    ) {
+    )
+    {
         $this->cartAddressService = $cartAddressService;
         $this->cartService = $cartService;
         $this->currencyService = $currencyService;
@@ -112,7 +113,8 @@ class OrderFormJsonController extends Controller
         // if the cart it's empty; we throw an exception
         throw_if(
             empty(
-                $this->cartService->getCart()->getItems()
+            $this->cartService->getCart()
+                ->getItems()
             ),
             new NotFoundException('The cart is empty')
         );
@@ -121,7 +123,8 @@ class OrderFormJsonController extends Controller
 
         if (isset($result['order'])) {
             return ResponseService::order($result['order']);
-        } elseif (isset($result['errors'])) {
+        }
+        elseif (isset($result['errors'])) {
             $errors = [];
             foreach ($result['errors'] as $message) {
                 $errors = [
@@ -135,7 +138,8 @@ class OrderFormJsonController extends Controller
                 ],
                 404
             );
-        } elseif ($result['redirect'] && !isset($result['errors'])) {
+        }
+        elseif ($result['redirect'] && !isset($result['errors'])) {
 
             return ResponseService::redirect($result['redirect']);
         }

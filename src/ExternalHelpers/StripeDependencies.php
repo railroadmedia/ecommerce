@@ -211,7 +211,8 @@ class StripeDependencies
         Token $token,
         Transfer $transfer,
         TransferReversal $transferReversal
-    ) {
+    )
+    {
         $this->alipayAccount = $alipayAccount;
         $this->apiRequestor = $apiRequestor;
         $this->applicationFee = $applicationFee;

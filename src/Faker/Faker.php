@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Faker\Generator;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Location\Services\LocationService;
 
 class Faker extends Generator
@@ -147,7 +146,9 @@ class Faker extends Generator
                 'total_paid' => $this->randomNumber(),
                 'total_refunded' => $this->randomNumber(),
                 'conversion_rate' => $this->randomNumber(2),
-                'type' => $this->randomElement([config('ecommerce.order_payment_type'), config('ecommerce.renewal_payment_type')]),
+                'type' => $this->randomElement(
+                    [config('ecommerce.order_payment_type'), config('ecommerce.renewal_payment_type')]
+                ),
                 'external_provider' => $this->word,
                 'external_id' => $this->word,
                 'gateway_name' => $this->word,

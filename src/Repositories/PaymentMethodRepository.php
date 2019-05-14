@@ -3,8 +3,6 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\Query\Expr\Join;
-use Railroad\Ecommerce\Entities\Address;
-use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -24,6 +22,7 @@ class PaymentMethodRepository extends RepositoryBase
     {
         parent::__construct($entityManager, $entityManager->getClassMetadata(PaymentMethod::class));
     }
+
     /**
      * @param int $id
      * @return PaymentMethod|null

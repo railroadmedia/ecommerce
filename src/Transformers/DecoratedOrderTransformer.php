@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
-use Railroad\Ecommerce\Transformers\OrderTransformer;
-
 class DecoratedOrderTransformer extends OrderTransformer
 {
     protected $payments;
@@ -16,7 +14,8 @@ class DecoratedOrderTransformer extends OrderTransformer
         array $refunds = [],
         array $subscriptions = [],
         array $paymentPlans = []
-    ) {
+    )
+    {
         $this->payments = $payments;
         $this->refunds = $refunds;
         $this->subscriptions = $subscriptions;

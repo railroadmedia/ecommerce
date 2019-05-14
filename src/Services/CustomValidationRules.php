@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Services;
 
-
 use Illuminate\Validation\Validator;
 use Webpatser\Countries\Countries;
 

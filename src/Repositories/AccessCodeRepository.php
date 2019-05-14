@@ -2,13 +2,10 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\AccessCode;
-use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 
 /**

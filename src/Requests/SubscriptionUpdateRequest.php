@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Requests;
 
 use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Services\ConfigService;
 
 class SubscriptionUpdateRequest extends FormRequest
 {
@@ -56,8 +55,7 @@ class SubscriptionUpdateRequest extends FormRequest
         return [
             'data.type' => 'in:subscription',
             'data.attributes.brand' => 'nullable|max:255',
-            'data.attributes.type' => 'max:255|in:' .
-                implode(
+            'data.attributes.type' => 'max:255|in:' . implode(
                     ',',
                     [
                         config('ecommerce.type_payment_plan'),
@@ -71,8 +69,7 @@ class SubscriptionUpdateRequest extends FormRequest
             'data.attributes.note' => 'max:255',
             'data.attributes.total_price' => 'nullable|numeric|min:0',
             'data.attributes.currency' => 'nullable|max:3',
-            'data.attributes.interval_type' => 'nullable|in:' .
-                implode(
+            'data.attributes.interval_type' => 'nullable|in:' . implode(
                     ',',
                     [
                         config('ecommerce.interval_type_yearly'),

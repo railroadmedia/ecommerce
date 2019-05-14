@@ -2,9 +2,6 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Location\Services\LocationService;
-
 class UserProductCreateRequest extends FormRequest
 {
     /**

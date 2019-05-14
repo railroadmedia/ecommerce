@@ -448,7 +448,8 @@ class Payment
      */
     public function setSubscriptionPayment(
         ?SubscriptionPayment $subscriptionPayment
-    ): self {
+    ): self
+    {
         $this->subscriptionPayment = $subscriptionPayment;
 
         return $this;
@@ -460,7 +461,8 @@ class Payment
     public function getOrder()
     {
         if (!empty($this->getOrderPayment())) {
-            return $this->getOrderPayment()->getOrder();
+            return $this->getOrderPayment()
+                ->getOrder();
         }
 
         return null;
@@ -472,7 +474,8 @@ class Payment
     public function getSubscription()
     {
         if (!empty($this->getSubscriptionPayment())) {
-            return $this->getSubscriptionPayment()->getSubscription();
+            return $this->getSubscriptionPayment()
+                ->getSubscription();
         }
 
         return null;

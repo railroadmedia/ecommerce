@@ -3,8 +3,8 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Doctrine\ORM\QueryBuilder;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\ShippingOption;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -53,7 +53,8 @@ class ShippingOptionController extends Controller
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService,
         ShippingOptionRepository $shippingOptionRepository
-    ) {
+    )
+    {
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->permissionService = $permissionService;
@@ -76,10 +77,7 @@ class ShippingOptionController extends Controller
         $alias = 's';
         $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
         $orderBy = $request->get('order_by_column', 'created_at');
-        if (
-            strpos($orderBy, '_') !== false
-            || strpos($orderBy, '-') !== false
-        ) {
+        if (strpos($orderBy, '_') !== false || strpos($orderBy, '-') !== false) {
             $orderBy = camel_case($orderBy);
         }
         $orderBy = $alias . '.' . $orderBy;
@@ -89,12 +87,13 @@ class ShippingOptionController extends Controller
          */
         $qb = $this->shippingOptionRepository->createQueryBuilder($alias);
 
-        $qb
-            ->setMaxResults($request->get('limit', 10))
+        $qb->setMaxResults($request->get('limit', 10))
             ->setFirstResult($first)
             ->orderBy($orderBy, $request->get('order_by_direction', 'desc'));
 
-        $shippingOptions = $qb->getQuery()->getResult();
+        $shippingOptions =
+            $qb->getQuery()
+                ->getResult();
 
         return ResponseService::shippingOption($shippingOptions, $qb);
     }
@@ -139,22 +138,20 @@ class ShippingOptionController extends Controller
     public function update(
         ShippingOptionUpdateRequest $request,
         $shippingOptionId
-    ) {
+    )
+    {
         $this->permissionService->canOrThrow(auth()->id(), 'edit.shipping.option');
 
-        $shippingOption = $this->shippingOptionRepository
-                                ->find($shippingOptionId);
+        $shippingOption = $this->shippingOptionRepository->find($shippingOptionId);
 
         throw_if(
             is_null($shippingOption),
             new NotFoundException(
-                'Update failed, shipping option not found with id: ' .
-                $shippingOptionId
+                'Update failed, shipping option not found with id: ' . $shippingOptionId
             )
         );
 
-        $this->jsonApiHydrator
-                ->hydrate($shippingOption, $request->onlyAllowed());
+        $this->jsonApiHydrator->hydrate($shippingOption, $request->onlyAllowed());
 
         $this->entityManager->flush();
 
@@ -178,14 +175,12 @@ class ShippingOptionController extends Controller
         /**
          * @var $shippingOption ShippingOption
          */
-        $shippingOption = $this->shippingOptionRepository
-                                ->find($shippingOptionId);
+        $shippingOption = $this->shippingOptionRepository->find($shippingOptionId);
 
         throw_if(
             !$shippingOption,
             new NotFoundException(
-                'Delete failed, shipping option not found with id: ' .
-                $shippingOptionId
+                'Delete failed, shipping option not found with id: ' . $shippingOptionId
             )
         );
 

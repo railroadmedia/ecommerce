@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Repositories\Traits;
 
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
-use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
 
 trait UseFormRequestQueryBuilder

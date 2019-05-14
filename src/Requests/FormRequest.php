@@ -33,10 +33,8 @@ class FormRequest extends IlluminateFormRequest
     {
         $errors = [];
 
-        foreach (
-            $validator->errors()
-                ->getMessages() as $key => $value
-        ) {
+        foreach ($validator->errors()
+                     ->getMessages() as $key => $value) {
             $errors[] = [
                 "title" => 'Validation failed.',
                 "source" => $key,

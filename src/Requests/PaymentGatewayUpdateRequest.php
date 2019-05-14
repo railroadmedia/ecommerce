@@ -2,9 +2,6 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-
-use Railroad\Ecommerce\Services\ConfigService;
-
 class PaymentGatewayUpdateRequest extends FormRequest
 {
     /**

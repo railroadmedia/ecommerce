@@ -15,7 +15,6 @@ use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\ProductCreateRequest;
 use Railroad\Ecommerce\Requests\ProductUpdateRequest;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
@@ -79,7 +78,8 @@ class ProductJsonController extends Controller
         PermissionService $permissionService,
         ProductRepository $productRepository,
         RemoteStorageService $remoteStorageService
-    ) {
+    )
+    {
         $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
@@ -102,10 +102,7 @@ class ProductJsonController extends Controller
 
         $alias = 'a';
         $orderBy = $request->get('order_by_column', 'created_at');
-        if (
-            strpos($orderBy, '_') !== false
-            || strpos($orderBy, '-') !== false
-        ) {
+        if (strpos($orderBy, '_') !== false || strpos($orderBy, '-') !== false) {
             $orderBy = camel_case($orderBy);
         }
         $orderBy = $alias . '.' . $orderBy;
@@ -117,18 +114,26 @@ class ProductJsonController extends Controller
          */
         $qb = $this->productRepository->createQueryBuilder($alias);
 
-        $qb
-            ->setMaxResults($request->get('limit', 10))
+        $qb->setMaxResults($request->get('limit', 10))
             ->setFirstResult($first)
-            ->where($qb->expr()->in($alias . '.brand', ':brands'))
-            ->andWhere($qb->expr()->in($alias . '.active', ':activity'))
+            ->where(
+                $qb->expr()
+                    ->in($alias . '.brand', ':brands')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->in($alias . '.active', ':activity')
+            )
             ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
             ->setParameter('brands', $brands)
             ->setParameter('activity', $active);
 
-        $products = $qb->getQuery()->getResult();
+        $products =
+            $qb->getQuery()
+                ->getResult();
 
-        return ResponseService::product($products, $qb)->respond();
+        return ResponseService::product($products, $qb)
+            ->respond();
     }
 
     /**
@@ -155,7 +160,8 @@ class ProductJsonController extends Controller
         $this->entityManager->persist($product);
         $this->entityManager->flush();
 
-        return ResponseService::product($product)->respond();
+        return ResponseService::product($product)
+            ->respond();
     }
 
     /**
@@ -184,10 +190,12 @@ class ProductJsonController extends Controller
 
         $this->entityManager->flush();
 
-        return ResponseService::product($product)->respond();
+        return ResponseService::product($product)
+            ->respond();
     }
 
     // todo: use soft delete
+
     /**
      * Delete a product that it's not connected to orders or discounts and return a JsonResponse.
      *
@@ -261,17 +269,21 @@ class ProductJsonController extends Controller
          */
         $qb = $this->productRepository->createQueryBuilder('p');
 
-        $qb
-            ->where($qb->expr()->in('p.active', ':activity'))
-            ->andWhere($qb->expr()->eq('p.id', ':id'));
+        $qb->where(
+                $qb->expr()
+                    ->in('p.active', ':activity')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.id', ':id')
+            );
 
         /**
          * @var $q Query
          */
         $q = $qb->getQuery();
 
-        $q
-            ->setParameter('activity', $active)
+        $q->setParameter('activity', $active)
             ->setParameter('id', $productId);
 
         /**
@@ -286,6 +298,7 @@ class ProductJsonController extends Controller
             )
         );
 
-        return ResponseService::product($product)->respond();
+        return ResponseService::product($product)
+            ->respond();
     }
 }

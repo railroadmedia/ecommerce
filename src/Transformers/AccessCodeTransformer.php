@@ -23,7 +23,7 @@ class AccessCodeTransformer extends TransformerAbstract
         }
 
         if (count($this->productsMap)) {
-             $this->defaultIncludes[] = 'product';
+            $this->defaultIncludes[] = 'product';
         }
 
         return [
@@ -32,9 +32,15 @@ class AccessCodeTransformer extends TransformerAbstract
             'brand' => $accessCode->getBrand(),
             'product_ids' => $accessCode->getProductIds() ?? [],
             'is_claimed' => $accessCode->getIsClaimed(),
-            'claimed_on' => $accessCode->getClaimedOn() ? $accessCode->getClaimedOn()->toDateTimeString() : null,
-            'created_at' => $accessCode->getCreatedAt() ? $accessCode->getCreatedAt()->toDateTimeString() : null,
-            'updated_at' => $accessCode->getUpdatedAt() ? $accessCode->getUpdatedAt()->toDateTimeString() : null,
+            'claimed_on' => $accessCode->getClaimedOn() ?
+                $accessCode->getClaimedOn()
+                    ->toDateTimeString() : null,
+            'created_at' => $accessCode->getCreatedAt() ?
+                $accessCode->getCreatedAt()
+                    ->toDateTimeString() : null,
+            'updated_at' => $accessCode->getUpdatedAt() ?
+                $accessCode->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 

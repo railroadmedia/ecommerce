@@ -4,11 +4,6 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Exception;
-use Railroad\Ecommerce\Entities\User;
-use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodCreated;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
-use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Customer;
@@ -16,8 +11,13 @@ use Railroad\Ecommerce\Entities\CustomerPaymentMethods;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
+use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodCreated;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
+use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Stripe\Card;
 use Stripe\Customer as StripeCustomer;
 use Throwable;
@@ -50,7 +50,8 @@ class PaymentMethodService
         CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
         EcommerceEntityManager $entityManager,
         UserPaymentMethodsRepository $userPaymentMethodsRepository
-    ) {
+    )
+    {
 
         $this->customerPaymentMethodsRepository = $customerPaymentMethodsRepository;
         $this->entityManager = $entityManager;
@@ -85,8 +86,7 @@ class PaymentMethodService
     {
         $creditCard = new CreditCard();
 
-        $creditCard
-            ->setFingerprint($card->fingerprint)
+        $creditCard->setFingerprint($card->fingerprint)
             ->setLastFourDigits($card->last4)
             ->setCardholderName($card->name)
             ->setCompanyName($card->brand)
@@ -131,11 +131,12 @@ class PaymentMethodService
         $this->entityManager->flush();
 
         // no events for customer
-        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId()) && $setUserDefaultPaymentMethod) {
+        if ($purchaser->getType() == Purchaser::USER_TYPE &&
+            !empty($purchaser->getId()) &&
+            $setUserDefaultPaymentMethod) {
             event(
                 new UserDefaultPaymentMethodEvent(
-                    $purchaser->getId(),
-                    $paymentMethod->getId()
+                    $purchaser->getId(), $paymentMethod->getId()
                 )
             );
         }
@@ -171,8 +172,7 @@ class PaymentMethodService
     {
         $billingAgreement = new PaypalBillingAgreement();
 
-        $billingAgreement
-            ->setExternalId($billingAgreementId)
+        $billingAgreement->setExternalId($billingAgreementId)
             ->setPaymentGatewayName($gateway);
 
         $this->entityManager->persist($billingAgreement);
@@ -209,11 +209,13 @@ class PaymentMethodService
         $this->entityManager->flush();
 
         // no events for customer
-        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId()) && $setUserDefaultPaymentMethod) {
+        if ($purchaser->getType() == Purchaser::USER_TYPE &&
+            !empty($purchaser->getId()) &&
+            $setUserDefaultPaymentMethod) {
             event(
                 new UserDefaultPaymentMethodEvent(
-                    $purchaser->getUserObject()->getId(),
-                    $paymentMethod->getId()
+                    $purchaser->getUserObject()
+                        ->getId(), $paymentMethod->getId()
                 )
             );
         }
@@ -241,15 +243,16 @@ class PaymentMethodService
     {
         $paymentMethod = new PaymentMethod();
 
-        $paymentMethod
-            ->setCurrency($currency)
+        $paymentMethod->setCurrency($currency)
             ->setBillingAddress($billingAddress);
 
         if ($method instanceof CreditCard) {
             $paymentMethod->setCreditCard($method);
-        } elseif ($method instanceof PaypalBillingAgreement) {
+        }
+        elseif ($method instanceof PaypalBillingAgreement) {
             $paymentMethod->setPaypalBillingAgreement($method);
-        } else {
+        }
+        else {
             throw new Exception('Invalid payment method type on create.');
         }
 
@@ -273,8 +276,7 @@ class PaymentMethodService
         ?bool $setUserDefaultPaymentMethod = true
     ): UserPaymentMethods
     {
-        $existingPrimaryMethod = $this->userPaymentMethodsRepository
-                    ->getUserPrimaryPaymentMethod($user);
+        $existingPrimaryMethod = $this->userPaymentMethodsRepository->getUserPrimaryPaymentMethod($user);
 
         if ($setUserDefaultPaymentMethod && $existingPrimaryMethod) {
             $existingPrimaryMethod->setIsPrimary(false);
@@ -282,8 +284,7 @@ class PaymentMethodService
 
         $userPaymentMethods = new UserPaymentMethods();
 
-        $userPaymentMethods
-            ->setUser($user)
+        $userPaymentMethods->setUser($user)
             ->setPaymentMethod($paymentMethod)
             ->setIsPrimary(
                 ($existingPrimaryMethod == null) || $setUserDefaultPaymentMethod
@@ -307,8 +308,7 @@ class PaymentMethodService
     {
         $customerPaymentMethods = new CustomerPaymentMethods();
 
-        $customerPaymentMethods
-            ->setCustomer($customer)
+        $customerPaymentMethods->setCustomer($customer)
             ->setPaymentMethod($paymentMethod)
             ->setIsPrimary(true);
 

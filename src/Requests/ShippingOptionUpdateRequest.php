@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-
 class ShippingOptionUpdateRequest extends FormRequest
 {
     /**

@@ -153,13 +153,12 @@ class ShippingOption
      */
     public function addShippingCostsWeightRange(
         ShippingCostsWeightRange $shippingCostsWeightRange
-    ): self {
+    ): self
+    {
 
-        if (
-            !$this->shippingCostsWeightRanges->contains(
-                $shippingCostsWeightRange
-            )
-        ) {
+        if (!$this->shippingCostsWeightRanges->contains(
+            $shippingCostsWeightRange
+        )) {
             $this->shippingCostsWeightRanges[] = $shippingCostsWeightRange;
             $shippingCostsWeightRange->setShippingOption($this);
         }
@@ -174,15 +173,13 @@ class ShippingOption
      */
     public function removeShippingCostsWeightRange(
         ShippingCostsWeightRange $shippingCostsWeightRange
-    ): self {
+    ): self
+    {
 
-        if (
-            $this->shippingCostsWeightRanges->contains(
-                $shippingCostsWeightRange
-            )
-        ) {
-            $this->shippingCostsWeightRanges
-                ->removeElement($shippingCostsWeightRange);
+        if ($this->shippingCostsWeightRanges->contains(
+            $shippingCostsWeightRange
+        )) {
+            $this->shippingCostsWeightRanges->removeElement($shippingCostsWeightRange);
 
             // set the owning side to null (unless already changed)
             if ($shippingCostsWeightRange->getShippingOption() === $this) {

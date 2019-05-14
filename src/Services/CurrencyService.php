@@ -2,8 +2,8 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Railroad\Location\Services\LocationService;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
+use Railroad\Location\Services\LocationService;
 
 class CurrencyService
 {

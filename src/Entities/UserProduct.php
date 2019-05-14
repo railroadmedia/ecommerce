@@ -102,7 +102,8 @@ class UserProduct
      */
     public function setExpirationDate(
         ?\DateTimeInterface $expirationDate
-    ): self {
+    ): self
+    {
         $this->expirationDate = $expirationDate;
 
         return $this;

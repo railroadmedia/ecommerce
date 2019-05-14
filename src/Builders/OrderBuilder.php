@@ -32,10 +32,21 @@ class OrderBuilder
 
     public function buildAddresses(Order $order, ?Address $billingAddress = null, ?Address $shippingAddress = null)
     {
-        if (empty($billingAddress) && !empty($this->cartService->getCart()->getBillingAddress())) {
-            $billingAddress = $this->cartService->getCart()->getBillingAddress()->toEntity();
-            
-            $order->setBillingAddress($this->cartService->getCart()->getBillingAddress()->toEntity());
+        if (empty($billingAddress) &&
+            !empty(
+            $this->cartService->getCart()
+                ->getBillingAddress()
+            )) {
+            $billingAddress =
+                $this->cartService->getCart()
+                    ->getBillingAddress()
+                    ->toEntity();
+
+            $order->setBillingAddress(
+                $this->cartService->getCart()
+                    ->getBillingAddress()
+                    ->toEntity()
+            );
         }
     }
 }

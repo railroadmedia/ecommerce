@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-use Railroad\Ecommerce\Services\ConfigService;
-
 class AccessCodeJsonClaimRequest extends FormRequest
 {
     /**
@@ -24,9 +22,11 @@ class AccessCodeJsonClaimRequest extends FormRequest
     public function rules()
     {
         return [
-            'access_code' => 'required|max:24|exists:'
-            . config('ecommerce.database_connection_name') . '.'
-            . 'ecommerce_access_codes' . ',code,is_claimed,0',
+            'access_code' => 'required|max:24|exists:' .
+                config('ecommerce.database_connection_name') .
+                '.' .
+                'ecommerce_access_codes' .
+                ',code,is_claimed,0',
             'claim_for_user_id' => 'required|integer',
         ];
     }

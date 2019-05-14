@@ -49,11 +49,11 @@ class OrderFormService
     /**
      * OrderFormService constructor.
      *
-     * @param CartService $cartService,
-     * @param OrderClaimingService $orderClaimingService,
-     * @param PaymentService $paymentService,
-     * @param PayPalPaymentGateway $payPalPaymentGateway,
-     * @param PurchaserService $purchaserService,
+     * @param CartService $cartService ,
+     * @param OrderClaimingService $orderClaimingService ,
+     * @param PaymentService $paymentService ,
+     * @param PayPalPaymentGateway $payPalPaymentGateway ,
+     * @param PurchaserService $purchaserService ,
      * @param ShippingService $shippingService
      */
     public function __construct(

@@ -6,7 +6,6 @@ use Exception;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\RefundFailedException;
 use Railroad\Ecommerce\ExternalHelpers\PayPal;
-use Railroad\Ecommerce\Services\ConfigService;
 
 class PayPalPaymentGateway
 {

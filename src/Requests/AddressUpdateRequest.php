@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Requests;
 
 use Railroad\Ecommerce\Entities\Address;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Location\Services\LocationService;
 
 class AddressUpdateRequest extends FormRequest

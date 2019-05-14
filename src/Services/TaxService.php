@@ -35,25 +35,25 @@ class TaxService
     public function getTaxRate(?Address $address): float
     {
         // todo: fix with new tax system
-//        if ($address && array_key_exists(strtolower($address->getCountry()), ConfigService::$taxRate)) {
-//            if (array_key_exists(
-//                strtolower($address->getState()),
-//                ConfigService::$taxRate[strtolower($address->getCountry())]
-//            )) {
-//                return ConfigService::$taxRate[strtolower($address->getCountry())][strtolower($address->getState())];
-//            }
-//            else {
-//                if (array_key_exists(
-//                    strtolower(self::DEFAULT_STATE_KEY),
-//                    ConfigService::$taxRate[strtolower($address->getCountry())]
-//                )) {
-//                    return ConfigService::$taxRate[strtolower($address->getCountry())][self::DEFAULT_STATE_KEY];
-//                }
-//                else {
-//                    return self::DEFAULT_RATE;
-//                }
-//            }
-//        }
+        //        if ($address && array_key_exists(strtolower($address->getCountry()), ConfigService::$taxRate)) {
+        //            if (array_key_exists(
+        //                strtolower($address->getState()),
+        //                ConfigService::$taxRate[strtolower($address->getCountry())]
+        //            )) {
+        //                return ConfigService::$taxRate[strtolower($address->getCountry())][strtolower($address->getState())];
+        //            }
+        //            else {
+        //                if (array_key_exists(
+        //                    strtolower(self::DEFAULT_STATE_KEY),
+        //                    ConfigService::$taxRate[strtolower($address->getCountry())]
+        //                )) {
+        //                    return ConfigService::$taxRate[strtolower($address->getCountry())][self::DEFAULT_STATE_KEY];
+        //                }
+        //                else {
+        //                    return self::DEFAULT_RATE;
+        //                }
+        //            }
+        //        }
 
         return self::DEFAULT_RATE;
     }

@@ -2,9 +2,7 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Services\ConfigService;
 
 class ProductCreateRequest extends FormRequest
 {
@@ -53,10 +51,9 @@ class ProductCreateRequest extends FormRequest
     {
         return [
             'data.attributes.name' => 'required|max:255',
-            'data.attributes.sku' => 'required|unique:'.'ecommerce_products'.',sku|max:255',
+            'data.attributes.sku' => 'required|unique:' . 'ecommerce_products' . ',sku|max:255',
             'data.attributes.price' => 'required|numeric|min:0',
-            'data.attributes.type' => 'required|max:255|in:' .
-                implode(
+            'data.attributes.type' => 'required|max:255|in:' . implode(
                     ',',
                     [
                         Product::TYPE_PRODUCT,
@@ -67,8 +64,10 @@ class ProductCreateRequest extends FormRequest
             'data.attributes.is_physical' => 'required|boolean',
             'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
             'data.attributes.stock' => 'nullable|numeric',
-            'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION,
-            'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION
+            'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' .
+                Product::TYPE_SUBSCRIPTION,
+            'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' .
+                Product::TYPE_SUBSCRIPTION
         ];
     }
 
@@ -78,23 +77,23 @@ class ProductCreateRequest extends FormRequest
     public function onlyAllowed()
     {
         return $this->only(
-                [
-                    'data.type',
-                    'data.attributes.name',
-                    'data.attributes.brand',
-                    'data.attributes.sku',
-                    'data.attributes.price',
-                    'data.attributes.type',
-                    'data.attributes.active',
-                    'data.attributes.category',
-                    'data.attributes.description',
-                    'data.attributes.thumbnail_url',
-                    'data.attributes.is_physical',
-                    'data.attributes.weight',
-                    'data.attributes.subscription_interval_type',
-                    'data.attributes.subscription_interval_count',
-                    'data.attributes.stock',
-                ]
-            );
+            [
+                'data.type',
+                'data.attributes.name',
+                'data.attributes.brand',
+                'data.attributes.sku',
+                'data.attributes.price',
+                'data.attributes.type',
+                'data.attributes.active',
+                'data.attributes.category',
+                'data.attributes.description',
+                'data.attributes.thumbnail_url',
+                'data.attributes.is_physical',
+                'data.attributes.weight',
+                'data.attributes.subscription_interval_type',
+                'data.attributes.subscription_interval_count',
+                'data.attributes.stock',
+            ]
+        );
     }
 }

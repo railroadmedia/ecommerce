@@ -27,7 +27,7 @@ class StripeCardException extends \Exception
                 ],
                 'meta' => [
                     'user' => $user ? [
-                        'email' =>  $user->getEmail()
+                        'email' => $user->getEmail()
                     ] : null,
                 ]
             ],

@@ -2,9 +2,6 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-
-use Railroad\Ecommerce\Services\ConfigService;
-
 class ShippingCostCreateRequest extends FormRequest
 {
     /**
@@ -42,9 +39,11 @@ class ShippingCostCreateRequest extends FormRequest
     {
         return [
             'data.type' => 'in:shippingCostsWeightRange',
-            'data.relationships.shippingOption.data.id' => 'required|numeric|exists:'.'ecommerce_shipping_options'.',id',
+            'data.relationships.shippingOption.data.id' => 'required|numeric|exists:' .
+                'ecommerce_shipping_options' .
+                ',id',
             'data.attributes.min' => 'required|numeric|min:0',
-            'data.attributes.max' =>'required|numeric|gte:data.attributes.min',
+            'data.attributes.max' => 'required|numeric|gte:data.attributes.min',
             'data.attributes.price' => 'required|numeric|min:0'
         ];
     }

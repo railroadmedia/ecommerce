@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-use Railroad\Ecommerce\Services\ConfigService;
-
 class PaymentCreateRequest extends FormRequest
 {
     /**
@@ -42,10 +40,11 @@ class PaymentCreateRequest extends FormRequest
         return [
             'data.type' => 'in:payment',
             'data.attributes.due' => 'required|numeric',
-            'data.relationships.paymentMethod.data.id' =>
-                'numeric|nullable|exists:'.'ecommerce_payment_methods'.',id',
-            'data.relationships.order.data.id' => 'numeric|exists:'.'ecommerce_orders'.',id',
-            'data.relationships.subscription.data.id' => 'numeric|exists:'.'ecommerce_subscriptions'.',id',
+            'data.relationships.paymentMethod.data.id' => 'numeric|nullable|exists:' .
+                'ecommerce_payment_methods' .
+                ',id',
+            'data.relationships.order.data.id' => 'numeric|exists:' . 'ecommerce_orders' . ',id',
+            'data.relationships.subscription.data.id' => 'numeric|exists:' . 'ecommerce_subscriptions' . ',id',
         ];
     }
 

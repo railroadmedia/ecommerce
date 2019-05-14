@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\UserStripeCustomerId;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
@@ -21,6 +20,7 @@ class UserStripeCustomerIdRepository extends RepositoryBase
     {
         parent::__construct($entityManager, $entityManager->getClassMetadata(UserStripeCustomerId::class));
     }
+
     /**
      * @param int $userId
      *
@@ -36,8 +36,7 @@ class UserStripeCustomerIdRepository extends RepositoryBase
             ->setParameter('userId', $userId)
             ->orderBy('usci.id', 'DESC');
 
-        $result = $qb->getQuery()
-            // ->useResultCache($this->arrayCache)
+        $result = $qb->getQuery()// ->useResultCache($this->arrayCache)
             ->getResult();
 
         if ($result) {

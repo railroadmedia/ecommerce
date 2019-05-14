@@ -4,8 +4,8 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\Structures\Address;
-use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Requests\SessionStoreAddressRequest;
+use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ResponseService;
 
@@ -76,6 +76,7 @@ class SessionJsonController extends Controller
             )
         );
 
-        return ResponseService::cart($this->cartService->toArray())->respond(200);
+        return ResponseService::cart($this->cartService->toArray())
+            ->respond(200);
     }
 }

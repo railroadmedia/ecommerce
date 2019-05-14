@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Transformers;
 use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Discount;
-use Railroad\Ecommerce\Entities\Order;
 
 class DiscountTransformer extends TransformerAbstract
 {
@@ -29,8 +28,12 @@ class DiscountTransformer extends TransformerAbstract
             'product_category' => $discount->getProductCategory(),
             'active' => $discount->getActive(),
             'visible' => $discount->getVisible(),
-            'created_at' => $discount->getCreatedAt() ? $discount->getCreatedAt()->toDateTimeString() : null,
-            'updated_at' => $discount->getUpdatedAt() ? $discount->getUpdatedAt()->toDateTimeString() : null,
+            'created_at' => $discount->getCreatedAt() ?
+                $discount->getCreatedAt()
+                    ->toDateTimeString() : null,
+            'updated_at' => $discount->getUpdatedAt() ?
+                $discount->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 
@@ -42,7 +45,8 @@ class DiscountTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'product'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $discount->getProduct(),
                 new ProductTransformer(),
@@ -53,13 +57,15 @@ class DiscountTransformer extends TransformerAbstract
 
     public function includeDiscountCriterias(Discount $discount)
     {
-        if ($discount->getDiscountCriterias()->first() instanceof Proxy) {
+        if ($discount->getDiscountCriterias()
+                ->first() instanceof Proxy) {
             return $this->collection(
                 $discount->getDiscountCriterias(),
                 new EntityReferenceTransformer(),
                 'discountCriterias'
             );
-        } else {
+        }
+        else {
             return $this->collection(
                 $discount->getDiscountCriterias(),
                 new DiscountCriteriaTransformer(true),

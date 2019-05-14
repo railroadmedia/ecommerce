@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Commands;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;
@@ -61,7 +60,8 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         RenewalService $renewalService,
         SubscriptionRepository $subscriptionRepository,
         UserProductService $userProductService
-    ) {
+    )
+    {
         parent::__construct();
 
         $this->entityManager = $entityManager;
@@ -84,32 +84,53 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
          */
         $qb = $this->subscriptionRepository->createQueryBuilder('s');
 
-        $qb
-            ->select(['s'])
-            ->where($qb->expr()->eq('s.brand', ':brand'))
-            ->andWhere($qb->expr()->lt('s.paidUntil', ':now'))
-            ->andWhere($qb->expr()->gte('s.paidUntil', ':cutoff'))
-            ->andWhere($qb->expr()->eq('s.isActive', ':active'))
-            ->andWhere($qb->expr()->isNull('s.canceledOn'))
+        $qb->select(['s'])
+            ->where(
+                $qb->expr()
+                    ->eq('s.brand', ':brand')
+            )
             ->andWhere(
-                $qb->expr()->orX(
-                    $qb->expr()->isNull('s.totalCyclesDue'),
-                    $qb->expr()->eq('s.totalCyclesDue', ':zero'),
-                    $qb->expr()->lt('s.totalCyclesPaid', 's.totalCyclesDue')
-                )
+                $qb->expr()
+                    ->lt('s.paidUntil', ':now')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->gte('s.paidUntil', ':cutoff')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.isActive', ':active')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('s.canceledOn')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->isNull('s.totalCyclesDue'),
+                        $qb->expr()
+                            ->eq('s.totalCyclesDue', ':zero'),
+                        $qb->expr()
+                            ->lt('s.totalCyclesPaid', 's.totalCyclesDue')
+                    )
             )
             ->setParameter('brand', config('ecommerce.brand'))
             ->setParameter('now', Carbon::now())
             ->setParameter(
                 'cutoff',
-                Carbon::now()->subMonths(
-                    config('ecommerce.paypal.subscription_renewal_date') ?? 1
-                )
+                Carbon::now()
+                    ->subMonths(
+                        config('ecommerce.paypal.subscription_renewal_date') ?? 1
+                    )
             )
             ->setParameter('active', true)
             ->setParameter('zero', 0);
 
-        $dueSubscriptions = $qb->getQuery()->getResult();
+        $dueSubscriptions =
+            $qb->getQuery()
+                ->getResult();
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
 
         foreach ($dueSubscriptions as $dueSubscription) {
@@ -123,42 +144,58 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
          */
         $qb = $this->subscriptionRepository->createQueryBuilder('s');
 
-        $qb
-            ->select(['s'])
-            ->where($qb->expr()->eq('s.brand', ':brand'))
-            ->andWhere($qb->expr()->lt('s.paidUntil', ':cutoff'))
-            ->andWhere($qb->expr()->eq('s.isActive', ':active'))
-            ->andWhere($qb->expr()->isNull('s.canceledOn'))
+        $qb->select(['s'])
+            ->where(
+                $qb->expr()
+                    ->eq('s.brand', ':brand')
+            )
             ->andWhere(
-                $qb->expr()->orX(
-                    $qb->expr()->isNull('s.totalCyclesDue'),
-                    $qb->expr()->eq('s.totalCyclesDue', ':zero'),
-                    $qb->expr()->lt('s.totalCyclesPaid', 's.totalCyclesDue')
-                )
+                $qb->expr()
+                    ->lt('s.paidUntil', ':cutoff')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.isActive', ':active')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('s.canceledOn')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->isNull('s.totalCyclesDue'),
+                        $qb->expr()
+                            ->eq('s.totalCyclesDue', ':zero'),
+                        $qb->expr()
+                            ->lt('s.totalCyclesPaid', 's.totalCyclesDue')
+                    )
             )
             ->setParameter('brand', config('ecommerce.brand'))
             ->setParameter(
                 'cutoff',
-                Carbon::now()->subMonths(
-                    config('ecommerce.paypal.subscription_renewal_date') ?? 1
-                )
+                Carbon::now()
+                    ->subMonths(
+                        config('ecommerce.paypal.subscription_renewal_date') ?? 1
+                    )
             )
             ->setParameter('active', true)
             ->setParameter('zero', 0);
 
-        $ancientSubscriptions = $qb->getQuery()->getResult();
+        $ancientSubscriptions =
+            $qb->getQuery()
+                ->getResult();
 
         $this->info('De-activate ancient subscriptions. Count: ' . count($ancientSubscriptions));
 
         foreach ($ancientSubscriptions as $ancientSubscription) {
-            $ancientSubscription
-                ->setIsActive(false)
+            $ancientSubscription->setIsActive(false)
                 ->setNote(self::DEACTIVATION_NOTE)
                 ->setCanceledOn(Carbon::now())
                 ->setUpdatedAt(Carbon::now());
 
-            $this->userProductService
-                    ->updateSubscriptionProducts($ancientSubscription);
+            $this->userProductService->updateSubscriptionProducts($ancientSubscription);
         }
 
         $this->entityManager->flush();

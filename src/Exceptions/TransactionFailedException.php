@@ -1,4 +1,5 @@
 <?php
+
 namespace Railroad\Ecommerce\Exceptions;
 
 use Exception;

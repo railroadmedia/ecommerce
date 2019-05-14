@@ -7,7 +7,6 @@ use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Services\OrderFormService;
-use Railroad\Ecommerce\Services\ConfigService;
 use Throwable;
 
 class OrderFormController extends Controller
@@ -24,7 +23,8 @@ class OrderFormController extends Controller
      */
     public function __construct(
         OrderFormService $orderFormService
-    ) {
+    )
+    {
         $this->orderFormService = $orderFormService;
     }
 
@@ -50,15 +50,14 @@ class OrderFormController extends Controller
 
         if (isset($result['errors']) || !isset($result['order'])) {
 
-            $redirectResponse = isset($result['redirect']) ?
-                    redirect()->away($result['redirect']) :
-                    redirect()->back();
+            $redirectResponse = isset($result['redirect']) ? redirect()->away($result['redirect']) : redirect()->back();
 
             foreach ($result['errors'] ?? [] as $message) {
                 $redirectResponse->with('error', $message);
             }
 
-        } else {
+        }
+        else {
 
             $redirectResponse = redirect()->route(
                 config('ecommerce.paypal.agreement_fulfilled_route')

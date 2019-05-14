@@ -36,9 +36,9 @@ class OrderInvoice extends Mailable
     public function build()
     {
         return $this->from(
-                config('ecommerce.invoice_gateway_details.pianote.invoice_sender'),
-                config('ecommerce.invoice_gateway_details.pianote.invoice_sender_name')
-            )
+            config('ecommerce.invoice_gateway_details.pianote.invoice_sender'),
+            config('ecommerce.invoice_gateway_details.pianote.invoice_sender_name')
+        )
             ->subject(config('ecommerce.invoice_gateway_details.pianote.invoice_email_subject'))
             ->view('ecommerce::billing', $this->viewData);
     }

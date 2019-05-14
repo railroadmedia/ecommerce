@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Listeners;
 
-
 use Illuminate\Support\Facades\Event;
 
 class GiveContentAccessListener

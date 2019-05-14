@@ -33,7 +33,8 @@ class StripeWebhookController extends Controller
     public function __construct(
         CreditCardRepository $creditCardRepository,
         EcommerceEntityManager $entityManager
-    ) {
+    )
+    {
         $this->creditCardRepository = $creditCardRepository;
         $this->entityManager = $entityManager;
     }
@@ -65,20 +66,18 @@ class StripeWebhookController extends Controller
             )
         );
 
-        $creditCards = $this->creditCardRepository
-                            ->findByExternalId($data['data']['object']['id']);
+        $creditCards = $this->creditCardRepository->findByExternalId($data['data']['object']['id']);
 
         $expirationDate = Carbon::createFromDate(
-                $data['data']['object']['exp_year'],
-                $data['data']['object']['exp_month']
-            );
+            $data['data']['object']['exp_year'],
+            $data['data']['object']['exp_month']
+        );
 
         foreach ($creditCards as $creditCard) {
             /**
              * @var $creditCard CreditCard
              */
-            $creditCard
-                ->setExpirationDate($expirationDate)
+            $creditCard->setExpirationDate($expirationDate)
                 ->setLastFourDigits($data['data']['object']['last4'])
                 ->setUpdatedAt(Carbon::now());
         }

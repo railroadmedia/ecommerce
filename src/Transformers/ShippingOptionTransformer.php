@@ -17,15 +17,18 @@ class ShippingOptionTransformer extends TransformerAbstract
             'active' => $shippingOption->getActive(),
             'priority' => $shippingOption->getPriority(),
             'created_at' => $shippingOption->getCreatedAt() ?
-                    $shippingOption->getCreatedAt()->toDateTimeString() : null,
+                $shippingOption->getCreatedAt()
+                    ->toDateTimeString() : null,
             'updated_at' => $shippingOption->getUpdatedAt() ?
-                    $shippingOption->getUpdatedAt()->toDateTimeString() : null,
+                $shippingOption->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 
     public function includeShippingCostsWeightRange(
         ShippingOption $shippingOption
-    ) {
+    )
+    {
         return $this->collection(
             $shippingOption->getShippingCostsWeightRanges(),
             new ShippingCostsWeightRangeTransformer(),

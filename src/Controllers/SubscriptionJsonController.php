@@ -16,10 +16,9 @@ use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
 use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\ResponseService;
@@ -145,9 +144,9 @@ class SubscriptionJsonController extends Controller
             $user = $this->userProvider->getUserById($request->get('user_id'));
 
             $qb->andWhere(
-                    $qb->expr()
-                        ->eq('s' . '.user', ':user')
-                )
+                $qb->expr()
+                    ->eq('s' . '.user', ':user')
+            )
                 ->setParameter('user', $user);
         }
 

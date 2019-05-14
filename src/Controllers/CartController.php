@@ -55,8 +55,7 @@ class CartController extends Controller
             }
 
             if (empty($product)) {
-                $errors[] = 'Error adding product SKU '.$productSku
-                    .' to the cart.';
+                $errors[] = 'Error adding product SKU ' . $productSku . ' to the cart.';
             }
         }
 

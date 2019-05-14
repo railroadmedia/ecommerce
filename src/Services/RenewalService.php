@@ -4,17 +4,17 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Exception;
-use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
+use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
+use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
-use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
-use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 
 class RenewalService
 {
@@ -86,7 +86,8 @@ class RenewalService
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         TaxService $taxService,
         UserProductService $userProductService
-    ) {
+    )
+    {
         $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
         $this->taxService = $taxService;
@@ -108,13 +109,8 @@ class RenewalService
     public function renew(Subscription $subscription)
     {
         // check for payment plan if the user have already paid all the cycles
-        if (
-            ($subscription->getType() == config('ecommerce.type_payment_plan')) &&
-            (
-                (int)$subscription->getTotalCyclesPaid() >=
-                (int)$subscription->getTotalCyclesDue()
-            )
-        ) {
+        if (($subscription->getType() == config('ecommerce.type_payment_plan')) &&
+            ((int)$subscription->getTotalCyclesPaid() >= (int)$subscription->getTotalCyclesDue())) {
             return $subscription;
         }
 
@@ -168,11 +164,13 @@ class RenewalService
                     ''
                 );
 
-                $payment
-                    ->setTotalPaid($chargePrice)
+                $payment->setTotalPaid($chargePrice)
                     ->setExternalProvider('stripe')
                     ->setExternalId($charge->id)
-                    ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
+                    ->setGatewayName(
+                        $paymentMethod->getMethod()
+                            ->getPaymentGatewayName()
+                    )
                     ->setStatus('succeeded')
                     ->setMessage('')
                     ->setCurrency($currency)
@@ -180,11 +178,13 @@ class RenewalService
 
             } catch (Exception $exception) {
 
-                $payment
-                    ->setTotalPaid(0)
+                $payment->setTotalPaid(0)
                     ->setExternalProvider('stripe')
                     ->setExternalId($charge->id ?? null)
-                    ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
+                    ->setGatewayName(
+                        $paymentMethod->getMethod()
+                            ->getPaymentGatewayName()
+                    )
                     ->setStatus('failed')
                     ->setMessage($exception->getMessage())
                     ->setCurrency($currency)
@@ -192,10 +192,8 @@ class RenewalService
 
                 $paymentException = $exception;
             }
-        } elseif (
-            $paymentMethod->getMethodType() ==
-            PaymentMethod::TYPE_PAYPAL
-        ) {
+        }
+        elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
 
             try {
 
@@ -214,8 +212,7 @@ class RenewalService
                  */
                 $method = $paymentMethod->getMethod();
 
-                $transactionId = $this->paypalPaymentGateway
-                    ->chargeBillingAgreement(
+                $transactionId = $this->paypalPaymentGateway->chargeBillingAgreement(
                         $method->getPaymentGatewayName(),
                         $chargePrice,
                         $currency,
@@ -223,11 +220,13 @@ class RenewalService
                         ''
                     );
 
-                $payment
-                    ->setTotalPaid($chargePrice)
+                $payment->setTotalPaid($chargePrice)
                     ->setExternalProvider('paypal')
                     ->setExternalId($transactionId)
-                    ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
+                    ->setGatewayName(
+                        $paymentMethod->getMethod()
+                            ->getPaymentGatewayName()
+                    )
                     ->setStatus('succeeded')
                     ->setMessage('')
                     ->setCurrency($currency)
@@ -235,11 +234,13 @@ class RenewalService
 
             } catch (Exception $exception) {
 
-                $payment
-                    ->setTotalPaid(0)
+                $payment->setTotalPaid(0)
                     ->setExternalProvider('paypal')
                     ->setExternalId($transactionId ?? null)
-                    ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
+                    ->setGatewayName(
+                        $paymentMethod->getMethod()
+                            ->getPaymentGatewayName()
+                    )
                     ->setStatus('failed')
                     ->setMessage($exception->getMessage())
                     ->setCurrency($currency)
@@ -247,12 +248,15 @@ class RenewalService
 
                 $paymentException = $exception;
             }
-        } else {
-            $payment
-                ->setTotalPaid(0)
+        }
+        else {
+            $payment->setTotalPaid(0)
                 ->setExternalProvider('unknown')
                 ->setExternalId($transactionId ?? null)
-                ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
+                ->setGatewayName(
+                    $paymentMethod->getMethod()
+                        ->getPaymentGatewayName()
+                )
                 ->setStatus('failed')
                 ->setMessage('Invalid payment method.')
                 ->setCurrency($currency)
@@ -260,8 +264,7 @@ class RenewalService
         }
 
         // save payment data in DB
-        $payment
-            ->setTotalDue($chargePrice)
+        $payment->setTotalDue($chargePrice)
             ->setTotalRefunded(0)
             ->setType(config('ecommerce.renewal_payment_type'))
             ->setPaymentMethod($paymentMethod)
@@ -273,8 +276,7 @@ class RenewalService
 
         $subscriptionPayment = new SubscriptionPayment();
 
-        $subscriptionPayment
-            ->setSubscription($subscription)
+        $subscriptionPayment->setSubscription($subscription)
             ->setPayment($payment);
 
         $this->entityManager->persist($subscriptionPayment);
@@ -287,65 +289,74 @@ class RenewalService
 
             switch ($subscription->getIntervalType()) {
                 case config('ecommerce.interval_type_monthly'):
-                    $nextBillDate = Carbon::now()
-                                ->addMonths($subscription->getIntervalCount());
-                break;
+                    $nextBillDate =
+                        Carbon::now()
+                            ->addMonths($subscription->getIntervalCount());
+                    break;
 
                 case config('ecommerce.interval_type_yearly'):
-                    $nextBillDate = Carbon::now()
-                                ->addYears($subscription->getIntervalCount());
-                break;
+                    $nextBillDate =
+                        Carbon::now()
+                            ->addYears($subscription->getIntervalCount());
+                    break;
 
                 case config('ecommerce.interval_type_daily'):
-                    $nextBillDate = Carbon::now()
-                                ->addDays($subscription->getIntervalCount());
-                break;
+                    $nextBillDate =
+                        Carbon::now()
+                            ->addDays($subscription->getIntervalCount());
+                    break;
 
                 default:
                     throw new Exception("Subscription type not configured");
-                break;
+                    break;
             }
 
-            $subscription
-                ->setIsActive(true)
+            $subscription->setIsActive(true)
                 ->setCanceledOn(null)
                 ->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1)
-                ->setPaidUntil($nextBillDate ? $nextBillDate->startOfDay() : Carbon::now()->addMonths(1))
+                ->setPaidUntil(
+                    $nextBillDate ? $nextBillDate->startOfDay() :
+                        Carbon::now()
+                            ->addMonths(1)
+                )
                 ->setUpdatedAt(Carbon::now());
 
             $this->entityManager->flush();
 
             event(new SubscriptionEvent($subscription->getId(), 'renewed'));
 
-        } else {
+        }
+        else {
 
-            $qb = $this->subscriptionPaymentRepository
-                        ->createQueryBuilder('sp');
+            $qb = $this->subscriptionPaymentRepository->createQueryBuilder('sp');
 
-            $qb
-                ->select('count(p)')
+            $qb->select('count(p)')
                 ->join('sp.payment', 'p')
-                ->where($qb->expr()->eq('sp.subscription', ':subscription'))
-                ->andWhere($qb->expr()->in('p.status', ':statuses'))
+                ->where(
+                    $qb->expr()
+                        ->eq('sp.subscription', ':subscription')
+                )
+                ->andWhere(
+                    $qb->expr()
+                        ->in('p.status', ':statuses')
+                )
                 ->setParameter('subscription', $subscription)
                 ->setParameter('statuses', ['0', 'failed']);
 
-            $failedPaymentsCount = $qb->getQuery()->getSingleScalarResult();
+            $failedPaymentsCount =
+                $qb->getQuery()
+                    ->getSingleScalarResult();
 
-            if (
-                $failedPaymentsCount >=
-                config('ecommerce.paypal.failed_payments_before_de_activation') ?? 1
-            ) {
+            if ($failedPaymentsCount >= config('ecommerce.paypal.failed_payments_before_de_activation') ?? 1) {
 
-                $subscription
-                    ->setIsActive(false)
+                $subscription->setIsActive(false)
                     ->setNote('De-activated due to payments failing.')
                     ->setUpdatedAt(Carbon::now());
 
                 $this->entityManager->flush();
 
                 event(
-                    new SubscriptionEvent($subscription->getId(),'deactivated')
+                    new SubscriptionEvent($subscription->getId(), 'deactivated')
                 );
             }
 

@@ -4,8 +4,8 @@ namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
-use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\Subscription;
 
 class SubscriptionTransformer extends TransformerAbstract
 {
@@ -41,19 +41,31 @@ class SubscriptionTransformer extends TransformerAbstract
             'brand' => $subscription->getBrand(),
             'type' => $subscription->getType(),
             'is_active' => $subscription->getIsActive(),
-            'start_date' => $subscription->getStartDate() ? $subscription->getStartDate()->toDateTimeString() : null,
-            'paid_until' => $subscription->getPaidUntil() ? $subscription->getPaidUntil()->toDateTimeString() : null,
-            'canceled_on' => $subscription->getCanceledOn() ? $subscription->getCanceledOn()->toDateTimeString() : null,
+            'start_date' => $subscription->getStartDate() ?
+                $subscription->getStartDate()
+                    ->toDateTimeString() : null,
+            'paid_until' => $subscription->getPaidUntil() ?
+                $subscription->getPaidUntil()
+                    ->toDateTimeString() : null,
+            'canceled_on' => $subscription->getCanceledOn() ?
+                $subscription->getCanceledOn()
+                    ->toDateTimeString() : null,
             'note' => $subscription->getNote(),
-            'total_price'=> $subscription->getTotalPrice(),
-            'currency'=> $subscription->getCurrency(),
-            'interval_type'=> $subscription->getIntervalType(),
-            'interval_count'=> $subscription->getIntervalCount(),
-            'total_cycles_due'=> $subscription->getTotalCyclesDue(),
-            'total_cycles_paid'=> $subscription->getTotalCyclesPaid(),
-            'deleted_at'=> $subscription->getDeletedAt() ? $subscription->getDeletedAt()->toDateTimeString() : null,
-            'created_at' => $subscription->getCreatedAt() ? $subscription->getCreatedAt()->toDateTimeString() : null,
-            'updated_at' => $subscription->getUpdatedAt() ? $subscription->getUpdatedAt()->toDateTimeString() : null,
+            'total_price' => $subscription->getTotalPrice(),
+            'currency' => $subscription->getCurrency(),
+            'interval_type' => $subscription->getIntervalType(),
+            'interval_count' => $subscription->getIntervalCount(),
+            'total_cycles_due' => $subscription->getTotalCyclesDue(),
+            'total_cycles_paid' => $subscription->getTotalCyclesPaid(),
+            'deleted_at' => $subscription->getDeletedAt() ?
+                $subscription->getDeletedAt()
+                    ->toDateTimeString() : null,
+            'created_at' => $subscription->getCreatedAt() ?
+                $subscription->getCreatedAt()
+                    ->toDateTimeString() : null,
+            'updated_at' => $subscription->getUpdatedAt() ?
+                $subscription->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 
@@ -65,7 +77,8 @@ class SubscriptionTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'product'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $subscription->getProduct(),
                 new ProductTransformer(),
@@ -95,7 +108,8 @@ class SubscriptionTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'customer'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $subscription->getCustomer(),
                 new CustomerTransformer(),
@@ -112,7 +126,8 @@ class SubscriptionTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'order'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $subscription->getOrder(),
                 new OrderTransformer(),
@@ -129,7 +144,8 @@ class SubscriptionTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'paymentMethod'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $subscription->getPaymentMethod(),
                 new PaymentMethodTransformer(),

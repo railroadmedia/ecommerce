@@ -2,12 +2,9 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
-use Carbon\Carbon;
 use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
-use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
-use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Entities\UserProduct;
 
 class UserProductTransformer extends TransformerAbstract

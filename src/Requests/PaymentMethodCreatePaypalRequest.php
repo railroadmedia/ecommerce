@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-use Railroad\Ecommerce\Services\PaymentMethodService;
-
 class PaymentMethodCreatePaypalRequest extends FormRequest
 {
     /**

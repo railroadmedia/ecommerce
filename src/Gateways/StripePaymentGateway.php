@@ -5,11 +5,9 @@ namespace Railroad\Ecommerce\Gateways;
 use Exception;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
-use Railroad\Ecommerce\Services\ConfigService;
 use Stripe\Card;
 use Stripe\Charge;
 use Stripe\Customer;
-use Stripe\Refund;
 use Stripe\StripeObject;
 
 class StripePaymentGateway
@@ -39,8 +37,7 @@ class StripePaymentGateway
     {
         $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
-        if(empty($config))
-        {
+        if (empty($config)) {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
@@ -48,12 +45,10 @@ class StripePaymentGateway
 
         $customers = $this->stripe->getCustomersByEmail($customerEmail)['data'];
 
-        if(empty($customers))
-        {
+        if (empty($customers)) {
             $customer = $this->stripe->createCustomer(['email' => $customerEmail]);
         }
-        else
-        {
+        else {
             $customer = reset($customers);
         }
 
@@ -70,8 +65,7 @@ class StripePaymentGateway
     {
         $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
-        if(empty($config))
-        {
+        if (empty($config)) {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
@@ -91,8 +85,7 @@ class StripePaymentGateway
     {
         $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
-        if(empty($config))
-        {
+        if (empty($config)) {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
@@ -104,12 +97,12 @@ class StripePaymentGateway
     }
 
     /**
-     * @param string   $gatewayName
-     * @param Card     $card
-     * @param int      $expirationMonth
-     * @param int      $expirationYear
-     * @param string   $addressCountry
-     * @param string   $addressState
+     * @param string $gatewayName
+     * @param Card $card
+     * @param int $expirationMonth
+     * @param int $expirationYear
+     * @param string $addressCountry
+     * @param string $addressState
      *
      * @return StripeObject
      *
@@ -122,10 +115,11 @@ class StripePaymentGateway
         $expirationYear,
         $addressCountry,
         $addressState
-    ) {
+    )
+    {
         $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
-        if(empty($config)) {
+        if (empty($config)) {
             $message = 'Gateway ' . $gatewayName . ' is not configured.';
             throw new PaymentFailedException($message);
         }
@@ -145,9 +139,9 @@ class StripePaymentGateway
      * @param          $gatewayName
      * @param          $amount
      * @param          $currency
-     * @param Card     $card
+     * @param Card $card
      * @param Customer $customer
-     * @param string   $description
+     * @param string $description
      * @return Charge
      * @throws PaymentFailedException
      */
@@ -158,16 +152,15 @@ class StripePaymentGateway
         Card $card,
         Customer $customer,
         $description = ''
-    ) {
+    )
+    {
         $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
-        if(empty($config))
-        {
+        if (empty($config)) {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
-        try
-        {
+        try {
             $this->stripe->setApiKey($config['stripe_api_secret']);
 
             $charge = $this->stripe->chargeCard(
@@ -177,9 +170,7 @@ class StripePaymentGateway
                 $currency,
                 $description
             );
-        }
-        catch(Exception $exception)
-        {
+        } catch (Exception $exception) {
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
 
@@ -198,24 +189,19 @@ class StripePaymentGateway
     {
         $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
-        if(empty($config))
-        {
+        if (empty($config)) {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
-        if(!in_array($reason, ['duplicate', 'fraudulent', 'requested_by_customer']))
-        {
+        if (!in_array($reason, ['duplicate', 'fraudulent', 'requested_by_customer'])) {
             $reason = null;
         }
 
-        try
-        {
+        try {
             $this->stripe->setApiKey($config['stripe_api_secret']);
 
             $refund = $this->stripe->createRefund($amount, $externalPaymentId, $reason);
-        }
-        catch(Exception $exception)
-        {
+        } catch (Exception $exception) {
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
 
@@ -232,19 +218,15 @@ class StripePaymentGateway
     {
         $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
-        if(empty($config))
-        {
+        if (empty($config)) {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
-        try
-        {
+        try {
             $this->stripe->setApiKey($config['stripe_api_secret']);
 
             $customer = $this->stripe->retrieveCustomer($customerId);
-        }
-        catch(Exception $exception)
-        {
+        } catch (Exception $exception) {
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
 
@@ -262,19 +244,15 @@ class StripePaymentGateway
     {
         $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
-        if(empty($config))
-        {
+        if (empty($config)) {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
-        try
-        {
+        try {
             $this->stripe->setApiKey($config['stripe_api_secret']);
 
             $card = $this->stripe->retrieveCard($customer, $cardId);
-        }
-        catch(Exception $exception)
-        {
+        } catch (Exception $exception) {
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
 
@@ -310,20 +288,20 @@ class StripePaymentGateway
         $addressLineTwo = null,
         $state = null,
         $zip = null
-    ) {
+    )
+    {
 
         $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
-        if(empty($config))
-        {
+        if (empty($config)) {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
-        try
-        {
+        try {
             $this->stripe->setApiKey($config['stripe_api_secret']);
 
-            $cardToken = $this->stripe->createCardToken($number,
+            $cardToken = $this->stripe->createCardToken(
+                $number,
                 $expirationMonth,
                 $expirationYear,
                 $cvc,
@@ -333,10 +311,9 @@ class StripePaymentGateway
                 $addressLineOne,
                 $addressLineTwo,
                 $state,
-                $zip);
-        }
-        catch(Exception $exception)
-        {
+                $zip
+            );
+        } catch (Exception $exception) {
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
 

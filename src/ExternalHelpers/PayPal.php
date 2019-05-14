@@ -7,7 +7,6 @@ use Railroad\Ecommerce\Exceptions\PayPal\CreateReferenceTransactionException;
 use Railroad\Ecommerce\Exceptions\PayPal\CreateRefundException;
 use Railroad\Ecommerce\Exceptions\PayPal\DoExpressCheckoutException;
 use Railroad\Ecommerce\Exceptions\PayPal\ManageRecurringPaymentsProfileStatusException;
-use Railroad\Ecommerce\Services\ConfigService;
 
 class PayPal
 {
@@ -29,7 +28,8 @@ class PayPal
      */
     public function createBillingAgreementExpressCheckoutToken($returnUrl, $cancelUrl)
     {
-        $nvp = '&RETURNURL=' .
+        $nvp =
+            '&RETURNURL=' .
             urlencode($returnUrl) .
             '&CANCELURL=' .
             urlencode($cancelUrl) .
@@ -82,8 +82,10 @@ class PayPal
         $paymentDescription,
         $billingAgreementId,
         $currency = 'USD'
-    ) {
-        $nvp = '&AMT=' .
+    )
+    {
+        $nvp =
+            '&AMT=' .
             $totalAmount .
             '&DESC=' .
             $paymentDescription .
@@ -115,9 +117,16 @@ class PayPal
      * @return string
      * @throws CreateRefundException
      */
-    public function createTransactionRefund($amountToRefund, $isPartialRefund, $transactionId, $reason, $currency = 'USD')
+    public function createTransactionRefund(
+        $amountToRefund,
+        $isPartialRefund,
+        $transactionId,
+        $reason,
+        $currency = 'USD'
+    )
     {
-        $nvp = '&AMT=' .
+        $nvp =
+            '&AMT=' .
             $amountToRefund .
             '&TRANSACTIONID=' .
             $transactionId .
@@ -126,7 +135,8 @@ class PayPal
             '&NOTE=' .
             $reason .
             '&PAYMENTTYPE=InstantOnly' .
-            '&CURRENCYCODE='.$currency;
+            '&CURRENCYCODE=' .
+            $currency;
 
         $response = $this->sendRequest('RefundTransaction', $nvp);
 
@@ -145,8 +155,7 @@ class PayPal
      */
     public function getRecurringPaymentProfileDetails($profileId)
     {
-        $nvp = '&PROFILEID=' .
-            $profileId;
+        $nvp = '&PROFILEID=' . $profileId;
 
         return $this->sendRequest('GetRecurringPaymentsProfileDetails', $nvp);
     }
@@ -161,7 +170,8 @@ class PayPal
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_POST, 1);
 
-        $nvpreq = 'METHOD=' .
+        $nvpreq =
+            'METHOD=' .
             urlencode($method) .
             '&VERSION=' .
             urlencode($this->apiVersion) .
@@ -184,9 +194,7 @@ class PayPal
 
     public function payPalResponseFailed($response)
     {
-        if (strtolower($response['ACK']) == 'success' ||
-            strtolower($response['ACK']) == 'successwithwarning'
-        ) {
+        if (strtolower($response['ACK']) == 'success' || strtolower($response['ACK']) == 'successwithwarning') {
             return false;
         }
 
@@ -215,7 +223,8 @@ class PayPal
         foreach ($myPost as $key => $value) {
             if ($get_magic_quotes_exists == true && get_magic_quotes_gpc() == 1) {
                 $value = urlencode(stripslashes($value));
-            } else {
+            }
+            else {
                 $value = urlencode($value);
             }
 
@@ -251,7 +260,8 @@ class PayPal
             );
             curl_close($ch);
             exit;
-        } else {
+        }
+        else {
             // Log the entire HTTP response if debug is switched on.
             curl_close($ch);
         }

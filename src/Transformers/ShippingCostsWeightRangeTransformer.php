@@ -15,9 +15,11 @@ class ShippingCostsWeightRangeTransformer extends TransformerAbstract
             'max' => $shippingCost->getMax(),
             'price' => $shippingCost->getPrice(),
             'created_at' => $shippingCost->getCreatedAt() ?
-                    $shippingCost->getCreatedAt()->toDateTimeString() : null,
+                $shippingCost->getCreatedAt()
+                    ->toDateTimeString() : null,
             'updated_at' => $shippingCost->getUpdatedAt() ?
-                    $shippingCost->getUpdatedAt()->toDateTimeString() : null,
+                $shippingCost->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 }

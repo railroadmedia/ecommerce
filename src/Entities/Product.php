@@ -381,7 +381,8 @@ class Product
      */
     public function setSubscriptionIntervalType(
         ?string $subscriptionIntervalType
-    ): self {
+    ): self
+    {
         $this->subscriptionIntervalType = $subscriptionIntervalType;
 
         return $this;
@@ -402,7 +403,8 @@ class Product
      */
     public function setSubscriptionIntervalCount(
         ?int $subscriptionIntervalCount
-    ): self {
+    ): self
+    {
         $this->subscriptionIntervalCount = $subscriptionIntervalCount;
 
         return $this;

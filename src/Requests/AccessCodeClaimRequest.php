@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Railroad\Ecommerce\Services\ConfigService;
 
 class AccessCodeClaimRequest extends FormRequest
 {
@@ -25,9 +24,11 @@ class AccessCodeClaimRequest extends FormRequest
     public function rules()
     {
         $rules = [
-            'access_code' => 'required|max:24|exists:'
-            . config('ecommerce.database_connection_name') . '.'
-            . 'ecommerce_access_codes' . ',code,is_claimed,0'
+            'access_code' => 'required|max:24|exists:' .
+                config('ecommerce.database_connection_name') .
+                '.' .
+                'ecommerce_access_codes' .
+                ',code,is_claimed,0'
         ];
 
         if (!auth()->user()) {

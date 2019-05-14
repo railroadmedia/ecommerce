@@ -22,7 +22,7 @@ class CartJsonController extends Controller
     /**
      * ShoppingCartController constructor.
      *
-     * @param  CartService             $cartService
+     * @param CartService $cartService
      */
     public function __construct(CartService $cartService)
     {
@@ -34,7 +34,7 @@ class CartJsonController extends Controller
      * product stock > requested quantity).
      * Errors are set in $response['meta']['cart']['errors']
      *
-     * @param  Request  $request
+     * @param Request $request
      *
      * @return JsonResponse
      * @throws Throwable
@@ -59,8 +59,7 @@ class CartJsonController extends Controller
             }
 
             if (empty($product)) {
-                $errors[] = 'Error adding product SKU '.$productSku
-                    .' to the cart.';
+                $errors[] = 'Error adding product SKU ' . $productSku . ' to the cart.';
             }
         }
 
@@ -69,16 +68,18 @@ class CartJsonController extends Controller
         if (!empty($errors)) {
             $cartArray['errors'] = $errors;
 
-            return ResponseService::cart($cartArray)->respond(403);
+            return ResponseService::cart($cartArray)
+                ->respond(403);
         }
 
-        return ResponseService::cart($cartArray)->respond(201);
+        return ResponseService::cart($cartArray)
+            ->respond(201);
     }
 
     /**
      * Remove product from cart.
      *
-     * @param  string $productSku
+     * @param string $productSku
      *
      * @return JsonResponse
      * @throws Throwable
@@ -100,7 +101,8 @@ class CartJsonController extends Controller
             $cartArray['errors'] = $errors;
         }
 
-        return ResponseService::cart($cartArray)->respond(200);
+        return ResponseService::cart($cartArray)
+            ->respond(200);
     }
 
     /**
@@ -108,8 +110,8 @@ class CartJsonController extends Controller
      * product stock > requested quantity).
      * Errors are set in $response['meta']['cart']['errors']
      *
-     * @param  string  $productSku
-     * @param  int  $quantity
+     * @param string $productSku
+     * @param int $quantity
      *
      * @return JsonResponse
      * @throws Throwable
@@ -131,7 +133,8 @@ class CartJsonController extends Controller
             $cartArray['errors'] = $errors;
         }
 
-        return ResponseService::cart($cartArray)->respond(200);
+        return ResponseService::cart($cartArray)
+            ->respond(200);
     }
 
     /**
@@ -159,6 +162,7 @@ class CartJsonController extends Controller
             $cartArray['errors'] = $errors;
         }
 
-        return ResponseService::cart($cartArray)->respond(200);
+        return ResponseService::cart($cartArray)
+            ->respond(200);
     }
 }

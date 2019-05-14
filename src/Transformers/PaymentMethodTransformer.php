@@ -23,12 +23,19 @@ class PaymentMethodTransformer extends TransformerAbstract
 
         return [
             'id' => $paymentMethod->getId(),
-            'method_id' => $paymentMethod->getMethod()->getId(),
+            'method_id' => $paymentMethod->getMethod()
+                ->getId(),
             'method_type' => $paymentMethod->getMethodType(),
             'currency' => $paymentMethod->getCurrency(),
-            'deleted_at' => $paymentMethod->getDeletedAt() ? $paymentMethod->getDeletedAt()->toDateTimeString() : null,
-            'created_at' => $paymentMethod->getCreatedAt() ? $paymentMethod->getCreatedAt()->toDateTimeString() : null,
-            'updated_at' => $paymentMethod->getUpdatedAt() ? $paymentMethod->getUpdatedAt()->toDateTimeString() : null,
+            'deleted_at' => $paymentMethod->getDeletedAt() ?
+                $paymentMethod->getDeletedAt()
+                    ->toDateTimeString() : null,
+            'created_at' => $paymentMethod->getCreatedAt() ?
+                $paymentMethod->getCreatedAt()
+                    ->toDateTimeString() : null,
+            'updated_at' => $paymentMethod->getUpdatedAt() ?
+                $paymentMethod->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 
@@ -40,7 +47,8 @@ class PaymentMethodTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'address'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $paymentMethod->getBillingAddress(),
                 new AddressTransformer(),
@@ -57,7 +65,8 @@ class PaymentMethodTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'userPaymentMethod'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $paymentMethod->getUserPaymentMethod(),
                 new UserPaymentMethodsTransformer(),
@@ -76,7 +85,8 @@ class PaymentMethodTransformer extends TransformerAbstract
                     new EntityReferenceTransformer(),
                     'creditCard'
                 );
-            } else {
+            }
+            else {
                 return $this->item(
                     $paymentMethod->getMethod(),
                     new CreditCardTransformer(),
@@ -84,7 +94,8 @@ class PaymentMethodTransformer extends TransformerAbstract
                 );
             }
 
-        } elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
+        }
+        elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
 
             if ($paymentMethod->getMethod() instanceof Proxy) {
                 return $this->item(
@@ -92,7 +103,8 @@ class PaymentMethodTransformer extends TransformerAbstract
                     new EntityReferenceTransformer(),
                     'paypalBillingAgreement'
                 );
-            } else {
+            }
+            else {
                 return $this->item(
                     $paymentMethod->getMethod(),
                     new PaypalBillingAgreementTransformer(),
@@ -100,7 +112,8 @@ class PaymentMethodTransformer extends TransformerAbstract
                 );
             }
 
-        } else {
+        }
+        else {
             throw new Exception('Invalid payment method type for ID: ' . $paymentMethod->getId());
         }
     }

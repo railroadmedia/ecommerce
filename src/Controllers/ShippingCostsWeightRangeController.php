@@ -51,7 +51,8 @@ class ShippingCostsWeightRangeController extends Controller
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService,
         ShippingCostsWeightRangeRepository $shippingCostsWeightRangeRepository
-    ) {
+    )
+    {
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->permissionService = $permissionService;
@@ -100,14 +101,12 @@ class ShippingCostsWeightRangeController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'edit.shipping_cost');
 
-        $shippingCost = $this->shippingCostsWeightRangeRepository
-                                ->find($shippingCostId);
+        $shippingCost = $this->shippingCostsWeightRangeRepository->find($shippingCostId);
 
         throw_if(
             is_null($shippingCost),
             new NotFoundException(
-                'Update failed, shipping cost weight range ' .
-                'not found with id: ' . $shippingCostId
+                'Update failed, shipping cost weight range ' . 'not found with id: ' . $shippingCostId
             )
         );
 
@@ -136,14 +135,12 @@ class ShippingCostsWeightRangeController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.shipping_cost');
 
-        $shippingCost = $this->shippingCostsWeightRangeRepository
-                                    ->find($shippingCostId);
+        $shippingCost = $this->shippingCostsWeightRangeRepository->find($shippingCostId);
 
         throw_if(
             !$shippingCost,
             new NotFoundException(
-                'Delete failed, shipping cost weight range ' .
-                'not found with id: ' . $shippingCostId
+                'Delete failed, shipping cost weight range ' . 'not found with id: ' . $shippingCostId
             )
         );
 

@@ -43,17 +43,20 @@ class PaypalBillingAgreementRepository extends EntityRepository
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this
-            ->getEntityManager()
-            ->createQueryBuilder();
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
 
-        $paypalAgreements = $qb
-            ->select('p')
-            ->from($this->getClassName(), 'p')
-            ->where($qb->expr()->in('p.id', ':paypalIds'))
-            ->setParameter('paypalIds', $paypalIds)
-            ->getQuery()
-            ->getResult();
+        $paypalAgreements =
+            $qb->select('p')
+                ->from($this->getClassName(), 'p')
+                ->where(
+                    $qb->expr()
+                        ->in('p.id', ':paypalIds')
+                )
+                ->setParameter('paypalIds', $paypalIds)
+                ->getQuery()
+                ->getResult();
 
         $results = [];
 

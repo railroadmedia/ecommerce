@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Cart;
@@ -23,7 +22,7 @@ class ProductRepository extends RepositoryBase
     {
         parent::__construct($entityManager, $entityManager->getClassMetadata(Product::class));
     }
-    
+
     /**
      * @return Product[]
      */

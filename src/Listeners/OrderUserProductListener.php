@@ -2,12 +2,9 @@
 
 namespace Railroad\Ecommerce\Listeners;
 
-use Carbon\Carbon;
-use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\UserProductService;
 
 class OrderUserProductListener

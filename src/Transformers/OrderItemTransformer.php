@@ -13,17 +13,19 @@ class OrderItemTransformer extends TransformerAbstract
 
     public function transform(OrderItem $orderItem)
     {
-        if (
-            $orderItem->getOrder() &&
-            !isset(self::$transformedOrders[$orderItem->getOrder()->getId()])
-        ) {
+        if ($orderItem->getOrder() &&
+            !isset(
+                self::$transformedOrders[$orderItem->getOrder()
+                    ->getId()]
+            )) {
             $this->defaultIncludes[] = 'order';
         }
 
-        if (
-            $orderItem->getProduct() &&
-            !isset(self::$transformedProducts[$orderItem->getProduct()->getId()])
-        ) {
+        if ($orderItem->getProduct() &&
+            !isset(
+                self::$transformedProducts[$orderItem->getProduct()
+                    ->getId()]
+            )) {
             $this->defaultIncludes[] = 'product';
         }
 
@@ -34,14 +36,19 @@ class OrderItemTransformer extends TransformerAbstract
             'initial_price' => $orderItem->getInitialPrice(),
             'total_discounted' => $orderItem->getTotalDiscounted(),
             'final_price' => $orderItem->getFinalPrice(),
-            'created_at' => $orderItem->getCreatedAt() ? $orderItem->getCreatedAt()->toDateTimeString() : null,
-            'updated_at' => $orderItem->getUpdatedAt() ? $orderItem->getUpdatedAt()->toDateTimeString() : null,
+            'created_at' => $orderItem->getCreatedAt() ?
+                $orderItem->getCreatedAt()
+                    ->toDateTimeString() : null,
+            'updated_at' => $orderItem->getUpdatedAt() ?
+                $orderItem->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 
     public function includeOrder(OrderItem $orderItem)
     {
-        self::$transformedOrders[$orderItem->getOrder()->getId()] = true;
+        self::$transformedOrders[$orderItem->getOrder()
+            ->getId()] = true;
 
         if ($orderItem->getOrder() instanceof Proxy) {
             return $this->item(
@@ -49,7 +56,8 @@ class OrderItemTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'order'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $orderItem->getOrder(),
                 new OrderTransformer(),
@@ -60,7 +68,8 @@ class OrderItemTransformer extends TransformerAbstract
 
     public function includeProduct(OrderItem $orderItem)
     {
-        self::$transformedProducts[$orderItem->getProduct()->getId()] = true;
+        self::$transformedProducts[$orderItem->getProduct()
+            ->getId()] = true;
 
         if ($orderItem->getProduct() instanceof Proxy) {
             return $this->item(
@@ -68,7 +77,8 @@ class OrderItemTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'product'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $orderItem->getProduct(),
                 new ProductTransformer(),

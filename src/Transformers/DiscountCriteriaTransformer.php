@@ -40,9 +40,11 @@ class DiscountCriteriaTransformer extends TransformerAbstract
             'min' => $discountCriteria->getMin(),
             'max' => $discountCriteria->getMax(),
             'created_at' => $discountCriteria->getCreatedAt() ?
-                                $discountCriteria->getCreatedAt()->toDateTimeString() : null,
+                $discountCriteria->getCreatedAt()
+                    ->toDateTimeString() : null,
             'updated_at' => $discountCriteria->getUpdatedAt() ?
-                                $discountCriteria->getUpdatedAt()->toDateTimeString() : null,
+                $discountCriteria->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 
@@ -54,7 +56,8 @@ class DiscountCriteriaTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'product'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $discountCriteria->getProduct(),
                 new ProductTransformer(),

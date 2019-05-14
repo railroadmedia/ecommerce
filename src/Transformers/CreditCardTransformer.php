@@ -18,12 +18,17 @@ class CreditCardTransformer extends TransformerAbstract
             'cardholder_name' => $creditCard->getCardholderName(),
             'company_name' => $creditCard->getCompanyName(),
             'expiration_date' => $creditCard->getExpirationDate() ?
-                                    $creditCard->getExpirationDate()->toDateTimeString() : null,
+                $creditCard->getExpirationDate()
+                    ->toDateTimeString() : null,
             'external_id' => $creditCard->getExternalId(),
             'external_customer_id' => $creditCard->getExternalCustomerId(),
             'payment_gateway_name' => $creditCard->getPaymentGatewayName(),
-            'created_at' => $creditCard->getCreatedAt() ? $creditCard->getCreatedAt()->toDateTimeString() : null,
-            'updated_at' => $creditCard->getUpdatedAt() ? $creditCard->getUpdatedAt()->toDateTimeString() : null,
+            'created_at' => $creditCard->getCreatedAt() ?
+                $creditCard->getCreatedAt()
+                    ->toDateTimeString() : null,
+            'updated_at' => $creditCard->getUpdatedAt() ?
+                $creditCard->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 }

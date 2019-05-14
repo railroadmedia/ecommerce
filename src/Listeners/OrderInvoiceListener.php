@@ -2,12 +2,10 @@
 
 namespace Railroad\Ecommerce\Listeners;
 
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Services\ConfigService;
 
 class OrderInvoiceListener
 {
@@ -52,11 +50,15 @@ class OrderInvoiceListener
                 'orderItems' => $order->getOrderItems(),
                 'payment' => $payment,
                 'currencySymbol' => $currencySymbol,
-            ],
-            $payment->getGatewayName()
+            ], $payment->getGatewayName()
         );
 
-        $emailAddress = $order->getUser() ? $order->getUser()->getEmail() : $order->getCustomer()->getEmail();
+        $emailAddress =
+            $order->getUser() ?
+                $order->getUser()
+                    ->getEmail() :
+                $order->getCustomer()
+                    ->getEmail();
 
         try {
             Mail::to($emailAddress)

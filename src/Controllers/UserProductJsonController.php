@@ -2,34 +2,20 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Carbon\Carbon;
-use Doctrine\ORM\QueryBuilder;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
-use Railroad\Ecommerce\Entities\Address;
-use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\UserProduct;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Events\UserProducts\UserProductCreated;
 use Railroad\Ecommerce\Events\UserProducts\UserProductDeleted;
 use Railroad\Ecommerce\Events\UserProducts\UserProductUpdated;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
-use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
-use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\UserProductCreateRequest;
 use Railroad\Ecommerce\Requests\UserProductUpdateRequest;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
-use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Exceptions\NotAllowedException;

@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Doctrine\ORM\QueryBuilder;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
@@ -13,7 +14,6 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
-use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodCreated;
 use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodDeleted;
 use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodUpdated;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
@@ -31,11 +31,10 @@ use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
-use Railroad\Ecommerce\Requests\PaymentMethodCreateRequest;
-use Railroad\Ecommerce\Requests\PaymentMethodUpdateRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodCreatePaypalRequest;
+use Railroad\Ecommerce\Requests\PaymentMethodCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodSetDefaultRequest;
-use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Requests\PaymentMethodUpdateRequest;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\PaymentMethodService;
@@ -43,7 +42,6 @@ use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Stripe\Error\Card;
-use Exception;
 use Throwable;
 
 class PaymentMethodJsonController extends Controller
@@ -525,11 +523,10 @@ class PaymentMethodJsonController extends Controller
             /**
              * @var $method CreditCard
              */
-            $method =
-                $this->creditCardRepository->find(
-                    $paymentMethod->getMethod()
-                        ->getId()
-                );
+            $method = $this->creditCardRepository->find(
+                $paymentMethod->getMethod()
+                    ->getId()
+            );
             $oldPaymentMethod = clone($paymentMethod);
 
             $customer = $this->stripePaymentGateway->getCustomer(

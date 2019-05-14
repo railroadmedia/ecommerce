@@ -3,11 +3,9 @@
 namespace Railroad\Ecommerce\Listeners;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Services\ConfigService;
 
 class OrderShippingFulfilmentListener
 {
@@ -37,7 +35,8 @@ class OrderShippingFulfilmentListener
 
         foreach ($orderItems as $orderItem) {
 
-            if ($orderItem->getProduct()->getIsPhysical()) {
+            if ($orderItem->getProduct()
+                ->getIsPhysical()) {
 
                 $orderItemFulfillment = new OrderItemFulfillment();
 

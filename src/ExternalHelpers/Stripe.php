@@ -2,16 +2,13 @@
 
 namespace Railroad\Ecommerce\ExternalHelpers;
 
-use Railroad\Ecommerce\Services\ConfigService;
 use Stripe\Card;
 use Stripe\Charge;
 use Stripe\Collection;
 use Stripe\Customer;
-use Stripe\Error\InvalidRequest;
 use Stripe\Refund;
-use Stripe\Source;
-use Stripe\Token;
 use Stripe\StripeObject;
+use Stripe\Token;
 
 class Stripe
 {
@@ -23,9 +20,9 @@ class Stripe
     }
 
     /**
-     * @param string      $number
-     * @param integer     $expirationMonth
-     * @param integer     $expirationYear
+     * @param string $number
+     * @param integer $expirationMonth
+     * @param integer $expirationYear
      * @param string|null $cvc
      * @param string|null $cardholderName
      * @param string|null $city
@@ -48,21 +45,22 @@ class Stripe
         $addressLineTwo = null,
         $state = null,
         $zip = null
-    ) {
+    )
+    {
         return $this->stripe->token->create(
             [
                 "card" => [
-                    "number"          => $number,
-                    "exp_month"       => $expirationMonth,
-                    "exp_year"        => $expirationYear,
-                    "cvc"             => $cvc,
-                    "name"            => $cardholderName,
-                    "address_city"    => $city,
+                    "number" => $number,
+                    "exp_month" => $expirationMonth,
+                    "exp_year" => $expirationYear,
+                    "cvc" => $cvc,
+                    "name" => $cardholderName,
+                    "address_city" => $city,
                     "address_country" => $country,
-                    "address_line1"   => $addressLineOne,
-                    "address_line2"   => $addressLineTwo,
-                    "address_state"   => $state,
-                    "address_zip"     => $zip,
+                    "address_line1" => $addressLineOne,
+                    "address_line2" => $addressLineTwo,
+                    "address_state" => $state,
+                    "address_zip" => $zip,
                 ]
             ]
         );
@@ -108,7 +106,7 @@ class Stripe
 
     /**
      * @param Customer $customer
-     * @param Token    $token
+     * @param Token $token
      * @return Card
      */
     public function createCard(Customer $customer, Token $token)
@@ -118,7 +116,7 @@ class Stripe
 
     /**
      * @param Customer $customer
-     * @param string   $cardId
+     * @param string $cardId
      * @return Card
      */
     public function retrieveCard(Customer $customer, $cardId)
@@ -128,11 +126,11 @@ class Stripe
 
     /**
      * @param Customer $customer
-     * @param string   $cardId
-     * @param int      $expirationMonth
-     * @param int      $expirationYear
-     * @param string   $addressCountry
-     * @param string   $addressState
+     * @param string $cardId
+     * @param int $expirationMonth
+     * @param int $expirationYear
+     * @param string $addressCountry
+     * @param string $addressState
      * @return StripeObject
      */
     public function updateCard(
@@ -141,9 +139,10 @@ class Stripe
         $expirationYear,
         $addressCountry,
         $addressState
-    ) {
+    )
+    {
         $card->exp_month = $expirationMonth;
-        $card->exp_year  = $expirationYear;
+        $card->exp_year = $expirationYear;
         $card->address_country = $addressCountry;
         $card->address_state = $addressState;
 
@@ -164,13 +163,14 @@ class Stripe
         Customer $customer,
         $currency,
         $description = ''
-    ) {
+    )
+    {
         return $this->stripe->charge->create(
             [
-                'amount'   => $amount,
+                'amount' => $amount,
                 'currency' => $currency,
-                'source'   => $card,
-                'description'   => $description,
+                'source' => $card,
+                'description' => $description,
                 'customer' => $customer,
             ]
         );
@@ -187,8 +187,8 @@ class Stripe
 
     /**
      * @param integer $amount (cents)
-     * @param string  $chargeId
-     * @param string  $reason (must be one of: duplicate, fraudulent, requested_by_customer
+     * @param string $chargeId
+     * @param string $reason (must be one of: duplicate, fraudulent, requested_by_customer
      * @return Refund
      */
     public function createRefund($amount, $chargeId, $reason = '')

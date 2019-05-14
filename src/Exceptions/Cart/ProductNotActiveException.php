@@ -14,15 +14,14 @@ class ProductNotActiveException extends AddToCartException
     /**
      * ProductOutOfStockException constructor.
      *
-     * @param  Product  $product
+     * @param Product $product
      */
     public function __construct(Product $product)
     {
         $this->product = $product;
 
         parent::__construct(
-            'Product '.$this->product->getName()
-            .' is not currently for sale, please check again later.',
+            'Product ' . $this->product->getName() . ' is not currently for sale, please check again later.',
             1
         );
     }

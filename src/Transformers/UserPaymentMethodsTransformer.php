@@ -4,11 +4,7 @@ namespace Railroad\Ecommerce\Transformers;
 
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
-use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
-use Railroad\Ecommerce\Transformers\CreditCardTransformer;
-use Railroad\Ecommerce\Transformers\PaymentMethodTransformer;
-use Railroad\Ecommerce\Transformers\PaypalBillingAgreementTransformer;
 
 class UserPaymentMethodsTransformer extends TransformerAbstract
 {
@@ -19,7 +15,8 @@ class UserPaymentMethodsTransformer extends TransformerAbstract
     public function __construct(
         $creditCardsMap = [],
         $paypalAgreementsMap = []
-    ) {
+    )
+    {
 
         $this->creditCardsMap = $creditCardsMap;
         $this->paypalAgreementsMap = $paypalAgreementsMap;
@@ -31,9 +28,11 @@ class UserPaymentMethodsTransformer extends TransformerAbstract
             'id' => $userPaymentMethod->getId(),
             'is_primary' => $userPaymentMethod->getIsPrimary(),
             'created_at' => $userPaymentMethod->getCreatedAt() ?
-                                $userPaymentMethod->getCreatedAt()->toDateTimeString() : null,
+                $userPaymentMethod->getCreatedAt()
+                    ->toDateTimeString() : null,
             'updated_at' => $userPaymentMethod->getUpdatedAt() ?
-                                $userPaymentMethod->getUpdatedAt()->toDateTimeString() : null,
+                $userPaymentMethod->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 

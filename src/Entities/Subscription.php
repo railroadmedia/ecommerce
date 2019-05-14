@@ -33,7 +33,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 class Subscription
 {
     use TimestampableEntity;
-    
+
     const TYPE_SUBSCRIPTION = 'subscription';
     const TYPE_PAYMENT_PLAN = 'payment plan';
 

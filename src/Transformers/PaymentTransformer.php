@@ -3,9 +3,8 @@
 namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
-use Railroad\Ecommerce\Entities\Payment;
 use League\Fractal\TransformerAbstract;
-use Railroad\Ecommerce\Transformers\EntityReferenceTransformer;
+use Railroad\Ecommerce\Entities\Payment;
 
 class PaymentTransformer extends TransformerAbstract
 {
@@ -28,9 +27,15 @@ class PaymentTransformer extends TransformerAbstract
             'status' => $payment->getStatus(),
             'message' => $payment->getMessage(),
             'currency' => $payment->getCurrency(),
-            'deleted_at' => $payment->getDeletedOn() ? $payment->getDeletedOn()->toDateTimeString() : null,
-            'created_at' => $payment->getCreatedAt() ? $payment->getCreatedAt()->toDateTimeString() : null,
-            'updated_at' => $payment->getUpdatedAt() ? $payment->getUpdatedAt()->toDateTimeString() : null,
+            'deleted_at' => $payment->getDeletedOn() ?
+                $payment->getDeletedOn()
+                    ->toDateTimeString() : null,
+            'created_at' => $payment->getCreatedAt() ?
+                $payment->getCreatedAt()
+                    ->toDateTimeString() : null,
+            'updated_at' => $payment->getUpdatedAt() ?
+                $payment->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 
@@ -42,7 +47,8 @@ class PaymentTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'paymentMethod'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $payment->getPaymentMethod(),
                 new PaymentMethodTransformer(),

@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
-use Railroad\Ecommerce\Entities\PaymentMethod;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository")

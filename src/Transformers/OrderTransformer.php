@@ -4,8 +4,8 @@ namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
-use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\Order;
 
 class OrderTransformer extends TransformerAbstract
 {
@@ -42,21 +42,29 @@ class OrderTransformer extends TransformerAbstract
             'finance_due' => $order->getFinanceDue(),
             'total_paid' => $order->getTotalPaid(),
             'brand' => $order->getBrand(),
-            'deleted_at' => $order->getDeletedOn() ? $order->getDeletedOn()->toDateTimeString() : null,
-            'created_at' => $order->getCreatedAt() ? $order->getCreatedAt()->toDateTimeString() : null,
-            'updated_at' => $order->getUpdatedAt() ? $order->getUpdatedAt()->toDateTimeString() : null,
+            'deleted_at' => $order->getDeletedOn() ?
+                $order->getDeletedOn()
+                    ->toDateTimeString() : null,
+            'created_at' => $order->getCreatedAt() ?
+                $order->getCreatedAt()
+                    ->toDateTimeString() : null,
+            'updated_at' => $order->getUpdatedAt() ?
+                $order->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 
     public function includeOrderItem(Order $order)
     {
-        if ($order->getOrderItems()->first() instanceof Proxy) {
+        if ($order->getOrderItems()
+                ->first() instanceof Proxy) {
             return $this->collection(
                 $order->getOrderItems(),
                 new EntityReferenceTransformer(),
                 'orderItem'
             );
-        } else {
+        }
+        else {
             return $this->collection(
                 $order->getOrderItems(),
                 new OrderItemTransformer(),
@@ -86,7 +94,8 @@ class OrderTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'customer'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $order->getCustomer(),
                 new CustomerTransformer(),
@@ -103,7 +112,8 @@ class OrderTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'address'
             );
-        } elseif (!empty($order->getBillingAddress())) {
+        }
+        elseif (!empty($order->getBillingAddress())) {
             return $this->item(
                 $order->getBillingAddress(),
                 new AddressTransformer(),
@@ -120,7 +130,8 @@ class OrderTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'address'
             );
-        } elseif (!empty($order->getShippingAddress())) {
+        }
+        elseif (!empty($order->getShippingAddress())) {
             return $this->item(
                 $order->getShippingAddress(),
                 new AddressTransformer(),

@@ -42,7 +42,8 @@ class UserDefaultPaymentMethodListener
         PaymentMethodRepository $paymentMethodRepository,
         SubscriptionRepository $subscriptionRepository,
         UserProviderInterface $userProvider
-    ) {
+    )
+    {
         $this->entityManager = $entityManager;
         $this->paymentMethodRepository = $paymentMethodRepository;
         $this->subscriptionRepository = $subscriptionRepository;
@@ -56,10 +57,9 @@ class UserDefaultPaymentMethodListener
      */
     public function handle(UserDefaultPaymentMethodEvent $event)
     {
-        $paymentMethod = $this->paymentMethodRepository
-                ->byId(
-                    $event->getDefaultPaymentMethodId()
-                );
+        $paymentMethod = $this->paymentMethodRepository->byId(
+                $event->getDefaultPaymentMethodId()
+            );
 
         /**
          * @var $user \Railroad\Ecommerce\Entities\User
@@ -68,19 +68,22 @@ class UserDefaultPaymentMethodListener
 
         $qb = $this->subscriptionRepository->createQueryBuilder('s');
 
-        $qb
-            ->select('s')
-            ->where($qb->expr()->eq('s.user', ':user'))
+        $qb->select('s')
+            ->where(
+                $qb->expr()
+                    ->eq('s.user', ':user')
+            )
             ->setParameter('user', $user);
 
-        $subscriptions = $qb->getQuery()->getResult();
+        $subscriptions =
+            $qb->getQuery()
+                ->getResult();
 
         foreach ($subscriptions as $subscription) {
             /**
              * @var $subscription \Railroad\Ecommerce\Entities\Subscription
              */
-            $subscription
-                ->setPaymentMethod($paymentMethod);
+            $subscription->setPaymentMethod($paymentMethod);
         }
 
         $this->entityManager->flush();

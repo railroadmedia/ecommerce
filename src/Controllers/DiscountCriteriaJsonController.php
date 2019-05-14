@@ -7,10 +7,10 @@ use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest;
-use Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest;
 use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
+use Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest;
+use Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
@@ -58,7 +58,8 @@ class DiscountCriteriaJsonController extends Controller
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService
-    ) {
+    )
+    {
         $this->discountCriteriaRepository = $discountCriteriaRepository;
         $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
@@ -98,7 +99,8 @@ class DiscountCriteriaJsonController extends Controller
 
         $this->entityManager->flush();
 
-        return ResponseService::discountCriteria($discountCriteria)->respond(201);
+        return ResponseService::discountCriteria($discountCriteria)
+            ->respond(201);
     }
 
     /**
@@ -113,14 +115,12 @@ class DiscountCriteriaJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'update.discount.criteria');
 
-        $discountCriteria = $this->discountCriteriaRepository
-                                ->find($discountCriteriaId);
+        $discountCriteria = $this->discountCriteriaRepository->find($discountCriteriaId);
 
         throw_if(
             is_null($discountCriteria),
             new NotFoundException(
-                'Update discount criteria failed, ' .
-                'discount criteria not found with id: ' . $discountCriteriaId
+                'Update discount criteria failed, ' . 'discount criteria not found with id: ' . $discountCriteriaId
             )
         );
 
@@ -131,7 +131,8 @@ class DiscountCriteriaJsonController extends Controller
 
         $this->entityManager->flush();
 
-        return ResponseService::discountCriteria($discountCriteria)->respond(200);
+        return ResponseService::discountCriteria($discountCriteria)
+            ->respond(200);
     }
 
     /**
@@ -145,14 +146,12 @@ class DiscountCriteriaJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.discount.criteria');
 
-        $discountCriteria = $this->discountCriteriaRepository
-                                ->find($discountCriteriaId);
+        $discountCriteria = $this->discountCriteriaRepository->find($discountCriteriaId);
 
         throw_if(
             is_null($discountCriteria),
             new NotFoundException(
-                'Delete discount criteria failed, ' .
-                'discount criteria not found with id: ' . $discountCriteriaId
+                'Delete discount criteria failed, ' . 'discount criteria not found with id: ' . $discountCriteriaId
             )
         );
 

@@ -2,9 +2,8 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
-use Railroad\Ecommerce\Entities\Refund;
-use Railroad\Ecommerce\Transformers\PaymentTransformer;
 use League\Fractal\TransformerAbstract;
+use Railroad\Ecommerce\Entities\Refund;
 
 class RefundTransformer extends TransformerAbstract
 {
@@ -19,12 +18,17 @@ class RefundTransformer extends TransformerAbstract
             'note' => $refund->getNote(),
             'external_id' => $refund->getExternalId(),
             'external_provider' => $refund->getExternalProvider(),
-            'created_at' => $refund->getCreatedAt() ? $refund->getCreatedAt()->toDateTimeString() : null,
-            'updated_at' => $refund->getUpdatedAt() ? $refund->getUpdatedAt()->toDateTimeString() : null,
+            'created_at' => $refund->getCreatedAt() ?
+                $refund->getCreatedAt()
+                    ->toDateTimeString() : null,
+            'updated_at' => $refund->getUpdatedAt() ?
+                $refund->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 
-    public function includePayment(Refund $refund) {
+    public function includePayment(Refund $refund)
+    {
         return $this->item(
             $refund->getPayment(),
             new PaymentTransformer(),

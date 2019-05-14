@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\Proxy\Proxy;
 use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 

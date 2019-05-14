@@ -41,17 +41,20 @@ class CreditCardRepository extends EntityRepository
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this
-            ->getEntityManager()
-            ->createQueryBuilder();
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
 
-        $creditCards = $qb
-            ->select('c')
-            ->from($this->getClassName(), 'c')
-            ->where($qb->expr()->in('c.id', ':creditCardIds'))
-            ->setParameter('creditCardIds', $creditCardIds)
-            ->getQuery()
-            ->getResult();
+        $creditCards =
+            $qb->select('c')
+                ->from($this->getClassName(), 'c')
+                ->where(
+                    $qb->expr()
+                        ->in('c.id', ':creditCardIds')
+                )
+                ->setParameter('creditCardIds', $creditCardIds)
+                ->getQuery()
+                ->getResult();
 
         $results = [];
 

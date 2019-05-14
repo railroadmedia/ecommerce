@@ -43,15 +43,20 @@ class OrderRepository extends EntityRepository
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this
-            ->getEntityManager()
-            ->createQueryBuilder();
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
 
-        $qb
-            ->select('COUNT(o)')
+        $qb->select('COUNT(o)')
             ->from($this->getClassName(), 'o')
-            ->where($qb->expr()->eq('o.shippingAddress', ':address'))
-            ->orWhere($qb->expr()->eq('o.billingAddress', ':address'));
+            ->where(
+                $qb->expr()
+                    ->eq('o.shippingAddress', ':address')
+            )
+            ->orWhere(
+                $qb->expr()
+                    ->eq('o.billingAddress', ':address')
+            );
 
         /**
          * @var $q \Doctrine\ORM\Query
@@ -60,6 +65,6 @@ class OrderRepository extends EntityRepository
 
         $q->setParameter('address', $address);
 
-        return (integer) $q->getSingleScalarResult() > 0;
+        return (integer)$q->getSingleScalarResult() > 0;
     }
 }

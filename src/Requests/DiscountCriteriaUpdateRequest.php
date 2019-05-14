@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-use Railroad\Ecommerce\Services\ConfigService;
-
 class DiscountCriteriaUpdateRequest extends FormRequest
 {
     /**
@@ -42,7 +40,7 @@ class DiscountCriteriaUpdateRequest extends FormRequest
         return [
             'data.attributes.name' => 'max:255',
             'data.attributes.type' => 'max:255',
-            'data.relationships.product.id' => 'nullable|exists:'.'ecommerce_products'.',id',
+            'data.relationships.product.id' => 'nullable|exists:' . 'ecommerce_products' . ',id',
             'data.attributes.min' => '',
             'data.attributes.max' => ''
         ];

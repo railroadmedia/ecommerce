@@ -43,15 +43,20 @@ class UserPaymentMethodsRepository extends EntityRepository
         /**
          * @var $qb \Doctrine\ORM\QueryBuilder
          */
-        $qb = $this->getEntityManager()
-            ->createQueryBuilder();
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
 
         $qb->select('p')
             ->from($this->getClassName(), 'p')
-            ->where($qb->expr()
-                ->in('p.user', ':user'))
-            ->andWhere($qb->expr()
-                ->in('p.isPrimary', ':true'));
+            ->where(
+                $qb->expr()
+                    ->in('p.user', ':user')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->in('p.isPrimary', ':true')
+            );
 
         /**
          * @var $q \Doctrine\ORM\Query

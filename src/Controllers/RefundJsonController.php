@@ -24,7 +24,6 @@ use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
@@ -115,7 +114,8 @@ class RefundJsonController extends Controller
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         UserProductService $userProductService,
         UserProductRepository $userProductRepository
-    ) {
+    )
+    {
         $this->entityManager = $entityManager;
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->orderItemRepository = $orderItemRepository;
@@ -150,16 +150,20 @@ class RefundJsonController extends Controller
          */
         $qb = $this->paymentRepository->createQueryBuilder('p');
 
-        $qb
-            ->select(['p', 'pm'])
+        $qb->select(['p', 'pm'])
             ->join('p.paymentMethod', 'pm')
-            ->where($qb->expr()->eq('p.id', ':id'))
+            ->where(
+                $qb->expr()
+                    ->eq('p.id', ':id')
+            )
             ->setParameter('id', $paymentId);
 
         /**
          * @var $payment Payment
          */
-        $payment = $qb->getQuery()->getOneOrNullResult();
+        $payment =
+            $qb->getQuery()
+                ->getOneOrNullResult();
 
         /**
          * @var $paymentMethod PaymentMethod
@@ -175,20 +179,22 @@ class RefundJsonController extends Controller
                 $payment->getExternalId(),
                 $request->input('data.attributes.note')
             );
-        } else if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
-            $refundExternalId = $this->payPalPaymentGateway->refund(
-                $request->input('data.attributes.refund_amount'),
-                $payment->getCurrency(),
-                $payment->getExternalId(),
-                $request->input('data.attributes.gateway_name'),
-                $request->input('data.attributes.note')
-            );
+        }
+        else {
+            if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
+                $refundExternalId = $this->payPalPaymentGateway->refund(
+                    $request->input('data.attributes.refund_amount'),
+                    $payment->getCurrency(),
+                    $payment->getExternalId(),
+                    $request->input('data.attributes.gateway_name'),
+                    $request->input('data.attributes.note')
+                );
+            }
         }
 
         $refund = new Refund();
 
-        $refund
-            ->setPayment($payment)
+        $refund->setPayment($payment)
             ->setPaymentAmount($payment->getTotalDue())
             ->setRefundedAmount($request->input('data.attributes.refund_amount'))
             ->setNote($request->input('data.attributes.note'))
@@ -209,14 +215,21 @@ class RefundJsonController extends Controller
          */
         $qb = $this->orderPaymentRepository->createQueryBuilder('op');
 
-        $qb
-            ->select(['op', 'p'])
+        $qb->select(['op', 'p'])
             ->join('op.payment', 'p')
-            ->where($qb->expr()->eq('op.payment', ':payment'))
-            ->andWhere($qb->expr()->isNull('p.deletedOn'))
+            ->where(
+                $qb->expr()
+                    ->eq('op.payment', ':payment')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('p.deletedOn')
+            )
             ->setParameter('payment', $payment);
 
-        $orderPayments = $qb->getQuery()->getResult();
+        $orderPayments =
+            $qb->getQuery()
+                ->getResult();
 
         $distinctOrders = [];
 
@@ -236,14 +249,24 @@ class RefundJsonController extends Controller
          */
         $qb = $this->orderItemFulfillmentRepository->createQueryBuilder('oif');
 
-        $qb
-            ->where($qb->expr()->in('oif.order', ':orders'))
-            ->andWhere($qb->expr()->eq('oif.status', ':status'))
-            ->andWhere($qb->expr()->isNull('oif.fulfilledOn'))
+        $qb->where(
+                $qb->expr()
+                    ->in('oif.order', ':orders')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('oif.status', ':status')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('oif.fulfilledOn')
+            )
             ->setParameter('orders', array_values($distinctOrders))
             ->setParameter('status', config('ecommerce.fulfillment_status_pending'));
 
-        $orderItemFulfillments = $qb->getQuery()->getResult();
+        $orderItemFulfillments =
+            $qb->getQuery()
+                ->getResult();
 
         foreach ($orderItemFulfillments as $orderItemFulfillment) {
             $this->entityManager->remove($orderItemFulfillment);
@@ -257,13 +280,17 @@ class RefundJsonController extends Controller
                  */
                 $qb = $this->orderItemRepository->createQueryBuilder('oi');
 
-                $qb
-                    ->select(['oi', 'p'])
+                $qb->select(['oi', 'p'])
                     ->join('oi.product', 'p')
-                    ->where($qb->expr()->in('oi.order', ':orders'))
+                    ->where(
+                        $qb->expr()
+                            ->in('oi.order', ':orders')
+                    )
                     ->setParameter('orders', array_values($distinctOrders));
 
-                $orderItems = $qb->getQuery()->getResult();
+                $orderItems =
+                    $qb->getQuery()
+                        ->getResult();
 
                 $distinctProducts = [];
 
@@ -284,29 +311,37 @@ class RefundJsonController extends Controller
                  */
                 $qb = $this->userProductRepository->createQueryBuilder('up');
 
-                $qb
-                    ->where($qb->expr()->in('up.product', ':products'))
+                $qb->where(
+                        $qb->expr()
+                            ->in('up.product', ':products')
+                    )
                     ->setParameter('products', array_values($distinctProducts));
 
-                $userProducts = $qb->getQuery()->getResult();
+                $userProducts =
+                    $qb->getQuery()
+                        ->getResult();
 
                 foreach ($userProducts as $userProduct) {
                     $this->entityManager->remove($userProduct);
                 }
-            } else {
+            }
+            else {
                 /**
                  * @var $qb QueryBuilder
                  */
-                $qb = $this->subscriptionPaymentRepository
-                                ->createQueryBuilder('sp');
+                $qb = $this->subscriptionPaymentRepository->createQueryBuilder('sp');
 
-                $qb
-                    ->select(['sp', 's'])
+                $qb->select(['sp', 's'])
                     ->join('sp.subscription', 's')
-                    ->where($qb->expr()->eq('sp.payment', ':payment'))
+                    ->where(
+                        $qb->expr()
+                            ->eq('sp.payment', ':payment')
+                    )
                     ->setParameter('payment', $payment);
 
-                $subscriptionPayments = $qb->getQuery()->getResult();
+                $subscriptionPayments =
+                    $qb->getQuery()
+                        ->getResult();
 
                 /**
                  * @var $subscriptionPayment SubscriptionPayment
@@ -317,8 +352,7 @@ class RefundJsonController extends Controller
                      */
                     $subscription = $subscriptionPayment->getSubscription();
 
-                    $subscriptionProducts = $this->userProductService
-                            ->getSubscriptionProducts($subscription);
+                    $subscriptionProducts = $this->userProductService->getSubscriptionProducts($subscription);
 
                     $user = $subscription->getUser();
 

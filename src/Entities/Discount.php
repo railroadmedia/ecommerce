@@ -284,7 +284,8 @@ class Discount
      */
     public function addDiscountCriteria(
         DiscountCriteria $discountCriteria
-    ): self {
+    ): self
+    {
 
         if (!$this->discountCriterias->contains($discountCriteria)) {
             $this->discountCriterias[] = $discountCriteria;
@@ -301,7 +302,8 @@ class Discount
      */
     public function removeDiscountCriteria(
         DiscountCriteria $discountCriteria
-    ): self {
+    ): self
+    {
 
         if ($this->discountCriterias->contains($discountCriteria)) {
 

@@ -18,7 +18,8 @@ class PaymentPlanService
      */
     public function __construct(
         CartService $cartService
-    ) {
+    )
+    {
         $this->cartService = $cartService;
     }
 
@@ -32,13 +33,9 @@ class PaymentPlanService
     {
         $cart = $this->cartService->getCart();
 
-        if (
-            (!$this->hasSubscriptionItems($cart->getItems())) &&
-            (
-                ($cart->getTotalDue() - $cart->calculateTaxesDue() - $cart->calculateShippingDue()) >
-                config('ecommerce.payment_plan_minimum_price')
-            )
-        ) {
+        if ((!$this->hasSubscriptionItems($cart->getItems())) &&
+            (($cart->getTotalDue() - $cart->calculateTaxesDue() - $cart->calculateShippingDue()) >
+                config('ecommerce.payment_plan_minimum_price'))) {
             return true;
         }
 
@@ -54,7 +51,8 @@ class PaymentPlanService
     public function hasSubscriptionItems($cartItems)
     {
         foreach ($cartItems as $cartItem) {
-            if ($cartItem->getProduct()->getType() == Subscription::TYPE_SUBSCRIPTION) {
+            if ($cartItem->getProduct()
+                    ->getType() == Subscription::TYPE_SUBSCRIPTION) {
                 return true;
             }
         }

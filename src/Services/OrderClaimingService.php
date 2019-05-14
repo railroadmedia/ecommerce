@@ -10,9 +10,9 @@ use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -127,7 +127,8 @@ class OrderClaimingService
             $this->entityManager->persist($orderItem);
 
             // create product subscriptions
-            if ($orderItem->getProduct()->getType() == Product::TYPE_SUBSCRIPTION) {
+            if ($orderItem->getProduct()
+                    ->getType() == Product::TYPE_SUBSCRIPTION) {
 
                 $subscription = $this->createSubscription(
                     $purchaser,
@@ -239,7 +240,9 @@ class OrderClaimingService
                 }
                 elseif ($discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
                     // todo - confirm for subscriptions only SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE modifies the cost
-                    $subscriptionPricePerPayment = $orderItem->getProduct()->getPrice() - $discount->getAmount();
+                    $subscriptionPricePerPayment =
+                        $orderItem->getProduct()
+                            ->getPrice() - $discount->getAmount();
                 }
             }
         }

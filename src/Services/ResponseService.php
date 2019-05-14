@@ -6,9 +6,8 @@ use Doctrine\ORM\QueryBuilder;
 use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
 use Railroad\Ecommerce\Entities\AccessCode;
-use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Order;
-use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
 use Railroad\Ecommerce\Transformers\CartItemTransformer;
@@ -17,8 +16,8 @@ use Railroad\Ecommerce\Transformers\DiscountCriteriaTransformer;
 use Railroad\Ecommerce\Transformers\DiscountTransformer;
 use Railroad\Ecommerce\Transformers\FulfillmentTransformer;
 use Railroad\Ecommerce\Transformers\OrderTransformer;
-use Railroad\Ecommerce\Transformers\PaymentTransformer;
 use Railroad\Ecommerce\Transformers\PaymentMethodTransformer;
+use Railroad\Ecommerce\Transformers\PaymentTransformer;
 use Railroad\Ecommerce\Transformers\ProductTransformer;
 use Railroad\Ecommerce\Transformers\RefundTransformer;
 use Railroad\Ecommerce\Transformers\ShippingCostsWeightRangeTransformer;
@@ -76,14 +75,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'accessCode',
-                new AccessCodeTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'accessCode',
+            new AccessCodeTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -99,14 +100,16 @@ class ResponseService extends FractalResponseService
         $products,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $accessCodes,
-                'accessCode',
-                new AccessCodeTransformer($products),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $accessCodes,
+            'accessCode',
+            new AccessCodeTransformer($products),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -120,14 +123,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'product',
-                new ProductTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'product',
+            new ProductTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -138,12 +143,12 @@ class ResponseService extends FractalResponseService
     public static function productThumbnail(string $url)
     {
         return fractal(
-                null,
-                function() {
-                    return null;
-                },
-                new JsonApiSerializer()
-            )->addMeta(['url' => $url]);
+            null,
+            function () {
+                return null;
+            },
+            new JsonApiSerializer()
+        )->addMeta(['url' => $url]);
     }
 
     /**
@@ -157,14 +162,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'discount',
-                new DiscountTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'discount',
+            new DiscountTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -178,14 +185,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'discountCriteria',
-                new DiscountCriteriaTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'discountCriteria',
+            new DiscountCriteriaTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -199,14 +208,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'shippingOption',
-                new ShippingOptionTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'shippingOption',
+            new ShippingOptionTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -220,14 +231,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'shippingCostsWeightRange',
-                new ShippingCostsWeightRangeTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'shippingCostsWeightRange',
+            new ShippingCostsWeightRangeTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -241,14 +254,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'subscription',
-                new SubscriptionTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'subscription',
+            new SubscriptionTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -262,14 +277,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'paymentMethod',
-                new PaymentMethodTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'paymentMethod',
+            new PaymentMethodTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -287,17 +304,18 @@ class ResponseService extends FractalResponseService
         $paypalAgreements,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $userPaymentMethods,
-                'userPaymentMethods',
-                new UserPaymentMethodsTransformer(
-                    $creditCards,
-                    $paypalAgreements
-                ),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $userPaymentMethods,
+            'userPaymentMethods',
+            new UserPaymentMethodsTransformer(
+                $creditCards, $paypalAgreements
+            ),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -311,14 +329,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'payment',
-                new PaymentTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'payment',
+            new PaymentTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -332,14 +352,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'refund',
-                new RefundTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'refund',
+            new RefundTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -353,14 +375,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'fulfillment',
-                new FulfillmentTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'fulfillment',
+            new FulfillmentTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -374,14 +398,16 @@ class ResponseService extends FractalResponseService
         $entityOrEntities,
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
         return self::create(
-                $entityOrEntities,
-                'order',
-                new OrderTransformer(),
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $entityOrEntities,
+            'order',
+            new OrderTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -403,22 +429,21 @@ class ResponseService extends FractalResponseService
         array $paymentPlans = [],
         QueryBuilder $queryBuilder = null,
         array $includes = []
-    ) {
+    )
+    {
 
         $transformer = new DecoratedOrderTransformer(
-            $payments,
-            $refunds,
-            $subscriptions,
-            $paymentPlans
+            $payments, $refunds, $subscriptions, $paymentPlans
         );
 
         return self::create(
-                $order,
-                'order',
-                $transformer,
-                new JsonApiSerializer(),
-                $queryBuilder
-            )->parseIncludes($includes);
+            $order,
+            'order',
+            $transformer,
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 
     /**
@@ -429,12 +454,12 @@ class ResponseService extends FractalResponseService
     public static function redirect(string $url)
     {
         return fractal(
-                null,
-                function() {
-                    return null;
-                },
-                new JsonApiSerializer()
-            )->addMeta(['redirect' => $url]);
+            null,
+            function () {
+                return null;
+            },
+            new JsonApiSerializer()
+        )->addMeta(['redirect' => $url]);
     }
 
     /**
@@ -452,7 +477,8 @@ class ResponseService extends FractalResponseService
         ?Address $shippingAddress,
         array $paymentPlansPricing,
         float $totalDue
-    ) {
+    )
+    {
 
         /*
         billingAddress & shippingAddress are exported using meta key to avoid
@@ -460,17 +486,19 @@ class ResponseService extends FractalResponseService
         */
 
         return self::create(
-                $cartItems,
-                'cartItem',
-                new CartItemTransformer(),
-                new JsonApiSerializer()
-            )
-            ->addMeta([
-                'paymentPlansPricing' => $paymentPlansPricing,
-                'totalDue' => $totalDue,
-                'billingAddress' => $billingAddress ? $billingAddress->toArray() : null,
-                'shippingAddress' => $shippingAddress ? $shippingAddress->toArray() : null,
-            ]);
+            $cartItems,
+            'cartItem',
+            new CartItemTransformer(),
+            new JsonApiSerializer()
+        )
+            ->addMeta(
+                [
+                    'paymentPlansPricing' => $paymentPlansPricing,
+                    'totalDue' => $totalDue,
+                    'billingAddress' => $billingAddress ? $billingAddress->toArray() : null,
+                    'shippingAddress' => $shippingAddress ? $shippingAddress->toArray() : null,
+                ]
+            );
     }
 
     /**
@@ -482,17 +510,20 @@ class ResponseService extends FractalResponseService
     public static function sessionAddresses(
         ?Address $billingAddress,
         ?Address $shippingAddress
-    ) {
+    )
+    {
         return fractal(
-                null,
-                function() {
-                    return null;
-                },
-                new JsonApiSerializer()
-            )->addMeta([
+            null,
+            function () {
+                return null;
+            },
+            new JsonApiSerializer()
+        )->addMeta(
+            [
                 'billingAddress' => $billingAddress->toArray(),
                 'shippingAddress' => $shippingAddress->toArray(),
-            ]);
+            ]
+        );
     }
 
     /**
@@ -503,13 +534,15 @@ class ResponseService extends FractalResponseService
     public static function cart(array $cartArray)
     {
         return fractal(
-                null,
-                function() {
-                    return null;
-                },
-                new JsonApiSerializer()
-            )->addMeta([
+            null,
+            function () {
+                return null;
+            },
+            new JsonApiSerializer()
+        )->addMeta(
+            [
                 'cart' => $cartArray,
-            ]);
+            ]
+        );
     }
 }

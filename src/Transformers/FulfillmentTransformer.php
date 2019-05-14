@@ -5,9 +5,6 @@ namespace Railroad\Ecommerce\Transformers;
 use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\OrderItemFulfillment;
-use Railroad\Ecommerce\Transformers\OrderItemTransformer;
-use Railroad\Ecommerce\Transformers\OrderTransformer;
-use Railroad\Ecommerce\Transformers\EntityReferenceTransformer;
 
 class FulfillmentTransformer extends TransformerAbstract
 {
@@ -21,11 +18,14 @@ class FulfillmentTransformer extends TransformerAbstract
             'company' => $orderItemFulfillment->getCompany(),
             'tracking_number' => $orderItemFulfillment->getTrackingNumber(),
             'fulfilled_on' => $orderItemFulfillment->getFulfilledOn() ?
-                $orderItemFulfillment->getFulfilledOn()->toDateTimeString() : null,
+                $orderItemFulfillment->getFulfilledOn()
+                    ->toDateTimeString() : null,
             'created_at' => $orderItemFulfillment->getCreatedAt() ?
-                $orderItemFulfillment->getCreatedAt()->toDateTimeString() : null,
+                $orderItemFulfillment->getCreatedAt()
+                    ->toDateTimeString() : null,
             'updated_at' => $orderItemFulfillment->getUpdatedAt() ?
-                $orderItemFulfillment->getUpdatedAt()->toDateTimeString() : null,
+                $orderItemFulfillment->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 
@@ -37,7 +37,8 @@ class FulfillmentTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'order'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $orderItemFulfillment->getOrder(),
                 new OrderTransformer(),
@@ -54,7 +55,8 @@ class FulfillmentTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'orderItem'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $orderItemFulfillment->getOrderItem(),
                 new OrderItemTransformer(),

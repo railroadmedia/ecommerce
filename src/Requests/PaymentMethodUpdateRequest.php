@@ -2,9 +2,6 @@
 
 namespace Railroad\Ecommerce\Requests;
 
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
-
 class PaymentMethodUpdateRequest extends FormRequest
 {
     /**
@@ -26,8 +23,8 @@ class PaymentMethodUpdateRequest extends FormRequest
     {
         return [
             'gateway' => 'required',
-            'year'    => 'required|numeric',
-            'month'   => 'required|numeric',
+            'year' => 'required|numeric',
+            'month' => 'required|numeric',
             'country' => 'required|string',
         ];
     }

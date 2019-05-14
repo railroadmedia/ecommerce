@@ -4,8 +4,8 @@ namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
-use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\Address;
 
 class AddressTransformer extends TransformerAbstract
 {
@@ -33,8 +33,12 @@ class AddressTransformer extends TransformerAbstract
             'zip' => $address->getZip(),
             'state' => $address->getState(),
             'country' => $address->getCountry(),
-            'created_at' => $address->getCreatedAt() ? $address->getCreatedAt()->toDateTimeString() : null,
-            'updated_at' => $address->getUpdatedAt() ? $address->getUpdatedAt()->toDateTimeString() : null,
+            'created_at' => $address->getCreatedAt() ?
+                $address->getCreatedAt()
+                    ->toDateTimeString() : null,
+            'updated_at' => $address->getUpdatedAt() ?
+                $address->getUpdatedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 
@@ -59,7 +63,8 @@ class AddressTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'customer'
             );
-        } else {
+        }
+        else {
             return $this->item(
                 $address->getCustomer(),
                 new CustomerTransformer(),

@@ -120,7 +120,8 @@ class DiscountJsonController extends Controller
         $this->entityManager->persist($discount);
         $this->entityManager->flush();
 
-        return ResponseService::discount($discount)->respond(201);
+        return ResponseService::discount($discount)
+            ->respond(201);
     }
 
     /**
@@ -146,7 +147,8 @@ class DiscountJsonController extends Controller
 
         $this->entityManager->flush();
 
-        return ResponseService::discount($discount)->respond(200);
+        return ResponseService::discount($discount)
+            ->respond(200);
     }
 
     /**

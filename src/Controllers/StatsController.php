@@ -16,9 +16,7 @@ use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Permissions\Services\PermissionService;
-use Railroad\Resora\Decorators\Decorator;
 use Railroad\Resora\Entities\Entity;
 
 class StatsController extends Controller
@@ -98,7 +96,8 @@ class StatsController extends Controller
         AddressRepository $addressRepository,
         PaymentMethodRepository $paymentMethodRepository,
         PermissionService $permissionService
-    ) {
+    )
+    {
         $this->paymentRepository = $paymentRepository;
         $this->productRepository = $productRepository;
         $this->orderRepository = $orderRepository;
@@ -191,7 +190,8 @@ class StatsController extends Controller
                                     $tax = $products[$item->product_id]->tax;
                                     if ($orderTotalPaid > 0) {
                                         $paid += $item->total_price / $orderTotalPaid * $payment->paid;
-                                    } else {
+                                    }
+                                    else {
                                         $paidForThisOrderItem = $payment->paid / count($items);
 
                                         $paid += $paidForThisOrderItem;
@@ -208,7 +208,8 @@ class StatsController extends Controller
                                             $tax += $item->total_price /
                                                 $orderTotalPaid *
                                                 ($order->tax * $payment->paid / $order->due);
-                                        } else {
+                                        }
+                                        else {
                                             $tax += $order->tax / count($items);
                                         }
                                         //finance
@@ -286,7 +287,8 @@ class StatsController extends Controller
                                     $products[$subscription->product_id]->offsetSet('refunded', $refunded);
                                     $products[$subscription->product_id]->offsetSet('paid', $paid);
                                     $products[$subscription->product_id]->offsetSet('totalNet', ($paid - $refunded));
-                                } else {
+                                }
+                                else {
                                     if ($subscription->order_id) {
                                         $orderForPaymentPlansRenewed =
                                             $this->orderRepository->query()
@@ -315,7 +317,8 @@ class StatsController extends Controller
                                             $paid = $products[$item->product_id]->paid;
                                             if ($orderTotalPaid > 0) {
                                                 $paid += $item->total_price / $orderTotalPaid * $payment->paid;
-                                            } else {
+                                            }
+                                            else {
                                                 $paid += $payment->paid / count($items);
                                             }
 
@@ -423,6 +426,7 @@ class StatsController extends Controller
                 'totalNet' => $products->sum('totalNet'),
             ]
         );
+
         return reply()->json($results);
     }
 
@@ -546,9 +550,11 @@ class StatsController extends Controller
                                     }
                                     if ($users->has("$order->user_id")) {
                                         $dataRow['email'] = $users[$order->user_id]['email'];
-                                    } elseif ($customers->has("$order->customer_id")) {
+                                    }
+                                    elseif ($customers->has("$order->customer_id")) {
                                         $dataRow['email'] = $customers[$order->customer_id]['email'];
-                                    } else {
+                                    }
+                                    else {
                                         $dataRow['email'] = 'unknown';
                                     }
 
@@ -672,9 +678,11 @@ class StatsController extends Controller
                                     $dataRow['total paid'] = $payment->paid;
                                     if ($users->has("$subscription->user_id")) {
                                         $dataRow['email'] = $users[$subscription->user_id]['email'];
-                                    } elseif ($customers->has("$subscription->customer_id")) {
+                                    }
+                                    elseif ($customers->has("$subscription->customer_id")) {
                                         $dataRow['email'] = $customers[$subscription->customer_id]['email'] ?? '';
-                                    } else {
+                                    }
+                                    else {
                                         $dataRow['email'] = 'unknown';
                                     }
 
@@ -684,7 +692,8 @@ class StatsController extends Controller
                                         if ($payment->refunded == 0) {
                                             $dataRow['tax paid'] = $subscription->tax_per_payment;
                                         }
-                                    } else {
+                                    }
+                                    else {
                                         if ($subscription->order_id) {
                                             $orderForPaymentPlansRenewed =
                                                 $this->orderRepository->query()
@@ -749,6 +758,7 @@ class StatsController extends Controller
                 'totalRows' => $rowTotals,
             ]
         );
+
         return reply()->json($results);
     }
 }

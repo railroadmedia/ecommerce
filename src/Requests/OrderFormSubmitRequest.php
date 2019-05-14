@@ -13,8 +13,6 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ShippingService;
 use Railroad\Permissions\Services\PermissionService;
 

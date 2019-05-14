@@ -7,7 +7,6 @@ use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
-use Railroad\Ecommerce\Services\ConfigService;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\AddressRepository")

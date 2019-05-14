@@ -2,16 +2,10 @@
 
 namespace Railroad\Ecommerce\Commands;
 
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
 use Railroad\Ecommerce\Entities\PaymentMethod;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\RenewalService;
-use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;
 
 class SplitPaymentMethodIdsToColumns extends Command

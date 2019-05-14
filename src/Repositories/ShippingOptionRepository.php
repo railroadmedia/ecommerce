@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\ShippingOption;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
@@ -74,7 +73,7 @@ class ShippingOptionRepository extends RepositoryBase
                 ->getResult()[0] ?? null;
 
         if (!empty($shippingOption) && !empty($shippingOption->getShippingCostsWeightRanges()[0])) {
-            return (float) $shippingOption->getShippingCostsWeightRanges()[0]->getPrice();
+            return (float)$shippingOption->getShippingCostsWeightRanges()[0]->getPrice();
         }
 
         return 0.0;

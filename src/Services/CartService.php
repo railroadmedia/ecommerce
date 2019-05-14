@@ -567,7 +567,8 @@ class CartService
             'due' => $due,
         ];
 
-        $discounts = $this->discountService->getApplicableDiscountsNames($this->cart, $totalItemCostDue, $shippingDue) ?? [];
+        $discounts =
+            $this->discountService->getApplicableDiscountsNames($this->cart, $totalItemCostDue, $shippingDue) ?? [];
 
         $items = [];
 
@@ -588,8 +589,16 @@ class CartService
                 'subscription_interval_type' => $product->getSubscriptionIntervalType(),
                 'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
                 'price_before_discounts' => $product->getPrice(),
-                'price_after_discounts' => round($product->getPrice() -
-                    $this->discountService->getItemDiscountedAmount($this->cart, $cartItem->getSku(), $totalItemCostDue, $shippingDue), 2),
+                'price_after_discounts' => round(
+                    $product->getPrice() -
+                    $this->discountService->getItemDiscountedAmount(
+                        $this->cart,
+                        $cartItem->getSku(),
+                        $totalItemCostDue,
+                        $shippingDue
+                    ),
+                    2
+                ),
                 'requires_shipping' => ($product->getWeight() != null && $product->getWeight() > 0)
             ];
         }
@@ -604,7 +613,8 @@ class CartService
 
                 if ($paymentPlanOption == 1) {
                     $label = '1 payment of $' . $orderDue;
-                } else {
+                }
+                else {
                     $financeDue = config('ecommerce.financing_cost_per_order', 1);
                     $format = '%s payments of $%s ($%s finance charge)';
                     $label = sprintf(
