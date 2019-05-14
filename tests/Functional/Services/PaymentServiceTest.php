@@ -112,7 +112,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -194,7 +194,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -378,7 +378,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -511,7 +511,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -602,7 +602,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),

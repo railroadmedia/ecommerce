@@ -2,19 +2,18 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Exception;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 
 class TaxService
 {
-    const TAXABLE_COUNTRY = 'canada';
-    const DEFAULT_STATE_KEY = 'alberta';
-    const DEFAULT_RATE = 0;
-
     /**
      * @var ShippingService
      */
     private $shippingService;
+
+    const TAXABLE_COUNTRY = 'canada';
 
     /**
      * TaxService constructor.
@@ -26,49 +25,155 @@ class TaxService
     }
 
     /**
-     * Calculate the tax rate based on country and region
+     * Calculate the product cost tax rate based on country and region
      *
      * @param Address|null $address
      *
      * @return float
+     * @throws Exception
      */
-    public function getTaxRate(?Address $address): float
+    public function getProductTaxRate(?Address $address): float
     {
-        // todo: fix with new tax system
-        //        if ($address && array_key_exists(strtolower($address->getCountry()), ConfigService::$taxRate)) {
-        //            if (array_key_exists(
-        //                strtolower($address->getState()),
-        //                ConfigService::$taxRate[strtolower($address->getCountry())]
-        //            )) {
-        //                return ConfigService::$taxRate[strtolower($address->getCountry())][strtolower($address->getState())];
-        //            }
-        //            else {
-        //                if (array_key_exists(
-        //                    strtolower(self::DEFAULT_STATE_KEY),
-        //                    ConfigService::$taxRate[strtolower($address->getCountry())]
-        //                )) {
-        //                    return ConfigService::$taxRate[strtolower($address->getCountry())][self::DEFAULT_STATE_KEY];
-        //                }
-        //                else {
-        //                    return self::DEFAULT_RATE;
-        //                }
-        //            }
-        //        }
+        if (empty($address) || empty($address->getCountry())) {
+            return 0;
+        }
 
-        return self::DEFAULT_RATE;
+        if ($address && array_key_exists(strtolower($address->getCountry()), config('ecommerce.product_tax_rate'))) {
+            if (array_key_exists(
+                strtolower($address->getState()),
+                config('ecommerce.product_tax_rate')[strtolower($address->getCountry())]
+            )) {
+                return config('ecommerce.product_tax_rate')[strtolower($address->getCountry())][strtolower(
+                    $address->getState()
+                )];
+            }
+            else {
+                throw new Exception(
+                    'Could not find product tax rate for address. Country: ' .
+                    $address->getCountry() .
+                    ' Province: ' .
+                    $address->getState()
+                );
+            }
+        }
+
+        return 0;
     }
 
     /**
-     * Calculate total taxes based on billing address and the amount that should be paid.
+     * Calculate the shipping cost tax rate based on country and region
      *
-     * @param float $costs
      * @param Address|null $address
      *
      * @return float
+     * @throws Exception
      */
-    public function vat($costs, ?Address $address): float
+    public function getShippingTaxRate(?Address $address): float
     {
-        return $costs * $this->getTaxRate($address);
+        if (empty($address) || empty($address->getCountry())) {
+            return 0;
+        }
+
+        if ($address && array_key_exists(strtolower($address->getCountry()), config('ecommerce.shipping_tax_rate'))) {
+            if (array_key_exists(
+                strtolower($address->getState()),
+                config('ecommerce.shipping_tax_rate')[strtolower($address->getCountry())]
+            )) {
+                return config('ecommerce.shipping_tax_rate')[strtolower($address->getCountry())][strtolower(
+                    $address->getState()
+                )];
+            }
+            else {
+                throw new Exception(
+                    'Could not find shipping tax rate for address. Country: ' .
+                    $address->getCountry() .
+                    ' Province: ' .
+                    $address->getState()
+                );
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * This is not used in calculating payment/orders totals, its only used to display GST on the invoice.
+     *
+     * @param Address|null $address
+     * @return int
+     * @throws Exception
+     */
+    public function getGSTTaxRate(?Address $address)
+    {
+        if (empty($address) || empty($address->getCountry())) {
+            return 0;
+        }
+
+        if ($address &&
+            array_key_exists(strtolower($address->getCountry()), config('ecommerce.gst_hst_tax_rate_display_only'))) {
+            if (array_key_exists(
+                strtolower($address->getState()),
+                config('ecommerce.gst_hst_tax_rate_display_only')[strtolower($address->getCountry())]
+            )) {
+                return config('ecommerce.gst_hst_tax_rate_display_only')[strtolower($address->getCountry())][strtolower(
+                    $address->getState()
+                )];
+            }
+            else {
+                throw new Exception(
+                    'Could not find GST tax rate for address. Country: ' .
+                    $address->getCountry() .
+                    ' Province: ' .
+                    $address->getState()
+                );
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param $productCosts
+     * @param $shippingCosts
+     * @param Address|null $address
+     * @return float
+     * @throws Exception
+     */
+    public function getTaxesDueTotal($productCosts, $shippingCosts, ?Address $address): float
+    {
+        return round(
+            $this->getTaxesDueForProductCost($productCosts, $address) +
+            $this->getTaxesDueForShippingCost($shippingCosts, $address),
+            2
+        );
+    }
+
+    /**
+     * Calculate total taxes based on the address and the amount that should be paid.
+     *
+     * @param float $productCosts
+     * @param Address|null $address
+     *
+     * @return float
+     * @throws Exception
+     */
+    public function getTaxesDueForProductCost($productCosts, ?Address $address): float
+    {
+        return round($productCosts * $this->getProductTaxRate($address), 2);
+    }
+
+    /**
+     * Calculate total taxes based on the address and the amount that should be paid.
+     *
+     * @param float $shippingCosts
+     * @param Address|null $address
+     *
+     * @return float
+     * @throws Exception
+     */
+    public function getTaxesDueForShippingCost($shippingCosts, ?Address $address): float
+    {
+        return round($shippingCosts * $this->getShippingTaxRate($address), 2);
     }
 
     /**
@@ -82,14 +187,16 @@ class TaxService
         $shippingAddress = $cart->getShippingAddress();
 
         // use the shipping address if set
-        if ($shippingAddress && $shippingAddress->getCountry()) {
+        if (!empty($shippingAddress) && !empty($shippingAddress->getCountry())) {
+
             $taxableAddress = $shippingAddress;
         }
 
         // otherwise use the billing address
-        if (!$taxableAddress &&
-            $billingAddress &&
+        if (empty($taxableAddress) &&
+            !empty($billingAddress) &&
             strtolower($billingAddress->getCountry()) == strtolower(self::TAXABLE_COUNTRY)) {
+
             $taxableAddress = $billingAddress;
         }
 

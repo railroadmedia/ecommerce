@@ -109,7 +109,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     ->setState($address['state'])
                     ->setZip($address['zip']);
 
-                $vat = $taxService->vat(
+                $vat = $taxService->getTaxesDueForProductCost(
                     $subscription['total_price'],
                     $billingAddressEntity
                 );
@@ -326,7 +326,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     ->setState($address['state'])
                     ->setZip($address['zip']);
 
-                $vat = $taxService->vat(
+                $vat = $taxService->getTaxesDueForProductCost(
                     $subscription['total_price'],
                     $billingAddressEntity
                 );

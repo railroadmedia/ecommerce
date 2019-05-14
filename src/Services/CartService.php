@@ -373,14 +373,15 @@ class CartService
 
         $shippingDue = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
-        $taxDue = $this->taxService->vat(
-            $totalItemCostDue + $shippingDue,
+        $totalTaxDue = $this->taxService->getTaxesDueTotal(
+            $totalItemCostDue,
+            $shippingDue,
             $this->taxService->getAddressForTaxation($this->getCart())
         );
 
         $financeDue = $this->getTotalFinanceCosts();
 
-        return round($totalItemCostDue + $shippingDue + $taxDue + $financeDue, 2);
+        return round($totalItemCostDue + $shippingDue + $totalTaxDue + $financeDue, 2);
     }
 
     /**
@@ -394,12 +395,13 @@ class CartService
 
         $shippingDue = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
-        $taxDue = $this->taxService->vat(
-            $totalItemCostDue + $shippingDue,
+        $totalTaxDue = $this->taxService->getTaxesDueTotal(
+            $totalItemCostDue,
+            $shippingDue,
             $this->taxService->getAddressForTaxation($this->getCart())
         );
 
-        return round($taxDue, 2);
+        return round($totalTaxDue, 2);
     }
 
     /**
@@ -415,8 +417,9 @@ class CartService
 
         $shippingDue = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
-        $taxDue = $this->taxService->vat(
-            $totalItemCostDue + $shippingDue,
+        $totalTaxDue = $this->taxService->getTaxesDueTotal(
+            $totalItemCostDue,
+            $shippingDue,
             $this->taxService->getAddressForTaxation($this->getCart())
         );
 
@@ -424,7 +427,7 @@ class CartService
 
         // Customers can only finance the order item price, taxes, and finance.
         // All shipping must be paid on the first payment.
-        $totalToFinance = $totalItemCostDue + $taxDue + $financeDue;
+        $totalToFinance = $totalItemCostDue + $totalTaxDue + $financeDue;
 
         $initialTotalDueBeforeShipping = $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments();
 
@@ -452,14 +455,15 @@ class CartService
 
         $shippingDue = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
-        $taxDue = $this->taxService->vat(
-            $totalItemCostDue + $shippingDue,
+        $totalTaxDue = $this->taxService->getTaxesDueTotal(
+            $totalItemCostDue,
+            $shippingDue,
             $this->taxService->getAddressForTaxation($this->getCart())
         );
 
         $financeDue = $this->getTotalFinanceCosts();
 
-        $totalToFinance = $totalItemCostDue + $taxDue + $financeDue;
+        $totalToFinance = $totalItemCostDue + $totalTaxDue + $financeDue;
 
         return round(
             $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(),
@@ -486,8 +490,9 @@ class CartService
         $order->setProductDue($totalItemCostDue);
         $order->setShippingDue($this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue));
         $order->setTaxesDue(
-            $this->taxService->vat(
-                $order->getProductDue() + $order->getShippingDue(),
+            $this->taxService->getTaxesDueTotal(
+                $order->getProductDue(),
+                $order->getShippingDue(),
                 $this->taxService->getAddressForTaxation($this->getCart())
             )
         );
@@ -556,14 +561,15 @@ class CartService
 
         $shippingDue = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
-        $taxDue = $this->taxService->vat(
-            $totalItemCostDue + $shippingDue,
+        $totalTaxDue = $this->taxService->getTaxesDueTotal(
+            $totalItemCostDue,
+            $shippingDue,
             $this->taxService->getAddressForTaxation($this->getCart())
         );
 
         $totals = [
             'shipping' => $shippingDue,
-            'tax' => round($taxDue, 2),
+            'tax' => round($totalTaxDue, 2),
             'due' => $due,
         ];
 
@@ -590,8 +596,7 @@ class CartService
                 'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
                 'price_before_discounts' => $product->getPrice(),
                 'price_after_discounts' => round(
-                    $product->getPrice() -
-                    $this->discountService->getItemDiscountedAmount(
+                    $product->getPrice() - $this->discountService->getItemDiscountedAmount(
                         $this->cart,
                         $cartItem->getSku(),
                         $totalItemCostDue,

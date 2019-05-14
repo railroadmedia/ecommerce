@@ -117,7 +117,7 @@ class RenewalServiceTest extends EcommerceTestCase
         $taxService = $this->app->make(TaxService::class);
         $currencyService = $this->app->make(CurrencyService::class);
 
-        $vat = $taxService->vat(
+        $vat = $taxService->getTaxesDueForProductCost(
             $subscription->getTotalPrice(),
             $paymentMethod->getBillingAddress()
         );
@@ -128,7 +128,7 @@ class RenewalServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => $chargePrice,
                 'total_paid' => $chargePrice,

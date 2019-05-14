@@ -139,7 +139,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $taxService = $this->app->make(TaxService::class);
 
-        $taxRate = $taxService->getTaxRate($billingAddress);
+        $taxRate = $taxService->getProductTaxRate($billingAddress);
 
         $expectedTaxes = round($expectedTotalFromItems * $taxRate + $shippingCostAmount * $taxRate, 2);
 

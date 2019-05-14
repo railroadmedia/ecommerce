@@ -129,13 +129,16 @@ class RenewalService
 
             try {
 
-                $vat = $this->taxService->vat(
+                $totalTaxDue = $this->taxService->getTaxesDueTotal(
                     $subscription->getTotalPrice(),
-                    $paymentMethod->getBillingAddress()
+                    0,
+                    !empty($paymentMethod->getBillingAddress()) ?
+                        $paymentMethod->getBillingAddress()
+                            ->toStructure() : null
                 );
 
                 $chargePrice = $this->currencyService->convertFromBase(
-                    $subscription->getTotalPrice() + $vat,
+                    $subscription->getTotalPrice() + $totalTaxDue,
                     $currency
                 );
 
@@ -174,7 +177,7 @@ class RenewalService
                     ->setStatus('succeeded')
                     ->setMessage('')
                     ->setCurrency($currency)
-                    ->setConversionRate(config('ecommerce.paypal.default_currency_conversion_rates')[$currency]);
+                    ->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
 
             } catch (Exception $exception) {
 
@@ -188,7 +191,7 @@ class RenewalService
                     ->setStatus('failed')
                     ->setMessage($exception->getMessage())
                     ->setCurrency($currency)
-                    ->setConversionRate(config('ecommerce.paypal.default_currency_conversion_rates')[$currency] ?? 0);
+                    ->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
 
                 $paymentException = $exception;
             }
@@ -197,13 +200,15 @@ class RenewalService
 
             try {
 
-                $vat = $this->taxService->vat(
+                $totalTaxDue = $this->taxService->getTaxesDueTotal(
                     $subscription->getTotalPrice(),
+                    0,
                     $paymentMethod->getBillingAddress()
+                        ->toStructure()
                 );
 
                 $chargePrice = $this->currencyService->convertFromBase(
-                    $subscription->getTotalPrice() + $vat,
+                    $subscription->getTotalPrice() + $totalTaxDue,
                     $currency
                 );
 
@@ -213,12 +218,12 @@ class RenewalService
                 $method = $paymentMethod->getMethod();
 
                 $transactionId = $this->paypalPaymentGateway->chargeBillingAgreement(
-                        $method->getPaymentGatewayName(),
-                        $chargePrice,
-                        $currency,
-                        $method->getExternalId(),
-                        ''
-                    );
+                    $method->getPaymentGatewayName(),
+                    $chargePrice,
+                    $currency,
+                    $method->getExternalId(),
+                    ''
+                );
 
                 $payment->setTotalPaid($chargePrice)
                     ->setExternalProvider('paypal')
@@ -230,7 +235,7 @@ class RenewalService
                     ->setStatus('succeeded')
                     ->setMessage('')
                     ->setCurrency($currency)
-                    ->setConversionRate(config('ecommerce.paypal.default_currency_conversion_rates')[$currency]);
+                    ->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
 
             } catch (Exception $exception) {
 
@@ -244,7 +249,7 @@ class RenewalService
                     ->setStatus('failed')
                     ->setMessage($exception->getMessage())
                     ->setCurrency($currency)
-                    ->setConversionRate(config('ecommerce.paypal.default_currency_conversion_rates')[$currency] ?? 0);
+                    ->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
 
                 $paymentException = $exception;
             }
@@ -260,7 +265,7 @@ class RenewalService
                 ->setStatus('failed')
                 ->setMessage('Invalid payment method.')
                 ->setCurrency($currency)
-                ->setConversionRate(config('ecommerce.paypal.default_currency_conversion_rates')[$currency] ?? 0);
+                ->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
         }
 
         // save payment data in DB

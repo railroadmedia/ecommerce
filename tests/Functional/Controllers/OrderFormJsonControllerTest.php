@@ -74,7 +74,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $billingAddress = new Address($billingCountry, $billingState);
 
-        return round($taxService->vat($price, $billingAddress), 2);
+        return round($taxService->getTaxesDueForProductCost($price, $billingAddress), 2);
     }
 
     public function test_submit_order_validation_not_physical_products()

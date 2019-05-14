@@ -49,11 +49,11 @@ class CurrencyService
      */
     public function getRate(string $currency)
     {
-        if (!$currency || !isset(config('ecommerce.paypal.default_currency_conversion_rates')[$currency])) {
+        if (!$currency || !isset(config('ecommerce.default_currency_conversion_rates')[$currency])) {
             throw new PaymentFailedException(self::CONVERSION_CONFIG);
         }
 
-        return config('ecommerce.paypal.default_currency_conversion_rates')[$currency];
+        return config('ecommerce.default_currency_conversion_rates')[$currency];
     }
 
     /**

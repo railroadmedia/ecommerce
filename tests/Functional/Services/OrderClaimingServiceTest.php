@@ -96,7 +96,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $brand = $this->faker->word;
         $country = 'canada';
-        $state = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$country]));
+        $state = 'alberta';
         $currency = 'USD';
 
         $userId = $this->faker->numberBetween(20, 100);
@@ -159,6 +159,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             ->setCurrency($currency)
             ->setTotalPaid($dueForOrder)
             ->setPaymentMethod($paymentMethod)
+            ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
             ->setCreatedAt(Carbon::now());
 
         $this->entityManager->persist($billingAddress);

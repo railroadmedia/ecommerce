@@ -11,7 +11,6 @@ use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -410,14 +409,14 @@ class CartServiceTest extends EcommerceTestCase
 
         $quantity = $this->faker->numberBetween(1, 3);
 
-        $shippingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$shippingCountry]));
+        $shippingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$shippingCountry]));
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($shippingCountry)
             ->setState($shippingState);
 
         $billingCountry = 'canada';
-        $billingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$billingCountry]));
+        $billingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
 
         $billingAddress = new Address();
         $billingAddress
@@ -427,9 +426,12 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $exptectedTaxRate = ConfigService::$taxRate[$shippingCountry][$shippingState];
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingState];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingState];
 
-        $exptectedTaxDue = round($exptectedTaxRate * ($expectedItemsCost + $expectedShippingCost), 2);
+        $expectedTaxDue =
+            round($expectedTaxRateProduct * $expectedItemsCost, 2) +
+            round($expectedTaxRateShipping * $expectedShippingCost, 2);
 
         $cart = Cart::fromSession();
 
@@ -445,7 +447,7 @@ class CartServiceTest extends EcommerceTestCase
 
         $taxDue = $cartService->getTaxDueForOrder();
 
-        $this->assertEquals($exptectedTaxDue, $taxDue);
+        $this->assertEquals($expectedTaxDue, $taxDue);
     }
 
     public function test_get_due_for_order()
@@ -476,14 +478,14 @@ class CartServiceTest extends EcommerceTestCase
 
         $quantity = $this->faker->numberBetween(1, 3);
 
-        $shippingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$shippingCountry]));
+        $shippingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$shippingCountry]));
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($shippingCountry)
             ->setState($shippingState);
 
         $billingCountry = 'canada';
-        $billingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$billingCountry]));
+        $billingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
 
         $billingAddress = new Address();
         $billingAddress
@@ -493,11 +495,14 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $exptectedTaxRate = ConfigService::$taxRate[$shippingCountry][$shippingState];
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingState];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingState];
 
-        $exptectedTaxDue = $exptectedTaxRate * ($expectedItemsCost + $expectedShippingCost);
+        $expectedTaxDue =
+            round($expectedTaxRateProduct * $expectedItemsCost, 2) +
+            round($expectedTaxRateShipping * $expectedShippingCost, 2);
 
-        $expectedTotalDue = round($expectedItemsCost + $expectedShippingCost + $exptectedTaxDue, 2);
+        $expectedTotalDue = round($expectedItemsCost + $expectedShippingCost + $expectedTaxDue, 2);
 
         $cart = Cart::fromSession();
 
@@ -516,7 +521,7 @@ class CartServiceTest extends EcommerceTestCase
         $this->assertEquals($expectedTotalDue, $dueForOrder);
     }
 
-    public function test_get_due_for_initial_payment()
+    public function test_get_due_for_initial_payment_bc()
     {
         $productWeight = $this->faker->randomFloat(2, 5, 10);
 
@@ -544,14 +549,14 @@ class CartServiceTest extends EcommerceTestCase
 
         $quantity = $this->faker->numberBetween(1, 3);
 
-        $shippingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$shippingCountry]));
+        $shippingState = 'british columbia';
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($shippingCountry)
             ->setState($shippingState);
 
         $billingCountry = 'canada';
-        $billingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$billingCountry]));
+        $billingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
 
         $billingAddress = new Address();
         $billingAddress
@@ -561,11 +566,14 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $exptectedTaxRate = ConfigService::$taxRate[$shippingCountry][$shippingState];
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingState];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingState];
 
-        $exptectedTaxDue = $exptectedTaxRate * ($expectedItemsCost + $expectedShippingCost);
+        $expectedTaxDue =
+            round($expectedTaxRateProduct * $expectedItemsCost, 2) +
+            round($expectedTaxRateShipping * $expectedShippingCost, 2);
 
-        $totalToFinance = $expectedItemsCost + $exptectedTaxDue + config('ecommerce.financing_cost_per_order');
+        $totalToFinance = $expectedItemsCost + $expectedTaxDue + config('ecommerce.financing_cost_per_order');
 
         $numberOfPayments = 2;
 
@@ -609,22 +617,23 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
 
         $shippingCountry = 'canada';
-        $shippingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$shippingCountry]));
+        $shippingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$shippingCountry]));
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($shippingCountry)
             ->setState($shippingState);
 
-        $exptectedTaxRate = ConfigService::$taxRate[$shippingCountry][$shippingState];
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingState];
 
-        $exptectedTaxDue = $exptectedTaxRate * $expectedItemsCost;
+        $expectedTaxDue =
+            round($expectedTaxRateProduct * $expectedItemsCost, 2);
 
         $financeDue = config('ecommerce.financing_cost_per_order');
 
         $numberOfPayments = 2;
 
         $expectedDueForPayment = round(
-            ($expectedItemsCost + $exptectedTaxDue + $financeDue) / $numberOfPayments,
+            ($expectedItemsCost + $expectedTaxDue + $financeDue) / $numberOfPayments,
             2
         );
 
@@ -673,14 +682,14 @@ class CartServiceTest extends EcommerceTestCase
 
         $quantity = $this->faker->numberBetween(1, 3);
 
-        $shippingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$shippingCountry]));
+        $shippingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$shippingCountry]));
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($shippingCountry)
             ->setState($shippingState);
 
         $billingCountry = 'canada';
-        $billingState = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$billingCountry]));
+        $billingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
 
         $billingAddress = new Address();
         $billingAddress
@@ -690,13 +699,16 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $exptectedTaxRate = ConfigService::$taxRate[$shippingCountry][$shippingState];
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingState];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingState];
 
-        $exptectedTaxDue = $exptectedTaxRate * ($expectedItemsCost + $expectedShippingCost);
+        $expectedTaxDue =
+            round($expectedTaxRateProduct * $expectedItemsCost, 2) +
+            round($expectedTaxRateShipping * $expectedShippingCost, 2);
 
         $finance = config('ecommerce.financing_cost_per_order');
 
-        $totalToFinance = $expectedItemsCost + $exptectedTaxDue + $finance;
+        $totalToFinance = $expectedItemsCost + $expectedTaxDue + $finance;
 
         $numberOfPayments = 2;
 
@@ -728,7 +740,7 @@ class CartServiceTest extends EcommerceTestCase
 
         $this->assertEquals($expectedItemsCost, $order->getProductDue());
         $this->assertEquals($expectedShippingCost, $order->getShippingDue());
-        $this->assertEquals($exptectedTaxDue, $order->getTaxesDue());
+        $this->assertEquals($expectedTaxDue, $order->getTaxesDue());
         $this->assertEquals($finance, $order->getFinanceDue());
     }
 }
