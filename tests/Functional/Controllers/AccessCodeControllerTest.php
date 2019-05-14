@@ -3,7 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class AccessCodeControllerTest extends EcommerceTestCase
@@ -27,7 +27,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $userId  = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -77,7 +77,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $userId  = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => null,
             'subscription_interval_count' => null,
         ]);
@@ -124,7 +124,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $userId  = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -198,7 +198,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $userId  = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);

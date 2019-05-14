@@ -3,7 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Location\Services\LocationService;
 
@@ -608,8 +608,8 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $country = $this->faker->word;
         $type = $this->faker->randomElement(
             [
-                ConfigService::$shippingAddressType,
-                ConfigService::$billingAddressType,
+                Address::SHIPPING_ADDRESS_TYPE,
+                Address::BILLING_ADDRESS_TYPE,
             ]
         );
         $userId = rand();

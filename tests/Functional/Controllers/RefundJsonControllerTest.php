@@ -3,10 +3,10 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
-use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class RefundJsonControllerTest extends EcommerceTestCase
@@ -70,7 +70,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -233,7 +233,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -398,7 +398,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -425,7 +425,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $order = $this->fakeOrder();
@@ -614,7 +614,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -801,7 +801,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -828,7 +828,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $order = $this->fakeOrder();
@@ -996,7 +996,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -1023,7 +1023,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $order = $this->fakeOrder();

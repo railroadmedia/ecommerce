@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
-use Carbon\Carbon;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase

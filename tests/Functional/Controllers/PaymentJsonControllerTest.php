@@ -3,13 +3,12 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Controllers\PaymentJsonController;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
-use Railroad\Ecommerce\Controllers\PaymentJsonController;
 use Stripe\Card;
 use Stripe\Charge;
 use Stripe\Customer;
@@ -49,7 +48,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -169,7 +168,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -257,7 +256,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment is linked to order
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderPayment,
+            'ecommerce_order_payments',
             [
                 'order_id' => $order['id'],
                 'payment_id' => $decodedResponse['data']['id'],
@@ -395,7 +394,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -674,7 +673,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -890,7 +889,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -981,7 +980,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -1086,7 +1085,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([

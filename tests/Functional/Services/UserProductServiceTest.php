@@ -1,22 +1,12 @@
 <?php
 
+use Carbon\Carbon;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
-use Railroad\Ecommerce\Tests\EcommerceTestCase;
-use Railroad\Ecommerce\Entities\PaymentMethod;
-use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\UserProductService;
-use Railroad\Ecommerce\Entities\CreditCard;
-use Carbon\Carbon;
-use Stripe\Card;
-use Stripe\Charge;
-use Stripe\Customer;
-use Stripe\Token;
+use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class UserProductServiceTest extends EcommerceTestCase
 {
@@ -46,7 +36,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(ConfigService::$typeSubscription)
+            ->setType(Product::TYPE_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -79,7 +69,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(ConfigService::$typeSubscription)
+            ->setType(Product::TYPE_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -134,7 +124,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(ConfigService::$typeSubscription)
+            ->setType(Product::TYPE_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -179,7 +169,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(ConfigService::$typeSubscription)
+            ->setType(Product::TYPE_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -232,7 +222,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(ConfigService::$typeSubscription)
+            ->setType(Product::TYPE_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -298,7 +288,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(ConfigService::$typeSubscription)
+            ->setType(Product::TYPE_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -311,7 +301,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(ConfigService::$typeSubscription)
+            ->setType(Product::TYPE_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 

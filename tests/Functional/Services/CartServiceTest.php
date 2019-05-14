@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Services;
 use Carbon\Carbon;
 use Doctrine\Common\Collections\ArrayCollection;
 use Railroad\Ecommerce\Entities\Order;
-use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;

@@ -3,7 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
@@ -20,7 +20,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
 
         for ($i = 0; $i < 10; $i++) {
             $address = $this->fakeAddress([
-                'type' => ConfigService::$shippingAddressType
+                'type' => Address::SHIPPING_ADDRESS_TYPE
             ]);
 
             $order = $this->fakeOrder([
@@ -100,7 +100,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
 
         for ($i = 0; $i < 10; $i++) {
             $address = $this->fakeAddress([
-                'type' => ConfigService::$shippingAddressType
+                'type' => Address::SHIPPING_ADDRESS_TYPE
             ]);
 
             $order = $this->fakeOrder([
@@ -191,7 +191,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
     public function test_fulfilled_order()
     {
         $address = $this->fakeAddress([
-            'type' => ConfigService::$shippingAddressType
+            'type' => Address::SHIPPING_ADDRESS_TYPE
         ]);
 
         $order = $this->fakeOrder([
@@ -261,7 +261,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
     public function test_fulfilled_order_item()
     {
         $address = $this->fakeAddress([
-            'type' => ConfigService::$shippingAddressType
+            'type' => Address::SHIPPING_ADDRESS_TYPE
         ]);
 
         $order = $this->fakeOrder([
@@ -332,7 +332,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
     public function test_delete_order_fulfillments()
     {
         $address = $this->fakeAddress([
-            'type' => ConfigService::$shippingAddressType
+            'type' => Address::SHIPPING_ADDRESS_TYPE
         ]);
 
         $order = $this->fakeOrder([
@@ -389,7 +389,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
     public function test_delete_order_item_fulfillment()
     {
         $address = $this->fakeAddress([
-            'type' => ConfigService::$shippingAddressType
+            'type' => Address::SHIPPING_ADDRESS_TYPE
         ]);
 
         $order = $this->fakeOrder([

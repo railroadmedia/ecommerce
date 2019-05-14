@@ -17,9 +17,9 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Services\CartService;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\OrderClaimingService;
 use Railroad\Ecommerce\Services\ShippingService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -116,13 +116,13 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $billingAddress
             ->setCountry($country)
             ->setState($state)
-            ->setType(ConfigService::$billingAddressType);
+            ->setType(Address::BILLING_ADDRESS_TYPE);
 
         $shippingAddress = new Address();
         $shippingAddress
             ->setCountry($country)
             ->setState($state)
-            ->setType(ConfigService::$shippingAddressType);
+            ->setType(Address::SHIPPING_ADDRESS_TYPE);
 
         $shippingAddressStructure = new AddressStructure();
         $shippingAddressStructure->setCountry($country)
@@ -173,7 +173,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomFloat(2, 15, 20))
-            ->setType(ConfigService::$typeProduct)
+            ->setType(Product::TYPE_PRODUCT)
             ->setActive(true)
             ->setIsPhysical(true)
             ->setWeight($this->faker->randomFloat(2, 15, 20))
@@ -187,7 +187,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomFloat(2, 15, 20))
-            ->setType(ConfigService::$typeSubscription)
+            ->setType(Product::TYPE_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false)
             ->setSubscriptionIntervalType(config('ecommerce.interval_type_monthly'))

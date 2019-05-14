@@ -2,11 +2,10 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Services;
 
-use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Structures\Address;
+use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
-use Railroad\Ecommerce\Services\ConfigService;
 
 class TaxServiceTest extends EcommerceTestCase
 {

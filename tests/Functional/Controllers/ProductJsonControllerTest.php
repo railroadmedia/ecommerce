@@ -4,7 +4,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
-use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ProductJsonControllerTest extends EcommerceTestCase
@@ -62,7 +62,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $subscription = $product = $this->faker->product(
-            ['type' => ConfigService::$typeSubscription]
+            ['type' => Product::TYPE_SUBSCRIPTION]
         );
 
         $results = $this->call(
@@ -161,7 +161,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                         'name' => $this->faker->word,
                         'sku' => $this->faker->word,
                         'price' => $this->faker->numberBetween(15.97, 15.99),
-                        'type' => ConfigService::$typeSubscription,
+                        'type' => Product::TYPE_SUBSCRIPTION,
                         'active' => true,
                         'is_physical' => false,
                         'stock' => $this->faker->numberBetween(0, 1000)
@@ -244,7 +244,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                         'name' => $this->faker->word,
                         'sku' => $this->faker->word,
                         'price' => $this->faker->numberBetween(15.97, 15.99),
-                        'type' => ConfigService::$typeProduct,
+                        'type' => Product::TYPE_PRODUCT,
                         'active' => true,
                         'is_physical' => true,
                         'stock' => $this->faker->numberBetween(0, 1000)
@@ -348,7 +348,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'subscription_interval_type' => null,
             'subscription_interval_count' => null
         ]);
@@ -361,7 +361,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     'id' => $product['id'],
                     'type' => 'product',
                     'attributes' => [
-                        'type' => ConfigService::$typeSubscription
+                        'type' => Product::TYPE_SUBSCRIPTION
                     ],
                 ],
             ]

@@ -3,9 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
-use Railroad\Location\Services\LocationService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 
 class UserProductJsonControllerTest extends EcommerceTestCase

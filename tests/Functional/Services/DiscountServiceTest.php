@@ -4,9 +4,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Services;
 
 use Carbon\Carbon;
 use Illuminate\Session\Store;
-use Railroad\Ecommerce\Entities\Discount;
 use Railroad\Ecommerce\Entities\Structures\Cart;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;

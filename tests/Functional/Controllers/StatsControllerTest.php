@@ -2,7 +2,8 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
-use Carbon\Carbon;
+use Railroad\Ecommerce\Tests\EcommerceTestCase;
+
 // use Railroad\Ecommerce\Repositories\OrderItemRepository;
 // use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
 // use Railroad\Ecommerce\Repositories\OrderRepository;
@@ -11,8 +12,6 @@ use Carbon\Carbon;
 // use Railroad\Ecommerce\Repositories\ProductRepository;
 // use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 // use Railroad\Ecommerce\Repositories\SubscriptionRepository;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class StatsControllerTest extends EcommerceTestCase
 {

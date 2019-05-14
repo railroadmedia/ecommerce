@@ -3,21 +3,17 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Services\ConfigService;
-use Railroad\Ecommerce\Services\PaymentMethodService;
-use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Stripe\Card;
 use Stripe\Charge;
 use Stripe\Customer;
-use Stripe\Token;
 
 class SubscriptionJsonControllerTest extends EcommerceTestCase
 {
@@ -91,7 +87,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $subscriptions = [];
@@ -185,7 +181,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $subscriptions = [];
@@ -350,7 +346,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $discount = $this->faker->discount([
@@ -510,7 +506,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $discount = $this->faker->discount([
@@ -636,7 +632,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $discount = $this->faker->discount([
@@ -763,7 +759,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $discount = $this->faker->discount([
@@ -836,7 +832,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $discount = $this->faker->discount([
@@ -976,7 +972,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ->willReturn(new Charge());
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -1042,7 +1038,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ->willReturn($this->faker->word);
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -1117,7 +1113,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             );
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -1147,7 +1143,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'expiration_date' => $subscription['paid_until']
         ]);
 
-        config('ecommerce.paypal.failed_payments_before_de_activation') = 3;
+        config()->set('ecommerce.paypal.failed_payments_before_de_activation', 3);
 
         $results = $this->call(
             'POST',
@@ -1193,7 +1189,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             );
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -1223,7 +1219,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'expiration_date' => $subscription['paid_until']
         ]);
 
-        config('ecommerce.paypal.failed_payments_before_de_activation') = 1;
+        config()->set('ecommerce.paypal.failed_payments_before_de_activation', 1);
 
         $results = $this->call(
             'POST',
@@ -1274,7 +1270,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $subscriptionBrands = [$this->faker->word, $this->faker->word];

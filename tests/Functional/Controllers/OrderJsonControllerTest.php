@@ -3,10 +3,9 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use PHPUnit\Framework\TestCase;
-use Railroad\Ecommerce\Controllers\OrderJsonController;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
-use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class OrderJsonControllerTest extends EcommerceTestCase
@@ -165,11 +164,11 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$shippingAddressType,
+            'type' => Address::SHIPPING_ADDRESS_TYPE,
             'user_id' => $userId
         ]);
 
@@ -195,7 +194,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $billingAddress = $this->fakeAddress([
-            'type' => ConfigService::$billingAddressType
+            'type' => Address::BILLING_ADDRESS_TYPE
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -468,7 +467,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $nrOrders = 10;
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $expectedData = [];
@@ -478,7 +477,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             $user = $this->fakeUser();
 
             $address = $this->fakeAddress([
-                'type' => ConfigService::$shippingAddressType,
+                'type' => Address::SHIPPING_ADDRESS_TYPE,
                 'user_id' => $user['id']
             ]);
 
@@ -558,12 +557,12 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $user = $this->fakeUser();
 
         $address = $this->fakeAddress([
-            'type' => ConfigService::$shippingAddressType,
+            'type' => Address::SHIPPING_ADDRESS_TYPE,
             'user_id' => $user['id']
         ]);
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $orderOutOfRange = $this->fakeOrder([
@@ -658,7 +657,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $brands = [$this->faker->word, $this->faker->word];
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $expectedData = [];
@@ -668,7 +667,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             $user = $this->fakeUser();
 
             $address = $this->fakeAddress([
-                'type' => ConfigService::$shippingAddressType,
+                'type' => Address::SHIPPING_ADDRESS_TYPE,
                 'user_id' => $user['id']
             ]);
 
@@ -727,7 +726,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         for ($i = 0; $i < 3; $i++) {
 
             $address = $this->fakeAddress([
-                'type' => ConfigService::$shippingAddressType
+                'type' => Address::SHIPPING_ADDRESS_TYPE
             ]);
 
             $order = $this->fakeOrder([
@@ -773,7 +772,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $brands = [$this->faker->word, $this->faker->word];
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription
+            'type' => Product::TYPE_SUBSCRIPTION
         ]);
 
         $expectedData = [];
@@ -783,7 +782,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             $user = $this->fakeUser();
 
             $address = $this->fakeAddress([
-                'type' => ConfigService::$shippingAddressType,
+                'type' => Address::SHIPPING_ADDRESS_TYPE,
                 'user_id' => $user['id']
             ]);
 
@@ -841,7 +840,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         for ($i = 0; $i < 3; $i++) {
 
             $address = $this->fakeAddress([
-                'type' => ConfigService::$shippingAddressType
+                'type' => Address::SHIPPING_ADDRESS_TYPE
             ]);
 
             $order = $this->fakeOrder([

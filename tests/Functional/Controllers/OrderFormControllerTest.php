@@ -6,10 +6,10 @@ use Carbon\Carbon;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
-use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
@@ -88,7 +88,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $productOne = $this->fakeProduct([
             'price' => 12.95,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 1,
@@ -99,7 +99,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $productTwo = $this->fakeProduct([
             'price' => 247,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -172,7 +172,7 @@ class OrderFormControllerTest extends EcommerceTestCase
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($transactionId);
 
-        config('ecommerce.paypal.agreement_fulfilled_route') = 'order.submit.paypal';
+        config()->set('ecommerce.paypal.agreement_fulfilled_route', 'order.submit.paypal');
 
         $paypalToken = $this->faker->word;
 
@@ -281,7 +281,7 @@ class OrderFormControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_addresses',
             [
-                'type' => ConfigService::$shippingAddressType,
+                'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
                 'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'first_name' => $orderData['shipping_first_name'],

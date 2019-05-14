@@ -6,9 +6,7 @@ use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Services\CartAddressService;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
-use Railroad\Location\Services\LocationService;
 
 class SessionJsonControllerTest extends EcommerceTestCase
 {

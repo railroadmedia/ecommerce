@@ -3,9 +3,7 @@
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
-use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -22,7 +20,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $externalId = 'card_' . $this->faker->password;
         $externalCustomerId = 'cus_' . $this->faker->password;
@@ -52,7 +50,7 @@ class PaymentServiceTest extends EcommerceTestCase
             'street_line_1' => null,
             'street_line_2' => null,
             'city' => null,
-            'type' => ConfigService::$billingAddressType,
+            'type' => Address::BILLING_ADDRESS_TYPE,
             'zip' => $this->faker->postcode,
             'state' => $this->faker->word,
             'country' => 'Canada',
@@ -138,7 +136,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $billingAddress = $this->fakeAddress([
             'user_id' => $userId,
@@ -147,7 +145,7 @@ class PaymentServiceTest extends EcommerceTestCase
             'street_line_1' => null,
             'street_line_2' => null,
             'city' => null,
-            'type' => ConfigService::$billingAddressType,
+            'type' => Address::BILLING_ADDRESS_TYPE,
             'zip' => $this->faker->postcode,
             'state' => $this->faker->word,
             'country' => 'Canada',
@@ -252,7 +250,7 @@ class PaymentServiceTest extends EcommerceTestCase
                 'street_line_1' => null,
                 'street_line_2' => null,
                 'city' => null,
-                'type' => ConfigService::$billingAddressType,
+                'type' => Address::BILLING_ADDRESS_TYPE,
                 'zip' => $this->faker->postcode,
                 'state' => $this->faker->word,
                 'country' => 'Canada',
@@ -332,7 +330,7 @@ class PaymentServiceTest extends EcommerceTestCase
         $billingAddress->setZip($billingAddressData['zip'])
             ->setState($this->faker->word)
             ->setCountry($billingAddressData['country'])
-            ->setType(ConfigService::$billingAddressType);
+            ->setType(Address::BILLING_ADDRESS_TYPE);
 
         $stripeToken = $this->faker->word;
 
@@ -465,7 +463,7 @@ class PaymentServiceTest extends EcommerceTestCase
         $billingAddress->setZip($this->faker->postcode)
             ->setState($this->faker->word)
             ->setCountry($country)
-            ->setType(ConfigService::$billingAddressType);
+            ->setType(Address::BILLING_ADDRESS_TYPE);
 
         $stripeToken = $this->faker->word;
 
@@ -567,7 +565,7 @@ class PaymentServiceTest extends EcommerceTestCase
         $billingAddress->setZip($this->faker->postcode)
             ->setState($this->faker->word)
             ->setCountry($country)
-            ->setType(ConfigService::$billingAddressType);
+            ->setType(Address::BILLING_ADDRESS_TYPE);
 
         $payPalToken = $this->faker->word;
 

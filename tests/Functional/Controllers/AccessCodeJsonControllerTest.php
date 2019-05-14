@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Ecommerce\Tests\Fixtures\UserProvider;
@@ -456,7 +457,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         $userId  = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);

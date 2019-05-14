@@ -1,6 +1,5 @@
 <?php
 
-
 use Railroad\Ecommerce\ExternalHelpers\Stripe;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 

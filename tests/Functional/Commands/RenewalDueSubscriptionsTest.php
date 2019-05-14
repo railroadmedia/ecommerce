@@ -4,8 +4,8 @@ namespace Railroad\Ecommerce\Tests\Functional\Commands;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Address;
-use Railroad\Ecommerce\Entities\Order;
-use Railroad\Ecommerce\Services\ConfigService;
+use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -50,7 +50,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $creditCard = $this->fakeCreditCard();
 
             $address = $this->fakeAddress([
-                'type' => ConfigService::$billingAddressType,
+                'type' => Address::BILLING_ADDRESS_TYPE,
                 'country' => 'Canada',
                 'state' => $this->faker->word,
                 'zip' => $this->faker->postcode
@@ -58,7 +58,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
             $paymentMethod = $this->fakePaymentMethod([
                 'method_id' => $creditCard['id'],
-                'method_type' => ConfigService::$creditCartPaymentMethodType,
+                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'currency' => $currency,
                 'billing_address_id' => $address['id']
             ]);
@@ -70,7 +70,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]);
 
             $product = $this->fakeProduct([
-                'type' => ConfigService::$typeSubscription
+                'type' => Product::TYPE_SUBSCRIPTION
             ]);
 
             $order = $this->fakeOrder();
@@ -84,7 +84,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $subscription = $this->fakeSubscription([
                 'user_id' => $userId,
                 'type' => $this->faker->randomElement(
-                    [ConfigService::$typeSubscription, config('ecommerce.type_payment_plan')]
+                    [Product::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
                 ),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()->subDay(1),
@@ -202,7 +202,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $creditCard = $this->fakeCreditCard();
 
             $address = $this->fakeAddress([
-                'type' => ConfigService::$billingAddressType,
+                'type' => Address::BILLING_ADDRESS_TYPE,
                 'country' => 'Canada',
                 'state' => $this->faker->word,
                 'zip' => $this->faker->postcode
@@ -210,7 +210,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
             $paymentMethod = $this->fakePaymentMethod([
                 'method_id' => $creditCard['id'],
-                'method_type' => ConfigService::$creditCartPaymentMethodType,
+                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'currency' => $currency,
                 'billing_address_id' => $address['id']
             ]);
@@ -222,7 +222,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]);
 
             $product = $this->fakeProduct([
-                'type' => ConfigService::$typeSubscription
+                'type' => Product::TYPE_SUBSCRIPTION
             ]);
 
             $order = $this->fakeOrder();
@@ -236,7 +236,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $subscription = $this->fakeSubscription([
                 'user_id' => $userId,
                 'type' => $this->faker->randomElement(
-                    [ConfigService::$typeSubscription, config('ecommerce.type_payment_plan')]
+                    [Product::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
                 ),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()
@@ -266,7 +266,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $creditCard = $this->fakeCreditCard();
 
             $address = $this->fakeAddress([
-                'type' => ConfigService::$billingAddressType,
+                'type' => Address::BILLING_ADDRESS_TYPE,
                 'country' => 'Canada',
                 'state' => $this->faker->word,
                 'zip' => $this->faker->postcode
@@ -274,7 +274,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
             $paymentMethod = $this->fakePaymentMethod([
                 'method_id' => $creditCard['id'],
-                'method_type' => ConfigService::$creditCartPaymentMethodType,
+                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
                 'currency' => $currency,
                 'billing_address_id' => $address['id']
             ]);
@@ -286,7 +286,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]);
 
             $product = $this->fakeProduct([
-                'type' => ConfigService::$typeSubscription
+                'type' => Product::TYPE_SUBSCRIPTION
             ]);
 
             $order = $this->fakeOrder();
@@ -300,7 +300,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $subscription = $this->fakeSubscription([
                 'user_id' => $userId,
                 'type' => $this->faker->randomElement(
-                    [ConfigService::$typeSubscription, config('ecommerce.type_payment_plan')]
+                    [Product::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
                 ),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()->subDay(1),

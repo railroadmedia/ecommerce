@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
@@ -101,7 +102,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'sku' => 'product-one',
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -115,7 +116,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'sku' => 'product-two',
                 'price' => 247,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -199,7 +200,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -212,7 +213,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -338,7 +339,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -351,7 +352,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -461,7 +462,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -516,7 +517,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -648,7 +649,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -662,7 +663,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -814,7 +815,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$billingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => null,
                             'last_name' => null,
@@ -839,7 +840,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$shippingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => $requestData['shipping_first_name'],
                             'last_name' => $requestData['shipping_last_name'],
@@ -970,7 +971,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -983,7 +984,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -1099,7 +1100,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -1113,7 +1114,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -1283,7 +1284,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$shippingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => $orderRequestData['shipping_first_name'],
                             'last_name' => $orderRequestData['shipping_last_name'],
@@ -1440,7 +1441,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'street_line_1' => null,
                 'street_line_2' => null,
                 'city' => null,
-                'type' => ConfigService::$billingAddressType,
+                'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                 'zip' => $billingData['billing_zip_or_postal_code'],
                 'state' => $billingData['billing_region'],
                 'country' => $billingData['billing_country'],
@@ -1508,7 +1509,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -1522,7 +1523,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -1697,7 +1698,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$shippingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => $orderRequestData['shipping_first_name'],
                             'last_name' => $orderRequestData['shipping_last_name'],
@@ -1861,7 +1862,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'street_line_1' => null,
                 'street_line_2' => null,
                 'city' => null,
-                'type' => ConfigService::$billingAddressType,
+                'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                 'zip' => $billingData['billing_zip_or_postal_code'],
                 'state' => $billingData['billing_region'],
                 'country' => $billingData['billing_country'],
@@ -1936,7 +1937,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -1950,7 +1951,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -2125,7 +2126,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$shippingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => $orderRequestData['shipping_first_name'],
                             'last_name' => $orderRequestData['shipping_last_name'],
@@ -2265,7 +2266,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'street_line_1' => null,
                 'street_line_2' => null,
                 'city' => null,
-                'type' => ConfigService::$billingAddressType,
+                'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                 'zip' => $billingData['billing_zip_or_postal_code'],
                 'state' => $billingData['billing_region'],
                 'country' => $billingData['billing_country'],
@@ -2320,7 +2321,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -2334,7 +2335,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -2510,7 +2511,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$shippingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => $orderRequestData['shipping_first_name'],
                             'last_name' => $orderRequestData['shipping_last_name'],
@@ -2594,7 +2595,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $session = $this->app->make(Store::class);
 
         $shippingAddressData = [
-            'type' => ConfigService::$shippingAddressType,
+            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
             'brand' => $brand,
             'user_id' => $userId,
             'customer_id' => null,
@@ -2690,7 +2691,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -2704,7 +2705,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -2861,7 +2862,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$billingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => null,
                             'last_name' => null,
@@ -3009,7 +3010,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeSubscription,
+                'type' => Product::TYPE_SUBSCRIPTION,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -3177,7 +3178,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -3311,7 +3312,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$billingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => null,
                             'last_name' => null,
@@ -3336,7 +3337,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$shippingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => $orderRequestData['shipping_first_name'],
                             'last_name' => $orderRequestData['shipping_last_name'],
@@ -3465,7 +3466,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -3599,7 +3600,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$billingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => null,
                             'last_name' => null,
@@ -3624,7 +3625,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$shippingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => $orderRequestData['shipping_first_name'],
                             'last_name' => $orderRequestData['shipping_last_name'],
@@ -3707,7 +3708,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeSubscription,
+                'type' => Product::TYPE_SUBSCRIPTION,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -3842,7 +3843,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeSubscription,
+                'type' => Product::TYPE_SUBSCRIPTION,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -3961,7 +3962,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -4103,7 +4104,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -4219,7 +4220,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -4358,7 +4359,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -4516,7 +4517,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -4681,7 +4682,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -4847,7 +4848,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -5009,7 +5010,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -5041,7 +5042,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -5231,7 +5232,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$billingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => null,
                             'last_name' => null,
@@ -5255,7 +5256,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$shippingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => $requestData['shipping_first_name'],
                             'last_name' => $requestData['shipping_last_name'],
@@ -5467,7 +5468,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -5613,7 +5614,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$billingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => null,
                             'last_name' => null,
@@ -5724,7 +5725,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => ConfigService::$typeProduct,
+                'type' => Product::TYPE_PRODUCT,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -5852,7 +5853,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => round($this->paymentPlanMinimumPrice * 2 , 2),
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 1,
@@ -6000,7 +6001,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     [
                         'type' => 'address',
                         'attributes' => [
-                            'type' => ConfigService::$billingAddressType,
+                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                             'brand' => $brand,
                             'first_name' => null,
                             'last_name' => null,
@@ -6138,7 +6139,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productOne = $this->fakeProduct([
             'price' => 147.95,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -6149,7 +6150,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productTwo = $this->fakeProduct([
             'price' => 79.42,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 1,
@@ -6346,7 +6347,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productOne = $this->fakeProduct([
             'price' => 12.95,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -6358,7 +6359,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productTwo = $this->fakeProduct([
             'price' => 247,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 1,
@@ -6510,7 +6511,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => 142.95,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -6638,7 +6639,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => 142.95,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -6755,7 +6756,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productOne = $this->fakeProduct([
             'price' => 12.95,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -6768,7 +6769,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productTwo = $this->fakeProduct([
             'price' => 24,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'category' => $productTwoCategory,
             'description' => $this->faker->word,
@@ -6918,7 +6919,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => 142.95,
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -7021,7 +7022,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',
             [
-                'type' => ConfigService::$typeSubscription,
+                'type' => Product::TYPE_SUBSCRIPTION,
                 'brand' => $brand,
                 'user_id' => $randomUser['id'],
                 'is_active' => 1,
@@ -7089,7 +7090,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => 142.95,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -7237,7 +7238,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => 142.95,
-            'type' => ConfigService::$typeProduct,
+            'type' => Product::TYPE_PRODUCT,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
