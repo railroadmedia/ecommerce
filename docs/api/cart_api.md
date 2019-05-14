@@ -2,7 +2,7 @@
 
 # Form/Get Endpoints
 
-### `{ METHOD /*/add-to-cart }`
+### `{ GET /*/add-to-cart }`
 
 Add a new item to the cart via a static href link (get request).
 

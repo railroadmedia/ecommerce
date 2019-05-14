@@ -24,6 +24,7 @@ return [
     'redis_host' => 'redis',
     'redis_port' => 6379,
 
+    // entities
     'entities' => [
         [
             'path' => __DIR__ . '/../src/Entities',
@@ -35,43 +36,65 @@ return [
     'autoload_all_routes' => true,
     'route_middleware_public_groups' => ['ecommerce_public'],
     'route_middleware_logged_in_groups' => ['ecommerce_logged_in'],
-    'route_prefix' => '',
 
     //the countries and the region names should be lowercase
-    'tax_rate' => [
+    'product_tax_rate' => [
         'canada' => [
-            'default' => 0.5,
             'alberta' => 0.05,
-            'ab' => 0.05,
             'british columbia' => 0.12,
-            'bc' => 0.12,
             'manitoba' => 0.05,
-            'mb' => 0.05,
             'new brunswick' => 0.13,
-            'nb' => 0.13,
-            'newfoundland' => 0.13,
-            'nl' => 0.13,
             'newfoundland and labrador' => 0.13,
             'northwest territories' => 0.05,
-            'nt' => 0.05,
             'nova scotia' => 0.15,
-            'ns' => 0.15,
             'nunavut' => 0.05,
-            'nu' => 0.05,
             'ontario' => 0.13,
-            'on' => 0.13,
             'prince edward island' => 0.14,
-            'pe' => 0.14,
-            'pei' => 0.14,
             'quebec' => 0.05,
-            'qc' => 0.05,
             'saskatchewan' => 0.05,
-            'sk' => 0.05,
             'yukon' => 0.05,
-            'yt' => 0.05,
         ],
     ],
 
+    // tax rate used on the shipping costs, its sometimes different than tax for product cost
+    'shipping_tax_rate' => [
+        'canada' => [
+            'alberta' => 0.05,
+            'british columbia' => 0.12,
+            'manitoba' => 0.05,
+            'new brunswick' => 0.13,
+            'newfoundland and labrador' => 0.13,
+            'northwest territories' => 0.05,
+            'nova scotia' => 0.15,
+            'nunavut' => 0.05,
+            'ontario' => 0.13,
+            'prince edward island' => 0.14,
+            'quebec' => 0.05,
+            'saskatchewan' => 0.05,
+            'yukon' => 0.05,
+        ],
+    ],
+
+    // this is used to show how much of the taxes the user paid went to gst in invoices
+    'gst_tax_rate_display_only' => [
+        'canada' => [
+            'alberta' => 0.05,
+            'british columbia' => 0.12,
+            'manitoba' => 0.05,
+            'new brunswick' => 0.13,
+            'newfoundland and labrador' => 0.13,
+            'northwest territories' => 0.05,
+            'nova scotia' => 0.15,
+            'nunavut' => 0.05,
+            'ontario' => 0.13,
+            'prince edward island' => 0.14,
+            'quebec' => 0.05,
+            'saskatchewan' => 0.05,
+            'yukon' => 0.05,
+        ],
+    ],
+
+    // currencies
     'supported_currencies' => [
         'CAD',
         'USD',
@@ -79,6 +102,7 @@ return [
         'EUR',
     ],
 
+    // changing the default currency can have massive consequences
     'default_currency' => 'USD',
     'default_currency_conversion_rates' => [
         'CAD' => 1.32,
@@ -86,11 +110,13 @@ return [
         'GBP' => 0.77,
         'USD' => 1.0,
     ],
-    
+
+    // payment plans
     'financing_cost_per_order' => 1,
     'payment_plan_options' => [1, 2, 5],
     'payment_plan_minimum_price' => 20,
 
+    // gateways
     'default_gateway' => 'drumeo',
     'payment_gateways' => [
         'paypal' => [
@@ -145,19 +171,14 @@ return [
         ],
     ],
 
-    'middleware' => [
-        \Illuminate\Cookie\Middleware\EncryptCookies::class,
-        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-        \Illuminate\Session\Middleware\StartSession::class,
-        \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
-    ],
-
+    // paypal
     'paypal' => [
         'agreement_route' => 'payment-method.paypal.agreement',
         'agreement_fulfilled_route' => ''
         // route to redirect after handling a paypal agreement, eg for recordeo 'account.settings.payments'
     ],
 
+    // permissions
     'role_abilities' => [
         'administrator' => [
             'create.shipping.option',
@@ -195,7 +216,8 @@ return [
             'delete.address',
         ],
     ],
-    
+
+    // invoices
     'invoice_gateway_details' => [
         'pianote' => [
             'invoice_sender' => 'support@pianote.com',
@@ -205,6 +227,7 @@ return [
         ],
     ],
 
+    // constants
     'billing_address' => 'billing',
     'shipping_address' => 'shipping',
     'paypal_payment_method_type' => 'paypal',

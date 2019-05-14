@@ -71,26 +71,29 @@ class EcommerceServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../../views', 'ecommerce');
 
         //load package routes file
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/access_codes.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/address.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/discount.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/discount_criteria.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/order.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/order_form.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/payment.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/payment_method.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/product.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/refund.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/session.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/shipping_costs.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/shipping_fulfillment.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/shipping_option.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/shopping_cart.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/stats.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/stripe_webhook.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/subscriptions.php');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/user_product.php');
+        if (config('ecommerce.autoload_all_routes', true) == true) {
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/access_codes.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/address.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/discount.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/discount_criteria.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/order.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/order_form.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/payment.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/payment_method.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/product.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/refund.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/session.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/shipping_costs.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/shipping_fulfillment.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/shipping_option.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/shopping_cart.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/stats.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/stripe_webhook.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/subscriptions.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/user_product.php');
+        }
 
+        // commands
         $this->commands(
             [
                 RenewalDueSubscriptions::class,
