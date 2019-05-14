@@ -270,7 +270,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         $limit = 10;
         $totalNumberOfDiscounts = $this->faker->numberBetween(15, 25);
         $discounts = [];
-        $products = [];
+        $included = [];
 
         for ($i = 0; $i < $totalNumberOfDiscounts; $i++) {
 
@@ -287,6 +287,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
             $discountCriteria = $this->fakeDiscountCriteria([
                 'discount_id' => $discount['id'],
                 'product_id' => null,
+                'updated_at' => null
             ]);
 
             if ($i < $limit) {
@@ -307,11 +308,18 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                                 'id' => $product['id']
                             ]
                         ],
-                        'discountCriterias' => ['data' => []]
+                        'discountCriterias' => [
+                            'data' => [
+                                [
+                                    'type' => 'discountCriterias',
+                                    'id' => $discountCriteria['id']
+                                ]
+                            ]
+                        ]
                     ],
                 ];
 
-                $products[] = [
+                $included[] = [
                     'type' => 'product',
                     'id' => $product['id'],
                     'attributes' => array_merge(
@@ -323,6 +331,18 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                             'active' => (bool) $product['active'],
                             'is_physical' => (bool) $product['is_physical']
                         ]
+                    )
+                ];
+
+                $included[] = [
+                    'type' => 'discountCriterias',
+                    'id' => $discountCriteria['id'],
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $discountCriteria,
+                            ['id' => true, 'product_id' => true, 'discount_id' => true,]
+                        ),
+                        []
                     )
                 ];
             }
@@ -344,7 +364,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         $parsedResults = $results->decodeResponseJson();
 
         $this->assertEquals($discounts, $parsedResults['data']);
-        $this->assertEquals($products, $parsedResults['included']);
+        $this->assertEquals($included, $parsedResults['included']);
     }
 
     public function test_pull_discount()

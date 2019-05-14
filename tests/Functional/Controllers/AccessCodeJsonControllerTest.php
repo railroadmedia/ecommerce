@@ -33,7 +33,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             $productIds = [];
 
             $product = $this->fakeProduct([
-                'type' => ConfigService::$typeSubscription,
+                'type' => Product::TYPE_SUBSCRIPTION,
                 'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
                 'subscription_interval_count' => 1,
             ]);
@@ -41,7 +41,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
             $productIds[] = $product['id'];
 
             $product = $this->fakeProduct([
-                'type' => ConfigService::$typeSubscription,
+                'type' => Product::TYPE_SUBSCRIPTION,
                 'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
                 'subscription_interval_count' => 1,
             ]);
@@ -140,7 +140,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         for($i = 0; $i < $nrAccessCodes; $i++) {
             $product = $this->fakeProduct([
-                'type' => ConfigService::$typeSubscription,
+                'type' => Product::TYPE_SUBSCRIPTION,
                 'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
                 'subscription_interval_count' => 1,
             ]);
@@ -242,7 +242,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         $userId  = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -297,7 +297,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         $user = $this->fakeUser();
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -380,7 +380,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $product = $this->fakeProduct([
-            'type' => ConfigService::$typeSubscription,
+            'type' => Product::TYPE_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);

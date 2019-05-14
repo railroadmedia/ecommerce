@@ -192,7 +192,9 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.entities', $defaultConfig['entities']);
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
         $app['config']->set('ecommerce.available_brands', $defaultConfig['available_brands']);
-        $app['config']->set('ecommerce.tax_rate', $defaultConfig['tax_rate']);
+        $app['config']->set('ecommerce.product_tax_rate', $defaultConfig['product_tax_rate']);
+        $app['config']->set('ecommerce.shipping_tax_rate', $defaultConfig['shipping_tax_rate']);
+        $app['config']->set('ecommerce.gst_tax_rate_display_only', $defaultConfig['gst_tax_rate_display_only']);
         $app['config']->set('ecommerce.paypal', $defaultConfig['payment_gateways']['paypal']);
         $app['config']->set('ecommerce.stripe', $defaultConfig['payment_gateways']['stripe']);
         $app['config']->set('ecommerce.payment_gateways', $defaultConfig['payment_gateways']);

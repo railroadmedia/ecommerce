@@ -164,7 +164,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_SUBSCRIPTION,
+            'updated_at' => null
         ]);
 
         $address = $this->fakeAddress([
@@ -345,7 +346,12 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 [
                     'type' => 'product',
                     'id' => '1',
-                    'attributes' => []
+                    'attributes' => array_diff_key(
+                        $product,
+                        [
+                            'id' => true,
+                        ]
+                    )
                 ],
                 [
                     'type' => 'user',

@@ -6,6 +6,7 @@ use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Services\CartAddressService;
+use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class SessionJsonControllerTest extends EcommerceTestCase
@@ -14,6 +15,11 @@ class SessionJsonControllerTest extends EcommerceTestCase
      * @var CartAddressService
      */
     protected $cartAddressService;
+
+    /**
+     * @var CartService
+     */
+    protected $cartService;
 
     /**
      * @var Store
@@ -25,6 +31,7 @@ class SessionJsonControllerTest extends EcommerceTestCase
         parent::setUp();
 
         $this->cartAddressService = $this->app->make(CartAddressService::class);
+        $this->cartService = $this->app->make(CartService::class);
 
         $this->session = $this->app->make(Store::class);
     }
@@ -32,6 +39,15 @@ class SessionJsonControllerTest extends EcommerceTestCase
     public function test_store_address_new()
     {
         $this->session->flush();
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(15, 100),
+            'is_physical' => true,
+            'weight' => 10,
+        ]);
+
+        $this->cartService->addToCart($product['sku'], 1);
 
         $cartAddressService = $this->app->make(CartAddressService::class);
 
@@ -60,7 +76,9 @@ class SessionJsonControllerTest extends EcommerceTestCase
         $this->assertArraySubset(
             [
                 'meta' => [
-                    'shippingAddress' => $address->toArray()
+                    'cart' => [
+                        'shipping_address' => $address->toArray()
+                    ]
                 ]
             ],
             $response->decodeResponseJson()
@@ -70,6 +88,15 @@ class SessionJsonControllerTest extends EcommerceTestCase
     public function test_store_address_supplement()
     {
         $this->session->flush();
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(15, 100),
+            'is_physical' => true,
+            'weight' => 10,
+        ]);
+
+        $this->cartService->addToCart($product['sku'], 1);
 
         // setup initial session address
         $address = new Address();
@@ -107,7 +134,9 @@ class SessionJsonControllerTest extends EcommerceTestCase
         $this->assertArraySubset(
             [
                 'meta' => [
-                    'shippingAddress' => $address->toArray()
+                    'cart' => [
+                        'shipping_address' => $address->toArray()
+                    ]
                 ]
             ],
             $response->decodeResponseJson()
@@ -117,6 +146,15 @@ class SessionJsonControllerTest extends EcommerceTestCase
     public function test_store_address_update()
     {
         $this->session->flush();
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(15, 100),
+            'is_physical' => true,
+            'weight' => 10,
+        ]);
+
+        $this->cartService->addToCart($product['sku'], 1);
 
         // setup initial session address
         $address = new Address();
@@ -153,7 +191,9 @@ class SessionJsonControllerTest extends EcommerceTestCase
         $this->assertArraySubset(
             [
                 'meta' => [
-                    'shippingAddress' => $address->toArray()
+                    'cart' => [
+                        'shipping_address' => $address->toArray()
+                    ]
                 ]
             ],
             $response->decodeResponseJson()

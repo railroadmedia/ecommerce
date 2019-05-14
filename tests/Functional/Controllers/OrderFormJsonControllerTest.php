@@ -572,7 +572,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $fingerPrint = $this->faker->word;
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -926,7 +926,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -1054,7 +1054,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -1359,7 +1359,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -1773,7 +1773,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -2208,7 +2208,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -2586,7 +2586,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $fingerPrint = $this->faker->word;
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -2976,7 +2976,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
         $currency = $this->getCurrency();
 
         $cardToken = $this->faker->word;
@@ -3098,7 +3098,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
         $currency = $this->getCurrency();
 
         $country = 'Canada';
@@ -3417,7 +3417,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
         $currency = $this->getCurrency();
 
         $cardToken = $this->faker->word;
@@ -3674,7 +3674,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
         $currency = $this->getCurrency();
 
         $cardToken = $this->faker->word;
@@ -3805,7 +3805,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $cardToken = $this->faker->word;
 
@@ -4054,7 +4054,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $cardToken = $this->faker->word;
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -4621,7 +4621,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -4787,7 +4787,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -4980,7 +4980,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $currency = $this->getCurrency();
 
@@ -5457,7 +5457,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -5716,7 +5716,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -5834,7 +5834,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $shippingOption = $this->fakeShippingOption([
             'country' => $country,
@@ -6120,7 +6120,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $shippingOption = $this->fakeShippingOption([
             'country' => $country,
@@ -6308,7 +6308,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $country = 'canada';
         $state = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$country]));
@@ -6507,7 +6507,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $product = $this->fakeProduct([
             'price' => 142.95,
@@ -6635,7 +6635,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $product = $this->fakeProduct([
             'price' => 142.95,
@@ -6752,7 +6752,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $productOne = $this->fakeProduct([
             'price' => 12.95,
@@ -6882,7 +6882,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $cardToken = $this->faker->word;
 
@@ -7053,7 +7053,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        config('ecommerce.brand') = $brand;
+        config()->set('ecommerce.brand', $brand);
 
         $cardToken = $this->faker->word;
 
