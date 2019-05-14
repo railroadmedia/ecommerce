@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\OrderPayment;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -130,7 +131,7 @@ class OrderJsonController extends Controller
             ->where($qb->expr()->in('o.brand', ':brands'))
             ->setParameter(
                 'brands',
-                $request->get('brands', [ConfigService::$availableBrands])
+                $request->get('brands', [config('ecommerce.available_brands')])
             )
             ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
             ->setMaxResults($request->get('limit', 15))
@@ -248,13 +249,13 @@ class OrderJsonController extends Controller
 
         $subscriptions = $subscriptionItems
             ->filter(function(Subscription $subscription) {
-                return $subscription->getType() == ConfigService::$typeSubscription;
+                return $subscription->getType() == Product::TYPE_SUBSCRIPTION;
             })
             ->all();
 
         $paymentPlans = $subscriptionItems
             ->filter(function(Subscription $subscription) {
-                return $subscription->getType() == ConfigService::$paymentPlanType;
+                return $subscription->getType() == config('ecommerce.type_payment_plan');
             })
             ->all();
 

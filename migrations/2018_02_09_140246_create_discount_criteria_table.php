@@ -15,7 +15,7 @@ class CreateDiscountCriteriaTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)->create(
+        Schema::connection(config('ecommerce.database_connection_name'))->create(
             'ecommerce_discount_criteria',
             function(Blueprint $table) {
                 $table->increments('id');

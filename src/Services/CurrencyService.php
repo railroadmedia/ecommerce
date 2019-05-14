@@ -31,8 +31,8 @@ class CurrencyService
     {
         $currency = $this->locationService->getCurrency();
 
-        if (!in_array($currency, ConfigService::$supportedCurrencies) || empty($currency)) {
-            $currency = ConfigService::$defaultCurrency;
+        if (!in_array($currency, config('ecommerce.supported_currencies')) || empty($currency)) {
+            $currency = config('ecommerce.default_currency');
         }
 
         return $currency;
@@ -49,11 +49,11 @@ class CurrencyService
      */
     public function getRate(string $currency)
     {
-        if (!$currency || !isset(ConfigService::$defaultCurrencyConversionRates[$currency])) {
+        if (!$currency || !isset(config('ecommerce.paypal.default_currency_conversion_rates')[$currency])) {
             throw new PaymentFailedException(self::CONVERSION_CONFIG);
         }
 
-        return ConfigService::$defaultCurrencyConversionRates[$currency];
+        return config('ecommerce.paypal.default_currency_conversion_rates')[$currency];
     }
 
     /**

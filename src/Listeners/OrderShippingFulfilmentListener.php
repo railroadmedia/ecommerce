@@ -43,7 +43,7 @@ class OrderShippingFulfilmentListener
 
                 $orderItemFulfillment->setOrder($order)
                     ->setOrderItem($orderItem)
-                    ->setStatus(ConfigService::$fulfillmentStatusPending)
+                    ->setStatus(config('ecommerce.fulfillment_status_pending'))
                     ->setCreatedAt(Carbon::now());
 
                 $this->entityManager->persist($orderItemFulfillment);

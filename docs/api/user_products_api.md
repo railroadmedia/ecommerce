@@ -153,7 +153,7 @@ Create a new user product row.
     'data.attributes.quantity' => 'required|numeric',
     'data.attributes.expiration_date' => 'date|nullable',
     'data.relationships.user.data.id' => 'required|integer',
-    'data.relationships.product.data.id' => 'required|numeric|exists:' . ConfigService::$tableProduct . ',id',
+    'data.relationships.product.data.id' => 'required|numeric|exists:' . 'ecommerce_products' . ',id',
 ];
 ```
 
@@ -287,7 +287,7 @@ Update an existing user product.
     'data.attributes.quantity' => 'numeric',
     'data.attributes.expiration_date' => 'date|nullable',
     'data.relationships.user.data.id' => 'integer',
-    'data.relationships.product.data.id' => 'numeric|exists:' . ConfigService::$tableProduct . ',id',
+    'data.relationships.product.data.id' => 'numeric|exists:' . 'ecommerce_products' . ',id',
 ];
 ```
 

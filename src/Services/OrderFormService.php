@@ -146,7 +146,7 @@ class OrderFormService
                     if (empty($request->get('token'))) {
 
                         $gateway = $request->get('gateway');
-                        $config = ConfigService::$paymentGateways['paypal'];
+                        $config = config('ecommerce.payment_gateways')['paypal'];
                         $url = route($config[$gateway]['paypal_api_checkout_return_route']);
 
                         $checkoutUrl =

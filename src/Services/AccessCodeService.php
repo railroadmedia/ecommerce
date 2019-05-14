@@ -127,15 +127,15 @@ class AccessCodeService
             $intervalCount = $product->getSubscriptionIntervalCount();
 
             switch ($product->getSubscriptionIntervalType()) {
-                case ConfigService::$intervalTypeMonthly:
+                case config('ecommerce.interval_type_monthly'):
                     $endDate = $subscriptionEndDate->addMonths($intervalCount);
                     break;
 
-                case ConfigService::$intervalTypeYearly:
+                case config('ecommerce.interval_type_yearly'):
                     $endDate = $subscriptionEndDate->addYears($intervalCount);
                     break;
 
-                case ConfigService::$intervalTypeDaily:
+                case config('ecommerce.interval_type_daily'):
                     $endDate = $subscriptionEndDate->addDays($intervalCount);
                     break;
 
@@ -180,21 +180,21 @@ class AccessCodeService
             $expirationDate = null;
 
             switch ($product->getSubscriptionIntervalType()) {
-                case ConfigService::$intervalTypeMonthly:
+                case config('ecommerce.interval_type_monthly'):
                     $expirationDate =
                         Carbon::now()
                             ->addMonths($intervalCount)
                             ->startOfDay();
                     break;
 
-                case ConfigService::$intervalTypeYearly:
+                case config('ecommerce.interval_type_yearly'):
                     $expirationDate =
                         Carbon::now()
                             ->addYears($intervalCount)
                             ->startOfDay();
                     break;
 
-                case ConfigService::$intervalTypeDaily:
+                case config('ecommerce.interval_type_daily'):
                     $expirationDate =
                         Carbon::now()
                             ->addDays($intervalCount)

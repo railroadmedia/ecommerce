@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Listeners;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\ConfigService;
@@ -49,7 +50,7 @@ class OrderUserProductListener
 
                 $expirationDate = null;
 
-                if ($product->getType() == ConfigService::$typeSubscription) {
+                if ($product->getType() == Product::TYPE_SUBSCRIPTION) {
 
                     $subscription = $this->subscriptionRepository->getOrderProductSubscription(
                         $order,

@@ -34,7 +34,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
             $orderItemFulfillment = $this->fakeOrderItemFulfillment([
                 'order_id' => $order['id'],
                 'order_item_id' => $orderItem['id'],
-                'status' => ConfigService::$fulfillmentStatusPending,
+                'status' => config('ecommerce.fulfillment_status_pending'),
                 'updated_at' => null
             ]);
 
@@ -116,14 +116,14 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
                 'order_item_id' => $orderItem['id'],
                 'status' => $this->faker->randomElement(
                     [
-                        ConfigService::$fulfillmentStatusPending,
-                        ConfigService::$fulfillmentStatusFulfilled
+                        config('ecommerce.fulfillment_status_pending'),
+                        config('ecommerce.fulfillment_status_fulfilled')
                     ]
                 ),
                 'updated_at' => null
             ]);
 
-            if ($orderItemFulfillment['status'] === ConfigService::$fulfillmentStatusPending) {
+            if ($orderItemFulfillment['status'] === config('ecommerce.fulfillment_status_pending')) {
                 continue;
             }
 
@@ -171,7 +171,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
             'GET',
             '/fulfillment',
             [
-                'status' => [ConfigService::$fulfillmentStatusFulfilled]
+                'status' => [config('ecommerce.fulfillment_status_fulfilled')]
             ]
         );
 
@@ -205,7 +205,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $orderItemFulfillmentOne = $this->fakeOrderItemFulfillment([
             'order_id' => $order['id'],
             'order_item_id' => $orderItemOne['id'],
-            'status' => ConfigService::$fulfillmentStatusPending,
+            'status' => config('ecommerce.fulfillment_status_pending'),
             'updated_at' => null
         ]);
 
@@ -216,7 +216,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $orderItemFulfillmentTwo = $this->fakeOrderItemFulfillment([
             'order_id' => $order['id'],
             'order_item_id' => $orderItemTwo['id'],
-            'status' => ConfigService::$fulfillmentStatusPending,
+            'status' => config('ecommerce.fulfillment_status_pending'),
             'updated_at' => null
         ]);
 
@@ -234,11 +234,11 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillmentOne['id'],
                 'order_id' => $order['id'],
-                'status' => ConfigService::$fulfillmentStatusFulfilled,
+                'status' => config('ecommerce.fulfillment_status_fulfilled'),
                 'company' => $shippingCompany,
                 'tracking_number' => $trackingNumber,
                 'fulfilled_on' => Carbon::now()->toDateTimeString()
@@ -246,11 +246,11 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillmentTwo['id'],
                 'order_id' => $order['id'],
-                'status' => ConfigService::$fulfillmentStatusFulfilled,
+                'status' => config('ecommerce.fulfillment_status_fulfilled'),
                 'company' => $shippingCompany,
                 'tracking_number' => $trackingNumber,
                 'fulfilled_on' => Carbon::now()->toDateTimeString()
@@ -275,7 +275,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $orderItemFulfillmentOne = $this->fakeOrderItemFulfillment([
             'order_id' => $order['id'],
             'order_item_id' => $orderItemOne['id'],
-            'status' => ConfigService::$fulfillmentStatusPending,
+            'status' => config('ecommerce.fulfillment_status_pending'),
             'updated_at' => null
         ]);
 
@@ -286,7 +286,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $orderItemFulfillmentTwo = $this->fakeOrderItemFulfillment([
             'order_id' => $order['id'],
             'order_item_id' => $orderItemTwo['id'],
-            'status' => ConfigService::$fulfillmentStatusPending,
+            'status' => config('ecommerce.fulfillment_status_pending'),
             'updated_at' => null
         ]);
 
@@ -305,11 +305,11 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillmentOne['id'],
                 'order_id' => $order['id'],
-                'status' => ConfigService::$fulfillmentStatusFulfilled,
+                'status' => config('ecommerce.fulfillment_status_fulfilled'),
                 'company' => $shippingCompany,
                 'tracking_number' => $trackingNumber,
                 'fulfilled_on' => Carbon::now()->toDateTimeString()
@@ -317,11 +317,11 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillmentTwo['id'],
                 'order_id' => $order['id'],
-                'status' => ConfigService::$fulfillmentStatusPending,
+                'status' => config('ecommerce.fulfillment_status_pending'),
                 'company' => null,
                 'tracking_number' => null,
                 'fulfilled_on' => null
@@ -346,7 +346,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $orderItemFulfillmentOne = $this->fakeOrderItemFulfillment([
             'order_id' => $order['id'],
             'order_item_id' => $orderItemOne['id'],
-            'status' => ConfigService::$fulfillmentStatusPending,
+            'status' => config('ecommerce.fulfillment_status_pending'),
             'updated_at' => null
         ]);
 
@@ -357,7 +357,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $orderItemFulfillmentTwo = $this->fakeOrderItemFulfillment([
             'order_id' => $order['id'],
             'order_item_id' => $orderItemTwo['id'],
-            'status' => ConfigService::$fulfillmentStatusPending,
+            'status' => config('ecommerce.fulfillment_status_pending'),
             'updated_at' => null
         ]);
 
@@ -370,7 +370,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseMissing(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillmentOne['id'],
                 'order_id' => $order['id'],
@@ -378,7 +378,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseMissing(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillmentTwo['id'],
                 'order_id' => $order['id'],
@@ -403,7 +403,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $orderItemFulfillmentOne = $this->fakeOrderItemFulfillment([
             'order_id' => $order['id'],
             'order_item_id' => $orderItemOne['id'],
-            'status' => ConfigService::$fulfillmentStatusPending,
+            'status' => config('ecommerce.fulfillment_status_pending'),
             'updated_at' => null
         ]);
 
@@ -414,7 +414,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $orderItemFulfillmentTwo = $this->fakeOrderItemFulfillment([
             'order_id' => $order['id'],
             'order_item_id' => $orderItemTwo['id'],
-            'status' => ConfigService::$fulfillmentStatusPending,
+            'status' => config('ecommerce.fulfillment_status_pending'),
             'updated_at' => null
         ]);
 
@@ -428,7 +428,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseMissing(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillmentOne['id'],
                 'order_id' => $order['id'],
@@ -436,7 +436,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillmentTwo['id'],
                 'order_id' => $order['id'],

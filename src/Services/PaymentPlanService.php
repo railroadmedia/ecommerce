@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Railroad\Ecommerce\Entities\Subscription;
+
 class PaymentPlanService
 {
     /**
@@ -52,7 +54,7 @@ class PaymentPlanService
     public function hasSubscriptionItems($cartItems)
     {
         foreach ($cartItems as $cartItem) {
-            if ($cartItem->getProduct()->getType() == ConfigService::$typeSubscription) {
+            if ($cartItem->getProduct()->getType() == Subscription::TYPE_SUBSCRIPTION) {
                 return true;
             }
         }

@@ -15,7 +15,7 @@ class CreateSubscriptionPaymentTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)->create(
+        Schema::connection(config('ecommerce.database_connection_name'))->create(
             'ecommerce_subscription_payment',
             function(Blueprint $table) {
                 $table->increments('id');

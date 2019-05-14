@@ -48,7 +48,7 @@ class RenameDatetimeColumns extends Migration
     public function up()
     {
         foreach ($this->tables as $_table) {
-            Schema::connection(ConfigService::$databaseConnectionName)
+            Schema::connection(config('ecommerce.database_connection_name'))
                 ->table($_table, function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -56,7 +56,7 @@ class RenameDatetimeColumns extends Migration
                     $table->renameColumn('created_on', 'created_at');
                 });
 
-            Schema::connection(ConfigService::$databaseConnectionName)
+            Schema::connection(config('ecommerce.database_connection_name'))
                 ->table($_table, function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -66,7 +66,7 @@ class RenameDatetimeColumns extends Migration
         }
 
         foreach ($this->deletedOnTables as $deletedOnTable) {
-            Schema::connection(ConfigService::$databaseConnectionName)
+            Schema::connection(config('ecommerce.database_connection_name'))
                 ->table($deletedOnTable, function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -84,7 +84,7 @@ class RenameDatetimeColumns extends Migration
     public function down()
     {
         foreach ($this->tables as $_table) {
-            Schema::connection(ConfigService::$databaseConnectionName)
+            Schema::connection(config('ecommerce.database_connection_name'))
                 ->table($_table, function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -92,7 +92,7 @@ class RenameDatetimeColumns extends Migration
                     $table->renameColumn('created_at', 'created_on');
                 });
 
-            Schema::connection(ConfigService::$databaseConnectionName)
+            Schema::connection(config('ecommerce.database_connection_name'))
                 ->table($_table, function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
@@ -102,7 +102,7 @@ class RenameDatetimeColumns extends Migration
         }
 
         foreach ($this->deletedOnTables as $deletedOnTable) {
-            Schema::connection(ConfigService::$databaseConnectionName)
+            Schema::connection(config('ecommerce.database_connection_name'))
                 ->table($deletedOnTable, function ($table) {
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint

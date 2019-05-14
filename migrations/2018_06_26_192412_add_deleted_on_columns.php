@@ -14,7 +14,7 @@ class AddDeletedOnColumns extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function (Blueprint $table) {
@@ -22,7 +22,7 @@ class AddDeletedOnColumns extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_payment',
                 function (Blueprint $table) {
@@ -30,7 +30,7 @@ class AddDeletedOnColumns extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_subscription',
                 function (Blueprint $table) {
@@ -46,7 +46,7 @@ class AddDeletedOnColumns extends Migration
      */
     public function down()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function (Blueprint $table) {
@@ -54,7 +54,7 @@ class AddDeletedOnColumns extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_payment',
                 function (Blueprint $table) {
@@ -62,7 +62,7 @@ class AddDeletedOnColumns extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_subscription',
                 function (Blueprint $table) {

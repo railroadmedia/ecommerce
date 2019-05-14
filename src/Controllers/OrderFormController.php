@@ -61,7 +61,7 @@ class OrderFormController extends Controller
         } else {
 
             $redirectResponse = redirect()->route(
-                ConfigService::$paypalAgreementFulfilledRoute
+                config('ecommerce.paypal.agreement_fulfilled_route')
             );
 
             $redirectResponse->with('success', true);

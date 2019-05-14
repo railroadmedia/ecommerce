@@ -157,7 +157,7 @@ Create a new address.
     'data.attributes.state' => 'nullable|max:255',
     'data.attributes.country' => 'required|max:255|in:' . implode(',', LocationService::countries()),
     'data.relationships.customer.data.type' => 'nullable|in:customer',
-    'data.relationships.customer.data.id' => 'integer|nullable|exists:' . ConfigService::$tableCustomer . ',id',
+    'data.relationships.customer.data.id' => 'integer|nullable|exists:' . 'ecommerce_customers' . ',id',
     'data.relationships.user.data.type' => 'nullable|in:user',
     'data.relationships.user.data.id' => 'integer|nullable',
 ];
@@ -278,7 +278,7 @@ Update an existing address.
 
 ```php
 [
-    'data.id' => 'exists:' . ConfigService::$tableAddress . ',id',
+    'data.id' => 'exists:' . 'ecommerce_addresses' . ',id',
     'data.type' => 'in:address',
     'data.attributes.type' => 'max:255|in:' . implode(
             ',',
@@ -296,7 +296,7 @@ Update an existing address.
     'data.attributes.state' => 'nullable|max:255',
     'data.attributes.country' => 'max:255|in:' . implode(',', LocationService::countries()),
     'data.relationships.customer.data.type' => 'nullable|in:customer',
-    'data.relationships.customer.data.id' => 'integer|nullable|exists:' . ConfigService::$tableCustomer . ',id',
+    'data.relationships.customer.data.id' => 'integer|nullable|exists:' . 'ecommerce_customers' . ',id',
     'data.relationships.user.data.type' => 'nullable|in:user',
     'data.relationships.user.data.id' => 'integer|nullable',
 ];

@@ -26,8 +26,8 @@ class AccessCodeClaimRequest extends FormRequest
     {
         $rules = [
             'access_code' => 'required|max:24|exists:'
-            . ConfigService::$databaseConnectionName . '.'
-            . ConfigService::$tableAccessCode . ',code,is_claimed,0'
+            . config('ecommerce.database_connection_name') . '.'
+            . 'ecommerce_access_codes' . ',code,is_claimed,0'
         ];
 
         if (!auth()->user()) {

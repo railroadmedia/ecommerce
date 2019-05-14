@@ -241,7 +241,7 @@ class RefundJsonController extends Controller
             ->andWhere($qb->expr()->eq('oif.status', ':status'))
             ->andWhere($qb->expr()->isNull('oif.fulfilledOn'))
             ->setParameter('orders', array_values($distinctOrders))
-            ->setParameter('status', ConfigService::$fulfillmentStatusPending);
+            ->setParameter('status', config('ecommerce.fulfillment_status_pending'));
 
         $orderItemFulfillments = $qb->getQuery()->getResult();
 

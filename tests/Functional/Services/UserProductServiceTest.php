@@ -149,7 +149,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
         // assert user product was created
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'product_id' => $product->getId(),
                 'user_id' => $user->getId(),
@@ -200,7 +200,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
         // assert user product was created
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'product_id' => $product->getId(),
                 'user_id' => $user->getId(),
@@ -266,7 +266,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
         // assert user product was updated
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'product_id' => $product->getId(),
                 'user_id' => $user->getId(),
@@ -372,7 +372,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
         // assert user product was removed
         $this->assertDatabaseMissing(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'product_id' => $productOne->getId(),
                 'user_id' => $user->getId()
@@ -380,7 +380,7 @@ class UserProductServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'product_id' => $productTwo->getId(),
                 'user_id' => $user->getId(),

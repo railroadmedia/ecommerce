@@ -33,7 +33,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
             $product = $this->fakeProduct([
                 'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
                 'subscription_interval_count' => 1,
             ]);
 
@@ -41,7 +41,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
             $product = $this->fakeProduct([
                 'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
                 'subscription_interval_count' => 1,
             ]);
 
@@ -140,7 +140,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         for($i = 0; $i < $nrAccessCodes; $i++) {
             $product = $this->fakeProduct([
                 'type' => ConfigService::$typeSubscription,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
                 'subscription_interval_count' => 1,
             ]);
 
@@ -242,7 +242,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -297,7 +297,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -349,7 +349,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         // assert the user product data was saved in the db
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $user['id'],
                 'product_id' => $product['id'],
@@ -362,7 +362,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         // assert access code was set as claimed
         $this->assertDatabaseHas(
-            ConfigService::$tableAccessCode,
+            'ecommerce_access_codes',
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => true,
@@ -380,7 +380,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -424,7 +424,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         // assert access code was set as claimed
         $this->assertDatabaseHas(
-            ConfigService::$tableAccessCode,
+            'ecommerce_access_codes',
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => false,
@@ -457,7 +457,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 

@@ -22,7 +22,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $externalId = 'card_' . $this->faker->password;
         $externalCustomerId = 'cus_' . $this->faker->password;
@@ -114,7 +114,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -138,7 +138,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $billingAddress = $this->fakeAddress([
             'user_id' => $userId,
@@ -196,7 +196,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -350,7 +350,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'fingerprint' => $fakerCard->fingerprint,
                 'last_four_digits' => $fakerCard->last4,
@@ -370,7 +370,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'credit_card_id' => 2,
                 'currency' => $currency,
@@ -380,7 +380,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -483,7 +483,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'fingerprint' => $fakerCard->fingerprint,
                 'last_four_digits' => $fakerCard->last4,
@@ -503,7 +503,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'credit_card_id' => 1,
                 'currency' => $currency,
@@ -513,7 +513,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -585,7 +585,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePaypalBillingAgreement,
+            'ecommerce_paypal_billing_agreements',
             [
                 'external_id' => $billingAgreementId,
                 'payment_gateway_name' => $brand,
@@ -594,7 +594,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'paypal_billing_agreement_id' => 1,
                 'currency' => $currency,
@@ -604,7 +604,7 @@ class PaymentServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),

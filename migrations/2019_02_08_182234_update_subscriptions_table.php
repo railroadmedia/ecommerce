@@ -13,7 +13,7 @@ class UpdateSubscriptionsTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_subscription',
                 function ($table) {
@@ -24,7 +24,7 @@ class UpdateSubscriptionsTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_subscription',
                 function ($table) {
@@ -35,7 +35,7 @@ class UpdateSubscriptionsTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_subscription',
                 function ($table) {
@@ -54,7 +54,7 @@ class UpdateSubscriptionsTable extends Migration
      */
     public function down()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_subscription',
                 function ($table) {
@@ -65,7 +65,7 @@ class UpdateSubscriptionsTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_subscription',
                 function ($table) {
@@ -76,7 +76,7 @@ class UpdateSubscriptionsTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_subscription',
                 function ($table) {

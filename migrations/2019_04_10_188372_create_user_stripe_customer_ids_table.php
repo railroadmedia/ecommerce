@@ -15,7 +15,7 @@ class CreateUserStripeCustomerIdsTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)->create(
+        Schema::connection(config('ecommerce.database_connection_name'))->create(
             'ecommerce_user_stripe_customer_ids',
             function(Blueprint $table) {
                 $table->increments('id');

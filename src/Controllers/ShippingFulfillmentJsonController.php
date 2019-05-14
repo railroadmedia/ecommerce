@@ -69,8 +69,8 @@ class ShippingFulfillmentJsonController extends Controller
         $statuses = (array) $request->get(
             'status',
             [
-                ConfigService::$fulfillmentStatusPending,
-                ConfigService::$fulfillmentStatusFulfilled
+                config('ecommerce.fulfillment_status_pending'),
+                config('ecommerce.fulfillment_status_fulfilled')
             ]
         );
 
@@ -141,7 +141,7 @@ class ShippingFulfillmentJsonController extends Controller
             $found = true;
 
             $fulfillment
-                ->setStatus(ConfigService::$fulfillmentStatusFulfilled)
+                ->setStatus(config('ecommerce.fulfillment_status_fulfilled'))
                 ->setCompany($request->get('shipping_company'))
                 ->setTrackingNumber($request->get('tracking_number'))
                 ->setFulfilledOn(Carbon::now());
@@ -179,7 +179,7 @@ class ShippingFulfillmentJsonController extends Controller
             ->where($qb->expr()->eq('IDENTITY(oif.order)', ':orderId'))
             ->andWhere($qb->expr()->eq('oif.status', ':status'))
             ->setParameter('orderId', $request->get('order_id'))
-            ->setParameter('status', ConfigService::$fulfillmentStatusPending);
+            ->setParameter('status', config('ecommerce.fulfillment_status_pending'));
 
         if ($request->has('order_item_id')) {
             $qb

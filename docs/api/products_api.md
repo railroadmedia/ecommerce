@@ -124,22 +124,22 @@ Create a new product.
 ```php
 [
     'data.attributes.name' => 'required|max:255',
-    'data.attributes.sku' => 'required|unique:'.ConfigService::$tableProduct.',sku|max:255',
+    'data.attributes.sku' => 'required|unique:'.'ecommerce_products'.',sku|max:255',
     'data.attributes.price' => 'required|numeric|min:0',
     'data.attributes.type' => 'required|max:255|in:' .
         implode(
             ',',
             [
-                ConfigService::$typeProduct,
-                ConfigService::$typeSubscription
+                Product::TYPE_PRODUCT,
+                Product::TYPE_SUBSCRIPTION
             ]
         ),
     'data.attributes.active' => 'required|boolean',
     'data.attributes.is_physical' => 'required|boolean',
     'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
     'data.attributes.stock' => 'nullable|numeric',
-    'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . ConfigService::$typeSubscription,
-    'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . ConfigService::$typeSubscription
+    'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION,
+    'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION
 ];
 ```
 
@@ -237,22 +237,22 @@ Update an existing product.
 ```php
 [
     'data.attributes.name' => 'max:255',
-    'data.attributes.sku' => 'unique:'.ConfigService::$tableProduct.',sku,'.Request::route('productId').'|max:255',
+    'data.attributes.sku' => 'unique:'.'ecommerce_products'.',sku,'.Request::route('productId').'|max:255',
     'data.attributes.price' => 'numeric|min:0',
     'data.attributes.type' => 'max:255|in:' .
         implode(
             ',',
             [
-                ConfigService::$typeProduct,
-                ConfigService::$typeSubscription
+                Product::TYPE_PRODUCT,
+                Product::TYPE_SUBSCRIPTION
             ]
         ),
     'data.attributes.active' => 'boolean',
     'data.attributes.is_physical' => 'boolean',
     'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
     'data.attributes.stock' => 'numeric',
-    'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . ConfigService::$typeSubscription,
-    'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . ConfigService::$typeSubscription
+    'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION,
+    'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION
 ];
 ```
 

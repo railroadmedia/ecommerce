@@ -15,7 +15,7 @@ class CreateOrderItemTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)->create(
+        Schema::connection(config('ecommerce.database_connection_name'))->create(
             'ecommerce_order_item',
             function(Blueprint $table) {
                 $table->increments('id');

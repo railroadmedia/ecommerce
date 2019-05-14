@@ -14,7 +14,7 @@ class MakeSkuUniqueProductTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)->table(
+        Schema::connection(config('ecommerce.database_connection_name'))->table(
             'ecommerce_products',
             function ($table) {
                 /**
@@ -33,7 +33,7 @@ class MakeSkuUniqueProductTable extends Migration
      */
     public function down()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)->table(
+        Schema::connection(config('ecommerce.database_connection_name'))->table(
             'ecommerce_products',
             function ($table) {
                 /**

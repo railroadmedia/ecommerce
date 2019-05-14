@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Requests;
 
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Location\Services\LocationService;
 
@@ -40,13 +41,13 @@ class AddressUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'data.id' => 'exists:' . ConfigService::$tableAddress . ',id',
+            'data.id' => 'exists:' . 'ecommerce_addresses' . ',id',
             'data.type' => 'in:address',
             'data.attributes.type' => 'max:255|in:' . implode(
                     ',',
                     [
-                        ConfigService::$billingAddressType,
-                        ConfigService::$shippingAddressType,
+                        Address::BILLING_ADDRESS_TYPE,
+                        Address::SHIPPING_ADDRESS_TYPE,
                     ]
                 ),
             'data.attributes.first_name' => 'nullable|max:255',
@@ -58,7 +59,7 @@ class AddressUpdateRequest extends FormRequest
             'data.attributes.state' => 'nullable|max:255',
             'data.attributes.country' => 'max:255|in:' . implode(',', LocationService::countries()),
             'data.relationships.customer.data.type' => 'nullable|in:customer',
-            'data.relationships.customer.data.id' => 'integer|nullable|exists:' . ConfigService::$tableCustomer . ',id',
+            'data.relationships.customer.data.id' => 'integer|nullable|exists:' . 'ecommerce_customers' . ',id',
             'data.relationships.user.data.type' => 'nullable|in:user',
             'data.relationships.user.data.id' => 'integer|nullable',
         ];
@@ -86,7 +87,7 @@ class AddressUpdateRequest extends FormRequest
                 ]
             ),
             [
-                'data.attributes.brand' => $this->input('brand', ConfigService::$brand),
+                'data.attributes.brand' => $this->input('brand', config('ecommerce.brand')),
             ]
         );
     }

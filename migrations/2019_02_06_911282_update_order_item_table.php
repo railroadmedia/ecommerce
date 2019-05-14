@@ -13,7 +13,7 @@ class UpdateOrderItemTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order_item',
                 function ($table) {
@@ -27,7 +27,7 @@ class UpdateOrderItemTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order_item',
                 function ($table) {
@@ -38,7 +38,7 @@ class UpdateOrderItemTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order_item',
                 function ($table) {
@@ -49,7 +49,7 @@ class UpdateOrderItemTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order_item',
                 function ($table) {
@@ -60,7 +60,7 @@ class UpdateOrderItemTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order_item',
                 function ($table) {
@@ -79,7 +79,7 @@ class UpdateOrderItemTable extends Migration
      */
     public function down()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order_item',
                 function ($table) {
@@ -90,7 +90,7 @@ class UpdateOrderItemTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order_item',
                 function ($table) {
@@ -101,7 +101,7 @@ class UpdateOrderItemTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order_item',
                 function ($table) {
@@ -114,7 +114,7 @@ class UpdateOrderItemTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order_item',
                 function ($table) {
@@ -127,7 +127,7 @@ class UpdateOrderItemTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order_item',
                 function ($table) {

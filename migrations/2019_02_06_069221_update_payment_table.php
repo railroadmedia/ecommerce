@@ -13,7 +13,7 @@ class UpdatePaymentTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_payment',
                 function ($table) {
@@ -24,7 +24,7 @@ class UpdatePaymentTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_payment',
                 function ($table) {
@@ -35,7 +35,7 @@ class UpdatePaymentTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_payment',
                 function ($table) {
@@ -46,7 +46,7 @@ class UpdatePaymentTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_payment',
                 function ($table) {
@@ -68,7 +68,7 @@ class UpdatePaymentTable extends Migration
      */
     public function down()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_payment',
                 function ($table) {
@@ -79,7 +79,7 @@ class UpdatePaymentTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_payment',
                 function ($table) {
@@ -90,7 +90,7 @@ class UpdatePaymentTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_payment',
                 function ($table) {
@@ -101,7 +101,7 @@ class UpdatePaymentTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_payment',
                 function ($table) {

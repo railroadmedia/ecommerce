@@ -34,7 +34,7 @@ class UserProductCreateRequest extends FormRequest
             'data.attributes.quantity' => 'required|numeric',
             'data.attributes.expiration_date' => 'date|nullable',
             'data.relationships.user.data.id' => 'required|integer',
-            'data.relationships.product.data.id' => 'required|numeric|exists:' . ConfigService::$tableProduct . ',id',
+            'data.relationships.product.data.id' => 'required|numeric|exists:' . 'ecommerce_products' . ',id',
         ];
     }
 

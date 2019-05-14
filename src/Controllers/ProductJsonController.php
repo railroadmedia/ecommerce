@@ -110,7 +110,7 @@ class ProductJsonController extends Controller
         }
         $orderBy = $alias . '.' . $orderBy;
         $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
-        $brands = $request->get('brands', [ConfigService::$availableBrands]);
+        $brands = $request->get('brands', [config('ecommerce.available_brands')]);
 
         /**
          * @var $qb QueryBuilder
@@ -149,7 +149,7 @@ class ProductJsonController extends Controller
         $this->jsonApiHydrator->hydrate($product, $request->onlyAllowed());
 
         if (!$product->getBrand()) {
-            $product->setBrand(ConfigService::$brand);
+            $product->setBrand(config('ecommerce.brand'));
         }
 
         $this->entityManager->persist($product);

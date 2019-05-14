@@ -13,7 +13,7 @@ class UpdateDueColumnsOrderTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {
@@ -24,7 +24,7 @@ class UpdateDueColumnsOrderTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {
@@ -39,7 +39,7 @@ class UpdateDueColumnsOrderTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {
@@ -50,7 +50,7 @@ class UpdateDueColumnsOrderTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {
@@ -61,7 +61,7 @@ class UpdateDueColumnsOrderTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {
@@ -76,7 +76,7 @@ class UpdateDueColumnsOrderTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {
@@ -95,7 +95,7 @@ class UpdateDueColumnsOrderTable extends Migration
      */
     public function down()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {
@@ -106,7 +106,7 @@ class UpdateDueColumnsOrderTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {
@@ -117,7 +117,7 @@ class UpdateDueColumnsOrderTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {
@@ -128,7 +128,7 @@ class UpdateDueColumnsOrderTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {
@@ -139,7 +139,7 @@ class UpdateDueColumnsOrderTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {
@@ -150,7 +150,7 @@ class UpdateDueColumnsOrderTable extends Migration
                 }
             );
 
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_order',
                 function ($table) {

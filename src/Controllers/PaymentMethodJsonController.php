@@ -270,7 +270,7 @@ class PaymentMethodJsonController extends Controller
         $purchaser->setId($user->getId());
         $purchaser->setEmail($user->getEmail());
         $purchaser->setType(Purchaser::USER_TYPE);
-        $purchaser->setBrand($request->get('gateway', ConfigService::$brand));
+        $purchaser->setBrand($request->get('gateway', config('ecommerce.brand')));
 
         try {
             if ($request->get('method_type') == PaymentMethod::TYPE_CREDIT_CARD) {
@@ -291,8 +291,8 @@ class PaymentMethodJsonController extends Controller
                 // save billing address
                 $billingAddress = new Address();
 
-                $billingAddress->setType(ConfigService::$billingAddressType)
-                    ->setBrand(ConfigService::$brand)
+                $billingAddress->setType(Address::BILLING_ADDRESS_TYPE)
+                    ->setBrand(config('ecommerce.brand'))
                     ->setUser($user)
                     ->setState($card->address_state ?? '')
                     ->setCountry($billingCountry ?? '');
@@ -337,8 +337,8 @@ class PaymentMethodJsonController extends Controller
     public function getPaypalUrl()
     {
         $url = $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl(
-            ConfigService::$brand,
-            url()->route(ConfigService::$paypalAgreementRoute)
+            config('ecommerce.brand'),
+            url()->route(config('ecommerce.paypal.agreement_route'))
         );
 
         return response()->json(['url' => $url]);
@@ -356,7 +356,7 @@ class PaymentMethodJsonController extends Controller
         if ($request->has('token')) {
 
             $billingAgreementId = $this->payPalPaymentGateway->createBillingAgreement(
-                ConfigService::$brand,
+                config('ecommerce.brand'),
                 '',
                 '',
                 $request->get('token')
@@ -372,12 +372,12 @@ class PaymentMethodJsonController extends Controller
             $purchaser->setId($user->getId());
             $purchaser->setEmail($user->getEmail());
             $purchaser->setType(Purchaser::USER_TYPE);
-            $purchaser->setBrand($request->get('gateway', ConfigService::$brand));
+            $purchaser->setBrand($request->get('gateway', config('ecommerce.brand')));
 
             $billingAddress = new Address();
 
-            $billingAddress->setType(ConfigService::$billingAddressType)
-                ->setBrand(ConfigService::$brand)
+            $billingAddress->setType(Address::BILLING_ADDRESS_TYPE)
+                ->setBrand(config('ecommerce.brand'))
                 ->setUser($user)
                 ->setState('')
                 ->setCountry('');
@@ -388,7 +388,7 @@ class PaymentMethodJsonController extends Controller
                 $purchaser,
                 $billingAddress,
                 $billingAgreementId,
-                ConfigService::$brand,
+                config('ecommerce.brand'),
                 $this->currencyService->get(),
                 false
             );
@@ -396,8 +396,8 @@ class PaymentMethodJsonController extends Controller
             event(new PaypalPaymentMethodEvent($paymentMethod->getId()));
         }
 
-        if (ConfigService::$paypalAgreementFulfilledRoute) {
-            return redirect()->route(ConfigService::$paypalAgreementFulfilledRoute);
+        if (config('ecommerce.paypal.agreement_fulfilled_route')) {
+            return redirect()->route(config('ecommerce.paypal.agreement_fulfilled_route'));
         }
 
         return ResponseService::empty(204);

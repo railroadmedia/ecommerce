@@ -98,12 +98,12 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                     $qb->expr()->lt('s.totalCyclesPaid', 's.totalCyclesDue')
                 )
             )
-            ->setParameter('brand', ConfigService::$brand)
+            ->setParameter('brand', config('ecommerce.brand'))
             ->setParameter('now', Carbon::now())
             ->setParameter(
                 'cutoff',
                 Carbon::now()->subMonths(
-                    ConfigService::$subscriptionRenewalDateCutoff ?? 1
+                    config('ecommerce.paypal.subscription_renewal_date') ?? 1
                 )
             )
             ->setParameter('active', true)
@@ -136,11 +136,11 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                     $qb->expr()->lt('s.totalCyclesPaid', 's.totalCyclesDue')
                 )
             )
-            ->setParameter('brand', ConfigService::$brand)
+            ->setParameter('brand', config('ecommerce.brand'))
             ->setParameter(
                 'cutoff',
                 Carbon::now()->subMonths(
-                    ConfigService::$subscriptionRenewalDateCutoff ?? 1
+                    config('ecommerce.paypal.subscription_renewal_date') ?? 1
                 )
             )
             ->setParameter('active', true)

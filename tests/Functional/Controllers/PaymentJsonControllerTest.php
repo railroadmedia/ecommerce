@@ -35,7 +35,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
@@ -109,12 +109,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
                 'total_refunded' => null,
-                'type' => ConfigService::$orderPaymentType,
+                'type' => config('ecommerce.order_payment_type'),
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'stripe',
                 'currency' => $currency,
@@ -137,7 +137,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
@@ -238,12 +238,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
                 'total_refunded' => null,
-                'type' => ConfigService::$orderPaymentType,
+                'type' => config('ecommerce.order_payment_type'),
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'stripe',
                 'currency' => $currency,
@@ -269,7 +269,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert order total paied sum
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'id' => $order['id'],
                 'total_paid' => $expectedSum
@@ -284,7 +284,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['paypal'])
+            array_keys(config('ecommerce.payment_gateways')['paypal'])
         );
 
         $this->paypalExternalHelperMock
@@ -336,7 +336,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                         'total_due' => $due,
                         'total_paid' => $due,
                         'total_refunded' => null,
-                        'type' => ConfigService::$orderPaymentType,
+                        'type' => config('ecommerce.order_payment_type'),
                         'external_provider' => 'paypal',
                         'status' => '1',
                         'message' => '',
@@ -351,12 +351,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
                 'total_refunded' => null,
-                'type' => ConfigService::$orderPaymentType,
+                'type' => config('ecommerce.order_payment_type'),
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'paypal',
                 'currency' => $currency,
@@ -378,7 +378,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $conversionRate = $this->currencyService->getRate($currency);
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
 
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
@@ -455,12 +455,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
                 'total_refunded' => null,
-                'type' => ConfigService::$orderPaymentType,
+                'type' => config('ecommerce.order_payment_type'),
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'stripe',
                 'currency' => $currency,
@@ -481,7 +481,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $currency = $this->getCurrency();
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
 
         $user = $this->fakeUser();
@@ -539,7 +539,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $currency = $this->getCurrency();
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -595,7 +595,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $currency = $this->getCurrency();
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -652,7 +652,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
         $cycles = 1;
 
@@ -727,7 +727,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                         'total_due' => $due,
                         'total_paid' => $due,
                         'total_refunded' => null,
-                        'type' => ConfigService::$renewalPaymentType,
+                        'type' => config('ecommerce.renewal_payment_type'),
                         'external_provider' => 'stripe',
                         'status' => '1',
                         'message' => '',
@@ -742,12 +742,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
                 'total_refunded' => null,
-                'type' => ConfigService::$renewalPaymentType,
+                'type' => config('ecommerce.renewal_payment_type'),
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'stripe',
                 'currency' => $currency,
@@ -759,7 +759,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'id' => $subscription['id'],
                 'total_cycles_paid' => $cycles + 1,
@@ -768,7 +768,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'id' => $subscription['id'],
                 'total_cycles_paid' => $cycles + 1,
@@ -777,7 +777,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscriptionPayment,
+            'ecommerce_subscription_payments',
             [
                 'subscription_id' => $subscription['id'],
                 'payment_id' => $decodedResponse['data']['id']
@@ -791,7 +791,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $due = $this->faker->numberBetween(0, 1000);
         $currency = $this->getCurrency();
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
 
         $message = 'transaction failed';
@@ -848,17 +848,17 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => $due,
                 'total_paid' => 0,
                 'total_refunded' => null,
-                'type' => ConfigService::$renewalPaymentType,
+                'type' => config('ecommerce.renewal_payment_type'),
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'paypal',
                 'currency' => $currency,
                 'status' => 'failed',
-                'type' => ConfigService::$orderPaymentType,
+                'type' => config('ecommerce.order_payment_type'),
                 'message' => 'Payment failed: ' . $message,
                 'created_at' => Carbon::now()->toDateTimeString(),
                 'updated_at' => Carbon::now()->toDateTimeString(),
@@ -876,7 +876,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $message = 'charge failed';
 
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
@@ -938,17 +938,17 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => $due,
                 'total_paid' => 0,
                 'total_refunded' => null,
-                'type' => ConfigService::$renewalPaymentType,
+                'type' => config('ecommerce.renewal_payment_type'),
                 'payment_method_id' => $paymentMethod['id'],
                 'external_provider' => 'stripe',
                 'currency' => $currency,
                 'status' => 'failed',
-                'type' => ConfigService::$orderPaymentType,
+                'type' => config('ecommerce.order_payment_type'),
                 'message' => 'Payment failed: ' . $message,
                 'created_at' => Carbon::now()->toDateTimeString(),
                 'updated_at' => Carbon::now()->toDateTimeString(),
@@ -965,7 +965,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
@@ -1178,7 +1178,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         $this->assertSoftDeleted(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'id' => $payment['id']
             ]

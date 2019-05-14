@@ -105,7 +105,7 @@ class RenewalServiceTest extends EcommerceTestCase
             ->setPaidUntil(Carbon::now()->subDay(1))
             ->setTotalPrice($this->faker->randomNumber(3))
             ->setCurrency($this->getCurrency())
-            ->setIntervalType(ConfigService::$intervalTypeMonthly)
+            ->setIntervalType(config('ecommerce.interval_type_monthly'))
             ->setIntervalCount(1)
             ->setTotalCyclesPaid($this->faker->randomNumber(3))
             ->setPaymentMethod($paymentMethod)
@@ -133,12 +133,12 @@ class RenewalServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => $chargePrice,
                 'total_paid' => $chargePrice,
                 'total_refunded' => 0,
-                'type' => ConfigService::$renewalPaymentType,
+                'type' => config('ecommerce.renewal_payment_type'),
                 'external_id' => $charge->id,
                 'external_provider' => 'stripe',
                 'status' => 'succeeded',
@@ -149,7 +149,7 @@ class RenewalServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscriptionPayment,
+            'ecommerce_subscription_payments',
             [
                 'subscription_id' => $subscription->getId(),
                 'created_at' => Carbon::now()->toDateTimeString(),
@@ -158,7 +158,7 @@ class RenewalServiceTest extends EcommerceTestCase
 
         // assert user products assignation
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $user->getId(),
                 'product_id' => $product->getId(),

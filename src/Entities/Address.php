@@ -131,7 +131,7 @@ class Address implements AddressInterface
      */
     public function __construct()
     {
-        $this->brand = ConfigService::$brand;
+        $this->brand = config('ecommerce.brand');
     }
 
     /**

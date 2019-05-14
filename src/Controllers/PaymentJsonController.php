@@ -282,8 +282,8 @@ class PaymentJsonController extends Controller
         $conversionRate = $this->currencyService->getRate($currency);
 
         $paymentType = $request->input('data.relationships.subscription.data.id') ?
-                            ConfigService::$renewalPaymentType :
-                            ConfigService::$orderPaymentType;
+                            config('ecommerce.renewal_payment_type') :
+                            config('ecommerce.order_payment_type');
 
         $paymentPrice = $request->input('data.attributes.due');
 
@@ -291,13 +291,14 @@ class PaymentJsonController extends Controller
 
         $exception = null;
 
+        // todo: this is broken
         if (is_null($paymentMethod)) {
 
             $payment
                 ->setTotalDue($paymentPrice)
                 ->setTotalPaid($paymentPrice)
-                ->setExternalProvider(ConfigService::$manualPaymentType)
-                ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
+                ->setExternalProvider('manual')
+                ->setGatewayName('manual')
                 ->setStatus(true)
                 ->setCurrency($currency)
                 ->setCreatedAt(Carbon::now());

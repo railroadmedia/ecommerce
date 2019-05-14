@@ -109,7 +109,7 @@ class RenewalService
     {
         // check for payment plan if the user have already paid all the cycles
         if (
-            ($subscription->getType() == ConfigService::$paymentPlanType) &&
+            ($subscription->getType() == config('ecommerce.type_payment_plan')) &&
             (
                 (int)$subscription->getTotalCyclesPaid() >=
                 (int)$subscription->getTotalCyclesDue()
@@ -176,7 +176,7 @@ class RenewalService
                     ->setStatus('succeeded')
                     ->setMessage('')
                     ->setCurrency($currency)
-                    ->setConversionRate(ConfigService::$defaultCurrencyConversionRates[$currency]);
+                    ->setConversionRate(config('ecommerce.paypal.default_currency_conversion_rates')[$currency]);
 
             } catch (Exception $exception) {
 
@@ -188,7 +188,7 @@ class RenewalService
                     ->setStatus('failed')
                     ->setMessage($exception->getMessage())
                     ->setCurrency($currency)
-                    ->setConversionRate(ConfigService::$defaultCurrencyConversionRates[$currency] ?? 0);
+                    ->setConversionRate(config('ecommerce.paypal.default_currency_conversion_rates')[$currency] ?? 0);
 
                 $paymentException = $exception;
             }
@@ -231,7 +231,7 @@ class RenewalService
                     ->setStatus('succeeded')
                     ->setMessage('')
                     ->setCurrency($currency)
-                    ->setConversionRate(ConfigService::$defaultCurrencyConversionRates[$currency]);
+                    ->setConversionRate(config('ecommerce.paypal.default_currency_conversion_rates')[$currency]);
 
             } catch (Exception $exception) {
 
@@ -243,7 +243,7 @@ class RenewalService
                     ->setStatus('failed')
                     ->setMessage($exception->getMessage())
                     ->setCurrency($currency)
-                    ->setConversionRate(ConfigService::$defaultCurrencyConversionRates[$currency] ?? 0);
+                    ->setConversionRate(config('ecommerce.paypal.default_currency_conversion_rates')[$currency] ?? 0);
 
                 $paymentException = $exception;
             }
@@ -256,14 +256,14 @@ class RenewalService
                 ->setStatus('failed')
                 ->setMessage('Invalid payment method.')
                 ->setCurrency($currency)
-                ->setConversionRate(ConfigService::$defaultCurrencyConversionRates[$currency] ?? 0);
+                ->setConversionRate(config('ecommerce.paypal.default_currency_conversion_rates')[$currency] ?? 0);
         }
 
         // save payment data in DB
         $payment
             ->setTotalDue($chargePrice)
             ->setTotalRefunded(0)
-            ->setType(ConfigService::$renewalPaymentType)
+            ->setType(config('ecommerce.renewal_payment_type'))
             ->setPaymentMethod($paymentMethod)
             ->setCreatedAt(Carbon::now());
 
@@ -286,17 +286,17 @@ class RenewalService
             $nextBillDate = null;
 
             switch ($subscription->getIntervalType()) {
-                case ConfigService::$intervalTypeMonthly:
+                case config('ecommerce.interval_type_monthly'):
                     $nextBillDate = Carbon::now()
                                 ->addMonths($subscription->getIntervalCount());
                 break;
 
-                case ConfigService::$intervalTypeYearly:
+                case config('ecommerce.interval_type_yearly'):
                     $nextBillDate = Carbon::now()
                                 ->addYears($subscription->getIntervalCount());
                 break;
 
-                case ConfigService::$intervalTypeDaily:
+                case config('ecommerce.interval_type_daily'):
                     $nextBillDate = Carbon::now()
                                 ->addDays($subscription->getIntervalCount());
                 break;
@@ -334,7 +334,7 @@ class RenewalService
 
             if (
                 $failedPaymentsCount >=
-                ConfigService::$failedPaymentsBeforeDeactivation ?? 1
+                config('ecommerce.paypal.failed_payments_before_de_activation') ?? 1
             ) {
 
                 $subscription

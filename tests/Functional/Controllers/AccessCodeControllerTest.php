@@ -28,7 +28,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -49,7 +49,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         // assert the user product data was saved in the db
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -62,7 +62,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         // assert access code was set as claimed
         $this->assertDatabaseHas(
-            ConfigService::$tableAccessCode,
+            'ecommerce_access_codes',
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => true,
@@ -99,7 +99,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         // assert the user product data was saved in the db
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -109,7 +109,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         // assert access code was set as claimed
         $this->assertDatabaseHas(
-            ConfigService::$tableAccessCode,
+            'ecommerce_access_codes',
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => true,
@@ -125,7 +125,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -139,7 +139,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
                 ->toDateTimeString(),
             'is_active' => 1,
             'interval_count' => 1,
-            'interval_type' => ConfigService::$intervalTypeYearly,
+            'interval_type' => config('ecommerce.interval_type_yearly'),
         ]);
 
         $accessCode = $this->fakeAccessCode([
@@ -159,7 +159,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         // assert the subscription data was saved in the db
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -173,7 +173,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         // assert access code was set as claimed
         $this->assertDatabaseHas(
-            ConfigService::$tableAccessCode,
+            'ecommerce_access_codes',
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => true,
@@ -184,7 +184,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         // assert subscription access code was saved in the db
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscriptionAccessCode,
+            'ecommerce_subscription_access_codes',
             [
                 'subscription_id' => $subscription['id'],
                 'access_code_id' => $accessCode['id'],
@@ -199,7 +199,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -213,7 +213,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
                 ->toDateTimeString(),
             'is_active' => 1,
             'interval_count' => 1,
-            'interval_type' => ConfigService::$intervalTypeYearly,
+            'interval_type' => config('ecommerce.interval_type_yearly'),
         ]);
 
         $accessCode = $this->fakeAccessCode([
@@ -233,7 +233,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         // assert the user product data was saved in the db
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -246,7 +246,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         // assert access code was set as claimed
         $this->assertDatabaseHas(
-            ConfigService::$tableAccessCode,
+            'ecommerce_access_codes',
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => true,

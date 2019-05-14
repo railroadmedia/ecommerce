@@ -48,7 +48,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
 
         $this->assertSoftDeleted(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'id' => $subscription['id'],
             ]
@@ -466,7 +466,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert that the subscription exists in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             array_diff_key(
                 $subscription,
                 ['updated_at' => true]
@@ -475,7 +475,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product was created
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -607,7 +607,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             array_merge(
                 $subscription,
                 [
@@ -619,7 +619,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -738,7 +738,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             array_merge(
                 $subscription,
                 [
@@ -751,7 +751,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product was removed
         $this->assertDatabaseMissing(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             $userProduct
         );
     }
@@ -939,7 +939,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             array_merge(
                 $subscription,
                 [
@@ -951,7 +951,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product was updated
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             array_merge(
                 $userProduct,
                 [
@@ -977,7 +977,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -996,7 +996,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                         ->toDateTimeString(),
             'is_active' => 1,
             'interval_count' => 1,
-            'interval_type' => ConfigService::$intervalTypeYearly,
+            'interval_type' => config('ecommerce.interval_type_yearly'),
         ]);
 
         $this->expectsEvents([SubscriptionRenewed::class, SubscriptionUpdated::class]);
@@ -1007,7 +1007,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -1020,7 +1020,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'id' => $subscription['id'],
                 'is_active' => 1,
@@ -1043,7 +1043,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -1062,7 +1062,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                         ->toDateTimeString(),
             'is_active' => 1,
             'interval_count' => 1,
-            'interval_type' => ConfigService::$intervalTypeYearly,
+            'interval_type' => config('ecommerce.interval_type_yearly'),
         ]);
 
         $this->expectsEvents([SubscriptionRenewed::class, SubscriptionUpdated::class]);
@@ -1073,7 +1073,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -1086,7 +1086,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'id' => $subscription['id'],
                 'is_active' => 1,
@@ -1118,7 +1118,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -1137,7 +1137,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                         ->toDateTimeString(),
             'is_active' => 1,
             'interval_count' => 1,
-            'interval_type' => ConfigService::$intervalTypeYearly,
+            'interval_type' => config('ecommerce.interval_type_yearly'),
         ]);
 
         $userProduct = $this->fakeUserProduct([
@@ -1147,7 +1147,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'expiration_date' => $subscription['paid_until']
         ]);
 
-        ConfigService::$failedPaymentsBeforeDeactivation = 3;
+        config('ecommerce.paypal.failed_payments_before_de_activation') = 3;
 
         $results = $this->call(
             'POST',
@@ -1168,13 +1168,13 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product data was not updated
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             $userProduct
         );
 
         // assert subscription data was not updated
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             $subscription
         );
     }
@@ -1194,7 +1194,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => ConfigService::$typeSubscription,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -1213,7 +1213,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                         ->toDateTimeString(),
             'is_active' => 1,
             'interval_count' => 1,
-            'interval_type' => ConfigService::$intervalTypeYearly,
+            'interval_type' => config('ecommerce.interval_type_yearly'),
         ]);
 
         $userProduct = $this->fakeUserProduct([
@@ -1223,7 +1223,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'expiration_date' => $subscription['paid_until']
         ]);
 
-        ConfigService::$failedPaymentsBeforeDeactivation = 1;
+        config('ecommerce.paypal.failed_payments_before_de_activation') = 1;
 
         $results = $this->call(
             'POST',
@@ -1244,13 +1244,13 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         // assert user product data was removed
         $this->assertDatabaseMissing(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             $userProduct
         );
 
         // assert subscription was set as inactive
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             array_merge(
                 $subscription,
                 [

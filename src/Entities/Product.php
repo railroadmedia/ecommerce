@@ -28,6 +28,9 @@ class Product
 {
     use TimestampableEntity;
 
+    const TYPE_PRODUCT = 'product';
+    const TYPE_SUBSCRIPTION = 'subscription';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")

@@ -25,8 +25,8 @@ class AccessCodeJsonClaimRequest extends FormRequest
     {
         return [
             'access_code' => 'required|max:24|exists:'
-            . ConfigService::$databaseConnectionName . '.'
-            . ConfigService::$tableAccessCode . ',code,is_claimed,0',
+            . config('ecommerce.database_connection_name') . '.'
+            . 'ecommerce_access_codes' . ',code,is_claimed,0',
             'claim_for_user_id' => 'required|integer',
         ];
     }

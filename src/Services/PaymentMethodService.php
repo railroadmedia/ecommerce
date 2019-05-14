@@ -103,7 +103,7 @@ class PaymentMethodService
         $paymentMethod = $this->createPaymentMethod(
             $billingAddress,
             $creditCard,
-            $currency ?? ConfigService::$defaultCurrency
+            $currency ?? config('ecommerce.default_currency')
         );
 
         $this->entityManager->persist($paymentMethod);
@@ -181,7 +181,7 @@ class PaymentMethodService
         $paymentMethod = $this->createPaymentMethod(
             $billingAddress,
             $billingAgreement,
-            $currency ?? ConfigService::$defaultCurrency
+            $currency ?? config('ecommerce.default_currency')
         );
 
         $this->entityManager->persist($paymentMethod);

@@ -116,7 +116,7 @@ class SubscriptionJsonController extends Controller
             $orderBy = camel_case($orderBy);
         }
         $orderBy = 's' . '.' . $orderBy;
-        $brands = $request->get('brands', [ConfigService::$availableBrands]);
+        $brands = $request->get('brands', [config('ecommerce.available_brands')]);
 
         /**
          * @var $qb QueryBuilder

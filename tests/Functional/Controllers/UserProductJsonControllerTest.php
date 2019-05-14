@@ -247,7 +247,7 @@ class UserProductJsonControllerTest extends EcommerceTestCase
 
         //assert that the address exists in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             $userProduct1 + [
                 'user_id' => $userId
             ]
@@ -370,7 +370,7 @@ class UserProductJsonControllerTest extends EcommerceTestCase
 
         //assert that the address exists in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             $userProduct1
         );
     }

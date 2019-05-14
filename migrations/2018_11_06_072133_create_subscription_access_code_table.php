@@ -15,7 +15,7 @@ class CreateSubscriptionAccessCodeTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)->create(
+        Schema::connection(config('ecommerce.database_connection_name'))->create(
             'ecommerce_subscription_access_code',
             function(Blueprint $table) {
                 $table->increments('id');

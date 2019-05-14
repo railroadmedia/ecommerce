@@ -84,22 +84,22 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $subscription = $this->fakeSubscription([
                 'user_id' => $userId,
                 'type' => $this->faker->randomElement(
-                    [ConfigService::$typeSubscription, ConfigService::$paymentPlanType]
+                    [ConfigService::$typeSubscription, config('ecommerce.type_payment_plan')]
                 ),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()->subDay(1),
                 'product_id' => $product['id'],
                 'currency' => $currency,
                 'order_id' => $order['id'],
-                'brand' => ConfigService::$brand,
-                'interval_type' => ConfigService::$intervalTypeMonthly,
+                'brand' => config('ecommerce.brand'),
+                'interval_type' => config('ecommerce.interval_type_monthly'),
                 'interval_count' => 1,
                 'total_cycles_paid' => 1,
                 'total_cycles_due' => $this->faker->numberBetween(2, 5),
                 'payment_method_id' => $paymentMethod['id'],
             ]);
 
-            if ($subscription['type'] != ConfigService::$paymentPlanType) {
+            if ($subscription['type'] != config('ecommerce.type_payment_plan')) {
                 $initialSubscriptions[] = $subscription;
 
                 $billingAddressEntity = new Address();
@@ -127,7 +127,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
         for ($i = 0; $i < count($initialSubscriptions); $i++) {
             $this->assertDatabaseHas(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscriptions',
                 [
                     'id' => $initialSubscriptions[$i]['id'],
                     'paid_until' => Carbon::now()
@@ -143,7 +143,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
             // assert user products assignation
             $this->assertDatabaseHas(
-                ConfigService::$tableUserProduct,
+                'ecommerce_user_products',
                 [
                     'user_id' => $initialSubscriptions[$i]['user_id'],
                     'product_id' => $initialSubscriptions[$i]['product_id'],
@@ -156,13 +156,13 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             );
 
             $this->assertDatabaseHas(
-                ConfigService::$tablePayment,
+                'ecommerce_order_payments',
                 [
                     'total_due' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
                     'total_paid' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
                     'total_refunded' => 0,
                     'conversion_rate' => $expectedConversionRate,
-                    'type' => ConfigService::$renewalPaymentType,
+                    'type' => config('ecommerce.renewal_payment_type'),
                     'external_id' => $fakerCharge->id,
                     'external_provider' => 'stripe',
                     'status' => 'succeeded',
@@ -236,16 +236,16 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $subscription = $this->fakeSubscription([
                 'user_id' => $userId,
                 'type' => $this->faker->randomElement(
-                    [ConfigService::$typeSubscription, ConfigService::$paymentPlanType]
+                    [ConfigService::$typeSubscription, config('ecommerce.type_payment_plan')]
                 ),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()
-                    ->subMonths(ConfigService::$subscriptionRenewalDateCutoff + 1),
+                    ->subMonths(config('ecommerce.paypal.subscription_renewal_date') + 1),
                 'product_id' => $product['id'],
                 'currency' => $currency,
                 'order_id' => $order['id'],
-                'brand' => ConfigService::$brand,
-                'interval_type' => ConfigService::$intervalTypeMonthly,
+                'brand' => config('ecommerce.brand'),
+                'interval_type' => config('ecommerce.interval_type_monthly'),
                 'interval_count' => 1,
                 'total_cycles_paid' => 1,
                 'total_cycles_due' => $this->faker->numberBetween(2, 5),
@@ -300,22 +300,22 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $subscription = $this->fakeSubscription([
                 'user_id' => $userId,
                 'type' => $this->faker->randomElement(
-                    [ConfigService::$typeSubscription, ConfigService::$paymentPlanType]
+                    [ConfigService::$typeSubscription, config('ecommerce.type_payment_plan')]
                 ),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()->subDay(1),
                 'product_id' => $product['id'],
                 'currency' => $currency,
                 'order_id' => $order['id'],
-                'brand' => ConfigService::$brand,
-                'interval_type' => ConfigService::$intervalTypeMonthly,
+                'brand' => config('ecommerce.brand'),
+                'interval_type' => config('ecommerce.interval_type_monthly'),
                 'interval_count' => 1,
                 'total_cycles_paid' => 1,
                 'total_cycles_due' => $this->faker->numberBetween(2, 5),
                 'payment_method_id' => $paymentMethod['id'],
             ]);
 
-            if ($subscription['type'] != ConfigService::$paymentPlanType) {
+            if ($subscription['type'] != config('ecommerce.type_payment_plan')) {
 
                 $initialSubscriptions[] = $subscription;
 
@@ -344,7 +344,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
         foreach ($oldSubscriptions as $deactivatedSubscription) {
             $this->assertDatabaseHas(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscriptions',
                 [
                     'id' => $deactivatedSubscription['id'],
                     'is_active' => false,
@@ -354,7 +354,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             );
 
             $this->assertDatabaseMissing(
-                ConfigService::$tableUserProduct,
+                'ecommerce_user_products',
                 [
                     'user_id' => $deactivatedSubscription['user_id'],
                     'product_id' => $deactivatedSubscription['product_id']
@@ -365,7 +365,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         for ($i = 0; $i < count($initialSubscriptions); $i++) {
 
             $this->assertDatabaseHas(
-                ConfigService::$tableSubscription,
+                'ecommerce_subscriptions',
                 [
                     'id' => $initialSubscriptions[$i]['id'],
                     'paid_until' => Carbon::now()
@@ -380,7 +380,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
             // assert user products assignation
             $this->assertDatabaseHas(
-                ConfigService::$tableUserProduct,
+                'ecommerce_user_products',
                 [
                     'user_id' => $initialSubscriptions[$i]['user_id'],
                     'product_id' => $initialSubscriptions[$i]['product_id'],
@@ -393,13 +393,13 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             );
 
             $this->assertDatabaseHas(
-                ConfigService::$tablePayment,
+                'ecommerce_order_payments',
                 [
                     'total_due' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
                     'total_paid' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
                     'total_refunded' => 0,
                     'conversion_rate' => $expectedConversionRate,
-                    'type' => ConfigService::$renewalPaymentType,
+                    'type' => config('ecommerce.renewal_payment_type'),
                     'external_id' => $fakerCharge->id,
                     'external_provider' => 'stripe',
                     'status' => 'succeeded',

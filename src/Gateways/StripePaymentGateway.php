@@ -37,7 +37,7 @@ class StripePaymentGateway
      */
     public function getOrCreateCustomer($gatewayName, $customerEmail)
     {
-        $config = ConfigService::$paymentGateways['stripe'][$gatewayName] ?? '';
+        $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
         if(empty($config))
         {
@@ -68,7 +68,7 @@ class StripePaymentGateway
      */
     public function createCustomer($gatewayName, $customerEmail)
     {
-        $config = ConfigService::$paymentGateways['stripe'][$gatewayName] ?? '';
+        $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
         if(empty($config))
         {
@@ -89,7 +89,7 @@ class StripePaymentGateway
      */
     public function createCustomerCard($gatewayName, Customer $customer, $tokenId)
     {
-        $config = ConfigService::$paymentGateways['stripe'][$gatewayName] ?? '';
+        $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
         if(empty($config))
         {
@@ -123,7 +123,7 @@ class StripePaymentGateway
         $addressCountry,
         $addressState
     ) {
-        $config = ConfigService::$paymentGateways['stripe'][$gatewayName] ?? '';
+        $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
         if(empty($config)) {
             $message = 'Gateway ' . $gatewayName . ' is not configured.';
@@ -159,7 +159,7 @@ class StripePaymentGateway
         Customer $customer,
         $description = ''
     ) {
-        $config = ConfigService::$paymentGateways['stripe'][$gatewayName] ?? '';
+        $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
         if(empty($config))
         {
@@ -196,7 +196,7 @@ class StripePaymentGateway
      */
     public function refund($gatewayName, $amount, $externalPaymentId, $reason = null)
     {
-        $config = ConfigService::$paymentGateways['stripe'][$gatewayName] ?? '';
+        $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
         if(empty($config))
         {
@@ -230,7 +230,7 @@ class StripePaymentGateway
      */
     public function getCustomer($gatewayName, $customerId)
     {
-        $config = ConfigService::$paymentGateways['stripe'][$gatewayName] ?? '';
+        $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
         if(empty($config))
         {
@@ -260,7 +260,7 @@ class StripePaymentGateway
      */
     public function getCard(Customer $customer, $cardId, $gatewayName)
     {
-        $config = ConfigService::$paymentGateways['stripe'][$gatewayName] ?? '';
+        $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
         if(empty($config))
         {
@@ -312,7 +312,7 @@ class StripePaymentGateway
         $zip = null
     ) {
 
-        $config = ConfigService::$paymentGateways['stripe'][$gatewayName] ?? '';
+        $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
         if(empty($config))
         {

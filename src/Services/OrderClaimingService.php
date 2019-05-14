@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
@@ -126,7 +127,7 @@ class OrderClaimingService
             $this->entityManager->persist($orderItem);
 
             // create product subscriptions
-            if ($orderItem->getProduct()->getType() == ConfigService::$typeSubscription) {
+            if ($orderItem->getProduct()->getType() == Product::TYPE_SUBSCRIPTION) {
 
                 $subscription = $this->createSubscription(
                     $purchaser,
@@ -186,7 +187,7 @@ class OrderClaimingService
         int $totalCyclesDue = null
     ): Subscription
     {
-        $type = ConfigService::$typeSubscription;
+        $type = Subscription::TYPE_SUBSCRIPTION;
 
         $nextBillDate = null;
         $subscriptionPricePerPayment = 0;
@@ -198,7 +199,7 @@ class OrderClaimingService
                 Carbon::now()
                     ->addMonths(1);
 
-            $type = ConfigService::$paymentPlanType;
+            $type = config('ecommerce.type_payment_plan');
 
             $subscriptionPricePerPayment = $this->cartService->getDueForOrder();
         }
@@ -207,19 +208,19 @@ class OrderClaimingService
             $product = $orderItem->getProduct();
 
             if (!empty($product->getSubscriptionIntervalType())) {
-                if ($product->getSubscriptionIntervalType() == ConfigService::$intervalTypeMonthly) {
+                if ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
                     $nextBillDate =
                         Carbon::now()
                             ->addMonths($product->getSubscriptionIntervalCount());
 
                 }
-                elseif ($product->getSubscriptionIntervalType() == ConfigService::$intervalTypeYearly) {
+                elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
                     $nextBillDate =
                         Carbon::now()
                             ->addYears($product->getSubscriptionIntervalCount());
 
                 }
-                elseif ($product->getSubscriptionIntervalType() == ConfigService::$intervalTypeDaily) {
+                elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
                     $nextBillDate =
                         Carbon::now()
                             ->addDays($product->getSubscriptionIntervalCount());
@@ -245,7 +246,7 @@ class OrderClaimingService
 
         $subscription = new Subscription();
 
-        $intervalType = $product ? $product->getSubscriptionIntervalType() : ConfigService::$intervalTypeMonthly;
+        $intervalType = $product ? $product->getSubscriptionIntervalType() : config('ecommerce.interval_type_monthly');
 
         $intervalCount = $product ? $product->getSubscriptionIntervalCount() : 1;
 

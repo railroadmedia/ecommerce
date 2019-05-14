@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Requests;
 
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Location\Services\LocationService;
 
@@ -47,8 +48,8 @@ class AddressCreateRequest extends FormRequest
             'data.attributes.type' => 'required|max:255|in:' . implode(
                     ',',
                     [
-                        ConfigService::$billingAddressType,
-                        ConfigService::$shippingAddressType,
+                        Address::BILLING_ADDRESS_TYPE,
+                        Address::SHIPPING_ADDRESS_TYPE,
                     ]
                 ),
             'data.attributes.first_name' => 'nullable|max:255',
@@ -60,7 +61,7 @@ class AddressCreateRequest extends FormRequest
             'data.attributes.state' => 'nullable|max:255',
             'data.attributes.country' => 'required|max:255|in:' . implode(',', LocationService::countries()),
             'data.relationships.customer.data.type' => 'nullable|in:customer',
-            'data.relationships.customer.data.id' => 'integer|nullable|exists:' . ConfigService::$tableCustomer . ',id',
+            'data.relationships.customer.data.id' => 'integer|nullable|exists:' . 'ecommerce_customers' . ',id',
             'data.relationships.user.data.type' => 'nullable|in:user',
             'data.relationships.user.data.id' => 'integer|nullable',
         ];

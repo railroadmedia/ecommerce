@@ -190,7 +190,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             ->setType(ConfigService::$typeSubscription)
             ->setActive(true)
             ->setIsPhysical(false)
-            ->setSubscriptionIntervalType(ConfigService::$intervalTypeMonthly)
+            ->setSubscriptionIntervalType(config('ecommerce.interval_type_monthly'))
             ->setSubscriptionIntervalCount($this->faker->numberBetween(0, 12))
             ->setCreatedAt(Carbon::now());
 
@@ -268,7 +268,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $this->orderClaimingService->claimOrder($purchaser, $payment, $cart, $shippingAddress);
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'brand' => $brand,
                 'user_id' => $userId,
@@ -282,7 +282,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $productOne->getId(),
                 'quantity' => $quantityOne,
@@ -296,7 +296,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $productOne->getId(),
                 'quantity' => $quantityOne,
@@ -310,7 +310,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $productTwo->getId(),
                 'quantity' => $quantityTwo,
@@ -324,18 +324,18 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'order_id' => 1,
                 'order_item_id' => 1,
-                'status' => ConfigService::$fulfillmentStatusPending,
+                'status' => config('ecommerce.fulfillment_status_pending'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString()
             ]
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'brand' => $brand,
                 'product_id' => $productTwo->getId(),
@@ -350,7 +350,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productOne->getId(),
@@ -360,7 +360,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productTwo->getId(),

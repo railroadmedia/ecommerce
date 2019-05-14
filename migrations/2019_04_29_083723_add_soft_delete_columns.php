@@ -13,7 +13,7 @@ class AddSoftDeleteColumns extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_addresses',
                 function ($table) {
@@ -33,7 +33,7 @@ class AddSoftDeleteColumns extends Migration
      */
     public function down()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)
+        Schema::connection(config('ecommerce.database_connection_name'))
             ->table(
                 'ecommerce_addresses',
                 function ($table) {

@@ -571,7 +571,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $fingerPrint = $this->faker->word;
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -869,7 +869,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productOne['id'],
@@ -878,7 +878,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productTwo['id'],
@@ -889,7 +889,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // creditCard
         $this->assertDatabaseHas(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'fingerprint' => $fingerPrint,
                 'last_four_digits' => $fakerCard->last4,
@@ -910,7 +910,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // paymentMethod
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'credit_card_id' => 1,
                 'created_at' => Carbon::now()
@@ -925,7 +925,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -1053,7 +1053,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -1313,7 +1313,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productOne['id'],
@@ -1322,7 +1322,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productTwo['id'],
@@ -1333,7 +1333,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert payment
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -1358,7 +1358,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -1727,7 +1727,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productOne['id'],
@@ -1736,7 +1736,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productTwo['id'],
@@ -1747,7 +1747,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert payment
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -1772,7 +1772,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -2155,7 +2155,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseMissing(
-            ConfigService::$tableUserStripeCustomerId,
+            'ecommerce_user_stripe_customer_ids',
             [
                 'id' => ($userStripeCustomerId['id'] + 1),
                 'user_id' => $userId,
@@ -2163,7 +2163,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productOne['id'],
@@ -2172,7 +2172,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productTwo['id'],
@@ -2183,7 +2183,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert payment
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -2207,7 +2207,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -2540,7 +2540,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productOne['id'],
@@ -2549,7 +2549,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productTwo['id'],
@@ -2560,7 +2560,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert payment
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -2585,7 +2585,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $fingerPrint = $this->faker->word;
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -2911,7 +2911,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productOne['id'],
@@ -2920,7 +2920,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productTwo['id'],
@@ -2931,7 +2931,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // creditCard
         $this->assertDatabaseHas(
-            ConfigService::$tableCreditCard,
+            'ecommerce_credit_cards',
             [
                 'fingerprint' => $fingerPrint,
                 'last_four_digits' => $fakerCard->last4,
@@ -2952,7 +2952,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert payment
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -2975,7 +2975,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
         $currency = $this->getCurrency();
 
         $cardToken = $this->faker->word;
@@ -3014,7 +3014,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'description' => $this->faker->word,
                 'is_physical' => 0,
                 'weight' => 0,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
                 'subscription_interval_count' => 1,
             ]
         );
@@ -3051,7 +3051,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -3064,10 +3064,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // billingAddress
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'customer_id' => null,
                 'zip' => $requestData['billing_zip_or_postal_code'],
@@ -3080,10 +3080,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert missing shipping address
         $this->assertDatabaseMissing(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'customer_id' => null,
                 'created_at' => Carbon::now()
@@ -3097,7 +3097,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
         $currency = $this->getCurrency();
 
         $country = 'Canada';
@@ -3364,7 +3364,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'total_due' => $expectedOrderTotalDue,
                 'product_due' => $expectedProductDiscountedPrice,
@@ -3373,7 +3373,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'finance_due' => 0,
                 'user_id' => $userId,
                 'customer_id' => null,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString()
             ]
@@ -3416,7 +3416,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
         $currency = $this->getCurrency();
 
         $cardToken = $this->faker->word;
@@ -3652,7 +3652,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'total_due' => $expectedOrderTotalDue,
                 'product_due' => $expectedProductDiscountedPrice,
@@ -3661,7 +3661,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'finance_due' => 0,
                 'user_id' => $userId,
                 'customer_id' => null,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString()
             ]
@@ -3673,7 +3673,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
         $currency = $this->getCurrency();
 
         $cardToken = $this->faker->word;
@@ -3712,7 +3712,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'description' => $this->faker->word,
                 'is_physical' => 0,
                 'weight' => 0,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
                 'subscription_interval_count' => 1,
             ]
         );
@@ -3770,7 +3770,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'brand' => $brand,
                 'product_id' => $product['id'],
@@ -3786,7 +3786,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -3804,7 +3804,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $cardToken = $this->faker->word;
 
@@ -3847,7 +3847,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'description' => $this->faker->word,
                 'is_physical' => 0,
                 'weight' => 0,
-                'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
                 'subscription_interval_count' => 1,
             ]
         );
@@ -3901,9 +3901,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         //assert the discount days are added to the paid_until data
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'product_id' => $product['id'],
                 'user_id' => $userId,
                 'is_active' => "1",
@@ -4027,7 +4027,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'total_due' => $expectedPrice,
                 'product_due' => $expectedTotalFromItems,
@@ -4037,7 +4037,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'total_paid' => $expectedPrice,
                 'user_id' => $userId,
                 'customer_id' => null,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString()
             ]
@@ -4053,7 +4053,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $cardToken = $this->faker->word;
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -4163,9 +4163,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedTaxes,
@@ -4290,9 +4290,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         //assert the discount amount it's included in order due
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedTaxes,
@@ -4303,7 +4303,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         //assert the discount amount it's saved in order item data
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $product['id'],
                 'quantity' => $productQuantity,
@@ -4429,9 +4429,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedTaxes,
@@ -4442,7 +4442,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert the discount amount it's saved in order item data
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $product['id'],
                 'quantity' => $productQuantity,
@@ -4591,9 +4591,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedTaxes,
@@ -4604,7 +4604,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert the discount amount it's saved in order item data
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $product['id'],
                 'quantity' => $productQuantity,
@@ -4620,7 +4620,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -4758,9 +4758,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedTaxes,
@@ -4771,7 +4771,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert the discount amount it's saved in order item data
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $product['id'],
                 'initial_price' => $product['price'],
@@ -4786,7 +4786,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -4922,9 +4922,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert the discount amount it's included in order due
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedTaxes,
@@ -4935,7 +4935,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert the discount amount it's saved in order item data
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $product['id'],
                 'initial_price' => $product['price'],
@@ -4979,7 +4979,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $currency = $this->getCurrency();
 
@@ -5292,11 +5292,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertNotNull($customerId); // customer id provided in response
 
         $this->assertDatabaseHas(
-            ConfigService::$tableCustomer,
+            'ecommerce_customers',
             [
                 'id' => $customerId,
                 'email' => $billingEmailAddress,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ]
@@ -5304,10 +5304,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // billingAddress
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => null,
                 'customer_id' => $customerId,
                 'zip' => $requestData['billing_zip_or_postal_code'],
@@ -5320,7 +5320,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // userPaymentMethods
         $this->assertDatabaseHas(
-            ConfigService::$tableCustomerPaymentMethods,
+            'ecommerce_customer_payment_methods',
             [
                 'customer_id' => $customerId,
                 'is_primary' => true,
@@ -5330,7 +5330,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'brand' => $brand,
                 'user_id' => null,
@@ -5343,7 +5343,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => $expectedPaymentTotalDue,
                 'total_paid' => $expectedPaymentTotalDue,
@@ -5362,7 +5362,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // orderItem
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $productOne['id'],
                 'quantity' => $productOneQuantity,
@@ -5376,7 +5376,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $productTwo['id'],
                 'quantity' => $productTwoQuantity,
@@ -5391,9 +5391,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // orderItemFulfillment
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
-                'status' => ConfigService::$fulfillmentStatusPending,
+                'status' => config('ecommerce.fulfillment_status_pending'),
                 'company' => null,
                 'tracking_number' => null,
                 'fulfilled_on' => null,
@@ -5456,7 +5456,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -5643,9 +5643,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedTaxes,
@@ -5655,7 +5655,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $product['id'],
                 'initial_price' => $product['price'],
@@ -5665,7 +5665,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $userId,
                 'is_primary' => true,
@@ -5715,7 +5715,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'Canada';
         $state = $this->faker->word;
@@ -5833,7 +5833,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $shippingOption = $this->fakeShippingOption([
             'country' => $country,
@@ -6028,9 +6028,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
-                'type' => ConfigService::$paymentPlanType,
+                'type' => config('ecommerce.type_payment_plan'),
                 'brand' => $brand,
                 'user_id' => $userId,
                 'start_date' => Carbon::now()->toDateTimeString(),
@@ -6045,7 +6045,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // order & based order prices
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'total_due' => round($expectedOrderTotalDue, 2),
                 'product_due' => $expectedInitialProductPrice,
@@ -6054,13 +6054,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'finance_due' => $financeCharge,
                 'user_id' => $userId,
                 'customer_id' => null,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => $expectedPaymentTotalPaid,
                 'total_paid' => $expectedPaymentTotalPaid,
@@ -6119,7 +6119,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $shippingOption = $this->fakeShippingOption([
             'country' => $country,
@@ -6263,9 +6263,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedTaxes,
@@ -6275,7 +6275,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => $expectedPaymentTotalDue,
                 'total_paid' => $expectedPaymentTotalDue,
@@ -6307,7 +6307,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $country = 'canada';
         $state = $this->faker->randomElement(array_keys(ConfigService::$taxRate[$country]));
@@ -6506,7 +6506,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $product = $this->fakeProduct([
             'price' => 142.95,
@@ -6580,9 +6580,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedTaxes,
@@ -6634,7 +6634,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $product = $this->fakeProduct([
             'price' => 142.95,
@@ -6686,9 +6686,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedTaxes,
@@ -6699,7 +6699,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert new quantity is added to exiting
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -6751,7 +6751,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $productOne = $this->fakeProduct([
             'price' => 12.95,
@@ -6857,9 +6857,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedTaxes,
@@ -6881,7 +6881,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $cardToken = $this->faker->word;
 
@@ -6923,7 +6923,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'description' => $this->faker->word,
             'is_physical' => 0,
             'weight' => 0,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -6974,7 +6974,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'brand' => $brand,
                 'user_id' => $randomUser['id'],
@@ -6986,7 +6986,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $randomUser['id'],
                 'created_at' => Carbon::now()->toDateTimeString(),
@@ -6994,10 +6994,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $randomUser['id'],
                 'customer_id' => null,
                 'zip' => $orderData['billing_zip_or_postal_code'],
@@ -7008,7 +7008,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $randomUser['id'],
                 'product_id' => $product['id'],
@@ -7019,7 +7019,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableSubscription,
+            'ecommerce_subscriptions',
             [
                 'type' => ConfigService::$typeSubscription,
                 'brand' => $brand,
@@ -7052,7 +7052,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
-        ConfigService::$brand = $brand;
+        config('ecommerce.brand') = $brand;
 
         $cardToken = $this->faker->word;
 
@@ -7144,7 +7144,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $results->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'brand' => $brand,
                 'user_id' => $randomUser['id'],
@@ -7156,7 +7156,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $randomUser['id'],
                 'created_at' => Carbon::now()->toDateTimeString(),
@@ -7164,10 +7164,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $randomUser['id'],
                 'customer_id' => null,
                 'zip' => $orderData['billing_zip_or_postal_code'],
@@ -7178,7 +7178,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $randomUser['id'],
                 'product_id' => $product['id'],
@@ -7284,7 +7284,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'brand' => $brand
         ];
 
-        ConfigService::$paymentGateways['stripe'][$brand] = [
+        config('ecommerce.payment_gateways')['stripe'][$brand] = [
             'stripe_api_secret' => $this->faker->word
         ];
 
@@ -7297,7 +7297,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'brand' => $brand,
                 'user_id' => $randomUser['id'],
@@ -7309,7 +7309,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $randomUser['id'],
                 'created_at' => Carbon::now()->toDateTimeString(),
@@ -7317,7 +7317,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
                 'brand' => $brand,
@@ -7331,7 +7331,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $randomUser['id'],
                 'product_id' => $product['id'],

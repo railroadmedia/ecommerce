@@ -15,7 +15,9 @@ class CreateProductTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)->create(
+        config('ecommerce.data_mode');
+            
+        Schema::connection(config('ecommerce.database_connection_name'))->create(
             'ecommerce_product',
             function(Blueprint $table) {
                 $table->increments('id');

@@ -405,7 +405,7 @@ class UserProductService
      */
     public function getSubscriptionProducts(Subscription $subscription)
     {
-        if ($subscription->getType() == ConfigService::$paymentPlanType) {
+        if ($subscription->getType() == config('ecommerce.type_payment_plan')) {
 
             if (!$subscription->getOrder()) {
                 return collect([]);

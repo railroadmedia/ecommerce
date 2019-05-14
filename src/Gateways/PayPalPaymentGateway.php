@@ -36,7 +36,7 @@ class PayPalPaymentGateway
      */
     public function createBillingAgreement($gatewayName, $amount, $currency, $expressCheckoutToken, $description = '')
     {
-        $config = ConfigService::$paymentGateways['paypal'][$gatewayName] ?? null;
+        $config = config('ecommerce.payment_gateways')['paypal'][$gatewayName] ?? null;
 
         if (empty($config)) {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
@@ -68,7 +68,7 @@ class PayPalPaymentGateway
      */
     public function chargeBillingAgreement($gatewayName, $amount, $currency, $billingAgreementId, $description = '')
     {
-        $config = ConfigService::$paymentGateways['paypal'][$gatewayName] ?? null;
+        $config = config('ecommerce.payment_gateways')['paypal'][$gatewayName] ?? null;
 
         if (empty($config)) {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
@@ -97,7 +97,7 @@ class PayPalPaymentGateway
      */
     public function getBillingAgreementExpressCheckoutUrl($gatewayName, $returnUrl)
     {
-        $config = ConfigService::$paymentGateways['paypal'][$gatewayName] ?? null;
+        $config = config('ecommerce.payment_gateways')['paypal'][$gatewayName] ?? null;
 
         if (empty($config)) {
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
@@ -127,7 +127,7 @@ class PayPalPaymentGateway
      */
     public function refund($amount, $currency, $transactionId, $gatewayName, $description = '')
     {
-        $config = ConfigService::$paymentGateways['paypal'][$gatewayName] ?? null;
+        $config = config('ecommerce.payment_gateways')['paypal'][$gatewayName] ?? null;
 
         if (empty($config)) {
             throw new RefundFailedException('Gateway ' . $gatewayName . ' is not configured.');

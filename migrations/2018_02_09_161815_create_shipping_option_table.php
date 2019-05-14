@@ -15,7 +15,7 @@ class CreateShippingOptionTable extends Migration
      */
     public function up()
     {
-        Schema::connection(ConfigService::$databaseConnectionName)->create(
+        Schema::connection(config('ecommerce.database_connection_name'))->create(
             'ecommerce_shipping_option',
             function(Blueprint $table) {
                 $table->increments('id');

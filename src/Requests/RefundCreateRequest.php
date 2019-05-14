@@ -45,7 +45,7 @@ class RefundCreateRequest extends FormRequest
             'data.attributes.refund_amount' => 'required|numeric',
             'data.attributes.note' => 'max:255',
             'data.attributes.gateway_name' => 'required',
-            'data.relationships.payment.data.id' => 'required|numeric|exists:' . ConfigService::$tablePayment . ',id'
+            'data.relationships.payment.data.id' => 'required|numeric|exists:' . 'ecommerce_order_payments' . ',id'
         ];
     }
 

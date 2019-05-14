@@ -4,6 +4,8 @@ namespace Railroad\Ecommerce\Faker;
 
 use Carbon\Carbon;
 use Faker\Generator;
+use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Location\Services\LocationService;
 
@@ -22,7 +24,7 @@ class Faker extends Generator
                 'claimed_on' => $claimed ?
                     Carbon::now()
                         ->toDateTimeString() : null,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -39,8 +41,8 @@ class Faker extends Generator
                 'price' => $this->numberBetween(1, 1000),
                 'type' => $this->randomElement(
                     [
-                        ConfigService::$typeProduct,
-                        ConfigService::$typeSubscription,
+                        Product::TYPE_PRODUCT,
+                        Product::TYPE_SUBSCRIPTION,
                     ]
                 ),
                 'active' => $this->randomElement([0, 1]),
@@ -51,14 +53,14 @@ class Faker extends Generator
                 'weight' => $this->numberBetween(0, 100),
                 'subscription_interval_type' => $this->randomElement(
                     [
-                        ConfigService::$intervalTypeDaily,
-                        ConfigService::$intervalTypeMonthly,
-                        ConfigService::$intervalTypeYearly,
+                        config('ecommerce.interval_type_daily'),
+                        config('ecommerce.interval_type_monthly'),
+                        config('ecommerce.interval_type_yearly'),
                     ]
                 ),
                 'subscription_interval_count' => $this->numberBetween(0, 12),
                 'stock' => $this->numberBetween(100, 1000),
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -72,7 +74,7 @@ class Faker extends Generator
             [
                 'phone' => $this->phoneNumber,
                 'email' => $this->email,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -86,11 +88,11 @@ class Faker extends Generator
             [
                 'type' => $this->randomElement(
                     [
-                        ConfigService::$billingAddressType,
-                        ConfigService::$shippingAddressType,
+                        Address::BILLING_ADDRESS_TYPE,
+                        Address::SHIPPING_ADDRESS_TYPE,
                     ]
                 ),
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'first_name' => $this->firstName,
                 'last_name' => $this->lastName,
                 'street_line_1' => $this->streetAddress,
@@ -145,7 +147,7 @@ class Faker extends Generator
                 'total_paid' => $this->randomNumber(),
                 'total_refunded' => $this->randomNumber(),
                 'conversion_rate' => $this->randomNumber(2),
-                'type' => $this->randomElement([ConfigService::$orderPaymentType, ConfigService::$renewalPaymentType]),
+                'type' => $this->randomElement([config('ecommerce.order_payment_type'), config('ecommerce.renewal_payment_type')]),
                 'external_provider' => $this->word,
                 'external_id' => $this->word,
                 'gateway_name' => $this->word,
@@ -278,7 +280,7 @@ class Faker extends Generator
                 'total_paid' => $this->randomNumber(),
                 'user_id' => $this->randomNumber(),
                 'customer_id' => null,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'shipping_address_id' => $this->randomNumber(),
                 'billing_address_id' => $this->randomNumber(),
                 'created_at' => Carbon::now()
@@ -310,8 +312,8 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'brand' => ConfigService::$brand,
-                'type' => ConfigService::$typeSubscription,
+                'brand' => config('ecommerce.brand'),
+                'type' => Product::TYPE_SUBSCRIPTION,
                 'user_id' => $this->randomNumber(),
                 'customer_id' => null,
                 'order_id' => $this->randomNumber(),
@@ -345,7 +347,7 @@ class Faker extends Generator
             [
                 'order_id' => $this->randomNumber(),
                 'order_item_id' => $this->randomNumber(),
-                'status' => ConfigService::$fulfillmentStatusPending,
+                'status' => config('ecommerce.fulfillment_status_pending'),
                 'company' => null,
                 'tracking_number' => null,
                 'fulfilled_on' => null,

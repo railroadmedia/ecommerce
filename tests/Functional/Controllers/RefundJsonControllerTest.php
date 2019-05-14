@@ -58,7 +58,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $refund = new \stdClass();
@@ -194,7 +194,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -208,7 +208,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -222,7 +222,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['paypal'])
+            array_keys(config('ecommerce.payment_gateways')['paypal'])
         );
         $methodType = PaymentMethod::TYPE_PAYPAL;
         $refundId = $this->faker->word;
@@ -358,7 +358,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -372,7 +372,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -386,7 +386,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $refund = new \stdClass();
@@ -455,7 +455,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         $orderItemFulfillment = $this->fakeOrderItemFulfillment([
             'order_id' => $order['id'],
-            'status' => ConfigService::$fulfillmentStatusPending
+            'status' => config('ecommerce.fulfillment_status_pending')
         ]);
 
         $response = $this->call(
@@ -556,7 +556,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -570,7 +570,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -579,7 +579,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert shipping fulfillment deleted
         $this->assertDatabaseMissing(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillment['id'],
                 'order_id' => $order['id'],
@@ -588,7 +588,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert user products were not removed on partial refund
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -602,7 +602,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $refund = new \stdClass();
@@ -650,7 +650,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         $orderItemFulfillment = $this->fakeOrderItemFulfillment([
             'order_id' => $order['id'],
-            'status' => ConfigService::$fulfillmentStatusFulfilled,
+            'status' => config('ecommerce.fulfillment_status_fulfilled'),
             'fulfilled_on' => Carbon::now()->toDateTimeString()
         ]);
 
@@ -752,7 +752,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -766,7 +766,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -775,7 +775,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert shipping fulfillment still exists in the database
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillment['id'],
                 'order_id' => $order['id'],
@@ -789,7 +789,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $refund = new \stdClass();
@@ -948,7 +948,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -962,7 +962,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -970,7 +970,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseMissing(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
@@ -984,7 +984,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
         $gateway = $this->faker->randomElement(
-            array_keys(ConfigService::$paymentGateways['stripe'])
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $refund = new \stdClass();
@@ -1151,7 +1151,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund raw saved in db
         $this->assertDatabaseHas(
-            ConfigService::$tableRefund,
+            'ecommerce_refunds',
             [
                 'payment_id' => $payment['id'],
                 'payment_amount' => $payment['total_due'],
@@ -1165,7 +1165,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -1173,7 +1173,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseMissing(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],

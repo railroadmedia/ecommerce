@@ -52,7 +52,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert the product was saved in the db
         $this->assertDatabaseHas(
-            ConfigService::$tableProduct,
+            'ecommerce_products',
             $product
         );
     }
@@ -97,7 +97,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert subscription data exist in db
         $this->assertDatabaseHas(
-            ConfigService::$tableProduct,
+            'ecommerce_products',
             $subscription
         );
     }
@@ -225,7 +225,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert product with the same sku was not saved in the db
         $this->assertDatabaseMissing(
-            ConfigService::$tableProduct,
+            'ecommerce_products',
             $productWithExistingSKU
         );
     }
@@ -332,7 +332,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert product updated in the db
         $this->assertDatabaseHas(
-            ConfigService::$tableProduct,
+            'ecommerce_products',
             array_merge(
                 $product,
                 [
@@ -387,7 +387,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert product raw was not modified in db
         $this->assertDatabaseHas(
-            ConfigService::$tableProduct,
+            'ecommerce_products',
             $product
         );
     }
@@ -419,7 +419,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->status());
 
         // assert product was removed from db
-        $this->assertDatabaseMissing(ConfigService::$tableProduct, [
+        $this->assertDatabaseMissing('ecommerce_products', [
             'id' => $product['id'],
         ]);
     }
@@ -626,7 +626,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert product updated in the db
         $this->assertDatabaseHas(
-            ConfigService::$tableProduct,
+            'ecommerce_products',
             array_merge(
                 $product,
                 [
@@ -672,7 +672,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert product2 was not modified in db
         $this->assertDatabaseHas(
-            ConfigService::$tableProduct,
+            'ecommerce_products',
             $product2
         );
     }
@@ -823,7 +823,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
     {
         $productFirstBrand = $this->fakeProduct([
             'active' => true,
-            'brand' => ConfigService::$brand
+            'brand' => config('ecommerce.brand')
         ]);
 
         $productSecondBrand = $this->fakeProduct([
@@ -906,7 +906,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert product updated in the db
         $this->assertDatabaseHas(
-            ConfigService::$tableProduct,
+            'ecommerce_products',
             array_merge(
                 $product,
                 [

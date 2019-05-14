@@ -124,9 +124,9 @@ class OrderFormSubmitRequest extends FormRequest
         if ($this->shippingService->doesCartHaveAnyPhysicalItems($this->cartService->getCart())) {
             $rules += [
                 'shipping_address_id' => 'required_without_all:shipping_first_name,shipping_last_name,shipping_address_line_1,shipping_city,shipping_region,shipping_zip_or_postal_code,shipping_country|exists:' .
-                    ConfigService::$databaseConnectionName .
+                    config('ecommerce.database_connection_name') .
                     '.' .
-                    ConfigService::$tableAddress .
+                    'ecommerce_addresses' .
                     ',id',
                 'shipping_first_name' => 'required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
                 'shipping_last_name' => 'required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
@@ -198,7 +198,7 @@ class OrderFormSubmitRequest extends FormRequest
 
         if (empty($address)) {
             $address = $this->populateShippingAddress(new Address());
-            $address->setType(ConfigService::$shippingAddressType);
+            $address->setType(Address::SHIPPING_ADDRESS_TYPE);
         }
 
         return $address;
@@ -239,7 +239,7 @@ class OrderFormSubmitRequest extends FormRequest
 
         if (empty($address)) {
             $address = $this->populateBillingAddress(new Address());
-            $address->setType(ConfigService::$billingAddressType);
+            $address->setType(Address::BILLING_ADDRESS_TYPE);
         }
 
         return $address;
@@ -254,7 +254,7 @@ class OrderFormSubmitRequest extends FormRequest
         $purchaser = new Purchaser();
 
         // set the brand
-        $purchaser->setBrand(ConfigService::$brand);
+        $purchaser->setBrand(config('ecommerce.brand'));
 
         // user with special permissions can place orders for other users
         if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
@@ -265,7 +265,7 @@ class OrderFormSubmitRequest extends FormRequest
             $purchaser->setId($user->getId());
             $purchaser->setEmail($user->getEmail());
             $purchaser->setType(Purchaser::USER_TYPE);
-            $purchaser->setBrand($this->get('brand', ConfigService::$brand));
+            $purchaser->setBrand($this->get('brand', config('ecommerce.brand')));
 
             return $purchaser;
         }

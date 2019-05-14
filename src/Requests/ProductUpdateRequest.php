@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Requests;
 
 
 use Illuminate\Support\Facades\Request;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Services\ConfigService;
 
 class ProductUpdateRequest extends FormRequest
@@ -53,22 +54,22 @@ class ProductUpdateRequest extends FormRequest
     {
         return [
             'data.attributes.name' => 'max:255',
-            'data.attributes.sku' => 'unique:'.ConfigService::$tableProduct.',sku,'.Request::route('productId').'|max:255',
+            'data.attributes.sku' => 'unique:'.'ecommerce_products'.',sku,'.Request::route('productId').'|max:255',
             'data.attributes.price' => 'numeric|min:0',
             'data.attributes.type' => 'max:255|in:' .
                 implode(
                     ',',
                     [
-                        ConfigService::$typeProduct,
-                        ConfigService::$typeSubscription
+                        Product::TYPE_PRODUCT,
+                        Product::TYPE_SUBSCRIPTION,
                     ]
                 ),
             'data.attributes.active' => 'boolean',
             'data.attributes.is_physical' => 'boolean',
             'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
             'data.attributes.stock' => 'numeric',
-            'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . ConfigService::$typeSubscription,
-            'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . ConfigService::$typeSubscription
+            'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION,
+            'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION
         ];
     }
 

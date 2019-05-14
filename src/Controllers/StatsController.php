@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Repositories\OrderItemRepository;
@@ -121,8 +122,8 @@ class StatsController extends Controller
                     '0 as paid, 0 as shippingCosts, 0 as finance, 0 as tax, 0 as refunded, 0 as quantity, 0 as totalNet'
                 )
                 ->whereIn(
-                    ConfigService::$tableProduct . '.brand',
-                    $request->get('brands', [ConfigService::$availableBrands])
+                    'ecommerce_products' . '.brand',
+                    $request->get('brands', [config('ecommerce.available_brands')])
                 )
                 ->get()
                 ->keyBy('id');
@@ -130,25 +131,25 @@ class StatsController extends Controller
         $allPayments =
             $this->paymentRepository->query()
                 ->where(
-                    ConfigService::$tablePayment . '.created_on',
+                    'ecommerce_order_payments' . '.created_on',
                     '>',
                     Carbon::parse($request->get('start-date', Carbon::now()))
                         ->startOfDay()
                 )
                 ->where(
-                    ConfigService::$tablePayment . '.created_on',
+                    'ecommerce_order_payments' . '.created_on',
                     '<',
                     Carbon::parse($request->get('end-date', Carbon::now()))
                         ->endOfDay()
                 )
-                ->whereIn(ConfigService::$tablePayment . '.status', ['paid', 1])
-                ->where(ConfigService::$tablePayment . '.paid', '>', 0)
+                ->whereIn('ecommerce_order_payments' . '.status', ['paid', 1])
+                ->where('ecommerce_order_payments' . '.paid', '>', 0)
                 ->get()
                 ->groupBy('type');
-        if ($allPayments->has(ConfigService::$orderPaymentType)) {
+        if ($allPayments->has(config('ecommerce.order_payment_type'))) {
             $orderPayments =
                 $this->orderPaymentRepository->query()
-                    ->whereIn('payment_id', $allPayments[ConfigService::$orderPaymentType]->pluck('id'))
+                    ->whereIn('payment_id', $allPayments[config('ecommerce.order_payment_type')]->pluck('id'))
                     ->get()
                     ->keyBy('order_id');
             $orderPaymentDetails =
@@ -161,8 +162,8 @@ class StatsController extends Controller
                 $this->orderRepository->query()
                     ->whereIn('id', $orderPayments->pluck('order_id'))
                     ->whereIn(
-                        ConfigService::$tableOrder . '.brand',
-                        $request->get('brands', [ConfigService::$availableBrands])
+                        'ecommerce_orders' . '.brand',
+                        $request->get('brands', [config('ecommerce.available_brands')])
                     )
                     ->orderBy('created_on')
                     ->chunk(
@@ -234,10 +235,10 @@ class StatsController extends Controller
         }
 
         //renewal stats
-        if ($allPayments->has(ConfigService::$renewalPaymentType)) {
+        if ($allPayments->has(config('ecommerce.renewal_payment_type'))) {
             $subscriptionRenewalPayments =
                 $this->subscriptionPaymentRepository->query()
-                    ->whereIn('payment_id', $allPayments[ConfigService::$renewalPaymentType]->pluck('id'))
+                    ->whereIn('payment_id', $allPayments[config('ecommerce.renewal_payment_type')]->pluck('id'))
                     ->get()
                     ->keyBy('subscription_id');
             $subscriptionPaymentDetails =
@@ -248,7 +249,7 @@ class StatsController extends Controller
             $subscriptions =
                 $this->subscriptionRepository->query()
                     ->whereIn('id', $subscriptionRenewalPayments->pluck('subscription_id'))
-                    ->whereIn('brand', $request->get('brands', [ConfigService::$availableBrands]))
+                    ->whereIn('brand', $request->get('brands', [config('ecommerce.available_brands')]))
                     ->orderBy('created_on')
                     ->chunk(
                         250,
@@ -259,7 +260,7 @@ class StatsController extends Controller
                             $subscriptionPaymentDetails
                         ) {
                             foreach ($subscriptions as $subscription) {
-                                if ($subscription->type == ConfigService::$typeSubscription) {
+                                if ($subscription->type == Product::TYPE_SUBSCRIPTION) {
                                     $payment =
                                         $subscriptionPaymentDetails[$subscriptionRenewalPayments[$subscription->id]->payment_id];
 
@@ -345,42 +346,42 @@ class StatsController extends Controller
         $unknownPlans =
             $this->paymentRepository->query()
                 ->select(
-                    ConfigService::$tablePayment . '.id',
-                    ConfigService::$tablePayment . '.paid as payment_paid',
-                    ConfigService::$tablePayment . '.type as payment_type',
-                    ConfigService::$tablePayment . '.refunded',
-                    ConfigService::$tablePayment . '.payment_method_id',
-                    ConfigService::$tableSubscription . '.order_id',
-                    ConfigService::$tableSubscription . '.tax_per_payment',
-                    ConfigService::$tableSubscription . '.type as subscription_type'
+                    'ecommerce_order_payments' . '.id',
+                    'ecommerce_order_payments' . '.paid as payment_paid',
+                    'ecommerce_order_payments' . '.type as payment_type',
+                    'ecommerce_order_payments' . '.refunded',
+                    'ecommerce_order_payments' . '.payment_method_id',
+                    'ecommerce_subscriptions' . '.order_id',
+                    'ecommerce_subscriptions' . '.tax_per_payment',
+                    'ecommerce_subscriptions' . '.type as subscription_type'
                 )
                 ->join(
-                    ConfigService::$tableSubscriptionPayment,
-                    ConfigService::$tablePayment . '.id',
+                    'ecommerce_subscription_payments',
+                    'ecommerce_order_payments' . '.id',
                     '=',
-                    ConfigService::$tableSubscriptionPayment . '.payment_id'
+                    'ecommerce_subscription_payments' . '.payment_id'
                 )
                 ->join(
-                    ConfigService::$tableSubscription,
-                    ConfigService::$tableSubscriptionPayment . '.subscription_id',
+                    'ecommerce_subscriptions',
+                    'ecommerce_subscription_payments' . '.subscription_id',
                     '=',
-                    ConfigService::$tableSubscription . '.id'
+                    'ecommerce_subscriptions' . '.id'
                 )
                 ->where(
-                    ConfigService::$tablePayment . '.created_on',
+                    'ecommerce_order_payments' . '.created_on',
                     '>',
                     Carbon::parse($request->get('start-date', Carbon::now()))
                         ->startOfDay()
                 )
                 ->where(
-                    ConfigService::$tablePayment . '.created_on',
+                    'ecommerce_order_payments' . '.created_on',
                     '<',
                     Carbon::parse($request->get('end-date', Carbon::now()))
                         ->endOfDay()
                 )
-                ->whereIn(ConfigService::$tablePayment . '.status', ['succeeded', 'paid', 1])
-                ->whereNull(ConfigService::$tableSubscription . '.product_id')
-                ->whereNull(ConfigService::$tableSubscription . '.order_id')
+                ->whereIn('ecommerce_order_payments' . '.status', ['succeeded', 'paid', 1])
+                ->whereNull('ecommerce_subscriptions' . '.product_id')
+                ->whereNull('ecommerce_subscriptions' . '.order_id')
                 ->get();
         $quantity = 0;
         $paid = 0;
@@ -429,7 +430,7 @@ class StatsController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.stats');
 
-        $brand = $request->get('brands', [ConfigService::$availableBrands]);
+        $brand = $request->get('brands', [config('ecommerce.available_brands')]);
         $rows = [];
         $rowDataTemplate = [
             'email' => '',
@@ -447,19 +448,19 @@ class StatsController extends Controller
 
         $this->paymentRepository->query()
             ->where(
-                ConfigService::$tablePayment . '.created_on',
+                'ecommerce_order_payments' . '.created_on',
                 '>',
                 Carbon::parse($request->get('start-date', Carbon::now()))
                     ->startOfDay()
             )
             ->where(
-                ConfigService::$tablePayment . '.created_on',
+                'ecommerce_order_payments' . '.created_on',
                 '<',
                 Carbon::parse($request->get('end-date', Carbon::now()))
                     ->endOfDay()
             )
             ->whereIn(
-                ConfigService::$tablePayment . '.status',
+                'ecommerce_order_payments' . '.status',
                 ['paid', 1]
             )
             ->orderBy('created_on')
@@ -472,7 +473,7 @@ class StatsController extends Controller
                             ->get()
                             ->keyBy('id');
 
-                    $paymentsForOrders = $allPayments->where('type', ConfigService::$orderPaymentType);
+                    $paymentsForOrders = $allPayments->where('type', config('ecommerce.order_payment_type'));
 
                     $orderPayments =
                         $this->orderPaymentRepository->query()
@@ -488,7 +489,7 @@ class StatsController extends Controller
                     //order stats
                     $this->orderRepository->query()
                         ->whereIn('id', $orderPayments->pluck('order_id'))
-                        ->whereIn(ConfigService::$tableOrder . '.brand', $brand)
+                        ->whereIn('ecommerce_orders' . '.brand', $brand)
                         ->orderBy('created_on')
                         ->chunk(
                             100,
@@ -625,7 +626,7 @@ class StatsController extends Controller
                             ->keyBy('id');
                     $this->subscriptionRepository->query()
                         ->whereIn('id', $subscriptionRenewalPayments->pluck('subscription_id'))
-                        ->whereIn(ConfigService::$tableSubscription . '.brand', $brand)
+                        ->whereIn('ecommerce_subscriptions' . '.brand', $brand)
                         ->orderBy('created_on')
                         ->chunk(
                             100,
@@ -677,7 +678,7 @@ class StatsController extends Controller
                                         $dataRow['email'] = 'unknown';
                                     }
 
-                                    if (($subscription->type == ConfigService::$typeSubscription) &&
+                                    if (($subscription->type == Product::TYPE_SUBSCRIPTION) &&
                                         ($subscription->product_id)) {
                                         $dataRow['products'] .= $products[$subscription->product_id]->name;
                                         if ($payment->refunded == 0) {
@@ -688,7 +689,7 @@ class StatsController extends Controller
                                             $orderForPaymentPlansRenewed =
                                                 $this->orderRepository->query()
                                                     ->whereIn('id', [$subscription->order_id])
-                                                    ->whereIn(ConfigService::$tableOrder . '.brand', $brand)
+                                                    ->whereIn('ecommerce_orders' . '.brand', $brand)
                                                     ->get()
                                                     ->keyBy('id');
                                             $itemsForPaymentPlans =

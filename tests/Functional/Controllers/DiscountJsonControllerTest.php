@@ -118,7 +118,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         );
 
         // assert that the discount exists in the database
-        $this->assertDatabaseHas(ConfigService::$tableDiscount, $discount);
+        $this->assertDatabaseHas('ecommerce_discounts', $discount);
     }
 
     public function test_update_missing_discount()
@@ -222,7 +222,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
 
         // assert database updates
         $this->assertDatabaseHas(
-            ConfigService::$tableDiscount,
+            'ecommerce_discounts',
             array_merge(
                 $discount,
                 [
@@ -243,7 +243,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         // assert that the discount not exists anymore in the database
-        $this->assertDatabaseMissing(ConfigService::$tableDiscount, $discount);
+        $this->assertDatabaseMissing('ecommerce_discounts', $discount);
     }
 
     public function test_delete_not_found()

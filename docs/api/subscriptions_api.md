@@ -190,8 +190,8 @@ Create a new subscription.
         implode(
             ',',
             [
-                ConfigService::$paymentPlanType,
-                ConfigService::$typeSubscription
+                config('ecommerce.type_payment_plan'),
+                Product::TYPE_SUBSCRIPTION
             ]
         ),
     'data.attributes.is_active' => 'required|boolean',
@@ -205,18 +205,18 @@ Create a new subscription.
         implode(
             ',',
             [
-                ConfigService::$intervalTypeYearly,
-                ConfigService::$intervalTypeMonthly,
-                ConfigService::$intervalTypeDaily
+                config('ecommerce.interval_type_yearly'),
+                config('ecommerce.interval_type_monthly'),
+                config('ecommerce.interval_type_daily')
             ]
         ),
     'data.attributes.interval_count' => 'required|numeric|min:0',
     'data.attributes.total_cycles_due' => 'nullable|numeric|min:0',
     'data.attributes.total_cycles_paid' => 'required|numeric|min:0',
     'data.relationships.user.data.id' => 'required|integer',
-    'data.relationships.order.data.id' => 'numeric|exists:' . ConfigService::$tableOrder . ',id',
-    'data.relationships.product.data.id' => 'numeric|exists:' . ConfigService::$tableProduct . ',id',
-    'data.relationships.paymentMethod.data.id' => 'numeric|exists:' . ConfigService::$tablePaymentMethod . ',id',
+    'data.relationships.order.data.id' => 'numeric|exists:' . 'ecommerce_orders' . ',id',
+    'data.relationships.product.data.id' => 'numeric|exists:' . 'ecommerce_products' . ',id',
+    'data.relationships.paymentMethod.data.id' => 'numeric|exists:' . 'ecommerce_payment_methods' . ',id',
 ];
 ```
 
@@ -413,8 +413,8 @@ Update an existing subscription.
         implode(
             ',',
             [
-                ConfigService::$paymentPlanType,
-                ConfigService::$typeSubscription
+                config('ecommerce.type_payment_plan'),
+                Product::TYPE_SUBSCRIPTION
             ]
         ),
     'data.attributes.is_active' => 'nullable|boolean',
@@ -428,17 +428,17 @@ Update an existing subscription.
         implode(
             ',',
             [
-                ConfigService::$intervalTypeYearly,
-                ConfigService::$intervalTypeMonthly,
-                ConfigService::$intervalTypeDaily
+                config('ecommerce.interval_type_yearly'),
+                config('ecommerce.interval_type_monthly'),
+                config('ecommerce.interval_type_daily')
             ]
         ),
     'data.attributes.interval_count' => 'nullable|numeric|min:0',
     'data.attributes.total_cycles_due' => 'nullable|numeric|min:0',
     'data.attributes.total_cycles_paid' => 'nullable|numeric|min:0',
-    'data.relationships.order.data.id' => 'numeric|exists:' . ConfigService::$tableOrder . ',id',
-    'data.relationships.product.data.id' => 'numeric|exists:' . ConfigService::$tableProduct . ',id',
-    'data.relationships.paymentMethod.data.id' => 'numeric|exists:' . ConfigService::$tablePaymentMethod . ',id',
+    'data.relationships.order.data.id' => 'numeric|exists:' . 'ecommerce_orders' . ',id',
+    'data.relationships.product.data.id' => 'numeric|exists:' . 'ecommerce_products' . ',id',
+    'data.relationships.paymentMethod.data.id' => 'numeric|exists:' . 'ecommerce_payment_methods' . ',id',
     'data.relationships.user.data.id' => 'integer',
 
 ];

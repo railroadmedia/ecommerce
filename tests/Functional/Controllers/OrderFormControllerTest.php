@@ -45,7 +45,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             'billing_zip_or_postal_code' => $this->faker->postcode,
             'billing_country' => $country,
             'company_name' => $this->faker->creditCardType,
-            'gateway' => ConfigService::$brand,
+            'gateway' => config('ecommerce.brand'),
             'shipping_first_name' => $this->faker->firstName,
             'shipping_last_name' => $this->faker->lastName,
             'shipping_address_line_1' => $this->faker->address,
@@ -104,7 +104,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             'description' => $this->faker->word,
             'is_physical' => 0,
             'weight' => 0,
-            'subscription_interval_type' => ConfigService::$intervalTypeYearly,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
 
@@ -172,7 +172,7 @@ class OrderFormControllerTest extends EcommerceTestCase
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($transactionId);
 
-        ConfigService::$paypalAgreementFulfilledRoute = 'order.submit.paypal';
+        config('ecommerce.paypal.agreement_fulfilled_route') = 'order.submit.paypal';
 
         $paypalToken = $this->faker->word;
 
@@ -195,7 +195,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // assert database records
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productOne['id'],
@@ -206,7 +206,7 @@ class OrderFormControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableUserProduct,
+            'ecommerce_user_products',
             [
                 'user_id' => $userId,
                 'product_id' => $productTwo['id'],
@@ -218,10 +218,10 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // billingAddress
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'zip' => $orderData['billing_zip_or_postal_code'],
                 'state' => $orderData['billing_region'],
@@ -232,17 +232,17 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // billingAgreement
         $this->assertDatabaseHas(
-            ConfigService::$tablePaypalBillingAgreement,
+            'ecommerce_paypal_billing_agreements',
             [
                 'external_id' => $billingAgreementId,
-                'payment_gateway_name' => ConfigService::$brand,
+                'payment_gateway_name' => config('ecommerce.brand'),
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
 
         // paymentMethod
         $this->assertDatabaseHas(
-            ConfigService::$tablePaymentMethod,
+            'ecommerce_payment_methods',
             [
                 'method_type' => PaymentMethod::TYPE_PAYPAL,
                 'created_at' => Carbon::now()->toDateTimeString()
@@ -251,7 +251,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // userPaymentMethods
         $this->assertDatabaseHas(
-            ConfigService::$tableUserPaymentMethods,
+            'ecommerce_user_payment_methods',
             [
                 'user_id' => $userId,
                 'is_primary' => true,
@@ -261,7 +261,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // payment
         $this->assertDatabaseHas(
-            ConfigService::$tablePayment,
+            'ecommerce_order_payments',
             [
                 'total_due' => round($expectedPaymentTotalDue, 2),
                 'total_paid' => round($expectedPaymentTotalDue, 2),
@@ -279,10 +279,10 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // shippingAddress
         $this->assertDatabaseHas(
-            ConfigService::$tableAddress,
+            'ecommerce_addresses',
             [
                 'type' => ConfigService::$shippingAddressType,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'first_name' => $orderData['shipping_first_name'],
                 'last_name' => $orderData['shipping_last_name'],
@@ -298,7 +298,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // order & based order prices
         $this->assertDatabaseHas(
-            ConfigService::$tableOrder,
+            'ecommerce_orders',
             [
                 'total_due' => round($expectedOrderTotalDue, 2),
                 'product_due' => $expectedTotalFromItems,
@@ -307,14 +307,14 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'finance_due' => 0,
                 'user_id' => $userId,
                 'customer_id' => null,
-                'brand' => ConfigService::$brand,
+                'brand' => config('ecommerce.brand'),
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
         );
 
         // orderItem
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $productOne['id'],
                 'quantity' => $productOneQuantity,
@@ -327,7 +327,7 @@ class OrderFormControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItem,
+            'ecommerce_order_items',
             [
                 'product_id' => $productTwo['id'],
                 'quantity' => $productTwoQuantity,
@@ -341,7 +341,7 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         // orderItemFulfillment
         $this->assertDatabaseHas(
-            ConfigService::$tableOrderItemFulfillment,
+            'ecommerce_order_item_fulfillment',
             [
                 'status' => 'pending',
                 'company' => null,
