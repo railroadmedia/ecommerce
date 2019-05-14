@@ -132,7 +132,7 @@ class OrderFormJsonController extends Controller
                     'detail' => $message,
                 ];
             }
-            response()->json(
+            return response()->json(
                 [
                     'errors' => $errors,
                 ],

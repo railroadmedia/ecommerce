@@ -172,7 +172,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $productOne
             ->setBrand($brand)
             ->setName($this->faker->word)
-            ->setSku($this->faker->word)
+            ->setSku($this->faker->word . rand())
             ->setPrice($this->faker->randomFloat(2, 15, 20))
             ->setType(Product::TYPE_PRODUCT)
             ->setActive(true)
@@ -186,7 +186,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $productTwo
             ->setBrand($brand)
             ->setName($this->faker->word)
-            ->setSku($this->faker->word)
+            ->setSku($this->faker->word . rand())
             ->setPrice($this->faker->randomFloat(2, 15, 20))
             ->setType(Product::TYPE_SUBSCRIPTION)
             ->setActive(true)

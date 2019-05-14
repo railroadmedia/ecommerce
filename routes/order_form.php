@@ -13,12 +13,4 @@ Route::group([
 
     Route::put('/json/order-form/submit', Railroad\Ecommerce\Controllers\OrderFormJsonController::class . '@submitOrder')
         ->name('json.order-form.submit');
-
-    // order form controller with redirect responses
-    Route::post('/order-form/submit', Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitOrder')
-        ->name('order-form.submit');
-
-    Route::get('/order-form/submit-paypal', Railroad\Ecommerce\Controllers\OrderFormController::class . '@submitPaypalOrder')
-        ->name('order-form.submit-paypal');
-
 });

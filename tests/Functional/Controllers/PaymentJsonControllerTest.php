@@ -108,7 +108,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
@@ -237,7 +237,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
@@ -350,7 +350,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
@@ -454,7 +454,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
@@ -741,7 +741,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => $due,
@@ -847,7 +847,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => 0,
@@ -937,7 +937,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         // assert payment exists in the db
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'total_due' => $due,
                 'total_paid' => 0,
@@ -1177,7 +1177,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->getStatusCode());
 
         $this->assertSoftDeleted(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'id' => $payment['id']
             ]

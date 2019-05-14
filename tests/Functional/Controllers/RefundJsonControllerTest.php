@@ -144,9 +144,26 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'user',
+                        'id' => $userId,
+                        'attributes' => []
+                    ],
+                    [
                         'type' => 'creditCard',
                         'id' => $creditCard['id'],
                         'attributes' => []
+                    ],
+                    [
+                        'type' => 'userPaymentMethod',
+                        'id' => $userPaymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $userPaymentMethod,
+                            [
+                                'id' => true,
+                                'user_id' => true,
+                                'payment_method_id' => true,
+                            ]
+                        )
                     ],
                     [
                         'type' => 'address',
@@ -208,7 +225,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -308,9 +325,26 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'user',
+                        'id' => $userId,
+                        'attributes' => []
+                    ],
+                    [
                         'type' => 'paypalBillingAgreement',
                         'id' => $paypalBillingAgreement['id'],
                         'attributes' => []
+                    ],
+                    [
+                        'type' => 'userPaymentMethod',
+                        'id' => $userPaymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $userPaymentMethod,
+                            [
+                                'id' => true,
+                                'user_id' => true,
+                                'payment_method_id' => true,
+                            ]
+                        )
                     ],
                     [
                         'type' => 'address',
@@ -372,7 +406,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -506,9 +540,26 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'user',
+                        'id' => $userId,
+                        'attributes' => []
+                    ],
+                    [
                         'type' => 'creditCard',
                         'id' => $creditCard['id'],
                         'attributes' => []
+                    ],
+                    [
+                        'type' => 'userPaymentMethod',
+                        'id' => $userPaymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $userPaymentMethod,
+                            [
+                                'id' => true,
+                                'user_id' => true,
+                                'payment_method_id' => true,
+                            ]
+                        )
                     ],
                     [
                         'type' => 'address',
@@ -570,7 +621,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -702,9 +753,26 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'user',
+                        'id' => $userId,
+                        'attributes' => []
+                    ],
+                    [
                         'type' => 'creditCard',
                         'id' => $creditCard['id'],
                         'attributes' => []
+                    ],
+                    [
+                        'type' => 'userPaymentMethod',
+                        'id' => $userPaymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $userPaymentMethod,
+                            [
+                                'id' => true,
+                                'user_id' => true,
+                                'payment_method_id' => true,
+                            ]
+                        )
                     ],
                     [
                         'type' => 'address',
@@ -766,7 +834,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -898,9 +966,26 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'user',
+                        'id' => $userId,
+                        'attributes' => []
+                    ],
+                    [
                         'type' => 'creditCard',
                         'id' => $creditCard['id'],
                         'attributes' => []
+                    ],
+                    [
+                        'type' => 'userPaymentMethod',
+                        'id' => $userPaymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $userPaymentMethod,
+                            [
+                                'id' => true,
+                                'user_id' => true,
+                                'payment_method_id' => true,
+                            ]
+                        )
                     ],
                     [
                         'type' => 'address',
@@ -962,7 +1047,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
@@ -1101,9 +1186,26 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 ],
                 'included' => [
                     [
+                        'type' => 'user',
+                        'id' => $userId,
+                        'attributes' => []
+                    ],
+                    [
                         'type' => 'creditCard',
                         'id' => $creditCard['id'],
                         'attributes' => []
+                    ],
+                    [
+                        'type' => 'userPaymentMethod',
+                        'id' => $userPaymentMethod['id'],
+                        'attributes' => array_diff_key(
+                            $userPaymentMethod,
+                            [
+                                'id' => true,
+                                'user_id' => true,
+                                'payment_method_id' => true,
+                            ]
+                        )
                     ],
                     [
                         'type' => 'address',
@@ -1165,7 +1267,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         // assert refund value saved in payment table
         $this->assertDatabaseHas(
-            'ecommerce_order_payments',
+            'ecommerce_payments',
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
