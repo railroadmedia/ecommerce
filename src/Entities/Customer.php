@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
 /**
  * @ORM\Entity()
@@ -18,7 +19,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class Customer
 {
-    use TimestampableEntity;
+    use TimestampableEntity, NotableEntity;
 
     /**
      * @ORM\Id

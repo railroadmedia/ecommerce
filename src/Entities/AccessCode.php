@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Entities;
 use Carbon\Carbon;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\AccessCodeRepository")
@@ -24,7 +25,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class AccessCode
 {
-    use TimestampableEntity;
+    use TimestampableEntity, NotableEntity;
 
     /**
      * @ORM\Id

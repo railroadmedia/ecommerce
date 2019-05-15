@@ -28,6 +28,7 @@ class DiscountTransformer extends TransformerAbstract
             'product_category' => $discount->getProductCategory(),
             'active' => $discount->getActive(),
             'visible' => $discount->getVisible(),
+            'note' => $discount->getNote(),
             'created_at' => $discount->getCreatedAt() ?
                 $discount->getCreatedAt()
                     ->toDateTimeString() : null,

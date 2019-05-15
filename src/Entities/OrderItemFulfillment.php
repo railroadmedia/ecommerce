@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository")
@@ -20,7 +21,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class OrderItemFulfillment
 {
-    use TimestampableEntity;
+    use TimestampableEntity, NotableEntity;
 
     /**
      * @ORM\Id

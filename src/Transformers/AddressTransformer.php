@@ -33,6 +33,7 @@ class AddressTransformer extends TransformerAbstract
             'zip' => $address->getZip(),
             'state' => $address->getState(),
             'country' => $address->getCountry(),
+            'note' => $address->getNote(),
             'created_at' => $address->getCreatedAt() ?
                 $address->getCreatedAt()
                     ->toDateTimeString() : null,

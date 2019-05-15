@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\ProductRepository")
@@ -26,7 +27,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class Product
 {
-    use TimestampableEntity;
+    use TimestampableEntity, NotableEntity;
 
     const TYPE_PRODUCT = 'product';
     const TYPE_SUBSCRIPTION = 'subscription';

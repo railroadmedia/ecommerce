@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\RefundRepository")
@@ -20,7 +21,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class Refund
 {
-    use TimestampableEntity;
+    use TimestampableEntity, NotableEntity;
 
     /**
      * @ORM\Id
@@ -50,13 +51,6 @@ class Refund
      * @var float
      */
     protected $refundedAmount;
-
-    /**
-     * @ORM\Column(type="text", nullable=true)
-     *
-     * @var string
-     */
-    protected $note;
 
     /**
      * @ORM\Column(type="string", length=64, name="external_id", nullable=true)
@@ -136,26 +130,6 @@ class Refund
     public function setRefundedAmount(?float $refundedAmount): self
     {
         $this->refundedAmount = $refundedAmount;
-
-        return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getNote(): ?string
-    {
-        return $this->note;
-    }
-
-    /**
-     * @param string $note
-     *
-     * @return Refund
-     */
-    public function setNote(?string $note): self
-    {
-        $this->note = $note;
 
         return $this;
     }

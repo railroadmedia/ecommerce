@@ -24,6 +24,7 @@ class Faker extends Generator
                     Carbon::now()
                         ->toDateTimeString() : null,
                 'brand' => config('ecommerce.brand'),
+                'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -60,6 +61,7 @@ class Faker extends Generator
                 'subscription_interval_count' => $this->numberBetween(0, 12),
                 'stock' => $this->numberBetween(100, 1000),
                 'brand' => config('ecommerce.brand'),
+                'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -74,6 +76,7 @@ class Faker extends Generator
                 'phone' => $this->phoneNumber,
                 'email' => $this->email,
                 'brand' => config('ecommerce.brand'),
+                'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -100,6 +103,7 @@ class Faker extends Generator
                 'zip' => $this->postcode,
                 'state' => $this->word,
                 'country' => $this->randomElement(LocationService::countries()),
+                'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
                 'updated_at' => Carbon::now()
@@ -156,6 +160,7 @@ class Faker extends Generator
                 'message' => null,
                 'payment_method_id' => $this->randomNumber(),
                 'currency' => $this->currencyCode,
+                'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -168,6 +173,7 @@ class Faker extends Generator
         return array_merge(
             [
                 'currency' => $this->currencyCode,
+                'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -245,6 +251,7 @@ class Faker extends Generator
                 'product_id' => $this->randomNumber(2),
                 'active' => $this->boolean,
                 'visible' => $this->boolean,
+                'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -284,6 +291,7 @@ class Faker extends Generator
                 'brand' => config('ecommerce.brand'),
                 'shipping_address_id' => $this->randomNumber(),
                 'billing_address_id' => $this->randomNumber(),
+                'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -326,7 +334,7 @@ class Faker extends Generator
                     ->addYear(1)
                     ->toDateTimeString(),
                 'canceled_on' => null,
-                'note' => null,
+                'note' => $this->text,
                 'total_price' => $this->randomNumber(3),
                 'currency' => 'CAD',
                 'interval_type' => 'year',
@@ -352,6 +360,7 @@ class Faker extends Generator
                 'company' => null,
                 'tracking_number' => null,
                 'fulfilled_on' => null,
+                'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],

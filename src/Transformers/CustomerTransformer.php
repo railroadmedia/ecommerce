@@ -14,6 +14,7 @@ class CustomerTransformer extends TransformerAbstract
             'brand' => $customer->getBrand(),
             'phone' => $customer->getPhone(),
             'email' => $customer->getEmail(),
+            'note' => $customer->getNote(),
             'created_at' => $customer->getCreatedAt() ?
                 $customer->getCreatedAt()
                     ->toDateTimeString() : null,

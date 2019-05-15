@@ -20,6 +20,7 @@ class FulfillmentTransformer extends TransformerAbstract
             'fulfilled_on' => $orderItemFulfillment->getFulfilledOn() ?
                 $orderItemFulfillment->getFulfilledOn()
                     ->toDateTimeString() : null,
+            'note' => $orderItemFulfillment->getNote(),
             'created_at' => $orderItemFulfillment->getCreatedAt() ?
                 $orderItemFulfillment->getCreatedAt()
                     ->toDateTimeString() : null,

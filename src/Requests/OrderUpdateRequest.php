@@ -57,6 +57,7 @@ class OrderUpdateRequest extends FormRequest
                 'data.attributes.taxes_due',
                 'data.attributes.shipping_due',
                 'data.attributes.total_paid',
+                'data.attributes.note',
             ]
         );
     }

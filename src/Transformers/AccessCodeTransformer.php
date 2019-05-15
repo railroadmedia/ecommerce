@@ -32,6 +32,7 @@ class AccessCodeTransformer extends TransformerAbstract
             'brand' => $accessCode->getBrand(),
             'product_ids' => $accessCode->getProductIds() ?? [],
             'is_claimed' => $accessCode->getIsClaimed(),
+            'note' => $accessCode->getNote(),
             'claimed_on' => $accessCode->getClaimedOn() ?
                 $accessCode->getClaimedOn()
                     ->toDateTimeString() : null,

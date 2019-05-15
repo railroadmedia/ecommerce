@@ -65,6 +65,7 @@ class DiscountUpdateRequest extends FormRequest
                 'data.attributes.amount',
                 'data.attributes.active',
                 'data.attributes.visible',
+                'data.attributes.note',
                 'data.relationships.product'
             ]
         );

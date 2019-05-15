@@ -25,6 +25,7 @@ class AddressUpdateRequest extends FormRequest
             'data.attributes.zip' => 'zip',
             'data.attributes.state' => 'state',
             'data.attributes.country' => 'country',
+            'data.attributes.note' => 'note',
             'data.relationships.customer.data.type' => 'customer type',
             'data.relationships.customer.data.id' => 'customer id',
             'data.relationships.user.data.type' => 'user type',
@@ -57,6 +58,7 @@ class AddressUpdateRequest extends FormRequest
             'data.attributes.zip' => 'nullable|max:255',
             'data.attributes.state' => 'nullable|max:255',
             'data.attributes.country' => 'max:255|in:' . implode(',', LocationService::countries()),
+            'data.attributes.note' => 'nullable|string',
             'data.relationships.customer.data.type' => 'nullable|in:customer',
             'data.relationships.customer.data.id' => 'integer|nullable|exists:' . 'ecommerce_customers' . ',id',
             'data.relationships.user.data.type' => 'nullable|in:user',
@@ -81,6 +83,7 @@ class AddressUpdateRequest extends FormRequest
                     'data.attributes.zip',
                     'data.attributes.state',
                     'data.attributes.country',
+                    'data.attributes.note',
                     'data.relationships.user',
                     'data.relationships.customer',
                 ]

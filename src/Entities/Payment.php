@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\PaymentRepository")
@@ -24,7 +25,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class Payment
 {
-    use TimestampableEntity;
+    use TimestampableEntity, NotableEntity;
 
     const STATUS_PAID = 'paid';
     const STATUS_PARTIALLY_PAID = 'partially_paid';

@@ -7,6 +7,7 @@ use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
+use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\AddressRepository")
@@ -28,7 +29,7 @@ use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
  */
 class Address implements AddressInterface
 {
-    use TimestampableEntity, SoftDeleteableEntity;
+    use TimestampableEntity, SoftDeleteableEntity, NotableEntity;
 
     CONST BILLING_ADDRESS_TYPE = 'billing';
     CONST SHIPPING_ADDRESS_TYPE = 'shipping';

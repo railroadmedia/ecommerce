@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Entities;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\PaymentMethodRepository")
@@ -23,7 +24,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class PaymentMethod
 {
-    use TimestampableEntity, SoftDeleteableEntity;
+    use TimestampableEntity, SoftDeleteableEntity, NotableEntity;
 
     const TYPE_CREDIT_CARD = 'credit_card';
     const TYPE_PAYPAL = 'paypal';

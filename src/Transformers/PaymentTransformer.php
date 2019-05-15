@@ -27,6 +27,7 @@ class PaymentTransformer extends TransformerAbstract
             'status' => $payment->getStatus(),
             'message' => $payment->getMessage(),
             'currency' => $payment->getCurrency(),
+            'note' => $payment->getNote(),
             'deleted_at' => $payment->getDeletedOn() ?
                 $payment->getDeletedOn()
                     ->toDateTimeString() : null,

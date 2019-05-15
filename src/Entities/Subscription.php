@@ -6,6 +6,7 @@ use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\SubscriptionRepository")
@@ -32,7 +33,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class Subscription
 {
-    use TimestampableEntity;
+    use TimestampableEntity, NotableEntity;
 
     const TYPE_SUBSCRIPTION = 'subscription';
     const TYPE_PAYMENT_PLAN = 'payment plan';
@@ -112,13 +113,6 @@ class Subscription
      * @var \DateTime
      */
     protected $canceledOn;
-
-    /**
-     * @ORM\Column(type="text")
-     *
-     * @var string
-     */
-    protected $note;
 
     /**
      * @ORM\Column(
@@ -338,26 +332,6 @@ class Subscription
     public function setCanceledOn(?DateTimeInterface $canceledOn): self
     {
         $this->canceledOn = $canceledOn;
-
-        return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getNote(): ?string
-    {
-        return $this->note;
-    }
-
-    /**
-     * @param string $note
-     *
-     * @return Subscription
-     */
-    public function setNote(?string $note): self
-    {
-        $this->note = $note;
 
         return $this;
     }

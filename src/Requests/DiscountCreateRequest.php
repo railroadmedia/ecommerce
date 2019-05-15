@@ -28,7 +28,8 @@ class DiscountCreateRequest extends FormRequest
             'data.attributes.type' => 'type',
             'data.attributes.amount' => 'amount',
             'data.attributes.active' => 'active',
-            'data.attributes.visible' => 'visible'
+            'data.attributes.visible' => 'visible',
+            'data.attributes.note' => 'note',
         ];
     }
 
@@ -64,6 +65,7 @@ class DiscountCreateRequest extends FormRequest
                 'data.attributes.amount',
                 'data.attributes.active',
                 'data.attributes.visible',
+                'data.attributes.note',
                 'data.relationships.product'
             ]
         );
