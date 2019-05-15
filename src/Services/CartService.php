@@ -8,6 +8,7 @@ use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotActiveException;
@@ -16,6 +17,7 @@ use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
 use Railroad\Ecommerce\Exceptions\Cart\UpdateNumberOfPaymentsCartException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Location\Services\LocationService;
 use Railroad\Permissions\Services\PermissionService;
 use Throwable;
 
@@ -56,6 +58,11 @@ class CartService
      */
     private $shippingService;
 
+    /**
+     * @var LocationService
+     */
+    private $locationService;
+
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
@@ -71,6 +78,7 @@ class CartService
      * @param ProductRepository $productRepository
      * @param TaxService $taxService
      * @param ShippingService $shippingService
+     * @param LocationService $locationService
      */
     public function __construct(
         DiscountService $discountService,
@@ -78,7 +86,8 @@ class CartService
         PermissionService $permissionService,
         ProductRepository $productRepository,
         TaxService $taxService,
-        ShippingService $shippingService
+        ShippingService $shippingService,
+        LocationService $locationService
     )
     {
         $this->discountService = $discountService;
@@ -87,6 +96,7 @@ class CartService
         $this->productRepository = $productRepository;
         $this->taxService = $taxService;
         $this->shippingService = $shippingService;
+        $this->locationService = $locationService;
     }
 
     /**
@@ -550,6 +560,16 @@ class CartService
             !empty($this->cart->getBillingAddress()) ?
                 $this->cart->getBillingAddress()
                     ->toArray() : null;
+
+        if ((empty($billingAddress) || empty($billingAddress['country'])) &&
+            !empty($this->locationService->getCountry())) {
+            $address = new Address($this->locationService->getCountry(), $this->locationService->getRegion());
+
+            $this->cart->setBillingAddress($address);
+
+            $this->cart->toSession();
+            $billingAddress = $address->toArray();
+        }
 
         $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 

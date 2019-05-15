@@ -187,7 +187,9 @@ class TaxService
         $shippingAddress = $cart->getShippingAddress();
 
         // use the shipping address if set
-        if (!empty($shippingAddress) && !empty($shippingAddress->getCountry())) {
+        if (!empty($shippingAddress) &&
+            !empty($shippingAddress->getCountry()) &&
+            $this->shippingService->doesCartHaveAnyPhysicalItems($cart)) {
 
             $taxableAddress = $shippingAddress;
         }

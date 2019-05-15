@@ -21,6 +21,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Tests\Fixtures\UserProvider;
 use Railroad\Location\Providers\LocationServiceProvider;
+use Railroad\Location\Services\ConfigService;
 use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
@@ -122,6 +123,8 @@ class EcommerceTestCase extends BaseTestCase
     protected function setUp()
     {
         parent::setUp();
+
+        ConfigService::$testingIP = '';
 
         $this->faker = Factory::create();
         $this->databaseManager = $this->app->make(DatabaseManager::class);

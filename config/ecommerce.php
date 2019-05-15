@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'development_mode' => true,
+    'development_mode' => env('APP_DEBUG', true),
 
     // brands
     'brand' => 'brand',

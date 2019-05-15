@@ -610,6 +610,7 @@ class CartServiceTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 15, 20),
+            'is_physical' => true,
         ]);
 
         $quantity = $this->faker->numberBetween(1, 3);
@@ -617,7 +618,7 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
 
         $shippingCountry = 'canada';
-        $shippingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$shippingCountry]));
+        $shippingState = 'alberta';
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($shippingCountry)
