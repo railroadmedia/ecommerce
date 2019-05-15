@@ -110,11 +110,8 @@ class SessionJsonControllerTest extends EcommerceTestCase
         $this->cartAddressService
             ->updateShippingAddress($address);
 
-        // some default faker countries fail the backend validation, such as: 'Svalbard & Jan Mayen Islands'
-        $countries = ['Canada', 'Serbia', 'Aruba', 'Greece'];
-
         $supplementAddress = [
-            'shipping-country' => $this->faker->randomElement($countries),
+            'shipping-country' => 'Serbia',
             'shipping-first-name' => $this->faker->word,
         ];
 

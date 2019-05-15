@@ -529,7 +529,8 @@ class CartServiceTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 15, 20),
-            'weight' => $productWeight
+            'weight' => $productWeight,
+            'is_physical' => true,
         ]);
 
         $shippingCountry = 'canada';
