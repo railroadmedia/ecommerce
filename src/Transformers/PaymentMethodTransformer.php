@@ -41,76 +41,40 @@ class PaymentMethodTransformer extends TransformerAbstract
 
     public function includeBillingAddress(PaymentMethod $paymentMethod)
     {
-        if ($paymentMethod->getBillingAddress() instanceof Proxy) {
-            return $this->item(
-                $paymentMethod->getBillingAddress(),
-                new EntityReferenceTransformer(),
-                'address'
-            );
-        }
-        else {
-            return $this->item(
-                $paymentMethod->getBillingAddress(),
-                new AddressTransformer(),
-                'address'
-            );
-        }
+        return $this->item(
+            $paymentMethod->getBillingAddress(),
+            new AddressTransformer(),
+            'address'
+        );
     }
 
     public function includeUserPaymentMethod(PaymentMethod $paymentMethod)
     {
-        if ($paymentMethod->getUserPaymentMethod() instanceof Proxy) {
-            return $this->item(
-                $paymentMethod->getUserPaymentMethod(),
-                new EntityReferenceTransformer(),
-                'userPaymentMethod'
-            );
-        }
-        else {
-            return $this->item(
-                $paymentMethod->getUserPaymentMethod(),
-                new UserPaymentMethodsTransformer(),
-                'userPaymentMethod'
-            );
-        }
+        return $this->item(
+            $paymentMethod->getUserPaymentMethod(),
+            new UserPaymentMethodsTransformer(),
+            'userPaymentMethod'
+        );
     }
 
     public function includeMethod(PaymentMethod $paymentMethod)
     {
         if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
 
-            if ($paymentMethod->getMethod() instanceof Proxy) {
-                return $this->item(
-                    $paymentMethod->getMethod(),
-                    new EntityReferenceTransformer(),
-                    'creditCard'
-                );
-            }
-            else {
-                return $this->item(
-                    $paymentMethod->getMethod(),
-                    new CreditCardTransformer(),
-                    'creditCard'
-                );
-            }
+            return $this->item(
+                $paymentMethod->getMethod(),
+                new CreditCardTransformer(),
+                'creditCard'
+            );
 
         }
         elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
 
-            if ($paymentMethod->getMethod() instanceof Proxy) {
-                return $this->item(
-                    $paymentMethod->getMethod(),
-                    new EntityReferenceTransformer(),
-                    'paypalBillingAgreement'
-                );
-            }
-            else {
-                return $this->item(
-                    $paymentMethod->getMethod(),
-                    new PaypalBillingAgreementTransformer(),
-                    'paypalBillingAgreement'
-                );
-            }
+            return $this->item(
+                $paymentMethod->getMethod(),
+                new CreditCardTransformer(),
+                'creditCard'
+            );
 
         }
         else {
