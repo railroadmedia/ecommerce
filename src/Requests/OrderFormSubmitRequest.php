@@ -98,13 +98,13 @@ class OrderFormSubmitRequest extends FormRequest
     {
         // base rules
         $rules = [
-            'payment_method_type' => 'required_without:payment_method_id',
-            'payment_method_id' => 'required_without:payment_method_type',
-            'billing_country' => 'required|in:' . implode(',', config('location.countries')),
-            'card_token' => 'required_if:payment_method_type,' . PaymentMethod::TYPE_CREDIT_CARD,
-            'gateway' => 'required',
-            'currency' => 'in:' . implode(',', config('ecommerce.supported_currencies')),
-            'payment_plan_number_of_payments' => 'in:' . implode(',', config('ecommerce.payment_plan_options')),
+            'payment_method_type' => 'string|required_without:payment_method_id',
+            'payment_method_id' => 'integer|required_without:payment_method_type',
+            'billing_country' => 'string|required|in:' . implode(',', config('location.countries')),
+            'card_token' => 'string|required_if:payment_method_type,' . PaymentMethod::TYPE_CREDIT_CARD,
+            'gateway' => 'string|required',
+            'currency' => 'string|in:' . implode(',', config('ecommerce.supported_currencies')),
+            'payment_plan_number_of_payments' => 'integer|in:' . implode(',', config('ecommerce.payment_plan_options')),
         ];
 
         // billing address
@@ -113,26 +113,26 @@ class OrderFormSubmitRequest extends FormRequest
         // if the country is in canada we must also get the region and zip
         if (request()->get('billing_country') == 'Canada') {
             $rules += [
-                'billing_region' => 'required|regex:/^[0-9a-zA-Z-_ ]+$/',
-                'billing_zip_or_postal_code' => 'regex:/^[0-9a-zA-Z-_ ]+$/',
+                'billing_region' => 'string|required|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'billing_zip_or_postal_code' => 'string|regex:/^[0-9a-zA-Z-_ ]+$/',
             ];
         }
 
         // if the cart has any items that need shipping
         if ($this->shippingService->doesCartHaveAnyPhysicalItems($this->cartService->getCart())) {
             $rules += [
-                'shipping_address_id' => 'required_without_all:shipping_first_name,shipping_last_name,shipping_address_line_1,shipping_city,shipping_region,shipping_zip_or_postal_code,shipping_country|exists:' .
+                'shipping_address_id' => 'integer|required_without_all:shipping_first_name,shipping_last_name,shipping_address_line_1,shipping_city,shipping_region,shipping_zip_or_postal_code,shipping_country|exists:' .
                     config('ecommerce.database_connection_name') .
                     '.' .
                     'ecommerce_addresses' .
                     ',id',
-                'shipping_first_name' => 'required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
-                'shipping_last_name' => 'required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
-                'shipping_address_line_1' => 'required_without:shipping_address_id',
-                'shipping_city' => 'required_without:shipping_address_id|regex:/^[a-zA-Z-_ ]+$/',
-                'shipping_region' => 'required_without:shipping_address_id|regex:/^[0-9a-zA-Z-_ ]+$/',
-                'shipping_zip_or_postal_code' => 'required_without:shipping_address_id|regex:/^[0-9a-zA-Z-_ ]+$/',
-                'shipping_country' => 'required_without:shipping_address_id|in:' .
+                'shipping_first_name' => 'string|required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
+                'shipping_last_name' => 'string|required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
+                'shipping_address_line_1' => 'string|required_without:shipping_address_id',
+                'shipping_city' => 'string|required_without:shipping_address_id|regex:/^[a-zA-Z-_ ]+$/',
+                'shipping_region' => 'string|required_without:shipping_address_id|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'shipping_zip_or_postal_code' => 'string|required_without:shipping_address_id|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'shipping_country' => 'string|required_without:shipping_address_id|in:' .
                     implode(',', config('location.countries')),
             ];
         }
