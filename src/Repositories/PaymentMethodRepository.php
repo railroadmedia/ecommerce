@@ -106,4 +106,29 @@ class PaymentMethodRepository extends RepositoryBase
             ->useResultCache($this->arrayCache)
             ->getOneOrNullResult();
     }
+
+    /**
+     * @param $userId
+     * @return PaymentMethod[]
+     */
+    public function getAllUsersPaymentMethods($userId)
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $paymentMethods =
+            $qb->select(['upm', 'pm', 'cc', 'ppba'])
+                ->from(PaymentMethod::class, 'pm')
+                ->join('pm.userPaymentMethod', 'upm')
+                ->leftJoin('pm.creditCard', 'cc')
+                ->leftJoin('pm.paypalBillingAgreement', 'ppba')
+                ->where(
+                    $qb->expr()
+                        ->eq('upm.user', ':user')
+                )
+                ->setParameter('user', $userId)
+                ->getQuery()
+                ->getResult();
+
+        return $paymentMethods;
+    }
 }
