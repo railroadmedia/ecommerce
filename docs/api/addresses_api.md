@@ -65,6 +65,7 @@ $.ajax({
             "zip":"26707-9218",
             "state":"sunt",
             "country":"The Gambia",
+            "note":"some note.",
             "created_at":"2019-04-29 18:26:45",
             "updated_at":"2019-04-29 18:26:45"
          },
@@ -117,6 +118,9 @@ Create a new address.
 - Must have the 'store.address' permission to create addresses for others users or customers
 
 ### Request Parameters
+
+[Notable](request_notable_parameter.md)
+<br>
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
@@ -182,6 +186,7 @@ $.ajax({
             zip: "33348-7377",
             state: "sed",
             country: "Ireland",
+            note: "some note",
             created_at: "2019-04-29 18:46:48",
             updated_at: "2019-04-29 18:46:48"
         },
@@ -219,6 +224,7 @@ $.ajax({
          "zip":"14241",
          "state":"rerum",
          "country":"Czech Republic",
+         "note":"some note.",
          "created_at":"2019-04-29 18:49:41",
          "updated_at":"2019-04-29 18:49:41"
       },
@@ -256,6 +262,9 @@ Update an existing address.
 - Must have the 'update.address' permission to update addresses for others users or customers
 
 ### Request Parameters
+
+[Notable](request_notable_parameter.md)
+<br>
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
@@ -322,6 +331,7 @@ $.ajax({
             zip: "33348-7377",
             state: "sed",
             country: "Ireland",
+            note: "some note",
             created_at: "2019-04-29 18:46:48",
             updated_at: "2019-04-29 18:46:48"
         },
@@ -359,6 +369,7 @@ $.ajax({
          "zip":"14241",
          "state":"rerum",
          "country":"Czech Republic",
+         "note":"some note",
          "created_at":"2019-04-29 18:49:41",
          "updated_at":"2019-04-29 18:49:41"
       },

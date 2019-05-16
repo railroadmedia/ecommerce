@@ -159,6 +159,9 @@ Create a new subscription.
 
 ### Request Parameters
 
+[Notable](request_notable_parameter.md)
+<br>
+
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |body|data.type|yes||must be 'subscription'||
@@ -168,7 +171,6 @@ Create a new subscription.
 |body|data.attributes.start_date|yes||date time string||
 |body|data.attributes.paid_until|yes||date time string||
 |body|data.attributes.canceled_on|yes||date time string||
-|body|data.attributes.note|yes||||
 |body|data.attributes.total_price|yes||||
 |body|data.attributes.currency|yes||||
 |body|data.attributes.interval_type|yes||'year' or 'month'||
@@ -381,6 +383,9 @@ Update an existing subscription.
 
 ### Request Parameters
 
+[Notable](request_notable_parameter.md)
+<br>
+
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |path|subscription id|yes||||
@@ -391,7 +396,6 @@ Update an existing subscription.
 |body|data.attributes.start_date|||date time string||
 |body|data.attributes.paid_until|||date time string||
 |body|data.attributes.canceled_on|||date time string||
-|body|data.attributes.note|||||
 |body|data.attributes.total_price|||||
 |body|data.attributes.currency|||||
 |body|data.attributes.interval_type|||'year' or 'month'||
@@ -594,7 +598,7 @@ $.ajax({
             "start_date":"2019-05-01 16:09:59",
             "paid_until":"2020-05-01 00:00:00",
             "canceled_on":null,
-            "note":null,
+            "note":"some note.",
             "total_price":940,
             "currency":"CAD",
             "interval_type":"year",

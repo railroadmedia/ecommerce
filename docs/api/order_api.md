@@ -66,6 +66,7 @@ $.ajax({
                 "total_paid":4971861,
                 "brand":"brand",
                 "deleted_at":null,
+                "note":"some note",
                 "created_at":"2019-04-30 18:27:36",
                 "updated_at":null
             },
@@ -220,6 +221,7 @@ $.ajax({
             "total_paid":4971861,
             "brand":"brand",
             "deleted_at":null,
+            "note":"some note",
             "created_at":"2019-04-30 18:27:36",
             "updated_at":null
         },
@@ -339,6 +341,9 @@ Update an existing order.
 
 ### Request Parameters
 
+[Notable](request_notable_parameter.md)
+<br>
+
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |body|data.type|yes||must be 'order'||
@@ -396,6 +401,7 @@ $.ajax({
             "finance_due":67,
             "total_paid":65,
             "brand":"brand",
+            "note":"some note",
             "deleted_at":null,
             "created_at":"2019-04-30 18:37:18",
             "updated_at":"2019-04-30 18:37:18"

@@ -66,6 +66,7 @@ $.ajax({
                 "subscription_interval_type":"year",
                 "subscription_interval_count":7,
                 "stock":402,
+                "note":"some note",
                 "created_at":"2019-04-30 21:29:48",
                 "updated_at":null
             }
@@ -100,6 +101,9 @@ Create a new product.
 - Must have the 'create.product' permission to create
 
 ### Request Parameters
+
+[Notable](request_notable_parameter.md)
+<br>
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
@@ -147,24 +151,25 @@ Create a new product.
 
 ```json
 {   
-    data: {
-        type: "product",
-        attributes: {
-            name: "sit",
-            sku: "omnis6239535",
-            price: 39,
-            type: "subscription",
-            active: 0,
-            category: "assumenda",
-            description: "Et porro error laborum labore nobis",
-            thumbnail_url: "https://lorempixel.com/640/480/?72919",
-            is_physical: 1,
-            weight: 12,
-            subscription_interval_type: "month",
-            subscription_interval_count: 8,
-            stock: 620,
-            brand: "brand",
-            created_at: "2019-04-30 21:37:04"
+    "data": {
+        "type": "product",
+        "attributes": {
+            "name": "sit",
+            "sku": "omnis6239535",
+            "price": 39,
+            "type": "subscription",
+            "active": 0,
+            "category": "assumenda",
+            "description": "Et porro error laborum labore nobis",
+            "thumbnail_url": "https://lorempixel.com/640/480/?72919",
+            "is_physical": 1,
+            "weight": 12,
+            "subscription_interval_type": "month",
+            "subscription_interval_count": 8,
+            "stock": 620,
+            "brand": "brand",
+            "note": "some note", 
+            "created_at": "2019-04-30 21:37:04"
         }
     }
 }
@@ -194,6 +199,7 @@ Create a new product.
             "subscription_interval_type":"year",
             "subscription_interval_count":6,
             "stock":877,
+            "note":"some note",
             "created_at":"2019-04-30 21:37:58",
             "updated_at":"2019-04-30 21:37:58"
         }
@@ -213,6 +219,9 @@ Update an existing product.
 - Must have the 'update.product' permission to create
 
 ### Request Parameters
+
+[Notable](request_notable_parameter.md)
+<br>
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
@@ -301,6 +310,7 @@ $.ajax({
             "subscription_interval_type":"year",
             "subscription_interval_count":2,
             "stock":870,
+            "note":"some note",
             "created_at":"2019-04-30 21:45:45",
             "updated_at":"2019-04-30 21:45:45"
         }

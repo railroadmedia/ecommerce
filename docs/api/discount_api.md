@@ -58,6 +58,7 @@ $.ajax({
                 "product_category":null,
                 "active":true,
                 "visible":true,
+                "note":"some note",
                 "created_at":"2019-04-30 17:32:40",
                 "updated_at":null
             },
@@ -158,6 +159,7 @@ $.ajax({
             "product_category":null,
             "active":false,
             "visible":false,
+            "note":"some note",
             "created_at":"2019-04-30 17:35:37",
             "updated_at":null
         },
@@ -210,6 +212,9 @@ Create a new discount.
 
 ### Request Parameters
 
+[Notable](request_notable_parameter.md)
+<br>
+
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |body|data.type|yes||must be 'discount'||
@@ -254,6 +259,7 @@ $.ajax({
                 product_id: 1,
                 active: true,
                 visible: false,
+                note: "some note",
                 created_at: "2019-04-30 17:45:11",
             },
             relationships: {
@@ -288,6 +294,7 @@ $.ajax({
             "product_category":null,
             "active":false,
             "visible":false,
+            "note":"some note",
             "created_at":"2019-04-30 17:35:37",
             "updated_at":null
         },
@@ -339,6 +346,9 @@ Update an existing discount.
 - Must have the 'update.discount' permission.
 
 ### Request Parameters
+
+[Notable](request_notable_parameter.md)
+<br>
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
@@ -404,6 +414,7 @@ $.ajax({
             "product_category":null,
             "active":false,
             "visible":false,
+            "note":"some note",
             "created_at":"2019-04-30 17:35:37",
             "updated_at":null
         },

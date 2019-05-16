@@ -66,6 +66,7 @@ $.ajax({
                 "status":"1",
                 "message":null,
                 "currency":"MDL",
+                "note":"some note",
                 "deleted_at":null,
                 "created_at":"2019-04-30 20:15:28",
                 "updated_at":null
@@ -123,6 +124,9 @@ Create a new payment. This DOES actually attempt to charge the user.
 
 ### Request Parameters
 
+[Notable](request_notable_parameter.md)
+<br>
+
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |body|data.attributes.due|yes||how much to charge in their currency||
@@ -157,7 +161,8 @@ $.ajax({
         attributes: {
             due: 10.02,
             currency: 'CAD',
-            payment_gateway: 'drumeo'
+            payment_gateway: 'drumeo',
+            note: 'some note'
         },
         relationships: {
             paymentMethod: {
@@ -194,6 +199,7 @@ $.ajax({
             "status":"1",
             "message":"",
             "currency":"CAD",
+            "note":"some note",
             "deleted_at":null,
             "created_at":"2019-04-30 20:29:46",
             "updated_at":"2019-04-30 20:29:46"
