@@ -339,8 +339,16 @@
                                                         @endforeach
 
                                                         @if($order->getTaxesDue() > 0)
+                                                            @if($gstPaid > 0)
+                                                                <tr>
+                                                                    <td>GST/HST</td>
+                                                                    <td class="alignright">
+                                                                        {{ $currencySymbol}} {{ number_format($gstPaid, 2) }}</td>
+                                                                </tr>
+                                                            @endif
+
                                                             <tr>
-                                                                <td>Tax</td>
+                                                                <td>Total Tax</td>
                                                                 <td class="alignright">
                                                                     {{ $currencySymbol}} {{ number_format($order->getTaxesDue(), 2) }}</td>
                                                             </tr>
