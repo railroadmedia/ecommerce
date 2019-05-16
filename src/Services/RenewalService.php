@@ -356,8 +356,8 @@ class RenewalService
             if ($failedPaymentsCount >= config('ecommerce.paypal.failed_payments_before_de_activation') ?? 1) {
 
                 $subscription->setIsActive(false)
-                    ->setNote('De-activated due to payments failing.')
                     ->setUpdatedAt(Carbon::now());
+                $subscription->setNote('De-activated due to payments failing.');
 
                 $this->entityManager->flush();
 

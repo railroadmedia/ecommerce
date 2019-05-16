@@ -47,6 +47,7 @@ class DiscountUpdateRequest extends FormRequest
             'data.attributes.amount' => 'numeric',
             'data.attributes.active' => 'boolean',
             'data.attributes.visible' => 'boolean',
+            'data.attributes.note' => 'nullable|string',
         ];
     }
 

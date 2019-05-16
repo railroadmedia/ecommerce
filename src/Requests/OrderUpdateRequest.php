@@ -27,6 +27,7 @@ class OrderUpdateRequest extends FormRequest
             'data.attributes.taxes_due' => 'taxes due',
             'data.attributes.shipping_due' => 'shipping due',
             'data.attributes.total_paid' => 'total paid',
+            'data.attributes.note' => 'note',
         ];
     }
 
@@ -43,6 +44,7 @@ class OrderUpdateRequest extends FormRequest
             'data.attributes.taxes_due' => 'numeric|min:0',
             'data.attributes.shipping_due' => 'numeric|min:0',
             'data.attributes.total_paid' => 'numeric|min:0',
+            'data.attributes.note' => 'nullable|string',
         ];
     }
 

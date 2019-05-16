@@ -39,6 +39,7 @@ class ProductCreateRequest extends FormRequest
             'data.attributes.subscription_interval_type' => 'subscription interval type',
             'data.attributes.subscription_interval_count' => 'subscription interval count',
             'data.attributes.stock' => 'stock',
+            'data.attributes.note' => 'note',
         ];
     }
 
@@ -67,7 +68,8 @@ class ProductCreateRequest extends FormRequest
             'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' .
                 Product::TYPE_SUBSCRIPTION,
             'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' .
-                Product::TYPE_SUBSCRIPTION
+                Product::TYPE_SUBSCRIPTION,
+            'data.attributes.note' => 'nullable|string',
         ];
     }
 
@@ -93,6 +95,7 @@ class ProductCreateRequest extends FormRequest
                 'data.attributes.subscription_interval_type',
                 'data.attributes.subscription_interval_count',
                 'data.attributes.stock',
+                'data.attributes.note',
             ]
         );
     }

@@ -66,7 +66,7 @@ class SubscriptionCreateRequest extends FormRequest
             'data.attributes.start_date' => 'required|date',
             'data.attributes.paid_until' => 'required|date',
             'data.attributes.canceled_on' => 'nullable|date',
-            'data.attributes.note' => 'nullable|max:255',
+            'data.attributes.note' => 'nullable',
             'data.attributes.total_price' => 'required|numeric|min:0',
             'data.attributes.currency' => 'required|max:3',
             'data.attributes.interval_type' => 'required|in:' . implode(

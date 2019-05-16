@@ -48,6 +48,7 @@ class DiscountCreateRequest extends FormRequest
             'data.attributes.amount' => 'required|numeric',
             'data.attributes.active' => 'required|boolean',
             'data.attributes.visible' => 'required|boolean',
+            'data.attributes.note' => 'nullable|string',
         ];
     }
 

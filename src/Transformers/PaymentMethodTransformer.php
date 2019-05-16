@@ -73,8 +73,8 @@ class PaymentMethodTransformer extends TransformerAbstract
 
             return $this->item(
                 $paymentMethod->getMethod(),
-                new CreditCardTransformer(),
-                'creditCard'
+                new PaypalBillingAgreementTransformer(),
+                'paypalBillingAgreement'
             );
 
         }

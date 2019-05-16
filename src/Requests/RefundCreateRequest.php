@@ -40,7 +40,7 @@ class RefundCreateRequest extends FormRequest
         return [
             'data.type' => 'in:refund',
             'data.attributes.refund_amount' => 'required|numeric',
-            'data.attributes.note' => 'max:255',
+            'data.attributes.note' => 'nullable|string',
             'data.attributes.gateway_name' => 'required',
             'data.relationships.payment.data.id' => 'required|numeric|exists:' . 'ecommerce_payments' . ',id'
         ];

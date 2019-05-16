@@ -24,6 +24,7 @@ class PaymentCreateRequest extends FormRequest
         return [
             'data.type' => 'json data type',
             'data.attributes.due' => 'due',
+            'data.attributes.note' => 'note',
             'data.relationships.paymentMethod.data.id' => 'payment method',
             'data.relationships.order.data.id' => 'order',
             'data.relationships.subscription.data.id' => 'subscription'
@@ -40,6 +41,7 @@ class PaymentCreateRequest extends FormRequest
         return [
             'data.type' => 'in:payment',
             'data.attributes.due' => 'required|numeric',
+            'data.attributes.note' => 'nullable|string',
             'data.relationships.paymentMethod.data.id' => 'numeric|nullable|exists:' .
                 'ecommerce_payment_methods' .
                 ',id',
@@ -56,6 +58,7 @@ class PaymentCreateRequest extends FormRequest
         return $this->only(
             [
                 'data.attributes.due',
+                'data.attributes.note',
                 'data.relationships.paymentMethod',
                 'data.relationships.order',
                 'data.relationships.subscription'

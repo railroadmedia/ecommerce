@@ -409,7 +409,7 @@ class CartServiceTest extends EcommerceTestCase
 
         $quantity = $this->faker->numberBetween(1, 3);
 
-        $shippingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$shippingCountry]));
+        $shippingState = 'alberta';
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($shippingCountry)
