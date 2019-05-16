@@ -178,7 +178,7 @@ class PaymentMethodJsonController extends Controller
          */
         $user = $this->userProvider->getUserById($userId);
 
-        if (empty($user) || $userId !== auth()->id()) {
+        if (empty($user) || $userId != auth()->id()) {
             $this->permissionService->canOrThrow(auth()->id(), 'pull.user.payment.method');
         }
 
