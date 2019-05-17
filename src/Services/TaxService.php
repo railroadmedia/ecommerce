@@ -48,7 +48,7 @@ class TaxService
                 )];
             }
             else {
-                throw new Exception(
+                error_log(
                     'Could not find product tax rate for address. Country: ' .
                     $address->getCountry() .
                     ' Province: ' .
