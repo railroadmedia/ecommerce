@@ -42,11 +42,13 @@ class PaymentMethodTransformer extends TransformerAbstract
 
     public function includeBillingAddress(PaymentMethod $paymentMethod)
     {
-        return $this->item(
-            $paymentMethod->getBillingAddress(),
-            new AddressTransformer(),
-            'address'
-        );
+        if (!empty($paymentMethod->getBillingAddress())) {
+            return $this->item(
+                $paymentMethod->getBillingAddress(),
+                new AddressTransformer(),
+                'address'
+            );
+        }
     }
 
     public function includeUserPaymentMethod(PaymentMethod $paymentMethod)
