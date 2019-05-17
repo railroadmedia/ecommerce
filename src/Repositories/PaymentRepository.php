@@ -76,7 +76,7 @@ class PaymentRepository extends EntityRepository
      */
     public function getAllUsersPayments($userId, $paidOnly = false)
     {
-        $payments = [];
+        $allPayments = [];
 
         // order payments
         $qb =
@@ -86,9 +86,10 @@ class PaymentRepository extends EntityRepository
         /**
          * @var $ordersWithPayments Order[]
          */
-        $qb->select('o', 'p', 'pm')
-            ->from(Order::class, 'o')
-            ->join('o.payments', 'p')
+        $qb->select('o', 'p', 'pm', 'op')
+            ->from(Payment::class, 'p')
+            ->join('p.orderPayment', 'op')
+            ->join('op.order', 'o')
             ->join('p.paymentMethod', 'pm')
             ->where('o.user = :userId')
             ->setParameter('userId', $userId);
@@ -100,14 +101,12 @@ class PaymentRepository extends EntityRepository
             );
         }
 
-        $ordersWithPayments =
+        $payments =
             $qb->getQuery()
                 ->getResult();
 
-        foreach ($ordersWithPayments as $orderWithPayments) {
-            foreach ($orderWithPayments->getPayments() as $payment) {
-                $payments[$payment->getId()] = $payment;
-            }
+        foreach ($payments as $payment) {
+            $allPayments[$payment->getId()] = $payment;
         }
 
         // subscription payments
@@ -118,9 +117,10 @@ class PaymentRepository extends EntityRepository
         /**
          * @var $subscriptionsWithPayments Subscription[]
          */
-        $qb->select('s', 'p', 'pm')
-            ->from(Subscription::class, 's')
-            ->join('s.payments', 'p')
+        $qb->select('s', 'p', 'pm', 'sp')
+            ->from(Payment::class, 'p')
+            ->join('p.subscriptionPayment', 'sp')
+            ->join('sp.subscription', 's')
             ->join('p.paymentMethod', 'pm')
             ->where('s.user = :userId')
             ->setParameter('userId', $userId);
@@ -132,16 +132,14 @@ class PaymentRepository extends EntityRepository
             );
         }
 
-        $subscriptionsWithPayments =
+        $payments =
             $qb->getQuery()
                 ->getResult();
 
-        foreach ($subscriptionsWithPayments as $subscriptionWithPayments) {
-            foreach ($subscriptionWithPayments->getPayments() as $payment) {
-                $payments[$payment->getId()] = $payment;
-            }
+        foreach ($payments as $payment) {
+            $allPayments[$payment->getId()] = $payment;
         }
 
-        return $payments;
+        return $allPayments;
     }
 }

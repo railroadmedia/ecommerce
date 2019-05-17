@@ -61,10 +61,9 @@ class TaxServiceTest extends EcommerceTestCase
         $address->setCountry($country)
             ->setState($state);
 
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Could not find product tax rate for address. Country: canada Province: ');
-
         $rate = $srv->getProductTaxRate($address);
+
+        $this->assertEquals(0, $rate);
     }
 
     public function test_get_product_tax_rate_unset_country()
