@@ -84,7 +84,7 @@ class TaxService
                 )];
             }
             else {
-                throw new Exception(
+                error_log(
                     'Could not find shipping tax rate for address. Country: ' .
                     $address->getCountry() .
                     ' Province: ' .
@@ -120,7 +120,7 @@ class TaxService
                 )];
             }
             else {
-                throw new Exception(
+                error_log(
                     'Could not find GST tax rate for address. Country: ' .
                     $address->getCountry() .
                     ' Province: ' .
