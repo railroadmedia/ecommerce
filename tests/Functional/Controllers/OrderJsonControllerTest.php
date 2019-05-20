@@ -159,6 +159,153 @@ class OrderJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_update_order_items()
+    {
+        $randomId = $this->faker->randomNumber();
+
+        $productOnePrice = $this->faker->randomFloat(2, 50, 90);
+        $productOneQuantity = 1;
+
+        $productTwoPrice = $this->faker->randomFloat(2, 50, 90);
+        $productTwoInitialQuantity = 3;
+
+        $orderInitialProductDue = round($productOnePrice * $productOneQuantity + $productTwoPrice * $productTwoInitialQuantity, 2);
+        $orderInitialTaxesDue = $this->faker->randomFloat(2, 3, 5);
+        $orderInitialShippingDue = $this->faker->randomFloat(2, 3, 5);
+        $orderInitialTotalDue = round($orderInitialProductDue + $orderInitialTaxesDue + $orderInitialShippingDue, 2);
+        $orderInitialTotalPaid = $orderInitialTotalDue;
+
+        $order = $this->fakeOrder([
+            'user_id' => $randomId,
+            'customer_id' => null,
+            'shipping_address_id' => null,
+            'billing_address_id' => null,
+            'deleted_at' => null,
+            'total_due' => $orderInitialTotalDue,
+            'product_due' => $orderInitialProductDue,
+            'taxes_due' => $orderInitialTaxesDue,
+            'shipping_due' => $orderInitialShippingDue,
+            'finance_due' => 0,
+            'total_paid' => $orderInitialTotalPaid,
+        ]);
+
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'is_physical' => false,
+            'stock' => $this->faker->numberBetween(5, 100),
+            'price' => $productOnePrice,
+        ]);
+
+        $orderItemOne = $this->fakeOrderItem([
+            'order_id' => $order['id'],
+            'product_id' => $productOne['id'],
+            'quantity' => $productOneQuantity,
+            'weight' => 0,
+            'initial_price' => $productOne['price'],
+            'total_discounted' => 0,
+            'final_price' => $productOne['price']
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'is_physical' => 1,
+            'weight' => 0.20,
+            'stock' => $this->faker->numberBetween(5, 100),
+            'price' => $productTwoPrice,
+        ]);
+
+        $orderItemTwo = $this->fakeOrderItem([
+            'order_id' => $order['id'],
+            'product_id' => $productTwo['id'],
+            'quantity' => $productTwoInitialQuantity,
+            'weight' => $productTwo['weight'],
+            'initial_price' => $productTwo['price'],
+            'total_discounted' => 0,
+            'final_price' => $productTwo['price'] * $productTwoInitialQuantity
+        ]);
+
+        $productTwoNewQuantity = 2;
+        $orderNewProductDue = round($productOnePrice * $productOneQuantity + $productTwoPrice * $productTwoNewQuantity, 2);
+        $orderNewTaxesDue = $this->faker->randomFloat(2, 3, 5);
+        $orderNewShippingDue = $this->faker->randomFloat(2, 3, 5);
+        $orderNewTotalDue = round($orderNewProductDue + $orderNewTaxesDue + $orderNewShippingDue, 2);
+        $orderNewTotalPaid = $orderNewTotalDue;
+
+        $response = $this->call(
+            'PATCH',
+            '/order/' . $order['id'],
+            [
+                'data' => [
+                    'type' => 'order',
+                    'attributes' => [
+                        'total_due' => $orderNewTotalDue,
+                        'product_due' => $orderNewProductDue,
+                        'taxes_due' => $orderNewTaxesDue,
+                        'shipping_due' => $orderNewShippingDue,
+                        'finance_due' => 0,
+                        'total_paid' => $orderNewTotalPaid,
+                    ],
+                    'relationships' => [
+                        'orderItems' => [
+                            'data' => [
+                                [
+                                    'type' => 'orderItem',
+                                    'id' => $orderItemOne['id'],
+                                ],
+                                [
+                                    'type' => 'orderItem',
+                                    'id' => $orderItemTwo['id'],
+                                ],
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'orderItem',
+                        'id' => $orderItemTwo['id'],
+                        'attributes' => [
+                            'quantity' => $productTwoNewQuantity,
+                            'final_price' => $productTwo['price'] * $productTwoNewQuantity,
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'total_due' => $orderNewTotalDue,
+                'product_due' => $orderNewProductDue,
+                'taxes_due' => $orderNewTaxesDue,
+                'shipping_due' => $orderNewShippingDue,
+                'finance_due' => 0,
+                'total_paid' => $orderNewTotalPaid,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_items',
+            [
+                'product_id' => $productOne['id'],
+                'quantity' => $productOneQuantity,
+                'initial_price' => $productOne['price'],
+                'final_price' => $productOne['price'] * $productOneQuantity,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_items',
+            [
+                'product_id' => $productTwo['id'],
+                'quantity' => $productTwoNewQuantity,
+                'initial_price' => $productTwo['price'],
+                'final_price' => $productTwo['price'] * $productTwoNewQuantity,
+            ]
+        );
+    }
+
     public function test_show_decorated_order()
     {
         $userId = $this->createAndLogInNewUser();

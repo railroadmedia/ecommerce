@@ -24,10 +24,12 @@ class OrderUpdateRequest extends FormRequest
         return [
             'data.type' => 'json data type',
             'data.attributes.total_due' => 'total due',
+            'data.attributes.product_due' => 'product due',
             'data.attributes.taxes_due' => 'taxes due',
             'data.attributes.shipping_due' => 'shipping due',
             'data.attributes.total_paid' => 'total paid',
             'data.attributes.note' => 'note',
+            'data.relationships.orderItems.data.id' => 'order item'
         ];
     }
 
@@ -41,10 +43,12 @@ class OrderUpdateRequest extends FormRequest
         return [
             'data.type' => 'in:order',
             'data.attributes.total_due' => 'numeric|min:0',
+            'data.attributes.product_due' => 'numeric|min:0',
             'data.attributes.taxes_due' => 'numeric|min:0',
             'data.attributes.shipping_due' => 'numeric|min:0',
             'data.attributes.total_paid' => 'numeric|min:0',
             'data.attributes.note' => 'nullable|string',
+            'data.relationships.orderItems.data.id' => 'numeric|exists:ecommerce_order_items,id',
         ];
     }
 
@@ -56,10 +60,13 @@ class OrderUpdateRequest extends FormRequest
         return $this->only(
             [
                 'data.attributes.total_due',
+                'data.attributes.product_due',
                 'data.attributes.taxes_due',
                 'data.attributes.shipping_due',
                 'data.attributes.total_paid',
                 'data.attributes.note',
+                'data.relationships.orderItems',
+                'include',
             ]
         );
     }

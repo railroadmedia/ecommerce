@@ -349,6 +349,23 @@ class OrderJsonController extends Controller
 
         $this->jsonApiHydrator->hydrate($order, $request->onlyAllowed());
 
+        if ($request->input('included')) {
+
+            $orderItems = [];
+
+            foreach ($order->getOrderItems() as $orderItem) {
+                $orderItems[$orderItem->getId()] = $orderItem;
+            }
+
+            foreach ($request->input('included') as $data) {
+                if ($data['type'] == 'orderItem') {
+                    $orderItem = $orderItems[$data['id']];
+
+                    $this->jsonApiHydrator->hydrate($orderItem, $data);
+                }
+            }
+        }
+
         $this->entityManager->flush();
 
         return ResponseService::order($order);
