@@ -22,6 +22,103 @@ class CartJsonControllerTest extends EcommerceTestCase
         $this->session = $this->app->make(Store::class);
     }
 
+    public function test_index()
+    {
+        $this->session->flush();
+
+        $cartService = $this->app->make(CartService::class);
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(15, 100),
+        ]);
+
+        $initialQuantity = 2;
+
+        $cartService->addToCart(
+            $product['sku'],
+            $initialQuantity,
+            false,
+            ''
+        );
+
+        $response = $this->call('GET', '/json/cart');
+
+        // response asserts
+
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection count
+        $this->assertEquals(1, count($decodedResponse['meta']['cart']['items']));
+
+        // assert cart item data
+        $this->assertEquals(
+            [
+                'sku'                         => $product['sku'],
+                'name'                        => $product['name'],
+                'quantity'                    => $initialQuantity,
+                'thumbnail_url'               => $product['thumbnail_url'],
+                'description'                 => $product['description'],
+                'stock'                       => $product['stock'],
+                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'subscription_interval_count' => $product['subscription_interval_count'],
+                'price_before_discounts'      => $product['price'],
+                'price_after_discounts'       => $product['price'],
+                'requires_shipping'           => true,
+            ],
+            $decodedResponse['meta']['cart']['items'][0]
+        );
+
+        $totalDue = $product['price'] * $initialQuantity;
+
+        // assert total due
+        $this->assertEquals(
+            $totalDue,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertEquals(1, count($cart->getItems()));
+
+        // assert cart item
+        $cartItemOne = $cart->getItemBySku($product['sku']);
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($initialQuantity, $cartItemOne->getQuantity());
+    }
+
     public function test_add_to_cart()
     {
         $this->session->flush();

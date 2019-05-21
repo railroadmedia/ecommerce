@@ -13,7 +13,7 @@ Add a new item to the cart via a static href link (get request).
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |query|products|yes||must be an array, see notes below|
-|query|locked||false|true/false|if true the quantities are locked, when a new item is added it clears the cart|
+|query|locked||false|true/false|if true the quantities are locked, previous cart items are removed, and when a new item is added it clears the current cart|
 |query|promo-code|||||
 
 'products' parameter MUST be an object with the product sku as the key and the quantity to add as the value. Quantities are added if the item already exists in the cart.
@@ -99,6 +99,125 @@ Returns the entire cart.
                 "shipping":0,
                 "tax":0,
                 "due":1730
+            }
+        }
+    }
+}
+```
+
+<!--- -------------------------------------------------------------------------------------------------------------- -->
+
+### `{ GET /*/json/cart }`
+
+Returns the current content of the cart.
+
+### Request Parameters
+
+|Type|Key|Required|Default|Options|Notes|
+|----|---|--------|-------|-------|-----|
+
+### Request Example
+
+```js   
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/json/cart',
+    type: 'get',
+    data: {}, 
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+Returns the entire cart.
+
+```200 OK```
+
+```json
+{
+    "data":null,
+    "meta":{
+        "cart":{
+            "items":[
+                {
+                    "sku":"vel168022",
+                    "name":"unde",
+                    "quantity":2,
+                    "thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?29311",
+                    "description":"Omnis id consequuntur sit et reprehenderit. Quod dolores quod saepe accusantium nisi at. Vero nihil aperiam voluptas vel. Voluptates officia eius quo voluptatem hic.",
+                    "stock":23,
+                    "subscription_interval_type":"day",
+                    "subscription_interval_count":9,
+                    "price_before_discounts":865,
+                    "price_after_discounts":865
+                }
+            ],
+            "discounts":[
+
+            ],
+            "shipping_address":null,
+            "billing_address":null,
+            "number_of_payments":1,
+            "totals":{
+                "shipping":0,
+                "tax":0,
+                "due":1730
+            }
+        }
+    }
+}
+```
+
+<!--- -------------------------------------------------------------------------------------------------------------- -->
+
+### `{ DELETE /*/json/clear-cart }`
+
+Clears the cart of all items and data cache.
+
+### Request Parameters
+
+|Type|Key|Required|Default|Options|Notes|
+|----|---|--------|-------|-------|-----|
+
+### Request Example
+
+```js   
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/json/clear-cart',
+    type: 'delete',
+    data: {}, 
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+Returns the empty cart.
+
+```200 OK```
+
+```json
+{
+    "data":null,
+    "meta":{
+        "cart":{
+            "items":[
+
+            ],
+            "discounts":[
+
+            ],
+            "shipping_address":null,
+            "billing_address":null,
+            "number_of_payments":1,
+            "totals":{
+                "shipping":0,
+                "tax":0,
+                "due":0
             }
         }
     }

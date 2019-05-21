@@ -30,6 +30,34 @@ class CartJsonController extends Controller
     }
 
     /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Throwable
+     */
+    public function index(Request $request)
+    {
+        $cartArray = $this->cartService->toArray();
+
+        return ResponseService::cart($cartArray)
+            ->respond(200);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Throwable
+     */
+    public function clear(Request $request)
+    {
+        $this->cartService->clearCart();
+
+        $cartArray = $this->cartService->toArray();
+
+        return ResponseService::cart($cartArray)
+            ->respond(200);
+    }
+
+    /**
      * Add products to cart; if the products are active and available (the
      * product stock > requested quantity).
      * Errors are set in $response['meta']['cart']['errors']

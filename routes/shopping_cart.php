@@ -10,6 +10,14 @@ Route::group([
     Route::get('/add-to-cart', Railroad\Ecommerce\Controllers\CartController::class . '@addToCart')
         ->name('shopping-cart.add-to-cart');
 
+    Route::get('/json/cart',
+        Railroad\Ecommerce\Controllers\CartJsonController::class . '@index')
+        ->name('shopping-cart.json.index');
+
+    Route::delete('/json/clear-cart',
+        Railroad\Ecommerce\Controllers\CartJsonController::class . '@clear')
+        ->name('shopping-cart.json.clear-cart');
+
     Route::put('/json/add-to-cart',
         Railroad\Ecommerce\Controllers\CartJsonController::class . '@addCartItem')
         ->name('shopping-cart.json.remove-from-cart');

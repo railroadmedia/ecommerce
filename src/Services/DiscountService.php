@@ -467,7 +467,7 @@ class DiscountService
                 }
             }
 
-            if ($criteriaMet) {
+            if ($criteriaMet || empty($activeDiscount->getDiscountCriterias()->count())) {
                 $discountsToApply[$activeDiscount->getId()] = $activeDiscount;
             }
         }
