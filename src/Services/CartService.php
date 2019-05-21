@@ -143,6 +143,10 @@ class CartService
 
         // product
         $product = $this->productRepository->bySku($sku);
+        
+        if ($quantity < 1) {
+            throw new ProductNotFoundException($sku);
+        }
 
         if (empty($product)) {
             throw new ProductNotFoundException($sku);
@@ -207,6 +211,10 @@ class CartService
         $product = $this->productRepository->bySku($sku);
 
         if (empty($product)) {
+            throw new ProductNotFoundException($sku);
+        }
+
+        if ($quantity < 1) {
             throw new ProductNotFoundException($sku);
         }
 
