@@ -84,6 +84,7 @@ Returns the entire cart.
             "shipping_address":null,
             "billing_address":null,
             "number_of_payments":1,
+            "locked":0,
             "totals":{
                 "shipping":0,
                 "tax":0,
@@ -138,6 +139,7 @@ Returns the empty cart.
             "shipping_address":null,
             "billing_address":null,
             "number_of_payments":1,
+            "locked":0,
             "totals":{
                 "shipping":0,
                 "tax":0,
@@ -214,6 +216,8 @@ Returns the entire cart.
             "shipping_address":null,
             "billing_address":null,
             "number_of_payments":1,
+            "locked":0,
+            "locked":0,
             "totals":{
                 "shipping":0,
                 "tax":0,
@@ -279,6 +283,7 @@ Returns the entire cart.
             "shipping_address":null,
             "billing_address":null,
             "number_of_payments":1,
+            "locked":0,
             "totals":{
                 "shipping":0,
                 "tax":0,
@@ -345,6 +350,7 @@ Returns the entire cart.
             "shipping_address":null,
             "billing_address":null,
             "number_of_payments":1,
+            "locked":0,
             "totals":{
                 "shipping":0,
                 "tax":0,

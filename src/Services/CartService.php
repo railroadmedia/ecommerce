@@ -702,6 +702,7 @@ class CartService
             'billing_address' => $billingAddress,
             'number_of_payments' => $numberOfPayments,
             'payment_plan_options' => $paymentPlanOptions,
+            'locked' => $this->cart->getLocked(),
             'totals' => $totals,
         ];
     }
