@@ -61,8 +61,8 @@ class ShippingOptionRepository extends RepositoryBase
             ->setParameter('any', '*')
             ->setParameter('totalWeight', $totalWeight)
             ->setParameter('active', true)
-            ->orderBy('so.priority')
-            ->orderBy('scwr.id');
+            ->orderBy('so.priority', 'desc')
+            ->addOrderBy('scwr.id');
 
         /**
          * @var $shippingOption ShippingOption
