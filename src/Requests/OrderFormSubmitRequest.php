@@ -104,8 +104,15 @@ class OrderFormSubmitRequest extends FormRequest
             'card_token' => 'string|required_if:payment_method_type,' . PaymentMethod::TYPE_CREDIT_CARD,
             'gateway' => 'string|required',
             'currency' => 'string|in:' . implode(',', config('ecommerce.supported_currencies')),
-            'payment_plan_number_of_payments' => 'integer|in:' . implode(',', config('ecommerce.payment_plan_options')),
         ];
+
+        if (!$this->cartService->hasAnyRecurringSubscriptionProducts()) {
+            $rules['payment_plan_number_of_payments'] =
+                'integer|in:' . implode(',', config('ecommerce.payment_plan_options'));
+        } else {
+            $rules['payment_plan_number_of_payments'] =
+                'integer|in:1';
+        }
 
         // billing address
         // todo: validate billing address

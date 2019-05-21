@@ -272,6 +272,22 @@ class CartService
     }
 
     /**
+     * @return bool
+     */
+    public function hasAnyRecurringSubscriptionProducts()
+    {
+        $products = $this->productRepository->byCart($this->getCart());
+
+        foreach ($products as $product) {
+            if (!empty($product->getSubscriptionIntervalType())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Returns the total cart items cost with discounts applied
      *
      * @return float
