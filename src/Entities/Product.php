@@ -29,8 +29,9 @@ class Product
 {
     use TimestampableEntity, NotableEntity;
 
-    const TYPE_PRODUCT = 'product';
-    const TYPE_SUBSCRIPTION = 'subscription';
+    const TYPE_DIGITAL_SUBSCRIPTION = 'digital subscription';
+    const TYPE_DIGITAL_ONE_TIME = 'digital one time';
+    const TYPE_PHYSICAL_ONE_TIME = 'physical one time';
 
     /**
      * @ORM\Id

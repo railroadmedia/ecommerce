@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Faker\Generator;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Location\Services\LocationService;
 
 class Faker extends Generator
@@ -41,8 +42,9 @@ class Faker extends Generator
                 'price' => $this->numberBetween(1, 1000),
                 'type' => $this->randomElement(
                     [
-                        Product::TYPE_PRODUCT,
-                        Product::TYPE_SUBSCRIPTION,
+                        Product::TYPE_DIGITAL_ONE_TIME,
+                        Product::TYPE_DIGITAL_SUBSCRIPTION,
+                        Product::TYPE_PHYSICAL_ONE_TIME,
                     ]
                 ),
                 'active' => $this->randomElement([0, 1]),
@@ -322,7 +324,7 @@ class Faker extends Generator
         return array_merge(
             [
                 'brand' => config('ecommerce.brand'),
-                'type' => Product::TYPE_SUBSCRIPTION,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
                 'user_id' => $this->randomNumber(),
                 'customer_id' => null,
                 'order_id' => $this->randomNumber(),

@@ -130,7 +130,7 @@ class OrderClaimingService
 
             // create product subscriptions
             if ($orderItem->getProduct()
-                    ->getType() == Product::TYPE_SUBSCRIPTION) {
+                    ->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
 
                 $subscription = $this->createSubscription(
                     $purchaser,

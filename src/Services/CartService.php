@@ -530,6 +530,9 @@ class CartService
 
         $shippingDue = $this->cart->getShippingOverride() ?:
             $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
+        
+        $order->setProductDue($totalItemCostDue);
+        $order->setShippingDue($shippingDue);
 
         $taxesDue = $this->cart->getTaxOverride() ?:
             $this->taxService->getTaxesDueTotal(
@@ -539,8 +542,7 @@ class CartService
             );
 
         $order->setFinanceDue($this->getTotalFinanceCosts());
-        $order->setProductDue($totalItemCostDue);
-        $order->setShippingDue($shippingDue);
+
         $order->setTaxesDue($taxesDue);
 
         return $order;

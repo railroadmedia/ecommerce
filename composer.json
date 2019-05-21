@@ -16,7 +16,7 @@
     "railroad/resora": ">=1.0.10 <1.1",
     "railroad/doctrine": "^0.0",
     "ext-redis": "*",
-    "railroad/doctrine-array-hydrator": "^1.0",
+    "railroad/doctrine-array-hydrator": "1.0.*",
     "ext-json": "*"
   },
   "require-dev": {

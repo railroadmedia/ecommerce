@@ -15,6 +15,7 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Services\CartAddressService;
@@ -102,7 +103,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'sku' => 'product-one',
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -116,7 +117,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'sku' => 'product-two',
                 'price' => 247,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -200,7 +201,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -213,7 +214,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -339,7 +340,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -352,7 +353,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -462,7 +463,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -517,7 +518,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -649,7 +650,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -663,7 +664,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -941,7 +942,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => true,
@@ -955,7 +956,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => false,
@@ -1090,7 +1091,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'type' => 'order',
                     'attributes' => [
                         'total_due' => $expectedOrderTotalDue,
-                        'product_due' => $expectedTotalFromItems,
+                        'product_due' => round($expectedTotalFromItems, 2),
                         'taxes_due' => $expectedTaxes,
                         'shipping_due' => $shippingDueOverride,
                         'finance_due' => 0,
@@ -1340,7 +1341,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -1353,7 +1354,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -1469,7 +1470,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -1483,7 +1484,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -1884,7 +1885,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -1898,7 +1899,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -2319,7 +2320,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -2333,7 +2334,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -2710,7 +2711,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -2724,7 +2725,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -3087,7 +3088,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -3101,7 +3102,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 247,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -3413,7 +3414,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_SUBSCRIPTION,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -3581,7 +3582,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -3876,7 +3877,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -4125,7 +4126,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_SUBSCRIPTION,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -4260,7 +4261,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_SUBSCRIPTION,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -4379,7 +4380,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -4521,7 +4522,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -4637,7 +4638,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -4776,7 +4777,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -4934,7 +4935,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -5106,7 +5107,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -5279,7 +5280,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -5441,7 +5442,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -5473,7 +5474,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -5899,7 +5900,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -6156,7 +6157,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -6284,7 +6285,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => round($this->paymentPlanMinimumPrice * 2 , 2),
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 1,
@@ -6570,7 +6571,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productOne = $this->fakeProduct([
             'price' => 147.95,
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -6581,7 +6582,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productTwo = $this->fakeProduct([
             'price' => 79.42,
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 1,
@@ -6785,7 +6786,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productOne = $this->fakeProduct([
             'price' => 12.95,
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -6797,7 +6798,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productTwo = $this->fakeProduct([
             'price' => 247,
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 1,
@@ -6956,7 +6957,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => 142.95,
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -7084,7 +7085,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => 142.95,
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -7201,7 +7202,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productOne = $this->fakeProduct([
             'price' => 12.95,
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -7214,7 +7215,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $productTwo = $this->fakeProduct([
             'price' => 24,
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'active' => 1,
             'category' => $productTwoCategory,
             'description' => $this->faker->word,
@@ -7364,7 +7365,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => 142.95,
-            'type' => Product::TYPE_SUBSCRIPTION,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -7467,7 +7468,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',
             [
-                'type' => Product::TYPE_SUBSCRIPTION,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
                 'brand' => $brand,
                 'user_id' => $randomUser['id'],
                 'is_active' => 1,
@@ -7535,7 +7536,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => 142.95,
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,
@@ -7683,7 +7684,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'price' => 142.95,
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'active' => 1,
             'description' => $this->faker->word,
             'is_physical' => 0,

@@ -62,7 +62,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $subscription = $product = $this->faker->product(
-            ['type' => Product::TYPE_SUBSCRIPTION]
+            ['type' => Product::TYPE_DIGITAL_SUBSCRIPTION]
         );
 
         $results = $this->call(
@@ -161,7 +161,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                         'name' => $this->faker->word,
                         'sku' => $this->faker->word,
                         'price' => $this->faker->numberBetween(15.97, 15.99),
-                        'type' => Product::TYPE_SUBSCRIPTION,
+                        'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
                         'active' => true,
                         'is_physical' => false,
                         'stock' => $this->faker->numberBetween(0, 1000)
@@ -176,12 +176,12 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $errors = [
             [
                 'source' => 'data.attributes.subscription_interval_type',
-                'detail' => 'The subscription interval type field is required when type is subscription.',
+                'detail' => 'The subscription interval type field is required when type is digital subscription.',
                 'title' => 'Validation failed.'
             ],
             [
                 'source' => 'data.attributes.subscription_interval_count',
-                'detail' => 'The subscription interval count field is required when type is subscription.',
+                'detail' => 'The subscription interval count field is required when type is digital subscription.',
                 'title' => 'Validation failed.'
             ]
         ];
@@ -244,7 +244,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                         'name' => $this->faker->word,
                         'sku' => $this->faker->word,
                         'price' => $this->faker->numberBetween(15.97, 15.99),
-                        'type' => Product::TYPE_PRODUCT,
+                        'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                         'active' => true,
                         'is_physical' => true,
                         'stock' => $this->faker->numberBetween(0, 1000)
@@ -348,7 +348,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_PRODUCT,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'subscription_interval_type' => null,
             'subscription_interval_count' => null
         ]);
@@ -361,7 +361,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     'id' => $product['id'],
                     'type' => 'product',
                     'attributes' => [
-                        'type' => Product::TYPE_SUBSCRIPTION
+                        'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
                     ],
                 ],
             ]
@@ -374,12 +374,12 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $errors = [
             [
                 'source' => 'data.attributes.subscription_interval_type',
-                'detail' => 'The subscription interval type field is required when type is subscription.',
+                'detail' => 'The subscription interval type field is required when type is digital subscription.',
                 'title' => 'Validation failed.'
             ],
             [
                 'source' => 'data.attributes.subscription_interval_count',
-                'detail' => 'The subscription interval count field is required when type is subscription.',
+                'detail' => 'The subscription interval count field is required when type is digital subscription.',
                 'title' => 'Validation failed.'
             ]
         ];

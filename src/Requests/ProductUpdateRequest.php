@@ -62,8 +62,9 @@ class ProductUpdateRequest extends FormRequest
             'data.attributes.type' => 'max:255|in:' . implode(
                     ',',
                     [
-                        Product::TYPE_PRODUCT,
-                        Product::TYPE_SUBSCRIPTION,
+                        Product::TYPE_DIGITAL_ONE_TIME,
+                        Product::TYPE_DIGITAL_SUBSCRIPTION,
+                        Product::TYPE_PHYSICAL_ONE_TIME
                     ]
                 ),
             'data.attributes.active' => 'boolean',
@@ -71,9 +72,9 @@ class ProductUpdateRequest extends FormRequest
             'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
             'data.attributes.stock' => 'numeric',
             'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' .
-                Product::TYPE_SUBSCRIPTION,
+                Product::TYPE_DIGITAL_SUBSCRIPTION,
             'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' .
-                Product::TYPE_SUBSCRIPTION,
+                Product::TYPE_DIGITAL_SUBSCRIPTION,
             'data.attributes.note' => 'nullable|string',
         ];
     }

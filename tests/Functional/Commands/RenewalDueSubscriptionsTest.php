@@ -70,7 +70,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]);
 
             $product = $this->fakeProduct([
-                'type' => Product::TYPE_SUBSCRIPTION
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
             ]);
 
             $order = $this->fakeOrder();
@@ -84,7 +84,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $subscription = $this->fakeSubscription([
                 'user_id' => $userId,
                 'type' => $this->faker->randomElement(
-                    [Product::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
+                    [Product::TYPE_DIGITAL_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
                 ),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()->subDay(1),
@@ -222,7 +222,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]);
 
             $product = $this->fakeProduct([
-                'type' => Product::TYPE_SUBSCRIPTION
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
             ]);
 
             $order = $this->fakeOrder();
@@ -236,7 +236,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $subscription = $this->fakeSubscription([
                 'user_id' => $userId,
                 'type' => $this->faker->randomElement(
-                    [Product::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
+                    [Product::TYPE_DIGITAL_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
                 ),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()
@@ -286,7 +286,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]);
 
             $product = $this->fakeProduct([
-                'type' => Product::TYPE_SUBSCRIPTION
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
             ]);
 
             $order = $this->fakeOrder();
@@ -300,7 +300,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $subscription = $this->fakeSubscription([
                 'user_id' => $userId,
                 'type' => $this->faker->randomElement(
-                    [Product::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
+                    [Product::TYPE_DIGITAL_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
                 ),
                 'start_date' => Carbon::now()->subYear(2),
                 'paid_until' => Carbon::now()->subDay(1),

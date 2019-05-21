@@ -56,7 +56,7 @@ $.ajax({
                 "name":"non",
                 "sku":"ut4101194",
                 "price":227,
-                "type":"subscription",
+                "type":"digital subscription",
                 "active":false,
                 "category":"reiciendis",
                 "description":"Labore et commodi a cum ut accusamus. Et blanditiis facilis accusamus officiis aut. Voluptas sit eaque nam veritatis. Quae sed fugiat est porro distinctio sint voluptas.",
@@ -112,7 +112,7 @@ Create a new product.
 |body|data.attributes.brand|yes||||
 |body|data.attributes.sku|yes||||
 |body|data.attributes.price|yes||||
-|body|data.attributes.type|yes||'product' or 'subscription'||
+|body|data.attributes.type|yes||'digital subscription' or 'digital one time' or 'physical one time'||
 |body|data.attributes.active|yes||boolean||
 |body|data.attributes.category|yes||||
 |body|data.attributes.description|yes||||
@@ -134,16 +134,16 @@ Create a new product.
         implode(
             ',',
             [
-                Product::TYPE_PRODUCT,
-                Product::TYPE_SUBSCRIPTION
+                Product::TYPE_PHYSICAL_ONE_TIME,
+                Product::TYPE_DIGITAL_SUBSCRIPTION
             ]
         ),
     'data.attributes.active' => 'required|boolean',
     'data.attributes.is_physical' => 'required|boolean',
     'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
     'data.attributes.stock' => 'nullable|numeric',
-    'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION,
-    'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION
+    'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . Product::TYPE_DIGITAL_SUBSCRIPTION,
+    'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . Product::TYPE_DIGITAL_SUBSCRIPTION
 ];
 ```
 
@@ -157,7 +157,7 @@ Create a new product.
             "name": "sit",
             "sku": "omnis6239535",
             "price": 39,
-            "type": "subscription",
+            "type": "digital one time",
             "active": 0,
             "category": "assumenda",
             "description": "Et porro error laborum labore nobis",
@@ -189,7 +189,7 @@ Create a new product.
             "name":"quasi",
             "sku":"laudantium4222365",
             "price":776,
-            "type":"product",
+            "type":"physical one time",
             "active":false,
             "category":"voluptas",
             "description":"Qui cum ipsam velit molestiae necessitatibus. Et est libero hic corporis dolorum. Ea rerum corporis soluta magnam.",
@@ -230,7 +230,7 @@ Update an existing product.
 |body|data.attributes.brand|||||
 |body|data.attributes.sku|||||
 |body|data.attributes.price|||||
-|body|data.attributes.type|||'product' or 'subscription'||
+|body|data.attributes.type|||'digital subscription' or 'digital one time' or 'physical one time'||
 |body|data.attributes.active|||boolean||
 |body|data.attributes.category|||||
 |body|data.attributes.description|||||
@@ -252,16 +252,16 @@ Update an existing product.
         implode(
             ',',
             [
-                Product::TYPE_PRODUCT,
-                Product::TYPE_SUBSCRIPTION
+                Product::TYPE_PHYSICAL_ONE_TIME,
+                Product::TYPE_DIGITAL_SUBSCRIPTION
             ]
         ),
     'data.attributes.active' => 'boolean',
     'data.attributes.is_physical' => 'boolean',
     'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
     'data.attributes.stock' => 'numeric',
-    'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION,
-    'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . Product::TYPE_SUBSCRIPTION
+    'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . Product::TYPE_DIGITAL_SUBSCRIPTION,
+    'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . Product::TYPE_DIGITAL_SUBSCRIPTION
 ];
 ```
 
@@ -300,7 +300,7 @@ $.ajax({
             "name":"accusantium",
             "sku":"qui8237977",
             "price":624,
-            "type":"subscription",
+            "type":"digital subscription",
             "active":true,
             "category":"voluptatem",
             "description":"Quasi magnam inventore iste inventore tempora magnam ut. Hic dolorem quia qui natus sint autem. Vel sequi nobis culpa vel. Et perspiciatis quia et ad.",

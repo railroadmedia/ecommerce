@@ -459,7 +459,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $order = $this->fakeOrder();
@@ -896,7 +896,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $order = $this->fakeOrder();
@@ -1108,7 +1108,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         ]);
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $order = $this->fakeOrder();

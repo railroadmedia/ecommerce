@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class OrderJsonControllerTest extends EcommerceTestCase
@@ -13,6 +14,9 @@ class OrderJsonControllerTest extends EcommerceTestCase
     public function setUp()
     {
         parent::setUp();
+
+        $cartService = $this->app->make(CartService::class);
+        $cartService->clearCart();
     }
 
     public function test_delete()
@@ -311,7 +315,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'updated_at' => null
         ]);
 
@@ -620,7 +624,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $nrOrders = 10;
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $expectedData = [];
@@ -715,7 +719,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         ]);
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $orderOutOfRange = $this->fakeOrder([
@@ -810,7 +814,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $brands = [$this->faker->word, $this->faker->word];
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $expectedData = [];
@@ -925,7 +929,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $brands = [$this->faker->word, $this->faker->word];
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $expectedData = [];

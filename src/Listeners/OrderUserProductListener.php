@@ -47,7 +47,7 @@ class OrderUserProductListener
 
                 $expirationDate = null;
 
-                if ($product->getType() == Product::TYPE_SUBSCRIPTION) {
+                if ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
 
                     $subscription = $this->subscriptionRepository->getOrderProductSubscription(
                         $order,

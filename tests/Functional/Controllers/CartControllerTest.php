@@ -63,6 +63,7 @@ class CartControllerTest extends EcommerceTestCase
                 'shipping_address' => null,
                 'billing_address' => null,
                 'number_of_payments' => 1,
+                'locked' => false,
                 'totals' => [
                     'shipping' => 0,
                     'tax' => 0,
@@ -125,6 +126,7 @@ class CartControllerTest extends EcommerceTestCase
                 'shipping_address' => null,
                 'billing_address' => null,
                 'number_of_payments' => 1,
+                'locked' => false,
                 'totals' => [
                     'shipping' => 0,
                     'tax' => 0,
@@ -163,6 +165,7 @@ class CartControllerTest extends EcommerceTestCase
                 'shipping_address' => null,
                 'billing_address' => null,
                 'number_of_payments' => 1,
+                'locked' => false,
                 'totals' => [
                     'shipping' => 0,
                     'tax' => 0,
@@ -247,6 +250,7 @@ class CartControllerTest extends EcommerceTestCase
                 'shipping_address' => null,
                 'billing_address' => null,
                 'number_of_payments' => 1,
+                'locked' => false,
                 'totals' => [
                     'shipping' => 0,
                     'tax' => 0,
@@ -315,6 +319,7 @@ class CartControllerTest extends EcommerceTestCase
                 'shipping_address' => null,
                 'billing_address' => null,
                 'number_of_payments' => 1,
+                'locked' => false,
                 'totals' => [
                     'shipping' => 0,
                     'tax' => 0,
@@ -403,6 +408,7 @@ class CartControllerTest extends EcommerceTestCase
                 'shipping_address' => null,
                 'billing_address' => null,
                 'number_of_payments' => 1,
+                'locked' => false,
                 'totals' => [
                     'shipping' => 0,
                     'tax' => 0,

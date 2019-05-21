@@ -261,7 +261,7 @@ class StatsController extends Controller
                             $subscriptionPaymentDetails
                         ) {
                             foreach ($subscriptions as $subscription) {
-                                if ($subscription->type == Product::TYPE_SUBSCRIPTION) {
+                                if ($subscription->type == Product::TYPE_DIGITAL_SUBSCRIPTION) {
                                     $payment =
                                         $subscriptionPaymentDetails[$subscriptionRenewalPayments[$subscription->id]->payment_id];
 
@@ -686,7 +686,7 @@ class StatsController extends Controller
                                         $dataRow['email'] = 'unknown';
                                     }
 
-                                    if (($subscription->type == Product::TYPE_SUBSCRIPTION) &&
+                                    if (($subscription->type == Product::TYPE_DIGITAL_SUBSCRIPTION) &&
                                         ($subscription->product_id)) {
                                         $dataRow['products'] .= $products[$subscription->product_id]->name;
                                         if ($payment->refunded == 0) {

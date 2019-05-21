@@ -193,7 +193,7 @@ Create a new subscription.
             ',',
             [
                 config('ecommerce.type_payment_plan'),
-                Product::TYPE_SUBSCRIPTION
+                Product::TYPE_DIGITAL_SUBSCRIPTION
             ]
         ),
     'data.attributes.is_active' => 'required|boolean',
@@ -418,7 +418,7 @@ Update an existing subscription.
             ',',
             [
                 config('ecommerce.type_payment_plan'),
-                Product::TYPE_SUBSCRIPTION
+                Product::TYPE_DIGITAL_SUBSCRIPTION
             ]
         ),
     'data.attributes.is_active' => 'nullable|boolean',

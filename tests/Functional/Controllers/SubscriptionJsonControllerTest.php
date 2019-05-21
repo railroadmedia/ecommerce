@@ -87,7 +87,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $subscriptions = [];
@@ -181,7 +181,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $subscriptions = [];
@@ -346,7 +346,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $discount = $this->faker->discount([
@@ -506,7 +506,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $discount = $this->faker->discount([
@@ -632,7 +632,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $discount = $this->faker->discount([
@@ -759,7 +759,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $discount = $this->faker->discount([
@@ -832,7 +832,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser();
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $discount = $this->faker->discount([
@@ -972,7 +972,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ->willReturn(new Charge());
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -1038,7 +1038,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ->willReturn($this->faker->word);
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -1113,7 +1113,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             );
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -1189,7 +1189,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             );
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
         ]);
@@ -1270,7 +1270,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
         $product = $this->fakeProduct([
-            'type' => Product::TYPE_SUBSCRIPTION
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
         $subscriptionBrands = [$this->faker->word, $this->faker->word];

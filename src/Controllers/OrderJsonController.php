@@ -273,7 +273,7 @@ class OrderJsonController extends Controller
 
         $subscriptions = $subscriptionItems->filter(
                 function (Subscription $subscription) {
-                    return $subscription->getType() == Product::TYPE_SUBSCRIPTION;
+                    return $subscription->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION;
                 }
             )
             ->all();

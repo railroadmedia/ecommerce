@@ -34,7 +34,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -45,7 +45,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
         $productPhysical = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PRODUCT,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,

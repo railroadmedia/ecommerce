@@ -36,7 +36,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_SUBSCRIPTION)
+            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -69,7 +69,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_SUBSCRIPTION)
+            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -124,7 +124,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_SUBSCRIPTION)
+            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -169,7 +169,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_SUBSCRIPTION)
+            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -222,7 +222,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_SUBSCRIPTION)
+            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -288,7 +288,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_SUBSCRIPTION)
+            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 
@@ -301,7 +301,7 @@ class UserProductServiceTest extends EcommerceTestCase
             ->setName($this->faker->word)
             ->setSku($this->faker->word)
             ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_SUBSCRIPTION)
+            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
             ->setActive(true)
             ->setIsPhysical(false);
 

@@ -20,6 +20,10 @@ class CartServiceTest extends EcommerceTestCase
     protected function setUp()
     {
         parent::setUp();
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->clearCart();
     }
 
     public function test_add_to_cart()
