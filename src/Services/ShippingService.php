@@ -79,8 +79,11 @@ class ShippingService
 
         $costBeforeDiscounts = $this->shippingOptionRepository->getShippingCosts($country, $weight);
 
-        return (float)($costBeforeDiscounts -
-            $this->discountService->getTotalShippingDiscounted($cart, $totalDueInItems, $costBeforeDiscounts));
+        return max(
+            (float)($costBeforeDiscounts -
+                $this->discountService->getTotalShippingDiscounted($cart, $totalDueInItems, $costBeforeDiscounts)),
+            0
+        );
     }
 
     /**
