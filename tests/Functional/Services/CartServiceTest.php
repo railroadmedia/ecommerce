@@ -666,9 +666,11 @@ class CartServiceTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20),
-            'weight' => $productWeight
+            'stock' => 10,
+            'price' => 18.02, // 36.04
+            'weight' => 6,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'is_physical' => true
         ]);
 
         $shippingCountry = 'canada';
@@ -683,12 +685,15 @@ class CartServiceTest extends EcommerceTestCase
             'shipping_option_id' => $shippingOption['id'],
             'min' => 5,
             'max' => 50,
-            'price' => $this->faker->randomFloat(2, 3, 5),
+            'price' => 8.58,
         ]);
 
-        $quantity = $this->faker->numberBetween(1, 3);
+        // (36.04) + 8.58
+        // 44.62 * 0.05
 
-        $shippingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$shippingCountry]));
+        $quantity = 2;
+
+        $shippingState = 'quebec';
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($shippingCountry)
@@ -702,6 +707,8 @@ class CartServiceTest extends EcommerceTestCase
             ->setCountry($billingCountry)
             ->setState($billingState);
 
+        $numberOfPayments = 2;
+
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
@@ -709,14 +716,13 @@ class CartServiceTest extends EcommerceTestCase
         $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingState];
 
         $expectedTaxDue =
-            round($expectedTaxRateProduct * $expectedItemsCost, 2) +
-            round($expectedTaxRateShipping * $expectedShippingCost, 2);
+            (round($expectedTaxRateProduct * $expectedItemsCost, 2) +
+            round($expectedTaxRateShipping * $expectedShippingCost, 2));
 
         $finance = config('ecommerce.financing_cost_per_order');
 
         $totalToFinance = $expectedItemsCost + $expectedTaxDue + $finance;
 
-        $numberOfPayments = 2;
 
         $initialTotalDueBeforeShipping = round($totalToFinance / $numberOfPayments, 2);
 

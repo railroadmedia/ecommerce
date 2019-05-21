@@ -172,6 +172,8 @@ class EcommerceTestCase extends BaseTestCase
         $this->artisan('cache:clear');
 
         $this->createUsersTable();
+
+        session()->flush();
     }
 
     /**
