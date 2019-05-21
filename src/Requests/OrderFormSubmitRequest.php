@@ -172,6 +172,16 @@ class OrderFormSubmitRequest extends FormRequest
         $cart->setPaymentMethodId($this->get('payment_method_id'));
         $cart->setCurrency($this->get('currency', config('ecommerce.default_currency')));
 
+        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
+
+            $cart->setTaxOverride($this->get('taxes_due_override'));
+            $cart->setShippingOverride($this->get('shipping_due_override'));
+
+            foreach ($cart->getItems() as $cartItem) {
+                $cartItem->setDueOverride($this->get('order_items_due_override_' . $cartItem->getSku()));
+            }
+        }
+
         return $cart;
     }
 

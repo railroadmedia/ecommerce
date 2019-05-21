@@ -17,6 +17,11 @@ class CartItem implements Serializable
     private $quantity;
 
     /**
+     * @var float|null
+     */
+    private $dueOverride;
+
+    /**
      * CartItem constructor.
      *
      * @param string $sku
@@ -58,6 +63,22 @@ class CartItem implements Serializable
     public function setQuantity(int $quantity): void
     {
         $this->quantity = $quantity;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getDueOverride(): ?float
+    {
+        return $this->dueOverride;
+    }
+
+    /**
+     * @param float $dueOverride
+     */
+    public function setDueOverride(?float $dueOverride): void
+    {
+        $this->dueOverride = $dueOverride;
     }
 
     /**

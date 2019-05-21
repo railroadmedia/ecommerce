@@ -77,7 +77,9 @@ class OrderClaimingService
         $this->cartService->setCart($cart);
 
         $totalItemsCosts = $this->cartService->getTotalItemCosts();
-        $shippingCosts = $this->shippingService->getShippingDueForCart($cart, $totalItemsCosts);
+        $shippingCosts = $cart->getShippingOverride() ?:
+            $this->shippingService->getShippingDueForCart($cart, $totalItemsCosts);
+        $taxesDue = $cart->getTaxOverride() ?: $this->cartService->getTaxDueForOrder();
 
         // create the order
         $order = new Order();
@@ -85,7 +87,7 @@ class OrderClaimingService
         $order->setTotalDue($this->cartService->getDueForOrder())
             ->setProductDue($totalItemsCosts)
             ->setFinanceDue($this->cartService->getTotalFinanceCosts())
-            ->setTaxesDue($this->cartService->getTaxDueForOrder())
+            ->setTaxesDue($taxesDue)
             ->setTotalPaid($this->cartService->getDueForInitialPayment())
             ->setBrand($purchaser->getBrand())
             ->setUser($purchaser->getType() == Purchaser::USER_TYPE ? $purchaser->getUserObject() : null)

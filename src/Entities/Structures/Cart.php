@@ -59,6 +59,16 @@ class Cart implements Serializable
     private $currency;
 
     /**
+     * @var float|null
+     */
+    private $taxOverride;
+
+    /**
+     * @var float|null
+     */
+    private $shippingOverride;
+
+    /**
      * Get cart items
      *
      * @return CartItem[]
@@ -273,6 +283,38 @@ class Cart implements Serializable
     public function setCurrency(?string $currency): void
     {
         $this->currency = $currency;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getTaxOverride(): ?float
+    {
+        return $this->taxOverride;
+    }
+
+    /**
+     * @param float|null $taxOverride
+     */
+    public function setTaxOverride(?float $taxOverride): void
+    {
+        $this->taxOverride = $taxOverride;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getShippingOverride(): ?float
+    {
+        return $this->shippingOverride;
+    }
+
+    /**
+     * @param float|null $shippingOverride
+     */
+    public function setShippingOverride(?float $shippingOverride): void
+    {
+        $this->shippingOverride = $shippingOverride;
     }
 
     /**
