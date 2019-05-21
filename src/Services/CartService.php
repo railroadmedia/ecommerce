@@ -127,7 +127,6 @@ class CartService
 
         // cart locking
         if ($lock) {
-            $this->cart->replaceItems([]);
             $this->cart->setLocked(true);
         }
         elseif ($this->cart->getLocked()) {
