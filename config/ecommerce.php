@@ -227,6 +227,9 @@ return [
         ],
     ],
 
+    // redirects
+    'post_purchase_redirect_digital_items' => '/members',
+
     // constants
     'billing_address' => 'billing',
     'shipping_address' => 'shipping',
