@@ -55,6 +55,22 @@ class RepositoryBase
     }
 
     /**
+     * @return EcommerceEntityManager
+     */
+    protected function getEntityManager(): EcommerceEntityManager
+    {
+        return $this->entityManager;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getClassName(): string
+    {
+        return $this->entityName;
+    }
+
+    /**
      * @param string $alias
      * @param null $indexBy
      * @return QueryBuilder

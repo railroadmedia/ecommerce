@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Doctrine\ORM\Query;
-use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -100,40 +98,10 @@ class ProductJsonController extends Controller
     {
         $active = $this->permissionService->can(auth()->id(), 'pull.inactive.products') ? [0, 1] : [1];
 
-        $alias = 'a';
-        $orderBy = $request->get('order_by_column', 'created_at');
-        if (strpos($orderBy, '_') !== false || strpos($orderBy, '-') !== false) {
-            $orderBy = camel_case($orderBy);
-        }
-        $orderBy = $alias . '.' . $orderBy;
-        $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
-        $brands = $request->get('brands', [config('ecommerce.available_brands')]);
+        $productsAndBuilder = $this->productRepository->indexByRequest($request, $active);
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->productRepository->createQueryBuilder($alias);
-
-        $qb->setMaxResults($request->get('limit', 10))
-            ->setFirstResult($first)
-            ->where(
-                $qb->expr()
-                    ->in($alias . '.brand', ':brands')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->in($alias . '.active', ':activity')
-            )
-            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
-            ->setParameter('brands', $brands)
-            ->setParameter('activity', $active);
-
-        $products =
-            $qb->getQuery()
-                ->getResult();
-
-        return ResponseService::product($products, $qb)
-            ->respond();
+        return ResponseService::product($productsAndBuilder->getResults(), $productsAndBuilder->getQueryBuilder())
+            ->respond(200);
     }
 
     /**
@@ -264,32 +232,7 @@ class ProductJsonController extends Controller
             'pull.inactive.products'
         ) ? [0, 1] : [1];
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->productRepository->createQueryBuilder('p');
-
-        $qb->where(
-                $qb->expr()
-                    ->in('p.active', ':activity')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->eq('p.id', ':id')
-            );
-
-        /**
-         * @var $q Query
-         */
-        $q = $qb->getQuery();
-
-        $q->setParameter('activity', $active)
-            ->setParameter('id', $productId);
-
-        /**
-         * @var $product Product
-         */
-        $product = $q->getOneOrNullResult();
+        $product = $this->productRepository->findProduct($productId, $active);
 
         throw_if(
             is_null($product),

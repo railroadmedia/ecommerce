@@ -2,10 +2,16 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\ORMException;
+use Illuminate\Http\Request;
+use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 
 /**
  * Class ProductRepository
@@ -13,6 +19,8 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  */
 class ProductRepository extends RepositoryBase
 {
+    use UseFormRequestQueryBuilder;
+
     /**
      * CreditCardRepository constructor.
      *
@@ -24,7 +32,67 @@ class ProductRepository extends RepositoryBase
     }
 
     /**
+     * @param Request $request
+     * @param array $activity - default [1] - active products
+     *
+     * @return ResultsQueryBuilderComposite
+     */
+    public function indexByRequest(Request $request, ?array $activity = [1]): ResultsQueryBuilderComposite
+    {
+        $alias = 'p';
+
+        /** @var $qb FromRequestEcommerceQueryBuilder */
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->select($alias)
+            ->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->andWhere(
+                $qb->expr()
+                    ->in($alias . '.active', ':activity')
+            )
+            ->setParameter('activity', $activity);
+
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
+    }
+
+    /**
+     * @param int $productId
+     * @param array $activity - default [1] - active products
+     *
+     * @return Product|null
+     *
+     * @throws NonUniqueResultException
+     */
+    public function findProduct(int $productId, ?array $activity = [1]): ?Product
+    {
+        $alias = 'p';
+
+        /** @var $qb FromRequestEcommerceQueryBuilder */
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->where(
+                $qb->expr()
+                    ->in('p.active', ':activity')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.id', ':id')
+            )
+            ->setParameter('activity', $activity)
+            ->setParameter('id', $productId);
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
+    /**
      * @return Product[]
+     *
+     * @throws ORMException
      */
     public function all()
     {
@@ -43,6 +111,8 @@ class ProductRepository extends RepositoryBase
      * @param array $skus
      *
      * @return Product[]
+     *
+     * @throws ORMException
      */
     public function bySkus(array $skus)
     {
@@ -66,6 +136,8 @@ class ProductRepository extends RepositoryBase
      * @param string $sku
      *
      * @return null|Product
+     *
+     * @throws ORMException
      */
     public function bySku(string $sku)
     {
@@ -78,6 +150,8 @@ class ProductRepository extends RepositoryBase
      * @param array $accessCodes
      *
      * @return Product[]
+     *
+     * @throws ORMException
      */
     public function byAccessCodes(array $accessCodes): array
     {
@@ -111,6 +185,8 @@ class ProductRepository extends RepositoryBase
      * @param AccessCode $accessCode
      *
      * @return Product[]
+     *
+     * @throws ORMException
      */
     public function byAccessCode(AccessCode $accessCode): array
     {
@@ -121,6 +197,8 @@ class ProductRepository extends RepositoryBase
      * @param Cart $cart
      *
      * @return Product[]
+     *
+     * @throws ORMException
      */
     public function byCart(Cart $cart)
     {

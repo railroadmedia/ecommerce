@@ -2,8 +2,11 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Illuminate\Http\Request;
+use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\ShippingOption;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 
 /**
  * Class ShippingOptionRepository
@@ -11,6 +14,8 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  */
 class ShippingOptionRepository extends RepositoryBase
 {
+    use UseFormRequestQueryBuilder;
+
     /**
      * CreditCardRepository constructor.
      *
@@ -19,6 +24,26 @@ class ShippingOptionRepository extends RepositoryBase
     public function __construct(EcommerceEntityManager $entityManager)
     {
         parent::__construct($entityManager, $entityManager->getClassMetadata(ShippingOption::class));
+    }
+
+    /**
+     * @param $request
+     * @return ResultsQueryBuilderComposite
+     */
+    public function indexByRequest(Request $request): ResultsQueryBuilderComposite
+    {
+        $alias = 'so';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias);
+
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
     }
 
     /**

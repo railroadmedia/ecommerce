@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\QueryBuilder;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -94,14 +93,12 @@ class SubscriptionJsonController extends Controller
         $this->userProvider = $userProvider;
     }
 
-    // todo: refactor database logic to repository
-
     /**
      * Pull subscriptions paginated
      *
      * @param Request $request
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws Throwable
      */
@@ -109,52 +106,10 @@ class SubscriptionJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.subscriptions');
 
-        $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
-        $orderBy = $request->get('order_by_column', 'created_at');
-        if (strpos($orderBy, '_') !== false || strpos($orderBy, '-') !== false) {
-            $orderBy = camel_case($orderBy);
-        }
-        $orderBy = 's' . '.' . $orderBy;
-        $brands = $request->get('brands', [config('ecommerce.available_brands')]);
+        $subscriptionsAndBuilder = $this->subscriptionRepository->indexByRequest($request);
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->subscriptionRepository->createQueryBuilder('s');
-
-        $qb->select(['s', 'p', 'o', 'pm'])
-            ->leftJoin('s.product', 'p')
-            ->leftJoin('s.order', 'o')
-            ->leftJoin('s.paymentMethod', 'pm')
-            ->where(
-                $qb->expr()
-                    ->in('s' . '.brand', ':brands')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->isNull('s' . '.deletedAt')
-            )
-            ->setMaxResults($request->get('limit', 10))
-            ->setFirstResult($first)
-            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
-            ->setParameter('brands', $brands);
-
-        if ($request->has('user_id')) {
-
-            $user = $this->userProvider->getUserById($request->get('user_id'));
-
-            $qb->andWhere(
-                $qb->expr()
-                    ->eq('s' . '.user', ':user')
-            )
-                ->setParameter('user', $user);
-        }
-
-        $subscriptions =
-            $qb->getQuery()
-                ->getResult();
-
-        return ResponseService::subscription($subscriptions, $qb);
+        return ResponseService::subscription($subscriptionsAndBuilder->getResults(), $subscriptionsAndBuilder->getQueryBuilder())
+            ->respond(200);
     }
 
     /**

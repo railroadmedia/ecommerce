@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -66,7 +65,7 @@ class ShippingOptionController extends Controller
      *
      * @param Request $request
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws Throwable
      */
@@ -74,28 +73,10 @@ class ShippingOptionController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.shipping.options');
 
-        $alias = 's';
-        $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
-        $orderBy = $request->get('order_by_column', 'created_at');
-        if (strpos($orderBy, '_') !== false || strpos($orderBy, '-') !== false) {
-            $orderBy = camel_case($orderBy);
-        }
-        $orderBy = $alias . '.' . $orderBy;
+        $shippingOptionAndBuilder = $this->shippingOptionRepository->indexByRequest($request);
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->shippingOptionRepository->createQueryBuilder($alias);
-
-        $qb->setMaxResults($request->get('limit', 10))
-            ->setFirstResult($first)
-            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'));
-
-        $shippingOptions =
-            $qb->getQuery()
-                ->getResult();
-
-        return ResponseService::shippingOption($shippingOptions, $qb);
+        return ResponseService::shippingOption($shippingOptionAndBuilder->getResults(), $shippingOptionAndBuilder->getQueryBuilder())
+            ->respond(200);
     }
 
     /**

@@ -3,6 +3,9 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\Query\Expr\Join;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
@@ -40,9 +43,7 @@ class PaymentRepository extends EntityRepository
      */
     public function getOrderPayments(Order $order): array
     {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
+        /** @var $qb QueryBuilder */
         $qb =
             $this->getEntityManager()
                 ->createQueryBuilder();
@@ -59,14 +60,49 @@ class PaymentRepository extends EntityRepository
                     ->isNull('p.deletedOn')
             );
 
-        /**
-         * @var $q \Doctrine\ORM\Query
-         */
+        /** @var $q Query */
         $q = $qb->getQuery();
 
         $q->setParameter('order', $order);
 
         return $q->getResult();
+    }
+
+    /**
+     * Returns payments entities related to specified order
+     *
+     * @param Order $order
+     *
+     * @return array
+     */
+    public function getPaymentsByOrder(Order $order): array
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['p'])
+            ->from(Payment::class, 'p')
+            ->join(
+                OrderPayment::class,
+                'op',
+                Join::WITH,
+                $qb->expr()
+                    ->eq(true, true)
+            )
+            ->join('op.payment', 'py')
+            ->where(
+                $qb->expr()
+                    ->eq('op.order', ':order')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.id', 'py.id')
+            )
+            ->setParameter('order', $order);
+
+        return $qb->getQuery()->getResult();
     }
 
     /**
@@ -83,9 +119,7 @@ class PaymentRepository extends EntityRepository
             $this->getEntityManager()
                 ->createQueryBuilder();
 
-        /**
-         * @var $ordersWithPayments Order[]
-         */
+        /** @var $ordersWithPayments Order[] */
         $qb->select('o', 'p', 'pm', 'op')
             ->from(Payment::class, 'p')
             ->join('p.orderPayment', 'op')
@@ -106,6 +140,7 @@ class PaymentRepository extends EntityRepository
                 ->getResult();
 
         foreach ($payments as $payment) {
+            /** @var $payment Payment */
             $allPayments[$payment->getId()] = $payment;
         }
 
@@ -114,9 +149,7 @@ class PaymentRepository extends EntityRepository
             $this->getEntityManager()
                 ->createQueryBuilder();
 
-        /**
-         * @var $subscriptionsWithPayments Subscription[]
-         */
+        /** @var $subscriptionsWithPayments Subscription[] */
         $qb->select('s', 'p', 'pm', 'sp')
             ->from(Payment::class, 'p')
             ->join('p.subscriptionPayment', 'sp')
@@ -137,6 +170,7 @@ class PaymentRepository extends EntityRepository
                 ->getResult();
 
         foreach ($payments as $payment) {
+            /** @var $payment Payment */
             $allPayments[$payment->getId()] = $payment;
         }
 

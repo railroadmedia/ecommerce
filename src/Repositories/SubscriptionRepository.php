@@ -3,11 +3,17 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
+use Illuminate\Http\Request;
+use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 
 /**
  * Class SubscriptionRepository
@@ -19,16 +25,69 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  *
  * @package Railroad\Ecommerce\Repositories
  */
-class SubscriptionRepository extends EntityRepository
+class SubscriptionRepository extends RepositoryBase
 {
+    use UseFormRequestQueryBuilder;
+
+    /**
+     * @var UserProviderInterface
+     */
+    protected $userProvider;
+
     /**
      * SubscriptionRepository constructor.
      *
      * @param EcommerceEntityManager $em
+     * @param UserProviderInterface $userProvider
      */
-    public function __construct(EcommerceEntityManager $em)
-    {
+    public function __construct(
+        EcommerceEntityManager $em,
+        UserProviderInterface $userProvider
+    ) {
         parent::__construct($em, $em->getClassMetadata(Subscription::class));
+
+        $this->userProvider = $userProvider;
+    }
+
+    /**
+     * @param $request
+     *
+     * @return ResultsQueryBuilderComposite
+     */
+    public function indexByRequest(Request $request): ResultsQueryBuilderComposite
+    {
+        $alias = 's';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->restrictBrandsByRequest($request, $alias)
+            ->select(['s', 'p', 'o', 'pm'])
+            ->leftJoin('s.product', 'p')
+            ->leftJoin('s.order', 'o')
+            ->leftJoin('s.paymentMethod', 'pm')
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('s' . '.deletedAt')
+            );
+
+        if ($request->has('user_id')) {
+
+            $user = $this->userProvider->getUserById($request->get('user_id'));
+
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq('s' . '.user', ':user')
+            )
+                ->setParameter('user', $user);
+        }
+
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
     }
 
     /**
@@ -40,9 +99,7 @@ class SubscriptionRepository extends EntityRepository
      */
     public function getProductsSubscriptions(array $products): array
     {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
+        /** @var $qb QueryBuilder */
         $qb =
             $this->getEntityManager()
                 ->createQueryBuilder();
@@ -54,9 +111,7 @@ class SubscriptionRepository extends EntityRepository
                     ->in('s.product', ':products')
             );
 
-        /**
-         * @var $q \Doctrine\ORM\Query
-         */
+        /** @var $q Query */
         $q = $qb->getQuery();
 
         $q->setParameter('products', $products);
@@ -70,16 +125,16 @@ class SubscriptionRepository extends EntityRepository
      * @param Order $order
      * @param Product $product
      *
-     * @return array
+     * @return Subscription|null
+     *
+     * @throws NonUniqueResultException
      */
     public function getOrderProductSubscription(
         Order $order,
         Product $product
     ): ?Subscription
     {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
+        /** @var $qb QueryBuilder */
         $qb =
             $this->getEntityManager()
                 ->createQueryBuilder();
@@ -95,9 +150,7 @@ class SubscriptionRepository extends EntityRepository
                     ->eq('s.product', ':product')
             );
 
-        /**
-         * @var $q \Doctrine\ORM\Query
-         */
+        /** @var $q Query */
         $q = $qb->getQuery();
 
         $q->setParameter('order', $order)
@@ -109,6 +162,8 @@ class SubscriptionRepository extends EntityRepository
     /**
      * @param $userId
      * @param array $productIds
+     * @param bool $activeOnly - default false
+     *
      * @return Subscription|null
      */
     public function getUserSubscriptionForProducts($userId, array $productIds, $activeOnly = false)
@@ -197,5 +252,28 @@ class SubscriptionRepository extends EntityRepository
                 ->getResult();
 
         return $subscriptions;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return Subscription[]
+     */
+    public function getOrderSubscriptions(Order $order): array
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select('s')
+            ->from($this->getClassName(), 's')
+            ->where(
+                $qb->expr()
+                    ->eq('s.order', ':order')
+            )
+            ->setParameter('order', $order);
+
+        return $qb->getQuery()->getResult();
     }
 }

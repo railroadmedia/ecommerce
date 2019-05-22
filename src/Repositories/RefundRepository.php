@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
@@ -26,5 +27,23 @@ class RefundRepository extends EntityRepository
     public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(Refund::class));
+    }
+
+    public function getPaymentsRefunds(array $payments): array
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['r'])
+            ->from(Refund::class, 'r')
+            ->where(
+                $qb->expr()
+                    ->in('r.payment', ':payments')
+            )
+            ->setParameter('payments', $payments);
+
+        return $qb->getQuery()->getResult();
     }
 }

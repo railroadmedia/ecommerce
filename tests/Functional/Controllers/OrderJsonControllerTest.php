@@ -380,7 +380,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
             'order_id' => $order['id'],
             'payment_method_id' => null,
             'updated_at' => null,
-            'user_id' => $userId
+            'user_id' => $userId,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
         ]);
 
         //
@@ -695,6 +696,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
             [
                 'page'  => $page,
                 'limit' => $limit,
+                'order_by_column' => 'id',
+                'order_by_direction' => 'asc'
             ]
         );
 
