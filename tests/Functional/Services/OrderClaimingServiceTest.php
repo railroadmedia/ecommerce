@@ -351,6 +351,14 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => 1,
+                'payment_id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
             'ecommerce_user_products',
             [
                 'user_id' => $userId,

@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Doctrine\Common\Collections\ArrayCollection;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
@@ -13,6 +14,7 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -297,6 +299,13 @@ class OrderClaimingService
             ->setTotalCyclesDue($totalCyclesDue)
             ->setPaymentMethod($payment->getPaymentMethod())
             ->setCreatedAt(Carbon::now());
+
+        $subscriptionPayment = new SubscriptionPayment();
+
+        $subscriptionPayment->setSubscription($subscription)
+            ->setPayment($payment);
+
+        $this->entityManager->persist($subscriptionPayment);
 
         return $subscription;
     }

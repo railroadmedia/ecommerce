@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Controllers\PaymentJsonController;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Services\CurrencyService;
@@ -93,7 +94,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                         'total_due' => $due,
                         'total_paid' => $due,
                         'total_refunded' => null,
-                        'type' => 'order',
+                        'type' => Payment::TYPE_INITIAL_ORDER,
                         'external_provider' => 'stripe',
                         'status' => '1',
                         'message' => '',
@@ -222,7 +223,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                         'total_due' => $due,
                         'total_paid' => $due,
                         'total_refunded' => null,
-                        'type' => 'order',
+                        'type' => Payment::TYPE_INITIAL_ORDER,
                         'external_provider' => 'stripe',
                         'status' => '1',
                         'message' => '',
@@ -439,7 +440,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                         'total_due' => $due,
                         'total_paid' => $due,
                         'total_refunded' => null,
-                        'type' => 'order',
+                        'type' => Payment::TYPE_INITIAL_ORDER,
                         'external_provider' => 'stripe',
                         'status' => '1',
                         'message' => '',
