@@ -256,6 +256,7 @@ class ShippingServiceTest extends EcommerceTestCase
             [
                 'country' => $country,
                 'active' => true,
+                'priority' => 2,
             ]
         );
 
@@ -263,6 +264,7 @@ class ShippingServiceTest extends EcommerceTestCase
             [
                 'country' => $country,
                 'active' => true,
+                'priority' => 1,
             ]
         );
 

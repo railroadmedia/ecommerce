@@ -65,7 +65,9 @@ class UserProductService
             if ($userProduct->getProduct()
                     ->getId() == $productId &&
                 ($userProduct->getExpirationDate() == null ||
-                    Carbon::parse($userProduct->getExpirationDate()) > Carbon::now())) {
+                    Carbon::parse($userProduct->getExpirationDate()) >
+                    Carbon::now()
+                        ->subDays(config('ecommerce.days_before_access_revoked_after_expiry', 0)))) {
 
                 return true;
             }
@@ -90,7 +92,9 @@ class UserProductService
                     $productIds
                 ) &&
                 ($userProduct->getExpirationDate() == null ||
-                    Carbon::parse($userProduct->getExpirationDate()) > Carbon::now())) {
+                    Carbon::parse($userProduct->getExpirationDate()) >
+                    Carbon::now()
+                        ->subDays(config('ecommerce.days_before_access_revoked_after_expiry', 0)))) {
 
                 return true;
             }

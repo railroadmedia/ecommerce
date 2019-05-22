@@ -127,6 +127,18 @@ class Subscription
     protected $totalPrice;
 
     /**
+     * @ORM\Column(
+     *     type="decimal",
+     *     name="tax",
+     *     precision=8,
+     *     scale=2
+     * )
+     *
+     * @var float
+     */
+    protected $tax;
+
+    /**
      * @ORM\Column(type="string")
      *
      * @var string
@@ -352,6 +364,25 @@ class Subscription
     public function setTotalPrice(float $totalPrice): self
     {
         $this->totalPrice = $totalPrice;
+
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getTax(): float
+    {
+        return $this->tax;
+    }
+
+    /**
+     * @param float $tax
+     * @return Subscription
+     */
+    public function setTax(float $tax): Subscription
+    {
+        $this->tax = $tax;
 
         return $this;
     }

@@ -57,8 +57,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]);
 
             $paymentMethod = $this->fakePaymentMethod([
-                'method_id' => $creditCard['id'],
-                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'credit_card_id' => $creditCard['id'],
                 'currency' => $currency,
                 'billing_address_id' => $address['id']
             ]);
@@ -111,7 +110,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
                 $vat = $taxService->getTaxesDueForProductCost(
                     $subscription['total_price'],
-                    $billingAddressEntity
+                    $billingAddressEntity->toStructure()
                 );
 
                 $paymentAmount = $currencyService->convertFromBase(
@@ -156,7 +155,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             );
 
             $this->assertDatabaseHas(
-                'ecommerce_order_payments',
+                'ecommerce_payments',
                 [
                     'total_due' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
                     'total_paid' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
@@ -209,8 +208,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]);
 
             $paymentMethod = $this->fakePaymentMethod([
-                'method_id' => $creditCard['id'],
-                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'credit_card_id' => $creditCard['id'],
                 'currency' => $currency,
                 'billing_address_id' => $address['id']
             ]);
@@ -273,8 +271,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]);
 
             $paymentMethod = $this->fakePaymentMethod([
-                'method_id' => $creditCard['id'],
-                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'credit_card_id' => $creditCard['id'],
                 'currency' => $currency,
                 'billing_address_id' => $address['id']
             ]);
@@ -328,7 +325,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
                 $vat = $taxService->getTaxesDueForProductCost(
                     $subscription['total_price'],
-                    $billingAddressEntity
+                    $billingAddressEntity->toStructure()
                 );
 
                 $paymentAmount = $currencyService->convertFromBase(
@@ -393,7 +390,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             );
 
             $this->assertDatabaseHas(
-                'ecommerce_order_payments',
+                'ecommerce_payments',
                 [
                     'total_due' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
                     'total_paid' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),

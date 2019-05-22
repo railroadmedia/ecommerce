@@ -40,24 +40,32 @@ class OrderClaimingService
     private $entityManager;
 
     /**
+     * @var TaxService
+     */
+    private $taxService;
+
+    /**
      * OrderClaimingService constructor.
      *
      * @param CartService $cartService
      * @param DiscountService $discountService
      * @param ShippingService $shippingService
      * @param EcommerceEntityManager $entityManager
+     * @param TaxService $taxService
      */
     public function __construct(
         CartService $cartService,
         DiscountService $discountService,
         ShippingService $shippingService,
-        EcommerceEntityManager $entityManager
+        EcommerceEntityManager $entityManager,
+        TaxService $taxService
     )
     {
         $this->cartService = $cartService;
         $this->discountService = $discountService;
         $this->shippingService = $shippingService;
         $this->entityManager = $entityManager;
+        $this->taxService = $taxService;
     }
 
     /**
@@ -77,8 +85,8 @@ class OrderClaimingService
         $this->cartService->setCart($cart);
 
         $totalItemsCosts = $this->cartService->getTotalItemCosts();
-        $shippingCosts = $cart->getShippingOverride() ?:
-            $this->shippingService->getShippingDueForCart($cart, $totalItemsCosts);
+        $shippingCosts =
+            $cart->getShippingOverride() ?: $this->shippingService->getShippingDueForCart($cart, $totalItemsCosts);
         $taxesDue = $cart->getTaxOverride() ?: $this->cartService->getTaxDueForOrder();
 
         // create the order
@@ -182,6 +190,15 @@ class OrderClaimingService
         return $order;
     }
 
+    /**
+     * @param Purchaser $purchaser
+     * @param Payment $payment
+     * @param Order $order
+     * @param OrderItem|null $orderItem
+     * @param int|null $totalCyclesDue
+     * @return Subscription
+     * @throws \Throwable
+     */
     public function createSubscription(
         Purchaser $purchaser,
         Payment $payment,
@@ -255,6 +272,14 @@ class OrderClaimingService
 
         $intervalCount = $product ? $product->getSubscriptionIntervalCount() : 1;
 
+        $totalTaxDue =
+            $this->cartService->getCart()
+                ->getTaxOverride() ?: $this->taxService->getTaxesDueTotal(
+                $this->cartService->getTotalItemCosts(),
+                0,
+                $this->taxService->getAddressForTaxation($this->cartService->getCart())
+            );
+
         $subscription->setBrand($purchaser->getBrand())
             ->setType($type)
             ->setUser($purchaser->getUserObject())
@@ -263,7 +288,8 @@ class OrderClaimingService
             ->setIsActive(true)
             ->setStartDate(Carbon::now())
             ->setPaidUntil($nextBillDate)
-            ->setTotalPrice($subscriptionPricePerPayment)
+            ->setTotalPrice($subscriptionPricePerPayment + $totalTaxDue)
+            ->setTax($totalTaxDue)
             ->setCurrency($payment->getCurrency())
             ->setIntervalType($intervalType)
             ->setIntervalCount($intervalCount)

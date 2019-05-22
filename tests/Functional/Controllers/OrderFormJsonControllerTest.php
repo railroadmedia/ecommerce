@@ -4301,7 +4301,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ''
         );
 
-        $expectedTotalPrice = round($product['price'] - $discount['amount'], 2);
+        $expectedTax = 0.65;
+        $expectedTotalPrice = round($product['price'] + $expectedTax - $discount['amount'], 2);
 
         $response = $this->call(
             'PUT',
@@ -4332,6 +4333,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ->addYear(1)
                     ->toDateTimeString(),
                 'total_price' => $expectedTotalPrice,
+                'tax' => $expectedTax,
             ]
         );
     }
@@ -7481,7 +7483,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'total_cycles_paid' => 1,
                 'interval_type' => $product['subscription_interval_type'],
                 'interval_count' => $product['subscription_interval_count'],
-                'total_price' => $product['price'],
+                'total_price' => $product['price'] + $expectedTaxes,
+                'tax' => $expectedTaxes,
                 'canceled_on' => null
             ]
         );

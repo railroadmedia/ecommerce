@@ -99,6 +99,7 @@ class RenewalServiceTest extends EcommerceTestCase
             ->setStartDate(Carbon::now())
             ->setPaidUntil(Carbon::now()->subDay(1))
             ->setTotalPrice($this->faker->randomNumber(3))
+            ->setTax($this->faker->randomNumber(3))
             ->setCurrency($this->getCurrency())
             ->setIntervalType(config('ecommerce.interval_type_monthly'))
             ->setIntervalCount(1)

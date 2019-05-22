@@ -129,16 +129,17 @@ class RenewalService
 
             try {
 
-                $totalTaxDue = $this->taxService->getTaxesDueTotal(
-                    $subscription->getTotalPrice(),
-                    0,
-                    !empty($paymentMethod->getBillingAddress()) ?
-                        $paymentMethod->getBillingAddress()
-                            ->toStructure() : null
-                );
+                // todo: revamp tax system
+//                $totalTaxDue = $this->taxService->getTaxesDueTotal(
+//                    $subscription->getTotalPrice(),
+//                    0,
+//                    !empty($paymentMethod->getBillingAddress()) ?
+//                        $paymentMethod->getBillingAddress()
+//                            ->toStructure() : null
+//                );
 
                 $chargePrice = $this->currencyService->convertFromBase(
-                    $subscription->getTotalPrice() + $totalTaxDue,
+                    $subscription->getTotalPrice(),
                     $currency
                 );
 
@@ -200,16 +201,17 @@ class RenewalService
 
             try {
 
-                $totalTaxDue = $this->taxService->getTaxesDueTotal(
-                    $subscription->getTotalPrice(),
-                    0,
-                    !empty($paymentMethod->getBillingAddress()) ?
-                        $paymentMethod->getBillingAddress()
-                            ->toStructure() : null
-                );
+                // todo: revamp tax system
+//                $totalTaxDue = $this->taxService->getTaxesDueTotal(
+//                    $subscription->getTotalPrice(),
+//                    0,
+//                    !empty($paymentMethod->getBillingAddress()) ?
+//                        $paymentMethod->getBillingAddress()
+//                            ->toStructure() : null
+//                );
 
                 $chargePrice = $this->currencyService->convertFromBase(
-                    $subscription->getTotalPrice() + $totalTaxDue,
+                    $subscription->getTotalPrice(),
                     $currency
                 );
 

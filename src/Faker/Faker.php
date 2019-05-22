@@ -338,6 +338,7 @@ class Faker extends Generator
                 'canceled_on' => null,
                 'note' => $this->text,
                 'total_price' => $this->randomNumber(3),
+                'tax' => $this->randomNumber(3),
                 'currency' => 'CAD',
                 'interval_type' => 'year',
                 'interval_count' => $this->randomNumber(),

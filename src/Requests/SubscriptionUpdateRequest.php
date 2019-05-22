@@ -33,6 +33,7 @@ class SubscriptionUpdateRequest extends FormRequest
             'data.attributes.canceled_on' => 'canceled_on',
             'data.attributes.note' => 'note',
             'data.attributes.total_price' => 'total_price',
+            'data.attributes.tax' => 'tax',
             'data.attributes.currency' => 'currency',
             'data.attributes.interval_type' => 'interval_type',
             'data.attributes.interval_count' => 'interval_count',
@@ -54,7 +55,7 @@ class SubscriptionUpdateRequest extends FormRequest
     {
         return [
             'data.type' => 'in:subscription',
-            'data.attributes.brand' => 'nullable|max:255',
+            'data.attributes.brand' => 'max:255',
             'data.attributes.type' => 'max:255|in:' . implode(
                     ',',
                     [
@@ -62,14 +63,15 @@ class SubscriptionUpdateRequest extends FormRequest
                         Subscription::TYPE_SUBSCRIPTION
                     ]
                 ),
-            'data.attributes.is_active' => 'nullable|boolean',
-            'data.attributes.start_date' => 'nullable|date',
-            'data.attributes.paid_until' => 'nullable|date',
+            'data.attributes.is_active' => 'boolean',
+            'data.attributes.start_date' => 'date',
+            'data.attributes.paid_until' => 'date',
             'data.attributes.canceled_on' => 'nullable|date',
             'data.attributes.note' => 'max:255',
-            'data.attributes.total_price' => 'nullable|numeric|min:0',
-            'data.attributes.currency' => 'nullable|max:3',
-            'data.attributes.interval_type' => 'nullable|in:' . implode(
+            'data.attributes.total_price' => 'numeric|min:0',
+            'data.attributes.tax' => 'numeric|min:0',
+            'data.attributes.currency' => 'max:3',
+            'data.attributes.interval_type' => 'in:' . implode(
                     ',',
                     [
                         config('ecommerce.interval_type_yearly'),
@@ -77,9 +79,9 @@ class SubscriptionUpdateRequest extends FormRequest
                         config('ecommerce.interval_type_daily')
                     ]
                 ),
-            'data.attributes.interval_count' => 'nullable|numeric|min:0',
+            'data.attributes.interval_count' => 'numeric|min:0',
             'data.attributes.total_cycles_due' => 'nullable|numeric|min:0',
-            'data.attributes.total_cycles_paid' => 'nullable|numeric|min:0',
+            'data.attributes.total_cycles_paid' => 'numeric|min:0',
             'data.relationships.order.data.id' => 'numeric|exists:' . 'ecommerce_orders' . ',id',
             'data.relationships.product.data.id' => 'numeric|exists:' . 'ecommerce_products' . ',id',
             'data.relationships.paymentMethod.data.id' => 'numeric|exists:' . 'ecommerce_payment_methods' . ',id',
@@ -102,6 +104,7 @@ class SubscriptionUpdateRequest extends FormRequest
                 'data.attributes.canceled_on',
                 'data.attributes.note',
                 'data.attributes.total_price',
+                'data.attributes.tax',
                 'data.attributes.currency',
                 'data.attributes.interval_type',
                 'data.attributes.interval_count',

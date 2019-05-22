@@ -33,6 +33,7 @@ class SubscriptionCreateRequest extends FormRequest
             'data.attributes.canceled_on' => 'canceled_on',
             'data.attributes.note' => 'note',
             'data.attributes.total_price' => 'total_price',
+            'data.attributes.tax' => 'tax',
             'data.attributes.currency' => 'currency',
             'data.attributes.interval_type' => 'interval_type',
             'data.attributes.interval_count' => 'interval_count',
@@ -68,6 +69,7 @@ class SubscriptionCreateRequest extends FormRequest
             'data.attributes.canceled_on' => 'nullable|date',
             'data.attributes.note' => 'nullable',
             'data.attributes.total_price' => 'required|numeric|min:0',
+            'data.attributes.tax' => 'numeric|min:0',
             'data.attributes.currency' => 'required|max:3',
             'data.attributes.interval_type' => 'required|in:' . implode(
                     ',',
@@ -102,6 +104,7 @@ class SubscriptionCreateRequest extends FormRequest
                 'data.attributes.canceled_on',
                 'data.attributes.note',
                 'data.attributes.total_price',
+                'data.attributes.tax',
                 'data.attributes.currency',
                 'data.attributes.interval_type',
                 'data.attributes.interval_count',

@@ -52,6 +52,7 @@ class SubscriptionTransformer extends TransformerAbstract
                     ->toDateTimeString() : null,
             'note' => $subscription->getNote(),
             'total_price' => $subscription->getTotalPrice(),
+            'tax' => $subscription->getTax(),
             'currency' => $subscription->getCurrency(),
             'interval_type' => $subscription->getIntervalType(),
             'interval_count' => $subscription->getIntervalCount(),
