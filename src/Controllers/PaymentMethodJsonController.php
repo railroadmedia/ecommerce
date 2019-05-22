@@ -292,7 +292,7 @@ class PaymentMethodJsonController extends Controller
                 $billingAddress = new Address();
 
                 $billingAddress->setType(Address::BILLING_ADDRESS_TYPE)
-                    ->setBrand(config('ecommerce.brand'))
+                    ->setBrand($request->get('gateway', config('ecommerce.brand')))
                     ->setUser($user)
                     ->setState($card->address_state ?? '')
                     ->setCountry($billingCountry ?? '');
@@ -377,7 +377,7 @@ class PaymentMethodJsonController extends Controller
             $billingAddress = new Address();
 
             $billingAddress->setType(Address::BILLING_ADDRESS_TYPE)
-                ->setBrand(config('ecommerce.brand'))
+                ->setBrand($request->get('gateway', config('ecommerce.brand')))
                 ->setUser($user)
                 ->setState('')
                 ->setCountry('');
