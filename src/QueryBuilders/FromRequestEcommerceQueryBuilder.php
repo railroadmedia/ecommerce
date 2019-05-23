@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\QueryBuilders;
 
+use Carbon\Carbon;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
 
@@ -74,11 +75,50 @@ class FromRequestEcommerceQueryBuilder extends QueryBuilder
 
         $brands = $request->get('brands', $defaultBrands);
 
-        $this->where(
+        $this->andWhere(
             $this->expr()
                 ->in($entityAlias . '.brand', ':brands')
         )
             ->setParameter('brands', $brands);
+
+        return $this;
+    }
+
+    /**
+     * You must use andWhere or orWhere after using this method, since it uses a where statement.
+     *
+     * @param Request $request
+     * @param $entityAlias
+     * @param string $entityAttribute
+     * @return FromRequestEcommerceQueryBuilder
+     */
+    public function restrictBetweenTimes(Request $request, $entityAlias, $entityAttribute = 'createdAt')
+    {
+        $smallDateTime =
+            $request->get(
+                'small_date_time',
+                Carbon::now()
+                    ->subDay()
+                    ->toDateTimeString()
+            );
+
+        $bigDateTime =
+            $request->get(
+                'big_date_time',
+                Carbon::now()
+                    ->toDateTimeString()
+            );
+
+        $this->andWhere(
+            $this->expr()
+                ->gt($entityAlias . '.' . $entityAttribute, ':smallDateTime')
+        )
+            ->andWhere(
+                $this->expr()
+                    ->lte($entityAlias . '.' . $entityAttribute, ':bigDateTime')
+            )
+            ->setParameter('smallDateTime', $smallDateTime)
+            ->setParameter('bigDateTime', $bigDateTime);
 
         return $this;
     }

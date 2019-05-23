@@ -58,7 +58,8 @@ class OrderItemFulfillmentRepository extends RepositoryBase
 
         $qb->paginateByRequest($request)
             ->orderByRequest($request, $alias)
-            ->where(
+            ->restrictBetweenTimes($request, $alias)
+            ->andWhere(
                 $qb->expr()
                     ->in('oif.status', ':statuses')
             )
