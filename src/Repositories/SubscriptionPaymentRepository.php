@@ -2,7 +2,8 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
@@ -16,7 +17,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  *
  * @package Railroad\Ecommerce\Repositories
  */
-class SubscriptionPaymentRepository extends EntityRepository
+class SubscriptionPaymentRepository extends RepositoryBase
 {
     /**
      * SubscriptionPaymentRepository constructor.
@@ -29,5 +30,29 @@ class SubscriptionPaymentRepository extends EntityRepository
             $em,
             $em->getClassMetadata(SubscriptionPayment::class)
         );
+    }
+
+    /**
+     * @param Payment $payment
+     *
+     * @return SubscriptionPayment[]
+     */
+    public function getByPayment(Payment $payment): array
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['sp', 's'])
+            ->from(SubscriptionPayment::class, 'sp')
+            ->join('sp.subscription', 's')
+            ->where(
+                $qb->expr()
+                    ->eq('sp.payment', ':payment')
+            )
+            ->setParameter('payment', $payment);
+
+        return $qb->getQuery()->getResult();
     }
 }

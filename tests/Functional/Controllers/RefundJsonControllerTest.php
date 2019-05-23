@@ -899,7 +899,9 @@ class RefundJsonControllerTest extends EcommerceTestCase
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
-        $order = $this->fakeOrder();
+        $order = $this->fakeOrder([
+            'user_id' => $userId
+        ]);
 
         $orderPayment = $this->fakeOrderPayment([
             'order_id' => $order['id'],
@@ -914,6 +916,14 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         $userProduct = $this->fakeUserProduct([
             'user_id' => $userId,
+            'product_id' => $product['id'],
+            'quantity' => 1
+        ]);
+
+        $otherUser = $this->fakeUser();
+
+        $otherUserProduct = $this->fakeUserProduct([
+            'user_id' => $otherUser['id'],
             'product_id' => $product['id'],
             'quantity' => 1
         ]);
@@ -1058,6 +1068,14 @@ class RefundJsonControllerTest extends EcommerceTestCase
             'ecommerce_user_products',
             [
                 'user_id' => $userId,
+                'product_id' => $product['id'],
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $otherUser['id'],
                 'product_id' => $product['id'],
             ]
         );

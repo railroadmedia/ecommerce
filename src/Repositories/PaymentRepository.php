@@ -2,15 +2,19 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Query\Expr\Join;
+use Illuminate\Http\Request;
+use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
+use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 
 /**
  * Class PaymentRepository
@@ -22,8 +26,10 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  *
  * @package Railroad\Ecommerce\Repositories
  */
-class PaymentRepository extends EntityRepository
+class PaymentRepository extends RepositoryBase
 {
+    use UseFormRequestQueryBuilder;
+
     /**
      * PaymentRepository constructor.
      *
@@ -32,6 +38,67 @@ class PaymentRepository extends EntityRepository
     public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(Payment::class));
+    }
+
+    /**
+     * @param $request
+     *
+     * @return ResultsQueryBuilderComposite
+     */
+    public function indexByRequest(Request $request): ResultsQueryBuilderComposite
+    {
+        $alias = 'p';
+
+        /** @var $qb FromRequestEcommerceQueryBuilder */
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->select(['p', 'pm', 'cc', 'ppba'])
+            ->leftJoin('p.paymentMethod', 'pm')
+            ->leftJoin('pm.creditCard', 'cc')
+            ->leftJoin('pm.paypalBillingAgreement', 'ppba');
+
+        if (!empty($request->get('order_id'))) {
+            $aliasOrderPayment = 'op';
+            $qb->join($alias . '.orderPayment', $aliasOrderPayment)
+                ->where(
+                    $qb->expr()
+                        ->eq(
+                            'IDENTITY(' . $aliasOrderPayment . '.order)',
+                            ':orderId'
+                        )
+                )
+                ->setParameter(
+                    'orderId',
+                    $request->get('order_id')
+                );
+        }
+
+        if (!empty($request->get('subscription_id'))) {
+            $aliasSubscriptionPayment = 'sp';
+            $qb->join(
+                    $alias . '.subscriptionPayment',
+                    $aliasSubscriptionPayment
+                )
+                ->where(
+                    $qb->expr()
+                        ->eq(
+                            'IDENTITY(' . $aliasSubscriptionPayment . '.subscription)',
+                            ':subscriptionId'
+                        )
+                )
+                ->setParameter(
+                    'subscriptionId',
+                    $request->get('subscription_id')
+                );
+        }
+
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
     }
 
     /**
@@ -103,6 +170,34 @@ class PaymentRepository extends EntityRepository
             ->setParameter('order', $order);
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Returns payment entity with related payment method
+     *
+     * @param int $paymentId
+     *
+     * @return Payment
+     *
+     * @throws NonUniqueResultException
+     */
+    public function getPaymentAndPaymentMethod(int $paymentId): ?Payment
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['p', 'pm'])
+            ->from(Payment::class, 'p')
+            ->join('p.paymentMethod', 'pm')
+            ->where(
+                $qb->expr()
+                    ->eq('p.id', ':id')
+            )
+            ->setParameter('id', $paymentId);
+
+        return $qb->getQuery()->getOneOrNullResult();
     }
 
     /**

@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -15,7 +14,6 @@ use Railroad\Ecommerce\Requests\OrderFulfilledRequest;
 use Railroad\Ecommerce\Requests\OrderFulfillmentDeleteRequest;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
-use Spatie\Fractal\Fractal;
 use Throwable;
 
 class ShippingFulfillmentJsonController extends Controller
@@ -58,7 +56,7 @@ class ShippingFulfillmentJsonController extends Controller
      *
      * @param Request $request
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws Throwable
      */
@@ -66,39 +64,10 @@ class ShippingFulfillmentJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.fulfillments');
 
-        $statuses = (array)$request->get(
-            'status',
-            [
-                config('ecommerce.fulfillment_status_pending'),
-                config('ecommerce.fulfillment_status_fulfilled')
-            ]
-        );
+        $fulfillmentsAndBuilder = $this->orderItemFulfillmentRepository->indexByRequest($request);
 
-        $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
-        $orderBy = $request->get('order_by_column', 'created_at');
-        if (strpos($orderBy, '_') !== false || strpos($orderBy, '-') !== false) {
-            $orderBy = camel_case($orderBy);
-        }
-        $orderBy = 'oif.' . $orderBy;
-
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->orderItemFulfillmentRepository->createQueryBuilder('oif');
-
-        $fulfillments =
-            $qb->where(
-                    $qb->expr()
-                        ->in('oif.status', ':statuses')
-                )
-                ->setMaxResults($request->get('limit', 10))
-                ->setFirstResult($first)
-                ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
-                ->setParameter('statuses', $statuses)
-                ->getQuery()
-                ->getResult();
-
-        return ResponseService::fulfillment($fulfillments);
+        return ResponseService::fulfillment($fulfillmentsAndBuilder->getResults(), $fulfillmentsAndBuilder->getQueryBuilder())
+            ->respond(200);
     }
 
     /**
@@ -115,28 +84,10 @@ class ShippingFulfillmentJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'fulfilled.fulfillment');
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->orderItemFulfillmentRepository->createQueryBuilder('oif');
-
-        $qb->where(
-                $qb->expr()
-                    ->eq('IDENTITY(oif.order)', ':orderId')
-            )
-            ->setParameter('orderId', $request->get('order_id'));
-
-        if ($request->has('order_item_id')) {
-            $qb->andWhere(
-                    $qb->expr()
-                        ->eq('IDENTITY(oif.orderItem)', ':orderItemId')
-                )
-                ->setParameter('orderItemId', $request->get('order_item_id'));
-        }
-
-        $fulfillments =
-            $qb->getQuery()
-                ->getResult();
+        $fulfillments = $this->orderItemFulfillmentRepository->getByOrderAndOrderItem(
+            $request->get('order_id'),
+            $request->get('order_item_id')
+        );
 
         $found = false;
 
@@ -175,33 +126,10 @@ class ShippingFulfillmentJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.fulfillment');
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->orderItemFulfillmentRepository->createQueryBuilder('oif');
-
-        $qb->where(
-                $qb->expr()
-                    ->eq('IDENTITY(oif.order)', ':orderId')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->eq('oif.status', ':status')
-            )
-            ->setParameter('orderId', $request->get('order_id'))
-            ->setParameter('status', config('ecommerce.fulfillment_status_pending'));
-
-        if ($request->has('order_item_id')) {
-            $qb->andWhere(
-                    $qb->expr()
-                        ->eq('IDENTITY(oif.orderItem)', ':orderItemId')
-                )
-                ->setParameter('orderItemId', $request->get('order_item_id'));
-        }
-
-        $fulfillments =
-            $qb->getQuery()
-                ->getResult();
+        $fulfillments = $this->orderItemFulfillmentRepository->getByOrderAndOrderItem(
+            $request->get('order_id'),
+            $request->get('order_item_id')
+        );
 
         foreach ($fulfillments as $fulfillment) {
             $this->entityManager->remove($fulfillment);

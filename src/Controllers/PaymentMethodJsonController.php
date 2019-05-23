@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\QueryBuilder;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
@@ -161,7 +160,6 @@ class PaymentMethodJsonController extends Controller
 
     // todo: add func to get customers payment methods
 
-    // todo: move database logic to repository
     /**
      * Get all user's payment methods with all the method details: credit card or paypal billing agreement
      *
@@ -189,49 +187,7 @@ class PaymentMethodJsonController extends Controller
             )
         );
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->paymentMethodRepository->createQueryBuilder('pm');
-
-        $paymentMethods =
-            $qb->select(['upm', 'pm', 'cc', 'ppba'])
-                ->join('pm.userPaymentMethod', 'upm')
-                ->leftJoin('pm.creditCard', 'cc')
-                ->leftJoin('pm.paypalBillingAgreement', 'ppba')
-                ->where(
-                    $qb->expr()
-                        ->eq('upm.user', ':user')
-                )
-                ->setParameter('user', $user)
-                ->getQuery()
-                ->getResult();
-
-        $creditCardIds = [];
-        $paypalIds = [];
-
-        /**
-         * @var $paymentMethods PaymentMethod
-         */
-        foreach ($paymentMethods as $paymentMethod) {
-
-            $type = $paymentMethod->getMethodType();
-
-            if ($type == PaymentMethod::TYPE_PAYPAL) {
-                $paypalIds[] =
-                    $paymentMethod->getMethod()
-                        ->getId();
-            }
-            else {
-                $creditCardIds[] =
-                    $paymentMethod->getMethod()
-                        ->getId();
-            }
-        }
-
-        $creditCardsMap = $this->creditCardRepository->getCreditCardsMap($creditCardIds);
-
-        $paypalAgreementsMap = $this->paypalBillingAgreementRepository->getPaypalAgreementsMap($paypalIds);
+        $paymentMethods = $this->paymentMethodRepository->getAllUsersPaymentMethods($user->getId());
 
         return ResponseService::paymentMethod(
             $paymentMethods
@@ -323,7 +279,7 @@ class PaymentMethodJsonController extends Controller
 
             // throw generic
             throw new PaymentFailedException($exception->getMessage());
-        } catch (\Exception $paymentFailedException) {
+        } catch (Exception $paymentFailedException) {
             throw new PaymentFailedException($paymentFailedException->getMessage());
         }
 
@@ -362,9 +318,7 @@ class PaymentMethodJsonController extends Controller
                 $request->get('token')
             );
 
-            /**
-             * @var $user \Railroad\Ecommerce\Entities\User
-             */
+            /** @var $user User */
             $user = $this->userProvider->getCurrentUser();
 
             $purchaser = new Purchaser();
@@ -412,18 +366,7 @@ class PaymentMethodJsonController extends Controller
      */
     public function setDefault(PaymentMethodSetDefaultRequest $request)
     {
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->userPaymentMethodsRepository->createQueryBuilder('p');
-
-        $userPaymentMethod = $qb->where(
-            $qb->expr()
-                ->eq('IDENTITY(p.paymentMethod)', ':id')
-        )
-            ->setParameter('id', $request->get('id'))
-            ->getQuery()
-            ->getOneOrNullResult();
+        $userPaymentMethod = $this->userPaymentMethodsRepository->getByMethodId($request->get('id'));
 
         /**
          * @var $paymentMethod PaymentMethod
@@ -488,20 +431,7 @@ class PaymentMethodJsonController extends Controller
             new PaymentMethodException($message)
         );
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->userPaymentMethodsRepository->createQueryBuilder('upm');
-
-        $userPaymentMethod =
-            $qb->select(['upm'])
-                ->where(
-                    $qb->expr()
-                        ->eq('IDENTITY(upm.paymentMethod)', ':id')
-                )
-                ->setParameter('id', $paymentMethodId)
-                ->getQuery()
-                ->getOneOrNullResult();
+        $userPaymentMethod = $this->userPaymentMethodsRepository->getByMethodId($paymentMethodId);
 
         if ($userPaymentMethod &&
             $userPaymentMethod->getUser() &&
@@ -624,20 +554,7 @@ class PaymentMethodJsonController extends Controller
             )
         );
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->userPaymentMethodsRepository->createQueryBuilder('upm');
-
-        $userPaymentMethod =
-            $qb->select(['upm'])
-                ->where(
-                    $qb->expr()
-                        ->eq('IDENTITY(upm.paymentMethod)', ':id')
-                )
-                ->setParameter('id', $paymentMethodId)
-                ->getQuery()
-                ->getOneOrNullResult();
+        $userPaymentMethod = $this->userPaymentMethodsRepository->getByMethodId($paymentMethodId);
 
         if (empty($userPaymentMethod) ||
             ($userPaymentMethod->getUser() &&

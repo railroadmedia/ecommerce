@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\QueryBuilder;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
@@ -140,12 +139,10 @@ class PaymentJsonController extends Controller
         $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
     }
 
-    // todo: refactor database logic to repository
-
     /**
      * @param PaymentIndexRequest $request
      *
-     * @return Fractal
+     * @return JsonResponse
      *
      * @throws NotAllowedException
      */
@@ -153,70 +150,11 @@ class PaymentJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'list.payment');
 
-        $alias = 'p';
-        $orderBy = $request->get('order_by_column', 'created_at');
-        if (strpos($orderBy, '_') !== false || strpos($orderBy, '-') !== false) {
-            $orderBy = camel_case($orderBy);
-        }
-        $orderBy = $alias . '.' . $orderBy;
-        $first = ($request->get('page', 1) - 1) * $request->get('limit', 10);
+        $paymentsAndBuilder = $this->paymentRepository->indexByRequest($request);
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->paymentRepository->createQueryBuilder('p');
-
-        $qb->select(['p', 'pm', 'cc', 'ppba'])
-            ->leftJoin('p.paymentMethod', 'pm')
-            ->leftJoin('pm.creditCard', 'cc')
-            ->leftJoin('pm.paypalBillingAgreement', 'ppba')
-            ->orderBy($orderBy, $request->get('order_by_direction', 'desc'))
-            ->setMaxResults($request->get('limit', 100))
-            ->setFirstResult($first);
-
-        if (!empty($request->get('order_id'))) {
-            $aliasOrderPayment = 'op';
-            $qb->join($alias . '.orderPayment', $aliasOrderPayment)
-                ->where(
-                    $qb->expr()
-                        ->eq(
-                            'IDENTITY(' . $aliasOrderPayment . '.order)',
-                            ':orderId'
-                        )
-                )
-                ->setParameter(
-                    'orderId',
-                    $request->get('order_id')
-                );
-        }
-
-        if (!empty($request->get('subscription_id'))) {
-            $aliasSubscriptionPayment = 'sp';
-            $qb->join(
-                    $alias . '.subscriptionPayment',
-                    $aliasSubscriptionPayment
-                )
-                ->where(
-                    $qb->expr()
-                        ->eq(
-                            'IDENTITY(' . $aliasSubscriptionPayment . '.subscription)',
-                            ':subscriptionId'
-                        )
-                )
-                ->setParameter(
-                    'subscriptionId',
-                    $request->get('subscription_id')
-                );
-        }
-
-        $payments =
-            $qb->getQuery()
-                ->getResult();
-
-        return ResponseService::payment($payments, $qb);
+        return ResponseService::payment($paymentsAndBuilder->getResults(), $paymentsAndBuilder->getQueryBuilder())
+            ->respond(200);
     }
-
-    // todo: refactor database logic to repository
 
     /**
      * Call the method that save a new payment and create the linksluanhc tho with subscription or order if it's necessary.
@@ -233,22 +171,9 @@ class PaymentJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'create.payment');
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->userPaymentMethodsRepository->createQueryBuilder('p');
-
-        $userPaymentMethod =
-            $qb->where(
-                    $qb->expr()
-                        ->eq('IDENTITY(p.paymentMethod)', ':id')
-                )
-                ->setParameter(
-                    'id',
-                    $request->input('data.relationships.paymentMethod.data.id')
-                )
-                ->getQuery()
-                ->getOneOrNullResult();
+        $userPaymentMethod = $this->userPaymentMethodsRepository->getByMethodId(
+            $request->input('data.relationships.paymentMethod.data.id')
+        );
 
         /**
          * @var $user User

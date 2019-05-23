@@ -2,7 +2,8 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -18,7 +19,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  *
  * @package Railroad\Ecommerce\Repositories
  */
-class OrderItemRepository extends EntityRepository
+class OrderItemRepository extends RepositoryBase
 {
     /**
      * OrderItemRepository constructor.
@@ -28,5 +29,29 @@ class OrderItemRepository extends EntityRepository
     public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(OrderItem::class));
+    }
+
+    /**
+     * @param Order[] $orders
+     *
+     * @return OrderItem[]
+     */
+    public function getByOrders(array $orders): array
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['oi', 'p'])
+            ->from(OrderItem::class, 'oi')
+            ->join('oi.product', 'p')
+            ->where(
+                $qb->expr()
+                    ->in('oi.order', ':orders')
+            )
+            ->setParameter('orders', $orders);
+
+        return $qb->getQuery()->getResult();
     }
 }

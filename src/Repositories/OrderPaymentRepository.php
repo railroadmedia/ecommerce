@@ -2,8 +2,9 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Railroad\Ecommerce\Entities\OrderPayment;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
@@ -16,7 +17,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  *
  * @package Railroad\Ecommerce\Repositories
  */
-class OrderPaymentRepository extends EntityRepository
+class OrderPaymentRepository extends RepositoryBase
 {
     /**
      * OrderPaymentRepository constructor.
@@ -26,5 +27,33 @@ class OrderPaymentRepository extends EntityRepository
     public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(OrderPayment::class));
+    }
+
+    /**
+     * @param Payment $payment
+     *
+     * @return OrderPayment[]
+     */
+    public function getByPayment(Payment $payment): array
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['op', 'p'])
+            ->from(OrderPayment::class, 'op')
+            ->join('op.payment', 'p')
+            ->where(
+                $qb->expr()
+                    ->eq('op.payment', ':payment')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('p.deletedOn')
+            )
+            ->setParameter('payment', $payment);
+
+        return $qb->getQuery()->getResult();
     }
 }

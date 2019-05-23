@@ -2,8 +2,11 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\NonUniqueResultException;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserProduct;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -40,6 +43,8 @@ class UserProductRepository extends RepositoryBase
      * @param int $id The identifier.
      *
      * @return UserProduct
+     *
+     * @throws NonUniqueResultException
      */
     public function find(int $id)
     {
@@ -82,5 +87,28 @@ class UserProductRepository extends RepositoryBase
                 ->getResult();
 
         return new ResultsQueryBuilderComposite($results, $qb);
+    }
+
+    /**
+     * @param Product[] $products
+     *
+     * @return UserProduct[]
+     */
+    public function getByProducts(array $products): array
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select('up')
+            ->from(UserProduct::class, 'up')
+            ->where(
+                $qb->expr()
+                    ->in('up.product', ':products')
+            )
+            ->setParameter('products', $products);
+
+        return $qb->getQuery()->getResult();
     }
 }
