@@ -368,6 +368,8 @@ class RenewalService
                 );
             }
 
+            $this->userProductService->updateSubscriptionProducts($subscription);
+
             throw isset($paymentException) ? $paymentException : new Exception();
         }
 

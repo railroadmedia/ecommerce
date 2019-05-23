@@ -12,6 +12,11 @@ interface UserProviderInterface
      * @return User|null
      */
     public function getUserById(int $id): ?User;
+    /**
+     * @param array $ids
+     * @return User[]
+     */
+    public function getUsersByIds(array $ids): array;
 
     /**
      * @param User $user

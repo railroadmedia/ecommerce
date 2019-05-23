@@ -33,6 +33,26 @@ class UserProvider implements UserProviderInterface
     }
 
     /**
+     * @param array $ids
+     * @return array
+     */
+    public function getUsersByIds(array $ids): array
+    {
+        $users =
+            DB::table(EcommerceTestCase::TABLES['users'])
+                ->whereIn('id', $ids)
+                ->get();
+
+        $userObjects = [];
+
+        foreach ($users as $user) {
+            $userObjects[] = new User($user->id, $user->email);
+        }
+
+        return $userObjects;
+    }
+
+    /**
      * @param User $user
      * @return int
      */

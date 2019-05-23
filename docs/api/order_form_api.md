@@ -123,6 +123,7 @@ Submit the order with whatever is currently in the cart.
 |body|account_creation_email|yes if the order has digital items or 'billing_email' is not set||||
 |body|account_creation_password|yes if the order has digital items or 'billing_email' is not set||||
 |body|account_creation_password_confirmation|yes if the order has digital items or 'billing_email' is not set||||
+|body|user_id||||'place-orders-for-other-users' permission is required to place orders for other users|
 
 ### Request Example
 

@@ -134,7 +134,13 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
 
         foreach ($dueSubscriptions as $dueSubscription) {
-            $this->renewalService->renew($dueSubscription);
+            try {
+                $this->renewalService->renew($dueSubscription);
+            } catch (Throwable $throwable) {
+                $this->info(
+                    'Failed to renew subscription ID: ' . $dueSubscription->getId() . ' - ' . $throwable->getMessage()
+                );
+            }
         }
 
         // deactivate ancient subscriptions

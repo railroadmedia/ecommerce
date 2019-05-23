@@ -182,17 +182,16 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
             ];
         }
 
-        $response =
-            $this->call(
-                'GET',
-                '/fulfillment',
-                [
-                    'small_date_time' => Carbon::now()
-                        ->subDays(3),
-                    'big_date_time' => Carbon::now()
-                        ->toDateTimeString()
-                ]
-            );
+        $response = $this->call(
+            'GET',
+            '/fulfillment',
+            [
+                'small_date_time' => Carbon::now()
+                    ->subDays(3),
+                'big_date_time' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
 
         $decodedResponse = $response->decodeResponseJson();
 
@@ -205,6 +204,130 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
             $expectedIncludes,
             $decodedResponse['included']
         );
+    }
+
+    public function test_index_between_dates_csv()
+    {
+        $user = $this->fakeUser();
+
+        $expectedData = [];
+        $expectedIncludes = [];
+
+        for ($i = 0; $i < 10; $i++) {
+            $address = $this->fakeAddress(
+                [
+                    'type' => Address::SHIPPING_ADDRESS_TYPE
+                ]
+            );
+
+            $order = $this->fakeOrder(
+                [
+                    'shipping_address_id' => $address['id'],
+                    'user_id' => $user['id'],
+                ]
+            );
+
+            $product = $this->fakeProduct();
+
+            $orderItem = $this->fakeOrderItem(
+                [
+                    'order_id' => $order['id'],
+                    'product_id' => $product['id'],
+                ]
+            );
+
+            $orderItemFulfillment = $this->fakeOrderItemFulfillment(
+                [
+                    'order_id' => $order['id'],
+                    'order_item_id' => $orderItem['id'],
+                    'status' => $this->faker->randomElement(
+                        [
+                            config('ecommerce.fulfillment_status_pending'),
+                            config('ecommerce.fulfillment_status_fulfilled')
+                        ]
+                    ),
+                    'fulfilled_on' => $this->faker->randomElement(
+                        [
+                            Carbon::now()->toDateTimeString(),
+                            null,
+                        ]
+                    ),
+                    'updated_at' => null,
+                    'created_at' => Carbon::now()
+                        ->subDays($i),
+                ]
+            );
+
+            if ($i > 2) {
+                continue;
+            }
+
+            $expectedData[] = [
+                'type' => 'fulfillment',
+                'id' => $orderItemFulfillment['id'],
+                'attributes' => array_diff_key(
+                    $orderItemFulfillment,
+                    [
+                        'id' => true,
+                        'order_id' => true,
+                        'order_item_id' => true,
+                    ]
+                ),
+                'relationships' => [
+                    'order' => [
+                        'data' => [
+                            'type' => 'order',
+                            'id' => $order['id'],
+                        ]
+                    ],
+                    'orderItem' => [
+                        'data' => [
+                            'type' => 'orderItem',
+                            'id' => $orderItem['id'],
+                        ]
+                    ]
+                ]
+            ];
+
+            $expectedIncludes[] = [
+                'type' => 'order',
+                'id' => $order['id'],
+                'attributes' => []
+            ];
+
+            $expectedIncludes[] = [
+                'type' => 'orderItem',
+                'id' => $orderItem['id'],
+                'attributes' => []
+            ];
+        }
+
+        $response = $this->call(
+            'GET',
+            '/fulfillment',
+            [
+                'small_date_time' => Carbon::now()
+                    ->subDays(3),
+                'big_date_time' => Carbon::now()
+                    ->toDateTimeString(),
+                'csv' => true,
+            ]
+        );
+
+        ob_start();
+        $response->send();
+        $text = ob_get_clean();
+
+        $texts = explode("\n", $text);
+
+        $rows= [];
+
+        foreach ($texts as $textRowString) {
+            $rows[] = str_getcsv($textRowString, ",", '"');
+        }
+
+        // todo: data matching tests
+        $this->assertEquals(5, count($rows));
     }
 
     public function test_index_filtered_fulfillments()

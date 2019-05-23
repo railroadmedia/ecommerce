@@ -52,13 +52,14 @@ class OrderItemFulfillmentRepository extends RepositoryBase
             ]
         );
 
-        $alias = 'oif';
+        $qb = $this->createQueryBuilder('oif');
 
-        $qb = $this->createQueryBuilder($alias);
-
-        $qb->paginateByRequest($request)
-            ->orderByRequest($request, $alias)
-            ->restrictBetweenTimes($request, $alias)
+        $qb->orderByRequest($request, 'oif')
+            ->restrictBetweenTimes($request, 'oif')
+            ->select(['oif', 'o', 'oi', 'oip'])
+            ->join('oif.order', 'o')
+            ->join('oif.orderItem', 'oi')
+            ->join('oi.product', 'oip')
             ->andWhere(
                 $qb->expr()
                     ->in('oif.status', ':statuses')
@@ -95,13 +96,14 @@ class OrderItemFulfillmentRepository extends RepositoryBase
 
         if ($orderItemId) {
             $qb->andWhere(
-                    $qb->expr()
-                        ->eq('IDENTITY(oif.orderItem)', ':orderItemId')
-                )
+                $qb->expr()
+                    ->eq('IDENTITY(oif.orderItem)', ':orderItemId')
+            )
                 ->setParameter('orderItemId', $orderItemId);
         }
 
-        return $qb->getQuery()->getResult();
+        return $qb->getQuery()
+            ->getResult();
     }
 
     /**
@@ -133,6 +135,7 @@ class OrderItemFulfillmentRepository extends RepositoryBase
             ->setParameter('orders', $orders)
             ->setParameter('status', config('ecommerce.fulfillment_status_pending'));
 
-        return $qb->getQuery()->getResult();
+        return $qb->getQuery()
+            ->getResult();
     }
 }

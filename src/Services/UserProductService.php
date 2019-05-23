@@ -455,19 +455,13 @@ class UserProductService
     {
         $products = $this->getSubscriptionProducts($subscription);
 
-        if ($subscription->getIsActive()) {
+        foreach ($products as $productData) {
 
-            foreach ($products as $productData) {
-
-                $this->assignUserProduct(
-                    $subscription->getUser(),
-                    $productData['product'],
-                    $subscription->getPaidUntil()
-                );
-            }
-        }
-        else {
-            $this->removeUserProducts($subscription->getUser(), $products);
+            $this->assignUserProduct(
+                $subscription->getUser(),
+                $productData['product'],
+                $subscription->getPaidUntil()
+            );
         }
     }
 }

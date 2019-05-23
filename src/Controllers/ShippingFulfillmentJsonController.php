@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -32,6 +33,10 @@ class ShippingFulfillmentJsonController extends Controller
      * @var PermissionService
      */
     private $permissionService;
+    /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
 
     /**
      * ShippingFulfillmentJsonController constructor.
@@ -39,16 +44,19 @@ class ShippingFulfillmentJsonController extends Controller
      * @param EcommerceEntityManager $entityManager
      * @param OrderItemFulfillmentRepository $orderItemFulfillmentRepository
      * @param PermissionService $permissionService
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
-        PermissionService $permissionService
+        PermissionService $permissionService,
+        UserProviderInterface $userProvider
     )
     {
         $this->entityManager = $entityManager;
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->permissionService = $permissionService;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -66,7 +74,125 @@ class ShippingFulfillmentJsonController extends Controller
 
         $fulfillmentsAndBuilder = $this->orderItemFulfillmentRepository->indexByRequest($request);
 
-        return ResponseService::fulfillment($fulfillmentsAndBuilder->getResults(), $fulfillmentsAndBuilder->getQueryBuilder())
+        /**
+         * @var $fulfillment OrderItemFulfillment
+         */
+        $fulfillments = $fulfillmentsAndBuilder->getResults();
+
+        if ($request->has('csv')) {
+            $rows = [];
+
+            foreach ($fulfillments as $fulfillment) {
+                $rows[] = [
+                    $fulfillment->getOrder()
+                        ->getId(),
+                    Carbon::instance($fulfillment->getCreatedAt())
+                        ->timezone($request->get('timezone', 'America/Los_Angeles'))
+                        ->toDateTimeString(),
+                    $fulfillment->getOrder()
+                        ->getUser()
+                        ->getEmail(),
+                    '',
+                    '',
+                    $fulfillment->getOrder()
+                        ->getShippingAddress()
+                        ->getFirstName(),
+                    $fulfillment->getOrder()
+                        ->getShippingAddress()
+                        ->getLastName(),
+                    $fulfillment->getOrder()
+                        ->getShippingAddress()
+                        ->getStreetLine1(),
+                    $fulfillment->getOrder()
+                        ->getShippingAddress()
+                        ->getStreetLine2(),
+                    $fulfillment->getOrder()
+                        ->getShippingAddress()
+                        ->getCity(),
+                    $fulfillment->getOrder()
+                        ->getShippingAddress()
+                        ->getState(),
+                    $fulfillment->getOrder()
+                        ->getShippingAddress()
+                        ->getZip(),
+                    $fulfillment->getOrder()
+                        ->getShippingAddress()
+                        ->getCountry(),
+                    $fulfillment->getStatus() == config('ecommerce.fulfillment_status_fulfilled'),
+                    $fulfillment->getOrderItem()
+                        ->getId(),
+                    $fulfillment->getOrderItem()
+                        ->getProduct()
+                        ->getId(),
+                    $fulfillment->getOrderItem()
+                        ->getProduct()
+                        ->getName(),
+                    $fulfillment->getOrderItem()
+                        ->getProduct()
+                        ->getSku(),
+                    $fulfillment->getOrderItem()
+                        ->getProduct()
+                        ->getWeight(),
+                    $fulfillment->getOrderItem()
+                        ->getQuantity(),
+                    $fulfillment->getOrderItem()->getFinalPrice(),
+                    $fulfillment->getStatus(),
+                    '',
+                    '',
+                    !empty($fulfillment->getFulfilledOn()) ?
+                        Carbon::instance($fulfillment->getFulfilledOn())
+                            ->timezone($request->get('timezone', 'America/Los_Angeles'))
+                            ->toDateTimeString() : '',
+                    $fulfillment->getOrderItem()->getFinalPrice(),
+                ];
+            }
+
+            $filePath = sys_get_temp_dir() . "/shippers-export-" . time() . ".csv";
+
+            $f = fopen($filePath, "w");
+
+            fputcsv(
+                $f,
+                [
+                    'Order ID',
+                    'Ordered On (PST)',
+                    'Email',
+                    'Company',
+                    'Phone',
+                    'First Name',
+                    'Last Name',
+                    'Street Line 1',
+                    'Street Line 2',
+                    'City',
+                    'State/Province',
+                    'Zip/Postal Code',
+                    'Country',
+                    'Is Fulfilled',
+                    'Order Item ID',
+                    'Product ID',
+                    'Product Name',
+                    'Product SKU',
+                    'Product Weight *',
+                    'Quantity',
+                    'Item Total $',
+                    'Fulfillment Status',
+                    'Shipping Company',
+                    'Tracking Number',
+                    'Fulfilled On',
+                    'Order Total $',
+                ]
+            );
+
+            foreach ($rows as $line) {
+                fputcsv($f, $line);
+            }
+
+            return response()
+                ->download($filePath)
+                ->deleteFileAfterSend();
+        }
+
+        return ResponseService::fulfillment($fulfillmentsAndBuilder->getResults())
             ->respond(200);
     }
 
