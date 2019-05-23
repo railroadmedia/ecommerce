@@ -62,6 +62,7 @@ $.ajax({
                 "canceled_on":null,
                 "note":null,
                 "total_price":599,
+                "tax":123,
                 "currency":"CAD",
                 "interval_type":"year",
                 "interval_count":883379,
@@ -172,7 +173,7 @@ Create a new subscription.
 |body|data.attributes.paid_until|yes||date time string||
 |body|data.attributes.canceled_on|yes||date time string||
 |body|data.attributes.total_price|yes||||
-|body|data.attributes.currency|yes||||
+|body|data.attributes.tax||will be calculated automatically from the payment method billing address if not set or set to null|||
 |body|data.attributes.interval_type|yes||'year' or 'month'||
 |body|data.attributes.interval_count|yes||||
 |body|data.attributes.total_cycles_due|yes||||
@@ -202,6 +203,7 @@ Create a new subscription.
     'data.attributes.canceled_on' => 'nullable|date',
     'data.attributes.note' => 'nullable',
     'data.attributes.total_price' => 'required|numeric|min:0',
+    'data.attributes.tax' => 'nullable|numeric|min:0',
     'data.attributes.currency' => 'required|max:3',
     'data.attributes.interval_type' => 'required|in:' .
         implode(
@@ -243,6 +245,7 @@ $.ajax({
             canceled_on: null,
             note: null,
             total_price: 458,
+            tax: 31,
             currency: "CAD",
             interval_type: "year",
             interval_count: 335434,
@@ -301,6 +304,7 @@ $.ajax({
             "canceled_on":null,
             "note":null,
             "total_price":628,
+            "tax":54,
             "currency":"CAD",
             "interval_type":"year",
             "interval_count":76614,
@@ -397,6 +401,7 @@ Update an existing subscription.
 |body|data.attributes.paid_until|||date time string||
 |body|data.attributes.canceled_on|||date time string||
 |body|data.attributes.total_price|||||
+|body|data.attributes.tax||will be calculated automatically from the payment method billing address if not set or set to null|||
 |body|data.attributes.currency|||||
 |body|data.attributes.interval_type|||'year' or 'month'||
 |body|data.attributes.interval_count|||||
@@ -427,6 +432,7 @@ Update an existing subscription.
     'data.attributes.canceled_on' => 'nullable|date',
     'data.attributes.note' => 'max:255',
     'data.attributes.total_price' => 'nullable|numeric|min:0',
+    'data.attributes.tax' => 'nullable|numeric|min:0',
     'data.attributes.currency' => 'nullable|max:3',
     'data.attributes.interval_type' => 'nullable|in:' .
         implode(
@@ -484,6 +490,7 @@ $.ajax({
             "canceled_on":null,
             "note":null,
             "total_price":981355223,
+            "tax":23453,
             "currency":"CAD",
             "interval_type":"year",
             "interval_count":75181,
@@ -600,6 +607,7 @@ $.ajax({
             "canceled_on":null,
             "note":"some note.",
             "total_price":940,
+            "tax":0,
             "currency":"CAD",
             "interval_type":"year",
             "interval_count":1,
