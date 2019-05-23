@@ -745,10 +745,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             )
         );
 
-        // assert user product was removed
-        $this->assertDatabaseMissing(
+        // assert user product was set
+        $this->assertDatabaseHas(
             'ecommerce_user_products',
-            $userProduct
+            array_merge(
+                $userProduct,
+                [
+                    'expiration_date' => $subscription['paid_until'],
+                ]
+            )
         );
     }
 
@@ -1238,10 +1243,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             $results->decodeResponseJson('errors')
         );
 
-        // assert user product data was removed
-        $this->assertDatabaseMissing(
+        // assert user product was set
+        $this->assertDatabaseHas(
             'ecommerce_user_products',
-            $userProduct
+            array_merge(
+                $userProduct,
+                [
+                    'expiration_date' => $subscription['paid_until'],
+                ]
+            )
         );
 
         // assert subscription was set as inactive

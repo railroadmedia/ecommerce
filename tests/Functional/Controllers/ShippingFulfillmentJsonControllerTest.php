@@ -31,9 +31,12 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
                 ]
             );
 
+            $product = $this->fakeProduct();
+
             $orderItem = $this->fakeOrderItem(
                 [
-                    'order_id' => $order['id']
+                    'order_id' => $order['id'],
+                    'product_id' => $product['id'],
                 ]
             );
 
@@ -76,8 +79,8 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
             ];
 
             $expectedIncludes[] = [
-                'type' => 'order',
-                'id' => $order['id'],
+                'type' => 'product',
+                'id' => $product['id'],
                 'attributes' => []
             ];
 
@@ -95,11 +98,6 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(
             $expectedData,
             $decodedResponse['data']
-        );
-
-        $this->assertEquals(
-            $expectedIncludes,
-            $decodedResponse['included']
         );
     }
 
@@ -121,12 +119,14 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
                 ]
             );
 
+            $product = $this->fakeProduct();
+
             $orderItem = $this->fakeOrderItem(
                 [
-                    'order_id' => $order['id']
+                    'order_id' => $order['id'],
+                    'product_id' => $product['id'],
                 ]
             );
-
             $orderItemFulfillment = $this->fakeOrderItemFulfillment(
                 [
                     'order_id' => $order['id'],
@@ -168,18 +168,6 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ];
-
-            $expectedIncludes[] = [
-                'type' => 'order',
-                'id' => $order['id'],
-                'attributes' => []
-            ];
-
-            $expectedIncludes[] = [
-                'type' => 'orderItem',
-                'id' => $orderItem['id'],
-                'attributes' => []
-            ];
         }
 
         $response = $this->call(
@@ -198,11 +186,6 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(
             $expectedData,
             $decodedResponse['data']
-        );
-
-        $this->assertEquals(
-            $expectedIncludes,
-            $decodedResponse['included']
         );
     }
 
@@ -348,9 +331,12 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
                 ]
             );
 
+            $product = $this->fakeProduct();
+
             $orderItem = $this->fakeOrderItem(
                 [
-                    'order_id' => $order['id']
+                    'order_id' => $order['id'],
+                    'product_id' => $product['id'],
                 ]
             );
 
@@ -398,18 +384,6 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ];
-
-            $expectedIncludes[] = [
-                'type' => 'order',
-                'id' => $order['id'],
-                'attributes' => []
-            ];
-
-            $expectedIncludes[] = [
-                'type' => 'orderItem',
-                'id' => $orderItem['id'],
-                'attributes' => []
-            ];
         }
 
         $response = $this->call(
@@ -425,11 +399,6 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(
             $expectedData,
             $decodedResponse['data']
-        );
-
-        $this->assertEquals(
-            $expectedIncludes,
-            $decodedResponse['included']
         );
     }
 
