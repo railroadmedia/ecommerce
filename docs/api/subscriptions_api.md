@@ -172,7 +172,7 @@ Create a new subscription.
 |body|data.attributes.start_date|yes||date time string||
 |body|data.attributes.paid_until|yes||date time string||
 |body|data.attributes.canceled_on|yes||date time string||
-|body|data.attributes.total_price|yes||||
+|body|data.attributes.total_price|yes||the price EXCLUDING tax||
 |body|data.attributes.tax||will be calculated automatically from the payment method billing address if not set or set to null|||
 |body|data.attributes.interval_type|yes||'year' or 'month'||
 |body|data.attributes.interval_count|yes||||
@@ -400,7 +400,7 @@ Update an existing subscription.
 |body|data.attributes.start_date|||date time string||
 |body|data.attributes.paid_until|||date time string||
 |body|data.attributes.canceled_on|||date time string||
-|body|data.attributes.total_price|||||
+|body|data.attributes.total_price|||the price EXCLUDING tax||
 |body|data.attributes.tax||will be calculated automatically from the payment method billing address if not set or set to null|||
 |body|data.attributes.currency|||||
 |body|data.attributes.interval_type|||'year' or 'month'||
