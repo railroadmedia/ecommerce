@@ -248,9 +248,6 @@ class SubscriptionJsonController extends Controller
 
             $this->renewalService->renew($subscription);
 
-            event(new SubscriptionRenewed($subscription));
-            event(new SubscriptionUpdated($oldSubscription, $subscription));
-
             $response = ResponseService::subscription($subscription);
 
         } catch (Exception $exception) {

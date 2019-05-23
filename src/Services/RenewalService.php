@@ -9,6 +9,8 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -108,6 +110,8 @@ class RenewalService
      */
     public function renew(Subscription $subscription)
     {
+        $oldSubscription = clone($subscription);
+
         // check for payment plan if the user have already paid all the cycles
         if (($subscription->getType() == config('ecommerce.type_payment_plan')) &&
             ((int)$subscription->getTotalCyclesPaid() >= (int)$subscription->getTotalCyclesDue())) {
@@ -319,6 +323,7 @@ class RenewalService
                     break;
             }
 
+
             $subscription->setIsActive(true)
                 ->setCanceledOn(null)
                 ->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1)
@@ -328,6 +333,9 @@ class RenewalService
                             ->addMonths(1)
                 )
                 ->setUpdatedAt(Carbon::now());
+
+            event(new SubscriptionRenewed($subscription));
+            event(new SubscriptionUpdated($oldSubscription, $subscription));
 
             $this->entityManager->flush();
 
@@ -362,6 +370,8 @@ class RenewalService
                 $subscription->setNote('De-activated due to payments failing.');
 
                 $this->entityManager->flush();
+
+                event(new SubscriptionUpdated($oldSubscription, $subscription));
 
                 event(
                     new SubscriptionEvent($subscription->getId(), 'deactivated')
