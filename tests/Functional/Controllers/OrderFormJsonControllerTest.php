@@ -596,7 +596,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'shipping_zip_or_postal_code' => $this->faker->postcode,
             'shipping_country' => 'Canada',
             'currency' => $currency,
-            'brand' => $currency,
+            'brand' => 'drumeo',
         ];
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
@@ -2708,14 +2708,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $shippingAddress = $this->fakeAddress(['type' => 'shipping', 'state' => 'alberta', 'country' => 'canada']);
+        $shippingAddress = $this->fakeAddress(['type' => 'shipping', 'state' => 'alberta', 'country' => 'Canada']);
 
         $cardToken = $this->faker->word;
 
         $orderRequestData = [
                 'payment_method_id' => $paymentMethod['id'],
                 'shipping_address_id' => $shippingAddress['id'],
-                'currency' => $currency
+                'currency' => $currency,
+                'brand' => 'drumeo'
             ];
 
         $fakerCustomer = new Customer();

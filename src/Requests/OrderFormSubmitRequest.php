@@ -190,6 +190,18 @@ class OrderFormSubmitRequest extends FormRequest
             }
         }
 
+        // if we are using existing shipping/billing addresses we need to pull those
+        if (!empty($this->get('billing_address_id'))) {
+            $billingAddress = $this->addressRepository->find($this->get('billing_address_id'));
+
+            $cart->setBillingAddress(!empty($billingAddress) ? $billingAddress->toStructure() : null);
+        }
+        if (!empty($this->get('shipping_address_id'))) {
+            $shippingAddress = $this->addressRepository->find($this->get('shipping_address_id'));
+
+            $cart->setShippingAddress(!empty($shippingAddress) ? $shippingAddress->toStructure() : null);
+        }
+
         return $cart;
     }
 
