@@ -7923,6 +7923,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_submit_product_for_other_user()
     {
+        $adminUser = $this->createAndLogInNewUser();
+
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
 

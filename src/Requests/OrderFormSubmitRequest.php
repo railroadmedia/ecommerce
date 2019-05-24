@@ -172,8 +172,8 @@ class OrderFormSubmitRequest extends FormRequest
 
         $cart->setPaymentPlanNumberOfPayments($this->get('payment_plan_number_of_payments', 1));
 
-        $cart->setShippingAddress($this->getShippingAddressStructure());
-        $cart->setBillingAddress($this->getBillingAddressStructure());
+        $cart->setShippingAddress($this->getShippingAddress()->toStructure());
+        $cart->setBillingAddress($this->getBillingAddress()->toStructure());
 
         $cart->setBillingAddressId($this->get('billing_address_id'));
         $cart->setShippingAddressId($this->get('shipping_address_id'));
@@ -188,18 +188,6 @@ class OrderFormSubmitRequest extends FormRequest
             foreach ($cart->getItems() as $cartItem) {
                 $cartItem->setDueOverride($this->get('order_items_due_override_' . $cartItem->getSku()));
             }
-        }
-
-        // if we are using existing shipping/billing addresses we need to pull those
-        if (!empty($this->get('billing_address_id'))) {
-            $billingAddress = $this->addressRepository->find($this->get('billing_address_id'));
-
-            $cart->setBillingAddress(!empty($billingAddress) ? $billingAddress->toStructure() : null);
-        }
-        if (!empty($this->get('shipping_address_id'))) {
-            $shippingAddress = $this->addressRepository->find($this->get('shipping_address_id'));
-
-            $cart->setShippingAddress(!empty($shippingAddress) ? $shippingAddress->toStructure() : null);
         }
 
         return $cart;
