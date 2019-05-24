@@ -40,12 +40,14 @@ class SessionJsonControllerTest extends EcommerceTestCase
     {
         $this->session->flush();
 
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(15, 100),
-            'is_physical' => true,
-            'weight' => 10,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(15, 100),
+                'is_physical' => true,
+                'weight' => 10,
+            ]
+        );
 
         $this->cartService->addToCart($product['sku'], 1);
 
@@ -84,16 +86,67 @@ class SessionJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_store_address_existing_id()
+    {
+        $this->session->flush();
+
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(15, 100),
+                'is_physical' => true,
+                'weight' => 10,
+            ]
+        );
+
+        $address = $this->fakeAddress();
+
+        $this->cartService->addToCart($product['sku'], 1);
+
+        $response = $this->call('PUT', '/session/address', ['shipping-address-id' => $address['id']]);
+
+        $cart = Cart::fromSession();
+
+        $addressFromSession = $cart->getShippingAddress();
+
+        $expectedAddress = [
+            'first_name' => $address['first_name'],
+            'last_name' => $address['last_name'],
+            'city' => $address['city'],
+            'state' => $address['state'],
+            'country' => $address['country'],
+            'zip_or_postal_code' => $address['zip'],
+            'street_line_two' => $address['street_line_2'],
+            'street_line_one' => $address['street_line_1'],
+        ];
+
+        $this->assertEquals($expectedAddress, $addressFromSession->toArray());
+
+        // assert response has the address data
+        $this->assertArraySubset(
+            [
+                'meta' => [
+                    'cart' => [
+                        'shipping_address' => $expectedAddress
+                    ]
+                ]
+            ],
+            $response->decodeResponseJson()
+        );
+    }
+
     public function test_store_address_supplement()
     {
         $this->session->flush();
 
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(15, 100),
-            'is_physical' => true,
-            'weight' => 10,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(15, 100),
+                'is_physical' => true,
+                'weight' => 10,
+            ]
+        );
 
         $this->cartService->addToCart($product['sku'], 1);
 
@@ -105,8 +158,7 @@ class SessionJsonControllerTest extends EcommerceTestCase
         $address->setLastName($this->faker->word);
         $address->setZip($this->faker->postcode);
 
-        $this->cartAddressService
-            ->updateShippingAddress($address);
+        $this->cartAddressService->updateShippingAddress($address);
 
         $supplementAddress = [
             'shipping-country' => 'Serbia',
@@ -141,12 +193,14 @@ class SessionJsonControllerTest extends EcommerceTestCase
     {
         $this->session->flush();
 
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(15, 100),
-            'is_physical' => true,
-            'weight' => 10,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(15, 100),
+                'is_physical' => true,
+                'weight' => 10,
+            ]
+        );
 
         $this->cartService->addToCart($product['sku'], 1);
 
@@ -158,8 +212,7 @@ class SessionJsonControllerTest extends EcommerceTestCase
         $address->setLastName($this->faker->word);
         $address->setZip($this->faker->postcode);
 
-        $this->cartAddressService
-            ->updateShippingAddress($address);
+        $this->cartAddressService->updateShippingAddress($address);
 
         // setup additional address data with field overwritten
         $supplementAddress = [

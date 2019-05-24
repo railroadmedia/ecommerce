@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\Structures\Address;
+use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Requests\SessionStoreAddressRequest;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
@@ -17,21 +18,33 @@ class SessionJsonController extends Controller
      * @var CartAddressService
      */
     private $cartAddressService;
+
     /**
      * @var CartService
      */
     private $cartService;
 
     /**
+     * @var AddressRepository
+     */
+    private $addressRepository;
+
+    /**
      * SessionJsonController constructor.
      *
      * @param CartAddressService $cartAddressService
      * @param CartService $cartService
+     * @param AddressRepository $addressRepository
      */
-    public function __construct(CartAddressService $cartAddressService, CartService $cartService)
+    public function __construct(
+        CartAddressService $cartAddressService,
+        CartService $cartService,
+        AddressRepository $addressRepository
+    )
     {
         $this->cartAddressService = $cartAddressService;
         $this->cartService = $cartService;
+        $this->addressRepository = $addressRepository;
     }
 
     public function storeAddress(SessionStoreAddressRequest $request)
@@ -47,16 +60,23 @@ class SessionJsonController extends Controller
             'shipping-zip-or-postal-code' => 'zip',
         ];
 
-        $requestShippingAddress = $request->only(array_keys($shippingKeys));
+        if (!empty($request->get('shipping-address-id'))) {
+            $shippingAddressEntity = $this->addressRepository->find($request->get('shipping-address-id'));
 
-        $shippingAddress = $this->cartAddressService->updateShippingAddress(
-            Address::createFromArray(
-                array_combine(
-                    array_intersect_key($shippingKeys, $requestShippingAddress),
-                    $requestShippingAddress
+            $this->cartAddressService->updateShippingAddress($shippingAddressEntity->toStructure());
+        }
+        else {
+            $requestShippingAddress = $request->only(array_keys($shippingKeys));
+
+            $shippingAddress = $this->cartAddressService->updateShippingAddress(
+                Address::createFromArray(
+                    array_combine(
+                        array_intersect_key($shippingKeys, $requestShippingAddress),
+                        $requestShippingAddress
+                    )
                 )
-            )
-        );
+            );
+        }
 
         $billingKeys = [
             'billing-country' => 'country',
@@ -65,16 +85,23 @@ class SessionJsonController extends Controller
             'billing-email' => 'email',
         ];
 
-        $requestBillingAddress = $request->only(array_keys($billingKeys));
+        if (!empty($request->get('billing-address-id'))) {
+            $billingAddressEntity = $this->addressRepository->find($request->get('billing-address-id'));
 
-        $billingAddress = $this->cartAddressService->updateBillingAddress(
-            Address::createFromArray(
-                array_combine(
-                    array_intersect_key($billingKeys, $requestBillingAddress),
-                    $requestBillingAddress
+            $this->cartAddressService->updateBillingAddress($billingAddressEntity->toStructure());
+        }
+        else {
+            $requestBillingAddress = $request->only(array_keys($billingKeys));
+
+            $billingAddress = $this->cartAddressService->updateBillingAddress(
+                Address::createFromArray(
+                    array_combine(
+                        array_intersect_key($billingKeys, $requestBillingAddress),
+                        $requestBillingAddress
+                    )
                 )
-            )
-        );
+            );
+        }
 
         return ResponseService::cart($this->cartService->toArray())
             ->respond(200);
