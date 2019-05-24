@@ -98,7 +98,7 @@ class OrderFormSubmitRequest extends FormRequest
     {
         // base rules
         $rules = [
-            'brand' => 'string|required',
+            'brand' => 'string',
             'payment_method_type' => 'string|required_without:payment_method_id',
             'payment_method_id' => 'integer|required_without:payment_method_type',
             'billing_country' => 'string|required_without:payment_method_id|in:' . implode(',', config('location.countries')),

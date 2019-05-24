@@ -20,7 +20,6 @@ use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
@@ -159,12 +158,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 ],
                 [
                     'source' => 'billing_country',
-                    'detail' => 'The billing country field is required.',
+                    'detail' => 'The billing country field is required when payment method id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'gateway',
-                    'detail' => 'The gateway field is required.',
+                    'detail' => 'The gateway field is required when payment method id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
@@ -256,12 +255,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 ],
                 [
                     'source' => 'billing_country',
-                    'detail' => 'The billing country field is required.',
+                    'detail' => 'The billing country field is required when payment method id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'gateway',
-                    'detail' => 'The gateway field is required.',
+                    'detail' => 'The gateway field is required when payment method id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
@@ -398,12 +397,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 ],
                 [
                     'source' => 'billing_country',
-                    'detail' => 'The billing country field is required.',
+                    'detail' => 'The billing country field is required when payment method id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
                     'source' => 'gateway',
-                    'detail' => 'The gateway field is required.',
+                    'detail' => 'The gateway field is required when payment method id is not present.',
                     'title' => 'Validation failed.'
                 ],
                 [
@@ -496,6 +495,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'account_creation_password' => $password,
                 'account_creation_password_confirmation' => $password,
                 'gateway' => 'drumeo',
+                'brand' => 'drumeo',
             ]
         );
 
@@ -550,6 +550,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'account_creation_password' => $password,
                 'account_creation_password_confirmation' => $password,
                 'gateway' => 'drumeo',
+                'brand' => 'drumeo',
             ]
         );
 
@@ -594,7 +595,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'shipping_region' => 'alberta',
             'shipping_zip_or_postal_code' => $this->faker->postcode,
             'shipping_country' => 'Canada',
-            'currency' => $currency
+            'currency' => $currency,
+            'brand' => $currency,
         ];
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
