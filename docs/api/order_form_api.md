@@ -102,6 +102,7 @@ Submit the order with whatever is currently in the cart.
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
+|body|brand|usually yes||||
 |body|payment_method_type|yes if 'payment_method_id' not set||||
 |body|payment_method_id|yes if 'payment_method_type' not set||||
 |body|billing_country|yes||||

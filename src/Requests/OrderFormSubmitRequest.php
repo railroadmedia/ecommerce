@@ -98,6 +98,7 @@ class OrderFormSubmitRequest extends FormRequest
     {
         // base rules
         $rules = [
+            'brand' => 'string|required',
             'payment_method_type' => 'string|required_without:payment_method_id',
             'payment_method_id' => 'integer|required_without:payment_method_type',
             'billing_country' => 'string|required_without:payment_method_id|in:' . implode(',', config('location.countries')),
@@ -269,7 +270,7 @@ class OrderFormSubmitRequest extends FormRequest
         $purchaser = new Purchaser();
 
         // set the brand
-        $purchaser->setBrand(config('ecommerce.brand'));
+        $purchaser->setBrand($this->get('brand', config('ecommerce.brand')));
 
         // user with special permissions can place orders for other users
         if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
