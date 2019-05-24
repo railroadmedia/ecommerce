@@ -86,16 +86,16 @@ class PaymentMethodService
     {
         $creditCard = new CreditCard();
 
-        $creditCard->setFingerprint($card->fingerprint)
-            ->setLastFourDigits($card->last4)
-            ->setCardholderName($card->name)
-            ->setCompanyName($card->brand)
-            ->setExpirationDate(
-                Carbon::createFromDate($card->exp_year, $card->exp_month)
-            )
-            ->setExternalId($card->id)
-            ->setExternalCustomerId($stripeCustomer->id)
-            ->setPaymentGatewayName($gateway);
+        $creditCard->setFingerprint($card->fingerprint);
+        $creditCard->setLastFourDigits($card->last4);
+        $creditCard->setCardholderName($card->name);
+        $creditCard->setCompanyName($card->brand);
+        $creditCard->setExpirationDate(
+            Carbon::createFromDate($card->exp_year, $card->exp_month)
+        );
+        $creditCard->setExternalId($card->id);
+        $creditCard->setExternalCustomerId($stripeCustomer->id);
+        $creditCard->setPaymentGatewayName($gateway);
 
         $this->entityManager->persist($creditCard);
         $this->entityManager->flush(); // needed to link composite payment method
@@ -172,8 +172,8 @@ class PaymentMethodService
     {
         $billingAgreement = new PaypalBillingAgreement();
 
-        $billingAgreement->setExternalId($billingAgreementId)
-            ->setPaymentGatewayName($gateway);
+        $billingAgreement->setExternalId($billingAgreementId);
+        $billingAgreement->setPaymentGatewayName($gateway);
 
         $this->entityManager->persist($billingAgreement);
         $this->entityManager->flush(); // needed to link composite payment method
@@ -243,8 +243,8 @@ class PaymentMethodService
     {
         $paymentMethod = new PaymentMethod();
 
-        $paymentMethod->setCurrency($currency)
-            ->setBillingAddress($billingAddress);
+        $paymentMethod->setCurrency($currency);
+        $paymentMethod->setBillingAddress($billingAddress);
 
         if ($method instanceof CreditCard) {
             $paymentMethod->setCreditCard($method);
@@ -284,11 +284,11 @@ class PaymentMethodService
 
         $userPaymentMethods = new UserPaymentMethods();
 
-        $userPaymentMethods->setUser($user)
-            ->setPaymentMethod($paymentMethod)
-            ->setIsPrimary(
-                ($existingPrimaryMethod == null) || $setUserDefaultPaymentMethod
-            ); // if user has no other payment method, this should be primary
+        $userPaymentMethods->setUser($user);
+        $userPaymentMethods->setPaymentMethod($paymentMethod);
+        $userPaymentMethods->setIsPrimary(
+            ($existingPrimaryMethod == null) || $setUserDefaultPaymentMethod
+        ); // if user has no other payment method, this should be primary
 
         return $userPaymentMethods;
     }
@@ -308,9 +308,9 @@ class PaymentMethodService
     {
         $customerPaymentMethods = new CustomerPaymentMethods();
 
-        $customerPaymentMethods->setCustomer($customer)
-            ->setPaymentMethod($paymentMethod)
-            ->setIsPrimary(true);
+        $customerPaymentMethods->setCustomer($customer);
+        $customerPaymentMethods->setPaymentMethod($paymentMethod);
+        $customerPaymentMethods->setIsPrimary(true);
 
         return $customerPaymentMethods;
     }

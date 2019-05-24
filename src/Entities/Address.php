@@ -152,14 +152,10 @@ class Address implements AddressInterface
 
     /**
      * @param string $type
-     *
-     * @return Address
      */
-    public function setType(string $type): self
+    public function setType(string $type)
     {
         $this->type = $type;
-
-        return $this;
     }
 
     /**
@@ -172,14 +168,10 @@ class Address implements AddressInterface
 
     /**
      * @param string $brand
-     *
-     * @return Address
      */
-    public function setBrand(string $brand): self
+    public function setBrand(string $brand)
     {
         $this->brand = $brand;
-
-        return $this;
     }
 
     /**
@@ -192,14 +184,10 @@ class Address implements AddressInterface
 
     /**
      * @param string $firstName
-     *
-     * @return Address
      */
-    public function setFirstName(?string $firstName): self
+    public function setFirstName(?string $firstName)
     {
         $this->firstName = $firstName;
-
-        return $this;
     }
 
     /**
@@ -212,14 +200,10 @@ class Address implements AddressInterface
 
     /**
      * @param string $lastName
-     *
-     * @return Address
      */
-    public function setLastName(?string $lastName): self
+    public function setLastName(?string $lastName)
     {
         $this->lastName = $lastName;
-
-        return $this;
     }
 
     /**
@@ -232,14 +216,10 @@ class Address implements AddressInterface
 
     /**
      * @param string $streetLine1
-     *
-     * @return Address
      */
-    public function setStreetLine1(?string $streetLine1): self
+    public function setStreetLine1(?string $streetLine1)
     {
         $this->streetLine1 = $streetLine1;
-
-        return $this;
     }
 
     /**
@@ -252,14 +232,10 @@ class Address implements AddressInterface
 
     /**
      * @param string $streetLine2
-     *
-     * @return Address
      */
-    public function setStreetLine2(?string $streetLine2): self
+    public function setStreetLine2(?string $streetLine2)
     {
         $this->streetLine2 = $streetLine2;
-
-        return $this;
     }
 
     /**
@@ -272,14 +248,10 @@ class Address implements AddressInterface
 
     /**
      * @param string $city
-     *
-     * @return Address
      */
-    public function setCity(?string $city): self
+    public function setCity(?string $city)
     {
         $this->city = $city;
-
-        return $this;
     }
 
     /**
@@ -292,14 +264,10 @@ class Address implements AddressInterface
 
     /**
      * @param string $zip
-     *
-     * @return Address
      */
-    public function setZip(?string $zip): self
+    public function setZip(?string $zip)
     {
         $this->zip = $zip;
-
-        return $this;
     }
 
     /**
@@ -312,14 +280,10 @@ class Address implements AddressInterface
 
     /**
      * @param string $state
-     *
-     * @return Address
      */
-    public function setState(?string $state): AddressInterface
+    public function setState(?string $state)
     {
         $this->state = $state;
-
-        return $this;
     }
 
     /**
@@ -332,14 +296,10 @@ class Address implements AddressInterface
 
     /**
      * @param string $country
-     *
-     * @return Address
      */
-    public function setCountry(?string $country): AddressInterface
+    public function setCountry(?string $country)
     {
         $this->country = $country;
-
-        return $this;
     }
 
     /**
@@ -352,14 +312,10 @@ class Address implements AddressInterface
 
     /**
      * @param User $user
-     *
-     * @return Address
      */
-    public function setUser(?User $user): self
+    public function setUser(?User $user)
     {
         $this->user = $user;
-
-        return $this;
     }
 
     /**
@@ -372,14 +328,10 @@ class Address implements AddressInterface
 
     /**
      * @param Customer $customer
-     *
-     * @return Address
      */
-    public function setCustomer(?Customer $customer): self
+    public function setCustomer(?Customer $customer)
     {
         $this->customer = $customer;
-
-        return $this;
     }
 
     /**

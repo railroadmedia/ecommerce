@@ -113,25 +113,22 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $purchaser->setType(Purchaser::USER_TYPE);
 
         $billingAddress = new Address();
-        $billingAddress
-            ->setCountry($country)
-            ->setState($state)
-            ->setType(Address::BILLING_ADDRESS_TYPE);
+        $billingAddress->setCountry($country);
+        $billingAddress->setState($state);
+        $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
 
         $shippingAddress = new Address();
-        $shippingAddress
-            ->setCountry($country)
-            ->setState($state)
-            ->setType(Address::SHIPPING_ADDRESS_TYPE);
+        $shippingAddress->setCountry($country);
+        $shippingAddress->setState($state);
+        $shippingAddress->setType(Address::SHIPPING_ADDRESS_TYPE);
 
         $shippingAddressStructure = new AddressStructure();
-        $shippingAddressStructure->setCountry($country)
-            ->setState($state);
+        $shippingAddressStructure->setCountry($country);
+        $shippingAddressStructure->setState($state);
 
         $billingAddressStructure = new AddressStructure();
-        $billingAddress
-            ->setCountry($country)
-            ->setState($state);
+        $billingAddress->setCountry($country);
+        $billingAddress->setState($state);
 
         $creditCard = new CreditCard();
         $creditCard->setCardholderName($this->faker->name);
@@ -145,22 +142,20 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $paymentMethod = new PaymentMethod();
 
-        $paymentMethod
-            ->setBillingAddress($billingAddress)
-            ->setCreditCard($creditCard)
-            ->setCurrency($currency);
+        $paymentMethod->setBillingAddress($billingAddress);
+        $paymentMethod->setCreditCard($creditCard);
+        $paymentMethod->setCurrency($currency);
 
         $payment = new Payment();
 
-        $payment
-            ->setTotalDue($dueForOrder)
-            ->setType(Payment::TYPE_INITIAL_ORDER)
-            ->setStatus(Payment::STATUS_PAID)
-            ->setCurrency($currency)
-            ->setTotalPaid($dueForOrder)
-            ->setPaymentMethod($paymentMethod)
-            ->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName())
-            ->setCreatedAt(Carbon::now());
+        $payment->setTotalDue($dueForOrder);
+        $payment->setType(Payment::TYPE_INITIAL_ORDER);
+        $payment->setStatus(Payment::STATUS_PAID);
+        $payment->setCurrency($currency);
+        $payment->setTotalPaid($dueForOrder);
+        $payment->setPaymentMethod($paymentMethod);
+        $payment->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName());
+        $payment->setCreatedAt(Carbon::now());
 
         $this->entityManager->persist($billingAddress);
         $this->entityManager->persist($creditCard);
@@ -169,54 +164,50 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $productOne = new Product();
 
-        $productOne
-            ->setBrand($brand)
-            ->setName($this->faker->word)
-            ->setSku($this->faker->word . rand())
-            ->setPrice($this->faker->randomFloat(2, 15, 20))
-            ->setType(Product::TYPE_PHYSICAL_ONE_TIME)
-            ->setActive(true)
-            ->setIsPhysical(true)
-            ->setWeight($this->faker->randomFloat(2, 15, 20))
-            ->setStock(50)
-            ->setCreatedAt(Carbon::now());
+        $productOne->setBrand($brand);
+        $productOne->setName($this->faker->word);
+        $productOne->setSku($this->faker->word . rand());
+        $productOne->setPrice($this->faker->randomFloat(2, 15, 20));
+        $productOne->setType(Product::TYPE_PHYSICAL_ONE_TIME);
+        $productOne->setActive(true);
+        $productOne->setIsPhysical(true);
+        $productOne->setWeight($this->faker->randomFloat(2, 15, 20));
+        $productOne->setStock(50);
+        $productOne->setCreatedAt(Carbon::now());
 
         $productTwo = new Product();
 
-        $productTwo
-            ->setBrand($brand)
-            ->setName($this->faker->word)
-            ->setSku($this->faker->word . rand())
-            ->setPrice($this->faker->randomFloat(2, 15, 20))
-            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
-            ->setActive(true)
-            ->setIsPhysical(false)
-            ->setSubscriptionIntervalType(config('ecommerce.interval_type_monthly'))
-            ->setSubscriptionIntervalCount($this->faker->numberBetween(0, 12))
-            ->setCreatedAt(Carbon::now());
+        $productTwo->setBrand($brand);
+        $productTwo->setName($this->faker->word);
+        $productTwo->setSku($this->faker->word . rand());
+        $productTwo->setPrice($this->faker->randomFloat(2, 15, 20));
+        $productTwo->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $productTwo->setActive(true);
+        $productTwo->setIsPhysical(false);
+        $productTwo->setSubscriptionIntervalType(config('ecommerce.interval_type_monthly'));
+        $productTwo->setSubscriptionIntervalCount($this->faker->numberBetween(0, 12));
+        $productTwo->setCreatedAt(Carbon::now());
 
         $discountOne = new Discount();
 
-        $discountOne
-            ->setName($this->faker->word)
-            ->setDescription($this->faker->word)
-            ->setType(DiscountService::PRODUCT_AMOUNT_OFF_TYPE)
-            ->setAmount($discountOneAmount)
-            ->setActive(true)
-            ->setVisible(true)
-            ->setProduct($productOne)
-            ->setCreatedAt(Carbon::now());
+        $discountOne->setName($this->faker->word);
+        $discountOne->setDescription($this->faker->word);
+        $discountOne->setType(DiscountService::PRODUCT_AMOUNT_OFF_TYPE);
+        $discountOne->setAmount($discountOneAmount);
+        $discountOne->setActive(true);
+        $discountOne->setVisible(true);
+        $discountOne->setProduct($productOne);
+        $discountOne->setCreatedAt(Carbon::now());
 
         $discountCriteriaOne = new DiscountCriteria();
 
-        $discountCriteriaOne
-            ->setName($this->faker->word)
-            ->setType(DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE)
-            ->setProduct($productOne)
-            ->setMin(1)
-            ->setMax(5)
-            ->setDiscount($discountOne)
-            ->setCreatedAt(Carbon::now());
+        $discountCriteriaOne->setName($this->faker->word);
+        $discountCriteriaOne->setType(DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE);
+        $discountCriteriaOne->setProduct($productOne);
+        $discountCriteriaOne->setMin(1);
+        $discountCriteriaOne->setMax(5);
+        $discountCriteriaOne->setDiscount($discountOne);
+        $discountCriteriaOne->setCreatedAt(Carbon::now());
 
         $discountOne->addDiscountCriteria($discountCriteriaOne);
 
@@ -231,22 +222,20 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $orderItemOne = new OrderItem();
 
-        $orderItemOne
-            ->setProduct($productOne)
-            ->setQuantity($quantityOne)
-            ->setInitialPrice($productOne->getPrice())
-            ->setTotalDiscounted($discountOneAmount)
-            ->setFinalPrice($orderItemOneFinalPrice)
-            ->setWeight($productOne->getWeight());
+        $orderItemOne->setProduct($productOne);
+        $orderItemOne->setQuantity($quantityOne);
+        $orderItemOne->setInitialPrice($productOne->getPrice());
+        $orderItemOne->setTotalDiscounted($discountOneAmount);
+        $orderItemOne->setFinalPrice($orderItemOneFinalPrice);
+        $orderItemOne->setWeight($productOne->getWeight());
 
         $orderItemTwo = new OrderItem();
 
-        $orderItemTwo
-            ->setProduct($productTwo)
-            ->setQuantity($quantityTwo)
-            ->setInitialPrice($productTwo->getPrice())
-            ->setTotalDiscounted(0)
-            ->setFinalPrice($productTwo->getPrice() * $quantityTwo);
+        $orderItemTwo->setProduct($productTwo);
+        $orderItemTwo->setQuantity($quantityTwo);
+        $orderItemTwo->setInitialPrice($productTwo->getPrice());
+        $orderItemTwo->setTotalDiscounted(0);
+        $orderItemTwo->setFinalPrice($productTwo->getPrice() * $quantityTwo);
 
         $orderItems = [$orderItemOne, $orderItemTwo];
 

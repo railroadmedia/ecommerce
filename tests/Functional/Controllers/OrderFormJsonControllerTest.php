@@ -3010,13 +3010,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $sessionShippingAddress = new Address();
 
-        $sessionShippingAddress->setCountry($shippingAddress['country'])
-            ->setState($shippingAddress['state'])
-            ->setZip($shippingAddress['zip'])
-            ->setFirstName($shippingAddress['first_name'])
-            ->setLastName($shippingAddress['last_name'])
-            ->setStreetLine1($shippingAddress['street_line_1'])
-            ->setCity($shippingAddress['city']);
+        $sessionShippingAddress->setCountry($shippingAddress['country']);
+        $sessionShippingAddress->setState($shippingAddress['state']);
+        $sessionShippingAddress->setZip($shippingAddress['zip']);
+        $sessionShippingAddress->setFirstName($shippingAddress['first_name']);
+        $sessionShippingAddress->setLastName($shippingAddress['last_name']);
+        $sessionShippingAddress->setStreetLine1($shippingAddress['street_line_1']);
+        $sessionShippingAddress->setCity($shippingAddress['city']);
 
         $this->cartService->refreshCart();
         $this->cartService->getCart()
@@ -6756,13 +6756,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $zip = $this->faker->postcode;
 
         $shippingAddress = new Address();
-        $shippingAddress->setCountry($country)
-            ->setState($state);
+        $shippingAddress->setCountry($country);
+        $shippingAddress->setState($state);
 
         $billingAddress = new Address();
-        $billingAddress
-            ->setCountry($country)
-            ->setState($state);
+        $billingAddress->setCountry($country);
+        $billingAddress->setState($state);
 
         $cart = Cart::fromSession();
 

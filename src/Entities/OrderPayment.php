@@ -60,14 +60,10 @@ class OrderPayment
 
     /**
      * @param Order $order
-     *
-     * @return OrderPayment
      */
-    public function setOrder(?Order $order): self
+    public function setOrder(?Order $order)
     {
         $this->order = $order;
-
-        return $this;
     }
 
     /**
@@ -80,13 +76,9 @@ class OrderPayment
 
     /**
      * @param Payment $payment
-     *
-     * @return OrderPayment
      */
-    public function setPayment(?Payment $payment): self
+    public function setPayment(?Payment $payment)
     {
         $this->payment = $payment;
-
-        return $this;
     }
 }

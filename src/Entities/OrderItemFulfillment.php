@@ -90,14 +90,10 @@ class OrderItemFulfillment
 
     /**
      * @param Order $order
-     *
-     * @return OrderItemFulfillment
      */
-    public function setOrder(?Order $order): self
+    public function setOrder(?Order $order)
     {
         $this->order = $order;
-
-        return $this;
     }
 
     /**
@@ -110,14 +106,10 @@ class OrderItemFulfillment
 
     /**
      * @param OrderItem $orderItem
-     *
-     * @return OrderItemFulfillment
      */
-    public function setOrderItem(?OrderItem $orderItem): self
+    public function setOrderItem(?OrderItem $orderItem)
     {
         $this->orderItem = $orderItem;
-
-        return $this;
     }
 
     /**
@@ -130,14 +122,10 @@ class OrderItemFulfillment
 
     /**
      * @param string $status
-     *
-     * @return OrderItemFulfillment
      */
-    public function setStatus(string $status): self
+    public function setStatus(string $status)
     {
         $this->status = $status;
-
-        return $this;
     }
 
     /**
@@ -150,14 +138,10 @@ class OrderItemFulfillment
 
     /**
      * @param string $company
-     *
-     * @return OrderItemFulfillment
      */
-    public function setCompany(string $company): self
+    public function setCompany(string $company)
     {
         $this->company = $company;
-
-        return $this;
     }
 
     /**
@@ -170,14 +154,10 @@ class OrderItemFulfillment
 
     /**
      * @param string $trackingNumber
-     *
-     * @return OrderItemFulfillment
      */
-    public function setTrackingNumber(string $trackingNumber): self
+    public function setTrackingNumber(string $trackingNumber)
     {
         $this->trackingNumber = $trackingNumber;
-
-        return $this;
     }
 
     /**
@@ -190,13 +170,9 @@ class OrderItemFulfillment
 
     /**
      * @param \DateTimeInterface $fulfilledOn
-     *
-     * @return OrderItemFulfillment
      */
-    public function setFulfilledOn(?\DateTimeInterface $fulfilledOn): self
+    public function setFulfilledOn(?\DateTimeInterface $fulfilledOn)
     {
         $this->fulfilledOn = $fulfilledOn;
-
-        return $this;
     }
 }

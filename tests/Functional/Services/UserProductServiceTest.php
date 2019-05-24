@@ -31,14 +31,13 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $product = new Product();
 
-        $product
-            ->setBrand($this->faker->word)
-            ->setName($this->faker->word)
-            ->setSku($this->faker->word)
-            ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
-            ->setActive(true)
-            ->setIsPhysical(false);
+        $product->setBrand($this->faker->word);
+        $product->setName($this->faker->word);
+        $product->setSku($this->faker->word);
+        $product->setPrice($this->faker->randomNumber(4));
+        $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $product->setActive(true);
+        $product->setIsPhysical(false);
 
         $em->persist($product);
         $em->flush();
@@ -64,24 +63,22 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $product = new Product();
 
-        $product
-            ->setBrand($this->faker->word)
-            ->setName($this->faker->word)
-            ->setSku($this->faker->word)
-            ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
-            ->setActive(true)
-            ->setIsPhysical(false);
+        $product->setBrand($this->faker->word);
+        $product->setName($this->faker->word);
+        $product->setSku($this->faker->word);
+        $product->setPrice($this->faker->randomNumber(4));
+        $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $product->setActive(true);
+        $product->setIsPhysical(false);
 
         $em->persist($product);
 
         $userProduct = new UserProduct();
 
-        $userProduct
-            ->setUser($user)
-            ->setProduct($product)
-            ->setQuantity(1)
-            ->setCreatedAt(Carbon::now());
+        $userProduct->setUser($user);
+        $userProduct->setProduct($product);
+        $userProduct->setQuantity(1);
+        $userProduct->setCreatedAt(Carbon::now());
 
         $em->persist($userProduct);
         $em->flush();
@@ -119,14 +116,13 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $product = new Product();
 
-        $product
-            ->setBrand($this->faker->word)
-            ->setName($this->faker->word)
-            ->setSku($this->faker->word)
-            ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
-            ->setActive(true)
-            ->setIsPhysical(false);
+        $product->setBrand($this->faker->word);
+        $product->setName($this->faker->word);
+        $product->setSku($this->faker->word);
+        $product->setPrice($this->faker->randomNumber(4));
+        $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $product->setActive(true);
+        $product->setIsPhysical(false);
 
         $em->persist($product);
 
@@ -164,14 +160,13 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $product = new Product();
 
-        $product
-            ->setBrand($this->faker->word)
-            ->setName($this->faker->word)
-            ->setSku($this->faker->word)
-            ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
-            ->setActive(true)
-            ->setIsPhysical(false);
+        $product->setBrand($this->faker->word);
+        $product->setName($this->faker->word);
+        $product->setSku($this->faker->word);
+        $product->setPrice($this->faker->randomNumber(4));
+        $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $product->setActive(true);
+        $product->setIsPhysical(false);
 
         $em->persist($product);
 
@@ -217,14 +212,13 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $product = new Product();
 
-        $product
-            ->setBrand($this->faker->word)
-            ->setName($this->faker->word)
-            ->setSku($this->faker->word)
-            ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
-            ->setActive(true)
-            ->setIsPhysical(false);
+        $product->setBrand($this->faker->word);
+        $product->setName($this->faker->word);
+        $product->setSku($this->faker->word);
+        $product->setPrice($this->faker->randomNumber(4));
+        $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $product->setActive(true);
+        $product->setIsPhysical(false);
 
         $em->persist($product);
 
@@ -232,13 +226,12 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $userProduct = new UserProduct();
 
-        $userProduct
-            ->setUser($user)
-            ->setProduct($product)
-            ->setQuantity($initialQuantity)
-            ->setCreatedAt(
-                Carbon::now()->subDay($this->faker->randomNumber(4))
-            );
+        $userProduct->setUser($user);
+        $userProduct->setProduct($product);
+        $userProduct->setQuantity($initialQuantity);
+        $userProduct->setCreatedAt(
+            Carbon::now()->subDay($this->faker->randomNumber(4))
+        );
 
         $em->persist($userProduct);
         $em->flush();
@@ -283,27 +276,25 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $productOne = new Product();
 
-        $productOne
-            ->setBrand($this->faker->word)
-            ->setName($this->faker->word)
-            ->setSku($this->faker->word)
-            ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
-            ->setActive(true)
-            ->setIsPhysical(false);
+        $productOne->setBrand($this->faker->word);
+        $productOne->setName($this->faker->word);
+        $productOne->setSku($this->faker->word);
+        $productOne->setPrice($this->faker->randomNumber(4));
+        $productOne->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $productOne->setActive(true);
+        $productOne->setIsPhysical(false);
 
         $em->persist($productOne);
 
         $productTwo = new Product();
 
-        $productTwo
-            ->setBrand($this->faker->word)
-            ->setName($this->faker->word)
-            ->setSku($this->faker->word)
-            ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
-            ->setActive(true)
-            ->setIsPhysical(false);
+        $productTwo->setBrand($this->faker->word);
+        $productTwo->setName($this->faker->word);
+        $productTwo->setSku($this->faker->word);
+        $productTwo->setPrice($this->faker->randomNumber(4));
+        $productTwo->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $productTwo->setActive(true);
+        $productTwo->setIsPhysical(false);
 
         $em->persist($productTwo);
 
@@ -311,14 +302,13 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $userProductOneQuantity = 1;
 
-        $userProductOne
-            ->setUser($user)
-            ->setProduct($productOne)
-            ->setQuantity($userProductOneQuantity)
-            ->setExpirationDate(Carbon::now())
-            ->setCreatedAt(
-                Carbon::now()->subDay($this->faker->randomNumber(4))
-            );
+        $userProductOne->setUser($user);
+        $userProductOne->setProduct($productOne);
+        $userProductOne->setQuantity($userProductOneQuantity);
+        $userProductOne->setExpirationDate(Carbon::now());
+        $userProductOne->setCreatedAt(
+            Carbon::now()->subDay($this->faker->randomNumber(4))
+        );
 
         $em->persist($userProductOne);
 
@@ -326,14 +316,13 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $userProductTwoQuantity = 3;
 
-        $userProductTwo
-            ->setUser($user)
-            ->setProduct($productTwo)
-            ->setQuantity($userProductTwoQuantity)
-            ->setExpirationDate(Carbon::now())
-            ->setCreatedAt(
-                Carbon::now()->subDay($this->faker->randomNumber(4))
-            );
+        $userProductTwo->setUser($user);
+        $userProductTwo->setProduct($productTwo);
+        $userProductTwo->setQuantity($userProductTwoQuantity);
+        $userProductTwo->setExpirationDate(Carbon::now());
+        $userProductTwo->setCreatedAt(
+            Carbon::now()->subDay($this->faker->randomNumber(4))
+        );
 
         $em->persist($userProductTwo);
 

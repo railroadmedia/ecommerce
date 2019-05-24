@@ -327,10 +327,10 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $billingAddress = new Address();
 
-        $billingAddress->setZip($billingAddressData['zip'])
-            ->setState($this->faker->word)
-            ->setCountry($billingAddressData['country'])
-            ->setType(Address::BILLING_ADDRESS_TYPE);
+        $billingAddress->setZip($billingAddressData['zip']);
+        $billingAddress->setState($this->faker->word);
+        $billingAddress->setCountry($billingAddressData['country']);
+        $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
 
         $stripeToken = $this->faker->word;
 
@@ -460,10 +460,10 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $billingAddress = new Address();
 
-        $billingAddress->setZip($this->faker->postcode)
-            ->setState($this->faker->word)
-            ->setCountry($country)
-            ->setType(Address::BILLING_ADDRESS_TYPE);
+        $billingAddress->setZip($this->faker->postcode);
+        $billingAddress->setState($this->faker->word);
+        $billingAddress->setCountry($country);
+        $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
 
         $stripeToken = $this->faker->word;
 
@@ -562,10 +562,10 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $billingAddress = new Address();
 
-        $billingAddress->setZip($this->faker->postcode)
-            ->setState($this->faker->word)
-            ->setCountry($country)
-            ->setType(Address::BILLING_ADDRESS_TYPE);
+        $billingAddress->setZip($this->faker->postcode);
+        $billingAddress->setState($this->faker->word);
+        $billingAddress->setCountry($country);
+        $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
 
         $payPalToken = $this->faker->word;
 

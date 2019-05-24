@@ -60,14 +60,10 @@ class SubscriptionPayment
 
     /**
      * @param Subscription $subscription
-     *
-     * @return SubscriptionPayment
      */
-    public function setSubscription(?Subscription $subscription): self
+    public function setSubscription(?Subscription $subscription)
     {
         $this->subscription = $subscription;
-
-        return $this;
     }
 
     /**
@@ -80,13 +76,9 @@ class SubscriptionPayment
 
     /**
      * @param Payment $payment
-     *
-     * @return SubscriptionPayment
      */
-    public function setPayment(?Payment $payment): self
+    public function setPayment(?Payment $payment)
     {
         $this->payment = $payment;
-
-        return $this;
     }
 }

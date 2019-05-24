@@ -90,14 +90,10 @@ class DiscountCriteria
 
     /**
      * @param string $name
-     *
-     * @return DiscountCriteria
      */
-    public function setName(string $name): self
+    public function setName(string $name)
     {
         $this->name = $name;
-
-        return $this;
     }
 
     /**
@@ -110,14 +106,10 @@ class DiscountCriteria
 
     /**
      * @param string $type
-     *
-     * @return DiscountCriteria
      */
-    public function setType(string $type): self
+    public function setType(string $type)
     {
         $this->type = $type;
-
-        return $this;
     }
 
     /**
@@ -130,14 +122,10 @@ class DiscountCriteria
 
     /**
      * @param string $min
-     *
-     * @return DiscountCriteria
      */
-    public function setMin(string $min): self
+    public function setMin(string $min)
     {
         $this->min = $min;
-
-        return $this;
     }
 
     /**
@@ -150,14 +138,10 @@ class DiscountCriteria
 
     /**
      * @param string $max
-     *
-     * @return DiscountCriteria
      */
-    public function setMax(string $max): self
+    public function setMax(string $max)
     {
         $this->max = $max;
-
-        return $this;
     }
 
     /**
@@ -170,14 +154,10 @@ class DiscountCriteria
 
     /**
      * @param Product $product
-     *
-     * @return DiscountCriteria
      */
-    public function setProduct(?Product $product): self
+    public function setProduct(?Product $product)
     {
         $this->product = $product;
-
-        return $this;
     }
 
     /**
@@ -190,13 +170,9 @@ class DiscountCriteria
 
     /**
      * @param Discount $discount
-     *
-     * @return DiscountCriteria
      */
-    public function setDiscount(?Discount $discount): self
+    public function setDiscount(?Discount $discount)
     {
         $this->discount = $discount;
-
-        return $this;
     }
 }

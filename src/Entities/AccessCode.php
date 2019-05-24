@@ -96,14 +96,10 @@ class AccessCode
 
     /**
      * @param string $code
-     *
-     * @return AccessCode
      */
-    public function setCode(string $code): self
+    public function setCode(string $code)
     {
         $this->code = $code;
-
-        return $this;
     }
 
     /**
@@ -116,14 +112,10 @@ class AccessCode
 
     /**
      * @param array $productIds
-     *
-     * @return AccessCode
      */
-    public function setProductIds(array $productIds): self
+    public function setProductIds(array $productIds)
     {
         $this->productIds = $productIds;
-
-        return $this;
     }
 
     /**
@@ -136,14 +128,10 @@ class AccessCode
 
     /**
      * @param bool $isClaimed
-     *
-     * @return AccessCode
      */
-    public function setIsClaimed(bool $isClaimed): self
+    public function setIsClaimed(bool $isClaimed)
     {
         $this->isClaimed = $isClaimed;
-
-        return $this;
     }
 
     /**
@@ -156,14 +144,10 @@ class AccessCode
 
     /**
      * @param Carbon|null $claimedOn
-     *
-     * @return AccessCode
      */
-    public function setClaimedOn(?Carbon $claimedOn): self
+    public function setClaimedOn(?Carbon $claimedOn)
     {
         $this->claimedOn = $claimedOn;
-
-        return $this;
     }
 
     /**
@@ -176,14 +160,10 @@ class AccessCode
 
     /**
      * @param string $brand
-     *
-     * @return AccessCode
      */
-    public function setBrand(string $brand): self
+    public function setBrand(string $brand)
     {
         $this->brand = $brand;
-
-        return $this;
     }
 
     /**
@@ -196,13 +176,9 @@ class AccessCode
 
     /**
      * @param User|null $claimer
-     *
-     * @return AccessCode
      */
-    public function setClaimer(?User $claimer): self
+    public function setClaimer(?User $claimer)
     {
         $this->claimer = $claimer;
-
-        return $this;
     }
 }

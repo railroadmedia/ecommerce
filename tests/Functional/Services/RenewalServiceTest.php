@@ -52,61 +52,57 @@ class RenewalServiceTest extends EcommerceTestCase
 
         $creditCard = new CreditCard();
 
-        $creditCard
-            ->setFingerprint($this->faker->word)
-            ->setLastFourDigits($this->faker->randomNumber(4, true))
-            ->setCompanyName($this->faker->word)
-            ->setExpirationDate(Carbon::now())
-            ->setPaymentGatewayName($this->getPaymentGateway('stripe'))
-            ->setExternalId($this->faker->word)
-            ->setCreatedAt(Carbon::now());
+        $creditCard->setFingerprint($this->faker->word);
+        $creditCard->setLastFourDigits($this->faker->randomNumber(4, true));
+        $creditCard->setCompanyName($this->faker->word);
+        $creditCard->setExpirationDate(Carbon::now());
+        $creditCard->setPaymentGatewayName($this->getPaymentGateway('stripe'));
+        $creditCard->setExternalId($this->faker->word);
+        $creditCard->setCreatedAt(Carbon::now());
 
         $em->persist($creditCard);
         $em->flush();
 
         $paymentMethod = new PaymentMethod();
 
-        $paymentMethod
-            ->setCreditCard($creditCard)
-            ->setCurrency($this->getCurrency())
-            ->setCreatedAt(Carbon::now());
+        $paymentMethod->setCreditCard($creditCard);
+        $paymentMethod->setCurrency($this->getCurrency());
+        $paymentMethod->setCreatedAt(Carbon::now());
 
         $em->persist($paymentMethod);
         $em->flush();
 
         $product = new Product();
 
-        $product
-            ->setBrand($this->faker->word)
-            ->setName($this->faker->word)
-            ->setSku($this->faker->word)
-            ->setPrice($this->faker->randomNumber(4))
-            ->setType(Product::TYPE_DIGITAL_SUBSCRIPTION)
-            ->setActive(true)
-            ->setIsPhysical(false);
+        $product->setBrand($this->faker->word);
+        $product->setName($this->faker->word);
+        $product->setSku($this->faker->word);
+        $product->setPrice($this->faker->randomNumber(4));
+        $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $product->setActive(true);
+        $product->setIsPhysical(false);
 
         $em->persist($product);
         $em->flush();
 
         $subscription = new Subscription();
 
-        $subscription
-            ->setBrand($this->faker->word)
-            ->setType('subscription')
-            ->setIsActive(true)
-            ->setProduct($product)
-            ->setUser($user)
-            ->setStartDate(Carbon::now())
-            ->setPaidUntil(Carbon::now()->subDay(1))
-            ->setTotalPrice($this->faker->randomNumber(3))
-            ->setTax($this->faker->randomNumber(3))
-            ->setCurrency($this->getCurrency())
-            ->setIntervalType(config('ecommerce.interval_type_monthly'))
-            ->setIntervalCount(1)
-            ->setTotalCyclesPaid($this->faker->randomNumber(3))
-            ->setPaymentMethod($paymentMethod)
-            ->setCreatedAt(Carbon::now())
-            ->setUpdatedAt(Carbon::now());
+        $subscription->setBrand($this->faker->word);
+        $subscription->setType('subscription');
+        $subscription->setIsActive(true);
+        $subscription->setProduct($product);
+        $subscription->setUser($user);
+        $subscription->setStartDate(Carbon::now());
+        $subscription->setPaidUntil(Carbon::now()->subDay(1));
+        $subscription->setTotalPrice($this->faker->randomNumber(3));
+        $subscription->setTax($this->faker->randomNumber(3));
+        $subscription->setCurrency($this->getCurrency());
+        $subscription->setIntervalType(config('ecommerce.interval_type_monthly'));
+        $subscription->setIntervalCount(1);
+        $subscription->setTotalCyclesPaid($this->faker->randomNumber(3));
+        $subscription->setPaymentMethod($paymentMethod);
+        $subscription->setCreatedAt(Carbon::now());
+        $subscription->setUpdatedAt(Carbon::now());
 
         $em->persist($subscription);
         $em->flush();

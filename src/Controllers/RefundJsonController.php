@@ -173,15 +173,12 @@ class RefundJsonController extends Controller
         }
 
         $refund = new Refund();
-
-        // todo: we do not want to make setters return $this, refactor
-        $refund->setPayment($payment)
-            ->setPaymentAmount($payment->getTotalDue())
-            ->setRefundedAmount($request->input('data.attributes.refund_amount'))
-            ->setExternalId($refundExternalId)
-            ->setExternalProvider($payment->getExternalProvider())
-            ->setCreatedAt(Carbon::now());
-
+        $refund->setPayment($payment);
+        $refund->setPaymentAmount($payment->getTotalDue());
+        $refund->setRefundedAmount($request->input('data.attributes.refund_amount'));
+        $refund->setExternalId($refundExternalId);
+        $refund->setExternalProvider($payment->getExternalProvider());
+        $refund->setCreatedAt(Carbon::now());
         $refund->setNote($request->input('data.attributes.note'));
 
         $this->entityManager->persist($refund);

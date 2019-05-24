@@ -158,14 +158,10 @@ class Product
 
     /**
      * @param string $brand
-     *
-     * @return Product
      */
-    public function setBrand(string $brand): self
+    public function setBrand(string $brand)
     {
         $this->brand = $brand;
-
-        return $this;
     }
 
     /**
@@ -178,14 +174,10 @@ class Product
 
     /**
      * @param string $name
-     *
-     * @return Product
      */
-    public function setName(string $name): self
+    public function setName(string $name)
     {
         $this->name = $name;
-
-        return $this;
     }
 
     /**
@@ -198,14 +190,10 @@ class Product
 
     /**
      * @param string $sku
-     *
-     * @return Product
      */
-    public function setSku(string $sku): self
+    public function setSku(string $sku)
     {
         $this->sku = $sku;
-
-        return $this;
     }
 
     /**
@@ -218,14 +206,10 @@ class Product
 
     /**
      * @param float $price
-     *
-     * @return Product
      */
-    public function setPrice(float $price): self
+    public function setPrice(float $price)
     {
         $this->price = $price;
-
-        return $this;
     }
 
     /**
@@ -238,14 +222,10 @@ class Product
 
     /**
      * @param string $type
-     *
-     * @return Product
      */
-    public function setType(string $type): self
+    public function setType(string $type)
     {
         $this->type = $type;
-
-        return $this;
     }
 
     /**
@@ -258,14 +238,10 @@ class Product
 
     /**
      * @param bool $active
-     *
-     * @return Product
      */
-    public function setActive(bool $active): self
+    public function setActive(bool $active)
     {
         $this->active = $active;
-
-        return $this;
     }
 
     /**
@@ -278,14 +254,10 @@ class Product
 
     /**
      * @param string $category
-     *
-     * @return Product
      */
-    public function setCategory(?string $category): self
+    public function setCategory(?string $category)
     {
         $this->category = $category;
-
-        return $this;
     }
 
     /**
@@ -298,14 +270,10 @@ class Product
 
     /**
      * @param string $description
-     *
-     * @return Product
      */
-    public function setDescription(?string $description): self
+    public function setDescription(?string $description)
     {
         $this->description = $description;
-
-        return $this;
     }
 
     /**
@@ -318,14 +286,10 @@ class Product
 
     /**
      * @param string $thumbnailUrl
-     *
-     * @return Product
      */
-    public function setThumbnailUrl(?string $thumbnailUrl): self
+    public function setThumbnailUrl(?string $thumbnailUrl)
     {
         $this->thumbnailUrl = $thumbnailUrl;
-
-        return $this;
     }
 
     /**
@@ -338,14 +302,10 @@ class Product
 
     /**
      * @param bool $isPhysical
-     *
-     * @return Product
      */
-    public function setIsPhysical(bool $isPhysical): self
+    public function setIsPhysical(bool $isPhysical)
     {
         $this->isPhysical = $isPhysical;
-
-        return $this;
     }
 
     /**
@@ -358,14 +318,10 @@ class Product
 
     /**
      * @param float $weight
-     *
-     * @return Product
      */
-    public function setWeight(?float $weight): self
+    public function setWeight(?float $weight)
     {
         $this->weight = $weight;
-
-        return $this;
     }
 
     /**
@@ -378,16 +334,11 @@ class Product
 
     /**
      * @param string $subscriptionIntervalType
-     *
-     * @return Product
      */
     public function setSubscriptionIntervalType(
         ?string $subscriptionIntervalType
-    ): self
-    {
+    ) {
         $this->subscriptionIntervalType = $subscriptionIntervalType;
-
-        return $this;
     }
 
     /**
@@ -400,16 +351,11 @@ class Product
 
     /**
      * @param int $subscriptionIntervalCount
-     *
-     * @return Product
      */
     public function setSubscriptionIntervalCount(
         ?int $subscriptionIntervalCount
-    ): self
-    {
+    ) {
         $this->subscriptionIntervalCount = $subscriptionIntervalCount;
-
-        return $this;
     }
 
     /**
@@ -422,13 +368,9 @@ class Product
 
     /**
      * @param int $stock
-     *
-     * @return Product
      */
-    public function setStock(?int $stock): self
+    public function setStock(?int $stock)
     {
         $this->stock = $stock;
-
-        return $this;
     }
 }

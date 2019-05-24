@@ -94,28 +94,28 @@ class OrderClaimingService
         // create the order
         $order = new Order();
 
-        $order->setTotalDue($this->cartService->getDueForOrder())
-            ->setProductDue($totalItemsCosts)
-            ->setFinanceDue($this->cartService->getTotalFinanceCosts())
-            ->setTaxesDue($taxesDue)
-            ->setTotalPaid($this->cartService->getDueForInitialPayment())
-            ->setBrand($purchaser->getBrand())
-            ->setUser($purchaser->getType() == Purchaser::USER_TYPE ? $purchaser->getUserObject() : null)
-            ->setCustomer($purchaser->getType() == Purchaser::CUSTOMER_TYPE ? $purchaser->getCustomerEntity() : null)
-            ->setShippingDue($shippingCosts)
-            ->setShippingAddress($shippingAddress)
-            ->setBillingAddress(
-                $payment->getPaymentMethod()
-                    ->getBillingAddress()
-            )
-            ->setCreatedAt(Carbon::now());
+        $order->setTotalDue($this->cartService->getDueForOrder());
+        $order->setProductDue($totalItemsCosts);
+        $order->setFinanceDue($this->cartService->getTotalFinanceCosts());
+        $order->setTaxesDue($taxesDue);
+        $order->setTotalPaid($this->cartService->getDueForInitialPayment());
+        $order->setBrand($purchaser->getBrand());
+        $order->setUser($purchaser->getType() == Purchaser::USER_TYPE ? $purchaser->getUserObject() : null);
+        $order->setCustomer($purchaser->getType() == Purchaser::CUSTOMER_TYPE ? $purchaser->getCustomerEntity() : null);
+        $order->setShippingDue($shippingCosts);
+        $order->setShippingAddress($shippingAddress);
+        $order->setBillingAddress(
+            $payment->getPaymentMethod()
+                ->getBillingAddress()
+        );
+        $order->setCreatedAt(Carbon::now());
 
         // link the payment
         $orderPayment = new OrderPayment();
 
-        $orderPayment->setOrder($order)
-            ->setPayment($payment)
-            ->setCreatedAt(Carbon::now());
+        $orderPayment->setOrder($order);
+        $orderPayment->setPayment($payment);
+        $orderPayment->setCreatedAt(Carbon::now());
 
         if ($shippingAddress) {
             $this->entityManager->persist($shippingAddress);
@@ -161,8 +161,8 @@ class OrderClaimingService
         foreach ($orderDiscounts as $discount) {
             $orderDiscount = new OrderDiscount();
 
-            $orderDiscount->setOrder($order)
-                ->setDiscount($discount);
+            $orderDiscount->setOrder($order);
+            $orderDiscount->setDiscount($discount);
 
             $this->entityManager->persist($orderDiscount);
         }
@@ -282,28 +282,28 @@ class OrderClaimingService
                 $this->taxService->getAddressForTaxation($this->cartService->getCart())
             );
 
-        $subscription->setBrand($purchaser->getBrand())
-            ->setType($type)
-            ->setUser($purchaser->getUserObject())
-            ->setOrder($order)
-            ->setProduct(is_null($orderItem) ? null : $orderItem->getProduct())
-            ->setIsActive(true)
-            ->setStartDate(Carbon::now())
-            ->setPaidUntil($nextBillDate)
-            ->setTotalPrice($subscriptionPricePerPayment + $totalTaxDue)
-            ->setTax($totalTaxDue)
-            ->setCurrency($payment->getCurrency())
-            ->setIntervalType($intervalType)
-            ->setIntervalCount($intervalCount)
-            ->setTotalCyclesPaid(1)
-            ->setTotalCyclesDue($totalCyclesDue)
-            ->setPaymentMethod($payment->getPaymentMethod())
-            ->setCreatedAt(Carbon::now());
+        $subscription->setBrand($purchaser->getBrand());
+        $subscription->setType($type);
+        $subscription->setUser($purchaser->getUserObject());
+        $subscription->setOrder($order);
+        $subscription->setProduct(is_null($orderItem) ? null : $orderItem->getProduct());
+        $subscription->setIsActive(true);
+        $subscription->setStartDate(Carbon::now());
+        $subscription->setPaidUntil($nextBillDate);
+        $subscription->setTotalPrice($subscriptionPricePerPayment + $totalTaxDue);
+        $subscription->setTax($totalTaxDue);
+        $subscription->setCurrency($payment->getCurrency());
+        $subscription->setIntervalType($intervalType);
+        $subscription->setIntervalCount($intervalCount);
+        $subscription->setTotalCyclesPaid(1);
+        $subscription->setTotalCyclesDue($totalCyclesDue);
+        $subscription->setPaymentMethod($payment->getPaymentMethod());
+        $subscription->setCreatedAt(Carbon::now());
 
         $subscriptionPayment = new SubscriptionPayment();
 
-        $subscriptionPayment->setSubscription($subscription)
-            ->setPayment($payment);
+        $subscriptionPayment->setSubscription($subscription);
+        $subscriptionPayment->setPayment($payment);
 
         $this->entityManager->persist($subscriptionPayment);
 

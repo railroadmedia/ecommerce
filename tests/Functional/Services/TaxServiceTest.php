@@ -25,8 +25,8 @@ class TaxServiceTest extends EcommerceTestCase
 
         $address = new Address();
 
-        $address->setCountry($country)
-            ->setState($state);
+        $address->setCountry($country);
+        $address->setState($state);
 
         $this->assertEquals(12.5, $srv->getTaxesDueTotal($price, $shipping, $address));
     }
@@ -40,8 +40,8 @@ class TaxServiceTest extends EcommerceTestCase
 
         $address = new Address();
 
-        $address->setCountry($country)
-            ->setState($state);
+        $address->setCountry($country);
+        $address->setState($state);
 
         $this->assertEquals(
             config('ecommerce.product_tax_rate')[$country][$state],
@@ -58,8 +58,8 @@ class TaxServiceTest extends EcommerceTestCase
 
         $address = new Address();
 
-        $address->setCountry($country)
-            ->setState($state);
+        $address->setCountry($country);
+        $address->setState($state);
 
         $rate = $srv->getProductTaxRate($address);
 
@@ -75,8 +75,8 @@ class TaxServiceTest extends EcommerceTestCase
 
         $address = new Address();
 
-        $address->setCountry($country)
-            ->setState($state);
+        $address->setCountry($country);
+        $address->setState($state);
 
         $rate = $srv->getProductTaxRate($address);
 
@@ -92,8 +92,8 @@ class TaxServiceTest extends EcommerceTestCase
 
         $address = new Address();
 
-        $address->setCountry($country)
-            ->setState($state);
+        $address->setCountry($country);
+        $address->setState($state);
 
         $this->assertEquals(
             config('ecommerce.shipping_tax_rate')[$country][$state],
@@ -110,8 +110,8 @@ class TaxServiceTest extends EcommerceTestCase
 
         $address = new Address();
 
-        $address->setCountry($country)
-            ->setState($state);
+        $address->setCountry($country);
+        $address->setState($state);
 
         $this->assertEquals(
             config('ecommerce.gst_hst_tax_rate_display_only')[$country][$state],
@@ -129,8 +129,8 @@ class TaxServiceTest extends EcommerceTestCase
 
         $address = new Address();
 
-        $address->setCountry($country)
-            ->setState($state);
+        $address->setCountry($country);
+        $address->setState($state);
 
         $this->assertEquals(12, $srv->getTaxesDueForProductCost($price, $address));
     }
@@ -145,8 +145,8 @@ class TaxServiceTest extends EcommerceTestCase
 
         $address = new Address();
 
-        $address->setCountry($country)
-            ->setState($state);
+        $address->setCountry($country);
+        $address->setState($state);
 
         $this->assertEquals(5, $srv->getTaxesDueForShippingCost($price, $address));
     }
@@ -161,8 +161,8 @@ class TaxServiceTest extends EcommerceTestCase
 
         $address = new Address();
 
-        $address->setCountry($country)
-            ->setState($state);
+        $address->setCountry($country);
+        $address->setState($state);
 
         $this->assertEquals(5, $srv->getTaxesDueForShippingCost($price, $address));
     }

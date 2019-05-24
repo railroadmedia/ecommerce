@@ -247,11 +247,11 @@ class PaymentMethodJsonController extends Controller
                 // save billing address
                 $billingAddress = new Address();
 
-                $billingAddress->setType(Address::BILLING_ADDRESS_TYPE)
-                    ->setBrand($request->get('gateway', config('ecommerce.brand')))
-                    ->setUser($user)
-                    ->setState($card->address_state ?? '')
-                    ->setCountry($billingCountry ?? '');
+                $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
+                $billingAddress->setBrand($request->get('gateway', config('ecommerce.brand')));
+                $billingAddress->setUser($user);
+                $billingAddress->setState($card->address_state ?? '');
+                $billingAddress->setCountry($billingCountry ?? '');
 
                 $this->entityManager->persist($billingAddress);
 
@@ -330,11 +330,11 @@ class PaymentMethodJsonController extends Controller
 
             $billingAddress = new Address();
 
-            $billingAddress->setType(Address::BILLING_ADDRESS_TYPE)
-                ->setBrand($request->get('gateway', config('ecommerce.brand')))
-                ->setUser($user)
-                ->setState('')
-                ->setCountry('');
+            $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
+            $billingAddress->setBrand($request->get('gateway', config('ecommerce.brand')));
+            $billingAddress->setUser($user);
+            $billingAddress->setState('');
+            $billingAddress->setCountry('');
 
             $this->entityManager->persist($billingAddress);
 
@@ -486,23 +486,23 @@ class PaymentMethodJsonController extends Controller
                 $request->get('month')
             );
 
-            $method->setFingerprint($card->fingerprint)
-                ->setLastFourDigits($card->last4)
-                ->setCardholderName($card->name)
-                ->setCompanyName($card->brand)
-                ->setExpirationDate($expirationDate->startOfMonth())
-                ->setExternalId($card->id)
-                ->setExternalCustomerId($card->customer)
-                ->setPaymentGatewayName($request->get('gateway'))
-                ->setUpdatedAt(Carbon::now());
+            $method->setFingerprint($card->fingerprint);
+            $method->setLastFourDigits($card->last4);
+            $method->setCardholderName($card->name);
+            $method->setCompanyName($card->brand);
+            $method->setExpirationDate($expirationDate->startOfMonth());
+            $method->setExternalId($card->id);
+            $method->setExternalCustomerId($card->customer);
+            $method->setPaymentGatewayName($request->get('gateway'));
+            $method->setUpdatedAt(Carbon::now());
 
             $billingCountry = $card->address_country ?? $card->country;
 
             $address = $this->addressRepository->byId($paymentMethod->getBillingAddress());
 
-            $address->setState($card->address_state ?? '')
-                ->setCountry($billingCountry ?? '')
-                ->setUpdatedAt(Carbon::now());
+            $address->setState($card->address_state ?? '');
+            $address->setCountry($billingCountry ?? '');
+            $address->setUpdatedAt(Carbon::now());
 
             $this->entityManager->flush();
 

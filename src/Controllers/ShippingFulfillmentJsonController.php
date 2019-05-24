@@ -223,10 +223,10 @@ class ShippingFulfillmentJsonController extends Controller
              */
             $found = true;
 
-            $fulfillment->setStatus(config('ecommerce.fulfillment_status_fulfilled'))
-                ->setCompany($request->get('shipping_company'))
-                ->setTrackingNumber($request->get('tracking_number'))
-                ->setFulfilledOn(Carbon::now());
+            $fulfillment->setStatus(config('ecommerce.fulfillment_status_fulfilled'));
+            $fulfillment->setCompany($request->get('shipping_company'));
+            $fulfillment->setTrackingNumber($request->get('tracking_number'));
+            $fulfillment->setFulfilledOn(Carbon::now());
         }
 
         $this->entityManager->flush();

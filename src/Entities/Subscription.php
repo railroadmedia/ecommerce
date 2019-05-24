@@ -218,14 +218,10 @@ class Subscription
 
     /**
      * @param string $brand
-     *
-     * @return Subscription
      */
-    public function setBrand(string $brand): self
+    public function setBrand(string $brand)
     {
         $this->brand = $brand;
-
-        return $this;
     }
 
     /**
@@ -238,14 +234,10 @@ class Subscription
 
     /**
      * @param string $type
-     *
-     * @return Subscription
      */
-    public function setType(string $type): self
+    public function setType(string $type)
     {
         $this->type = $type;
-
-        return $this;
     }
 
     /**
@@ -258,14 +250,10 @@ class Subscription
 
     /**
      * @param Order $order
-     *
-     * @return Subscription
      */
-    public function setOrder(?Order $order): self
+    public function setOrder(?Order $order)
     {
         $this->order = $order;
-
-        return $this;
     }
 
     /**
@@ -278,14 +266,10 @@ class Subscription
 
     /**
      * @param bool $isActive
-     *
-     * @return Subscription
      */
-    public function setIsActive(bool $isActive): self
+    public function setIsActive(bool $isActive)
     {
         $this->isActive = $isActive;
-
-        return $this;
     }
 
     /**
@@ -298,14 +282,10 @@ class Subscription
 
     /**
      * @param \DateTimeInterface $startDate
-     *
-     * @return Subscription
      */
-    public function setStartDate(DateTimeInterface $startDate): self
+    public function setStartDate(DateTimeInterface $startDate)
     {
         $this->startDate = $startDate;
-
-        return $this;
     }
 
     /**
@@ -318,14 +298,10 @@ class Subscription
 
     /**
      * @param \DateTimeInterface $paidUntil
-     *
-     * @return Subscription
      */
-    public function setPaidUntil(DateTimeInterface $paidUntil): self
+    public function setPaidUntil(DateTimeInterface $paidUntil)
     {
         $this->paidUntil = $paidUntil;
-
-        return $this;
     }
 
     /**
@@ -338,14 +314,10 @@ class Subscription
 
     /**
      * @param \DateTimeInterface $canceledOn
-     *
-     * @return Subscription
      */
-    public function setCanceledOn(?DateTimeInterface $canceledOn): self
+    public function setCanceledOn(?DateTimeInterface $canceledOn)
     {
         $this->canceledOn = $canceledOn;
-
-        return $this;
     }
 
     /**
@@ -358,14 +330,10 @@ class Subscription
 
     /**
      * @param float $totalPrice
-     *
-     * @return Subscription
      */
-    public function setTotalPrice(float $totalPrice): self
+    public function setTotalPrice(float $totalPrice)
     {
         $this->totalPrice = $totalPrice;
-
-        return $this;
     }
 
     /**
@@ -378,13 +346,10 @@ class Subscription
 
     /**
      * @param float $tax
-     * @return Subscription
      */
-    public function setTax(float $tax): Subscription
+    public function setTax(float $tax)
     {
         $this->tax = $tax;
-
-        return $this;
     }
 
     /**
@@ -397,14 +362,10 @@ class Subscription
 
     /**
      * @param string $currency
-     *
-     * @return Subscription
      */
-    public function setCurrency(string $currency): self
+    public function setCurrency(string $currency)
     {
         $this->currency = $currency;
-
-        return $this;
     }
 
     /**
@@ -417,14 +378,10 @@ class Subscription
 
     /**
      * @param string $intervalType
-     *
-     * @return Subscription
      */
-    public function setIntervalType(string $intervalType): self
+    public function setIntervalType(string $intervalType)
     {
         $this->intervalType = $intervalType;
-
-        return $this;
     }
 
     /**
@@ -437,14 +394,10 @@ class Subscription
 
     /**
      * @param int $intervalCount
-     *
-     * @return Subscription
      */
-    public function setIntervalCount(int $intervalCount): self
+    public function setIntervalCount(int $intervalCount)
     {
         $this->intervalCount = $intervalCount;
-
-        return $this;
     }
 
     /**
@@ -457,14 +410,10 @@ class Subscription
 
     /**
      * @param int $totalCyclesDue
-     *
-     * @return Subscription
      */
-    public function setTotalCyclesDue(?int $totalCyclesDue): self
+    public function setTotalCyclesDue(?int $totalCyclesDue)
     {
         $this->totalCyclesDue = $totalCyclesDue;
-
-        return $this;
     }
 
     /**
@@ -477,14 +426,10 @@ class Subscription
 
     /**
      * @param int $totalCyclesPaid
-     *
-     * @return Subscription
      */
-    public function setTotalCyclesPaid(int $totalCyclesPaid): self
+    public function setTotalCyclesPaid(int $totalCyclesPaid)
     {
         $this->totalCyclesPaid = $totalCyclesPaid;
-
-        return $this;
     }
 
     /**
@@ -497,14 +442,10 @@ class Subscription
 
     /**
      * @param PaymentMethod $paymentMethod
-     *
-     * @return Subscription
      */
-    public function setPaymentMethod(?PaymentMethod $paymentMethod): self
+    public function setPaymentMethod(?PaymentMethod $paymentMethod)
     {
         $this->paymentMethod = $paymentMethod;
-
-        return $this;
     }
 
     /**
@@ -517,14 +458,10 @@ class Subscription
 
     /**
      * @param \DateTimeInterface $deletedAt
-     *
-     * @return Subscription
      */
-    public function setDeletedAt(?DateTimeInterface $deletedAt): self
+    public function setDeletedAt(?DateTimeInterface $deletedAt)
     {
         $this->deletedAt = $deletedAt;
-
-        return $this;
     }
 
     /**
@@ -537,14 +474,10 @@ class Subscription
 
     /**
      * @param User $user
-     *
-     * @return Subscription
      */
-    public function setUser(?User $user): self
+    public function setUser(?User $user)
     {
         $this->user = $user;
-
-        return $this;
     }
 
     /**
@@ -557,14 +490,10 @@ class Subscription
 
     /**
      * @param Customer $customer
-     *
-     * @return Subscription
      */
-    public function setCustomer(?Customer $customer): self
+    public function setCustomer(?Customer $customer)
     {
         $this->customer = $customer;
-
-        return $this;
     }
 
     /**
@@ -577,14 +506,10 @@ class Subscription
 
     /**
      * @param Product $product
-     *
-     * @return Subscription
      */
-    public function setProduct(?Product $product): self
+    public function setProduct(?Product $product)
     {
         $this->product = $product;
-
-        return $this;
     }
 
     /**

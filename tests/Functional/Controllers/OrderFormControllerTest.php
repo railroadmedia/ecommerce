@@ -63,13 +63,12 @@ class OrderFormControllerTest extends EcommerceTestCase
         $this->session(['order-form-input' => $orderData]);
 
         $shippingAddress = new Address();
-        $shippingAddress->setCountry($country)
-            ->setState($state);
+        $shippingAddress->setCountry($country);
+        $shippingAddress->setState($state);
 
         $billingAddress = new Address();
-        $billingAddress
-            ->setCountry($country)
-            ->setState($state);
+        $billingAddress->setCountry($country);
+        $billingAddress->setState($state);
 
         $shippingOption = $this->fakeShippingOption([
             'country' => $country,

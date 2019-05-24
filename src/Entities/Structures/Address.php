@@ -80,14 +80,10 @@ class Address implements AddressInterface, Serializable
 
     /**
      * @param string $country
-     *
-     * @return Address
      */
-    public function setCountry(?string $country): AddressInterface
+    public function setCountry(?string $country)
     {
         $this->country = $country;
-
-        return $this;
     }
 
     /**
@@ -100,14 +96,10 @@ class Address implements AddressInterface, Serializable
 
     /**
      * @param string $state
-     *
-     * @return Address
      */
-    public function setState(?string $state): AddressInterface
+    public function setState(?string $state)
     {
         $this->state = $state;
-
-        return $this;
     }
 
     /**
@@ -120,14 +112,10 @@ class Address implements AddressInterface, Serializable
 
     /**
      * @param string $firstName
-     *
-     * @return Address
      */
-    public function setFirstName(?string $firstName): self
+    public function setFirstName(?string $firstName)
     {
         $this->firstName = $firstName;
-
-        return $this;
     }
 
     /**
@@ -140,14 +128,10 @@ class Address implements AddressInterface, Serializable
 
     /**
      * @param string $lastName
-     *
-     * @return Address
      */
-    public function setLastName(?string $lastName): self
+    public function setLastName(?string $lastName)
     {
         $this->lastName = $lastName;
-
-        return $this;
     }
 
     /**
@@ -160,14 +144,10 @@ class Address implements AddressInterface, Serializable
 
     /**
      * @param string $streetLine1
-     *
-     * @return Address
      */
-    public function setStreetLine1(?string $streetLine1): self
+    public function setStreetLine1(?string $streetLine1)
     {
         $this->streetLine1 = $streetLine1;
-
-        return $this;
     }
 
     /**
@@ -180,14 +160,10 @@ class Address implements AddressInterface, Serializable
 
     /**
      * @param string $streetLineTwo
-     *
-     * @return Address
      */
-    public function setStreetLine2(?string $streetLine2): self
+    public function setStreetLine2(?string $streetLine2)
     {
         $this->streetLine2 = $streetLine2;
-
-        return $this;
     }
 
     /**
@@ -200,14 +176,10 @@ class Address implements AddressInterface, Serializable
 
     /**
      * @param string $zipOrPostalCode
-     *
-     * @return Address
      */
-    public function setZip(?string $zip): self
+    public function setZip(?string $zip)
     {
         $this->zip = $zip;
-
-        return $this;
     }
 
     /**
@@ -220,24 +192,18 @@ class Address implements AddressInterface, Serializable
 
     /**
      * @param string $city
-     *
-     * @return Address
      */
-    public function setCity(?string $city): self
+    public function setCity(?string $city)
     {
         $this->city = $city;
-
-        return $this;
     }
 
     /**
      * Merges data from $address into current address
      *
      * @param Address $address
-     *
-     * @return Address
      */
-    public function merge(Address $address): self
+    public function merge(Address $address)
     {
         foreach (self::PROPS_MAP as $key => $nil) {
             $setterName = Inflector::camelize('set' . ucwords($key));
@@ -250,8 +216,6 @@ class Address implements AddressInterface, Serializable
                 call_user_func([$this, $setterName], $newValue);
             }
         }
-
-        return $this;
     }
 
     /**

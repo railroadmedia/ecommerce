@@ -156,14 +156,10 @@ class Order
 
     /**
      * @param float $totalDue
-     *
-     * @return Order
      */
-    public function setTotalDue(float $totalDue): self
+    public function setTotalDue(float $totalDue)
     {
         $this->totalDue = $totalDue;
-
-        return $this;
     }
 
     /**
@@ -176,14 +172,10 @@ class Order
 
     /**
      * @param float $productDue
-     *
-     * @return Order
      */
-    public function setProductDue(float $productDue): self
+    public function setProductDue(float $productDue)
     {
         $this->productDue = $productDue;
-
-        return $this;
     }
 
     /**
@@ -196,14 +188,10 @@ class Order
 
     /**
      * @param float $taxesDue
-     *
-     * @return Order
      */
-    public function setTaxesDue(float $taxesDue): self
+    public function setTaxesDue(float $taxesDue)
     {
         $this->taxesDue = $taxesDue;
-
-        return $this;
     }
 
     /**
@@ -216,14 +204,10 @@ class Order
 
     /**
      * @param float $shippingDue
-     *
-     * @return Order
      */
-    public function setShippingDue(float $shippingDue): self
+    public function setShippingDue(float $shippingDue)
     {
         $this->shippingDue = $shippingDue;
-
-        return $this;
     }
 
     /**
@@ -236,14 +220,10 @@ class Order
 
     /**
      * @param float $financeDue
-     *
-     * @return Order
      */
-    public function setFinanceDue(?float $financeDue): self
+    public function setFinanceDue(?float $financeDue)
     {
         $this->financeDue = $financeDue;
-
-        return $this;
     }
 
     /**
@@ -256,14 +236,10 @@ class Order
 
     /**
      * @param float $totalPaid
-     *
-     * @return Order
      */
-    public function setTotalPaid(float $totalPaid): self
+    public function setTotalPaid(float $totalPaid)
     {
         $this->totalPaid = $totalPaid;
-
-        return $this;
     }
 
     /**
@@ -276,14 +252,10 @@ class Order
 
     /**
      * @param string $brand
-     *
-     * @return Order
      */
-    public function setBrand(string $brand): self
+    public function setBrand(string $brand)
     {
         $this->brand = $brand;
-
-        return $this;
     }
 
     /**
@@ -296,14 +268,10 @@ class Order
 
     /**
      * @param \DateTimeInterface $deletedOn
-     *
-     * @return Order
      */
-    public function setDeletedOn(?\DateTimeInterface $deletedOn): self
+    public function setDeletedOn(?\DateTimeInterface $deletedOn)
     {
         $this->deletedOn = $deletedOn;
-
-        return $this;
     }
 
     /**
@@ -316,14 +284,10 @@ class Order
 
     /**
      * @param User $user
-     *
-     * @return Order
      */
-    public function setUser(?User $user): self
+    public function setUser(?User $user)
     {
         $this->user = $user;
-
-        return $this;
     }
 
     /**
@@ -336,14 +300,10 @@ class Order
 
     /**
      * @param Customer $customer
-     *
-     * @return Order
      */
-    public function setCustomer(?Customer $customer): self
+    public function setCustomer(?Customer $customer)
     {
         $this->customer = $customer;
-
-        return $this;
     }
 
     /**
@@ -356,14 +316,10 @@ class Order
 
     /**
      * @param Address $shippingAddress
-     *
-     * @return Order
      */
-    public function setShippingAddress(?Address $shippingAddress): self
+    public function setShippingAddress(?Address $shippingAddress)
     {
         $this->shippingAddress = $shippingAddress;
-
-        return $this;
     }
 
     /**
@@ -376,14 +332,10 @@ class Order
 
     /**
      * @param Address $billingAddress
-     *
-     * @return Order
      */
-    public function setBillingAddress(?Address $billingAddress): self
+    public function setBillingAddress(?Address $billingAddress)
     {
         $this->billingAddress = $billingAddress;
-
-        return $this;
     }
 
     /**
@@ -396,30 +348,22 @@ class Order
 
     /**
      * @param OrderItem $orderItem
-     *
-     * @return Order
      */
-    public function addOrderItem(OrderItem $orderItem): self
+    public function addOrderItem(OrderItem $orderItem)
     {
-
         if (!$this->orderItems->contains($orderItem)) {
 
             $this->orderItems[] = $orderItem;
 
             $orderItem->setOrder($this);
         }
-
-        return $this;
     }
 
     /**
      * @param OrderItem $orderItem
-     *
-     * @return Order
      */
-    public function removeOrderItem(OrderItem $orderItem): self
+    public function removeOrderItem(OrderItem $orderItem)
     {
-
         if ($this->orderItems->contains($orderItem)) {
 
             $this->orderItems->removeElement($orderItem);
@@ -429,8 +373,6 @@ class Order
                 $orderItem->setOrder(null);
             }
         }
-
-        return $this;
     }
 
     /**

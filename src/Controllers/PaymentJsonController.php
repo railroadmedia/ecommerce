@@ -220,13 +220,13 @@ class PaymentJsonController extends Controller
         // todo: this is broken
         if (is_null($paymentMethod)) {
 
-            $payment->setTotalDue($paymentPrice)
-                ->setTotalPaid($paymentPrice)
-                ->setExternalProvider('manual')
-                ->setGatewayName('manual')
-                ->setStatus(true)
-                ->setCurrency($currency)
-                ->setCreatedAt(Carbon::now());
+            $payment->setTotalDue($paymentPrice);
+            $payment->setTotalPaid($paymentPrice);
+            $payment->setExternalProvider('manual');
+            $payment->setGatewayName('manual');
+            $payment->setStatus(true);
+            $payment->setCurrency($currency);
+            $payment->setCreatedAt(Carbon::now());
 
         }
         else {
@@ -258,16 +258,16 @@ class PaymentJsonController extends Controller
                         ''
                     );
 
-                    $payment->setTotalPaid($paymentPrice)
-                        ->setExternalProvider('stripe')
-                        ->setGatewayName(
-                            $paymentMethod->getMethod()
-                                ->getPaymentGatewayName()
-                        )
-                        ->setExternalId($charge->id)
-                        ->setStatus(($charge->status == 'succeeded') ? '1' : '0')
-                        ->setMessage('')
-                        ->setCurrency($charge->currency);
+                    $payment->setTotalPaid($paymentPrice);
+                    $payment->setExternalProvider('stripe');
+                    $payment->setGatewayName(
+                        $paymentMethod->getMethod()
+                            ->getPaymentGatewayName()
+                    );
+                    $payment->setExternalId($charge->id);
+                    $payment->setStatus(($charge->status == 'succeeded') ? '1' : '0');
+                    $payment->setMessage('');
+                    $payment->setCurrency($charge->currency);
 
                 } catch (Exception $paymentFailedException) {
 
@@ -275,16 +275,16 @@ class PaymentJsonController extends Controller
                         $paymentFailedException->getMessage()
                     );
 
-                    $payment->setTotalPaid(0)
-                        ->setExternalProvider('stripe')
-                        ->setGatewayName(
-                            $paymentMethod->getMethod()
-                                ->getPaymentGatewayName()
-                        )
-                        ->setExternalId($charge->id ?? null)
-                        ->setStatus('failed')
-                        ->setMessage($paymentFailedException->getMessage())
-                        ->setCurrency($currency);
+                    $payment->setTotalPaid(0);
+                    $payment->setExternalProvider('stripe');
+                    $payment->setGatewayName(
+                        $paymentMethod->getMethod()
+                            ->getPaymentGatewayName()
+                    );
+                    $payment->setExternalId($charge->id ?? null);
+                    $payment->setStatus('failed');
+                    $payment->setMessage($paymentFailedException->getMessage());
+                    $payment->setCurrency($currency);
 
                 }
             }
@@ -305,16 +305,16 @@ class PaymentJsonController extends Controller
                                 ''
                             );
 
-                        $payment->setTotalPaid($paymentPrice)
-                            ->setExternalProvider('paypal')
-                            ->setExternalId($transactionId)
-                            ->setGatewayName(
-                                $paymentMethod->getMethod()
-                                    ->getPaymentGatewayName()
-                            )
-                            ->setStatus('1')
-                            ->setMessage('')
-                            ->setCurrency($currency);
+                        $payment->setTotalPaid($paymentPrice);
+                        $payment->setExternalProvider('paypal');
+                        $payment->setExternalId($transactionId);
+                        $payment->setGatewayName(
+                            $paymentMethod->getMethod()
+                                ->getPaymentGatewayName()
+                        );
+                        $payment->setStatus('1');
+                        $payment->setMessage('');
+                        $payment->setCurrency($currency);
 
                     } catch (Exception $paymentFailedException) {
 
@@ -322,26 +322,26 @@ class PaymentJsonController extends Controller
                             $paymentFailedException->getMessage()
                         );
 
-                        $payment->setTotalPaid(0)
-                            ->setExternalProvider('paypal')
-                            ->setExternalId($transactionId ?? null)
-                            ->setGatewayName(
-                                $paymentMethod->getMethod()
-                                    ->getPaymentGatewayName()
-                            )
-                            ->setStatus('failed')
-                            ->setMessage($paymentFailedException->getMessage())
-                            ->setCurrency($currency);
+                        $payment->setTotalPaid(0);
+                        $payment->setExternalProvider('paypal');
+                        $payment->setExternalId($transactionId ?? null);
+                        $payment->setGatewayName(
+                            $paymentMethod->getMethod()
+                                ->getPaymentGatewayName()
+                        );
+                        $payment->setStatus('failed');
+                        $payment->setMessage($paymentFailedException->getMessage());
+                        $payment->setCurrency($currency);
                     }
                 }
             }
         }
 
-        $payment->setTotalDue($paymentPrice)
-            ->setType($paymentType)
-            ->setConversionRate($conversionRate)
-            ->setPaymentMethod($paymentMethod)
-            ->setCreatedAt(Carbon::now());
+        $payment->setTotalDue($paymentPrice);
+        $payment->setType($paymentType);
+        $payment->setConversionRate($conversionRate);
+        $payment->setPaymentMethod($paymentMethod);
+        $payment->setCreatedAt(Carbon::now());
 
         $this->entityManager->persist($payment);
 
@@ -363,18 +363,18 @@ class PaymentJsonController extends Controller
              */
             $subscription = $this->subscriptionRepository->find($subscriptionId);
 
-            $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1)
-                ->setPaidUntil(
-                    $this->calculateNextBillDate(
-                        $subscription->getIntervalType(),
-                        $subscription->getIntervalCount()
-                    )
-                );
+            $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
+            $subscription->setPaidUntil(
+                $this->calculateNextBillDate(
+                    $subscription->getIntervalType(),
+                    $subscription->getIntervalCount()
+                )
+            );
 
             $subscriptionPayment = new SubscriptionPayment();
 
-            $subscriptionPayment->setSubscription($subscription)
-                ->setPayment($payment);
+            $subscriptionPayment->setSubscription($subscription);
+            $subscriptionPayment->setPayment($payment);
 
             $this->entityManager->persist($subscriptionPayment);
         }
@@ -414,9 +414,9 @@ class PaymentJsonController extends Controller
 
             $orderPayment = new OrderPayment();
 
-            $orderPayment->setOrder($order)
-                ->setPayment($payment)
-                ->setCreatedAt(Carbon::now());
+            $orderPayment->setOrder($order);
+            $orderPayment->setPayment($payment);
+            $orderPayment->setCreatedAt(Carbon::now());
 
             $this->entityManager->persist($orderPayment);
 

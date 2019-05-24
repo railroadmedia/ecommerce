@@ -350,13 +350,13 @@ class CartService
                     2
                 );
 
-                $orderItem->setProduct($product)
-                    ->setQuantity($cartItem->getQuantity())
-                    ->setWeight($product->getWeight())
-                    ->setInitialPrice($product->getPrice())
-                    ->setTotalDiscounted($discountAmount)
-                    ->setFinalPrice($cartItemDue)
-                    ->setCreatedAt(Carbon::now());
+                $orderItem->setProduct($product);
+                $orderItem->setQuantity($cartItem->getQuantity());
+                $orderItem->setWeight($product->getWeight());
+                $orderItem->setInitialPrice($product->getPrice());
+                $orderItem->setTotalDiscounted($discountAmount);
+                $orderItem->setFinalPrice($cartItemDue);
+                $orderItem->setCreatedAt(Carbon::now());
 
                 $orderItemDiscounts = $this->discountService->getItemDiscounts(
                     $this->getCart(),
@@ -368,8 +368,8 @@ class CartService
                 foreach ($orderItemDiscounts as $discount) {
                     $orderItemDiscount = new OrderDiscount();
 
-                    $orderItemDiscount->setDiscount($discount)
-                        ->setOrderItem($orderItem);
+                    $orderItemDiscount->setDiscount($discount);
+                    $orderItemDiscount->setOrderItem($orderItem);
 
                     $orderItem->addOrderItemDiscounts($orderItemDiscount);
                 }

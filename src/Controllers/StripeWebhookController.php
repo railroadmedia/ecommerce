@@ -77,9 +77,9 @@ class StripeWebhookController extends Controller
             /**
              * @var $creditCard CreditCard
              */
-            $creditCard->setExpirationDate($expirationDate)
-                ->setLastFourDigits($data['data']['object']['last4'])
-                ->setUpdatedAt(Carbon::now());
+            $creditCard->setExpirationDate($expirationDate);
+            $creditCard->setLastFourDigits($data['data']['object']['last4']);
+            $creditCard->setUpdatedAt(Carbon::now());
         }
 
         $this->entityManager->flush();

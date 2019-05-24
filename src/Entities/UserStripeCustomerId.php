@@ -66,14 +66,10 @@ class UserStripeCustomerId
 
     /**
      * @param User $user
-     *
-     * @return User
      */
-    public function setUser(?User $user): self
+    public function setUser(?User $user)
     {
         $this->user = $user;
-
-        return $this;
     }
 
     /**
@@ -86,13 +82,9 @@ class UserStripeCustomerId
 
     /**
      * @param string $stripeCustomerId
-     *
-     * @return CreditCard
      */
-    public function setStripeCustomerId(?string $stripeCustomerId): self
+    public function setStripeCustomerId(?string $stripeCustomerId)
     {
         $this->stripeCustomerId = $stripeCustomerId;
-
-        return $this;
     }
 }

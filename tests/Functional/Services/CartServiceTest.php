@@ -416,16 +416,15 @@ class CartServiceTest extends EcommerceTestCase
         $shippingState = 'alberta';
 
         $shippingAddress = new Address();
-        $shippingAddress->setCountry($shippingCountry)
-            ->setState($shippingState);
+        $shippingAddress->setCountry($shippingCountry);
+        $shippingAddress->setState($shippingState);
 
         $billingCountry = 'canada';
         $billingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
 
         $billingAddress = new Address();
-        $billingAddress
-            ->setCountry($billingCountry)
-            ->setState($billingState);
+        $billingAddress->setCountry($billingCountry);
+        $billingAddress->setState($billingState);
 
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
@@ -485,16 +484,15 @@ class CartServiceTest extends EcommerceTestCase
         $shippingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$shippingCountry]));
 
         $shippingAddress = new Address();
-        $shippingAddress->setCountry($shippingCountry)
-            ->setState($shippingState);
+        $shippingAddress->setCountry($shippingCountry);
+        $shippingAddress->setState($shippingState);
 
         $billingCountry = 'canada';
         $billingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
 
         $billingAddress = new Address();
-        $billingAddress
-            ->setCountry($billingCountry)
-            ->setState($billingState);
+        $billingAddress->setCountry($billingCountry);
+        $billingAddress->setState($billingState);
 
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
@@ -557,16 +555,15 @@ class CartServiceTest extends EcommerceTestCase
         $shippingState = 'british columbia';
 
         $shippingAddress = new Address();
-        $shippingAddress->setCountry($shippingCountry)
-            ->setState($shippingState);
+        $shippingAddress->setCountry($shippingCountry);
+        $shippingAddress->setState($shippingState);
 
         $billingCountry = 'canada';
         $billingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
 
         $billingAddress = new Address();
-        $billingAddress
-            ->setCountry($billingCountry)
-            ->setState($billingState);
+        $billingAddress->setCountry($billingCountry);
+        $billingAddress->setState($billingState);
 
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
@@ -626,8 +623,8 @@ class CartServiceTest extends EcommerceTestCase
         $shippingState = 'alberta';
 
         $shippingAddress = new Address();
-        $shippingAddress->setCountry($shippingCountry)
-            ->setState($shippingState);
+        $shippingAddress->setCountry($shippingCountry);
+        $shippingAddress->setState($shippingState);
 
         $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingState];
 
@@ -696,16 +693,15 @@ class CartServiceTest extends EcommerceTestCase
         $shippingState = 'quebec';
 
         $shippingAddress = new Address();
-        $shippingAddress->setCountry($shippingCountry)
-            ->setState($shippingState);
+        $shippingAddress->setCountry($shippingCountry);
+        $shippingAddress->setState($shippingState);
 
         $billingCountry = 'canada';
         $billingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
 
         $billingAddress = new Address();
-        $billingAddress
-            ->setCountry($billingCountry)
-            ->setState($billingState);
+        $billingAddress->setCountry($billingCountry);
+        $billingAddress->setState($billingState);
 
         $numberOfPayments = 2;
 

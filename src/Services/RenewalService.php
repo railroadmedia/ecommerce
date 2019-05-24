@@ -172,31 +172,31 @@ class RenewalService
                     ''
                 );
 
-                $payment->setTotalPaid($chargePrice)
-                    ->setExternalProvider('stripe')
-                    ->setExternalId($charge->id)
-                    ->setGatewayName(
-                        $paymentMethod->getMethod()
-                            ->getPaymentGatewayName()
-                    )
-                    ->setStatus('succeeded')
-                    ->setMessage('')
-                    ->setCurrency($currency)
-                    ->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
+                $payment->setTotalPaid($chargePrice);
+                $payment->setExternalProvider('stripe');
+                $payment->setExternalId($charge->id);
+                $payment->setGatewayName(
+                    $paymentMethod->getMethod()
+                        ->getPaymentGatewayName()
+                );
+                $payment->setStatus('succeeded');
+                $payment->setMessage('');
+                $payment->setCurrency($currency);
+                $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
 
             } catch (Exception $exception) {
 
-                $payment->setTotalPaid(0)
-                    ->setExternalProvider('stripe')
-                    ->setExternalId($charge->id ?? null)
-                    ->setGatewayName(
-                        $paymentMethod->getMethod()
-                            ->getPaymentGatewayName()
-                    )
-                    ->setStatus('failed')
-                    ->setMessage($exception->getMessage())
-                    ->setCurrency($currency)
-                    ->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
+                $payment->setTotalPaid(0);
+                $payment->setExternalProvider('stripe');
+                $payment->setExternalId($charge->id ?? null);
+                $payment->setGatewayName(
+                    $paymentMethod->getMethod()
+                        ->getPaymentGatewayName()
+                );
+                $payment->setStatus('failed');
+                $payment->setMessage($exception->getMessage());
+                $payment->setCurrency($currency);
+                $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
 
                 $paymentException = $exception;
             }
@@ -232,55 +232,55 @@ class RenewalService
                     ''
                 );
 
-                $payment->setTotalPaid($chargePrice)
-                    ->setExternalProvider('paypal')
-                    ->setExternalId($transactionId)
-                    ->setGatewayName(
-                        $paymentMethod->getMethod()
-                            ->getPaymentGatewayName()
-                    )
-                    ->setStatus('succeeded')
-                    ->setMessage('')
-                    ->setCurrency($currency)
-                    ->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
+                $payment->setTotalPaid($chargePrice);
+                $payment->setExternalProvider('paypal');
+                $payment->setExternalId($transactionId);
+                $payment->setGatewayName(
+                    $paymentMethod->getMethod()
+                        ->getPaymentGatewayName()
+                );
+                $payment->setStatus('succeeded');
+                $payment->setMessage('');
+                $payment->setCurrency($currency);
+                $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
 
             } catch (Exception $exception) {
 
-                $payment->setTotalPaid(0)
-                    ->setExternalProvider('paypal')
-                    ->setExternalId($transactionId ?? null)
-                    ->setGatewayName(
-                        $paymentMethod->getMethod()
-                            ->getPaymentGatewayName()
-                    )
-                    ->setStatus('failed')
-                    ->setMessage($exception->getMessage())
-                    ->setCurrency($currency)
-                    ->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
+                $payment->setTotalPaid(0);
+                $payment->setExternalProvider('paypal');
+                $payment->setExternalId($transactionId ?? null);
+                $payment->setGatewayName(
+                    $paymentMethod->getMethod()
+                        ->getPaymentGatewayName()
+                );
+                $payment->setStatus('failed');
+                $payment->setMessage($exception->getMessage());
+                $payment->setCurrency($currency);
+                $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
 
                 $paymentException = $exception;
             }
         }
         else {
-            $payment->setTotalPaid(0)
-                ->setExternalProvider('unknown')
-                ->setExternalId($transactionId ?? null)
-                ->setGatewayName(
-                    $paymentMethod->getMethod()
-                        ->getPaymentGatewayName()
-                )
-                ->setStatus('failed')
-                ->setMessage('Invalid payment method.')
-                ->setCurrency($currency)
-                ->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
+            $payment->setTotalPaid(0);
+            $payment->setExternalProvider('unknown');
+            $payment->setExternalId($transactionId ?? null);
+            $payment->setGatewayName(
+                $paymentMethod->getMethod()
+                    ->getPaymentGatewayName()
+            );
+            $payment->setStatus('failed');
+            $payment->setMessage('Invalid payment method.');
+            $payment->setCurrency($currency);
+            $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
         }
 
         // save payment data in DB
-        $payment->setTotalDue($chargePrice)
-            ->setTotalRefunded(0)
-            ->setType(config('ecommerce.renewal_payment_type'))
-            ->setPaymentMethod($paymentMethod)
-            ->setCreatedAt(Carbon::now());
+        $payment->setTotalDue($chargePrice);
+        $payment->setTotalRefunded(0);
+        $payment->setType(config('ecommerce.renewal_payment_type'));
+        $payment->setPaymentMethod($paymentMethod);
+        $payment->setCreatedAt(Carbon::now());
 
         $this->entityManager->persist($payment);
 
@@ -288,8 +288,8 @@ class RenewalService
 
         $subscriptionPayment = new SubscriptionPayment();
 
-        $subscriptionPayment->setSubscription($subscription)
-            ->setPayment($payment);
+        $subscriptionPayment->setSubscription($subscription);
+        $subscriptionPayment->setPayment($payment);
 
         $this->entityManager->persist($subscriptionPayment);
 
@@ -324,15 +324,15 @@ class RenewalService
             }
 
 
-            $subscription->setIsActive(true)
-                ->setCanceledOn(null)
-                ->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1)
-                ->setPaidUntil(
-                    $nextBillDate ? $nextBillDate->startOfDay() :
-                        Carbon::now()
-                            ->addMonths(1)
-                )
-                ->setUpdatedAt(Carbon::now());
+            $subscription->setIsActive(true);
+            $subscription->setCanceledOn(null);
+            $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
+            $subscription->setPaidUntil(
+                $nextBillDate ? $nextBillDate->startOfDay() :
+                    Carbon::now()
+                        ->addMonths(1)
+            );
+            $subscription->setUpdatedAt(Carbon::now());
 
             event(new SubscriptionRenewed($subscription));
             event(new SubscriptionUpdated($oldSubscription, $subscription));
@@ -365,8 +365,8 @@ class RenewalService
 
             if ($failedPaymentsCount >= config('ecommerce.paypal.failed_payments_before_de_activation') ?? 1) {
 
-                $subscription->setIsActive(false)
-                    ->setUpdatedAt(Carbon::now());
+                $subscription->setIsActive(false);
+                $subscription->setUpdatedAt(Carbon::now());
                 $subscription->setNote('De-activated due to payments failing.');
 
                 $this->entityManager->flush();

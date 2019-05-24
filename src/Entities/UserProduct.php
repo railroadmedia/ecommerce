@@ -77,14 +77,10 @@ class UserProduct
 
     /**
      * @param int $quantity
-     *
-     * @return UserProduct
      */
-    public function setQuantity(int $quantity): self
+    public function setQuantity(int $quantity)
     {
         $this->quantity = $quantity;
-
-        return $this;
     }
 
     /**
@@ -97,16 +93,11 @@ class UserProduct
 
     /**
      * @param \DateTimeInterface $expirationDate
-     *
-     * @return UserProduct
      */
     public function setExpirationDate(
         ?\DateTimeInterface $expirationDate
-    ): self
-    {
+    ) {
         $this->expirationDate = $expirationDate;
-
-        return $this;
     }
 
     /**
@@ -119,14 +110,10 @@ class UserProduct
 
     /**
      * @param User $user
-     *
-     * @return UserProduct
      */
-    public function setUser(?User $user): self
+    public function setUser(?User $user)
     {
         $this->user = $user;
-
-        return $this;
     }
 
     /**
@@ -139,13 +126,9 @@ class UserProduct
 
     /**
      * @param Product $product
-     *
-     * @return UserProduct
      */
-    public function setProduct(?Product $product): self
+    public function setProduct(?Product $product)
     {
         $this->product = $product;
-
-        return $this;
     }
 }

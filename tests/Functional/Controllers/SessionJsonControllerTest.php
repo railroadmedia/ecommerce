@@ -61,10 +61,9 @@ class SessionJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call('PUT', '/session/address', $shippingAddress);
 
-        $address
-            ->setStreetLine1($shippingAddress['shipping-address-line-1'])
-            ->setCity($shippingAddress['shipping-city'])
-            ->setFirstName($shippingAddress['shipping-first-name']);
+        $address->setStreetLine1($shippingAddress['shipping-address-line-1']);
+        $address->setCity($shippingAddress['shipping-city']);
+        $address->setFirstName($shippingAddress['shipping-first-name']);
 
         $cart = Cart::fromSession();
 
@@ -101,11 +100,10 @@ class SessionJsonControllerTest extends EcommerceTestCase
         // setup initial session address
         $address = new Address();
 
-        $address
-            ->setStreetLine1($this->faker->address)
-            ->setCity($this->faker->city)
-            ->setLastName($this->faker->word)
-            ->setZip($this->faker->postcode);
+        $address->setStreetLine1($this->faker->address);
+        $address->setCity($this->faker->city);
+        $address->setLastName($this->faker->word);
+        $address->setZip($this->faker->postcode);
 
         $this->cartAddressService
             ->updateShippingAddress($address);
@@ -117,9 +115,8 @@ class SessionJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call('PUT', '/session/address', $supplementAddress);
 
-        $address
-            ->setCountry($supplementAddress['shipping-country'])
-            ->setFirstName($supplementAddress['shipping-first-name']);
+        $address->setCountry($supplementAddress['shipping-country']);
+        $address->setFirstName($supplementAddress['shipping-first-name']);
 
         $cart = Cart::fromSession();
 
@@ -156,11 +153,10 @@ class SessionJsonControllerTest extends EcommerceTestCase
         // setup initial session address
         $address = new Address();
 
-        $address
-            ->setStreetLine1($this->faker->address)
-            ->setCity($this->faker->city)
-            ->setLastName($this->faker->word)
-            ->setZip($this->faker->postcode);
+        $address->setStreetLine1($this->faker->address);
+        $address->setCity($this->faker->city);
+        $address->setLastName($this->faker->word);
+        $address->setZip($this->faker->postcode);
 
         $this->cartAddressService
             ->updateShippingAddress($address);
@@ -173,9 +169,8 @@ class SessionJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call('PUT', '/session/address', $supplementAddress);
 
-        $address
-            ->setLastName($supplementAddress['shipping-last-name'])
-            ->setFirstName($supplementAddress['shipping-first-name']);
+        $address->setLastName($supplementAddress['shipping-last-name']);
+        $address->setFirstName($supplementAddress['shipping-first-name']);
 
         // assert session has the address data
         $cart = Cart::fromSession();

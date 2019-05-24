@@ -94,37 +94,28 @@ class Cart implements Serializable
      * CartItem with an existing SKU and the new quantity.
      *
      * @param CartItem $cartItem
-     * @return Cart
      */
-    public function setItem(CartItem $cartItem): Cart
+    public function setItem(CartItem $cartItem)
     {
         $this->items[$cartItem->getSku()] = $cartItem;
-
-        return $this;
     }
 
     /**
      * @param CartItem[] $cartItems
-     * @return Cart
      */
-    public function replaceItems(array $cartItems): Cart
+    public function replaceItems(array $cartItems)
     {
         $this->items = $cartItems;
-
-        return $this;
     }
 
     /**
      * Add cart on session
      *
      * @param string $sku
-     * @return Cart
      */
-    public function removeItemBySku(string $sku): Cart
+    public function removeItemBySku(string $sku)
     {
         unset($this->items[$sku]);
-
-        return $this;
     }
 
     /**

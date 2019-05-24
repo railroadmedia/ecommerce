@@ -88,14 +88,10 @@ class ShippingOption
 
     /**
      * @param string $country
-     *
-     * @return ShippingOption
      */
-    public function setCountry(string $country): self
+    public function setCountry(string $country)
     {
         $this->country = $country;
-
-        return $this;
     }
 
     /**
@@ -108,14 +104,10 @@ class ShippingOption
 
     /**
      * @param bool $active
-     *
-     * @return ShippingOption
      */
-    public function setActive(bool $active): self
+    public function setActive(bool $active)
     {
         $this->active = $active;
-
-        return $this;
     }
 
     /**
@@ -128,14 +120,10 @@ class ShippingOption
 
     /**
      * @param int $priority
-     *
-     * @return ShippingOption
      */
-    public function setPriority(int $priority): self
+    public function setPriority(int $priority)
     {
         $this->priority = $priority;
-
-        return $this;
     }
 
     /**
@@ -148,13 +136,10 @@ class ShippingOption
 
     /**
      * @param ShippingCostsWeightRange $shippingCostsWeightRange
-     *
-     * @return ShippingOption
      */
     public function addShippingCostsWeightRange(
         ShippingCostsWeightRange $shippingCostsWeightRange
-    ): self
-    {
+    ) {
 
         if (!$this->shippingCostsWeightRanges->contains(
             $shippingCostsWeightRange
@@ -162,19 +147,14 @@ class ShippingOption
             $this->shippingCostsWeightRanges[] = $shippingCostsWeightRange;
             $shippingCostsWeightRange->setShippingOption($this);
         }
-
-        return $this;
     }
 
     /**
      * @param ShippingCostsWeightRange $shippingCostsWeightRange
-     *
-     * @return ShippingOption
      */
     public function removeShippingCostsWeightRange(
         ShippingCostsWeightRange $shippingCostsWeightRange
-    ): self
-    {
+    ) {
 
         if ($this->shippingCostsWeightRanges->contains(
             $shippingCostsWeightRange
@@ -186,7 +166,5 @@ class ShippingOption
                 $shippingCostsWeightRange->setShippingOption(null);
             }
         }
-
-        return $this;
     }
 }

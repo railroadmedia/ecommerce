@@ -187,7 +187,6 @@ class OrderFormService
             ];
         } catch (StripeCard $exception) {
 
-            // todo - check Vue UI exceptions handling and update this block
             $exceptionData = $exception->getJsonBody();
 
             $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');

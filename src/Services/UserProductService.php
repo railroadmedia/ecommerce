@@ -251,10 +251,10 @@ class UserProductService
 
         $userProduct = new UserProduct();
 
-        $userProduct->setUser($user)
-            ->setProduct($product)
-            ->setExpirationDate($expirationDate)
-            ->setQuantity($quantity);
+        $userProduct->setUser($user);
+        $userProduct->setProduct($product);
+        $userProduct->setExpirationDate($expirationDate);
+        $userProduct->setQuantity($quantity);
 
         $this->entityManager->persist($userProduct);
         $this->entityManager->flush();
@@ -283,9 +283,9 @@ class UserProductService
     {
         $oldUserProduct = clone($userProduct);
 
-        $userProduct->setExpirationDate($expirationDate)
-            ->setQuantity($quantity)
-            ->setUpdatedAt(Carbon::now());
+        $userProduct->setExpirationDate($expirationDate);
+        $userProduct->setQuantity($quantity);
+        $userProduct->setUpdatedAt(Carbon::now());
 
         $this->entityManager->persist($userProduct);
         $this->entityManager->flush();

@@ -40,10 +40,10 @@ class OrderShippingFulfilmentListener
 
                 $orderItemFulfillment = new OrderItemFulfillment();
 
-                $orderItemFulfillment->setOrder($order)
-                    ->setOrderItem($orderItem)
-                    ->setStatus(config('ecommerce.fulfillment_status_pending'))
-                    ->setCreatedAt(Carbon::now());
+                $orderItemFulfillment->setOrder($order);
+                $orderItemFulfillment->setOrderItem($orderItem);
+                $orderItemFulfillment->setStatus(config('ecommerce.fulfillment_status_pending'));
+                $orderItemFulfillment->setCreatedAt(Carbon::now());
 
                 $this->entityManager->persist($orderItemFulfillment);
 

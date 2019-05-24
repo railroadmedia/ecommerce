@@ -171,10 +171,10 @@ class AccessCodeJsonController extends Controller
 
         $accessCode = $this->accessCodeRepository->find($request->get('access_code_id'));
 
-        $accessCode->setIsClaimed(false)
-            ->setClaimer(null)
-            ->setClaimedOn(null)
-            ->setUpdatedAt(Carbon::now());
+        $accessCode->setIsClaimed(false);
+        $accessCode->setClaimer(null);
+        $accessCode->setClaimedOn(null);
+        $accessCode->setUpdatedAt(Carbon::now());
 
         $this->entityManager->flush();
 

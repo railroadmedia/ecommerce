@@ -147,18 +147,18 @@ class AccessCodeService
                     break;
             }
 
-            $subscription->setIsActive(true)
-                ->setCanceledOn(null)
-                ->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1)
-                ->setPaidUntil($endDate->startOfDay())
-                ->setUpdatedAt(Carbon::now());
+            $subscription->setIsActive(true);
+            $subscription->setCanceledOn(null);
+            $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
+            $subscription->setPaidUntil($endDate->startOfDay());
+            $subscription->setUpdatedAt(Carbon::now());
 
             $subscriptionAccessCode = new SubscriptionAccessCode();
 
-            $subscriptionAccessCode->setSubscription($subscription)
-                ->setAccessCode($accessCode)
-                ->setCreatedAt(Carbon::now())
-                ->setUpdatedAt(Carbon::now()); // explicit date handling required for automated tests
+            $subscriptionAccessCode->setSubscription($subscription);
+            $subscriptionAccessCode->setAccessCode($accessCode);
+            $subscriptionAccessCode->setCreatedAt(Carbon::now());
+            $subscriptionAccessCode->setUpdatedAt(Carbon::now()); // explicit date handling required for automated tests
 
             $this->entityManager->persist($subscriptionAccessCode);
 
@@ -204,18 +204,18 @@ class AccessCodeService
 
             $userProduct = new UserProduct();
 
-            $userProduct->setUser($user)
-                ->setProduct($product)
-                ->setQuantity(1)
-                ->setExpirationDate($expirationDate);
+            $userProduct->setUser($user);
+            $userProduct->setProduct($product);
+            $userProduct->setQuantity(1);
+            $userProduct->setExpirationDate($expirationDate);
 
             $this->entityManager->persist($userProduct);
         }
 
-        $accessCode->setIsClaimed(true)
-            ->setClaimer($user)
-            ->setClaimedOn(Carbon::now())
-            ->setUpdatedAt(Carbon::now());
+        $accessCode->setIsClaimed(true);
+        $accessCode->setClaimer($user);
+        $accessCode->setClaimedOn(Carbon::now());
+        $accessCode->setUpdatedAt(Carbon::now());
 
         $this->entityManager->persist($accessCode);
         $this->entityManager->flush();

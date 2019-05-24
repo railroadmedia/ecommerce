@@ -120,14 +120,10 @@ class Discount
 
     /**
      * @param string $name
-     *
-     * @return Discount
      */
-    public function setName(string $name): self
+    public function setName(string $name)
     {
         $this->name = $name;
-
-        return $this;
     }
 
     /**
@@ -140,14 +136,10 @@ class Discount
 
     /**
      * @param string $description
-     *
-     * @return Discount
      */
-    public function setDescription(string $description): self
+    public function setDescription(string $description)
     {
         $this->description = $description;
-
-        return $this;
     }
 
     /**
@@ -160,14 +152,10 @@ class Discount
 
     /**
      * @param string $type
-     *
-     * @return Discount
      */
-    public function setType(string $type): self
+    public function setType(string $type)
     {
         $this->type = $type;
-
-        return $this;
     }
 
     /**
@@ -180,14 +168,10 @@ class Discount
 
     /**
      * @param float $amount
-     *
-     * @return Discount
      */
-    public function setAmount(float $amount): self
+    public function setAmount(float $amount)
     {
         $this->amount = $amount;
-
-        return $this;
     }
 
     /**
@@ -200,14 +184,10 @@ class Discount
 
     /**
      * @param string $productCategory
-     *
-     * @return Discount
      */
-    public function setProductCategory(?string $productCategory): self
+    public function setProductCategory(?string $productCategory)
     {
         $this->productCategory = $productCategory;
-
-        return $this;
     }
 
     /**
@@ -220,14 +200,10 @@ class Discount
 
     /**
      * @param bool $active
-     *
-     * @return Discount
      */
-    public function setActive(bool $active): self
+    public function setActive(bool $active)
     {
         $this->active = $active;
-
-        return $this;
     }
 
     /**
@@ -240,14 +216,10 @@ class Discount
 
     /**
      * @param bool $visible
-     *
-     * @return Discount
      */
-    public function setVisible(bool $visible): self
+    public function setVisible(bool $visible)
     {
         $this->visible = $visible;
-
-        return $this;
     }
 
     /**
@@ -260,14 +232,10 @@ class Discount
 
     /**
      * @param Product $product
-     *
-     * @return Discount
      */
-    public function setProduct(?Product $product): self
+    public function setProduct(?Product $product)
     {
         $this->product = $product;
-
-        return $this;
     }
 
     /**
@@ -280,32 +248,22 @@ class Discount
 
     /**
      * @param DiscountCriteria $discountCriteria
-     *
-     * @return Discount
      */
     public function addDiscountCriteria(
         DiscountCriteria $discountCriteria
-    ): self
-    {
-
+    ) {
         if (!$this->discountCriterias->contains($discountCriteria)) {
             $this->discountCriterias[] = $discountCriteria;
             $discountCriteria->setDiscount($this);
         }
-
-        return $this;
     }
 
     /**
      * @param DiscountCriteria $shippingCostsWeightRange
-     *
-     * @return Discount
      */
     public function removeDiscountCriteria(
         DiscountCriteria $discountCriteria
-    ): self
-    {
-
+    ) {
         if ($this->discountCriterias->contains($discountCriteria)) {
 
             $this->discountCriterias->removeElement($discountCriteria);
@@ -315,7 +273,5 @@ class Discount
                 $discountCriteria->setDiscount(null);
             }
         }
-
-        return $this;
     }
 }

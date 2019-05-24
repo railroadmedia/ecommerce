@@ -68,14 +68,10 @@ class UserPaymentMethods
 
     /**
      * @param User $user
-     *
-     * @return UserPaymentMethods
      */
-    public function setUser(?User $user): self
+    public function setUser(?User $user)
     {
         $this->user = $user;
-
-        return $this;
     }
 
     /**
@@ -88,14 +84,10 @@ class UserPaymentMethods
 
     /**
      * @param PaymentMethod $paymentMethod
-     *
-     * @return UserPaymentMethods
      */
-    public function setPaymentMethod(?PaymentMethod $paymentMethod): self
+    public function setPaymentMethod(?PaymentMethod $paymentMethod)
     {
         $this->paymentMethod = $paymentMethod;
-
-        return $this;
     }
 
     /**
@@ -108,13 +100,9 @@ class UserPaymentMethods
 
     /**
      * @param bool $isPrimary
-     *
-     * @return UserPaymentMethods
      */
-    public function setIsPrimary(bool $isPrimary): self
+    public function setIsPrimary(bool $isPrimary)
     {
         $this->isPrimary = $isPrimary;
-
-        return $this;
     }
 }

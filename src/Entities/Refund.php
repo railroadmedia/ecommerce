@@ -84,14 +84,10 @@ class Refund
 
     /**
      * @param Payment $payment
-     *
-     * @return Refund
      */
-    public function setPayment(?Payment $payment): self
+    public function setPayment(?Payment $payment)
     {
         $this->payment = $payment;
-
-        return $this;
     }
 
     /**
@@ -104,14 +100,10 @@ class Refund
 
     /**
      * @param float $paymentAmount
-     *
-     * @return Refund
      */
-    public function setPaymentAmount(?float $paymentAmount): self
+    public function setPaymentAmount(?float $paymentAmount)
     {
         $this->paymentAmount = $paymentAmount;
-
-        return $this;
     }
 
     /**
@@ -124,14 +116,10 @@ class Refund
 
     /**
      * @param float $refundedAmount
-     *
-     * @return Refund
      */
-    public function setRefundedAmount(?float $refundedAmount): self
+    public function setRefundedAmount(?float $refundedAmount)
     {
         $this->refundedAmount = $refundedAmount;
-
-        return $this;
     }
 
     /**
@@ -144,14 +132,10 @@ class Refund
 
     /**
      * @param string $externalId
-     *
-     * @return Refund
      */
-    public function setExternalId(?string $externalId): self
+    public function setExternalId(?string $externalId)
     {
         $this->externalId = $externalId;
-
-        return $this;
     }
 
     /**
@@ -164,13 +148,9 @@ class Refund
 
     /**
      * @param string $externalProvider
-     *
-     * @return Refund
      */
-    public function setExternalProvider(?string $externalProvider): self
+    public function setExternalProvider(?string $externalProvider)
     {
         $this->externalProvider = $externalProvider;
-
-        return $this;
     }
 }

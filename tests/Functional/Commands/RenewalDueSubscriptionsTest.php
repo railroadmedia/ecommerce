@@ -117,9 +117,9 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
                 $billingAddressEntity = new Address();
 
-                $billingAddressEntity->setCountry($address['country'])
-                    ->setState($address['state'])
-                    ->setZip($address['zip']);
+                $billingAddressEntity->setCountry($address['country']);
+                $billingAddressEntity->setState($address['state']);
+                $billingAddressEntity->setZip($address['zip']);
 
                 $vat = $taxService->getTaxesDueForProductCost(
                     $subscription['total_price'],
@@ -284,9 +284,9 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
         $billingAddressEntity = new Address();
 
-        $billingAddressEntity->setCountry($address['country'])
-            ->setState($address['state'])
-            ->setZip($address['zip']);
+        $billingAddressEntity->setCountry($address['country']);
+        $billingAddressEntity->setState($address['state']);
+        $billingAddressEntity->setZip($address['zip']);
 
         $paymentAmount = $currencyService->convertFromBase(
             $subscription['total_price'],
@@ -516,9 +516,9 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
                 $billingAddressEntity = new Address();
 
-                $billingAddressEntity->setCountry($address['country'])
-                    ->setState($address['state'])
-                    ->setZip($address['zip']);
+                $billingAddressEntity->setCountry($address['country']);
+                $billingAddressEntity->setState($address['state']);
+                $billingAddressEntity->setZip($address['zip']);
 
                 $vat = $taxService->getTaxesDueForProductCost(
                     $subscription['total_price'],

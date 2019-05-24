@@ -111,14 +111,10 @@ class CreditCard
 
     /**
      * @param string $fingerprint
-     *
-     * @return CreditCard
      */
-    public function setFingerprint(string $fingerprint): self
+    public function setFingerprint(string $fingerprint)
     {
         $this->fingerprint = $fingerprint;
-
-        return $this;
     }
 
     /**
@@ -131,14 +127,10 @@ class CreditCard
 
     /**
      * @param int $lastFourDigits
-     *
-     * @return CreditCard
      */
-    public function setLastFourDigits(int $lastFourDigits): self
+    public function setLastFourDigits(int $lastFourDigits)
     {
         $this->lastFourDigits = $lastFourDigits;
-
-        return $this;
     }
 
     /**
@@ -151,14 +143,10 @@ class CreditCard
 
     /**
      * @param string $cardholderName
-     *
-     * @return CreditCard
      */
-    public function setCardholderName(?string $cardholderName): self
+    public function setCardholderName(?string $cardholderName)
     {
         $this->cardholderName = $cardholderName;
-
-        return $this;
     }
 
     /**
@@ -171,14 +159,10 @@ class CreditCard
 
     /**
      * @param string $companyName
-     *
-     * @return CreditCard
      */
-    public function setCompanyName(string $companyName): self
+    public function setCompanyName(string $companyName)
     {
         $this->companyName = $companyName;
-
-        return $this;
     }
 
     /**
@@ -191,14 +175,10 @@ class CreditCard
 
     /**
      * @param \DateTimeInterface $expirationDate
-     *
-     * @return CreditCard
      */
-    public function setExpirationDate(\DateTimeInterface $expirationDate): self
+    public function setExpirationDate(\DateTimeInterface $expirationDate)
     {
         $this->expirationDate = $expirationDate;
-
-        return $this;
     }
 
     /**
@@ -211,14 +191,10 @@ class CreditCard
 
     /**
      * @param string $externalId
-     *
-     * @return CreditCard
      */
-    public function setExternalId(string $externalId): self
+    public function setExternalId(string $externalId)
     {
         $this->externalId = $externalId;
-
-        return $this;
     }
 
     /**
@@ -231,14 +207,10 @@ class CreditCard
 
     /**
      * @param string $externalCustomerId
-     *
-     * @return CreditCard
      */
-    public function setExternalCustomerId(?string $externalCustomerId): self
+    public function setExternalCustomerId(?string $externalCustomerId)
     {
         $this->externalCustomerId = $externalCustomerId;
-
-        return $this;
     }
 
     /**
@@ -251,13 +223,9 @@ class CreditCard
 
     /**
      * @param string $paymentGatewayName
-     *
-     * @return CreditCard
      */
-    public function setPaymentGatewayName(string $paymentGatewayName): self
+    public function setPaymentGatewayName(string $paymentGatewayName)
     {
         $this->paymentGatewayName = $paymentGatewayName;
-
-        return $this;
     }
 }

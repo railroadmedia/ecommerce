@@ -69,14 +69,10 @@ class Customer
 
     /**
      * @param string $brand
-     *
-     * @return Customer
      */
-    public function setBrand(string $brand): self
+    public function setBrand(string $brand)
     {
         $this->brand = $brand;
-
-        return $this;
     }
 
     /**
@@ -89,14 +85,10 @@ class Customer
 
     /**
      * @param string $phone
-     *
-     * @return Customer
      */
-    public function setPhone(?string $phone): self
+    public function setPhone(?string $phone)
     {
         $this->phone = $phone;
-
-        return $this;
     }
 
     /**
@@ -109,13 +101,9 @@ class Customer
 
     /**
      * @param string $email
-     *
-     * @return Customer
      */
-    public function setEmail(?string $email): self
+    public function setEmail(?string $email)
     {
         $this->email = $email;
-
-        return $this;
     }
 }

@@ -60,14 +60,10 @@ class SubscriptionAccessCode
 
     /**
      * @param Subscription $subscription
-     *
-     * @return SubscriptionAccessCode
      */
-    public function setSubscription(?Subscription $subscription): self
+    public function setSubscription(?Subscription $subscription)
     {
         $this->subscription = $subscription;
-
-        return $this;
     }
 
     /**
@@ -80,13 +76,9 @@ class SubscriptionAccessCode
 
     /**
      * @param AccessCode $accessCode
-     *
-     * @return SubscriptionAccessCode
      */
-    public function setAccessCode(?AccessCode $accessCode): self
+    public function setAccessCode(?AccessCode $accessCode)
     {
         $this->accessCode = $accessCode;
-
-        return $this;
     }
 }

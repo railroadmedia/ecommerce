@@ -67,14 +67,10 @@ class CustomerPaymentMethods
 
     /**
      * @param Customer $customer
-     *
-     * @return CustomerPaymentMethods
      */
-    public function setCustomer(?Customer $customer): self
+    public function setCustomer(?Customer $customer)
     {
         $this->customer = $customer;
-
-        return $this;
     }
 
     /**
@@ -87,14 +83,10 @@ class CustomerPaymentMethods
 
     /**
      * @param PaymentMethod $paymentMethod
-     *
-     * @return CustomerPaymentMethods
      */
-    public function setPaymentMethod(?PaymentMethod $paymentMethod): self
+    public function setPaymentMethod(?PaymentMethod $paymentMethod)
     {
         $this->paymentMethod = $paymentMethod;
-
-        return $this;
     }
 
     /**
@@ -107,13 +99,9 @@ class CustomerPaymentMethods
 
     /**
      * @param bool $isPrimary
-     *
-     * @return CustomerPaymentMethods
      */
-    public function setIsPrimary(bool $isPrimary): self
+    public function setIsPrimary(bool $isPrimary)
     {
         $this->isPrimary = $isPrimary;
-
-        return $this;
     }
 }

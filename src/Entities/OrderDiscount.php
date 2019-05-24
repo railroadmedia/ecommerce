@@ -67,14 +67,10 @@ class OrderDiscount
 
     /**
      * @param Order $order
-     *
-     * @return OrderDiscount
      */
-    public function setOrder(?Order $order): self
+    public function setOrder(?Order $order)
     {
         $this->order = $order;
-
-        return $this;
     }
 
     /**
@@ -87,14 +83,10 @@ class OrderDiscount
 
     /**
      * @param OrderItem $orderItem
-     *
-     * @return OrderDiscount
      */
-    public function setOrderItem(?OrderItem $orderItem): self
+    public function setOrderItem(?OrderItem $orderItem)
     {
         $this->orderItem = $orderItem;
-
-        return $this;
     }
 
     /**
@@ -107,13 +99,9 @@ class OrderDiscount
 
     /**
      * @param Discount $discount
-     *
-     * @return OrderDiscount
      */
-    public function setDiscount(?Discount $discount): self
+    public function setDiscount(?Discount $discount)
     {
         $this->discount = $discount;
-
-        return $this;
     }
 }

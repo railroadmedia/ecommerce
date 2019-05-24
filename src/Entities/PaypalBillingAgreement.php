@@ -68,11 +68,9 @@ class PaypalBillingAgreement
      *
      * @return PaypalBillingAgreement
      */
-    public function setExternalId(string $externalId): self
+    public function setExternalId(string $externalId)
     {
         $this->externalId = $externalId;
-
-        return $this;
     }
 
     /**
@@ -85,13 +83,9 @@ class PaypalBillingAgreement
 
     /**
      * @param string $paymentGatewayName
-     *
-     * @return PaypalBillingAgreement
      */
-    public function setPaymentGatewayName(string $paymentGatewayName): self
+    public function setPaymentGatewayName(string $paymentGatewayName)
     {
         $this->paymentGatewayName = $paymentGatewayName;
-
-        return $this;
     }
 }

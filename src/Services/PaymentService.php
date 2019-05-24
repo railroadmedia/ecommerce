@@ -195,21 +195,21 @@ class PaymentService
         // store payment in database
         $payment = new Payment();
 
-        $payment->setTotalDue($convertedPaymentAmount)
-            ->setTotalPaid($convertedPaymentAmount)
-            ->setTotalRefunded(0)
-            ->setConversionRate($conversionRate)
-            ->setType($paymentType)
-            ->setExternalId($externalPaymentId)
-            ->setExternalProvider($paymentMethod->getExternalProvider())
-            ->setGatewayName(
-                $paymentMethod->getMethod()
-                    ->getPaymentGatewayName()
-            )
-            ->setStatus(Payment::STATUS_PAID)
-            ->setPaymentMethod($paymentMethod)
-            ->setCurrency($currency)
-            ->setCreatedAt(Carbon::now());
+        $payment->setTotalDue($convertedPaymentAmount);
+        $payment->setTotalPaid($convertedPaymentAmount);
+        $payment->setTotalRefunded(0);
+        $payment->setConversionRate($conversionRate);
+        $payment->setType($paymentType);
+        $payment->setExternalId($externalPaymentId);
+        $payment->setExternalProvider($paymentMethod->getExternalProvider());
+        $payment->setGatewayName(
+            $paymentMethod->getMethod()
+                ->getPaymentGatewayName()
+        );
+        $payment->setStatus(Payment::STATUS_PAID);
+        $payment->setPaymentMethod($paymentMethod);
+        $payment->setCurrency($currency);
+        $payment->setCreatedAt(Carbon::now());
 
         $this->entityManager->persist($payment);
         $this->entityManager->flush();
@@ -266,8 +266,8 @@ class PaymentService
 
                 $userStripeCustomerId = new UserStripeCustomerId();
 
-                $userStripeCustomerId->setUser($purchaser->getUserObject())
-                    ->setStripeCustomerId($stripeCustomer->id);
+                $userStripeCustomerId->setUser($purchaser->getUserObject());
+                $userStripeCustomerId->setStripeCustomerId($stripeCustomer->id);
 
                 $this->entityManager->persist($userStripeCustomerId);
             }
@@ -344,21 +344,21 @@ class PaymentService
         // store payment in database
         $payment = new Payment();
 
-        $payment->setTotalDue($convertedPaymentAmount)
-            ->setTotalPaid($convertedPaymentAmount)
-            ->setTotalRefunded(0)
-            ->setConversionRate($conversionRate)
-            ->setType($paymentType)
-            ->setExternalId($charge['id'])
-            ->setExternalProvider(Payment::EXTERNAL_PROVIDER_STRIPE)
-            ->setGatewayName(
-                $paymentMethod->getMethod()
-                    ->getPaymentGatewayName()
-            )
-            ->setStatus(Payment::STATUS_PAID)
-            ->setPaymentMethod($paymentMethod)
-            ->setCurrency($currency)
-            ->setCreatedAt(Carbon::now());
+        $payment->setTotalDue($convertedPaymentAmount);
+        $payment->setTotalPaid($convertedPaymentAmount);
+        $payment->setTotalRefunded(0);
+        $payment->setConversionRate($conversionRate);
+        $payment->setType($paymentType);
+        $payment->setExternalId($charge['id']);
+        $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_STRIPE);
+        $payment->setGatewayName(
+            $paymentMethod->getMethod()
+                ->getPaymentGatewayName()
+        );
+        $payment->setStatus(Payment::STATUS_PAID);
+        $payment->setPaymentMethod($paymentMethod);
+        $payment->setCurrency($currency);
+        $payment->setCreatedAt(Carbon::now());
 
         $this->entityManager->persist($payment);
         $this->entityManager->flush();
@@ -447,21 +447,21 @@ class PaymentService
         // store payment in database
         $payment = new Payment();
 
-        $payment->setTotalDue($convertedPaymentAmount)
-            ->setTotalPaid($convertedPaymentAmount)
-            ->setTotalRefunded(0)
-            ->setConversionRate($conversionRate)
-            ->setType($paymentType)
-            ->setExternalId($transactionId)
-            ->setExternalProvider(Payment::EXTERNAL_PROVIDER_PAYPAL)
-            ->setGatewayName(
-                $paymentMethod->getMethod()
-                    ->getPaymentGatewayName()
-            )
-            ->setStatus(Payment::STATUS_PAID)
-            ->setPaymentMethod($paymentMethod)
-            ->setCurrency($currency)
-            ->setCreatedAt(Carbon::now());
+        $payment->setTotalDue($convertedPaymentAmount);
+        $payment->setTotalPaid($convertedPaymentAmount);
+        $payment->setTotalRefunded(0);
+        $payment->setConversionRate($conversionRate);
+        $payment->setType($paymentType);
+        $payment->setExternalId($transactionId);
+        $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_PAYPAL);
+        $payment->setGatewayName(
+            $paymentMethod->getMethod()
+                ->getPaymentGatewayName()
+        );
+        $payment->setStatus(Payment::STATUS_PAID);
+        $payment->setPaymentMethod($paymentMethod);
+        $payment->setCurrency($currency);
+        $payment->setCreatedAt(Carbon::now());
 
         $this->entityManager->persist($payment);
         $this->entityManager->flush();

@@ -196,10 +196,10 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         $this->info('De-activate ancient subscriptions. Count: ' . count($ancientSubscriptions));
 
         foreach ($ancientSubscriptions as $ancientSubscription) {
-            $ancientSubscription->setIsActive(false)
-                ->setNote(self::DEACTIVATION_NOTE)
-                ->setCanceledOn(Carbon::now())
-                ->setUpdatedAt(Carbon::now());
+            $ancientSubscription->setIsActive(false);
+            $ancientSubscription->setNote(self::DEACTIVATION_NOTE);
+            $ancientSubscription->setCanceledOn(Carbon::now());
+            $ancientSubscription->setUpdatedAt(Carbon::now());
 
             $this->userProductService->updateSubscriptionProducts($ancientSubscription);
         }

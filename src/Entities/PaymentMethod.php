@@ -91,11 +91,9 @@ class PaymentMethod
     /**
      * @param CreditCard|null $creditCard
      */
-    public function setCreditCard(?CreditCard $creditCard): PaymentMethod
+    public function setCreditCard(?CreditCard $creditCard)
     {
         $this->creditCard = $creditCard;
-
-        return $this;
     }
 
     /**
@@ -109,11 +107,9 @@ class PaymentMethod
     /**
      * @param PaypalBillingAgreement|null $paypalBillingAgreement
      */
-    public function setPaypalBillingAgreement(?PaypalBillingAgreement $paypalBillingAgreement): PaymentMethod
+    public function setPaypalBillingAgreement(?PaypalBillingAgreement $paypalBillingAgreement)
     {
         $this->paypalBillingAgreement = $paypalBillingAgreement;
-
-        return $this;
     }
 
     /**
@@ -158,14 +154,10 @@ class PaymentMethod
 
     /**
      * @param string $currency
-     *
-     * @return PaymentMethod
      */
-    public function setCurrency(string $currency): self
+    public function setCurrency(string $currency)
     {
         $this->currency = $currency;
-
-        return $this;
     }
 
     /**
@@ -178,14 +170,10 @@ class PaymentMethod
 
     /**
      * @param Address $billingAddress
-     *
-     * @return PaymentMethod
      */
-    public function setBillingAddress(?Address $billingAddress): self
+    public function setBillingAddress(?Address $billingAddress)
     {
         $this->billingAddress = $billingAddress;
-
-        return $this;
     }
 
     /**

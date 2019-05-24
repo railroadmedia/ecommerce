@@ -83,14 +83,10 @@ class ShippingCostsWeightRange
 
     /**
      * @param float $min
-     *
-     * @return ShippingCostsWeightRange
      */
-    public function setMin(float $min): self
+    public function setMin(float $min)
     {
         $this->min = $min;
-
-        return $this;
     }
 
     /**
@@ -103,14 +99,10 @@ class ShippingCostsWeightRange
 
     /**
      * @param float $max
-     *
-     * @return ShippingCostsWeightRange
      */
-    public function setMax(float $max): self
+    public function setMax(float $max)
     {
         $this->max = $max;
-
-        return $this;
     }
 
     /**
@@ -123,14 +115,10 @@ class ShippingCostsWeightRange
 
     /**
      * @param float $price
-     *
-     * @return ShippingCostsWeightRange
      */
-    public function setPrice(float $price): self
+    public function setPrice(float $price)
     {
         $this->price = $price;
-
-        return $this;
     }
 
     /**
@@ -143,13 +131,9 @@ class ShippingCostsWeightRange
 
     /**
      * @param ShippingOption $shippingOption
-     *
-     * @return ShippingCostsWeightRange
      */
-    public function setShippingOption(?ShippingOption $shippingOption): self
+    public function setShippingOption(?ShippingOption $shippingOption)
     {
         $this->shippingOption = $shippingOption;
-
-        return $this;
     }
 }

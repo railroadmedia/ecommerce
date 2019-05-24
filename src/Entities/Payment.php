@@ -165,14 +165,10 @@ class Payment
 
     /**
      * @param float $totalDue
-     *
-     * @return Payment
      */
-    public function setTotalDue(float $totalDue): self
+    public function setTotalDue(float $totalDue)
     {
         $this->totalDue = $totalDue;
-
-        return $this;
     }
 
     /**
@@ -185,14 +181,10 @@ class Payment
 
     /**
      * @param float $totalPaid
-     *
-     * @return Payment
      */
-    public function setTotalPaid(?float $totalPaid): self
+    public function setTotalPaid(?float $totalPaid)
     {
         $this->totalPaid = $totalPaid;
-
-        return $this;
     }
 
     /**
@@ -205,14 +197,10 @@ class Payment
 
     /**
      * @param float $totalRefunded
-     *
-     * @return Payment
      */
-    public function setTotalRefunded(?float $totalRefunded): self
+    public function setTotalRefunded(?float $totalRefunded)
     {
         $this->totalRefunded = $totalRefunded;
-
-        return $this;
     }
 
     /**
@@ -225,14 +213,10 @@ class Payment
 
     /**
      * @param float $conversionRate
-     *
-     * @return Payment
      */
-    public function setConversionRate(float $conversionRate): self
+    public function setConversionRate(float $conversionRate)
     {
         $this->conversionRate = $conversionRate;
-
-        return $this;
     }
 
     /**
@@ -245,14 +229,10 @@ class Payment
 
     /**
      * @param string $type
-     *
-     * @return Payment
      */
-    public function setType(string $type): self
+    public function setType(string $type)
     {
         $this->type = $type;
-
-        return $this;
     }
 
     /**
@@ -265,14 +245,10 @@ class Payment
 
     /**
      * @param string $externalId
-     *
-     * @return Payment
      */
-    public function setExternalId(?string $externalId): self
+    public function setExternalId(?string $externalId)
     {
         $this->externalId = $externalId;
-
-        return $this;
     }
 
     /**
@@ -285,14 +261,10 @@ class Payment
 
     /**
      * @param string $externalProvider
-     *
-     * @return Payment
      */
-    public function setExternalProvider(?string $externalProvider): self
+    public function setExternalProvider(?string $externalProvider)
     {
         $this->externalProvider = $externalProvider;
-
-        return $this;
     }
 
     /**
@@ -305,13 +277,10 @@ class Payment
 
     /**
      * @param string $gatewayName
-     * @return Payment
      */
     public function setGatewayName(string $gatewayName)
     {
         $this->gatewayName = $gatewayName;
-
-        return $this;
     }
 
     /**
@@ -324,14 +293,10 @@ class Payment
 
     /**
      * @param string $status
-     *
-     * @return Payment
      */
-    public function setStatus(string $status): self
+    public function setStatus(string $status)
     {
         $this->status = $status;
-
-        return $this;
     }
 
     /**
@@ -344,14 +309,10 @@ class Payment
 
     /**
      * @param string $message
-     *
-     * @return Payment
      */
-    public function setMessage(?string $message): self
+    public function setMessage(?string $message)
     {
         $this->message = $message;
-
-        return $this;
     }
 
     /**
@@ -364,14 +325,10 @@ class Payment
 
     /**
      * @param string $currency
-     *
-     * @return Payment
      */
-    public function setCurrency(string $currency): self
+    public function setCurrency(string $currency)
     {
         $this->currency = $currency;
-
-        return $this;
     }
 
     /**
@@ -384,14 +341,10 @@ class Payment
 
     /**
      * @param \DateTimeInterface $deletedOn
-     *
-     * @return Payment
      */
-    public function setDeletedOn(?\DateTimeInterface $deletedOn): self
+    public function setDeletedOn(?\DateTimeInterface $deletedOn)
     {
         $this->deletedOn = $deletedOn;
-
-        return $this;
     }
 
     /**
@@ -404,14 +357,10 @@ class Payment
 
     /**
      * @param PaymentMethod $paymentMethod
-     *
-     * @return Payment
      */
-    public function setPaymentMethod(?PaymentMethod $paymentMethod): self
+    public function setPaymentMethod(?PaymentMethod $paymentMethod)
     {
         $this->paymentMethod = $paymentMethod;
-
-        return $this;
     }
 
     /**
@@ -424,14 +373,10 @@ class Payment
 
     /**
      * @param OrderPayment $orderPayment
-     *
-     * @return Payment
      */
-    public function setOrderPayment(?OrderPayment $orderPayment): self
+    public function setOrderPayment(?OrderPayment $orderPayment)
     {
         $this->orderPayment = $orderPayment;
-
-        return $this;
     }
 
     /**
@@ -444,16 +389,11 @@ class Payment
 
     /**
      * @param SubscriptionPayment $subscriptionPayment
-     *
-     * @return Payment
      */
     public function setSubscriptionPayment(
         ?SubscriptionPayment $subscriptionPayment
-    ): self
-    {
+    ) {
         $this->subscriptionPayment = $subscriptionPayment;
-
-        return $this;
     }
 
     /**

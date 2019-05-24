@@ -107,14 +107,10 @@ class OrderItem
 
     /**
      * @param int $quantity
-     *
-     * @return OrderItem
      */
-    public function setQuantity(int $quantity): self
+    public function setQuantity(int $quantity)
     {
         $this->quantity = $quantity;
-
-        return $this;
     }
 
     /**
@@ -127,14 +123,10 @@ class OrderItem
 
     /**
      * @param float $weight
-     *
-     * @return OrderItem
      */
-    public function setWeight(float $weight): self
+    public function setWeight(float $weight)
     {
         $this->weight = $weight;
-
-        return $this;
     }
 
     /**
@@ -147,14 +139,10 @@ class OrderItem
 
     /**
      * @param float $initialPrice
-     *
-     * @return OrderItem
      */
-    public function setInitialPrice(float $initialPrice): self
+    public function setInitialPrice(float $initialPrice)
     {
         $this->initialPrice = $initialPrice;
-
-        return $this;
     }
 
     /**
@@ -167,14 +155,10 @@ class OrderItem
 
     /**
      * @param float $totalDiscounted
-     *
-     * @return OrderItem
      */
-    public function setTotalDiscounted(float $totalDiscounted): self
+    public function setTotalDiscounted(float $totalDiscounted)
     {
         $this->totalDiscounted = $totalDiscounted;
-
-        return $this;
     }
 
     /**
@@ -187,14 +171,10 @@ class OrderItem
 
     /**
      * @param float $finalPrice
-     *
-     * @return OrderItem
      */
-    public function setFinalPrice(float $finalPrice): self
+    public function setFinalPrice(float $finalPrice)
     {
         $this->finalPrice = $finalPrice;
-
-        return $this;
     }
 
     /**
@@ -207,14 +187,10 @@ class OrderItem
 
     /**
      * @param Order $order
-     *
-     * @return OrderItem
      */
-    public function setOrder(?Order $order): self
+    public function setOrder(?Order $order)
     {
         $this->order = $order;
-
-        return $this;
     }
 
     /**
@@ -227,14 +203,10 @@ class OrderItem
 
     /**
      * @param Product $product
-     *
-     * @return OrderItem
      */
-    public function setProduct(?Product $product): self
+    public function setProduct(?Product $product)
     {
         $this->product = $product;
-
-        return $this;
     }
 
     /**
@@ -247,25 +219,19 @@ class OrderItem
 
     /**
      * @param OrderDiscount $orderDiscount
-     *
-     * @return OrderItem
      */
-    public function addOrderItemDiscounts(OrderDiscount $orderDiscount): self
+    public function addOrderItemDiscounts(OrderDiscount $orderDiscount)
     {
         if (!$this->orderItemDiscounts->contains($orderDiscount)) {
             $this->orderItemDiscounts[] = $orderDiscount;
             $orderDiscount->setOrderItem($this);
         }
-
-        return $this;
     }
 
     /**
      * @param OrderDiscount $orderDiscount
-     *
-     * @return OrderItem
      */
-    public function removeOrderItemDiscounts(OrderDiscount $orderDiscount): self
+    public function removeOrderItemDiscounts(OrderDiscount $orderDiscount)
     {
         if ($this->orderItemDiscounts->contains($orderDiscount)) {
 
@@ -276,7 +242,5 @@ class OrderItem
                 $orderDiscount->setOrderItem(null);
             }
         }
-
-        return $this;
     }
 }
