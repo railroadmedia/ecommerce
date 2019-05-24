@@ -714,7 +714,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 $requestData['shipping_region']
             )];
 
-        $expectedTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2) +
+        $expectedTaxes =
+            round($expectedTaxRateProduct * $expectedTotalFromItems, 2) +
             round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
@@ -1540,7 +1541,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 $orderRequestData['shipping_region']
             )];
 
-        $expectedTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2) +
+        $expectedTaxes =
+            round($expectedTaxRateProduct * $expectedTotalFromItems, 2) +
             round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
@@ -2274,16 +2276,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $cardToken = $this->faker->word;
 
         $orderRequestData = [
-                'payment_method_id' => $paymentMethod['id'],
-                'shipping_first_name' => $this->faker->firstName,
-                'shipping_last_name' => $this->faker->lastName,
-                'shipping_address_line_1' => $this->faker->address,
-                'shipping_city' => $this->faker->city,
-                'shipping_region' => 'alberta',
-                'shipping_zip_or_postal_code' => $this->faker->postcode,
-                'shipping_country' => 'Canada',
-                'currency' => $currency
-            ];
+            'payment_method_id' => $paymentMethod['id'],
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => 'alberta',
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => 'Canada',
+            'currency' => $currency
+        ];
 
         $fakerCustomer = new Customer();
         $fakerCustomer->email = $this->faker->email;
@@ -2402,7 +2404,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedConversionRate = $currencyService->getRate($currency);
 
-//        dd($orderRequestData);
+        //        dd($orderRequestData);
 
         $response = $this->call(
             'PUT',
@@ -2708,16 +2710,18 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $shippingAddress = $this->fakeAddress(['type' => 'shipping', 'state' => 'alberta', 'country' => 'Canada']);
+        $shippingAddress = $this->fakeAddress(
+            ['type' => 'shipping', 'state' => 'alberta', 'country' => 'Canada', 'user_id' => $userId]
+        );
 
         $cardToken = $this->faker->word;
 
         $orderRequestData = [
-                'payment_method_id' => $paymentMethod['id'],
-                'shipping_address_id' => $shippingAddress['id'],
-                'currency' => $currency,
-                'brand' => 'drumeo'
-            ];
+            'payment_method_id' => $paymentMethod['id'],
+            'shipping_address_id' => $shippingAddress['id'],
+            'currency' => $currency,
+            'brand' => 'drumeo'
+        ];
 
         $fakerCustomer = new Customer();
         $fakerCustomer->email = $this->faker->email;
@@ -2836,7 +2840,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedConversionRate = $currencyService->getRate($currency);
 
-//                dd($orderRequestData);
+        //                dd($orderRequestData);
 
         $response = $this->call(
             'PUT',
@@ -2853,7 +2857,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         'product_due' => $expectedTotalFromItems,
                         'taxes_due' => $expectedTaxes,
                         'shipping_due' => $shippingCostAmount,
-                        'finance_due' => null,
+                        'finance_due' => 0,
                         'total_paid' => $expectedOrderTotalDue,
                         'brand' => $brand,
                         'created_at' => Carbon::now()
@@ -2914,7 +2918,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         'relationships' => [
                             'product' => [
                                 'data' => [
-                                    'type' => 'product', 
+                                    'type' => 'product',
                                     'id' => $productOne['id']
                                 ]
                             ]
@@ -3022,7 +3026,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
-
 
     public function test_submit_order_existing_payment_method_paypal()
     {
@@ -3434,7 +3437,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'street_line_2' => null,
             'city' => $this->faker->city,
             'zip' => $this->faker->postcode,
-            'state' => 'AB',
+            'state' => 'alberta',
             'country' => 'Canada'
         ];
 
@@ -5412,14 +5415,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedShippingCostAmount = round($shippingCostAmount - $discount['amount'], 2);
 
-        $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
-                $state
-            )];
-        $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
-                $state
-            )];
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
+            $state
+        )];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
+            $state
+        )];
 
         $expectedTaxes =
             round($expectedTaxRateProduct * $expectedTotalFromItems, 2) +
@@ -5586,14 +5587,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedShippingCostAmount = round($shippingCostAmount - $expectedShippingDiscount, 2);
 
-        $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
-                $state
-            )];
-        $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
-                $state
-            )];
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
+            $state
+        )];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
+            $state
+        )];
 
         $expectedTaxes =
             round($expectedTaxRateProduct * $expectedTotalFromItems, 2) +
@@ -6283,11 +6282,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 ->disableOriginalConstructor()
                 ->getMock();
 
-        $this->authManagerMock->method('guard')->willReturn($this->sessionGuardMock);
+        $this->authManagerMock->method('guard')
+            ->willReturn($this->sessionGuardMock);
 
         $this->app->instance(Factory::class, $this->authManagerMock);
 
-        $this->sessionGuardMock->method('loginUsingId')->willReturn(true);
+        $this->sessionGuardMock->method('loginUsingId')
+            ->willReturn(true);
 
         $cardToken = $this->faker->word;
 
@@ -6702,31 +6703,37 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
 
-        $shippingOption = $this->fakeShippingOption([
-            'country' => $country,
-            'active' => 1,
-            'priority' => 1,
-        ]);
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => $country,
+                'active' => 1,
+                'priority' => 1,
+            ]
+        );
 
         $shippingCostAmount = 5.50;
 
-        $shippingCost = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOption['id'],
-            'min' => 1,
-            'max' => 10,
-            'price' => $shippingCostAmount,
-        ]);
+        $shippingCost = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 1,
+                'max' => 10,
+                'price' => $shippingCostAmount,
+            ]
+        );
 
-        $product = $this->fakeProduct([
-            'price' => round($this->paymentPlanMinimumPrice * 2 , 2),
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 1,
-            'weight' => 2.20,
-            'subscription_interval_type' => '',
-            'subscription_interval_count' => 0,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'price' => round($this->paymentPlanMinimumPrice * 2, 2),
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 1,
+                'weight' => 2.20,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => 0,
+            ]
+        );
 
         $productQuantity = 2;
 
@@ -6751,7 +6758,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $state
         );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes + $financeCharge, 2);
+        $expectedOrderTotalDue =
+            round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes + $financeCharge, 2);
 
         $totalToFinance = $expectedTotalFromItems + $expectedTaxes + $financeCharge;
 
@@ -6767,11 +6775,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currencyService = $this->app->make(CurrencyService::class);
 
-        $expectedPaymentTotalDue = $currencyService
-            ->convertFromBase($expectedOrderTotalDue, $currency);
+        $expectedPaymentTotalDue = $currencyService->convertFromBase($expectedOrderTotalDue, $currency);
 
-        $expectedPaymentTotalPaid = $currencyService
-            ->convertFromBase($expectedTotalPaid, $currency);
+        $expectedPaymentTotalPaid = $currencyService->convertFromBase($expectedTotalPaid, $currency);
 
         $expectedConversionRate = $currencyService->getRate($currency);
 
@@ -6900,13 +6906,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'type' => config('ecommerce.type_payment_plan'),
                 'brand' => $brand,
                 'user_id' => $userId,
-                'start_date' => Carbon::now()->toDateTimeString(),
+                'start_date' => Carbon::now()
+                    ->toDateTimeString(),
                 'paid_until' => Carbon::now()
                     ->addMonth(1)
                     ->toDateTimeString(),
                 'total_cycles_due' => $paymentPlanOption,
                 'total_cycles_paid' => 1,
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -6922,7 +6930,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'user_id' => $userId,
                 'customer_id' => null,
                 'brand' => config('ecommerce.brand'),
-                'created_at' => Carbon::now()->toDateTimeString()
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
 
@@ -6939,7 +6948,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'status' => Payment::STATUS_PAID,
                 'message' => null,
                 'currency' => $currency,
-                'created_at' => Carbon::now()->toDateTimeString()
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
     }
@@ -6988,72 +6998,88 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
 
-        $shippingOption = $this->fakeShippingOption([
-            'country' => $country,
-            'active' => 1,
-            'priority' => 1,
-        ]);
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => $country,
+                'active' => 1,
+                'priority' => 1,
+            ]
+        );
 
         $shippingCostAmount = 5.50;
 
-        $shippingCost = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOption['id'],
-            'min' => 1,
-            'max' => 10,
-            'price' => $shippingCostAmount,
-        ]);
+        $shippingCost = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 1,
+                'max' => 10,
+                'price' => $shippingCostAmount,
+            ]
+        );
 
-        $productOne = $this->fakeProduct([
-            'price' => 147.95,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => '',
-            'subscription_interval_count' => '',
-        ]);
+        $productOne = $this->fakeProduct(
+            [
+                'price' => 147.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+            ]
+        );
 
-        $productTwo = $this->fakeProduct([
-            'price' => 79.42,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 1,
-            'weight' => 5.10,
-            'subscription_interval_type' => '',
-            'subscription_interval_count' => '',
-        ]);
+        $productTwo = $this->fakeProduct(
+            [
+                'price' => 79.42,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 1,
+                'weight' => 5.10,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+            ]
+        );
 
-        $discountOne = $this->fakeDiscount([
-            'active' => true,
-            'product_id' => $productOne['id'],
-            'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
-            'amount' => 20
-        ]);
+        $discountOne = $this->fakeDiscount(
+            [
+                'active' => true,
+                'product_id' => $productOne['id'],
+                'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+                'amount' => 20
+            ]
+        );
 
-        $discountCriteriaOne = $this->fakeDiscountCriteria([
-            'discount_id' => $discountOne['id'],
-            'product_id' => $productOne['id'],
-            'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'min' => '1',
-            'max' => '100',
-        ]);
+        $discountCriteriaOne = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discountOne['id'],
+                'product_id' => $productOne['id'],
+                'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
+                'min' => '1',
+                'max' => '100',
+            ]
+        );
 
-        $discountTwo = $this->fakeDiscount([
-            'active' => true,
-            'product_id' => $productTwo['id'],
-            'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
-            'amount' => 15
-        ]);
+        $discountTwo = $this->fakeDiscount(
+            [
+                'active' => true,
+                'product_id' => $productTwo['id'],
+                'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+                'amount' => 15
+            ]
+        );
 
-        $discountCriteriaTwo = $this->fakeDiscountCriteria([
-            'discount_id' => $discountTwo['id'],
-            'product_id' => $productTwo['id'],
-            'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'min' => '1',
-            'max' => '100',
-        ]);
+        $discountCriteriaTwo = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discountTwo['id'],
+                'product_id' => $productTwo['id'],
+                'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
+                'min' => '1',
+                'max' => '100',
+            ]
+        );
 
         $productOneQuantity = 2;
 
@@ -7077,24 +7103,24 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedProductOneDiscountAmount = round($discountOne['amount'] * $productOneQuantity, 2);
 
-        $expectedProductOneDiscountedPrice = round($expectedProductOneTotalPrice - $expectedProductOneDiscountAmount, 2);
+        $expectedProductOneDiscountedPrice =
+            round($expectedProductOneTotalPrice - $expectedProductOneDiscountAmount, 2);
 
         $expectedProductTwoTotalPrice = round($productTwo['price'] * $productTwoQuantity, 2);
 
         $expectedProductTwoDiscountAmount = round($discountTwo['amount'] * $productTwoQuantity, 2);
 
-        $expectedProductTwoDiscountedPrice = round($expectedProductTwoTotalPrice - $expectedProductTwoDiscountAmount, 2);
+        $expectedProductTwoDiscountedPrice =
+            round($expectedProductTwoTotalPrice - $expectedProductTwoDiscountAmount, 2);
 
         $expectedTotalFromItems = round($expectedProductOneDiscountedPrice + $expectedProductTwoDiscountedPrice, 2);
 
-        $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
-                $state
-            )];
-        $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
-                $state
-            )];
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
+            $state
+        )];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
+            $state
+        )];
 
         $expectedTaxes =
             round($expectedTaxRateProduct * $expectedTotalFromItems, 2) +
@@ -7104,8 +7130,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $currencyService = $this->app->make(CurrencyService::class);
 
-        $expectedPaymentTotalDue = $currencyService
-            ->convertFromBase($expectedOrderTotalDue, $currency);
+        $expectedPaymentTotalDue = $currencyService->convertFromBase($expectedOrderTotalDue, $currency);
 
         $expectedConversionRate = $currencyService->getRate($currency);
 
@@ -7161,7 +7186,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'status' => Payment::STATUS_PAID,
                 'message' => null,
                 'currency' => $currency,
-                'created_at' => Carbon::now()->toDateTimeString()
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
     }
@@ -7202,61 +7228,73 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $cart->toSession();
 
-        $shippingOption = $this->fakeShippingOption([
-            'country' => $country,
-            'active' => 1,
-            'priority' => 1,
-        ]);
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => $country,
+                'active' => 1,
+                'priority' => 1,
+            ]
+        );
 
         $shippingCostAmount = 5.50;
 
-        $shippingCost = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOption['id'],
-            'min' => 0,
-            'max' => 10,
-            'price' => $shippingCostAmount,
-        ]);
+        $shippingCost = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 0,
+                'max' => 10,
+                'price' => $shippingCostAmount,
+            ]
+        );
 
-        $productOne = $this->fakeProduct([
-            'price' => 12.95,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => '',
-            'subscription_interval_count' => 0,
-            'sku' => 'a' . $this->faker->word,
-        ]);
+        $productOne = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => 0,
+                'sku' => 'a' . $this->faker->word,
+            ]
+        );
 
-        $productTwo = $this->fakeProduct([
-            'price' => 247,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 1,
-            'weight' => 5.10,
-            'subscription_interval_type' => '',
-            'subscription_interval_count' => 0,
-            'sku' => 'b' . $this->faker->word,
-        ]);
+        $productTwo = $this->fakeProduct(
+            [
+                'price' => 247,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 1,
+                'weight' => 5.10,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => 0,
+                'sku' => 'b' . $this->faker->word,
+            ]
+        );
 
         $promoCode = rand();
 
-        $discount = $this->fakeDiscount([
-            'active' => true,
-            'product_id' => $productOne['id'],
-            'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
-            'amount' => 10,
-        ]);
+        $discount = $this->fakeDiscount(
+            [
+                'active' => true,
+                'product_id' => $productOne['id'],
+                'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
+                'amount' => 10,
+            ]
+        );
 
-        $discountCriteria = $this->fakeDiscountCriteria([
-            'discount_id' => $discount['id'],
-            'product_id' => $productTwo['id'],
-            'type' => DiscountCriteriaService::PROMO_CODE_REQUIREMENT_TYPE,
-            'min' => $promoCode,
-            'max' => $promoCode,
-        ]);
+        $discountCriteria = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discount['id'],
+                'product_id' => $productTwo['id'],
+                'type' => DiscountCriteriaService::PROMO_CODE_REQUIREMENT_TYPE,
+                'min' => $promoCode,
+                'max' => $promoCode,
+            ]
+        );
 
         $productOneQuantity = 2;
 
@@ -7276,22 +7314,22 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ''
         );
 
-        $expectedTotalFromItems = round($productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity, 2);
+        $expectedTotalFromItems =
+            round($productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity, 2);
 
-        $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
-                $state
-            )];
-        $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
-                $state
-            )];
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
+            $state
+        )];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
+            $state
+        )];
 
         $expectedTaxes =
             round($expectedTaxRateProduct * ($expectedTotalFromItems - $discount['amount']), 2) +
             round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $totalDueExpected = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes - $discount['amount'], 2);
+        $totalDueExpected =
+            round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes - $discount['amount'], 2);
 
         $response = $this->call('GET', '/json/order-form');
 
@@ -7388,33 +7426,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
 
-        $product = $this->fakeProduct([
-            'price' => 142.95,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => '',
-            'subscription_interval_count' => '',
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'price' => 142.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+            ]
+        );
 
         $promoCode = $this->faker->word;
 
-        $discount = $this->fakeDiscount([
-            'active' => true,
-            'product_id' => $product['id'],
-            'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
-            'amount' => 10,
-        ]);
+        $discount = $this->fakeDiscount(
+            [
+                'active' => true,
+                'product_id' => $product['id'],
+                'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
+                'amount' => 10,
+            ]
+        );
 
-        $discountCriteria = $this->fakeDiscountCriteria([
-            'discount_id' => $discount['id'],
-            'product_id' => $product['id'],
-            'type' => DiscountCriteriaService::PROMO_CODE_REQUIREMENT_TYPE,
-            'min' => $promoCode,
-            'max' => $promoCode,
-        ]);
+        $discountCriteria = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discount['id'],
+                'product_id' => $product['id'],
+                'type' => DiscountCriteriaService::PROMO_CODE_REQUIREMENT_TYPE,
+                'min' => $promoCode,
+                'max' => $promoCode,
+            ]
+        );
 
         $productQuantity = 2;
 
@@ -7516,22 +7560,26 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
 
-        $product = $this->fakeProduct([
-            'price' => 142.95,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => '',
-            'subscription_interval_count' => '',
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'price' => 142.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+            ]
+        );
 
-        $existingUserProduct = $this->fakeUserProduct([
-            'user_id' => $userId,
-            'product_id' => $product['id'],
-            'quantity' => 1,
-        ]);
+        $existingUserProduct = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+            ]
+        );
 
         $productQuantity = 2;
 
@@ -7633,46 +7681,54 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
 
-        $productOne = $this->fakeProduct([
-            'price' => 12.95,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => '',
-            'subscription_interval_count' => '',
-        ]);
+        $productOne = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+            ]
+        );
 
         $productTwoCategory = $this->faker->word;
 
-        $productTwo = $this->fakeProduct([
-            'price' => 24,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'category' => $productTwoCategory,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => '',
-            'subscription_interval_count' => '',
-        ]);
+        $productTwo = $this->fakeProduct(
+            [
+                'price' => 24,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'category' => $productTwoCategory,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+            ]
+        );
 
-        $discount = $this->fakeDiscount([
-            'active' => true,
-            'product_id' => $productOne['id'],
-            'product_category' => $productTwoCategory,
-            'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
-            'amount' => 10,
-        ]);
+        $discount = $this->fakeDiscount(
+            [
+                'active' => true,
+                'product_id' => $productOne['id'],
+                'product_category' => $productTwoCategory,
+                'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
+                'amount' => 10,
+            ]
+        );
 
-        $discountCriteria = $this->fakeDiscountCriteria([
-            'discount_id' => $discount['id'],
-            'product_id' => $productOne['id'],
-            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'min' => 5,
-            'max' => 500,
-        ]);
+        $discountCriteria = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discount['id'],
+                'product_id' => $productOne['id'],
+                'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+                'min' => 5,
+                'max' => 500,
+            ]
+        );
 
         $productOneQuantity = 2;
 
@@ -7694,15 +7750,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedProductOneTotalPrice = round($productOne['price'] * $productOneQuantity, 2);
 
-        $expectedProductOneDiscountAmount = round($discount['amount'] / 100 * $productOne['price'] * $productOneQuantity, 2);
+        $expectedProductOneDiscountAmount =
+            round($discount['amount'] / 100 * $productOne['price'] * $productOneQuantity, 2);
 
-        $expectedProductOneDiscountedPrice = round($expectedProductOneTotalPrice - $expectedProductOneDiscountAmount, 2);
+        $expectedProductOneDiscountedPrice =
+            round($expectedProductOneTotalPrice - $expectedProductOneDiscountAmount, 2);
 
         $expectedProductTwoTotalPrice = round($productTwo['price'] * $productTwoQuantity, 2);
 
-        $expectedProductTwoDiscountAmount = round($discount['amount'] / 100 * $productTwo['price'] * $productTwoQuantity, 2);
+        $expectedProductTwoDiscountAmount =
+            round($discount['amount'] / 100 * $productTwo['price'] * $productTwoQuantity, 2);
 
-        $expectedProductTwoDiscountedPrice = round($expectedProductTwoTotalPrice - $expectedProductTwoDiscountAmount, 2);
+        $expectedProductTwoDiscountedPrice =
+            round($expectedProductTwoTotalPrice - $expectedProductTwoDiscountAmount, 2);
 
         $expectedTotalFromItems = round($expectedProductOneDiscountedPrice + $expectedProductTwoDiscountedPrice, 2);
 
@@ -7796,16 +7856,18 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $product = $this->fakeProduct([
-            'price' => 142.95,
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'price' => 142.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
 
         $productQuantity = 2;
 
@@ -7869,7 +7931,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'ecommerce_user_payment_methods',
             [
                 'user_id' => $randomUser['id'],
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -7883,7 +7946,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'zip' => $orderData['billing_zip_or_postal_code'],
                 'state' => $orderData['billing_region'],
                 'country' => $orderData['billing_country'],
-                'created_at' => Carbon::now()->toDateTimeString()
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
 
@@ -7893,8 +7957,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'user_id' => $randomUser['id'],
                 'product_id' => $product['id'],
                 'quantity' => $productQuantity,
-                'expiration_date' => Carbon::now()->addYear(1)->toDateTimeString(),
-                'created_at' => Carbon::now()->toDateTimeString()
+                'expiration_date' => Carbon::now()
+                    ->addYear(1)
+                    ->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
 
@@ -7906,11 +7973,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'user_id' => $randomUser['id'],
                 'is_active' => 1,
                 'product_id' => $product['id'],
-                'start_date' => Carbon::now()->toDateTimeString(),
+                'start_date' => Carbon::now()
+                    ->toDateTimeString(),
                 'paid_until' => Carbon::now()
                     ->addYear(1)
                     ->toDateTimeString(),
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
                 'total_cycles_paid' => 1,
                 'interval_type' => $product['subscription_interval_type'],
                 'interval_count' => $product['subscription_interval_count'],
@@ -7970,16 +8039,18 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $product = $this->fakeProduct([
-            'price' => 142.95,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => null,
-            'subscription_interval_count' => null,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'price' => 142.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
+            ]
+        );
 
         $productQuantity = 2;
 
@@ -8042,7 +8113,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'ecommerce_user_payment_methods',
             [
                 'user_id' => $randomUser['id'],
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -8056,7 +8128,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'zip' => $orderData['billing_zip_or_postal_code'],
                 'state' => $orderData['billing_region'],
                 'country' => $orderData['billing_country'],
-                'created_at' => Carbon::now()->toDateTimeString()
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
 
@@ -8067,7 +8140,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => $productQuantity,
                 'expiration_date' => null,
-                'created_at' => Carbon::now()->toDateTimeString()
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
     }
@@ -8118,16 +8192,18 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $product = $this->fakeProduct([
-            'price' => 142.95,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => null,
-            'subscription_interval_count' => null,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'price' => 142.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
+            ]
+        );
 
         $productQuantity = 2;
 
@@ -8195,7 +8271,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'ecommerce_user_payment_methods',
             [
                 'user_id' => $randomUser['id'],
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -8209,7 +8286,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'zip' => $orderData['billing_zip_or_postal_code'],
                 'state' => $orderData['billing_region'],
                 'country' => $orderData['billing_country'],
-                'created_at' => Carbon::now()->toDateTimeString()
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
 
@@ -8220,7 +8298,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => $productQuantity,
                 'expiration_date' => null,
-                'created_at' => Carbon::now()->toDateTimeString()
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
     }

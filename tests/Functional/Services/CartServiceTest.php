@@ -393,6 +393,7 @@ class CartServiceTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 15, 20),
+            'is_physical' => true,
             'weight' => $productWeight
         ]);
 
@@ -455,12 +456,13 @@ class CartServiceTest extends EcommerceTestCase
 
     public function test_get_due_for_order()
     {
-        $productWeight = $this->faker->randomFloat(2, 5, 10);
+        $productWeight = 5;
 
         $product = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20),
+            'stock' => 100,
+            'is_physical' => true,
+            'price' => 15,
             'weight' => $productWeight
         ]);
 
@@ -474,21 +476,22 @@ class CartServiceTest extends EcommerceTestCase
 
         $shippingCosts = $this->fakeShippingCost([
             'shipping_option_id' => $shippingOption['id'],
-            'min' => 5,
+            'min' => 2,
             'max' => 50,
-            'price' => $this->faker->randomFloat(2, 3, 5),
+            'price' => 3,
         ]);
 
-        $quantity = $this->faker->numberBetween(1, 3);
+        $quantity = 2;
 
-        $shippingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$shippingCountry]));
+        $shippingState = 'ontario';
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($shippingCountry);
         $shippingAddress->setState($shippingState);
 
+
         $billingCountry = 'canada';
-        $billingState = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
+        $billingState = "new brunswick";
 
         $billingAddress = new Address();
         $billingAddress->setCountry($billingCountry);

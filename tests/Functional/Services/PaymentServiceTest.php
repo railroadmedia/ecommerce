@@ -103,7 +103,6 @@ class PaymentServiceTest extends EcommerceTestCase
         $paymentService = $this->app->make(PaymentService::class);
 
         $paymentService->chargeUsersExistingPaymentMethod(
-            $brand,
             $paymentMethod['id'],
             $currency,
             $paymentAmountInBaseCurrency,
@@ -185,7 +184,6 @@ class PaymentServiceTest extends EcommerceTestCase
         $paymentService = $this->app->make(PaymentService::class);
 
         $paymentService->chargeUsersExistingPaymentMethod(
-            $brand,
             $paymentMethod['id'],
             $currency,
             $paymentAmountInBaseCurrency,
