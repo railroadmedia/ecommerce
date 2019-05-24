@@ -122,7 +122,6 @@ class PaymentService
      * @throws OptimisticLockException
      */
     public function chargeUsersExistingPaymentMethod(
-        string $gateway,
         int $paymentMethodId,
         string $currency,
         float $paymentAmountInBaseCurrency,
@@ -142,6 +141,7 @@ class PaymentService
         }
 
         $externalPaymentId = null;
+        $gateway = $paymentMethod->getMethod()->getPaymentGatewayName();
 
         // credit cart
         if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {

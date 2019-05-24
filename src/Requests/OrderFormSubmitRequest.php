@@ -100,9 +100,9 @@ class OrderFormSubmitRequest extends FormRequest
         $rules = [
             'payment_method_type' => 'string|required_without:payment_method_id',
             'payment_method_id' => 'integer|required_without:payment_method_type',
-            'billing_country' => 'string|required|in:' . implode(',', config('location.countries')),
+            'billing_country' => 'string|required_without:payment_method_id|in:' . implode(',', config('location.countries')),
             'card_token' => 'string|required_if:payment_method_type,' . PaymentMethod::TYPE_CREDIT_CARD,
-            'gateway' => 'string|required',
+            'gateway' => 'string|required_without:payment_method_id',
             'currency' => 'string|in:' . implode(',', config('ecommerce.supported_currencies')),
         ];
 

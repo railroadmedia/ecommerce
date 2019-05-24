@@ -110,7 +110,6 @@ class OrderFormService
             if (!empty($cart->getPaymentMethodId())) {
 
                 $payment = $this->paymentService->chargeUsersExistingPaymentMethod(
-                    $request->get('gateway', config('ecommerce.default_gateway')),
                     $cart->getPaymentMethodId(),
                     $cart->getCurrency(),
                     $paymentAmountInBaseCurrency,
