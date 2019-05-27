@@ -27,4 +27,6 @@ Route::group([
         ])
         ->name('subscription.renew');
 
+    Route::get('/failed-subscriptions', Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@failed')
+        ->name('subscriptions.failed');
 });

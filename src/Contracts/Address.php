@@ -12,7 +12,7 @@ interface Address
     /**
      * @param string $state
      *
-     * @return Address
+     * @return void
      */
     public function setState(?string $state);
 
@@ -24,7 +24,7 @@ interface Address
     /**
      * @param string $country
      *
-     * @return Address
+     * @return void
      */
     public function setCountry(?string $country);
 }

@@ -16,6 +16,7 @@ use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Requests\FailedSubscriptionsRequest;
 use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
 use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
@@ -266,5 +267,15 @@ class SubscriptionJsonController extends Controller
         $this->userProductService->updateSubscriptionProducts($subscription);
 
         return $response;
+    }
+
+    public function failed(FailedSubscriptionsRequest $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.failed-subscriptions');
+
+        $subscriptionsAndBuilder = $this->subscriptionRepository->indexFailedByRequest($request);
+
+        return ResponseService::subscription($subscriptionsAndBuilder->getResults(), $subscriptionsAndBuilder->getQueryBuilder())
+            ->respond(200);
     }
 }

@@ -14,6 +14,7 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
+use Railroad\Ecommerce\Requests\FailedSubscriptionsRequest;
 
 /**
  * Class SubscriptionRepository
@@ -82,6 +83,80 @@ class SubscriptionRepository extends RepositoryBase
             )
                 ->setParameter('user', $user);
         }
+
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
+    }
+
+    /**
+     * @param $request
+     *
+     * @return ResultsQueryBuilderComposite
+     */
+    public function indexFailedByRequest(FailedSubscriptionsRequest $request): ResultsQueryBuilderComposite
+    {
+        $smallDateTime =
+            $request->get(
+                'small_date_time',
+                Carbon::now()
+                    ->subDay()
+                    ->toDateTimeString()
+            );
+
+        $bigDateTime =
+            $request->get(
+                'big_date_time',
+                Carbon::now()
+                    ->toDateTimeString()
+            );
+
+        $alias = 's';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->restrictBrandsByRequest($request, $alias)
+            ->select(['s', 'p', 'o', 'pm'])
+            ->leftJoin('s.product', 'p')
+            ->leftJoin('s.order', 'o')
+            ->leftJoin('s.paymentMethod', 'pm')
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('s.deletedAt')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.type', ':type')
+            )
+            ->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->andX(
+                        $qb->expr()->isNotNull(
+                            's.canceledOn'
+                        ),
+                        $qb->expr()->gt('s.canceledOn', ':canceledSmallDateTime'),
+                        $qb->expr()->lte('s.canceledOn', ':canceledBigDateTime')
+                    ),
+                    $qb->expr()->andX(
+                        $qb->expr()->isNull(
+                            's.canceledOn'
+                        ),
+                        $qb->expr()->eq('s.isActive', ':activity'),
+                        $qb->expr()->gt('s.paidUntil', ':paidSmallDateTime'),
+                        $qb->expr()->lte('s.paidUntil', ':paidBigDateTime')
+                    )
+                )
+            )
+            ->setParameter('canceledSmallDateTime', $smallDateTime)
+            ->setParameter('canceledBigDateTime', $bigDateTime)
+            ->setParameter('activity', false)
+            ->setParameter('paidSmallDateTime', $smallDateTime)
+            ->setParameter('paidBigDateTime', $bigDateTime)
+            ->setParameter('type', $request->get('type'));
 
         $results =
             $qb->getQuery()

@@ -33,4 +33,8 @@ Route::group([
     Route::put('/json/update-number-of-payments/{numberOfPayments}',
         Railroad\Ecommerce\Controllers\CartJsonController::class . '@updateNumberOfPayments')
         ->name('shopping-cart.json.update-number-of-payments');
+
+    Route::put('/json/session-address',
+        Railroad\Ecommerce\Controllers\CartJsonController::class . '@storeAddress')
+        ->name('shopping-cart.session-address');
 });
