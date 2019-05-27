@@ -59,24 +59,49 @@ $.ajax({
                 "productStatistic":{
                     "data":{
                         "type":"productStatistic",
-                        // the product id
-                        "id":"1"
+                        // the ID to reference included data should be the day and the the product id combined 
+                        "id":"2019-04-01:1"
                     }
                 },
                 "productStatistic":{
                     "data":{
                         "type":"productStatistic",
-                        // the product id
-                        "id":"2"
+                        "id":"2019-04-01:2"
                     }
                 }
             }
-        }
+        },
+        {
+            "type":"dailyStatistic",
+            "id":"2019-04-02",
+            "attributes":{
+                "total_sales":13825.32,
+                "total_refunded":824.91,
+                "total_number_of_orders_placed":513,
+                "total_number_of_successful_subscription_renewal_payments":87,
+                "total_number_of_failed_subscription_renewal_payments":21,
+                "day":"2019-04-01"
+            },
+            "relationships":{
+                "productStatistic":{
+                    "data":{
+                        "type":"productStatistic",
+                        "id":"2019-04-02:1"
+                    }
+                },
+                "productStatistic":{
+                    "data":{
+                        "type":"productStatistic",
+                        "id":"2019-04-02:2"
+                    }
+                }
+            }
+        }, ...
     ],
     "included":[
         {
             "type":"productStatistic",
-            "id":"1",
+            "id":"2019-04-01:1",
             "attributes":{
                 "sku":"some-sku",
                 "total_quantity_sold":42,
@@ -85,7 +110,25 @@ $.ajax({
         },
         {
             "type":"productStatistic",
-            "id":"2",
+            "id":"2019-04-01:2",
+            "attributes":{
+                "sku":"other-sku",
+                "total_quantity_sold":14,
+                "total_sales":9445.22
+            }
+        },
+        {
+            "type":"productStatistic",
+            "id":"2019-04-02:1",
+            "attributes":{
+                "sku":"some-sku",
+                "total_quantity_sold":42,
+                "total_sales":34875.22
+            }
+        },
+        {
+            "type":"productStatistic",
+            "id":"2019-04-02:2",
             "attributes":{
                 "sku":"other-sku",
                 "total_quantity_sold":14,
