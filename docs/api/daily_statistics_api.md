@@ -39,6 +39,8 @@ $.ajax({
 
 ### Response Example
 
+**NOTE: the productStatistic id for referencing the included data should be the day and the product id combined**
+
 ```200 OK```
 
 ```json
@@ -59,7 +61,6 @@ $.ajax({
                 "productStatistic":{
                     "data":{
                         "type":"productStatistic",
-                        // the ID to reference included data should be the day and the the product id combined 
                         "id":"2019-04-01:1"
                     }
                 },
@@ -113,15 +114,15 @@ $.ajax({
             "id":"2019-04-01:2",
             "attributes":{
                 "sku":"other-sku",
-                "total_quantity_sold":14,
-                "total_sales":9445.22
+                "total_quantity_sold":4,
+                "total_sales":842.31
             }
         },
         {
             "type":"productStatistic",
             "id":"2019-04-02:1",
             "attributes":{
-                "sku":"some-sku",
+                "sku":"some-sku-2",
                 "total_quantity_sold":42,
                 "total_sales":34875.22
             }
@@ -130,9 +131,9 @@ $.ajax({
             "type":"productStatistic",
             "id":"2019-04-02:2",
             "attributes":{
-                "sku":"other-sku",
-                "total_quantity_sold":14,
-                "total_sales":9445.22
+                "sku":"other-sku-2",
+                "total_quantity_sold":0,
+                "total_sales":0
             }
         }
     ]
