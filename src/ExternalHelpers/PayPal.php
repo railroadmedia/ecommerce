@@ -194,7 +194,10 @@ class PayPal
 
     public function payPalResponseFailed($response)
     {
-        if (strtolower($response['ACK']) == 'success' || strtolower($response['ACK']) == 'successwithwarning') {
+        if (empty($response['ACK']) ||
+            strtolower($response['ACK']) == 'success' ||
+            strtolower($response['ACK']) == 'successwithwarning') {
+            error_log(var_export($response, true));
             return false;
         }
 

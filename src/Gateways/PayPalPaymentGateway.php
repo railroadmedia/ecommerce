@@ -46,7 +46,8 @@ class PayPalPaymentGateway
 
             $billingAgreementId = $this->paypal->confirmAndCreateBillingAgreement($expressCheckoutToken);
         } catch (Exception $exception) {
-            error_log($exception->getMessage());
+
+            error_log($exception);
 
             throw new PaymentFailedException(
                 'Payment failed. Please ensure your PayPal account is funded and has a linked credit card then try again.'
@@ -83,6 +84,9 @@ class PayPalPaymentGateway
                 $currency
             );
         } catch (Exception $exception) {
+
+            error_log($exception);
+
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
 
@@ -111,6 +115,9 @@ class PayPalPaymentGateway
                     $returnUrl
                 );
         } catch (Exception $exception) {
+
+            error_log($exception);
+
             throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
         }
     }
@@ -143,6 +150,9 @@ class PayPalPaymentGateway
                 $currency
             );
         } catch (Exception $exception) {
+
+            error_log($exception);
+
             throw new RefundFailedException('Payment failed: ' . $exception->getMessage());
         }
 
