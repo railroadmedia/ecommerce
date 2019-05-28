@@ -23,7 +23,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         parent::setUp();
     }
 
-    /*
     public function test_delete()
     {
         $em = $this->app->make(EcommerceEntityManager::class);
@@ -1395,7 +1394,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             $response->decodeResponseJson('errors')
         );
     }
-    */
 
     public function test_pull_failed_subscriptions()
     {

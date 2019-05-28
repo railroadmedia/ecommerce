@@ -35,7 +35,7 @@ class OrderJsonController extends Controller
     private $jsonApiHydrator;
 
     /**
-     * @var EntityRepository
+     * @var OrderRepository
      */
     private $orderRepository;
 

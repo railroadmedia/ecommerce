@@ -13,4 +13,6 @@ Route::group([
     Route::get('stats/orders', \Railroad\Ecommerce\Controllers\StatsController::class . '@statsOrder')
         ->name('stats.orders');
 
+    Route::get('/daily-statistics', \Railroad\Ecommerce\Controllers\StatsController::class . '@dailyStatistics')
+        ->name('stats.orders');
 });

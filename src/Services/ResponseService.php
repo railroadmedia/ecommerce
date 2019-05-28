@@ -11,6 +11,7 @@ use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
 use Railroad\Ecommerce\Transformers\CartItemTransformer;
+use Railroad\Ecommerce\Transformers\DailyStatisticTransformer;
 use Railroad\Ecommerce\Transformers\DecoratedOrderTransformer;
 use Railroad\Ecommerce\Transformers\DiscountCriteriaTransformer;
 use Railroad\Ecommerce\Transformers\DiscountTransformer;
@@ -543,6 +544,22 @@ class ResponseService extends FractalResponseService
             [
                 'cart' => $cartArray,
             ]
+        );
+    }
+
+    /**
+     * @param array $dailyStatistics
+     *
+     * @return Fractal
+     */
+    public static function dailyStatistics(array $dailyStatistics)
+    {
+        return self::create(
+            $dailyStatistics,
+            'dailyStatistic',
+            new DailyStatisticTransformer(),
+            new JsonApiSerializer(),
+            null
         );
     }
 }

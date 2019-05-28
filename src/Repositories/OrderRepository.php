@@ -150,4 +150,50 @@ class OrderRepository extends RepositoryBase
             $qb->getQuery()
                 ->getOneOrNullResult();
     }
+
+    /**
+     * @param Request $request
+     *
+     * @return Order[]
+     */
+    public function getOrdersForStats(Request $request): array
+    {
+        $smallDateTime =
+            $request->get(
+                'small_date_time',
+                Carbon::now()
+                    ->subDay()
+                    ->toDateTimeString()
+            );
+
+        $bigDateTime =
+            $request->get(
+                'big_date_time',
+                Carbon::now()
+                    ->subDay()
+                    ->toDateTimeString()
+            );
+
+        /** @var $qb QueryBuilder */
+        $qb = $this->createQueryBuilder('o');
+
+        $qb->select(['o', 'oi', 'p'])
+            ->leftJoin('o.orderItems', 'oi')
+            ->leftJoin('oi.product', 'p')
+            ->where(
+                $qb->expr()
+                    ->between('o.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->setParameter('smallDateTime', $smallDateTime)
+            ->setParameter('bigDateTime', $bigDateTime);
+
+        if ($request->has('brand')) {
+            $qb->andWhere('o.brand = :brand')
+                ->setParameter('brand', $request->get('brand'));
+        }
+
+        return
+            $qb->getQuery()
+                ->getResult();
+    }
 }

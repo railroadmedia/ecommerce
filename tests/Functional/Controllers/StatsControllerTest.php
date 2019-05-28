@@ -2,6 +2,10 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
+use Carbon\Carbon;
+use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 // use Railroad\Ecommerce\Repositories\OrderItemRepository;
@@ -19,42 +23,42 @@ class StatsControllerTest extends EcommerceTestCase
     /**
      * @var ProductRepository
      */
-    protected $productRepository;
+    // protected $productRepository;
 
     /**
      * @var PaymentRepository
      */
-    protected $paymentRepository;
+    // protected $paymentRepository;
 
     /**
      * @var PaymentMethodRepository
      */
-    protected $paymentMethodRepository;
+    // protected $paymentMethodRepository;
 
     /**
      * @var OrderRepository
      */
-    protected $orderRepository;
+    // protected $orderRepository;
 
     /**
      * @var OrderItemRepository
      */
-    protected $orderItemRepository;
+    // protected $orderItemRepository;
 
     /**
      * @var OrderPaymentRepository
      */
-    protected $orderPaymentRepository;
+    // protected $orderPaymentRepository;
 
     /**
      * @var SubscriptionRepository
      */
-    protected $subscriptionRepository;
+    // protected $subscriptionRepository;
 
     /**
      * @var SubscriptionPaymentRepository
      */
-    protected $subscriptionPaymentRepository;
+    // protected $subscriptionPaymentRepository;
 
     public function setUp()
     {
@@ -70,12 +74,382 @@ class StatsControllerTest extends EcommerceTestCase
         // $this->subscriptionPaymentRepository = $this->app->make(SubscriptionPaymentRepository::class);
     }
 
-    public function test_true()
+    public function test_daily_statistics()
     {
-        // test temp disabled, until controller is migrated
-        // to be removed/updated
+        $this->permissionServiceMock->method('canOrThrow');
 
-        $this->assertTrue(true);
+        $userId = $this->createAndLogInNewUser();
+
+        $userOne = $this->fakeUser();
+        $userTwo = $this->fakeUser();
+        $userThree = $this->fakeUser();
+        $userFour = $this->fakeUser();
+
+        $brand = $this->faker->word;
+        $smallDatetime = Carbon::now()->subDays(30)->format('Y-m-d');
+        $bigDatetime = Carbon::now()->format('Y-m-d');
+
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productThree = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $orderOneDue = $this->faker->randomFloat(2, 50, 90);
+        $orderOneDate = Carbon::now()->subDays(25);
+
+        $orderOne = $this->fakeOrder([
+            'user_id' => $userOne['id'],
+            'customer_id' => null,
+            'shipping_address_id' => null,
+            'billing_address_id' => null,
+            'deleted_at' => null,
+            'total_due' => $orderOneDue,
+            'product_due' => $orderOneDue,
+            'taxes_due' => 0,
+            'shipping_due' => 0,
+            'finance_due' => 0,
+            'total_paid' => $orderOneDue,
+            'created_at' => $orderOneDate->toDateTimeString(),
+            'brand' => $brand,
+        ]);
+
+        $orderOneItemOne = $this->fakeOrderItem([
+            'order_id' => $orderOne['id'],
+            'product_id' => $productOne['id'],
+            'quantity' => 1,
+            'weight' => 0,
+            'initial_price' => $productOne['price'],
+            'total_discounted' => 0,
+            'final_price' => $orderOneDue
+        ]);
+
+        $orderTwoDue = $this->faker->randomFloat(2, 50, 90);
+        $orderTwoDate = Carbon::now()->subDays(20);
+
+        $orderTwo = $this->fakeOrder([
+            'user_id' => $userOne['id'],
+            'customer_id' => null,
+            'shipping_address_id' => null,
+            'billing_address_id' => null,
+            'deleted_at' => null,
+            'total_due' => $orderTwoDue,
+            'product_due' => $orderTwoDue,
+            'taxes_due' => 0,
+            'shipping_due' => 0,
+            'finance_due' => 0,
+            'total_paid' => $orderTwoDue,
+            'created_at' => $orderTwoDate->toDateTimeString(),
+            'brand' => $brand,
+        ]);
+
+        $orderTwoItemOne = $this->fakeOrderItem([
+            'order_id' => $orderTwo['id'],
+            'product_id' => $productTwo['id'],
+            'quantity' => 1,
+            'weight' => 0,
+            'initial_price' => $productTwo['price'],
+            'total_discounted' => 0,
+            'final_price' => $orderTwoDue
+        ]);
+
+        $orderThreeDue = $this->faker->randomFloat(2, 50, 90);
+        $orderThreeDate = Carbon::now()->subDays(20);
+
+        $orderThree = $this->fakeOrder([
+            'user_id' => $userTwo['id'],
+            'customer_id' => null,
+            'shipping_address_id' => null,
+            'billing_address_id' => null,
+            'deleted_at' => null,
+            'total_due' => $orderThreeDue,
+            'product_due' => $orderThreeDue,
+            'taxes_due' => 0,
+            'shipping_due' => 0,
+            'finance_due' => 0,
+            'total_paid' => $orderThreeDue,
+            'created_at' => $orderThreeDate->toDateTimeString(),
+            'brand' => $brand,
+        ]);
+
+        $orderThreeItemOne = $this->fakeOrderItem([
+            'order_id' => $orderThree['id'],
+            'product_id' => $productTwo['id'],
+            'quantity' => 1,
+            'weight' => 0,
+            'initial_price' => $productTwo['price'],
+            'total_discounted' => 0,
+            'final_price' => $orderThreeDue
+        ]);
+
+        $orderFourDue = $this->faker->randomFloat(2, 50, 90);
+        $orderFourDate = Carbon::now()->subDays(15);
+
+        $orderFour = $this->fakeOrder([
+            'user_id' => $userFour['id'],
+            'customer_id' => null,
+            'shipping_address_id' => null,
+            'billing_address_id' => null,
+            'deleted_at' => null,
+            'total_due' => $orderFourDue,
+            'product_due' => $orderFourDue,
+            'taxes_due' => 0,
+            'shipping_due' => 0,
+            'finance_due' => 0,
+            'total_paid' => $orderFourDue,
+            'created_at' => $orderFourDate->toDateTimeString(),
+            'brand' => $brand,
+        ]);
+
+        $orderFourItemOne = $this->fakeOrderItem([
+            'order_id' => $orderFour['id'],
+            'product_id' => $productThree['id'],
+            'quantity' => 1,
+            'weight' => 0,
+            'initial_price' => $productThree['price'],
+            'total_discounted' => 0,
+            'final_price' => $orderFourDue
+        ]);
+
+        $creditCardOne = $this->fakeCreditCard();
+
+        $billingAddressOne = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE
+        ]);
+
+        $paymentMethodOne = $this->fakePaymentMethod([
+            'method_id' => $creditCardOne['id'],
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'billing_address_id' => $billingAddressOne['id']
+        ]);
+
+        $paymentOne = $this->fakePayment([
+            'payment_method_id' => $paymentMethodOne['id'],
+            'total_due' => $orderOneDue,
+            'total_paid' => $orderOneDue,
+            'total_refunded' => 0,
+            'deleted_at' => null,
+            'updated_at' => null,
+            'created_at' => $orderOneDate->toDateTimeString(),
+        ]);
+
+        $orderPaymentOne = $this->fakeOrderPayment([
+            'order_id' => $orderOne['id'],
+            'payment_id' => $paymentOne['id'],
+            'created_at' => $orderOneDate->toDateTimeString(),
+        ]);
+
+        $creditCardTwo = $this->fakeCreditCard();
+
+        $billingAddressTwo = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE
+        ]);
+
+        $paymentMethodTwo = $this->fakePaymentMethod([
+            'method_id' => $creditCardTwo['id'],
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'billing_address_id' => $billingAddressTwo['id']
+        ]);
+
+        $paymentTwo = $this->fakePayment([
+            'payment_method_id' => $paymentMethodTwo['id'],
+            'total_due' => $orderTwoDue,
+            'total_paid' => $orderTwoDue,
+            'total_refunded' => 0,
+            'deleted_at' => null,
+            'updated_at' => null,
+            'created_at' => $orderTwoDate->toDateTimeString(),
+        ]);
+
+        $orderPaymentTwo = $this->fakeOrderPayment([
+            'order_id' => $orderTwo['id'],
+            'payment_id' => $paymentTwo['id'],
+            'created_at' => $orderTwoDate->toDateTimeString(),
+        ]);
+
+        $creditCardThree = $this->fakeCreditCard();
+
+        $billingAddressThree = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE
+        ]);
+
+        $paymentMethodThree = $this->fakePaymentMethod([
+            'method_id' => $creditCardThree['id'],
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'billing_address_id' => $billingAddressThree['id']
+        ]);
+
+        $paymentThree = $this->fakePayment([
+            'payment_method_id' => $paymentMethodThree['id'],
+            'total_due' => $orderThreeDue,
+            'total_paid' => $orderThreeDue,
+            'total_refunded' => 0,
+            'deleted_at' => null,
+            'updated_at' => null,
+            'created_at' => $orderThreeDate->toDateTimeString(),
+        ]);
+
+        $orderPaymentThree = $this->fakeOrderPayment([
+            'order_id' => $orderThree['id'],
+            'payment_id' => $paymentThree['id'],
+            'created_at' => $orderThreeDate->toDateTimeString(),
+        ]);
+
+        $creditCardFour = $this->fakeCreditCard();
+
+        $billingAddressFour = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE
+        ]);
+
+        $paymentMethodFour = $this->fakePaymentMethod([
+            'method_id' => $creditCardFour['id'],
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'billing_address_id' => $billingAddressFour['id']
+        ]);
+
+        $paymentFour = $this->fakePayment([
+            'payment_method_id' => $paymentMethodFour['id'],
+            'total_due' => $orderFourDue,
+            'total_paid' => $orderFourDue,
+            'total_refunded' => 0,
+            'deleted_at' => null,
+            'updated_at' => null,
+            'created_at' => $orderFourDate->toDateTimeString(),
+        ]);
+
+        $orderPaymentFour = $this->fakeOrderPayment([
+            'order_id' => $orderFour['id'],
+            'payment_id' => $paymentFour['id'],
+            'created_at' => $orderFourDate->toDateTimeString(),
+        ]);
+
+        $response = $this->call(
+            'GET',
+            '/daily-statistics',
+            [
+                'small_date_time' => $smallDatetime,
+                'big_date_time' => $bigDatetime,
+                'brand' => $brand
+            ]
+        );
+
+        $expected = [
+            'data' => [
+                [
+                    'type' => 'dailyStatistic',
+                    'id' => $orderOneDate->format('Y-m-d'),
+                    'attributes' => [
+                        'total_sales' => $orderOneDue,
+                        'total_refunded' => 0,
+                        'total_number_of_orders_placed' => 1,
+                        'total_number_of_successful_subscription_renewal_payments' => 0, // todo: update
+                        'total_number_of_failed_subscription_renewal_payments' => 0, // todo: update
+                        'day' => $orderOneDate->format('Y-m-d'),
+                    ],
+                    'relationships' => [
+                        'productStatistic' => [
+                            'data' => [
+                                [
+                                    'type' => 'productStatistic',
+                                    'id' => $orderOneDate->format('Y-m-d') . ':' . $productOne['id'],
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'dailyStatistic',
+                    'id' => $orderTwoDate->format('Y-m-d'),
+                    'attributes' => [
+                        'total_sales' => round($orderTwoDue + $orderThreeDue, 2),
+                        'total_refunded' => 0,
+                        'total_number_of_orders_placed' => 2,
+                        'total_number_of_successful_subscription_renewal_payments' => 0, // todo: update
+                        'total_number_of_failed_subscription_renewal_payments' => 0, // todo: update
+                        'day' => $orderTwoDate->format('Y-m-d'),
+                    ],
+                    'relationships' => [
+                        'productStatistic' => [
+                            'data' => [
+                                [
+                                    'type' => 'productStatistic',
+                                    'id' => $orderTwoDate->format('Y-m-d') . ':' . $productTwo['id'],
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'dailyStatistic',
+                    'id' => $orderFourDate->format('Y-m-d'),
+                    'attributes' => [
+                        'total_sales' => $orderFourDue,
+                        'total_refunded' => 0,
+                        'total_number_of_orders_placed' => 1,
+                        'total_number_of_successful_subscription_renewal_payments' => 0, // todo: update
+                        'total_number_of_failed_subscription_renewal_payments' => 0, // todo: update
+                        'day' => $orderFourDate->format('Y-m-d'),
+                    ],
+                    'relationships' => [
+                        'productStatistic' => [
+                            'data' => [
+                                [
+                                    'type' => 'productStatistic',
+                                    'id' => $orderFourDate->format('Y-m-d') . ':' . $productThree['id'],
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+            ],
+            'included' => [
+                [
+                    'type' => 'productStatistic',
+                    'id' => $orderOneDate->format('Y-m-d') . ':' . $productOne['id'],
+                    'attributes' =>  [
+                        'sku' => $productOne['sku'],
+                        'total_quantity_sold' => 1,
+                        'total_sales' => $orderOneDue,
+                    ],
+                ],
+                [
+                    'type' => 'productStatistic',
+                    'id' => $orderTwoDate->format('Y-m-d') . ':' . $productTwo['id'],
+                    'attributes' =>  [
+                        'sku' => $productTwo['sku'],
+                        'total_quantity_sold' => 2,
+                        'total_sales' => round($orderTwoDue + $orderThreeDue, 2),
+                    ],
+                ],
+                [
+                    'type' => 'productStatistic',
+                    'id' => $orderFourDate->format('Y-m-d') . ':' . $productThree['id'],
+                    'attributes' =>  [
+                        'sku' => $productThree['sku'],
+                        'total_quantity_sold' => 1,
+                        'total_sales' => $orderFourDue,
+                    ],
+                ],
+            ]
+        ];
+
+        // echo "\n### response: " . var_export($response->decodeResponseJson(), true) . "\n";
+
+        // $this->assertTrue(true);
+
+        $this->assertEquals(
+            $expected,
+            $response->decodeResponseJson()
+        );
     }
 
     /*

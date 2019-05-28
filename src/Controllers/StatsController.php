@@ -5,75 +5,80 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Repositories\AddressRepository;
-use Railroad\Ecommerce\Repositories\CustomerRepository;
-use Railroad\Ecommerce\Repositories\OrderItemRepository;
-use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
-use Railroad\Ecommerce\Repositories\OrderRepository;
-use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
-use Railroad\Ecommerce\Repositories\PaymentRepository;
-use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+// use Railroad\Ecommerce\Entities\Product;
+// use Railroad\Ecommerce\Repositories\AddressRepository;
+// use Railroad\Ecommerce\Repositories\CustomerRepository;
+// use Railroad\Ecommerce\Repositories\OrderItemRepository;
+// use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
+// use Railroad\Ecommerce\Repositories\OrderRepository;
+// use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
+// use Railroad\Ecommerce\Repositories\PaymentRepository;
+// use Railroad\Ecommerce\Repositories\ProductRepository;
+// use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
+// use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Services\ResponseService;
+use Railroad\Ecommerce\Services\StatsService;
 use Railroad\Permissions\Services\PermissionService;
-use Railroad\Resora\Entities\Entity;
+// use Railroad\Resora\Entities\Entity;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class StatsController extends Controller
 {
     /**
      * @var PaymentRepository
      */
-    private $paymentRepository;
+    // private $paymentRepository;
+
     /**
      * @var ProductRepository
      */
-    private $productRepository;
+    // private $productRepository;
 
     /**
      * @var OrderRepository
      */
-    private $orderRepository;
+    // private $orderRepository;
 
     /**
      * @var OrderItemRepository
      */
-    private $orderItemRepository;
+    // private $orderItemRepository;
 
     /**
      * @var OrderPaymentRepository
      */
-    private $orderPaymentRepository;
+    // private $orderPaymentRepository;
 
     /**
      * @var SubscriptionPaymentRepository
      */
-    private $subscriptionPaymentRepository;
+    // private $subscriptionPaymentRepository;
 
     /**
      * @var SubscriptionRepository
      */
-    private $subscriptionRepository;
+    // private $subscriptionRepository;
 
     /**
      * @var CustomerRepository
      */
-    private $customerRepository;
+    // private $customerRepository;
 
     /**
      * @var UserRepository
      */
-    private $userRepository;
+    // private $userRepository;
 
     /**
      * @var AddressRepository
      */
-    private $addressRepository;
+    // private $addressRepository;
 
     /**
      * @var PaymentMethodRepository
      */
-    private $paymentMethodRepository;
+    // private $paymentMethodRepository;
 
     /**
      * @var PermissionService
@@ -81,33 +86,59 @@ class StatsController extends Controller
     private $permissionService;
 
     /**
+     * @var StatsService
+     */
+    private $statsService;
+
+    /**
      * StatsController constructor.
      *
-     * @param ProductRepository $productRepository
+     * @param PermissionService $permissionService
+     * @param StatsService $statsService
      */
     public function __construct(
-        PaymentRepository $paymentRepository,
-        ProductRepository $productRepository,
-        OrderRepository $orderRepository,
-        OrderItemRepository $orderItemRepository,
-        OrderPaymentRepository $orderPaymentRepository,
-        SubscriptionPaymentRepository $subscriptionPaymentRepository,
-        SubscriptionRepository $subscriptionRepository,
-        AddressRepository $addressRepository,
-        PaymentMethodRepository $paymentMethodRepository,
-        PermissionService $permissionService
+        // PaymentRepository $paymentRepository,
+        // ProductRepository $productRepository,
+        // OrderRepository $orderRepository,
+        // OrderItemRepository $orderItemRepository,
+        // OrderPaymentRepository $orderPaymentRepository,
+        // SubscriptionPaymentRepository $subscriptionPaymentRepository,
+        // SubscriptionRepository $subscriptionRepository,
+        // AddressRepository $addressRepository,
+        // PaymentMethodRepository $paymentMethodRepository,
+        PermissionService $permissionService,
+        StatsService $statsService
     )
     {
-        $this->paymentRepository = $paymentRepository;
-        $this->productRepository = $productRepository;
-        $this->orderRepository = $orderRepository;
-        $this->orderItemRepository = $orderItemRepository;
-        $this->orderPaymentRepository = $orderPaymentRepository;
-        $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
-        $this->subscriptionRepository = $subscriptionRepository;
-        $this->addressRepository = $addressRepository;
-        $this->paymentMethodRepository = $paymentMethodRepository;
+        // $this->paymentRepository = $paymentRepository;
+        // $this->productRepository = $productRepository;
+        // $this->orderRepository = $orderRepository;
+        // $this->orderItemRepository = $orderItemRepository;
+        // $this->orderPaymentRepository = $orderPaymentRepository;
+        // $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
+        // $this->subscriptionRepository = $subscriptionRepository;
+        // $this->addressRepository = $addressRepository;
+        // $this->paymentMethodRepository = $paymentMethodRepository;
         $this->permissionService = $permissionService;
+        $this->statsService = $statsService;
+    }
+
+    /**
+     * return the daily statistics
+     *
+     * @param Request $request
+     *
+     * @return Fractal
+     *
+     * @throws Throwable
+     */
+    public function dailyStatistics(Request $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.daily-statistics');
+
+        $dailyStatistics = $this->statsService->indexByRequest($request);
+
+        return ResponseService::dailyStatistics($dailyStatistics)->respond(200);
     }
 
     public function statsProduct(Request $request)
