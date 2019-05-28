@@ -26,8 +26,10 @@ class PaymentMethodException extends Exception
         return response()->json(
             [
                 'errors' => [
-                    'title' => 'Payment failed.',
-                    'detail' => $this->message,
+                    [
+                        'title' => 'Payment failed.',
+                        'detail' => $this->message,
+                    ]
                 ],
             ],
             404

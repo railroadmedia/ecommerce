@@ -21,8 +21,10 @@ class UnprocessableEntityException extends \Exception
         return response()->json(
             [
                 'errors' => [
-                    'title' => 'Unprocessable Entity.',
-                    'detail' => $this->message,
+                    [
+                        'title' => 'Unprocessable Entity.',
+                        'detail' => $this->message,
+                    ]
                 ],
             ],
             422

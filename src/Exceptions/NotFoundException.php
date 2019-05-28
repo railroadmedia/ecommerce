@@ -26,8 +26,10 @@ class NotFoundException extends \Exception
         return response()->json(
             [
                 'errors' => [
-                    'title' => 'Not found.',
-                    'detail' => $this->message,
+                    [
+                        'title' => 'Not found.',
+                        'detail' => $this->message,
+                    ]
                 ],
             ],
             404

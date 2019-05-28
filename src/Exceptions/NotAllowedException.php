@@ -28,8 +28,10 @@ class NotAllowedException extends \Exception
         return response()->json(
             [
                 'errors' => [
-                    'title' => 'Not allowed.',
-                    'detail' => $this->message,
+                    [
+                        'title' => 'Not allowed.',
+                        'detail' => $this->message,
+                    ]
                 ],
             ],
             403

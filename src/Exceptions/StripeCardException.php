@@ -22,8 +22,10 @@ class StripeCardException extends \Exception
         return response()->json(
             [
                 'errors' => [
-                    'title' => 'Unprocessable Card.',
-                    'detail' => $this->stripeError
+                    [
+                        'title' => 'Unprocessable Card.',
+                        'detail' => $this->stripeError
+                    ]
                 ],
                 'meta' => [
                     'user' => $user ? [
