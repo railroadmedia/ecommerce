@@ -62,13 +62,15 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
     public function test_update_order()
     {
-        $order = $this->fakeOrder([
-            'user_id' => null,
-            'customer_id' => null,
-            'shipping_address_id' => null,
-            'billing_address_id' => null,
-            'deleted_at' => null
-        ]);
+        $order = $this->fakeOrder(
+            [
+                'user_id' => null,
+                'customer_id' => null,
+                'shipping_address_id' => null,
+                'billing_address_id' => null,
+                'deleted_at' => null
+            ]
+        );
 
         $newDue = $this->faker->numberBetween();
 
@@ -105,7 +107,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
                             ]
                         ),
                         [
-                            'updated_at' => Carbon::now()->toDateTimeString(),
+                            'updated_at' => Carbon::now()
+                                ->toDateTimeString(),
                             'total_due' => $newDue
                         ]
                     )
@@ -119,7 +122,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
             array_merge(
                 $order,
                 [
-                    'updated_at' => Carbon::now()->toDateTimeString(),
+                    'updated_at' => Carbon::now()
+                        ->toDateTimeString(),
                     'total_due' => $newDue
                 ]
             )
@@ -128,13 +132,15 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
     public function test_update_order_validation()
     {
-        $order = $this->fakeOrder([
-            'user_id' => null,
-            'customer_id' => null,
-            'shipping_address_id' => null,
-            'billing_address_id' => null,
-            'deleted_at' => null
-        ]);
+        $order = $this->fakeOrder(
+            [
+                'user_id' => null,
+                'customer_id' => null,
+                'shipping_address_id' => null,
+                'billing_address_id' => null,
+                'deleted_at' => null
+            ]
+        );
 
         $response = $this->call(
             'PATCH',
@@ -173,63 +179,75 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $productTwoPrice = $this->faker->randomFloat(2, 50, 90);
         $productTwoInitialQuantity = 3;
 
-        $orderInitialProductDue = round($productOnePrice * $productOneQuantity + $productTwoPrice * $productTwoInitialQuantity, 2);
+        $orderInitialProductDue =
+            round($productOnePrice * $productOneQuantity + $productTwoPrice * $productTwoInitialQuantity, 2);
         $orderInitialTaxesDue = $this->faker->randomFloat(2, 3, 5);
         $orderInitialShippingDue = $this->faker->randomFloat(2, 3, 5);
         $orderInitialTotalDue = round($orderInitialProductDue + $orderInitialTaxesDue + $orderInitialShippingDue, 2);
         $orderInitialTotalPaid = $orderInitialTotalDue;
 
-        $order = $this->fakeOrder([
-            'user_id' => $randomId,
-            'customer_id' => null,
-            'shipping_address_id' => null,
-            'billing_address_id' => null,
-            'deleted_at' => null,
-            'total_due' => $orderInitialTotalDue,
-            'product_due' => $orderInitialProductDue,
-            'taxes_due' => $orderInitialTaxesDue,
-            'shipping_due' => $orderInitialShippingDue,
-            'finance_due' => 0,
-            'total_paid' => $orderInitialTotalPaid,
-        ]);
+        $order = $this->fakeOrder(
+            [
+                'user_id' => $randomId,
+                'customer_id' => null,
+                'shipping_address_id' => null,
+                'billing_address_id' => null,
+                'deleted_at' => null,
+                'total_due' => $orderInitialTotalDue,
+                'product_due' => $orderInitialProductDue,
+                'taxes_due' => $orderInitialTaxesDue,
+                'shipping_due' => $orderInitialShippingDue,
+                'finance_due' => 0,
+                'total_paid' => $orderInitialTotalPaid,
+            ]
+        );
 
-        $productOne = $this->fakeProduct([
-            'active' => 1,
-            'is_physical' => false,
-            'stock' => $this->faker->numberBetween(5, 100),
-            'price' => $productOnePrice,
-        ]);
+        $productOne = $this->fakeProduct(
+            [
+                'active' => 1,
+                'is_physical' => false,
+                'stock' => $this->faker->numberBetween(5, 100),
+                'price' => $productOnePrice,
+            ]
+        );
 
-        $orderItemOne = $this->fakeOrderItem([
-            'order_id' => $order['id'],
-            'product_id' => $productOne['id'],
-            'quantity' => $productOneQuantity,
-            'weight' => 0,
-            'initial_price' => $productOne['price'],
-            'total_discounted' => 0,
-            'final_price' => $productOne['price']
-        ]);
+        $orderItemOne = $this->fakeOrderItem(
+            [
+                'order_id' => $order['id'],
+                'product_id' => $productOne['id'],
+                'quantity' => $productOneQuantity,
+                'weight' => 0,
+                'initial_price' => $productOne['price'],
+                'total_discounted' => 0,
+                'final_price' => $productOne['price']
+            ]
+        );
 
-        $productTwo = $this->fakeProduct([
-            'active' => 1,
-            'is_physical' => 1,
-            'weight' => 0.20,
-            'stock' => $this->faker->numberBetween(5, 100),
-            'price' => $productTwoPrice,
-        ]);
+        $productTwo = $this->fakeProduct(
+            [
+                'active' => 1,
+                'is_physical' => 1,
+                'weight' => 0.20,
+                'stock' => $this->faker->numberBetween(5, 100),
+                'price' => $productTwoPrice,
+            ]
+        );
 
-        $orderItemTwo = $this->fakeOrderItem([
-            'order_id' => $order['id'],
-            'product_id' => $productTwo['id'],
-            'quantity' => $productTwoInitialQuantity,
-            'weight' => $productTwo['weight'],
-            'initial_price' => $productTwo['price'],
-            'total_discounted' => 0,
-            'final_price' => $productTwo['price'] * $productTwoInitialQuantity
-        ]);
+        $orderItemTwo = $this->fakeOrderItem(
+            [
+                'order_id' => $order['id'],
+                'product_id' => $productTwo['id'],
+                'quantity' => $productTwoInitialQuantity,
+                'weight' => $productTwo['weight'],
+                'initial_price' => $productTwo['price'],
+                'total_discounted' => 0,
+                'final_price' => $productTwo['price'] * $productTwoInitialQuantity
+            ]
+        );
 
         $productTwoNewQuantity = 2;
-        $orderNewProductDue = round($productOnePrice * $productOneQuantity + $productTwoPrice * $productTwoNewQuantity, 2);
+        $orderNewProductDue =
+            round($productOnePrice * $productOneQuantity + $productTwoPrice * $productTwoNewQuantity, 2);
         $orderNewTaxesDue = $this->faker->randomFloat(2, 3, 5);
         $orderNewShippingDue = $this->faker->randomFloat(2, 3, 5);
         $orderNewTotalDue = round($orderNewProductDue + $orderNewTaxesDue + $orderNewShippingDue, 2);
@@ -314,30 +332,38 @@ class OrderJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'updated_at' => null
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'updated_at' => null
+            ]
+        );
 
-        $address = $this->fakeAddress([
-            'type' => Address::SHIPPING_ADDRESS_TYPE,
-            'user_id' => $userId
-        ]);
+        $address = $this->fakeAddress(
+            [
+                'type' => Address::SHIPPING_ADDRESS_TYPE,
+                'user_id' => $userId
+            ]
+        );
 
-        $order = $this->fakeOrder([
-            'deleted_at' => null,
-            'updated_at' => null,
-            'billing_address_id' => null,
-            'user_id' => null,
-            'shipping_address_id' => $address['id'],
-            'user_id' => $userId
-        ]);
+        $order = $this->fakeOrder(
+            [
+                'deleted_at' => null,
+                'updated_at' => null,
+                'billing_address_id' => null,
+                'user_id' => null,
+                'shipping_address_id' => $address['id'],
+                'user_id' => $userId
+            ]
+        );
 
-        $orderItem = $this->fakeOrderItem([
-            'order_id' => $order['id'],
-            'product_id' => $product['id'],
-            'updated_at' => null
-        ]);
+        $orderItem = $this->fakeOrderItem(
+            [
+                'order_id' => $order['id'],
+                'product_id' => $product['id'],
+                'updated_at' => null
+            ]
+        );
 
         $due = $this->faker->randomFloat(2, 100, 1000);
         $paid = $this->faker->randomFloat(2, 50, 90);
@@ -345,65 +371,85 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         $creditCard = $this->fakeCreditCard();
 
-        $billingAddress = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE
-        ]);
+        $billingAddress = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE
+            ]
+        );
 
-        $paymentMethod = $this->fakePaymentMethod([
-            'method_id' => $creditCard['id'],
-            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
-            'billing_address_id' => $billingAddress['id']
-        ]);
+        $paymentMethod = $this->fakePaymentMethod(
+            [
+                'method_id' => $creditCard['id'],
+                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'billing_address_id' => $billingAddress['id']
+            ]
+        );
 
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_due' => $due,
-            'total_paid' => $paid,
-            'total_refunded' => $refunded,
-            'deleted_at' => null,
-            'updated_at' => null
-        ]);
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_due' => $due,
+                'total_paid' => $paid,
+                'total_refunded' => $refunded,
+                'deleted_at' => null,
+                'updated_at' => null
+            ]
+        );
 
-        $refund = $this->fakeRefund([
-            'payment_amount' => $due,
-            'refunded_amount' => $refunded,
-            'payment_id' => $payment['id'],
-        ]);
+        $refund = $this->fakeRefund(
+            [
+                'payment_amount' => $due,
+                'refunded_amount' => $refunded,
+                'payment_id' => $payment['id'],
+            ]
+        );
 
-        $orderPayment = $this->fakeOrderPayment([
-            'order_id' => $order['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $orderPayment = $this->fakeOrderPayment(
+            [
+                'order_id' => $order['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'order_id' => $order['id'],
-            'payment_method_id' => null,
-            'updated_at' => null,
-            'user_id' => $userId,
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'order_id' => $order['id'],
+                'payment_method_id' => null,
+                'updated_at' => null,
+                'user_id' => $userId,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            ]
+        );
 
         //
-        $otherOrder = $this->fakeOrder([
-            'shipping_address_id' => $address['id']
-        ]);
+        $otherOrder = $this->fakeOrder(
+            [
+                'shipping_address_id' => $address['id']
+            ]
+        );
 
-        $otherOrderItem = $this->fakeOrderItem([
-            'order_id' => $otherOrder['id'],
-            'product_id' => $product['id'],
-        ]);
+        $otherOrderItem = $this->fakeOrderItem(
+            [
+                'order_id' => $otherOrder['id'],
+                'product_id' => $product['id'],
+            ]
+        );
 
         $otherPayment = $this->fakePayment();
 
-        $otherRefund = $this->fakeRefund([
-            'payment_id' => $otherPayment['id'],
-        ]);
+        $otherRefund = $this->fakeRefund(
+            [
+                'payment_id' => $otherPayment['id'],
+            ]
+        );
 
-        $otherOrderPayment = $this->fakeOrderPayment([
-            'order_id' => $otherOrder['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $otherOrderPayment = $this->fakeOrderPayment(
+            [
+                'order_id' => $otherOrder['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
         $expected = [
             'data' => [
@@ -469,32 +515,20 @@ class OrderJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            'included' => [
-                [
-                    'type' => 'paymentMethod',
-                    'id' => $paymentMethod['id'],
-                    'attributes' => []
-                ],
-                [
-                    'type' => 'payment',
-                    'id' => $payment['id'],
-                    'attributes' => array_diff_key(
-                        $payment,
-                        [
-                            'id' => true,
-                            'payment_method_id' => true
-                        ]
-                    ),
-                    'relationships' => [
-                        'paymentMethod' => [
-                            'data' => [
-                                'type' => 'paymentMethod',
-                                'id' => $paymentMethod['id'],
-                            ]
-                        ]
-                    ]
+        ];
 
-                ],
+        $response = $this->call(
+            'GET',
+            '/order/' . $order['id']
+        );
+
+        $this->assertEquals(
+            $expected['data'],
+            $response->decodeResponseJson()['data']
+        );
+
+        $this->assertIncludes(
+            [
                 [
                     'type' => 'product',
                     'id' => '1',
@@ -505,116 +539,9 @@ class OrderJsonControllerTest extends EcommerceTestCase
                         ]
                     )
                 ],
-                [
-                    'type' => 'user',
-                    'id' => $userId,
-                    'attributes' => []
-                ],
-                [
-                    'type' => 'orderItem',
-                    'id' => $orderItem['id'],
-                    'attributes' => array_diff_key(
-                        $orderItem,
-                        [
-                            'id' => true,
-                            'order_id' => true,
-                            'product_id' => true
-                        ]
-                    ),
-                    'relationships' => [
-                        'product' => [
-                            'data' => [
-                                'type' => 'product',
-                                'id' => $userId,
-                            ]
-                        ]
-                    ]
-                ],
-                [
-                    'type' => 'address',
-                    'id' => $address['id'],
-                    'attributes' => array_diff_key(
-                        $address,
-                        [
-                            'id' => true,
-                            'user_id' => true,
-                            'customer_id' => true
-                        ]
-                    ),
-                    'relationships' => [
-                        'user' => [
-                            'data' => [
-                                'type' => 'user',
-                                'id' => $userId,
-                            ]
-                        ]
-                    ]
-                ],
-                [
-                    'type' => 'refund',
-                    'id' => $refund['id'],
-                    'attributes' => array_diff_key(
-                        $refund,
-                        [
-                            'id' => true,
-                            'payment_id' => true
-                        ]
-                    ),
-                    'relationships' => [
-                        'payment' => [
-                            'data' => [
-                                'type' => 'payment',
-                                'id' => $payment['id']
-                            ]
-                        ]
-                    ]
-                ],
-                [
-                    'type' => 'subscription',
-                    'id' => $subscription['id'],
-                    'attributes' => array_diff_key(
-                        $subscription,
-                        [
-                            'id' => true,
-                            'user_id' => true,
-                            'customer_id' => true,
-                            'order_id' => true,
-                            'product_id' => true,
-                            'payment_method_id' => true
-                        ]
-                    ),
-                    'relationships' => [
-                        'product' => [
-                            'data' => [
-                                'type' => 'product',
-                                'id' => $product['id']
-                            ]
-                        ],
-                        'user' => [
-                            'data' => [
-                                'type' => 'user',
-                                'id' => $userId
-                            ]
-                        ],
-                        'order' => [
-                            'data' => [
-                                'type' => 'order',
-                                'id' => $order['id']
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ];
-
-        $response = $this->call(
-            'GET',
-            '/order/' . $order['id']
-        );
-
-        $this->assertEquals(
-            $expected,
-            $response->decodeResponseJson()
+            
+            ],
+            $response->decodeResponseJson()['included']
         );
     }
 
@@ -624,9 +551,11 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $limit = 10;
         $nrOrders = 10;
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $expectedData = [];
 
@@ -634,23 +563,29 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
             $user = $this->fakeUser();
 
-            $address = $this->fakeAddress([
-                'type' => Address::SHIPPING_ADDRESS_TYPE,
-                'user_id' => $user['id']
-            ]);
+            $address = $this->fakeAddress(
+                [
+                    'type' => Address::SHIPPING_ADDRESS_TYPE,
+                    'user_id' => $user['id']
+                ]
+            );
 
-            $order = $this->fakeOrder([
-                'deleted_at' => null,
-                'updated_at' => null,
-                'billing_address_id' => null,
-                'user_id' => $user['id'],
-                'shipping_address_id' => $address['id']
-            ]);
+            $order = $this->fakeOrder(
+                [
+                    'deleted_at' => null,
+                    'updated_at' => null,
+                    'billing_address_id' => null,
+                    'user_id' => $user['id'],
+                    'shipping_address_id' => $address['id']
+                ]
+            );
 
-            $orderItem = $this->fakeOrderItem([
-                'order_id' => $order['id'],
-                'product_id' => $product['id'],
-            ]);
+            $orderItem = $this->fakeOrderItem(
+                [
+                    'order_id' => $order['id'],
+                    'product_id' => $product['id'],
+                ]
+            );
 
             $expectedData[] = [
                 'type' => 'order',
@@ -694,7 +629,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             'GET',
             '/orders',
             [
-                'page'  => $page,
+                'page' => $page,
                 'limit' => $limit,
                 'order_by_column' => 'id',
                 'order_by_direction' => 'asc'
@@ -716,42 +651,56 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         $user = $this->fakeUser();
 
-        $address = $this->fakeAddress([
-            'type' => Address::SHIPPING_ADDRESS_TYPE,
-            'user_id' => $user['id']
-        ]);
+        $address = $this->fakeAddress(
+            [
+                'type' => Address::SHIPPING_ADDRESS_TYPE,
+                'user_id' => $user['id']
+            ]
+        );
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
-        $orderOutOfRange = $this->fakeOrder([
-            'created_at' => Carbon::now()->subMonth(1),
-            'deleted_at' => null,
-            'updated_at' => null,
-            'billing_address_id' => null,
-            'user_id' => $user['id'],
-            'shipping_address_id' => $address['id']
-        ]);
+        $orderOutOfRange = $this->fakeOrder(
+            [
+                'created_at' => Carbon::now()
+                    ->subMonth(1),
+                'deleted_at' => null,
+                'updated_at' => null,
+                'billing_address_id' => null,
+                'user_id' => $user['id'],
+                'shipping_address_id' => $address['id']
+            ]
+        );
 
-        $orderItemOutOfRange = $this->fakeOrderItem([
-            'order_id' => $orderOutOfRange['id'],
-            'product_id' => $product['id'],
-        ]);
+        $orderItemOutOfRange = $this->fakeOrderItem(
+            [
+                'order_id' => $orderOutOfRange['id'],
+                'product_id' => $product['id'],
+            ]
+        );
 
-        $orderInRange = $this->fakeOrder([
-            'created_at' => Carbon::now()->subDay(1),
-            'deleted_at' => null,
-            'updated_at' => null,
-            'billing_address_id' => null,
-            'user_id' => $user['id'],
-            'shipping_address_id' => $address['id']
-        ]);
+        $orderInRange = $this->fakeOrder(
+            [
+                'created_at' => Carbon::now()
+                    ->subDay(1),
+                'deleted_at' => null,
+                'updated_at' => null,
+                'billing_address_id' => null,
+                'user_id' => $user['id'],
+                'shipping_address_id' => $address['id']
+            ]
+        );
 
-        $orderItemInRange = $this->fakeOrderItem([
-            'order_id' => $orderInRange['id'],
-            'product_id' => $product['id'],
-        ]);
+        $orderItemInRange = $this->fakeOrderItem(
+            [
+                'order_id' => $orderInRange['id'],
+                'product_id' => $product['id'],
+            ]
+        );
 
         $expectedData[] = [
             'type' => 'order',
@@ -794,10 +743,13 @@ class OrderJsonControllerTest extends EcommerceTestCase
             'GET',
             '/orders',
             [
-                'page'  => $page,
+                'page' => $page,
                 'limit' => $limit,
-                'start-date' => Carbon::now()->subDay(2)->toDateTimeString(),
-                'end-date' => Carbon::now()->toDateTimeString()
+                'start-date' => Carbon::now()
+                    ->subDay(2)
+                    ->toDateTimeString(),
+                'end-date' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
 
@@ -816,9 +768,11 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $nrOrders = 10;
         $brands = [$this->faker->word, $this->faker->word];
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $expectedData = [];
 
@@ -826,24 +780,30 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
             $user = $this->fakeUser();
 
-            $address = $this->fakeAddress([
-                'type' => Address::SHIPPING_ADDRESS_TYPE,
-                'user_id' => $user['id']
-            ]);
+            $address = $this->fakeAddress(
+                [
+                    'type' => Address::SHIPPING_ADDRESS_TYPE,
+                    'user_id' => $user['id']
+                ]
+            );
 
-            $order = $this->fakeOrder([
-                'deleted_at' => null,
-                'updated_at' => null,
-                'billing_address_id' => null,
-                'user_id' => $user['id'],
-                'shipping_address_id' => $address['id'],
-                'brand' => $this->faker->randomElement($brands)
-            ]);
+            $order = $this->fakeOrder(
+                [
+                    'deleted_at' => null,
+                    'updated_at' => null,
+                    'billing_address_id' => null,
+                    'user_id' => $user['id'],
+                    'shipping_address_id' => $address['id'],
+                    'brand' => $this->faker->randomElement($brands)
+                ]
+            );
 
-            $orderItem = $this->fakeOrderItem([
-                'order_id' => $order['id'],
-                'product_id' => $product['id'],
-            ]);
+            $orderItem = $this->fakeOrderItem(
+                [
+                    'order_id' => $order['id'],
+                    'product_id' => $product['id'],
+                ]
+            );
 
             $expectedData[] = [
                 'type' => 'order',
@@ -885,30 +845,36 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         for ($i = 0; $i < 3; $i++) {
 
-            $address = $this->fakeAddress([
-                'type' => Address::SHIPPING_ADDRESS_TYPE
-            ]);
+            $address = $this->fakeAddress(
+                [
+                    'type' => Address::SHIPPING_ADDRESS_TYPE
+                ]
+            );
 
-            $order = $this->fakeOrder([
-                'deleted_at' => null,
-                'updated_at' => null,
-                'billing_address_id' => null,
-                'user_id' => null,
-                'shipping_address_id' => $address['id'],
-                'brand' => $this->faker->word().$this->faker->word()
-            ]);
+            $order = $this->fakeOrder(
+                [
+                    'deleted_at' => null,
+                    'updated_at' => null,
+                    'billing_address_id' => null,
+                    'user_id' => null,
+                    'shipping_address_id' => $address['id'],
+                    'brand' => $this->faker->word() . $this->faker->word()
+                ]
+            );
 
-            $orderItem = $this->fakeOrderItem([
-                'order_id' => $order['id'],
-                'product_id' => $product['id'],
-            ]);
+            $orderItem = $this->fakeOrderItem(
+                [
+                    'order_id' => $order['id'],
+                    'product_id' => $product['id'],
+                ]
+            );
         }
 
         $response = $this->call(
             'GET',
             '/orders',
             [
-                'page'  => $page,
+                'page' => $page,
                 'limit' => $limit,
                 'brands' => $brands,
                 'order_by_column' => 'id',
@@ -931,9 +897,11 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $nrOrders = 10;
         $brands = [$this->faker->word, $this->faker->word];
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $expectedData = [];
 
@@ -941,23 +909,29 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
             $user = $this->fakeUser();
 
-            $address = $this->fakeAddress([
-                'type' => Address::SHIPPING_ADDRESS_TYPE,
-                'user_id' => $user['id']
-            ]);
+            $address = $this->fakeAddress(
+                [
+                    'type' => Address::SHIPPING_ADDRESS_TYPE,
+                    'user_id' => $user['id']
+                ]
+            );
 
-            $order = $this->fakeOrder([
-                'deleted_at' => null,
-                'updated_at' => null,
-                'billing_address_id' => null,
-                'user_id' => $user['id'],
-                'shipping_address_id' => $address['id'],
-            ]);
+            $order = $this->fakeOrder(
+                [
+                    'deleted_at' => null,
+                    'updated_at' => null,
+                    'billing_address_id' => null,
+                    'user_id' => $user['id'],
+                    'shipping_address_id' => $address['id'],
+                ]
+            );
 
-            $orderItem = $this->fakeOrderItem([
-                'order_id' => $order['id'],
-                'product_id' => $product['id'],
-            ]);
+            $orderItem = $this->fakeOrderItem(
+                [
+                    'order_id' => $order['id'],
+                    'product_id' => $product['id'],
+                ]
+            );
 
             $expectedData[] = [
                 'type' => 'order',
@@ -999,30 +973,36 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         for ($i = 0; $i < 3; $i++) {
 
-            $address = $this->fakeAddress([
-                'type' => Address::SHIPPING_ADDRESS_TYPE
-            ]);
+            $address = $this->fakeAddress(
+                [
+                    'type' => Address::SHIPPING_ADDRESS_TYPE
+                ]
+            );
 
-            $order = $this->fakeOrder([
-                'deleted_at' => null,
-                'updated_at' => null,
-                'billing_address_id' => null,
-                'user_id' => null,
-                'shipping_address_id' => $address['id'],
-                'brand' => $this->faker->randomElement($brands)
-            ]);
+            $order = $this->fakeOrder(
+                [
+                    'deleted_at' => null,
+                    'updated_at' => null,
+                    'billing_address_id' => null,
+                    'user_id' => null,
+                    'shipping_address_id' => $address['id'],
+                    'brand' => $this->faker->randomElement($brands)
+                ]
+            );
 
-            $orderItem = $this->fakeOrderItem([
-                'order_id' => $order['id'],
-                'product_id' => $product['id'],
-            ]);
+            $orderItem = $this->fakeOrderItem(
+                [
+                    'order_id' => $order['id'],
+                    'product_id' => $product['id'],
+                ]
+            );
         }
 
         $response = $this->call(
             'GET',
             '/orders',
             [
-                'page'  => $page,
+                'page' => $page,
                 'limit' => $limit,
                 'order_by_column' => 'id',
                 'order_by_direction' => 'asc'

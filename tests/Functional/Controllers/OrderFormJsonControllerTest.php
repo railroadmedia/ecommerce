@@ -25,7 +25,6 @@ use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
-use Railroad\Ecommerce\Transformers\OrderItemTransformer;
 use Stripe\Card;
 use Stripe\Charge;
 use Stripe\Customer;
@@ -566,16 +565,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     public function test_submit_order_new_user_unique_email_failed()
     {
         $email = $this->faker->email;
-        $userId = $this->databaseManager->table('users')
-            ->insertGetId([
-                'email' => $email,
-                'password' => $this->faker->password,
-                'display_name' => $this->faker->name,
-                'created_at' => Carbon::now()
-                    ->toDateTimeString(),
-                'updated_at' => Carbon::now()
-                    ->toDateTimeString(),
-            ]);
+        $userId =
+            $this->databaseManager->table('users')
+                ->insertGetId(
+                    [
+                        'email' => $email,
+                        'password' => $this->faker->password,
+                        'display_name' => $this->faker->name,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                        'updated_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ]
+                );
 
         $this->authManagerMock =
             $this->getMockBuilder(AuthManager::class)
@@ -595,7 +597,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->sessionGuardMock->method('loginUsingId')
             ->willReturn(true);
-
 
         $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
@@ -670,7 +671,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $response->decodeResponseJson('errors')
         );
     }
-
 
     public function test_submit_order_credit_card_payment()
     {
@@ -860,125 +860,129 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $productOne['id'],
-                        'attributes' => array_diff_key(
-                            $productOne,
-                            [
-                                'id' => true,
-                            ]
-                        )
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $productOne['id'],
+                    'attributes' => array_diff_key(
+                        $productOne,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'product',
+                    'id' => $productTwo['id'],
+                    'attributes' => array_diff_key(
+                        $productTwo,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productOneQuantity,
+                        'weight' => $productOne['weight'],
+                        'initial_price' => $productOne['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productOne['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
                     ],
-                    [
-                        'type' => 'product',
-                        'id' => $productTwo['id'],
-                        'attributes' => array_diff_key(
-                            $productTwo,
-                            [
-                                'id' => true,
-                            ]
-                        )
-                    ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productOneQuantity,
-                            'weight' => $productOne['weight'],
-                            'initial_price' => $productOne['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productOne['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productOne['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productTwoQuantity,
-                            'weight' => $productTwo['weight'],
-                            'initial_price' => $productTwo['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productTwo['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productTwo['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => null,
-                            'last_name' => null,
-                            'street_line_1' => null,
-                            'street_line_2' => null,
-                            'city' => null,
-                            'zip' => $requestData['billing_zip_or_postal_code'],
-                            'state' => $requestData['billing_region'],
-                            'country' => $requestData['billing_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productOne['id']
                             ]
                         ]
                     ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => $requestData['shipping_first_name'],
-                            'last_name' => $requestData['shipping_last_name'],
-                            'street_line_1' => $requestData['shipping_address_line_1'],
-                            'street_line_2' => null,
-                            'city' => $requestData['shipping_city'],
-                            'zip' => $requestData['shipping_zip_or_postal_code'],
-                            'state' => $requestData['shipping_region'],
-                            'country' => $requestData['shipping_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productTwoQuantity,
+                        'weight' => $productTwo['weight'],
+                        'initial_price' => $productTwo['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productTwo['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productTwo['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => null,
+                        'last_name' => null,
+                        'street_line_1' => null,
+                        'street_line_2' => null,
+                        'city' => null,
+                        'zip' => $requestData['billing_zip_or_postal_code'],
+                        'state' => $requestData['billing_region'],
+                        'country' => $requestData['billing_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => $requestData['shipping_first_name'],
+                        'last_name' => $requestData['shipping_last_name'],
+                        'street_line_1' => $requestData['shipping_address_line_1'],
+                        'street_line_2' => null,
+                        'city' => $requestData['shipping_city'],
+                        'zip' => $requestData['shipping_zip_or_postal_code'],
+                        'state' => $requestData['shipping_region'],
+                        'country' => $requestData['shipping_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
                             ]
                         ]
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->decodeResponseJson()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -1222,125 +1226,129 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $productOne['id'],
-                        'attributes' => array_diff_key(
-                            $productOne,
-                            [
-                                'id' => true,
-                            ]
-                        )
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $productOne['id'],
+                    'attributes' => array_diff_key(
+                        $productOne,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'product',
+                    'id' => $productTwo['id'],
+                    'attributes' => array_diff_key(
+                        $productTwo,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productOneQuantity,
+                        'weight' => $productOne['weight'],
+                        'initial_price' => $productOne['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $orderItemOneDueOverride,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
                     ],
-                    [
-                        'type' => 'product',
-                        'id' => $productTwo['id'],
-                        'attributes' => array_diff_key(
-                            $productTwo,
-                            [
-                                'id' => true,
-                            ]
-                        )
-                    ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productOneQuantity,
-                            'weight' => $productOne['weight'],
-                            'initial_price' => $productOne['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $orderItemOneDueOverride,
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productOne['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productTwoQuantity,
-                            'weight' => $productTwo['weight'],
-                            'initial_price' => $productTwo['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $orderItemTwoDueOverride,
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productTwo['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => null,
-                            'last_name' => null,
-                            'street_line_1' => null,
-                            'street_line_2' => null,
-                            'city' => null,
-                            'zip' => $requestData['billing_zip_or_postal_code'],
-                            'state' => $requestData['billing_region'],
-                            'country' => $requestData['billing_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productOne['id']
                             ]
                         ]
                     ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => $requestData['shipping_first_name'],
-                            'last_name' => $requestData['shipping_last_name'],
-                            'street_line_1' => $requestData['shipping_address_line_1'],
-                            'street_line_2' => null,
-                            'city' => $requestData['shipping_city'],
-                            'zip' => $requestData['shipping_zip_or_postal_code'],
-                            'state' => $requestData['shipping_region'],
-                            'country' => $requestData['shipping_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productTwoQuantity,
+                        'weight' => $productTwo['weight'],
+                        'initial_price' => $productTwo['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $orderItemTwoDueOverride,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productTwo['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => null,
+                        'last_name' => null,
+                        'street_line_1' => null,
+                        'street_line_2' => null,
+                        'city' => null,
+                        'zip' => $requestData['billing_zip_or_postal_code'],
+                        'state' => $requestData['billing_region'],
+                        'country' => $requestData['billing_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => $requestData['shipping_first_name'],
+                        'last_name' => $requestData['shipping_last_name'],
+                        'street_line_1' => $requestData['shipping_address_line_1'],
+                        'street_line_2' => null,
+                        'city' => $requestData['shipping_city'],
+                        'zip' => $requestData['shipping_zip_or_postal_code'],
+                        'state' => $requestData['shipping_region'],
+                        'country' => $requestData['shipping_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
                             ]
                         ]
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->decodeResponseJson()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -1695,104 +1703,108 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $productOne['id'],
-                        'attributes' => array_diff_key(
-                            $productOne,
-                            [
-                                'id' => true,
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $productOne['id'],
+                    'attributes' => array_diff_key(
+                        $productOne,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'product',
+                    'id' => $productTwo['id'],
+                    'attributes' => array_diff_key(
+                        $productTwo,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productOneQuantity,
+                        'weight' => $productOne['weight'],
+                        'initial_price' => $productOne['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productOne['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productOne['id']
                             ]
-                        )
+                        ]
                     ],
-                    [
-                        'type' => 'product',
-                        'id' => $productTwo['id'],
-                        'attributes' => array_diff_key(
-                            $productTwo,
-                            [
-                                'id' => true,
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productTwoQuantity,
+                        'weight' => $productTwo['weight'],
+                        'initial_price' => $productTwo['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productTwo['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productTwo['id']
                             ]
-                        )
+                        ]
                     ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => $orderRequestData['shipping_first_name'],
+                        'last_name' => $orderRequestData['shipping_last_name'],
+                        'street_line_1' => $orderRequestData['shipping_address_line_1'],
+                        'street_line_2' => null,
+                        'city' => $orderRequestData['shipping_city'],
+                        'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                        'state' => $orderRequestData['shipping_region'],
+                        'country' => $orderRequestData['shipping_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
                     ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productOneQuantity,
-                            'weight' => $productOne['weight'],
-                            'initial_price' => $productOne['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productOne['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productOne['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productTwoQuantity,
-                            'weight' => $productTwo['weight'],
-                            'initial_price' => $productTwo['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productTwo['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productTwo['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => $orderRequestData['shipping_first_name'],
-                            'last_name' => $orderRequestData['shipping_last_name'],
-                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
-                            'street_line_2' => null,
-                            'city' => $orderRequestData['shipping_city'],
-                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
-                            'state' => $orderRequestData['shipping_region'],
-                            'country' => $orderRequestData['shipping_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
                             ]
                         ]
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->decodeResponseJson()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -2116,104 +2128,108 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $productOne['id'],
-                        'attributes' => array_diff_key(
-                            $productOne,
-                            [
-                                'id' => true,
-                            ]
-                        )
-                    ],
-                    [
-                        'type' => 'product',
-                        'id' => $productTwo['id'],
-                        'attributes' => array_diff_key(
-                            $productTwo,
-                            [
-                                'id' => true,
-                            ]
-                        )
-                    ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productOneQuantity,
-                            'weight' => $productOne['weight'],
-                            'initial_price' => $productOne['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productOne['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productOne['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productTwoQuantity,
-                            'weight' => $productTwo['weight'],
-                            'initial_price' => $productTwo['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productTwo['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productTwo['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => $orderRequestData['shipping_first_name'],
-                            'last_name' => $orderRequestData['shipping_last_name'],
-                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
-                            'street_line_2' => null,
-                            'city' => $orderRequestData['shipping_city'],
-                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
-                            'state' => $orderRequestData['shipping_region'],
-                            'country' => $orderRequestData['shipping_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
-                            ]
-                        ],
-                    ]
-                ]
             ],
             $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $productOne['id'],
+                    'attributes' => array_diff_key(
+                        $productOne,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'product',
+                    'id' => $productTwo['id'],
+                    'attributes' => array_diff_key(
+                        $productTwo,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productOneQuantity,
+                        'weight' => $productOne['weight'],
+                        'initial_price' => $productOne['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productOne['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productOne['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productTwoQuantity,
+                        'weight' => $productTwo['weight'],
+                        'initial_price' => $productTwo['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productTwo['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productTwo['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => $orderRequestData['shipping_first_name'],
+                        'last_name' => $orderRequestData['shipping_last_name'],
+                        'street_line_1' => $orderRequestData['shipping_address_line_1'],
+                        'street_line_2' => null,
+                        'city' => $orderRequestData['shipping_city'],
+                        'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                        'state' => $orderRequestData['shipping_region'],
+                        'country' => $orderRequestData['shipping_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ],
+                ]
+            ],
+            $response->decodeResponseJson()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -2546,104 +2562,108 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $productOne['id'],
-                        'attributes' => array_diff_key(
-                            $productOne,
-                            [
-                                'id' => true,
-                            ]
-                        )
-                    ],
-                    [
-                        'type' => 'product',
-                        'id' => $productTwo['id'],
-                        'attributes' => array_diff_key(
-                            $productTwo,
-                            [
-                                'id' => true,
-                            ]
-                        )
-                    ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productOneQuantity,
-                            'weight' => $productOne['weight'],
-                            'initial_price' => $productOne['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productOne['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productOne['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productTwoQuantity,
-                            'weight' => $productTwo['weight'],
-                            'initial_price' => $productTwo['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productTwo['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productTwo['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => $orderRequestData['shipping_first_name'],
-                            'last_name' => $orderRequestData['shipping_last_name'],
-                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
-                            'street_line_2' => null,
-                            'city' => $orderRequestData['shipping_city'],
-                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
-                            'state' => $orderRequestData['shipping_region'],
-                            'country' => $orderRequestData['shipping_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
-                            ]
-                        ],
-                    ]
-                ]
             ],
             $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $productOne['id'],
+                    'attributes' => array_diff_key(
+                        $productOne,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'product',
+                    'id' => $productTwo['id'],
+                    'attributes' => array_diff_key(
+                        $productTwo,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productOneQuantity,
+                        'weight' => $productOne['weight'],
+                        'initial_price' => $productOne['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productOne['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productOne['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productTwoQuantity,
+                        'weight' => $productTwo['weight'],
+                        'initial_price' => $productTwo['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productTwo['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productTwo['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => $orderRequestData['shipping_first_name'],
+                        'last_name' => $orderRequestData['shipping_last_name'],
+                        'street_line_1' => $orderRequestData['shipping_address_line_1'],
+                        'street_line_2' => null,
+                        'city' => $orderRequestData['shipping_city'],
+                        'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                        'state' => $orderRequestData['shipping_region'],
+                        'country' => $orderRequestData['shipping_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ],
+                ]
+            ],
+            $response->decodeResponseJson()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -2982,105 +3002,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $productOne['id'],
-                        'attributes' => array_diff_key(
-                            $productOne,
-                            [
-                                'id' => true,
-                            ]
-                        )
-                    ],
-                    [
-                        'type' => 'product',
-                        'id' => $productTwo['id'],
-                        'attributes' => array_diff_key(
-                            $productTwo,
-                            [
-                                'id' => true,
-                            ]
-                        )
-                    ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productOneQuantity,
-                            'weight' => $productOne['weight'],
-                            'initial_price' => $productOne['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productOne['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productOne['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productTwoQuantity,
-                            'weight' => $productTwo['weight'],
-                            'initial_price' => $productTwo['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productTwo['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productTwo['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => $shippingAddress['first_name'],
-                            'last_name' => $shippingAddress['last_name'],
-                            'street_line_1' => $shippingAddress['street_line_1'],
-                            'street_line_2' => null,
-                            'city' => $shippingAddress['city'],
-                            'zip' => $shippingAddress['zip'],
-                            'state' => $shippingAddress['state'],
-                            'country' => $shippingAddress['country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
-                            ]
-                        ],
-                    ]
-                ]
             ],
             $response->decodeResponseJson()
         );
+
+        $this->assertIncludes([], $response->decodeResponseJson()['included']);
 
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -3374,104 +3300,108 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $productOne['id'],
-                        'attributes' => array_diff_key(
-                            $productOne,
-                            [
-                                'id' => true,
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $productOne['id'],
+                    'attributes' => array_diff_key(
+                        $productOne,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'product',
+                    'id' => $productTwo['id'],
+                    'attributes' => array_diff_key(
+                        $productTwo,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productOneQuantity,
+                        'weight' => $productOne['weight'],
+                        'initial_price' => $productOne['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productOne['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productOne['id']
                             ]
-                        )
+                        ]
                     ],
-                    [
-                        'type' => 'product',
-                        'id' => $productTwo['id'],
-                        'attributes' => array_diff_key(
-                            $productTwo,
-                            [
-                                'id' => true,
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productTwoQuantity,
+                        'weight' => $productTwo['weight'],
+                        'initial_price' => $productTwo['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productTwo['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productTwo['id']
                             ]
-                        )
+                        ]
                     ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => $orderRequestData['shipping_first_name'],
+                        'last_name' => $orderRequestData['shipping_last_name'],
+                        'street_line_1' => $orderRequestData['shipping_address_line_1'],
+                        'street_line_2' => null,
+                        'city' => $orderRequestData['shipping_city'],
+                        'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                        'state' => $orderRequestData['shipping_region'],
+                        'country' => $orderRequestData['shipping_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
                     ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productOneQuantity,
-                            'weight' => $productOne['weight'],
-                            'initial_price' => $productOne['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productOne['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productOne['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productTwoQuantity,
-                            'weight' => $productTwo['weight'],
-                            'initial_price' => $productTwo['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productTwo['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productTwo['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => $orderRequestData['shipping_first_name'],
-                            'last_name' => $orderRequestData['shipping_last_name'],
-                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
-                            'street_line_2' => null,
-                            'city' => $orderRequestData['shipping_city'],
-                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
-                            'state' => $orderRequestData['shipping_region'],
-                            'country' => $orderRequestData['shipping_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
                             ]
                         ]
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->decodeResponseJson()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -3736,120 +3666,124 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $productOne['id'],
-                        'attributes' => array_diff_key(
-                            $productOne,
-                            [
-                                'id' => true,
-                            ]
-                        )
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $productOne['id'],
+                    'attributes' => array_diff_key(
+                        $productOne,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'product',
+                    'id' => $productTwo['id'],
+                    'attributes' => array_diff_key(
+                        $productTwo,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productOneQuantity,
+                        'weight' => $productOne['weight'],
+                        'initial_price' => $productOne['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productOne['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
                     ],
-                    [
-                        'type' => 'product',
-                        'id' => $productTwo['id'],
-                        'attributes' => array_diff_key(
-                            $productTwo,
-                            [
-                                'id' => true,
-                            ]
-                        )
-                    ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productOneQuantity,
-                            'weight' => $productOne['weight'],
-                            'initial_price' => $productOne['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productOne['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productOne['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productTwoQuantity,
-                            'weight' => $productTwo['weight'],
-                            'initial_price' => $productTwo['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $productTwo['price'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productTwo['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => null,
-                            'last_name' => null,
-                            'street_line_1' => null,
-                            'street_line_2' => null,
-                            'city' => null,
-                            'zip' => $requestData['billing_zip_or_postal_code'],
-                            'state' => $requestData['billing_region'],
-                            'country' => $requestData['billing_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productOne['id']
                             ]
                         ]
                     ],
-                    [
-                        'type' => 'address',
-                        'id' => $shippingAddress['id'],
-                        'attributes' => array_diff_key(
-                            $shippingAddress,
-                            [
-                                'id' => true,
-                                'user_id' => true,
-                                'customer_id' => true
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productTwoQuantity,
+                        'weight' => $productTwo['weight'],
+                        'initial_price' => $productTwo['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $productTwo['price'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productTwo['id']
                             ]
-                        ),
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => null,
+                        'last_name' => null,
+                        'street_line_1' => null,
+                        'street_line_2' => null,
+                        'city' => null,
+                        'zip' => $requestData['billing_zip_or_postal_code'],
+                        'state' => $requestData['billing_region'],
+                        'country' => $requestData['billing_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'address',
+                    'id' => $shippingAddress['id'],
+                    'attributes' => array_diff_key(
+                        $shippingAddress,
+                        [
+                            'id' => true,
+                            'user_id' => true,
+                            'customer_id' => true
+                        ]
+                    ),
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
                             ]
                         ]
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->decodeResponseJson()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -4223,95 +4157,99 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $product['id'],
-                        'attributes' => array_diff_key(
-                            $product,
-                            [
-                                'id' => true,
-                            ]
-                        )
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $product['id'],
+                    'attributes' => array_diff_key(
+                        $product,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productQuantity,
+                        'weight' => $product['weight'],
+                        'initial_price' => $product['price'],
+                        'total_discounted' => $expectedDiscountAmount,
+                        'final_price' => $expectedProductDiscountedPrice,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
                     ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productQuantity,
-                            'weight' => $product['weight'],
-                            'initial_price' => $product['price'],
-                            'total_discounted' => $expectedDiscountAmount,
-                            'final_price' => $expectedProductDiscountedPrice,
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $product['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => null,
-                            'last_name' => null,
-                            'street_line_1' => null,
-                            'street_line_2' => null,
-                            'city' => null,
-                            'zip' => $orderRequestData['billing_zip_or_postal_code'],
-                            'state' => $orderRequestData['billing_region'],
-                            'country' => $orderRequestData['billing_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
                             ]
                         ]
                     ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => $orderRequestData['shipping_first_name'],
-                            'last_name' => $orderRequestData['shipping_last_name'],
-                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
-                            'street_line_2' => null,
-                            'city' => $orderRequestData['shipping_city'],
-                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
-                            'state' => $orderRequestData['shipping_region'],
-                            'country' => $orderRequestData['shipping_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => null,
+                        'last_name' => null,
+                        'street_line_1' => null,
+                        'street_line_2' => null,
+                        'city' => null,
+                        'zip' => $orderRequestData['billing_zip_or_postal_code'],
+                        'state' => $orderRequestData['billing_region'],
+                        'country' => $orderRequestData['billing_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => $orderRequestData['shipping_first_name'],
+                        'last_name' => $orderRequestData['shipping_last_name'],
+                        'street_line_1' => $orderRequestData['shipping_address_line_1'],
+                        'street_line_2' => null,
+                        'city' => $orderRequestData['shipping_city'],
+                        'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                        'state' => $orderRequestData['shipping_region'],
+                        'country' => $orderRequestData['shipping_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
                             ]
                         ]
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->decodeResponseJson()['included']
         );
 
         $this->assertDatabaseHas(
@@ -4518,95 +4456,99 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $product['id'],
-                        'attributes' => array_diff_key(
-                            $product,
-                            [
-                                'id' => true,
-                            ]
-                        )
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $product['id'],
+                    'attributes' => array_diff_key(
+                        $product,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productQuantity,
+                        'weight' => $product['weight'],
+                        'initial_price' => $product['price'],
+                        'total_discounted' => $expectedDiscountAmount,
+                        'final_price' => $expectedProductDiscountedPrice,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
                     ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productQuantity,
-                            'weight' => $product['weight'],
-                            'initial_price' => $product['price'],
-                            'total_discounted' => $expectedDiscountAmount,
-                            'final_price' => $expectedProductDiscountedPrice,
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $product['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => null,
-                            'last_name' => null,
-                            'street_line_1' => null,
-                            'street_line_2' => null,
-                            'city' => null,
-                            'zip' => $orderRequestData['billing_zip_or_postal_code'],
-                            'state' => $orderRequestData['billing_region'],
-                            'country' => $orderRequestData['billing_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
                             ]
                         ]
                     ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => $orderRequestData['shipping_first_name'],
-                            'last_name' => $orderRequestData['shipping_last_name'],
-                            'street_line_1' => $orderRequestData['shipping_address_line_1'],
-                            'street_line_2' => null,
-                            'city' => $orderRequestData['shipping_city'],
-                            'zip' => $orderRequestData['shipping_zip_or_postal_code'],
-                            'state' => $orderRequestData['shipping_region'],
-                            'country' => $orderRequestData['shipping_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => null,
+                        'last_name' => null,
+                        'street_line_1' => null,
+                        'street_line_2' => null,
+                        'city' => null,
+                        'zip' => $orderRequestData['billing_zip_or_postal_code'],
+                        'state' => $orderRequestData['billing_region'],
+                        'country' => $orderRequestData['billing_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => $orderRequestData['shipping_first_name'],
+                        'last_name' => $orderRequestData['shipping_last_name'],
+                        'street_line_1' => $orderRequestData['shipping_address_line_1'],
+                        'street_line_2' => null,
+                        'city' => $orderRequestData['shipping_city'],
+                        'zip' => $orderRequestData['shipping_zip_or_postal_code'],
+                        'state' => $orderRequestData['shipping_region'],
+                        'country' => $orderRequestData['shipping_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
                             ]
                         ]
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->decodeResponseJson()['included']
         );
 
         $this->assertDatabaseHas(
@@ -6127,128 +6069,134 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $productOne['id'],
-                        'attributes' => array_diff_key(
-                            $productOne,
-                            [
-                                'id' => true,
-                            ]
-                        )
-                    ],
-                    [
-                        'type' => 'product',
-                        'id' => $productTwo['id'],
-                        'attributes' => array_diff_key(
-                            $productTwo,
-                            [
-                                'id' => true,
-                            ]
-                        )
-                    ],
-                    [
-                        'type' => 'customer',
-                        'attributes' => [
-                            'brand' => $brand,
-                            'phone' => null,
-                            'email' => $billingEmailAddress,
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
+            ],
+            $decodedResponse
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $productOne['id'],
+                    'attributes' => array_diff_key(
+                        $productOne,
+                        [
+                            'id' => true,
                         ]
+                    )
+                ],
+                [
+                    'type' => 'product',
+                    'id' => $productTwo['id'],
+                    'attributes' => array_diff_key(
+                        $productTwo,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'customer',
+                    'attributes' => [
+                        'brand' => $brand,
+                        'phone' => null,
+                        'email' => $billingEmailAddress,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ]
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productOneQuantity,
+                        'weight' => $productOne['weight'],
+                        'initial_price' => $productOne['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $expectedInitialProductOnePrice,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
                     ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productOneQuantity,
-                            'weight' => $productOne['weight'],
-                            'initial_price' => $productOne['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $expectedInitialProductOnePrice,
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productOne['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productTwoQuantity,
-                            'weight' => $productTwo['weight'],
-                            'initial_price' => $productTwo['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $expectedInitialProductTwoPrice,
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $productTwo['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => null,
-                            'last_name' => null,
-                            'street_line_1' => null,
-                            'street_line_2' => null,
-                            'city' => null,
-                            'zip' => $requestData['billing_zip_or_postal_code'],
-                            'state' => $requestData['billing_region'],
-                            'country' => $requestData['billing_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'customer' => [
-                                'data' => [
-                                    'type' => 'customer',
-                                ]
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productOne['id']
                             ]
                         ]
                     ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => $requestData['shipping_first_name'],
-                            'last_name' => $requestData['shipping_last_name'],
-                            'street_line_1' => $requestData['shipping_address_line_1'],
-                            'street_line_2' => null,
-                            'city' => $requestData['shipping_city'],
-                            'zip' => $requestData['shipping_zip_or_postal_code'],
-                            'state' => $requestData['shipping_region'],
-                            'country' => $requestData['shipping_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'customer' => [
-                                'data' => [
-                                    'type' => 'customer',
-                                ]
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productTwoQuantity,
+                        'weight' => $productTwo['weight'],
+                        'initial_price' => $productTwo['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $expectedInitialProductTwoPrice,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productTwo['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => null,
+                        'last_name' => null,
+                        'street_line_1' => null,
+                        'street_line_2' => null,
+                        'city' => null,
+                        'zip' => $requestData['billing_zip_or_postal_code'],
+                        'state' => $requestData['billing_region'],
+                        'country' => $requestData['billing_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'customer' => [
+                            'data' => [
+                                'type' => 'customer',
+                                'id' => 1,
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => $requestData['shipping_first_name'],
+                        'last_name' => $requestData['shipping_last_name'],
+                        'street_line_1' => $requestData['shipping_address_line_1'],
+                        'street_line_2' => null,
+                        'city' => $requestData['shipping_city'],
+                        'zip' => $requestData['shipping_zip_or_postal_code'],
+                        'state' => $requestData['shipping_region'],
+                        'country' => $requestData['shipping_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'customer' => [
+                            'data' => [
+                                'type' => 'customer',
+                                'id' => 1,
                             ]
                         ]
                     ]
                 ]
             ],
-            $decodedResponse
+            $response->decodeResponseJson()['included']
         );
 
         $customerId = null;
@@ -6546,70 +6494,74 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $product['id'],
-                        'attributes' => array_diff_key(
-                            $product,
-                            [
-                                'id' => true,
+            ],
+            $decodedResponse
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $product['id'],
+                    'attributes' => array_diff_key(
+                        $product,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productQuantity,
+                        'weight' => $product['weight'],
+                        'initial_price' => $product['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $expectedInitialProductPrice,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
                             ]
-                        )
+                        ]
                     ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => null,
+                        'last_name' => null,
+                        'street_line_1' => null,
+                        'street_line_2' => null,
+                        'city' => null,
+                        'zip' => $requestData['billing_zip_or_postal_code'],
+                        'state' => $requestData['billing_region'],
+                        'country' => $requestData['billing_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
                     ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productQuantity,
-                            'weight' => $product['weight'],
-                            'initial_price' => $product['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $expectedInitialProductPrice,
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $product['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => null,
-                            'last_name' => null,
-                            'street_line_1' => null,
-                            'street_line_2' => null,
-                            'city' => null,
-                            'zip' => $requestData['billing_zip_or_postal_code'],
-                            'state' => $requestData['billing_region'],
-                            'country' => $requestData['billing_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
                             ]
                         ]
                     ]
                 ]
             ],
-            $decodedResponse
+            $response->decodeResponseJson()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -6938,70 +6890,74 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'product',
-                        'id' => $product['id'],
-                        'attributes' => array_diff_key(
-                            $product,
-                            [
-                                'id' => true,
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $product['id'],
+                    'attributes' => array_diff_key(
+                        $product,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productQuantity,
+                        'weight' => $product['weight'],
+                        'initial_price' => $product['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $expectedInitialProductPrice,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
                             ]
-                        )
+                        ]
                     ],
-                    [
-                        'type' => 'user',
-                        'id' => $userId,
-                        'attributes' => []
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => null,
+                        'last_name' => null,
+                        'street_line_1' => null,
+                        'street_line_2' => null,
+                        'city' => null,
+                        'zip' => $requestData['billing_zip_or_postal_code'],
+                        'state' => $requestData['billing_region'],
+                        'country' => $requestData['billing_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
                     ],
-                    [
-                        'type' => 'orderItem',
-                        'attributes' => [
-                            'quantity' => $productQuantity,
-                            'weight' => $product['weight'],
-                            'initial_price' => $product['price'],
-                            'total_discounted' => 0,
-                            'final_price' => $expectedInitialProductPrice,
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $product['id']
-                                ]
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'address',
-                        'attributes' => [
-                            'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
-                            'brand' => $brand,
-                            'first_name' => null,
-                            'last_name' => null,
-                            'street_line_1' => null,
-                            'street_line_2' => null,
-                            'city' => null,
-                            'zip' => $requestData['billing_zip_or_postal_code'],
-                            'state' => $requestData['billing_region'],
-                            'country' => $requestData['billing_country'],
-                            'created_at' => Carbon::now()
-                                ->toDateTimeString(),
-                        ],
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId,
-                                ]
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
                             ]
                         ]
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->decodeResponseJson()['included']
         );
 
         $this->assertDatabaseHas(

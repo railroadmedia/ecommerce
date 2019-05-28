@@ -18,8 +18,7 @@ return [
     'enable_query_log' => false,
 
     // unique user validation database info
-    'database_info_for_unique_user_email_validation' =>
-    [
+    'database_info_for_unique_user_email_validation' => [
         'database_connection_name' => 'mysql',
         'table' => 'users',
         'email_column' => 'email',

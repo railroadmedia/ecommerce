@@ -28,6 +28,7 @@ class CartControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'is_physical' => false,
+            'weight' => 0,
             'stock' => $this->faker->numberBetween(5, 100),
             'price' => 92.22,
         ]);
@@ -56,7 +57,7 @@ class CartControllerTest extends EcommerceTestCase
                         'subscription_interval_count' => $product['subscription_interval_count'],
                         'price_before_discounts' => $product['price'],
                         'price_after_discounts' => $product['price'],
-                        'requires_shipping' => true,
+                        'requires_shipping' => false,
                     ]
                 ],
                 'discounts' => [],
