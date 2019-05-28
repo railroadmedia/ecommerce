@@ -9,30 +9,10 @@ use Railroad\Ecommerce\Entities\Order;
 
 class OrderTransformer extends TransformerAbstract
 {
+    protected $defaultIncludes = ['orderItem', 'user', 'customer', 'billingAddress', 'shippingAddress'];
+
     public function transform(Order $order)
     {
-        if (count($order->getOrderItems())) {
-            $this->defaultIncludes[] = 'orderItem';
-        }
-
-        if ($order->getUser()) {
-            // user relation is nullable
-            $this->defaultIncludes[] = 'user';
-        }
-
-        if ($order->getCustomer()) {
-            // customer relation is nullable
-            $this->defaultIncludes[] = 'customer';
-        }
-
-        if ($order->getBillingAddress()) {
-            $this->defaultIncludes[] = 'billingAddress';
-        }
-
-        if ($order->getShippingAddress()) {
-            $this->defaultIncludes[] = 'shippingAddress';
-        }
-
         return [
             'id' => $order->getId(),
             'total_due' => $order->getTotalDue(),
@@ -57,6 +37,10 @@ class OrderTransformer extends TransformerAbstract
 
     public function includeOrderItem(Order $order)
     {
+        if (empty($order->getOrderItems()) || $order->getOrderItems()->count() == 0) {
+            return null;
+        }
+
         if ($order->getOrderItems()
                 ->first() instanceof Proxy) {
             return $this->collection(
@@ -76,6 +60,10 @@ class OrderTransformer extends TransformerAbstract
 
     public function includeUser(Order $order)
     {
+        if (empty($order->getUser())) {
+            return null;
+        }
+
         $userProvider = app()->make(UserProviderInterface::class);
 
         $userTransformer = $userProvider->getUserTransformer();
@@ -89,6 +77,10 @@ class OrderTransformer extends TransformerAbstract
 
     public function includeCustomer(Order $order)
     {
+        if (empty($order->getCustomer())) {
+            return null;
+        }
+
         if ($order->getCustomer() instanceof Proxy) {
             return $this->item(
                 $order->getCustomer(),
@@ -107,6 +99,10 @@ class OrderTransformer extends TransformerAbstract
 
     public function includeBillingAddress(Order $order)
     {
+        if (empty($order->getBillingAddress())) {
+            return null;
+        }
+
         if ($order->getBillingAddress() instanceof Proxy) {
             return $this->item(
                 $order->getBillingAddress(),
@@ -121,10 +117,16 @@ class OrderTransformer extends TransformerAbstract
                 'address'
             );
         }
+
+        return null;
     }
 
     public function includeShippingAddress(Order $order)
     {
+        if (empty($order->getShippingAddress())) {
+            return null;
+        }
+
         if ($order->getShippingAddress() instanceof Proxy) {
             return $this->item(
                 $order->getShippingAddress(),
@@ -139,5 +141,7 @@ class OrderTransformer extends TransformerAbstract
                 'address'
             );
         }
+
+        return null;
     }
 }

@@ -61,11 +61,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->cartService = $this->app->make(CartService::class);
         $this->cartAddressService = $this->app->make(CartAddressService::class);
-
-        // OrderItemTransformer has transformed entities static registry, needed to handle cyclic entities relations
-        // these must be reset every test
-        OrderItemTransformer::$transformedOrders = [];
-        OrderItemTransformer::$transformedProducts = [];
     }
 
     protected function getExpectedTaxes(float $price, string $billingCountry, string $billingState)

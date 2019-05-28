@@ -8,27 +8,10 @@ use Railroad\Ecommerce\Entities\OrderItem;
 
 class OrderItemTransformer extends TransformerAbstract
 {
-    public static $transformedOrders = [];
-    public static $transformedProducts = [];
+    protected $defaultIncludes = ['order', 'product'];
 
     public function transform(OrderItem $orderItem)
     {
-        if ($orderItem->getOrder() &&
-            !isset(
-                self::$transformedOrders[$orderItem->getOrder()
-                    ->getId()]
-            )) {
-            $this->defaultIncludes[] = 'order';
-        }
-
-        if ($orderItem->getProduct() &&
-            !isset(
-                self::$transformedProducts[$orderItem->getProduct()
-                    ->getId()]
-            )) {
-            $this->defaultIncludes[] = 'product';
-        }
-
         return [
             'id' => $orderItem->getId(),
             'quantity' => $orderItem->getQuantity(),
@@ -47,8 +30,9 @@ class OrderItemTransformer extends TransformerAbstract
 
     public function includeOrder(OrderItem $orderItem)
     {
-        self::$transformedOrders[$orderItem->getOrder()
-            ->getId()] = true;
+        if (empty($orderItem->getOrder())) {
+            return null;
+        }
 
         if ($orderItem->getOrder() instanceof Proxy) {
             return $this->item(
@@ -58,9 +42,13 @@ class OrderItemTransformer extends TransformerAbstract
             );
         }
         else {
+            $transformer = new OrderTransformer();
+            $defaultIncludes = $transformer->getDefaultIncludes();
+            $transformer->setDefaultIncludes(array_diff($defaultIncludes, ['orderItem']));
+
             return $this->item(
                 $orderItem->getOrder(),
-                new OrderTransformer(),
+                $transformer,
                 'order'
             );
         }
@@ -68,9 +56,10 @@ class OrderItemTransformer extends TransformerAbstract
 
     public function includeProduct(OrderItem $orderItem)
     {
-        self::$transformedProducts[$orderItem->getProduct()
-            ->getId()] = true;
-
+        if (empty($orderItem->getProduct())) {
+            return null;
+        }
+        
         if ($orderItem->getProduct() instanceof Proxy) {
             return $this->item(
                 $orderItem->getProduct(),
@@ -79,9 +68,13 @@ class OrderItemTransformer extends TransformerAbstract
             );
         }
         else {
+            $transformer = new ProductTransformer();
+            $defaultIncludes = $transformer->getDefaultIncludes();
+            $transformer->setDefaultIncludes(array_diff($defaultIncludes, ['product']));
+
             return $this->item(
                 $orderItem->getProduct(),
-                new ProductTransformer(),
+                $transformer,
                 'product'
             );
         }
