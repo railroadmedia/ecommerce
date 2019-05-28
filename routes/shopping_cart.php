@@ -37,4 +37,8 @@ Route::group([
     Route::put('/json/session-address',
         Railroad\Ecommerce\Controllers\CartJsonController::class . '@storeAddress')
         ->name('shopping-cart.session-address');
+
+    Route::put('/session/address',
+        Railroad\Ecommerce\Controllers\CartJsonController::class . '@storeAddress')
+        ->name('shopping-cart.session-address');
 });
