@@ -21,12 +21,15 @@ class DecoratedOrderTransformer extends OrderTransformer
         $this->subscriptions = $subscriptions;
         $this->paymentPlans = $paymentPlans;
 
-        $this->defaultIncludes = [
-            'payments',
-            'refunds',
-            'subscriptions',
-            'paymentPlans'
-        ];
+        $this->defaultIncludes = array_merge(
+            $this->defaultIncludes,
+            [
+                'payments',
+                'refunds',
+                'subscriptions',
+                'paymentPlans'
+            ]
+        );
     }
 
     public function includePayments()
