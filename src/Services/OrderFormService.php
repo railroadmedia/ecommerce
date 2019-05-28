@@ -204,7 +204,7 @@ class OrderFormService
                 }
                 else {
                     // assume request not having redirect is json request
-                    throw new StripeCardException($exceptionData['error']);
+                    throw new StripeCardException($exceptionData['error']['message']);
                 }
             }
 
