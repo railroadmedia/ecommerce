@@ -101,7 +101,8 @@ class OrderFormSubmitRequest extends FormRequest
             'brand' => 'string',
             'payment_method_type' => 'string|required_without:payment_method_id',
             'payment_method_id' => 'integer|required_without:payment_method_type',
-            'billing_country' => 'string|required_without:payment_method_id|in:' . implode(',', config('location.countries')),
+            'billing_country' => 'string|required_without:payment_method_id|in:' .
+                implode(',', config('location.countries')),
             'card_token' => 'string|required_if:payment_method_type,' . PaymentMethod::TYPE_CREDIT_CARD,
             'gateway' => 'string|required_without:payment_method_id',
             'currency' => 'string|in:' . implode(',', config('ecommerce.supported_currencies')),
@@ -110,9 +111,9 @@ class OrderFormSubmitRequest extends FormRequest
         if (!$this->cartService->hasAnyRecurringSubscriptionProducts()) {
             $rules['payment_plan_number_of_payments'] =
                 'integer|in:' . implode(',', config('ecommerce.payment_plan_options'));
-        } else {
-            $rules['payment_plan_number_of_payments'] =
-                'integer|in:1';
+        }
+        else {
+            $rules['payment_plan_number_of_payments'] = 'integer|in:1';
         }
 
         // billing address
@@ -154,7 +155,12 @@ class OrderFormSubmitRequest extends FormRequest
             }
             else {
                 $rules += [
-                    'account_creation_email' => 'required_without:billing_email|email',
+                    'account_creation_email' => 'required_without:billing_email|email|unique:' .
+                        config('ecommerce.database_info_for_unique_user_email_validation.database_connection_name') .
+                        '.' .
+                        config('ecommerce.database_info_for_unique_user_email_validation.table') .
+                        ',' .
+                        config('ecommerce.database_info_for_unique_user_email_validation.email_column'),
                     'account_creation_password' => 'required_with:account_creation_email|confirmed',
                 ];
             }
@@ -172,8 +178,14 @@ class OrderFormSubmitRequest extends FormRequest
 
         $cart->setPaymentPlanNumberOfPayments($this->get('payment_plan_number_of_payments', 1));
 
-        $cart->setShippingAddress($this->getShippingAddress()->toStructure());
-        $cart->setBillingAddress($this->getBillingAddress()->toStructure());
+        $cart->setShippingAddress(
+            $this->getShippingAddress()
+                ->toStructure()
+        );
+        $cart->setBillingAddress(
+            $this->getBillingAddress()
+                ->toStructure()
+        );
 
         $cart->setBillingAddressId($this->get('billing_address_id'));
         $cart->setShippingAddressId($this->get('shipping_address_id'));

@@ -190,6 +190,14 @@ class EcommerceTestCase extends BaseTestCase
         $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
 
         $app['config']->set('ecommerce.database_connection_name', 'testbench');
+        $app['config']->set(
+            'ecommerce.database_info_for_unique_user_email_validation',
+            $defaultConfig['database_info_for_unique_user_email_validation']
+        );
+        $app['config']->set(
+            'ecommerce.database_info_for_unique_user_email_validation.database_connection_name',
+            'ecommerce_sqlite'
+        );
         $app['config']->set('ecommerce.cache_duration', 60);
         $app['config']->set('ecommerce.redis_host', $defaultConfig['redis_host']);
         $app['config']->set('ecommerce.redis_port', $defaultConfig['redis_port']);

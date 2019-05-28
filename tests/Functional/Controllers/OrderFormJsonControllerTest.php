@@ -563,6 +563,115 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_submit_order_new_user_unique_email_failed()
+    {
+        $email = $this->faker->email;
+        $userId = $this->databaseManager->table('users')
+            ->insertGetId([
+                'email' => $email,
+                'password' => $this->faker->password,
+                'display_name' => $this->faker->name,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]);
+
+        $this->authManagerMock =
+            $this->getMockBuilder(AuthManager::class)
+                ->disableOriginalConstructor()
+                ->setMethods(['guard'])
+                ->getMock();
+
+        $this->sessionGuardMock =
+            $this->getMockBuilder(SessionGuard::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $this->authManagerMock->method('guard')
+            ->willReturn($this->sessionGuardMock);
+
+        $this->app->instance(Factory::class, $this->authManagerMock);
+
+        $this->sessionGuardMock->method('loginUsingId')
+            ->willReturn(true);
+
+
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $country = 'Canada';
+        $state = 'alberta';
+        $zip = $this->faker->postcode;
+
+        $currency = $this->getCurrency();
+
+        $product = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+            ]
+        );
+
+        $productQuantity = 2;
+
+        $this->cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
+        );
+
+        $cardToken = 'token' . rand();
+        $accountCreationPassword = $this->faker->password;
+
+        $requestData = [
+            'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'card_token' => $cardToken,
+            'billing_region' => $state,
+            'billing_zip_or_postal_code' => $zip,
+            'billing_country' => $country,
+            'gateway' => $brand,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $state,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
+            'currency' => $currency,
+            'account_creation_email' => $email,
+            'account_creation_password' => $accountCreationPassword,
+            'account_creation_password_confirmation' => $accountCreationPassword,
+        ];
+
+        $response = $this->call(
+            'PUT',
+            '/json/order-form/submit',
+            $requestData
+        );
+
+        $this->assertEquals(422, $response->getStatusCode());
+
+        $this->assertEquals(
+            [
+                [
+                    'source' => 'account_creation_email',
+                    'detail' => 'The account creation email has already been taken.',
+                    'title' => 'Validation failed.'
+                ],
+            ],
+            $response->decodeResponseJson('errors')
+        );
+    }
+
+
     public function test_submit_order_credit_card_payment()
     {
         $userId = $this->createAndLogInNewUser();
