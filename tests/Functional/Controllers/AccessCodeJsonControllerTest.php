@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Ecommerce\Tests\Fixtures\UserProvider;
 
@@ -283,8 +282,10 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
         //assert that all the validation errors are returned
         $this->assertEquals(
             [
-                'title' => 'Not found.',
-                'detail' => 'Claim failed, user not found with id: ' . $userId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Claim failed, user not found with id: ' . $userId,
+                ]
             ],
             $response->decodeResponseJson('errors')
         );
@@ -292,7 +293,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
     public function test_claim()
     {
-        $adminId  = $this->createAndLogInNewUser();
+        $adminId = $this->createAndLogInNewUser();
 
         $user = $this->fakeUser();
 

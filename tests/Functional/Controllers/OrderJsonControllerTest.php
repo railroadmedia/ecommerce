@@ -46,8 +46,10 @@ class OrderJsonControllerTest extends EcommerceTestCase
         // assert the error message that it's returned in JSON format
         $this->assertEquals(
             [
-                'title' => 'Not found.',
-                'detail' => 'Delete failed, order not found with id: ' . $randomId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Delete failed, order not found with id: ' . $randomId,
+                ]
             ],
             $results->decodeResponseJson('errors')
         );
@@ -539,7 +541,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                         ]
                     )
                 ],
-            
+
             ],
             $response->decodeResponseJson()['included']
         );

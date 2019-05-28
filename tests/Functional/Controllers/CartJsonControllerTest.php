@@ -1158,6 +1158,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'active' => 1,
+            'weight' => 2,
+            'is_physical' => true,
             'stock' => $this->faker->numberBetween(3, 5),
         ]);
 

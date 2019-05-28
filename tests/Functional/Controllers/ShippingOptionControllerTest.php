@@ -129,10 +129,11 @@ class ShippingOptionControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             [
-                'title' => 'Not found.',
-                'detail' => 'Update failed, shipping option not found with id: ' . $randomId,
-            ]
-            ,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Update failed, shipping option not found with id: ' . $randomId,
+                ]
+            ],
             $results->decodeResponseJson('errors')
         );
     }
@@ -215,8 +216,10 @@ class ShippingOptionControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             [
-                'title' => 'Not found.',
-                'detail' => 'Delete failed, shipping option not found with id: ' . $randomId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Delete failed, shipping option not found with id: ' . $randomId,
+                ]
             ],
             $results->decodeResponseJson('errors')
         );

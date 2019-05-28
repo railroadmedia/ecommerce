@@ -279,8 +279,10 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert that the error message is received
         $errors = [
-            'title'  => 'Not found.',
-            'detail' => 'Update failed, product not found with id: ' . $randomProductId
+            [
+                'title' => 'Not found.',
+                'detail' => 'Update failed, product not found with id: ' . $randomProductId
+            ]
         ];
         $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
     }
@@ -401,8 +403,10 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert that the proper error messages are received
         $errors = [
-            'detail' => 'Delete failed, product not found with id: ' . $randomId,
-            'title' => 'Not found.'
+            [
+                'detail' => 'Delete failed, product not found with id: ' . $randomId,
+                'title' => 'Not found.'
+            ]
         ];
         $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
     }
@@ -689,8 +693,10 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert that the proper error messages are received
         $errors = [
-            'title' => 'Not found.',
-            'detail' => 'Pull failed, product not found with id: '.$randomId
+            [
+                'title' => 'Not found.',
+                'detail' => 'Pull failed, product not found with id: ' . $randomId
+            ]
         ];
 
         $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
@@ -765,8 +771,10 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         // assert that the proper error messages are received
         $errors = [
-            'title' => 'Not found.',
-            'detail' => 'Pull failed, product not found with id: '.$product['id']
+            [
+                'title' => 'Not found.',
+                'detail' => 'Pull failed, product not found with id: ' . $product['id']
+            ]
         ];
 
         $this->assertEquals($errors, $results->decodeResponseJson()['errors']);

@@ -70,8 +70,10 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         // assert the error message that it's returned in JSON format
         $this->assertEquals(
             [
-                'title' => 'Not found.',
-                'detail' => 'Delete failed, subscription not found with id: ' . $randomId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Delete failed, subscription not found with id: ' . $randomId,
+                ]
             ],
             $results->decodeResponseJson('errors')
         );
@@ -493,8 +495,10 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         // assert the error message that it's returned in JSON format
         $this->assertEquals(
             [
-                'title' => 'Not found.',
-                'detail' => 'Update failed, subscription not found with id: ' . $randomId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Update failed, subscription not found with id: ' . $randomId,
+                ]
             ],
             $results->decodeResponseJson('errors')
         );

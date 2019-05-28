@@ -132,8 +132,10 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         // assert the error message that it's returned in JSON format
         $this->assertEquals(
             [
-                'title'  => 'Not found.',
-                'detail' => 'Update failed, discount not found with id: ' . $randomId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Update failed, discount not found with id: ' . $randomId,
+                ]
             ],
             $results->decodeResponseJson()['errors']
         );
@@ -257,8 +259,10 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         // assert validation error
         $this->assertEquals(
             [
-                'detail' => 'Delete failed, discount not found with id: ' . $randomId,
-                'title' => 'Not found.'
+                [
+                    'detail' => 'Delete failed, discount not found with id: ' . $randomId,
+                    'title' => 'Not found.'
+                ]
             ],
             $results->decodeResponseJson()['errors']
         );
@@ -437,8 +441,10 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         // assert error message
         $this->assertEquals(
             [
-                'title'  => 'Not found.',
-                'detail' => 'Pull failed, discount not found with id: ' . $randomDiscountId
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Pull failed, discount not found with id: ' . $randomDiscountId
+                ]
             ],
             $results->decodeResponseJson()['errors']
         );

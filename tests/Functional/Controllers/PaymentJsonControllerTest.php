@@ -840,8 +840,10 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(422, $response->getStatusCode());
         $this->assertEquals(
             [
-                'title' => 'Payment failed.',
-                'detail' => 'Payment failed: ' . $message
+                [
+                    'title' => 'Payment failed.',
+                    'detail' => 'Payment failed: ' . $message
+                ]
             ],
             $response->decodeResponseJson('errors')
         );
@@ -930,8 +932,10 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(422, $response->getStatusCode());
         $this->assertEquals(
             [
-                'title' => 'Payment failed.',
-                'detail' => 'Payment failed: ' . $message
+                [
+                    'title' => 'Payment failed.',
+                    'detail' => 'Payment failed: ' . $message
+                ]
             ],
             $response->decodeResponseJson('errors')
         );
@@ -1198,8 +1202,10 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         // assert the error message that it's returned in JSON format
         $this->assertEquals(
             [
-                'title' => 'Not found.',
-                'detail' => 'Delete failed, payment not found with id: ' . $randomId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Delete failed, payment not found with id: ' . $randomId,
+                ]
             ],
             $results->decodeResponseJson('errors')
         );

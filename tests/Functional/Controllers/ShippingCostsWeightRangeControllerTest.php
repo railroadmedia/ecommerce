@@ -198,8 +198,10 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
         $this->assertEquals(404, $results->getStatusCode());
         $this->assertEquals(
             [
-                'title' => 'Not found.',
-                'detail' => 'Update failed, shipping cost weight range not found with id: ' . $randomId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Update failed, shipping cost weight range not found with id: ' . $randomId,
+                ]
             ],
             $results->decodeResponseJson('errors')
         );
@@ -331,8 +333,10 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             [
-                'title' => 'Not found.',
-                'detail' => 'Delete failed, shipping cost weight range not found with id: ' . $randomId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Delete failed, shipping cost weight range not found with id: ' . $randomId,
+                ]
             ],
             $results->decodeResponseJson('errors')
         );

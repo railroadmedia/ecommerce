@@ -74,8 +74,10 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         // assert that all the validation errors are returned
         $this->assertEquals(
             [
-                'title'  => 'Not found.',
-                'detail' => 'Create discount criteria failed, discount not found with id: ' . $randomId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Create discount criteria failed, discount not found with id: ' . $randomId,
+                ]
             ],
             $results->decodeResponseJson()['errors']
         );
@@ -191,8 +193,10 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         // assert that all the validation errors are returned
         $this->assertEquals(
             [
-                'title'  => 'Not found.',
-                'detail' => 'Update discount criteria failed, discount criteria not found with id: ' . $randomId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Update discount criteria failed, discount criteria not found with id: ' . $randomId,
+                ]
             ],
             $results->decodeResponseJson()['errors']
         );
@@ -301,8 +305,10 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         // assert that all the validation errors are returned
         $this->assertEquals(
             [
-                'title'  => 'Not found.',
-                'detail' => 'Delete discount criteria failed, discount criteria not found with id: ' . $randomId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Delete discount criteria failed, discount criteria not found with id: ' . $randomId,
+                ]
             ],
             $results->decodeResponseJson()['errors']
         );

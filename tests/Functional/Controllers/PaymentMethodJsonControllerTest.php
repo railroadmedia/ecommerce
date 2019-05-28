@@ -1904,8 +1904,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->assertArraySubset(
             [
-                'title' => 'Not allowed.',
-                'detail' => 'Delete failed, can not delete the default payment method',
+                [
+                    'title' => 'Not allowed.',
+                    'detail' => 'Delete failed, can not delete the default payment method',
+                ]
             ],
             $results->decodeResponseJson('errors')
         );
@@ -2061,8 +2063,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->assertArraySubset(
             [
-                'title' => 'Not found.',
-                'detail' => 'Pull failed, user not found with id: ' . $userId,
+                [
+                    'title' => 'Not found.',
+                    'detail' => 'Pull failed, user not found with id: ' . $userId,
+                ]
             ],
             $response->decodeResponseJson('errors')
         );
