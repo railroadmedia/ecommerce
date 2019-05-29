@@ -14,6 +14,9 @@ class DailyStatisticTransformer extends TransformerAbstract
         if (count($dailyStatistic->getProductStatistics())) {
             $this->defaultIncludes[] = 'productStatistic';
         }
+        else {
+            $this->defaultIncludes = [];
+        }
 
         return [
             'id' => $dailyStatistic->getId(),

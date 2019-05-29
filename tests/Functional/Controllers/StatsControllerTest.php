@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 // use Railroad\Ecommerce\Repositories\OrderItemRepository;
@@ -84,6 +85,10 @@ class StatsControllerTest extends EcommerceTestCase
         $userTwo = $this->fakeUser();
         $userThree = $this->fakeUser();
         $userFour = $this->fakeUser();
+        $userFive = $this->fakeUser();
+        $userSix = $this->fakeUser();
+        $userSeven = $this->fakeUser();
+        $userEight = $this->fakeUser();
 
         $brand = $this->faker->word;
         $smallDatetime = Carbon::now()->subDays(30)->format('Y-m-d');
@@ -104,6 +109,36 @@ class StatsControllerTest extends EcommerceTestCase
             'stock' => $this->faker->numberBetween(5, 100),
         ]);
 
+        $productFour = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productFive = $this->fakeProduct([
+            'active' => 1,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+            'subscription_interval_count' => 1,
+        ]);
+
+        $productSix = $this->fakeProduct([
+            'active' => 1,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+            'subscription_interval_count' => 1,
+        ]);
+
+        $productSeven = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        $productEight = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(5, 100),
+        ]);
+
+        // orders
         $orderOneDue = $this->faker->randomFloat(2, 50, 90);
         $orderOneDate = Carbon::now()->subDays(25);
 
@@ -220,6 +255,7 @@ class StatsControllerTest extends EcommerceTestCase
             'final_price' => $orderFourDue
         ]);
 
+        // payments for orders
         $creditCardOne = $this->fakeCreditCard();
 
         $billingAddressOne = $this->fakeAddress([
@@ -237,6 +273,8 @@ class StatsControllerTest extends EcommerceTestCase
             'total_due' => $orderOneDue,
             'total_paid' => $orderOneDue,
             'total_refunded' => 0,
+            'status' => Payment::STATUS_PAID,
+            'conversion_rate' => 1,
             'deleted_at' => null,
             'updated_at' => null,
             'created_at' => $orderOneDate->toDateTimeString(),
@@ -265,6 +303,8 @@ class StatsControllerTest extends EcommerceTestCase
             'total_due' => $orderTwoDue,
             'total_paid' => $orderTwoDue,
             'total_refunded' => 0,
+            'status' => Payment::STATUS_PAID,
+            'conversion_rate' => 1,
             'deleted_at' => null,
             'updated_at' => null,
             'created_at' => $orderTwoDate->toDateTimeString(),
@@ -293,6 +333,8 @@ class StatsControllerTest extends EcommerceTestCase
             'total_due' => $orderThreeDue,
             'total_paid' => $orderThreeDue,
             'total_refunded' => 0,
+            'status' => Payment::STATUS_PAID,
+            'conversion_rate' => 1,
             'deleted_at' => null,
             'updated_at' => null,
             'created_at' => $orderThreeDate->toDateTimeString(),
@@ -321,6 +363,8 @@ class StatsControllerTest extends EcommerceTestCase
             'total_due' => $orderFourDue,
             'total_paid' => $orderFourDue,
             'total_refunded' => 0,
+            'status' => Payment::STATUS_PAID,
+            'conversion_rate' => 1,
             'deleted_at' => null,
             'updated_at' => null,
             'created_at' => $orderFourDate->toDateTimeString(),
@@ -330,6 +374,283 @@ class StatsControllerTest extends EcommerceTestCase
             'order_id' => $orderFour['id'],
             'payment_id' => $paymentFour['id'],
             'created_at' => $orderFourDate->toDateTimeString(),
+        ]);
+
+        // subscriptions & payments
+        $creditCardFive = $this->fakeCreditCard();
+
+        $billingAddressFive = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE
+        ]);
+
+        $paymentMethodFive = $this->fakePaymentMethod([
+            'method_id' => $creditCardFive['id'],
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'billing_address_id' => $billingAddressFive['id']
+        ]);
+
+        $subscriptionOneDue = $this->faker->randomFloat(2, 50, 90);
+        $subscriptionOneDate = Carbon::now()->subDays(15);
+
+        $subscriptionOne = $this->fakeSubscription([
+            'product_id' => $productFour['id'],
+            'payment_method_id' => $paymentMethodFive['id'],
+            'user_id' => $userFive['id'],
+            'paid_until' => Carbon::now()
+                ->addYear(1)
+                ->startOfDay()
+                ->toDateTimeString(),
+            'is_active' => 1,
+            'interval_count' => 1,
+            'interval_type' => config('ecommerce.interval_type_yearly'),
+            'created_at' => $subscriptionOneDate->toDateTimeString(),
+            'brand' => $brand,
+        ]);
+
+        $paymentFive = $this->fakePayment([
+            'payment_method_id' => $paymentMethodFive['id'],
+            'total_due' => $subscriptionOneDue,
+            'total_paid' => $subscriptionOneDue,
+            'total_refunded' => 0,
+            'status' => Payment::STATUS_PAID,
+            'conversion_rate' => 1,
+            'deleted_at' => null,
+            'updated_at' => null,
+            'created_at' => $subscriptionOneDate->toDateTimeString(),
+        ]);
+
+        $subscriptionOnePayment = $this->fakeSubscriptionPayment([
+            'subscription_id' => $subscriptionOne['id'],
+            'payment_id' => $paymentFive['id'],
+        ]);
+
+        $creditCardSix = $this->fakeCreditCard();
+
+        $billingAddressSix = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE
+        ]);
+
+        $paymentMethodSix = $this->fakePaymentMethod([
+            'method_id' => $creditCardSix['id'],
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'billing_address_id' => $billingAddressSix['id']
+        ]);
+
+        $subscriptionTwoDue = $this->faker->randomFloat(2, 50, 90);
+        $subscriptionTwoDate = Carbon::now()->subDays(10);
+
+        $subscriptionTwo = $this->fakeSubscription([
+            'product_id' => $productFive['id'],
+            'payment_method_id' => $paymentMethodSix['id'],
+            'user_id' => $userSix['id'],
+            'paid_until' => Carbon::now()
+                ->addYear(1)
+                ->startOfDay()
+                ->toDateTimeString(),
+            'is_active' => 1,
+            'interval_count' => 1,
+            'interval_type' => config('ecommerce.interval_type_yearly'),
+            'created_at' => $subscriptionTwoDate->toDateTimeString(),
+            'brand' => $brand,
+        ]);
+
+        $paymentSix = $this->fakePayment([
+            'payment_method_id' => $paymentMethodSix['id'],
+            'total_due' => $subscriptionTwoDue,
+            'total_paid' => $subscriptionTwoDue,
+            'total_refunded' => 0,
+            'status' => Payment::STATUS_PAID,
+            'conversion_rate' => 1,
+            'deleted_at' => null,
+            'updated_at' => null,
+            'created_at' => $subscriptionTwoDate->toDateTimeString(),
+        ]);
+
+        $subscriptionTwoPayment = $this->fakeSubscriptionPayment([
+            'subscription_id' => $subscriptionTwo['id'],
+            'payment_id' => $paymentSix['id'],
+        ]);
+
+        // failed subscription & payment
+        $creditCardSeven = $this->fakeCreditCard();
+
+        $billingAddressSeven = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE
+        ]);
+
+        $paymentMethodSeven = $this->fakePaymentMethod([
+            'method_id' => $creditCardSeven['id'],
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'billing_address_id' => $billingAddressSeven['id']
+        ]);
+
+        $subscriptionThreeDue = $this->faker->randomFloat(2, 50, 90);
+        $subscriptionThreeDate = Carbon::now()->subDays(8);
+
+        $subscriptionThree = $this->fakeSubscription([
+            'product_id' => $productSix['id'],
+            'payment_method_id' => $paymentMethodSeven['id'],
+            'user_id' => $userSeven['id'],
+            'paid_until' => Carbon::now()
+                ->addYear(1)
+                ->startOfDay()
+                ->toDateTimeString(),
+            'is_active' => 0,
+            'interval_count' => 1,
+            'interval_type' => config('ecommerce.interval_type_yearly'),
+            'created_at' => $subscriptionThreeDate->toDateTimeString(),
+            'brand' => $brand,
+        ]);
+
+        $paymentSeven = $this->fakePayment([
+            'payment_method_id' => $paymentMethodSeven['id'],
+            'total_due' => $subscriptionThreeDue,
+            'total_paid' => $subscriptionThreeDue,
+            'total_refunded' => 0,
+            'status' => Payment::STATUS_FAILED,
+            'conversion_rate' => 1,
+            'deleted_at' => null,
+            'updated_at' => null,
+            'created_at' => $subscriptionThreeDate->toDateTimeString(),
+        ]);
+
+        $subscriptionTwoPayment = $this->fakeSubscriptionPayment([
+            'subscription_id' => $subscriptionThree['id'],
+            'payment_id' => $paymentSeven['id'],
+        ]);
+
+        // failed order & payment
+        $orderFiveDue = $this->faker->randomFloat(2, 50, 90);
+        $orderFiveDate = Carbon::now()->subDays(5);
+
+        $orderFive = $this->fakeOrder([
+            'user_id' => $userOne['id'],
+            'customer_id' => null,
+            'shipping_address_id' => null,
+            'billing_address_id' => null,
+            'deleted_at' => null,
+            'total_due' => $orderFiveDue,
+            'product_due' => $orderFiveDue,
+            'taxes_due' => 0,
+            'shipping_due' => 0,
+            'finance_due' => 0,
+            'total_paid' => $orderFiveDue,
+            'created_at' => $orderFiveDate->toDateTimeString(),
+            'brand' => $brand,
+        ]);
+
+        $orderFiveItemOne = $this->fakeOrderItem([
+            'order_id' => $orderFive['id'],
+            'product_id' => $productSeven['id'],
+            'quantity' => 1,
+            'weight' => 0,
+            'initial_price' => $productSeven['price'],
+            'total_discounted' => 0,
+            'final_price' => $orderFiveDue
+        ]);
+
+        $creditCardEight = $this->fakeCreditCard();
+
+        $billingAddressEight = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE
+        ]);
+
+        $paymentMethodEight = $this->fakePaymentMethod([
+            'method_id' => $creditCardEight['id'],
+            'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'billing_address_id' => $billingAddressEight['id']
+        ]);
+
+        $paymentEight = $this->fakePayment([
+            'payment_method_id' => $paymentMethodEight['id'],
+            'total_due' => $orderFiveDue,
+            'total_paid' => $orderFiveDue,
+            'total_refunded' => 0,
+            'status' => Payment::STATUS_FAILED,
+            'conversion_rate' => 1,
+            'deleted_at' => null,
+            'updated_at' => null,
+            'created_at' => $orderFiveDate->toDateTimeString(),
+        ]);
+
+        $orderPaymentFive = $this->fakeOrderPayment([
+            'order_id' => $orderFive['id'],
+            'payment_id' => $paymentEight['id'],
+            'created_at' => $orderFiveDate->toDateTimeString(),
+        ]);
+
+        // refund
+        $refundDue = $this->faker->randomFloat(2, 50, 90);
+        $refundDate = Carbon::now()->subDays(5);
+
+        $creditCardNine = $this->fakeCreditCard();
+
+        $billingAddressNine = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE
+            ]
+        );
+
+        $paymentMethodNine = $this->fakePaymentMethod(
+            [
+                'method_id' => $creditCardNine['id'],
+                'method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'billing_address_id' => $billingAddressNine['id']
+            ]
+        );
+
+        $paymentNine = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethodNine['id'],
+                'total_due' => $refundDue,
+                'total_paid' => $refundDue,
+                'total_refunded' => $refundDue,
+                'deleted_at' => null,
+                'updated_at' => null
+            ]
+        );
+
+        $refund = $this->fakeRefund(
+            [
+                'payment_amount' => $refundDue,
+                'refunded_amount' => $refundDue,
+                'payment_id' => $paymentNine['id'],
+                'created_at' => $refundDate->toDateTimeString(),
+            ]
+        );
+
+        $orderSixDate = Carbon::now()->subMonths(2); // outside of current stats period, but refund date is included
+
+        $orderSix = $this->fakeOrder([
+            'user_id' => $userEight['id'],
+            'customer_id' => null,
+            'shipping_address_id' => null,
+            'billing_address_id' => null,
+            'deleted_at' => null,
+            'total_due' => $refundDue,
+            'product_due' => $refundDue,
+            'taxes_due' => 0,
+            'shipping_due' => 0,
+            'finance_due' => 0,
+            'total_paid' => $refundDue,
+            'created_at' => $orderSixDate->toDateTimeString(),
+            'brand' => $brand,
+        ]);
+
+        $orderSixItemOne = $this->fakeOrderItem([
+            'order_id' => $orderSix['id'],
+            'product_id' => $productEight['id'],
+            'quantity' => 1,
+            'weight' => 0,
+            'initial_price' => $productEight['price'],
+            'total_discounted' => 0,
+            'final_price' => $refundDue
+        ]);
+
+        $orderPaymentSix = $this->fakeOrderPayment([
+            'order_id' => $orderSix['id'],
+            'payment_id' => $paymentNine['id'],
+            'created_at' => $orderSixDate->toDateTimeString(),
         ]);
 
         $response = $this->call(
@@ -351,8 +672,8 @@ class StatsControllerTest extends EcommerceTestCase
                         'total_sales' => $orderOneDue,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 1,
-                        'total_number_of_successful_subscription_renewal_payments' => 0, // todo: update
-                        'total_number_of_failed_subscription_renewal_payments' => 0, // todo: update
+                        'total_number_of_successful_subscription_renewal_payments' => 0,
+                        'total_number_of_failed_subscription_renewal_payments' => 0,
                         'day' => $orderOneDate->format('Y-m-d'),
                     ],
                     'relationships' => [
@@ -373,8 +694,8 @@ class StatsControllerTest extends EcommerceTestCase
                         'total_sales' => round($orderTwoDue + $orderThreeDue, 2),
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 2,
-                        'total_number_of_successful_subscription_renewal_payments' => 0, // todo: update
-                        'total_number_of_failed_subscription_renewal_payments' => 0, // todo: update
+                        'total_number_of_successful_subscription_renewal_payments' => 0,
+                        'total_number_of_failed_subscription_renewal_payments' => 0,
                         'day' => $orderTwoDate->format('Y-m-d'),
                     ],
                     'relationships' => [
@@ -392,11 +713,11 @@ class StatsControllerTest extends EcommerceTestCase
                     'type' => 'dailyStatistic',
                     'id' => $orderFourDate->format('Y-m-d'),
                     'attributes' => [
-                        'total_sales' => $orderFourDue,
+                        'total_sales' => round($orderFourDue + $subscriptionOneDue, 2),
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 1,
-                        'total_number_of_successful_subscription_renewal_payments' => 0, // todo: update
-                        'total_number_of_failed_subscription_renewal_payments' => 0, // todo: update
+                        'total_number_of_successful_subscription_renewal_payments' => 1,
+                        'total_number_of_failed_subscription_renewal_payments' => 0,
                         'day' => $orderFourDate->format('Y-m-d'),
                     ],
                     'relationships' => [
@@ -409,6 +730,42 @@ class StatsControllerTest extends EcommerceTestCase
                             ]
                         ]
                     ]
+                ],
+                [
+                    'type' => 'dailyStatistic',
+                    'id' => $subscriptionTwoDate->format('Y-m-d'),
+                    'attributes' => [
+                        'total_sales' => $subscriptionTwoDue,
+                        'total_refunded' => 0,
+                        'total_number_of_orders_placed' => 0,
+                        'total_number_of_successful_subscription_renewal_payments' => 1,
+                        'total_number_of_failed_subscription_renewal_payments' => 0,
+                        'day' => $subscriptionTwoDate->format('Y-m-d'),
+                    ],
+                ],
+                [
+                    'type' => 'dailyStatistic',
+                    'id' => $subscriptionThreeDate->format('Y-m-d'),
+                    'attributes' => [
+                        'total_sales' => 0,
+                        'total_refunded' => 0,
+                        'total_number_of_orders_placed' => 0,
+                        'total_number_of_successful_subscription_renewal_payments' => 0,
+                        'total_number_of_failed_subscription_renewal_payments' => 1,
+                        'day' => $subscriptionThreeDate->format('Y-m-d'),
+                    ],
+                ],
+                [
+                    'type' => 'dailyStatistic',
+                    'id' => $refundDate->format('Y-m-d'),
+                    'attributes' => [
+                        'total_sales' => 0,
+                        'total_refunded' => $refundDue,
+                        'total_number_of_orders_placed' => 0,
+                        'total_number_of_successful_subscription_renewal_payments' => 0,
+                        'total_number_of_failed_subscription_renewal_payments' => 0,
+                        'day' => $refundDate->format('Y-m-d'),
+                    ],
                 ],
             ],
             'included' => [
@@ -441,10 +798,6 @@ class StatsControllerTest extends EcommerceTestCase
                 ],
             ]
         ];
-
-        // echo "\n### response: " . var_export($response->decodeResponseJson(), true) . "\n";
-
-        // $this->assertTrue(true);
 
         $this->assertEquals(
             $expected,

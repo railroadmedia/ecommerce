@@ -2,7 +2,9 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Carbon\Carbon;
 use Doctrine\ORM\QueryBuilder;
+use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -52,6 +54,53 @@ class SubscriptionPaymentRepository extends RepositoryBase
                     ->eq('sp.payment', ':payment')
             )
             ->setParameter('payment', $payment);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return SubscriptionPayment[]
+     */
+    public function getSubscriptionPaymentsForStats(Request $request): array
+    {
+        $smallDateTime =
+            $request->get(
+                'small_date_time',
+                Carbon::now()
+                    ->subDay()
+                    ->toDateTimeString()
+            );
+
+        $bigDateTime =
+            $request->get(
+                'big_date_time',
+                Carbon::now()
+                    ->subDay()
+                    ->toDateTimeString()
+            );
+
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['sp', 's', 'p'])
+            ->from(SubscriptionPayment::class, 'sp')
+            ->join('sp.subscription', 's')
+            ->join('sp.payment', 'p')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->setParameter('smallDateTime', $smallDateTime)
+            ->setParameter('bigDateTime', $bigDateTime);
+
+        if ($request->has('brand')) {
+            $qb->andWhere('s.brand = :brand')
+                ->setParameter('brand', $request->get('brand'));
+        }
 
         return $qb->getQuery()->getResult();
     }

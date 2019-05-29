@@ -4,24 +4,45 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\OrderPayment;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Structures\DailyStatistic;
 use Railroad\Ecommerce\Entities\Structures\ProductStatistic;
-use Railroad\Ecommerce\Repositories\OrderRepository;
+use Railroad\Ecommerce\Entities\SubscriptionPayment;
+use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
+use Railroad\Ecommerce\Repositories\RefundRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 
 class StatsService
 {
     /**
-     * @var OrderRepository
+     * @var OrderPaymentRepository
      */
-    protected $orderRepository;
+    protected $orderPaymentRepository;
 
     /**
-     * @param OrderRepository $orderRepository
+     * @var RefundRepository
      */
-    public function __construct(OrderRepository $orderRepository)
-    {
-        $this->orderRepository = $orderRepository;
+    protected $refundRepository;
+
+    /**
+     * @var SubscriptionPaymentRepository
+     */
+    protected $subscriptionPaymentRepository;
+
+    /**
+     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param RefundRepository $refundRepository
+     * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
+     */
+    public function __construct(
+        OrderPaymentRepository $orderPaymentRepository,
+        RefundRepository $refundRepository,
+        SubscriptionPaymentRepository $subscriptionPaymentRepository
+    ) {
+        $this->orderPaymentRepository = $orderPaymentRepository;
+        $this->refundRepository = $refundRepository;
+        $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
     }
 
     /**
@@ -36,71 +57,150 @@ class StatsService
         $results = [];
         $dateFormat = 'Y-m-d';
 
-        $orders = $this->orderRepository->getOrdersForStats($request);
+        $orderPayments = $this->orderPaymentRepository->getOrderPaymentsForStats($request);
 
-        foreach ($orders as $order) {
-            $day = $order->getCreatedAt()->format($dateFormat);
+        foreach ($orderPayments as $orderPayment) {
+            if ($orderPayment->getPayment()->getStatus() == Payment::STATUS_FAILED) {
+                continue;
+            }
+
+            $day = $orderPayment->getPayment()->getCreatedAt()->format($dateFormat);
 
             if (!isset($results[$day])) {
                 $results[$day] = new DailyStatistic($day);
             }
 
-            $results[$day] = $this->addOrderToDailyStatistic($results[$day], $order);
+            $results[$day] = $this->addOrderPaymentToDailyStatistic($orderPayment, $results[$day]);
+        }
+
+        $subscriptionPayments = $this->subscriptionPaymentRepository->getSubscriptionPaymentsForStats($request);
+
+        foreach ($subscriptionPayments as $subscriptionPayment) {
+            $day = $subscriptionPayment->getPayment()->getCreatedAt()->format($dateFormat);
+
+            if (!isset($results[$day])) {
+                $results[$day] = new DailyStatistic($day);
+            }
+
+            $results[$day] = $this->addSubscriptionPaymentToDailyStatistic($subscriptionPayment, $results[$day]);
+        }
+
+        $refunds = $this->refundRepository->getRefundsForStats($request);
+
+        foreach ($refunds as $refund) {
+            $day = $refund->getCreatedAt()->format($dateFormat);
+
+            if (!isset($results[$day])) {
+                $results[$day] = new DailyStatistic($day);
+            }
+
+            $dailyStatistic = $results[$day];
+
+            $dailyStatistic->setTotalRefunded(
+                round(
+                    $dailyStatistic->getTotalRefunded() + $refund->getRefundedAmount(),
+                    2
+                )
+            );
         }
 
         return array_values($results);
     }
 
     /**
-     * @param Order $order
+     * @param OrderPayment $orderPayment
      * @param DailyStatistic $dailyStatistic
      *
      * @return DailyStatistic
      */
-    public function addOrderToDailyStatistic(Order $order, DailyStatistic $dailyStatistic): DailyStatistic
+    public function addOrderPaymentToDailyStatistic(
+        OrderPayment $orderPayment,
+        DailyStatistic $dailyStatistic
+    ): DailyStatistic
     {
-        $dailyStatistic->setTotalSales(
-            round(
-                $dailyStatistic->getTotalSales() + $order->getTotalPaid(),
-                2
-            )
-        );
+        $payment = $orderPayment->getPayment();
 
-        $dailyStatistic->setTotalOrders($dailyStatistic->getTotalOrders() + 1);
+        if ($payment->getStatus() != Payment::STATUS_FAILED) {
 
-        $productStatistics = $dailyStatistic->getProductStatistics();
-        $day = $dailyStatistic->getDay();
+            $paymentAmountInBaseCurrency = round($payment->getTotalPaid() / $payment->getConversionRate(), 2);
 
-        foreach ($order->getOrderItems() as $orderItem) {
-            $product = $orderItem->getProduct();
-            $currentProductStatistic = null;
-            $currentProductStatisticId = $day . ':' . $product->getId();
+            $dailyStatistic->setTotalSales(
+                round(
+                    $dailyStatistic->getTotalSales() + $paymentAmountInBaseCurrency,
+                    2
+                )
+            );
 
-            foreach ($productStatistics as $productStatistic) {
-                if ($productStatistic->getId() == $currentProductStatisticId) {
-                    $currentProductStatistic = $productStatistic;
-                    break;
+            $dailyStatistic->setTotalOrders($dailyStatistic->getTotalOrders() + 1);
+
+            $productStatistics = $dailyStatistic->getProductStatistics();
+            $day = $dailyStatistic->getDay();
+            $order = $orderPayment->getOrder();
+
+            foreach ($order->getOrderItems() as $orderItem) {
+                $product = $orderItem->getProduct();
+                $currentProductStatistic = null;
+                $currentProductStatisticId = $day . ':' . $product->getId();
+
+                foreach ($productStatistics as $productStatistic) {
+                    if ($productStatistic->getId() == $currentProductStatisticId) {
+                        $currentProductStatistic = $productStatistic;
+                        break;
+                    }
                 }
-            }
 
-            if (!$currentProductStatistic) {
-                $currentProductStatistic = new ProductStatistic(
-                    $currentProductStatisticId,
-                    $product->getSku()
+                if (!$currentProductStatistic) {
+                    $currentProductStatistic = new ProductStatistic(
+                        $currentProductStatisticId,
+                        $product->getSku()
+                    );
+
+                    $dailyStatistic->addProductStatistics($currentProductStatistic);
+                }
+
+                $currentProductStatistic->setTotalQuantitySold(
+                    $currentProductStatistic->getTotalQuantitySold() + $orderItem->getQuantity()
                 );
 
-                $dailyStatistic->addProductStatistics($currentProductStatistic);
+                $currentProductStatistic->setTotalSales(
+                    round(
+                        $currentProductStatistic->getTotalSales() + $orderItem->getFinalPrice(),
+                        2
+                    )
+                );
             }
+        }
 
-            $currentProductStatistic->setTotalQuantitySold(
-                $currentProductStatistic->getTotalQuantitySold()
-                + $orderItem->getQuantity()
+        return $dailyStatistic;
+    }
+
+    /**
+     * @param SubscriptionPayment $subscriptionPayment
+     * @param DailyStatistic $dailyStatistic
+     *
+     * @return DailyStatistic
+     */
+    public function addSubscriptionPaymentToDailyStatistic(
+        SubscriptionPayment $subscriptionPayment,
+        DailyStatistic $dailyStatistic
+    ): DailyStatistic
+    {
+        $payment = $subscriptionPayment->getPayment();
+
+        if ($payment->getStatus() != Payment::STATUS_FAILED) {
+            $paymentAmountInBaseCurrency = round($payment->getTotalPaid() / $payment->getConversionRate(), 2);
+
+            $dailyStatistic->setTotalSales(
+                round(
+                    $dailyStatistic->getTotalSales() + $paymentAmountInBaseCurrency,
+                    2
+                )
             );
 
-            $currentProductStatistic->setTotalSales(
-                $currentProductStatistic->getTotalSales()
-                + $orderItem->getFinalPrice()
-            );
+            $dailyStatistic->setTotalSuccessfulRenewals($dailyStatistic->getTotalSuccessfulRenewals() + 1);
+        }
+        else {
+            $dailyStatistic->setTotalFailedRenewals($dailyStatistic->getTotalFailedRenewals() + 1);
         }
 
         return $dailyStatistic;
