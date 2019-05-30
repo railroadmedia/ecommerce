@@ -361,6 +361,7 @@ Update an existing order.
     'data.attributes.taxes_due' => 'numeric|min:0',
     'data.attributes.shipping_due' => 'numeric|min:0',
     'data.attributes.total_paid' => 'numeric|min:0',
+    'data.attributes.note' => 'nullable|string',
 ];
 ```
 

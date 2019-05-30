@@ -75,6 +75,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
         );
 
         $newDue = $this->faker->numberBetween();
+        $newNote = 'hello';
 
         $response = $this->call(
             'PATCH',
@@ -83,7 +84,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'data' => [
                     'type' => 'order',
                     'attributes' => [
-                        'total_due' => $newDue
+                        'total_due' => $newDue,
+                        'note' => $newNote,
                     ]
                 ]
             ]
@@ -111,7 +113,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
                         [
                             'updated_at' => Carbon::now()
                                 ->toDateTimeString(),
-                            'total_due' => $newDue
+                            'total_due' => $newDue,
+                            'note' => $newNote,
                         ]
                     )
                 ]
@@ -126,7 +129,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 [
                     'updated_at' => Carbon::now()
                         ->toDateTimeString(),
-                    'total_due' => $newDue
+                    'total_due' => $newDue,
+                    'note' => $newNote,
                 ]
             )
         );
