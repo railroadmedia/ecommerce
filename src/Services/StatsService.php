@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;

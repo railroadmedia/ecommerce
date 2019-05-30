@@ -6,6 +6,7 @@ use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\Common\Cache\RedisCache;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\Entity;
+use Doctrine\ORM\ORMException;
 use Doctrine\ORM\QueryBuilder;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
@@ -91,6 +92,8 @@ class RepositoryBase
      * @param int $id The identifier.
      *
      * @return Entity
+     *
+     * @throws ORMException
      */
     public function find(int $id)
     {

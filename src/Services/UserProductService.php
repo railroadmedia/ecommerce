@@ -6,7 +6,10 @@ use Carbon\Carbon;
 use DateTimeInterface;
 use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\ORMException;
 use Illuminate\Support\Collection;
+use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\User;
@@ -55,7 +58,10 @@ class UserProductService
     /**
      * @param $userId
      * @param $productId
+     *
      * @return bool
+     *
+     * @throws ORMException
      */
     public function hasProduct($userId, $productId)
     {
@@ -79,7 +85,10 @@ class UserProductService
     /**
      * @param $userId
      * @param array $productIds
+     *
      * @return bool
+     *
+     * @throws ORMException
      */
     public function hasAnyOfProducts($userId, array $productIds)
     {
@@ -106,7 +115,10 @@ class UserProductService
     /**
      * @param $userId
      * @param $productId
+     *
      * @return bool|Carbon|null
+     *
+     * @throws ORMException
      */
     public function getProductExpirationDate($userId, $productId)
     {
@@ -129,11 +141,13 @@ class UserProductService
     }
 
     /**
-     * @param $userId
-     * @param $productId
+     * @param int $userId
+     *
      * @return UserProduct[]
+     *
+     * @throws ORMException
      */
-    public function getAllUsersProducts($userId)
+    public function getAllUsersProducts(int $userId)
     {
         $qb = $this->userProductRepository->createQueryBuilder('up');
 
@@ -164,9 +178,7 @@ class UserProductService
     ): ?UserProduct
     {
 
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
+        /** @var $qb QueryBuilder */
         $qb = $this->userProductRepository->createQueryBuilder('up');
 
         $qb->where(
@@ -197,9 +209,7 @@ class UserProductService
         $products
     ): array
     {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
+        /** @var $qb QueryBuilder */
         $qb = $this->userProductRepository->createQueryBuilder('up');
 
         $qb->where(
@@ -420,9 +430,7 @@ class UserProductService
                     ->getOrderItems()
             )->map(
                 function ($orderItem) {
-                    /**
-                     * @var $orderItem \Railroad\Ecommerce\Entities\OrderItem
-                     */
+                    /** @var $orderItem OrderItem */
                     return [
                         'product' => $orderItem->getProduct(),
                         'quantity' => $orderItem->getQuantity(),

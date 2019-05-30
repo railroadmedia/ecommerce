@@ -11,7 +11,6 @@ use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -242,7 +241,6 @@ class SubscriptionJsonController extends Controller
             )
         );
 
-        $oldSubscription = clone $subscription;
         $response = null;
 
         try {
@@ -269,6 +267,13 @@ class SubscriptionJsonController extends Controller
         return $response;
     }
 
+    /**
+     * @param FailedSubscriptionsRequest $request
+     *
+     * @return JsonResponse
+     *
+     * @throws Throwable
+     */
     public function failed(FailedSubscriptionsRequest $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.failed-subscriptions');

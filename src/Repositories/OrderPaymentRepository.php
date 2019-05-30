@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Repositories;
 use Carbon\Carbon;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;

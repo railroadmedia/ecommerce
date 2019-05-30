@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Illuminate\Session\Store;
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -24,6 +25,21 @@ class CartControllerTest extends EcommerceTestCase
     public function test_add_to_cart()
     {
         $this->session->flush();
+
+        $country = 'United States';
+        $state = 'Alaska';
+
+        $billingAddress = new Address();
+        $billingAddress->setCountry($country);
+        $billingAddress->setState($state);
+
+        $cart = Cart::fromSession();
+
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->toSession();
+
+        $productPrice = $this->faker->randomFloat(2, 50, 90);
 
         $product = $this->fakeProduct([
             'active' => 1,
@@ -62,7 +78,16 @@ class CartControllerTest extends EcommerceTestCase
                 ],
                 'discounts' => [],
                 'shipping_address' => null,
-                'billing_address' => null,
+                'billing_address' => [
+                    'zip_or_postal_code' => null,
+                    'street_line_two' => null,
+                    'street_line_one' => null,
+                    'last_name' => null,
+                    'first_name' => null,
+                    'state' => 'Alaska',
+                    'country' => 'United States',
+                    'city' => null,
+                ],
                 'number_of_payments' => 1,
                 'locked' => false,
                 'totals' => [
@@ -107,6 +132,19 @@ class CartControllerTest extends EcommerceTestCase
     {
         $this->session->flush();
 
+        $country = 'United States';
+        $state = 'Alaska';
+
+        $billingAddress = new Address();
+        $billingAddress->setCountry($country);
+        $billingAddress->setState($state);
+
+        $cart = Cart::fromSession();
+
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->toSession();
+
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => 0,
@@ -125,7 +163,16 @@ class CartControllerTest extends EcommerceTestCase
                 'items' => [],
                 'discounts' => [],
                 'shipping_address' => null,
-                'billing_address' => null,
+                'billing_address' => [
+                    'zip_or_postal_code' => null,
+                    'street_line_two' => null,
+                    'street_line_one' => null,
+                    'last_name' => null,
+                    'first_name' => null,
+                    'state' => 'Alaska',
+                    'country' => 'United States',
+                    'city' => null,
+                ],
                 'number_of_payments' => 1,
                 'locked' => false,
                 'totals' => [
@@ -151,6 +198,19 @@ class CartControllerTest extends EcommerceTestCase
     {
         $this->session->flush();
 
+        $country = 'United States';
+        $state = 'Alaska';
+
+        $billingAddress = new Address();
+        $billingAddress->setCountry($country);
+        $billingAddress->setState($state);
+
+        $cart = Cart::fromSession();
+
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->toSession();
+
         $randomSku = $this->faker->word;
 
         $response = $this->call('GET', '/add-to-cart', [
@@ -164,7 +224,16 @@ class CartControllerTest extends EcommerceTestCase
                 'items' => [],
                 'discounts' => [],
                 'shipping_address' => null,
-                'billing_address' => null,
+                'billing_address' => [
+                    'zip_or_postal_code' => null,
+                    'street_line_two' => null,
+                    'street_line_one' => null,
+                    'last_name' => null,
+                    'first_name' => null,
+                    'state' => 'Alaska',
+                    'country' => 'United States',
+                    'city' => null,
+                ],
                 'number_of_payments' => 1,
                 'locked' => false,
                 'totals' => [
@@ -189,6 +258,19 @@ class CartControllerTest extends EcommerceTestCase
 
     public function test_add_many_products_to_cart()
     {
+        $country = 'United States';
+        $state = 'Alaska';
+
+        $billingAddress = new Address();
+        $billingAddress->setCountry($country);
+        $billingAddress->setState($state);
+
+        $cart = Cart::fromSession();
+
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->toSession();
+
         $productOne = $this->fakeProduct([
             'active' => 1,
             'is_physical' => false,
@@ -249,7 +331,16 @@ class CartControllerTest extends EcommerceTestCase
                 ],
                 'discounts' => [],
                 'shipping_address' => null,
-                'billing_address' => null,
+                'billing_address' => [
+                    'zip_or_postal_code' => null,
+                    'street_line_two' => null,
+                    'street_line_one' => null,
+                    'last_name' => null,
+                    'first_name' => null,
+                    'state' => 'Alaska',
+                    'country' => 'United States',
+                    'city' => null,
+                ],
                 'number_of_payments' => 1,
                 'locked' => false,
                 'totals' => [
@@ -300,6 +391,19 @@ class CartControllerTest extends EcommerceTestCase
     {
         $this->session->flush();
 
+        $country = 'United States';
+        $state = 'Alaska';
+
+        $billingAddress = new Address();
+        $billingAddress->setCountry($country);
+        $billingAddress->setState($state);
+
+        $cart = Cart::fromSession();
+
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->toSession();
+
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(1, 3),
@@ -318,7 +422,16 @@ class CartControllerTest extends EcommerceTestCase
                 'items' => [],
                 'discounts' => [],
                 'shipping_address' => null,
-                'billing_address' => null,
+                'billing_address' => [
+                    'zip_or_postal_code' => null,
+                    'street_line_two' => null,
+                    'street_line_one' => null,
+                    'last_name' => null,
+                    'first_name' => null,
+                    'state' => 'Alaska',
+                    'country' => 'United States',
+                    'city' => null,
+                ],
                 'number_of_payments' => 1,
                 'locked' => false,
                 'totals' => [
@@ -342,11 +455,25 @@ class CartControllerTest extends EcommerceTestCase
 
     public function test_add_products_available_and_not_available_to_cart()
     {
+        $country = 'United States';
+        $state = 'Alaska';
+
+        $billingAddress = new Address();
+        $billingAddress->setCountry($country);
+        $billingAddress->setState($state);
+
+        $cart = Cart::fromSession();
+
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->toSession();
+
         $productOne = $this->fakeProduct([
             'active' => 1,
             'is_physical' => false,
             'stock' => $this->faker->numberBetween(5, 100),
             'price' => 22.82,
+            'weight' => 0,
         ]);
 
         $productTwo = $this->fakeProduct([
@@ -354,6 +481,7 @@ class CartControllerTest extends EcommerceTestCase
             'is_physical' => false,
             'stock' => $this->faker->numberBetween(5, 100),
             'price' => 1.02,
+            'weight' => 0,
         ]);
 
         $randomSku1 = $this->faker->word . 'sku1';
@@ -389,7 +517,7 @@ class CartControllerTest extends EcommerceTestCase
                         'subscription_interval_count' => $productOne['subscription_interval_count'],
                         'price_before_discounts' => $productOne['price'],
                         'price_after_discounts' => $productOne['price'],
-                        'requires_shipping' => true,
+                        'requires_shipping' => false,
                     ],
                     [
                         'sku' => $productTwo['sku'],
@@ -402,12 +530,21 @@ class CartControllerTest extends EcommerceTestCase
                         'subscription_interval_count' => $productTwo['subscription_interval_count'],
                         'price_before_discounts' => $productTwo['price'],
                         'price_after_discounts' => $productTwo['price'],
-                        'requires_shipping' => true,
+                        'requires_shipping' => false,
                     ],
                 ],
                 'discounts' => [],
                 'shipping_address' => null,
-                'billing_address' => null,
+                'billing_address' => [
+                    'zip_or_postal_code' => null,
+                    'street_line_two' => null,
+                    'street_line_one' => null,
+                    'last_name' => null,
+                    'first_name' => null,
+                    'state' => 'Alaska',
+                    'country' => 'United States',
+                    'city' => null,
+                ],
                 'number_of_payments' => 1,
                 'locked' => false,
                 'totals' => [

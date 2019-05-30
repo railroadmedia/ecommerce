@@ -4,8 +4,10 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Exception;
+use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
@@ -17,6 +19,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
+use Throwable;
 
 class RenewalService
 {
@@ -46,12 +49,12 @@ class RenewalService
     protected $subscriptionPaymentRepository;
 
     /**
-     * @var \Railroad\Ecommerce\Gateways\StripePaymentGateway
+     * @var StripePaymentGateway
      */
     protected $stripePaymentGateway;
 
     /**
-     * @var \Railroad\Ecommerce\Gateways\PayPalPaymentGateway
+     * @var PayPalPaymentGateway
      */
     protected $paypalPaymentGateway;
 
@@ -106,7 +109,7 @@ class RenewalService
      *
      * @return Subscription
      *
-     * @throws Exception
+     * @throws Throwable
      */
     public function renew(Subscription $subscription)
     {
@@ -118,9 +121,7 @@ class RenewalService
             return $subscription;
         }
 
-        /**
-         * @var $paymentMethod \Railroad\Ecommerce\Entities\PaymentMethod
-         */
+        /** @var $paymentMethod PaymentMethod */
         $paymentMethod = $subscription->getPaymentMethod();
 
         $payment = new Payment();
@@ -147,9 +148,7 @@ class RenewalService
                     $currency
                 );
 
-                /**
-                 * @var $method \Railroad\Ecommerce\Entities\CreditCard
-                 */
+                /** @var $method CreditCard */
                 $method = $paymentMethod->getCreditCard();
 
                 $customer = $this->stripePaymentGateway->getCustomer(
@@ -219,9 +218,7 @@ class RenewalService
                     $currency
                 );
 
-                /**
-                 * @var $method \Railroad\Ecommerce\Entities\PaypalBillingAgreement
-                 */
+                /** @var $method PaypalBillingAgreement */
                 $method = $paymentMethod->getMethod();
 
                 $transactionId = $this->paypalPaymentGateway->chargeBillingAgreement(

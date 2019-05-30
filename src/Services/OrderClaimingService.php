@@ -3,7 +3,8 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
@@ -18,6 +19,7 @@ use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Throwable;
 
 class OrderClaimingService
 {
@@ -74,13 +76,13 @@ class OrderClaimingService
      * @param Purchaser $purchaser
      * @param Payment $payment
      * @param Cart $cart
-     * @param Cart $cart
+     * @param Address $shippingAddress
      *
      * @return Order
      *
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
-     * @throws \Throwable
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws Throwable
      */
     public function claimOrder(Purchaser $purchaser, Payment $payment, Cart $cart, ?Address $shippingAddress): Order
     {
@@ -198,8 +200,10 @@ class OrderClaimingService
      * @param Order $order
      * @param OrderItem|null $orderItem
      * @param int|null $totalCyclesDue
+     *
      * @return Subscription
-     * @throws \Throwable
+     *
+     * @throws Throwable
      */
     public function createSubscription(
         Purchaser $purchaser,

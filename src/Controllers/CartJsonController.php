@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Illuminate\Http\JsonResponse as JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Entities\Address as AddressEntity;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
@@ -52,11 +53,10 @@ class CartJsonController extends Controller
     }
 
     /**
-     * @param Request $request
      * @return JsonResponse
      * @throws Throwable
      */
-    public function index(Request $request)
+    public function index()
     {
         $cartArray = $this->cartService->toArray();
 
@@ -65,11 +65,10 @@ class CartJsonController extends Controller
     }
 
     /**
-     * @param Request $request
      * @return JsonResponse
      * @throws Throwable
      */
-    public function clear(Request $request)
+    public function clear()
     {
         $this->cartService->clearCart();
 
@@ -222,6 +221,13 @@ class CartJsonController extends Controller
             ->respond(200);
     }
 
+    /**
+     * @param SessionStoreAddressRequest $request
+     *
+     * @return JsonResponse
+     *
+     * @throws Throwable
+     */
     public function storeAddress(SessionStoreAddressRequest $request)
     {
         $shippingKeys = [
@@ -236,6 +242,7 @@ class CartJsonController extends Controller
         ];
 
         if (!empty($request->get('shipping-address-id'))) {
+            /** @var $address AddressEntity */
             $shippingAddressEntity = $this->addressRepository->find($request->get('shipping-address-id'));
 
             $this->cartAddressService->updateShippingAddress($shippingAddressEntity->toStructure());
@@ -243,7 +250,7 @@ class CartJsonController extends Controller
         else {
             $requestShippingAddress = $request->only(array_keys($shippingKeys));
 
-            $shippingAddress = $this->cartAddressService->updateShippingAddress(
+            $this->cartAddressService->updateShippingAddress(
                 Address::createFromArray(
                     array_combine(
                         array_intersect_key($shippingKeys, $requestShippingAddress),
@@ -268,7 +275,7 @@ class CartJsonController extends Controller
         else {
             $requestBillingAddress = $request->only(array_keys($billingKeys));
 
-            $billingAddress = $this->cartAddressService->updateBillingAddress(
+            $this->cartAddressService->updateBillingAddress(
                 Address::createFromArray(
                     array_combine(
                         array_intersect_key($billingKeys, $requestBillingAddress),

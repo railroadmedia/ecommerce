@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\Query\Expr\Join;
+use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -25,7 +26,10 @@ class PaymentMethodRepository extends RepositoryBase
 
     /**
      * @param int $id
+     *
      * @return PaymentMethod|null
+     *
+     * @throws ORMException
      */
     public function byId(int $id): ?PaymentMethod
     {
@@ -49,6 +53,8 @@ class PaymentMethodRepository extends RepositoryBase
      * @param $paymentMethodId
      *
      * @return PaymentMethod|null
+     *
+     * @throws ORMException
      */
     public function getUsersPaymentMethodById($userId, $paymentMethodId)
     {
@@ -79,7 +85,10 @@ class PaymentMethodRepository extends RepositoryBase
 
     /**
      * @param $userId
+     *
      * @return PaymentMethod|null
+     *
+     * @throws ORMException
      */
     public function getUsersPrimaryPaymentMethod($userId)
     {
@@ -109,6 +118,7 @@ class PaymentMethodRepository extends RepositoryBase
 
     /**
      * @param $userId
+     *
      * @return PaymentMethod[]
      */
     public function getAllUsersPaymentMethods($userId)

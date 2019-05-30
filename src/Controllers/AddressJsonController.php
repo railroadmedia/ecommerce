@@ -164,6 +164,7 @@ class AddressJsonController extends Controller
      */
     public function update(AddressUpdateRequest $request, $addressId)
     {
+        /** @var $address Address */
         $address = $this->addressRepository->find($addressId);
 
         throw_if(

@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Doctrine\ORM\ORMException;
 use Exception;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
@@ -178,7 +179,10 @@ class TaxService
 
     /**
      * @param Cart $cart
+     *
      * @return Address|null
+     *
+     * @throws ORMException
      */
     public function getAddressForTaxation(Cart $cart): ?Address
     {

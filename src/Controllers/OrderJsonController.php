@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;

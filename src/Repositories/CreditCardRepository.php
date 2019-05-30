@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
@@ -38,9 +39,7 @@ class CreditCardRepository extends EntityRepository
      */
     public function getCreditCardsMap(?array $creditCardIds = []): array
     {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
+        /** @var $qb QueryBuilder */
         $qb =
             $this->getEntityManager()
                 ->createQueryBuilder();
@@ -59,9 +58,7 @@ class CreditCardRepository extends EntityRepository
         $results = [];
 
         foreach ($creditCards as $creditCard) {
-            /**
-             * @var $creditCard \Railroad\Ecommerce\Entities\CreditCard
-             */
+            /** @var $creditCard CreditCard */
             $results[$creditCard->getId()] = $creditCard;
         }
 

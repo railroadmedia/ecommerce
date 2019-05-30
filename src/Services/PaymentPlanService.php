@@ -7,7 +7,7 @@ use Railroad\Ecommerce\Entities\Subscription;
 class PaymentPlanService
 {
     /**
-     * @var \Railroad\Ecommerce\Services\CartService
+     * @var CartService
      */
     private $cartService;
 

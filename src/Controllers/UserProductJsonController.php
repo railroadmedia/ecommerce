@@ -2,6 +2,9 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Doctrine\DBAL\DBALException;
+use Doctrine\ORM\ORMException;
+use Doctrine\ORM\OptimisticLockException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -20,6 +23,7 @@ use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
+use ReflectionException;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
@@ -114,10 +118,10 @@ class UserProductJsonController extends Controller
      * @return JsonResponse
      *
      * @throws NotAllowedException
-     * @throws \Doctrine\DBAL\DBALException
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
-     * @throws \ReflectionException
+     * @throws DBALException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws ReflectionException
      */
     public function store(UserProductCreateRequest $request)
     {
@@ -142,13 +146,15 @@ class UserProductJsonController extends Controller
     /**
      * @param UserProductUpdateRequest $request
      * @param $userProductId
+     *
      * @return JsonResponse
+     *
      * @throws NotAllowedException
      * @throws Throwable
-     * @throws \Doctrine\DBAL\DBALException
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
-     * @throws \ReflectionException
+     * @throws DBALException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws ReflectionException
      */
     public function update(UserProductUpdateRequest $request, $userProductId)
     {
@@ -179,14 +185,15 @@ class UserProductJsonController extends Controller
     }
 
     /**
-     * @param Request $request
      * @param $userProductId
+     *
      * @return JsonResponse
+     *
      * @throws Throwable
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
-    public function delete(Request $request, $userProductId)
+    public function delete($userProductId)
     {
         $userProduct = $this->userProductRepository->find($userProductId);
 

@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Address;
@@ -31,7 +32,10 @@ class AddressRepository extends RepositoryBase
 
     /**
      * @param $id
+     *
      * @return Address|null
+     *
+     * @throws ORMException
      */
     public function byId($id): ?Address
     {

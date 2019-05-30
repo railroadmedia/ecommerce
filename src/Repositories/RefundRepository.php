@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 

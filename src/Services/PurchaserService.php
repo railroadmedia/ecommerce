@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -30,6 +31,8 @@ class PurchaserService
     /**
      * @param Purchaser $purchaser
      * @param bool $loginUser
+     *
+     * @throws ORMException
      */
     public function persist(Purchaser &$purchaser, $loginUser = true)
     {

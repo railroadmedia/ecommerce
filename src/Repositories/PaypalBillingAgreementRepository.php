@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
@@ -40,9 +41,7 @@ class PaypalBillingAgreementRepository extends EntityRepository
      */
     public function getPaypalAgreementsMap(?array $paypalIds = []): array
     {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
+        /** @var $qb QueryBuilder */
         $qb =
             $this->getEntityManager()
                 ->createQueryBuilder();
@@ -61,9 +60,7 @@ class PaypalBillingAgreementRepository extends EntityRepository
         $results = [];
 
         foreach ($paypalAgreements as $paypalAgreement) {
-            /**
-             * @var $paypalAgreement \Railroad\Ecommerce\Entities\PaypalBillingAgreement
-             */
+            /** @var $paypalAgreement PaypalBillingAgreement */
             $results[$paypalAgreement->getId()] = $paypalAgreement;
         }
 

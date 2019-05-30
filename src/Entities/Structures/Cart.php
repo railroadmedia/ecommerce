@@ -330,7 +330,7 @@ class Cart implements Serializable
     }
 
     /**
-     * @param array $data
+     * @param string $data
      */
     public function unserialize($data)
     {

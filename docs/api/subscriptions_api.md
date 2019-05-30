@@ -717,3 +717,148 @@ $.ajax({
 ```
 
 <!--- -------------------------------------------------------------------------------------------------------------- -->
+
+### `{ GET /*/failed-subscriptions }`
+
+Pulls the failed subscriptions
+
+### Permissions
+
+- Must be logged in
+- Must have the 'pull.failed-subscriptions' permission
+
+### Request Parameters
+
+|Type|Key|Required|Default|Options|Notes|
+|----|---|--------|-------|-------|-----|
+|query|type|yes| |'payment plan' or 'subscription'||
+|query|page|no|1|||
+|query|limit|no|10|||
+|query|order_by_column|no|created_at|||
+|query|order_by_direction|no|desc|||
+|query|brands|no||||
+|query|user_id|no| | |If specified, pull only failed subscriptions of specified user|
+|query|big_date_time|no|today|||
+|query|small_date_time|no|1 month before today|||
+
+### Request Example
+
+```js
+$.ajax({
+    url: 'https://www.domain.com' +
+        '/ecommerce/failed-subscriptions',
+    data: {
+        type: 'subscription',
+        order_by_column: 'id',
+        order_by_direction: 'desc',
+        page: 1,
+        limit: 10,
+    },
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+```json
+{
+    "data":[
+        {
+            "type":"subscription",
+            "id":"1",
+            "attributes":{
+                "brand":"brand",
+                "type":"subscription",
+                "is_active":false,
+                "start_date":"2019-05-01 15:21:37",
+                "paid_until":"2020-05-01 15:21:37",
+                "canceled_on":null,
+                "note":null,
+                "total_price":599,
+                "tax":123,
+                "currency":"CAD",
+                "interval_type":"year",
+                "interval_count":883379,
+                "total_cycles_due":149169717,
+                "total_cycles_paid":3,
+                "deleted_at":null,
+                "created_at":"2019-05-01 15:21:37",
+                "updated_at":null
+            },
+            "relationships":{
+                "product":{
+                    "data":{
+                        "type":"product",
+                        "id":"1"
+                    }
+                },
+                "user":{
+                    "data":{
+                        "type":"user",
+                        "id":"1"
+                    }
+                },
+                "order":{
+                    "data":{
+                        "type":"order",
+                        "id":"1"
+                    }
+                },
+                "paymentMethod":{
+                    "data":{
+                        "type":"paymentMethod",
+                        "id":"1"
+                    }
+                }
+            }
+        }
+    ],
+    "included":[
+        {
+            "type":"product",
+            "id":"1",
+            "attributes":[
+
+            ]
+        },
+        {
+            "type":"user",
+            "id":"1",
+            "attributes":[
+
+            ]
+        },
+        {
+            "type":"order",
+            "id":"1",
+            "attributes":[
+
+            ]
+        },
+        {
+            "type":"paymentMethod",
+            "id":"1",
+            "attributes":[
+
+            ]
+        }
+    ],
+    "meta":{
+        "pagination":{
+            "total":1,
+            "count":1,
+            "per_page":10,
+            "current_page":1,
+            "total_pages":1
+        }
+    },
+    "links":{
+        "self":"http:\/\/localhost\/failed-subscriptions?page=1&limit=10&order_by_column=id&order_by_direction=asc&type=subscription",
+        "first":"http:\/\/localhost\/failed-subscriptions?page=1&limit=10&order_by_column=id&order_by_direction=asc&type=subscription",
+        "last":"http:\/\/localhost\/failed-subscriptions?page=1&limit=10&order_by_column=id&order_by_direction=asc&type=subscription"
+    }
+}
+```
+
+<!--- -------------------------------------------------------------------------------------------------------------- -->

@@ -3,6 +3,9 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\NonUniqueResultException;
 use Railroad\Ecommerce\Entities\Customer;
 use Railroad\Ecommerce\Entities\CustomerPaymentMethods;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -39,15 +42,13 @@ class CustomerPaymentMethodsRepository extends EntityRepository
      *
      * @return CustomerPaymentMethods
      *
-     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @throws NonUniqueResultException
      */
     public function getCustomerPrimaryPaymentMethod(
         Customer $customer
     ): ?CustomerPaymentMethods
     {
-        /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
-         */
+        /** @var $qb QueryBuilder */
         $qb =
             $this->getEntityManager()
                 ->createQueryBuilder();
@@ -63,9 +64,7 @@ class CustomerPaymentMethodsRepository extends EntityRepository
                     ->in('p.isPrimary', ':true')
             );
 
-        /**
-         * @var $q \Doctrine\ORM\Query
-         */
+        /** @var $q Query */
         $q = $qb->getQuery();
 
         $q->setParameter('customer', $customer)

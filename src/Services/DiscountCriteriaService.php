@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Doctrine\ORM\ORMException;
 use Doctrine\ORM\QueryBuilder;
 use Exception;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
@@ -104,6 +105,8 @@ class DiscountCriteriaService
      * @param Cart $cart
      *
      * @return bool
+     *
+     * @throws ORMException
      */
     public function productQuantityRequirementMet(DiscountCriteria $discountCriteria, Cart $cart): bool
     {

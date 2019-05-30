@@ -2,10 +2,12 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\ShippingOptionRepository;
+use Throwable;
 
 class ShippingService
 {
@@ -53,7 +55,10 @@ class ShippingService
      *
      * @param Cart $cart
      * @param $totalDueInItems
+     *
      * @return float
+     *
+     * @throws Throwable
      */
     public function getShippingDueForCart(Cart $cart, float $totalDueInItems): float
     {
@@ -90,6 +95,8 @@ class ShippingService
      * @param Cart $cart
      *
      * @return float
+     *
+     * @throws ORMException
      */
     public function getCartWeight(Cart $cart): float
     {
@@ -114,6 +121,8 @@ class ShippingService
      * @param Cart $cart
      *
      * @return bool
+     *
+     * @throws ORMException
      */
     public function doesCartHaveAnyPhysicalItems(Cart $cart): bool
     {
@@ -134,6 +143,8 @@ class ShippingService
      * @param Cart $cart
      *
      * @return bool
+     *
+     * @throws ORMException
      */
     public function doesCartHaveAnyDigitalItems(Cart $cart): bool
     {

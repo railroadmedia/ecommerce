@@ -273,6 +273,8 @@ class CartService
 
     /**
      * @return bool
+     *
+     * @throws ORMException
      */
     public function hasAnyRecurringSubscriptionProducts()
     {

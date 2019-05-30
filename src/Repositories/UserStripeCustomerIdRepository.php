@@ -42,5 +42,7 @@ class UserStripeCustomerIdRepository extends RepositoryBase
         if ($result) {
             return $result[0];
         }
+
+        return null;
     }
 }
