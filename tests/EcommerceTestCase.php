@@ -225,7 +225,7 @@ class EcommerceTestCase extends BaseTestCase
             $defaultConfig['default_currency_conversion_rates']
         );
 
-        $app['config']->set('ecommerce.invoice_gateway_details', $defaultConfig['invoice_gateway_details']);
+        $app['config']->set('ecommerce.invoice_email_details', $defaultConfig['invoice_email_details']);
 
         $app['config']->set('ecommerce.payment_plan_minimum_price', $defaultConfig['payment_plan_minimum_price']);
         $app['config']->set('ecommerce.payment_plan_options', $defaultConfig['payment_plan_options']);

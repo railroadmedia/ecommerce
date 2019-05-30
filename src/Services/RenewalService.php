@@ -331,7 +331,7 @@ class RenewalService
             );
             $subscription->setUpdatedAt(Carbon::now());
 
-            event(new SubscriptionRenewed($subscription));
+            event(new SubscriptionRenewed($subscription, $payment));
             event(new SubscriptionUpdated($oldSubscription, $subscription));
 
             $this->entityManager->flush();

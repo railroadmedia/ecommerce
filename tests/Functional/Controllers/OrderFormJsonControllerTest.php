@@ -6638,7 +6638,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $brand = 'drumeo';
+        $brand = 'brand';
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
@@ -6696,8 +6696,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 $mail->build();
 
                 return $mail->hasTo(auth()->user()['email']) &&
-                    $mail->hasFrom(config('ecommerce.invoice_gateway_details.pianote.invoice_sender')) &&
-                    $mail->subject(config('ecommerce.invoice_gateway_details.pianote.invoicer_email_subject'));
+                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.order_invoice.invoice_sender')) &&
+                    $mail->subject(
+                        config('ecommerce.invoice_email_details.brand.order_invoice.invoice_email_subject')
+                    );
             }
         );
 

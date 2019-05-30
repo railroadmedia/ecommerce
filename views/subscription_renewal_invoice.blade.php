@@ -1,3 +1,9 @@
+@php
+    /** @var $subscription Railroad\Ecommerce\Entities\Subscription */
+    /** @var $product Railroad\Ecommerce\Entities\Product */
+    /** @var $payment Railroad\Ecommerce\Entities\Payment */
+@endphp
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -310,7 +316,9 @@
                             <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td class="content-block">
-                                        <h1 class="aligncenter">{{$currencySymbol}}{{ number_format($order->getTotalPaid(), 2) }} Paid</h1>
+                                        <h1 class="aligncenter">
+                                            {{$currencySymbol}}{{ number_format($payment->getTotalPaid(), 2) }} Paid
+                                        </h1>
 
                                     </td>
                                 </tr>
@@ -323,22 +331,21 @@
                                     <td class="content-block aligncenter">
                                         <table class="invoice">
                                             <tr>
-                                                <td><br>Invoice #{{$order->getId()}}<br>
-                                                    {{ $order->getCreatedAt()->format('F j, Y') }}</td>
+                                                <td><br>Invoice #{{$payment->getId()}}<br>
+                                                    {{ $payment->getCreatedAt()->format('F j, Y') }}</td>
                                             </tr>
                                             <tr>
                                                 <td>
                                                     <table class="invoice-items" cellpadding="0" cellspacing="0">
-                                                        @foreach($orderItems ?? [] as $orderItem)
                                                             <tr>
-                                                                <td>{{ $orderItem->getProduct()->getName() }}</td>
+                                                                <td>{{ $product->getName() }}</td>
                                                                 <td class="alignright">
-                                                                    $ {{ number_format($orderItem->getFinalPrice(), 2) }} USD
+                                                                    $ {{ number_format($payment->getTotalPaid(), 2) }}
+                                                                    {{ $payment->getCurrency() }}
                                                                 </td>
                                                             </tr>
-                                                        @endforeach
 
-                                                        @if($order->getTaxesDue() > 0)
+                                                        @if($subscription->getTax() > 0)
                                                             @if($gstPaid > 0)
                                                                 <tr>
                                                                     <td>GST/HST</td>
@@ -350,13 +357,14 @@
                                                             <tr>
                                                                 <td>Total Tax</td>
                                                                 <td class="alignright">
-                                                                    {{ $currencySymbol}} {{ number_format($order->getTaxesDue(), 2) }}</td>
+                                                                    {{ $currencySymbol}} {{ number_format($subscription->getTax(), 2) }}</td>
                                                             </tr>
                                                         @endif
                                                         <tr class="total">
                                                             <td class="alignright" width="80%">Total</td>
                                                             <td class="alignright">
-                                                                {{ $currencySymbol}}{{ number_format($order->getTotalPaid(), 2) }} {{ $payment->getCurrency() }}</td>
+                                                                {{ $currencySymbol}}{{ number_format($payment->getTotalPaid(), 2) }}
+                                                                {{ $payment->getCurrency() }}</td>
                                                         </tr>
                                                     </table>
                                                 </td>
@@ -366,7 +374,7 @@
                                 </tr>
                                 <tr>
                                     <td class="content-block aligncenter">
-                                        {{config('ecommerce.invoice_address')}}
+                                        {{ $invoiceSenderAddress }}
                                     </td>
                                 </tr>
                             </table>
@@ -376,7 +384,9 @@
                 <div class="footer">
                     <table width="100%">
                         <tr>
-                            <td class="aligncenter content-block">Questions? Email <a href="mailto:">{{config('ecommerce.invoice_sender')}}</a></td>
+                            <td class="aligncenter content-block">
+                                Questions? Email <a href="mailto:">{{ $invoiceSenderEmail }}</a>
+                            </td>
                         </tr>
                     </table>
                 </div>

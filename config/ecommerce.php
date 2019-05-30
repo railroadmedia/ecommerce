@@ -176,6 +176,10 @@ return [
                 'stripe_api_secret' => '',
                 'stripe_publishable_key' => '',
             ],
+            'brand' => [
+                'stripe_api_secret' => '',
+                'stripe_publishable_key' => '',
+            ],
         ],
     ],
 
@@ -228,12 +232,22 @@ return [
     'days_before_access_revoked_after_expiry' => 5,
 
     // invoices
-    'invoice_gateway_details' => [
-        'pianote' => [
-            'invoice_sender' => 'support@pianote.com',
-            'invoice_sender_name' => 'Pianote',
-            'invoice_address' => 'Pianote 107-31265 Wheel Avenue - Abbotsford BC, Canada',
-            'invoice_email_subject' => 'Pianote Invoice - Thank You!',
+    'invoice_email_details' => [
+        'brand' => [
+            'subscription_renewal_invoice' => [
+                'invoice_sender' => 'support@pianote.com',
+                'invoice_sender_name' => 'Pianote',
+                'invoice_address' => 'Pianote 107-31265 Wheel Avenue - Abbotsford BC, Canada',
+                'invoice_email_subject' => 'Pianote Invoice - Thank You!',
+                'invoice_view' => 'ecommerce::subscription_renewal_invoice',
+            ],
+            'order_invoice' => [
+                'invoice_sender' => 'support@pianote.com',
+                'invoice_sender_name' => 'Pianote',
+                'invoice_address' => 'Pianote 107-31265 Wheel Avenue - Abbotsford BC, Canada',
+                'invoice_email_subject' => 'Pianote Invoice - Thank You!',
+                'invoice_view' => 'ecommerce::order_invoice',
+            ],
         ],
     ],
 

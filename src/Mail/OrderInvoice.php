@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Mail;
 
+use Exception;
 use Illuminate\Mail\Mailable;
 
 class OrderInvoice extends Mailable
@@ -31,15 +32,22 @@ class OrderInvoice extends Mailable
     /**
      * Build the message.
      *
-     * @return \Railroad\Ecommerce\Mail\OrderInvoice
+     * @return OrderInvoice
+     * @throws Exception
      */
     public function build()
     {
+        if (empty(config('ecommerce.invoice_email_details.' . $this->gateway . '.order_invoice.invoice_sender'))) {
+            throw new Exception(
+                'Could not build order invoice email, configuration not set for gateway: ' . $this->gateway
+            );
+        }
+
         return $this->from(
-            config('ecommerce.invoice_gateway_details.pianote.invoice_sender'),
-            config('ecommerce.invoice_gateway_details.pianote.invoice_sender_name')
+            config('ecommerce.invoice_email_details.' . $this->gateway . '.order_invoice.invoice_sender'),
+            config('ecommerce.invoice_email_details.' . $this->gateway . '.order_invoice.invoice_sender_name')
         )
-            ->subject(config('ecommerce.invoice_gateway_details.pianote.invoice_email_subject'))
-            ->view('ecommerce::billing', $this->viewData);
+            ->subject(config('ecommerce.invoice_email_details.' . $this->gateway . '.order_invoice.invoice_email_subject'))
+            ->view(config('ecommerce.invoice_email_details.' . $this->gateway . '.order_invoice.invoice_view'), $this->viewData);
     }
 }

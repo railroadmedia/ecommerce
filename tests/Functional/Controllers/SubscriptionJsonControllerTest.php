@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
@@ -10,6 +12,8 @@ use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
+use Railroad\Ecommerce\Mail\OrderInvoice;
+use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Stripe\Card;
@@ -970,6 +974,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
     public function test_renew_subscription_credit_card()
     {
+        Mail::fake();
+
         $userId = $this->createAndLogInNewUser();
 
         $this->permissionServiceMock->method('can')->willReturn(true);
@@ -987,7 +993,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'subscription_interval_count' => 1,
         ]);
 
-        $creditCard = $this->fakeCreditCard();
+        $creditCard = $this->fakeCreditCard([
+            'payment_gateway_name' => 'brand',
+        ]);
 
         $paymentMethod = $this->fakePaymentMethod([
             'credit_card_id' => $creditCard['id'],
@@ -1005,12 +1013,27 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'interval_type' => config('ecommerce.interval_type_yearly'),
         ]);
 
-        $this->expectsEvents([SubscriptionRenewed::class, SubscriptionUpdated::class]);
-
         $results = $this->call(
             'POST',
             '/subscription-renew/' . $subscription['id']
         );
+
+        // Assert a message was sent to the given users...
+        Mail::assertSent(
+            SubscriptionInvoice::class,
+            function ($mail) {
+                $mail->build();
+
+                return $mail->hasTo(auth()->user()['email']) &&
+                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_sender')) &&
+                    $mail->subject(
+                        config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_email_subject')
+                    );
+            }
+        );
+
+        // assert a mailable was sent
+        Mail::assertSent(SubscriptionInvoice::class, 1);
 
         $this->assertDatabaseHas(
             'ecommerce_user_products',
