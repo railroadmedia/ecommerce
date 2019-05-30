@@ -242,18 +242,26 @@ class PaymentMethodJsonController extends Controller
                     $request->get('card_token')
                 );
 
-                $billingCountry = $card->address_country ?? $card->country;
+                if (!empty($request->get('address_id'))) {
+                    $address = $this->addressRepository->find($request->get('address_id'));
+                }
 
-                // save billing address
-                $billingAddress = new Address();
+                if (!empty($address)) {
+                    $billingAddress = $address;
+                } else {
+                    $billingCountry = $card->address_country ?? $card->country;
 
-                $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
-                $billingAddress->setBrand($request->get('gateway', config('ecommerce.brand')));
-                $billingAddress->setUser($user);
-                $billingAddress->setState($card->address_state ?? '');
-                $billingAddress->setCountry($billingCountry ?? '');
+                    // save billing address
+                    $billingAddress = new Address();
 
-                $this->entityManager->persist($billingAddress);
+                    $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
+                    $billingAddress->setBrand($request->get('gateway', config('ecommerce.brand')));
+                    $billingAddress->setUser($user);
+                    $billingAddress->setState($card->address_state ?? '');
+                    $billingAddress->setCountry($billingCountry ?? '');
+
+                    $this->entityManager->persist($billingAddress);
+                }
 
                 $paymentMethod = $this->paymentMethodService->createCreditCardPaymentMethod(
                     $purchaser,

@@ -102,7 +102,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_user_store_credit_card_payment_method_set_default()
+    public function test_user_store_credit_card_payment_method_set_default_existing_address()
     {
         Event::fake();
 
@@ -149,7 +149,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
-        $address = $this->fakeAddress();
+        $address = $this->fakeAddress(['user_id' => $customer['id']]);
 
         $payload = [
             'card_token' => 'tok_mastercard',
@@ -183,6 +183,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                         'billingAddress' => [
                             'data' => [
                                 'type' => 'address',
+                                'id' => $address['id'],
                             ]
                         ]
                     ]
@@ -197,6 +198,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     ],
                     [
                         'type' => 'address',
+                        'id' => $address['id'],
                     ]
                 ]
             ],
@@ -291,7 +293,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
-        $address = $this->fakeAddress();
+        $address = $this->fakeAddress(['user_id' => $customer['id']]);
 
         $payload = [
             'card_token' => 'tok_mastercard',
