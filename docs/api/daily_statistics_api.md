@@ -48,92 +48,133 @@ $.ajax({
     "data":[
         {
             "type":"dailyStatistic",
-            "id":"2019-04-01",
+            "id":"2019-05-05",
             "attributes":{
-                "total_sales":13825.32,
-                "total_refunded":824.91,
-                "total_number_of_orders_placed":513,
-                "total_number_of_successful_subscription_renewal_payments":87,
-                "total_number_of_failed_subscription_renewal_payments":21,
-                "day":"2019-04-01"
+                "total_sales":80.02,
+                "total_refunded":0,
+                "total_number_of_orders_placed":1,
+                "total_number_of_successful_subscription_renewal_payments":0,
+                "total_number_of_failed_subscription_renewal_payments":0,
+                "day":"2019-05-05"
             },
             "relationships":{
                 "productStatistic":{
-                    "data":{
-                        "type":"productStatistic",
-                        "id":"2019-04-01:1"
-                    }
-                },
-                "productStatistic":{
-                    "data":{
-                        "type":"productStatistic",
-                        "id":"2019-04-01:2"
-                    }
+                    "data":[
+                        {
+                            "type":"productStatistic",
+                            "id":"2019-05-05:1"
+                        }
+                    ]
                 }
             }
         },
         {
             "type":"dailyStatistic",
-            "id":"2019-04-02",
+            "id":"2019-05-10",
             "attributes":{
-                "total_sales":13825.32,
-                "total_refunded":824.91,
-                "total_number_of_orders_placed":513,
-                "total_number_of_successful_subscription_renewal_payments":87,
-                "total_number_of_failed_subscription_renewal_payments":21,
-                "day":"2019-04-01"
+                "total_sales":135.78,
+                "total_refunded":0,
+                "total_number_of_orders_placed":2,
+                "total_number_of_successful_subscription_renewal_payments":0,
+                "total_number_of_failed_subscription_renewal_payments":0,
+                "day":"2019-05-10"
             },
             "relationships":{
                 "productStatistic":{
-                    "data":{
-                        "type":"productStatistic",
-                        "id":"2019-04-02:1"
-                    }
-                },
-                "productStatistic":{
-                    "data":{
-                        "type":"productStatistic",
-                        "id":"2019-04-02:2"
-                    }
+                    "data":[
+                        {
+                            "type":"productStatistic",
+                            "id":"2019-05-10:2"
+                        }
+                    ]
                 }
             }
-        }, ...
+        },
+        {
+            "type":"dailyStatistic",
+            "id":"2019-05-15",
+            "attributes":{
+                "total_sales":120.83,
+                "total_refunded":0,
+                "total_number_of_orders_placed":1,
+                "total_number_of_successful_subscription_renewal_payments":1,
+                "total_number_of_failed_subscription_renewal_payments":0,
+                "day":"2019-05-15"
+            },
+            "relationships":{
+                "productStatistic":{
+                    "data":[
+                        {
+                            "type":"productStatistic",
+                            "id":"2019-05-15:3"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type":"dailyStatistic",
+            "id":"2019-05-20",
+            "attributes":{
+                "total_sales":82.42,
+                "total_refunded":0,
+                "total_number_of_orders_placed":0,
+                "total_number_of_successful_subscription_renewal_payments":1,
+                "total_number_of_failed_subscription_renewal_payments":0,
+                "day":"2019-05-20"
+            }
+        },
+        {
+            "type":"dailyStatistic",
+            "id":"2019-05-22",
+            "attributes":{
+                "total_sales":0,
+                "total_refunded":0,
+                "total_number_of_orders_placed":0,
+                "total_number_of_successful_subscription_renewal_payments":0,
+                "total_number_of_failed_subscription_renewal_payments":1,
+                "day":"2019-05-22"
+            }
+        },
+        {
+            "type":"dailyStatistic",
+            "id":"2019-05-25",
+            "attributes":{
+                "total_sales":0,
+                "total_refunded":70.06,
+                "total_number_of_orders_placed":0,
+                "total_number_of_successful_subscription_renewal_payments":0,
+                "total_number_of_failed_subscription_renewal_payments":0,
+                "day":"2019-05-25"
+            }
+        }
     ],
     "included":[
         {
             "type":"productStatistic",
-            "id":"2019-04-01:1",
+            "id":"2019-05-05:1",
             "attributes":{
-                "sku":"some-sku",
-                "total_quantity_sold":42,
-                "total_sales":34875.22
+                "sku":"explicabo441701",
+                "total_quantity_sold":1,
+                "total_sales":80.02
             }
         },
         {
             "type":"productStatistic",
-            "id":"2019-04-01:2",
+            "id":"2019-05-10:2",
             "attributes":{
-                "sku":"other-sku",
-                "total_quantity_sold":4,
-                "total_sales":842.31
+                "sku":"enim7176916",
+                "total_quantity_sold":2,
+                "total_sales":135.78
             }
         },
         {
             "type":"productStatistic",
-            "id":"2019-04-02:1",
+            "id":"2019-05-15:3",
             "attributes":{
-                "sku":"some-sku-2",
-                "total_quantity_sold":42,
-                "total_sales":34875.22
-            }
-        },
-        {
-            "type":"productStatistic",
-            "id":"2019-04-02:2",
-            "attributes":{
-                "sku":"other-sku-2",
-                "total_quantity_sold":0,
-                "total_sales":0
+                "sku":"alias3863776",
+                "total_quantity_sold":1,
+                "total_sales":69.95
             }
         }
     ]
