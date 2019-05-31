@@ -347,6 +347,7 @@ Update an existing order.
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |body|data.type|yes||must be 'order'||
+|body|data.attributes.note|||||
 |body|data.attributes.total_due|||||
 |body|data.attributes.taxes_due|||||
 |body|data.attributes.shipping_due|||||

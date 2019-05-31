@@ -102,6 +102,7 @@ class OrderClaimingService
         $order->setTaxesDue($taxesDue);
         $order->setTotalPaid($this->cartService->getDueForInitialPayment());
         $order->setBrand($purchaser->getBrand());
+        $order->setNote(request()->get('note'));
         $order->setUser($purchaser->getType() == Purchaser::USER_TYPE ? $purchaser->getUserObject() : null);
         $order->setCustomer($purchaser->getType() == Purchaser::CUSTOMER_TYPE ? $purchaser->getCustomerEntity() : null);
         $order->setShippingDue($shippingCosts);
