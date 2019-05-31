@@ -15,6 +15,7 @@ use Railroad\Ecommerce\Requests\SessionStoreAddressRequest;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ResponseService;
+use Railroad\Permissions\Services\PermissionService;
 use Throwable;
 
 class CartJsonController extends Controller
@@ -33,6 +34,10 @@ class CartJsonController extends Controller
      * @var CartService
      */
     private $cartService;
+    /**
+     * @var PermissionService
+     */
+    private $permissionService;
 
     /**
      * ShoppingCartController constructor.
@@ -40,16 +45,19 @@ class CartJsonController extends Controller
      * @param AddressRepository $addressRepository
      * @param CartAddressService $cartAddressService
      * @param CartService $cartService
+     * @param PermissionService $permissionService
      */
     public function __construct(
         AddressRepository $addressRepository,
         CartAddressService $cartAddressService,
-        CartService $cartService
+        CartService $cartService,
+        PermissionService $permissionService
     )
     {
         $this->addressRepository = $addressRepository;
         $this->cartAddressService = $cartAddressService;
         $this->cartService = $cartService;
+        $this->permissionService = $permissionService;
     }
 
     /**
@@ -96,7 +104,8 @@ class CartJsonController extends Controller
         $this->cartService->refreshCart();
 
         if ($request->get('locked', false) == true) {
-            $this->cartService->getCart()->replaceItems([]);
+            $this->cartService->getCart()
+                ->replaceItems([]);
         }
 
         foreach ($request->get('products', []) as $productSku => $quantityToAdd) {
@@ -284,6 +293,40 @@ class CartJsonController extends Controller
                 )
             );
         }
+
+        return ResponseService::cart($this->cartService->toArray())
+            ->respond(200);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Throwable
+     */
+    public function updateTotalOverrides(Request $request)
+    {
+        $this->cartService->refreshCart();
+        $cart = $this->cartService->getCart();
+
+        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
+
+            $cart->setTaxOverride($request->get('taxes_due_override'));
+            $cart->setShippingOverride($request->get('shipping_due_override'));
+
+            $overrides = $request->get('order_items_due_overrides', []);
+
+            if (!empty($overrides) && is_array($overrides)) {
+                foreach ($overrides as $override) {
+                    foreach ($cart->getItems() as $cartItem) {
+                        if ($override['sku'] == $cartItem->getSku() && !empty($override['amount'])) {
+                            $cartItem->setDueOverride($override['amount']);
+                        }
+                    }
+                }
+            }
+        }
+
+        $this->cartService->setCart($cart);
 
         return ResponseService::cart($this->cartService->toArray())
             ->respond(200);

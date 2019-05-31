@@ -360,3 +360,84 @@ Returns the entire cart.
     }
 }
 ```
+
+<!--- -------------------------------------------------------------------------------------------------------------- -->
+
+### `{ PATCH /*/json/update-total-overrides }`
+
+Update total overrides in the cart.
+
+### Request Parameters
+
+|Type|Key|Required|Default|Options|Notes|
+|----|---|--------|-------|-------|-----|
+|body|taxes_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
+|body|shipping_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
+|body|order_items_due_overrides| | |array of arrays: ['sku' => 'MYSKU', 'amount' => 100]|'place-orders-for-other-users' permission is required to override amounts|
+
+### Request Example
+
+```js   
+$.ajax({
+    url: 'https://www.domain.com' +
+        '/json/update-total-overrides',
+    data: {
+        taxes_due_override: 130,
+        shipping_due_override: 31,
+        order_items_due_overrides: [
+            {
+                'sku': 'MY-SKU',   
+                'amount': 13,   
+            },
+            {
+                'sku': 'MY-SKU-2',   
+                'amount': 51,   
+            },
+        ]
+    },
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+Returns the entire cart with the new totals.
+
+```200 OK```
+
+```json
+{
+    "data":null,
+    "meta":{
+        "cart":{
+            "items":[
+                {
+                    "sku":"vel168022",
+                    "name":"unde",
+                    "quantity":2,
+                    "thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?29311",
+                    "description":"Omnis id consequuntur sit et reprehenderit. Quod dolores quod saepe accusantium nisi at. Vero nihil aperiam voluptas vel. Voluptates officia eius quo voluptatem hic.",
+                    "stock":23,
+                    "subscription_interval_type":"day",
+                    "subscription_interval_count":9,
+                    "price_before_discounts":865,
+                    "price_after_discounts":865
+                }
+            ],
+            "discounts":[
+
+            ],
+            "shipping_address":null,
+            "billing_address":null,
+            "number_of_payments":1,
+            "locked":0,
+            "totals":{
+                "shipping":11,
+                "tax":82,
+                "due":1730
+            }
+        }
+    }
+}
+```

@@ -1559,4 +1559,100 @@ class CartJsonControllerTest extends EcommerceTestCase
             $response->decodeResponseJson()
         );
     }
+
+    public function test_update_cart_total_overrides()
+    {
+        $adminUser = $this->createAndLogInNewUser();
+
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
+        
+        $this->session->flush();
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 100),
+        ]);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $productQuantity = $this->faker->numberBetween(1, 5);
+
+        $cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
+        );
+
+        $params = [
+            'taxes_due_override' => rand(1, 100),
+            'shipping_due_override' => rand(1, 100),
+            'order_items_due_overrides' => [
+                [
+                    'sku' => $product['sku'],
+                    'amount' => rand(1, 100),
+                ]
+            ],
+        ];
+
+        $productTotalDueExpected = $params['order_items_due_overrides'][0]['amount'] * $productQuantity;
+        $taxesExpected = $params['taxes_due_override'];
+        $shippingExpected = $params['shipping_due_override'];
+
+        $totalDueExpected = $productTotalDueExpected + $taxesExpected + $shippingExpected;
+
+        $response = $this->call(
+            'PATCH',
+            '/json/update-total-overrides',
+            $params
+        );
+
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ],
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert total due
+        $this->assertEquals(
+            $totalDueExpected,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        $this->assertEquals(
+            $taxesExpected,
+            $decodedResponse['meta']['cart']['totals']['tax']
+        );
+
+        $this->assertEquals(
+            $shippingExpected,
+            $decodedResponse['meta']['cart']['totals']['shipping']
+        );
+
+        // backend assert
+        $cart = Cart::fromSession();
+
+        // assert session cart number of payments
+        $this->assertEquals(1, $cart->getPaymentPlanNumberOfPayments());
+    }
 }
