@@ -1101,8 +1101,16 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'currency' => $currency,
             'taxes_due_override' => $taxesDueOverride,
             'shipping_due_override' => $shippingDueOverride,
-            'order_items_due_override_' . $productOne['sku'] => $orderItemOneDueOverride,
-            'order_items_due_override_' . $productTwo['sku'] => $orderItemTwoDueOverride,
+            'order_items_due_overrides' => [
+                [
+                    'sku' => $productOne['sku'],
+                    'amount' => $orderItemOneDueOverride,
+                ],
+                [
+                    'sku' => $productTwo['sku'],
+                    'amount' => $orderItemTwoDueOverride,
+                ],
+            ],
         ];
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')

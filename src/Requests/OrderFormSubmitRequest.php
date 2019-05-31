@@ -199,8 +199,16 @@ class OrderFormSubmitRequest extends FormRequest
             $cart->setTaxOverride($this->get('taxes_due_override'));
             $cart->setShippingOverride($this->get('shipping_due_override'));
 
-            foreach ($cart->getItems() as $cartItem) {
-                $cartItem->setDueOverride($this->get('order_items_due_override_' . $cartItem->getSku()));
+            $overrides = $this->get('order_items_due_overrides', []);
+
+            if (!empty($overrides) && is_array($overrides)) {
+                foreach ($overrides as $override) {
+                    foreach ($cart->getItems() as $cartItem) {
+                        if ($override['sku'] == $cartItem->getSku() && !empty($override['amount'])) {
+                            $cartItem->setDueOverride($override['amount']);
+                        }
+                    }
+                }
             }
         }
 
