@@ -127,7 +127,7 @@ Submit the order with whatever is currently in the cart.
 |body|user_id|||you must pass this in all cases if you want to place orders for another user|'place-orders-for-other-users' permission is required to place orders for other users|
 |body|taxes_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
 |body|shipping_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
-|body|order_items_due_override_{sku}| | |{sku} is an order item product sku|'place-orders-for-other-users' permission is required to override amounts|
+|body|order_items_due_overrides| | |array of arrays: ['sku' => 'MYSKU', 'amount' => 100]|'place-orders-for-other-users' permission is required to override amounts|
 
 ### Request Example
 
@@ -153,6 +153,47 @@ $.ajax({
         account_creation_email: "reilly.fahey@emard.com",
         account_creation_password: "`riMe8x37Q{L",
         account_creation_password_confirmation: "`riMe8x37Q{L"
+    },
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+With overrides:
+```js   
+$.ajax({
+    url: 'https://www.domain.com' +
+        '/json/order-form/submit',
+    data: {
+        payment_method_type: "credit_card",
+        card_token: "veritatis",
+        billing_region: "deleniti",
+        billing_zip_or_postal_code: "27895-2195",
+        billing_country: "Canada",
+        gateway: "drumeo",
+        shipping_first_name: "Wyman",
+        shipping_last_name: "Kozey",
+        shipping_address_line_1: "Blandaport, NC 39987-8605",
+        shipping_city: "Amandamouth",
+        shipping_region: "deleniti",
+        shipping_zip_or_postal_code: "81723-8095",
+        shipping_country: "Canada",
+        currency: "CAD",
+        account_creation_email: "reilly.fahey@emard.com",
+        account_creation_password: "`riMe8x37Q{L",
+        account_creation_password_confirmation: "`riMe8x37Q{L",
+        taxes_due_override: 130,
+        shipping_due_override: 31,
+        order_items_due_overrides: [
+            {
+                'sku': 'MY-SKU',   
+                'amount': 13,   
+            },
+            {
+                'sku': 'MY-SKU-2',   
+                'amount': 51,   
+            },
+        ]
     },
     success: function(response) {},
     error: function(response) {}
