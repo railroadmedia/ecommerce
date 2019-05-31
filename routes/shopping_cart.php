@@ -38,6 +38,10 @@ Route::group([
         Railroad\Ecommerce\Controllers\CartJsonController::class . '@storeAddress')
         ->name('shopping-cart.json.session-address');
 
+    Route::patch('/json/update-total-overrides',
+        Railroad\Ecommerce\Controllers\CartJsonController::class . '@updateTotalOverrides')
+        ->name('shopping-cart.json.update-total-overrides');
+
     Route::put('/session/address',
         Railroad\Ecommerce\Controllers\CartJsonController::class . '@storeAddress')
         ->name('shopping-cart.session-address');
