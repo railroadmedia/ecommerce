@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Services;
 
 use Carbon\Carbon;
 use Doctrine\Common\Collections\ArrayCollection;
+use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
@@ -212,9 +213,14 @@ class CartServiceTest extends EcommerceTestCase
         $discountCriteriaOne = $this->fakeDiscountCriteria([
             'discount_id' => $discountOne['id'],
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 3),
             'max' => $this->faker->numberBetween(15, 20)
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaOne['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $cartItemOneDiscountAmount = round($discountOne['amount'] * $productOneQuantity, 2);
@@ -291,9 +297,14 @@ class CartServiceTest extends EcommerceTestCase
         $discountCriteriaOne = $this->fakeDiscountCriteria([
             'discount_id' => $discountOne['id'],
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 3),
             'max' => $this->faker->numberBetween(15, 20)
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaOne['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $discountTwo = $this->fakeDiscount([

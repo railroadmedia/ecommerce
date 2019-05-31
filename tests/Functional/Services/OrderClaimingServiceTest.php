@@ -203,7 +203,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $discountCriteriaOne->setName($this->faker->word);
         $discountCriteriaOne->setType(DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE);
-        $discountCriteriaOne->setProduct($productOne);
+        $discountCriteriaOne->addProduct($productOne);
         $discountCriteriaOne->setMin(1);
         $discountCriteriaOne->setMax(5);
         $discountCriteriaOne->setDiscount($discountOne);

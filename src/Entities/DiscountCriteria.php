@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -22,6 +24,9 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 class DiscountCriteria
 {
     use TimestampableEntity;
+
+    const PRODUCTS_RELATION_TYPE_ANY = 'owns any of products';
+    const PRODUCTS_RELATION_TYPE_ALL = 'owns all of products';
 
     /**
      * @ORM\Id
@@ -47,10 +52,20 @@ class DiscountCriteria
     protected $type;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Product")
-     * @ORM\JoinColumn(name="product_id", referencedColumnName="id")
+     * @ORM\Column(type="string")
+     *
+     * @var string
      */
-    protected $product;
+    protected $productsRelationType;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="Railroad\Ecommerce\Entities\Product")
+     * @ORM\JoinTable(name="ecommerce_discount_criterias_products",
+     *      joinColumns={@ORM\JoinColumn(name="discount_criteria_id", referencedColumnName="id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="product_id", referencedColumnName="id")}
+     * )
+     */
+    protected $products;
 
     /**
      * @ORM\Column(type="string")
@@ -71,6 +86,11 @@ class DiscountCriteria
      * @ORM\JoinColumn(name="discount_id", referencedColumnName="id")
      */
     protected $discount;
+
+    public function __construct()
+    {
+        $this->products = new ArrayCollection();
+    }
 
     /**
      * @return int|null
@@ -115,6 +135,22 @@ class DiscountCriteria
     /**
      * @return string|null
      */
+    public function getProductsRelationType(): ?string
+    {
+        return $this->productsRelationType;
+    }
+
+    /**
+     * @param string $productsRelationType
+     */
+    public function setProductsRelationType(string $productsRelationType)
+    {
+        $this->productsRelationType = $productsRelationType;
+    }
+
+    /**
+     * @return string|null
+     */
     public function getMin(): ?string
     {
         return $this->min;
@@ -145,19 +181,32 @@ class DiscountCriteria
     }
 
     /**
-     * @return Product|null
+     * @return Collection|Product[]
      */
-    public function getProduct(): ?Product
+    public function getProducts(): Collection
     {
-        return $this->product;
+        return $this->products;
     }
 
     /**
      * @param Product $product
      */
-    public function setProduct(?Product $product)
+    public function addProduct(?Product $product)
     {
-        $this->product = $product;
+        if (!$this->products->contains($product)) {
+            $this->products[] = $product;
+        }
+    }
+
+    /**
+     * @param Product $product
+     */
+    public function removeProduct(?Product $product)
+    {
+        if ($this->products->contains($product)) {
+
+            $this->products->removeElement($product);
+        }
     }
 
     /**

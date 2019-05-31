@@ -125,6 +125,9 @@ Submit the order with whatever is currently in the cart.
 |body|account_creation_password|yes if the order has digital items or 'billing_email' is not set||||
 |body|account_creation_password_confirmation|yes if the order has digital items or 'billing_email' is not set||||
 |body|user_id|||you must pass this in all cases if you want to place orders for another user|'place-orders-for-other-users' permission is required to place orders for other users|
+|body|taxes_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
+|body|shipping_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
+|body|order_items_due_override_{sku}| | |{sku} is an order item product sku|'place-orders-for-other-users' permission is required to override amounts|
 
 ### Request Example
 
@@ -239,6 +242,164 @@ $.ajax({
                 "initial_price":12.95,
                 "total_discounted":0,
                 "final_price":25.9,
+                "created_at":"2019-05-02 16:52:39",
+                "updated_at":"2019-05-02 16:52:39"
+            },
+            "relationships":{
+                "product":{
+                    "data":{
+                        "type":"product",
+                        "id":"1"
+                    }
+                }
+            }
+        },
+        {
+            "type":"address",
+            "id":"1",
+            "attributes":{
+                "type":"billing",
+                "brand":"drumeo",
+                "first_name":null,
+                "last_name":null,
+                "street_line_1":null,
+                "street_line_2":null,
+                "city":null,
+                "zip":"32552-5376",
+                "state":"illum",
+                "country":"Canada",
+                "created_at":"2019-05-02 16:52:39",
+                "updated_at":"2019-05-02 16:52:39"
+            },
+            "relationships":{
+                "user":{
+                    "data":{
+                        "type":"user",
+                        "id":"1"
+                    }
+                }
+            }
+        }
+    ]
+}
+```
+
+### Request Example
+
+```js   
+$.ajax({
+    url: 'https://www.domain.com' +
+        '/json/order-form/submit',
+    data: {
+        payment_method_type: "credit_card",
+        card_token: "veritatis",
+        billing_region: "deleniti",
+        billing_zip_or_postal_code: "27895-2195",
+        billing_country: "Canada",
+        gateway: "drumeo",
+        shipping_first_name: "Wyman",
+        shipping_last_name: "Kozey",
+        shipping_address_line_1: "Blandaport, NC 39987-8605",
+        shipping_city: "Amandamouth",
+        shipping_region: "deleniti",
+        shipping_zip_or_postal_code: "81723-8095",
+        shipping_country: "Canada",
+        currency: "CAD",
+        account_creation_email: "reilly.fahey@emard.com",
+        account_creation_password: "`riMe8x37Q{L",
+        account_creation_password_confirmation: "`riMe8x37Q{L",
+        taxes_due_override: 0,
+        shipping_due_override: 0,
+        order_items_due_override_distinctio6461867: 10
+    },
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+```200 OK```
+
+```json
+{
+    "data":{
+        "type":"order",
+        "id":"1",
+        "attributes":{
+            "total_due":20,
+            "product_due":20,
+            "taxes_due":0,
+            "shipping_due":0,
+            "finance_due":0,
+            "total_paid":20,
+            "brand":"drumeo",
+            "deleted_at":null,
+            "created_at":"2019-05-02 16:52:39",
+            "updated_at":"2019-05-02 16:52:39"
+        },
+        "relationships":{
+            "orderItem":{
+                "data":[
+                    {
+                        "type":"orderItem",
+                        "id":"1"
+                    }
+                ]
+            },
+            "user":{
+                "data":{
+                    "type":"user",
+                    "id":"1"
+                }
+            },
+            "billingAddress":{
+                "data":{
+                    "type":"address",
+                    "id":"1"
+                }
+            }
+        }
+    },
+    "included":[
+        {
+            "type":"product",
+            "id":"1",
+            "attributes":{
+                "brand":"drumeo",
+                "name":"aliquid",
+                "sku":"distinctio6461867",
+                "price":12.95,
+                "type":"product",
+                "active":true,
+                "category":"voluptas",
+                "description":"doloremque",
+                "thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?11290",
+                "is_physical":false,
+                "weight":0,
+                "subscription_interval_type":"",
+                "subscription_interval_count":0,
+                "stock":248,
+                "created_at":"2019-05-02 16:52:39",
+                "updated_at":null
+            }
+        },
+        {
+            "type":"user",
+            "id":"1",
+            "attributes":[
+
+            ]
+        },
+        {
+            "type":"orderItem",
+            "id":"1",
+            "attributes":{
+                "quantity":2,
+                "weight":0,
+                "initial_price":12.95,
+                "total_discounted":0,
+                "final_price":20,
                 "created_at":"2019-05-02 16:52:39",
                 "updated_at":"2019-05-02 16:52:39"
             },

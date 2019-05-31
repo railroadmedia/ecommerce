@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Services\CartService;
+use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -57,9 +58,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaOne = $this->fakeDiscountCriteria([
             'discount_id' => $discountOne['id'],
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 100),
             'max' => $this->faker->numberBetween(500, 1000),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaOne['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $discountTwo = $this->fakeDiscount([
@@ -72,10 +78,15 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $discountCriteriaTwo = $this->fakeDiscountCriteria([
             'discount_id' => $discountTwo['id'],
-            'product_id' => $productTwo['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
             'min' => $this->faker->numberBetween(1, 2),
             'max' => $this->faker->numberBetween(15, 20),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaTwo['id'],
+            'product_id' => $productTwo['id'],
         ]);
 
         $discountThree = $this->fakeDiscount([
@@ -91,9 +102,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaThree = $this->fakeDiscountCriteria([
             'discount_id' => $discountThree['id'],
             'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
-            'product_id' => $productThree['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => Carbon::now()->subDay(1),
             'max' => Carbon::now()->addDays(3),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaThree['id'],
+            'product_id' => $productThree['id'],
         ]);
 
         $discountFour = $this->fakeDiscount([
@@ -193,9 +209,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaOne = $this->fakeDiscountCriteria([
             'discount_id' => $discountOne['id'],
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 100),
             'max' => $this->faker->numberBetween(500, 1000),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaOne['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $discountTwo = $this->fakeDiscount([
@@ -208,10 +229,15 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $discountCriteriaTwo = $this->fakeDiscountCriteria([
             'discount_id' => $discountTwo['id'],
-            'product_id' => $productTwo['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
             'min' => $this->faker->numberBetween(1, 2),
             'max' => $this->faker->numberBetween(15, 20),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaTwo['id'],
+            'product_id' => $productTwo['id'],
         ]);
 
         $discountThree = $this->fakeDiscount([
@@ -227,9 +253,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaThree = $this->fakeDiscountCriteria([
             'discount_id' => $discountThree['id'],
             'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
-            'product_id' => $productThree['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => Carbon::now()->subDay(1),
             'max' => Carbon::now()->addDays(3),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaThree['id'],
+            'product_id' => $productThree['id'],
         ]);
 
         $discountFour = $this->fakeDiscount([
@@ -329,9 +360,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaOne = $this->fakeDiscountCriteria([
             'discount_id' => $discountOne['id'],
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 100),
             'max' => $this->faker->numberBetween(500, 1000),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaOne['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $discountTwo = $this->fakeDiscount([
@@ -344,10 +380,15 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $discountCriteriaTwo = $this->fakeDiscountCriteria([
             'discount_id' => $discountTwo['id'],
-            'product_id' => $productTwo['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
             'min' => $this->faker->numberBetween(1, 2),
             'max' => $this->faker->numberBetween(15, 20),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaTwo['id'],
+            'product_id' => $productTwo['id'],
         ]);
 
         $discountThree = $this->fakeDiscount([
@@ -363,9 +404,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaThree = $this->fakeDiscountCriteria([
             'discount_id' => $discountThree['id'],
             'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
-            'product_id' => $productThree['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => Carbon::now()->subDay(1),
             'max' => Carbon::now()->addDays(3),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaThree['id'],
+            'product_id' => $productThree['id'],
         ]);
 
         $discountFour = $this->fakeDiscount([
@@ -482,9 +528,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaOne = $this->fakeDiscountCriteria([
             'discount_id' => $discountOne['id'],
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 3),
             'max' => $this->faker->numberBetween(15, 20)
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaOne['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $discountTwo = $this->fakeDiscount([
@@ -517,9 +568,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaThree = $this->fakeDiscountCriteria([
             'discount_id' => $discountThree['id'],
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'product_id' => $productThree['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 3),
             'max' => $this->faker->numberBetween(15, 20)
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaThree['id'],
+            'product_id' => $productThree['id'],
         ]);
 
         $discountFour = $this->fakeDiscount([
@@ -642,9 +698,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaOne = $this->fakeDiscountCriteria([
             'discount_id' => $discountOne['id'],
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 3),
             'max' => $this->faker->numberBetween(15, 20)
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaOne['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $discountTwo = $this->fakeDiscount([
@@ -677,9 +738,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaThree = $this->fakeDiscountCriteria([
             'discount_id' => $discountThree['id'],
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'product_id' => $productThree['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 3),
             'max' => $this->faker->numberBetween(15, 20)
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaThree['id'],
+            'product_id' => $productThree['id'],
         ]);
 
         $discountFour = $this->fakeDiscount([
@@ -797,9 +863,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaOne = $this->fakeDiscountCriteria([
             'discount_id' => $discountOne['id'],
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 100),
             'max' => $this->faker->numberBetween(500, 1000),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaOne['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $discountTwo = $this->fakeDiscount([
@@ -813,10 +884,15 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $discountCriteriaTwo = $this->fakeDiscountCriteria([
             'discount_id' => $discountTwo['id'],
-            'product_id' => $productTwo['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
             'min' => $this->faker->numberBetween(1, 2),
             'max' => $this->faker->numberBetween(15, 20),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaTwo['id'],
+            'product_id' => $productTwo['id'],
         ]);
 
         $discountThree = $this->fakeDiscount([
@@ -833,9 +909,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaThree = $this->fakeDiscountCriteria([
             'discount_id' => $discountThree['id'],
             'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
-            'product_id' => $productThree['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => Carbon::now()->subDay(1),
             'max' => Carbon::now()->addDays(3),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaThree['id'],
+            'product_id' => $productThree['id'],
         ]);
 
         $discountFour = $this->fakeDiscount([
@@ -940,9 +1021,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaOne = $this->fakeDiscountCriteria([
             'discount_id' => $discountOne['id'],
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 100),
             'max' => $this->faker->numberBetween(500, 1000),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaOne['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $discountTwo = $this->fakeDiscount([
@@ -956,10 +1042,15 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $discountCriteriaTwo = $this->fakeDiscountCriteria([
             'discount_id' => $discountTwo['id'],
-            'product_id' => $productTwo['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
             'min' => $this->faker->numberBetween(1, 2),
             'max' => $this->faker->numberBetween(15, 20),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaTwo['id'],
+            'product_id' => $productTwo['id'],
         ]);
 
         $discountThree = $this->fakeDiscount([
@@ -976,9 +1067,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaThree = $this->fakeDiscountCriteria([
             'discount_id' => $discountThree['id'],
             'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
-            'product_id' => $productThree['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => Carbon::now()->subDay(1),
             'max' => Carbon::now()->addDays(3),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaThree['id'],
+            'product_id' => $productThree['id'],
         ]);
 
         $discountFour = $this->fakeDiscount([
@@ -1071,9 +1167,14 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaOne = $this->fakeDiscountCriteria([
             'discount_id' => $discountOne['id'],
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'product_id' => $product['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 30),
             'max' => $this->faker->numberBetween(150, 200),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaOne['id'],
+            'product_id' => $product['id'],
         ]);
 
         $discountTwo = $this->fakeDiscount([
@@ -1088,10 +1189,15 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $discountCriteriaTwo = $this->fakeDiscountCriteria([
             'discount_id' => $discountTwo['id'],
-            'product_id' => $product['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
             'min' => $this->faker->numberBetween(1, 2),
             'max' => $this->faker->numberBetween(15, 20),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaTwo['id'],
+            'product_id' => $product['id'],
         ]);
 
         $discountThree = $this->fakeDiscount([

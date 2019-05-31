@@ -43,6 +43,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         // all discountCriteriaMetForOrder switch cases are tested below, except default
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'type' => $this->faker->word . $this->faker->word,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -82,7 +83,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
             'min' => $this->faker->numberBetween(1, 5),
             'max' => $this->faker->numberBetween(15, 20)
         ]);
@@ -147,9 +148,14 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
             'min' => $this->faker->numberBetween(5, 10),
-            'max' => $this->faker->numberBetween(50, 100)
+            'max' => $this->faker->numberBetween(50, 100),
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $productOneQuantity = $this->faker->numberBetween(1, 5); // quantity is less than discount criteria min/max
@@ -193,9 +199,20 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => rand(),
             'min' => Carbon::now()->subDays(3),
-            'max' => Carbon::now()->addDays(5)
+            'max' => Carbon::now()->addDays(5),
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $product['id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -218,9 +235,20 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => rand(),
             'min' => Carbon::now()->subDays(5),
-            'max' => Carbon::now()->subDays(3)
+            'max' => Carbon::now()->subDays(3),
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $product['id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -262,9 +290,14 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
             'min' => $this->faker->numberBetween(1, 5),
-            'max' => $this->faker->numberBetween(500, 1000)
+            'max' => $this->faker->numberBetween(500, 1000),
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $productOneQuantity = $this->faker->numberBetween(1, 5);
@@ -331,9 +364,14 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
-            'product_id' => $productOne['id'],
             'min' => $this->faker->randomFloat(2, 10, 50),
-            'max' => $this->faker->randomFloat(2, 50, 100) // cart total will be more than max
+            'max' => $this->faker->randomFloat(2, 50, 100), // cart total will be more than max
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $productOneQuantity = $this->faker->numberBetween(1, 5);
@@ -383,9 +421,20 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $shippingCost = $this->faker->randomFloat(2, 100, 200);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => rand(),
             'min' => round($this->faker->randomFloat(2, 10, 90), 2),
-            'max' => round($this->faker->randomFloat(2, 210, 300), 2)
+            'max' => round($this->faker->randomFloat(2, 210, 300), 2),
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $product['id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -410,9 +459,20 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $shippingCost = $this->faker->randomFloat(2, 100);;
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => rand(),
             'min' => $this->faker->randomFloat(2, 10, 20),
-            'max' => $this->faker->randomFloat(2, 30, 40)
+            'max' => $this->faker->randomFloat(2, 30, 40),
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $product['id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -441,9 +501,20 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => rand(),
             'min' => $shippingAddress->getCountry(),
-            'max' => $this->faker->word . $this->faker->word
+            'max' => $this->faker->word . $this->faker->word,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $product['id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -472,9 +543,20 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => rand(),
             'min' => $this->faker->word . $this->faker->word,
-            'max' => $this->faker->word . $this->faker->word
+            'max' => $this->faker->word . $this->faker->word,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $product['id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -501,9 +583,20 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $cart->setPromoCode($promoCode);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => rand(),
             'min' => $promoCode,
-            'max' => $this->faker->word . $this->faker->word
+            'max' => $this->faker->word . $this->faker->word,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $product['id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -530,9 +623,20 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $cart->setPromoCode($promoCode);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => rand(),
             'min' => $this->faker->word . $this->faker->word,
-            'max' => $this->faker->word . $this->faker->word
+            'max' => $this->faker->word . $this->faker->word,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $product['id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -553,9 +657,20 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $em = $this->app->make(EcommerceEntityManager::class);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => rand(),
             'min' => 1,
-            'max' => rand()
+            'max' => rand(),
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL
+        ]);
+
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $product['id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -575,15 +690,26 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $em = $this->app->make(EcommerceEntityManager::class);
 
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
         $userProductData = $this->fakeUserProduct([
             'user_id' => $userId,
-            'product_id' => rand()
+            'product_id' => $product['id'],
         ]);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => $userProductData['product_id'],
             'min' => 1,
-            'max' => $userProductData['quantity']
+            'max' => $userProductData['quantity'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $userProductData['product_id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -603,15 +729,26 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $em = $this->app->make(EcommerceEntityManager::class);
 
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
         $userProductData = $this->fakeUserProduct([
             'user_id' => $userId,
-            'product_id' => rand()
+            'product_id' => $product['id'],
         ]);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => $userProductData['product_id'],
             'min' => ($userProductData['quantity'] + 1),
-            'max' => ($userProductData['quantity'] + 10)
+            'max' => ($userProductData['quantity'] + 10),
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $userProductData['product_id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)
@@ -631,16 +768,27 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $em = $this->app->make(EcommerceEntityManager::class);
 
+        $product = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
         $userProductData = $this->fakeUserProduct([
             'user_id' => $userId,
-            'product_id' => rand(),
+            'product_id' => $product['id'],
             'expiration_date' => Carbon::now()->subDays(3)
         ]);
 
         $discountCriteriaData = $this->fakeDiscountCriteria([
-            'product_id' => $userProductData['product_id'],
             'min' => 1,
-            'max' => $userProductData['quantity']
+            'max' => $userProductData['quantity'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $userProductData['product_id'],
         ]);
 
         $discountCriteria = $em->getRepository(DiscountCriteria::class)

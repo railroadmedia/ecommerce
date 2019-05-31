@@ -52,7 +52,8 @@ class EcommerceTestCase extends BaseTestCase
         'subscriptionPayments' => 'ecommerce_subscription_payments',
         'orderItemFulfillments' => 'ecommerce_order_item_fulfillment',
         'refunds' => 'ecommerce_refunds',
-        'userStripeCustomerId' => 'ecommerce_user_stripe_customer_ids'
+        'userStripeCustomerId' => 'ecommerce_user_stripe_customer_ids',
+        'discountCriteriasProducts' => 'ecommerce_discount_criterias_products',
     ];
 
     /**
@@ -838,6 +839,22 @@ class EcommerceTestCase extends BaseTestCase
         $data['id'] = $newRecordId;
 
         return $data;
+    }
+
+    /**
+     * Helper method to seed a test order payment
+     *
+     * @return array
+     */
+    public function fakeDiscountCriteriaProduct($discountCriteriaProduct = []): array
+    {
+        $discountCriteriaProductId =
+            $this->databaseManager->table(self::TABLES['discountCriteriasProducts'])
+                ->insertGetId($discountCriteriaProduct);
+
+        $discountCriteriaProduct['id'] = $discountCriteriaProductId;
+
+        return $discountCriteriaProduct;
     }
 
     public function getCurrency()

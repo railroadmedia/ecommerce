@@ -2,10 +2,12 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Carbon\Carbon;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\NonUniqueResultException;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
+use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserProduct;
@@ -110,5 +112,56 @@ class UserProductRepository extends RepositoryBase
             ->setParameter('products', $products);
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @param User $user
+     * @param DiscountCriteria $discountCriteria
+     *
+     * @return int
+     *
+     * @throws NonUniqueResultException
+     */
+    public function getCountByUserDiscountCriteriaProducts(
+        User $user,
+        DiscountCriteria $discountCriteria
+    ): int
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select('COUNT(up)')
+            ->from(UserProduct::class, 'up')
+            ->where(
+                $qb->expr()
+                    ->eq('up.user', ':user')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->in('up.product', ':products')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->gte('up.expirationDate', ':now'),
+                        $qb->expr()
+                            ->isNull('up.expirationDate')
+                    )
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->between('up.quantity', ':min', ':max')
+            )
+            ->setParameter('user', $user)
+            ->setParameter('products', $discountCriteria->getProducts())
+            ->setParameter('now', Carbon::now())
+            ->setParameter('min', (integer)$discountCriteria->getMin())
+            ->setParameter('max', (integer)$discountCriteria->getMax());
+
+        return (integer)$qb->getQuery()
+                ->getSingleScalarResult();
     }
 }

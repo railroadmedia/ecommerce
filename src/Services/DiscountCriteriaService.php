@@ -112,19 +112,36 @@ class DiscountCriteriaService
     {
         $products = $this->productRepository->bySkus($cart->listSkus());
 
+        $productsMap = [];
+
         foreach ($products as $product) {
+            $productsMap[$product->getId()] = $product;
+        }
+
+        foreach ($discountCriteria->getProducts() as $dcProduct) {
+
             $productCartItem = $cart->getItemBySku($product->getSku());
 
-            if ($product->getId() ==
-                $discountCriteria->getProduct()
-                    ->getId() &&
+            if (
+                isset($productsMap[$dcProduct->getId()]) &&
+                $productCartItem &&
                 ($productCartItem->getQuantity() >= (integer)$discountCriteria->getMin()) &&
-                ($productCartItem->getQuantity() <= (integer)$discountCriteria->getMax())) {
-                return true;
+                ($productCartItem->getQuantity() <= (integer)$discountCriteria->getMax())
+            ) {
+                // if dcProduct is in cart with valid quantity
+                if ($discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY) {
+                    return true;
+                }
+            }
+            elseif ($discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL) {
+                // if dcProduct is not in cart with valid quantity & discount criteria relation to producs == ALL
+                return false;
             }
         }
 
-        return false;
+        // discount criteria relation 'ANY' should have matched in above foreach block & already returned true
+        // unsatisfied discount criteria relation 'ALL' should have matched in above foreach block & already returned false
+        return $discountCriteria->getProductsRelationType() != DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY;
     }
 
     /**
@@ -237,40 +254,12 @@ class DiscountCriteriaService
             return false;
         }
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->userProductRepository->createQueryBuilder('up');
+        $userProductsCount = $this->userProductRepository->getCountByUserDiscountCriteriaProducts(
+            $this->currentUser,
+            $discountCriteria
+        );
 
-        $qb->select('COUNT(up)')
-            ->where(
-                $qb->expr()
-                    ->eq('up.user', ':user')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->eq('up.product', ':product')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->orX(
-                        $qb->expr()
-                            ->gte('up.expirationDate', ':now'),
-                        $qb->expr()
-                            ->isNull('up.expirationDate')
-                    )
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->between('up.quantity', ':min', ':max')
-            )
-            ->setParameter('user', $this->currentUser)
-            ->setParameter('product', $discountCriteria->getProduct())
-            ->setParameter('now', Carbon::now())
-            ->setParameter('min', (integer)$discountCriteria->getMin())
-            ->setParameter('max', (integer)$discountCriteria->getMax());
-
-        return (integer)$qb->getQuery()
-                ->getSingleScalarResult() > 0;
+        return $discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY ?
+            $userProductsCount > 0 : $userProductsCount == count($discountCriteria->getProducts());
     }
 }

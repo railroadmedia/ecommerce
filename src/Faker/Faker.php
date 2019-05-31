@@ -267,7 +267,6 @@ class Faker extends Generator
             [
                 'name' => $this->word(),
                 'type' => $this->word,
-                'product_id' => $this->randomNumber(2),
                 'min' => $this->randomNumber(1),
                 'max' => $this->randomNumber(2),
                 'discount_id' => $this->randomNumber(1),
