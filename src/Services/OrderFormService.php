@@ -106,8 +106,13 @@ class OrderFormService
         // try to make the payment
         try {
 
+            // if its free, dont create a payment
+            if ($paymentAmountInBaseCurrency == 0) {
+                $payment = null;
+            }
+
             // use their existing payment method if they chose one
-            if (!empty($cart->getPaymentMethodId())) {
+            elseif (!empty($cart->getPaymentMethodId())) {
 
                 $payment = $this->paymentService->chargeUsersExistingPaymentMethod(
                     $cart->getPaymentMethodId(),

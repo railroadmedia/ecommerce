@@ -168,6 +168,21 @@ class OrderFormSubmitRequest extends FormRequest
             }
         }
 
+        $this->cartService->setCart($this->getCart());
+
+        // its a free empty payment
+        if ($this->cartService->getDueForInitialPayment() == 0) {
+            unset($rules['payment_method_type']);
+            unset($rules['payment_method_id']);
+            unset($rules['billing_country']);
+            unset($rules['card_token']);
+            unset($rules['currency']);
+            unset($rules['billing_region']);
+            unset($rules['billing_zip_or_postal_code']);
+
+            $rules['payment_plan_number_of_payments'] = 'integer|in:1';
+        }
+
         return $rules;
     }
 
@@ -204,7 +219,7 @@ class OrderFormSubmitRequest extends FormRequest
             if (!empty($overrides) && is_array($overrides)) {
                 foreach ($overrides as $override) {
                     foreach ($cart->getItems() as $cartItem) {
-                        if ($override['sku'] == $cartItem->getSku() && !empty($override['amount'])) {
+                        if ($override['sku'] == $cartItem->getSku() && !is_null($override['amount'])) {
                             $cartItem->setDueOverride($override['amount']);
                         }
                     }

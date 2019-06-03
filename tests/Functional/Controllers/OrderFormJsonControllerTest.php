@@ -1414,6 +1414,361 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_submit_order_overrides_zero_dollar_total()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $currency = $this->getCurrency();
+        $fingerPrint = $this->faker->word;
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $country = 'Canada';
+        $state = 'alberta';
+        $zip = $this->faker->postcode;
+
+        $productOne = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => true,
+                'weight' => 0.20,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => 0,
+                'sku' => 'a' . $this->faker->word,
+            ]
+        );
+
+        $productTwo = $this->fakeProduct(
+            [
+                'price' => 247,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => false,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => 0,
+                'sku' => 'b' . $this->faker->word,
+            ]
+        );
+
+        $taxesDueOverride = 0;
+        $shippingDueOverride = 0;
+        $orderItemOneDueOverride = 0;
+        $orderItemTwoDueOverride = 0;
+
+        $requestData = [
+            'gateway' => $brand,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => 'alberta',
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => 'Canada',
+            'currency' => $currency,
+            'taxes_due_override' => $taxesDueOverride,
+            'shipping_due_override' => $shippingDueOverride,
+            'order_items_due_overrides' => [
+                [
+                    'sku' => $productOne['sku'],
+                    'amount' => $orderItemOneDueOverride,
+                ],
+                [
+                    'sku' => $productTwo['sku'],
+                    'amount' => $orderItemTwoDueOverride,
+                ],
+            ],
+        ];
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+        $fakerCustomer = new Customer();
+        $fakerCustomer->email = $this->faker->email;
+        $fakerCustomer->id = $this->faker->word . rand();
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $fingerPrint;
+        $fakerCard->brand = $this->faker->word;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = 2020;
+        $fakerCard->exp_month = 12;
+        $fakerCard->id = $this->faker->word;
+        $fakerCard->customer = $fakerCustomer->id;
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+        $fakerCharge->id = $this->faker->word;
+        $fakerCharge->currency = 'cad';
+        $fakerCharge->amount = 100;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => 'Canada',
+                'active' => 1,
+                'priority' => 1,
+            ]
+        );
+
+        $shippingCostAmount = 5.50;
+
+        $shippingCost = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 0,
+                'max' => 1000,
+                'price' => $shippingCostAmount,
+            ]
+        );
+
+        $productOneQuantity = 3;
+
+        $this->cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity,
+            false,
+            ''
+        );
+
+        $expectedProductOneTotalPrice = $orderItemOneDueOverride * $productOneQuantity;
+
+        $expectedProductOneDiscountedPrice = 0;
+
+        $productTwoQuantity = 2;
+
+        $this->cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $expectedProductTwoTotalPrice = $orderItemTwoDueOverride * $productTwoQuantity;
+
+        $expectedProductTwoDiscountedPrice = 0;
+
+        $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
+
+        $expectedTaxes = $taxesDueOverride;
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingDueOverride + $expectedTaxes, 2);
+
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
+
+        $response = $this->call(
+            'PUT',
+            '/json/order-form/submit',
+            $requestData
+        );
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'order',
+                    'attributes' => [
+                        'total_due' => $expectedOrderTotalDue,
+                        'product_due' => round($expectedTotalFromItems, 2),
+                        'taxes_due' => $expectedTaxes,
+                        'shipping_due' => $shippingDueOverride,
+                        'finance_due' => 0,
+                        'total_paid' => $expectedOrderTotalDue,
+                        'brand' => $brand,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ],
+                        'shippingAddress' => [
+                            'data' => ['type' => 'address']
+                        ]
+                    ]
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $productOne['id'],
+                    'attributes' => array_diff_key(
+                        $productOne,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'product',
+                    'id' => $productTwo['id'],
+                    'attributes' => array_diff_key(
+                        $productTwo,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productOneQuantity,
+                        'weight' => $productOne['weight'],
+                        'initial_price' => $productOne['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $orderItemOneDueOverride,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productOne['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productTwoQuantity,
+                        'weight' => $productTwo['weight'],
+                        'initial_price' => $productTwo['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $orderItemTwoDueOverride,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $productTwo['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::SHIPPING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => $requestData['shipping_first_name'],
+                        'last_name' => $requestData['shipping_last_name'],
+                        'street_line_1' => $requestData['shipping_address_line_1'],
+                        'street_line_2' => null,
+                        'city' => $requestData['shipping_city'],
+                        'zip' => $requestData['shipping_zip_or_postal_code'],
+                        'state' => $requestData['shipping_region'],
+                        'country' => $requestData['shipping_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            $response->decodeResponseJson()['included']
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $userId,
+                'product_id' => $productOne['id'],
+                'quantity' => $productOneQuantity,
+                'expiration_date' => null,
+            ]
+        );
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $userId,
+                'product_id' => $productTwo['id'],
+                'quantity' => $productTwoQuantity,
+                'expiration_date' => null,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'total_due' => $expectedOrderTotalDue,
+                'product_due' => $expectedTotalFromItems,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => $shippingDueOverride,
+                'finance_due' => 0,
+                'total_paid' => $expectedOrderTotalDue,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_items',
+            [
+                'product_id' => $productOne['id'],
+                'quantity' => $productOneQuantity,
+                'initial_price' => $productOne['price'],
+                'final_price' => $orderItemOneDueOverride,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_items',
+            [
+                'product_id' => $productTwo['id'],
+                'quantity' => $productTwoQuantity,
+                'initial_price' => $productTwo['price'],
+                'final_price' => $orderItemTwoDueOverride,
+            ]
+        );
+
+        // make sure fulfillment was created
+        $this->assertDatabaseHas(
+            'ecommerce_order_item_fulfillment',
+            [
+                'status' => config('ecommerce.fulfillment_status_pending'),
+                'company' => null,
+                'tracking_number' => null,
+                'fulfilled_on' => null,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+    }
+
+
     public function test_submit_order_paypal_payment_get_token_only()
     {
         $userId = $this->createAndLogInNewUser();

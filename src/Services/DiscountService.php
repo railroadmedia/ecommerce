@@ -123,6 +123,10 @@ class DiscountService
                     /** @var CartItem $productCartItem */
                     $productCartItem = $cart->getItemBySku($product->getSku());
 
+                    if (!is_null($productCartItem->getDueOverride())) {
+                        continue;
+                    }
+
                     /** @var Product $discountProduct */
                     $discountProduct = $applicableDiscount->getProduct();
 

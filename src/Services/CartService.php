@@ -143,7 +143,7 @@ class CartService
 
         // product
         $product = $this->productRepository->bySku($sku);
-        
+
         if ($quantity < 1) {
             throw new ProductNotFoundException($sku);
         }
@@ -306,7 +306,7 @@ class CartService
             $cartItem = $this->cart->getItemBySku($product->getSku());
 
             if (!empty($cartItem)) {
-                $price = $cartItem->getDueOverride() ?: $product->getPrice();
+                $price = !is_null($cartItem->getDueOverride()) ? $cartItem->getDueOverride() : $product->getPrice();
                 $totalBeforeDiscounts += $price * $cartItem->getQuantity();
             }
         }
@@ -317,7 +317,7 @@ class CartService
             $this->shippingService->getShippingDueForCart($this->cart, $totalBeforeDiscounts)
         );
 
-        return round($totalBeforeDiscounts - $totalDiscountAmount, 2);
+        return max(0, round($totalBeforeDiscounts - $totalDiscountAmount, 2));
     }
 
     /**
@@ -347,7 +347,7 @@ class CartService
                     $totalShippingCosts
                 );
 
-                $cartItemDue = $cartItem->getDueOverride() ?: round(
+                $cartItemDue = !is_null($cartItem->getDueOverride()) ? $cartItem->getDueOverride() : round(
                     $product->getPrice() * $cartItem->getQuantity() - $discountAmount,
                     2
                 );
@@ -407,19 +407,21 @@ class CartService
     {
         $totalItemCostDue = $this->getTotalItemCosts();
 
-        $shippingDue = $this->cart->getShippingOverride() ?:
-            $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
+        $shippingDue =
+            !is_null($this->cart->getShippingOverride()) ? $this->cart->getShippingOverride() :
+                $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
-        $totalTaxDue = $this->cart->getTaxOverride() ?:
-            $this->taxService->getTaxesDueTotal(
-                $totalItemCostDue,
-                $shippingDue,
-                $this->taxService->getAddressForTaxation($this->getCart())
-            );
+        $totalTaxDue =
+            !is_null($this->cart->getTaxOverride()) ? $this->cart->getTaxOverride() :
+                $this->taxService->getTaxesDueTotal(
+                    $totalItemCostDue,
+                    $shippingDue,
+                    $this->taxService->getAddressForTaxation($this->getCart())
+                );
 
         $financeDue = $this->getTotalFinanceCosts();
 
-        return round($totalItemCostDue + $shippingDue + $totalTaxDue + $financeDue, 2);
+        return max(0, round($totalItemCostDue + $shippingDue + $totalTaxDue + $financeDue, 2));
     }
 
     /**
@@ -431,17 +433,19 @@ class CartService
     {
         $totalItemCostDue = $this->getTotalItemCosts();
 
-        $shippingDue = $this->cart->getShippingOverride() ?:
-            $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
+        $shippingDue =
+            !is_null($this->cart->getShippingOverride()) ? $this->cart->getShippingOverride() :
+                $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
-        $totalTaxDue = $this->cart->getTaxOverride() ?:
-            $this->taxService->getTaxesDueTotal(
-                $totalItemCostDue,
-                $shippingDue,
-                $this->taxService->getAddressForTaxation($this->getCart())
-            );
+        $totalTaxDue =
+            !is_null($this->cart->getTaxOverride()) ? $this->cart->getTaxOverride() :
+                $this->taxService->getTaxesDueTotal(
+                    $totalItemCostDue,
+                    $shippingDue,
+                    $this->taxService->getAddressForTaxation($this->getCart())
+                );
 
-        return round($totalTaxDue, 2);
+        return max(0, round($totalTaxDue, 2));
     }
 
     /**
@@ -455,15 +459,17 @@ class CartService
     {
         $totalItemCostDue = $this->getTotalItemCosts();
 
-        $shippingDue = $this->cart->getShippingOverride() ?:
-            $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
+        $shippingDue =
+            !is_null($this->cart->getShippingOverride()) ? $this->cart->getShippingOverride() :
+                $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
-        $totalTaxDue = $this->cart->getTaxOverride() ?:
-            $this->taxService->getTaxesDueTotal(
-                $totalItemCostDue,
-                $shippingDue,
-                $this->taxService->getAddressForTaxation($this->getCart())
-            );
+        $totalTaxDue =
+            !is_null($this->cart->getTaxOverride()) ? $this->cart->getTaxOverride() :
+                $this->taxService->getTaxesDueTotal(
+                    $totalItemCostDue,
+                    $shippingDue,
+                    $this->taxService->getAddressForTaxation($this->getCart())
+                );
 
         $financeDue = $this->getTotalFinanceCosts();
 
@@ -480,7 +486,7 @@ class CartService
             );
         }
 
-        return round($initialTotalDueBeforeShipping + $shippingDue, 2);
+        return max(0, round($initialTotalDueBeforeShipping + $shippingDue, 2));
     }
 
     /**
@@ -495,23 +501,28 @@ class CartService
     {
         $totalItemCostDue = $this->getTotalItemCosts();
 
-        $shippingDue = $this->cart->getShippingOverride() ?:
-            $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
+        $shippingDue =
+            !is_null($this->cart->getShippingOverride()) ? $this->cart->getShippingOverride() :
+                $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
-        $totalTaxDue = $this->cart->getTaxOverride() ?:
-            $this->taxService->getTaxesDueTotal(
-                $totalItemCostDue,
-                $shippingDue,
-                $this->taxService->getAddressForTaxation($this->getCart())
-            );
+        $totalTaxDue =
+            !is_null($this->cart->getTaxOverride()) ? $this->cart->getTaxOverride() :
+                $this->taxService->getTaxesDueTotal(
+                    $totalItemCostDue,
+                    $shippingDue,
+                    $this->taxService->getAddressForTaxation($this->getCart())
+                );
 
         $financeDue = $this->getTotalFinanceCosts();
 
         $totalToFinance = $totalItemCostDue + $totalTaxDue + $financeDue;
 
-        return round(
-            $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(),
-            2
+        return max(
+            0,
+            round(
+                $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(),
+                2
+            )
         );
     }
 
@@ -530,18 +541,20 @@ class CartService
 
         $totalItemCostDue = $this->getTotalItemCosts();
 
-        $shippingDue = $this->cart->getShippingOverride() ?:
-            $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
-        
+        $shippingDue =
+            !is_null($this->cart->getShippingOverride()) ? $this->cart->getShippingOverride() :
+                $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
+
         $order->setProductDue($totalItemCostDue);
         $order->setShippingDue($shippingDue);
 
-        $taxesDue = $this->cart->getTaxOverride() ?:
-            $this->taxService->getTaxesDueTotal(
-                $order->getProductDue(),
-                $order->getShippingDue(),
-                $this->taxService->getAddressForTaxation($this->getCart())
-            );
+        $taxesDue =
+            !is_null($this->cart->getTaxOverride()) ? $this->cart->getTaxOverride() :
+                $this->taxService->getTaxesDueTotal(
+                    $order->getProductDue(),
+                    $order->getShippingDue(),
+                    $this->taxService->getAddressForTaxation($this->getCart())
+                );
 
         $order->setFinanceDue($this->getTotalFinanceCosts());
 
@@ -619,15 +632,17 @@ class CartService
 
         $totalItemCostDue = $this->getTotalItemCosts();
 
-        $shippingDue = $this->cart->getShippingOverride() ?:
-            $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
+        $shippingDue =
+            !is_null($this->cart->getShippingOverride()) ? $this->cart->getShippingOverride() :
+                $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
-        $totalTaxDue = $this->cart->getTaxOverride() ?:
-            $this->taxService->getTaxesDueTotal(
-                $totalItemCostDue,
-                $shippingDue,
-                $this->taxService->getAddressForTaxation($this->getCart())
-            );
+        $totalTaxDue =
+            !is_null($this->cart->getTaxOverride()) ? $this->cart->getTaxOverride() :
+                $this->taxService->getTaxesDueTotal(
+                    $totalItemCostDue,
+                    $shippingDue,
+                    $this->taxService->getAddressForTaxation($this->getCart())
+                );
 
         $totals = [
             'shipping' => $shippingDue,

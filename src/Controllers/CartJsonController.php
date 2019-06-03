@@ -318,7 +318,7 @@ class CartJsonController extends Controller
             if (!empty($overrides) && is_array($overrides)) {
                 foreach ($overrides as $override) {
                     foreach ($cart->getItems() as $cartItem) {
-                        if ($override['sku'] == $cartItem->getSku() && !empty($override['amount'])) {
+                        if ($override['sku'] == $cartItem->getSku() && !is_null($override['amount'])) {
                             $cartItem->setDueOverride($override['amount']);
                         }
                     }
@@ -327,6 +327,8 @@ class CartJsonController extends Controller
         }
 
         $this->cartService->setCart($cart);
+
+        $cart->toSession();
 
         return ResponseService::cart($this->cartService->toArray())
             ->respond(200);
