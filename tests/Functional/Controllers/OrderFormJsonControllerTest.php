@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Session\Store;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
+use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
@@ -2049,7 +2050,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $productOne['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => '2',
                 'max' => '2000000',
@@ -2481,7 +2481,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $productOne['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => '2',
                 'max' => '2000000',
@@ -2921,7 +2920,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $productOne['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => '2',
                 'max' => '2000000',
@@ -3220,7 +3218,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $productOne['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => '2',
                 'max' => '2000000',
@@ -4094,7 +4091,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
                 'type' => DiscountCriteriaService::SHIPPING_TOTAL_REQUIREMENT_TYPE,
                 'min' => '1',
                 'max' => '2000',
@@ -4393,12 +4389,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
+                'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
                 'type' => 'product quantity requirement',
                 'min' => 2,
                 'max' => 5,
             ]
         );
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteria['id'],
+            'product_id' => $product['id'],
+        ]);
 
         $expectedProductTotalPrice = $product['price'] * $productQuantity;
 
@@ -4637,7 +4638,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
                 'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
                 'min' => Carbon::now()
                     ->subDay(1),
@@ -4772,7 +4772,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
                 'type' => 'date requirement',
                 'min' => Carbon::now()
                     ->subDay(1),
@@ -4892,7 +4891,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => 5,
                 'max' => 500,
@@ -5034,7 +5032,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => 5,
                 'max' => 500,
@@ -5151,7 +5148,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => 5,
                 'max' => 500,
@@ -5290,7 +5286,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => 5,
                 'max' => 500,
@@ -5447,7 +5442,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => 5,
                 'max' => 500,
@@ -5617,7 +5611,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => 5,
                 'max' => 500,
@@ -5788,7 +5781,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => 5,
                 'max' => 500,
@@ -5951,7 +5943,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $productOne['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => 5,
                 'max' => 500,
@@ -7125,12 +7116,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteriaOne = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discountOne['id'],
-                'product_id' => $productOne['id'],
                 'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
+                'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
                 'min' => '1',
                 'max' => '100',
             ]
         );
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaOne['id'],
+            'product_id' => $productOne['id'],
+        ]);
 
         $discountTwo = $this->fakeDiscount(
             [
@@ -7144,12 +7140,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteriaTwo = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discountTwo['id'],
-                'product_id' => $productTwo['id'],
                 'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
+                'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
                 'min' => '1',
                 'max' => '100',
             ]
         );
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaTwo['id'],
+            'product_id' => $productTwo['id'],
+        ]);
 
         $productOneQuantity = 2;
 
@@ -7359,7 +7360,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $productTwo['id'],
                 'type' => DiscountCriteriaService::PROMO_CODE_REQUIREMENT_TYPE,
                 'min' => $promoCode,
                 'max' => $promoCode,
@@ -7523,7 +7523,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $product['id'],
                 'type' => DiscountCriteriaService::PROMO_CODE_REQUIREMENT_TYPE,
                 'min' => $promoCode,
                 'max' => $promoCode,
@@ -7793,7 +7792,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $discountCriteria = $this->fakeDiscountCriteria(
             [
                 'discount_id' => $discount['id'],
-                'product_id' => $productOne['id'],
                 'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
                 'min' => 5,
                 'max' => 500,

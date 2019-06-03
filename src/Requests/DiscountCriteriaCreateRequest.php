@@ -41,7 +41,6 @@ class DiscountCriteriaCreateRequest extends FormRequest
             'data.type' => 'in:discountCriteria',
             'data.attributes.name' => 'required|max:255',
             'data.attributes.type' => 'required|max:255',
-            'data.relationships.product.id' => 'nullable|exists:' . 'ecommerce_products' . ',id',
             'data.attributes.min' => 'required',
             'data.attributes.max' => 'required',
         ];
@@ -59,7 +58,7 @@ class DiscountCriteriaCreateRequest extends FormRequest
                 'data.attributes.type',
                 'data.attributes.min',
                 'data.attributes.max',
-                'data.relationships.product'
+                'data.relationships.products'
             ]
         );
     }

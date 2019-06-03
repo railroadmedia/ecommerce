@@ -704,7 +704,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $discountCriteriaData = $this->fakeDiscountCriteria([
             'min' => 1,
             'max' => $userProductData['quantity'],
-            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
         ]);
 
         $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
@@ -721,6 +721,114 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
             ->productOwnRequirement($discountCriteria);
 
         $this->assertTrue($metCriteria);
+    }
+
+    public function test_product_own_criteria_many_all()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $em = $this->app->make(EcommerceEntityManager::class);
+
+        $productOne = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $userProductOneData = $this->fakeUserProduct([
+            'user_id' => $userId,
+            'product_id' => $productOne['id'],
+            'quantity' => 2,
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $userProductTwoData = $this->fakeUserProduct([
+            'user_id' => $userId,
+            'product_id' => $productTwo['id'],
+            'quantity' => 2,
+        ]);
+
+        $discountCriteriaData = $this->fakeDiscountCriteria([
+            'min' => 1,
+            'max' => 3,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $discountCriteriaProductOne = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $productOne['id']
+        ]);
+
+        $discountCriteriaProductTwo = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $productTwo['id']
+        ]);
+
+        $discountCriteria = $em->getRepository(DiscountCriteria::class)
+                                ->find($discountCriteriaData['id']);
+
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
+            ->productOwnRequirement($discountCriteria);
+
+        $this->assertTrue($metCriteria);
+    }
+
+    public function test_product_own_criteria_many_all_not_met()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $em = $this->app->make(EcommerceEntityManager::class);
+
+        $productOne = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $userProductOneData = $this->fakeUserProduct([
+            'user_id' => $userId,
+            'product_id' => $productOne['id'],
+            'quantity' => 2,
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'price' => $this->faker->randomFloat(2, 60, 100),
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+
+        $discountCriteriaData = $this->fakeDiscountCriteria([
+            'min' => 1,
+            'max' => 3,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+        ]);
+
+        $discountCriteriaProductOne = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $productOne['id']
+        ]);
+
+        $discountCriteriaProductTwo = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaData['id'],
+            'product_id' => $productTwo['id']
+        ]);
+
+        $discountCriteria = $em->getRepository(DiscountCriteria::class)
+                                ->find($discountCriteriaData['id']);
+
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
+            ->productOwnRequirement($discountCriteria);
+
+        $this->assertFalse($metCriteria);
     }
 
     public function test_product_own_quantity_not_met()

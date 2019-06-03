@@ -31,6 +31,8 @@ class CartJsonControllerTest extends EcommerceTestCase
         $cartService = $this->app->make(CartService::class);
 
         $product = $this->fakeProduct([
+            'is_physical' => true,
+            'weight' => 1,
             'active' => 1,
             'stock' => $this->faker->numberBetween(15, 100),
         ]);

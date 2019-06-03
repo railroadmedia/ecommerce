@@ -93,7 +93,6 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         ]);
 
         $discountCriteria = $this->faker->discountCriteria([
-            'product_id' => $productDiscountCriteria['id']
         ]);
 
         $results = $this->call(
@@ -104,10 +103,12 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     'type' => 'discountCriteria',
                     'attributes' => $discountCriteria,
                     'relationships' => [
-                        'product' => [
+                        'products' => [
                             'data' => [
-                                'type' => 'product',
-                                'id' => $productDiscountCriteria['id']
+                                [
+                                    'type' => 'product',
+                                    'id' => $productDiscountCriteria['id']
+                                ]
                             ]
                         ]
                     ]
@@ -137,10 +138,12 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                                 'id' => $discount['id']
                             ]
                         ],
-                        'product' => [
+                        'products' => [
                             'data' => [
-                                'type' => 'product',
-                                'id' => $productDiscountCriteria['id']
+                                [
+                                    'type' => 'product',
+                                    'id' => $productDiscountCriteria['id']
+                                ]
                             ]
                         ]
                     ]
@@ -212,13 +215,11 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         ]);
 
         $discountCriteria = $this->fakeDiscountCriteria([
-            'product_id' => $productDiscountCriteria['id'],
             'discount_id' => $discount['id']
         ]);
 
         $newDiscountCriteria = $this->faker->discountCriteria([
-            'product_id' => $productDiscountCriteria['id'],
-            'discount_id' => $discount['id']
+            'discount_id' => $discount['id'],
         ]);
 
         $results = $this->call(
@@ -229,10 +230,12 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     'type' => 'discountCriteria',
                     'attributes' => $newDiscountCriteria,
                     'relationships' => [
-                        'product' => [
+                        'products' => [
                             'data' => [
-                                'type' => 'product',
-                                'id' => $productDiscountCriteria['id']
+                                [
+                                    'type' => 'product',
+                                    'id' => $productDiscountCriteria['id']
+                                ]
                             ]
                         ],
                         'discount' => [
@@ -257,7 +260,6 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     'attributes' => array_diff_key(
                         $newDiscountCriteria,
                         [
-                            'product_id' => true,
                             'discount_id' => true,
                         ]
                     ),
@@ -268,10 +270,12 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                                 'id' => $discount['id']
                             ]
                         ],
-                        'product' => [
+                        'products' => [
                             'data' => [
-                                'type' => 'product',
-                                'id' => $productDiscountCriteria['id']
+                                [
+                                    'type' => 'product',
+                                    'id' => $productDiscountCriteria['id']
+                                ]
                             ]
                         ]
                     ]
@@ -324,7 +328,6 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         ]);
 
         $discountCriteria = $this->fakeDiscountCriteria([
-            'product_id' => $productDiscountCriteria['id'],
             'discount_id' => $discount['id']
         ]);
 

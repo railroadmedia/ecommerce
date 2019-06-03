@@ -28,9 +28,9 @@ class DiscountCriteriaTransformer extends TransformerAbstract
             $this->defaultIncludes[] = 'discount';
         }
 
-        if (!empty($discountCriteria->getProduct())) {
+        if (!empty($discountCriteria->getProducts())) {
             // product relation is nullable
-            $this->defaultIncludes[] = 'product';
+            $this->defaultIncludes[] = 'products';
         }
 
         return [
@@ -48,22 +48,13 @@ class DiscountCriteriaTransformer extends TransformerAbstract
         ];
     }
 
-    public function includeProduct(DiscountCriteria $discountCriteria)
+    public function includeProducts(DiscountCriteria $discountCriteria)
     {
-        if ($discountCriteria->getProduct() instanceof Proxy) {
-            return $this->item(
-                $discountCriteria->getProduct(),
-                new EntityReferenceTransformer(),
-                'product'
-            );
-        }
-        else {
-            return $this->item(
-                $discountCriteria->getProduct(),
-                new ProductTransformer(),
-                'product'
-            );
-        }
+        return $this->collection(
+            $discountCriteria->getProducts(),
+            new ProductTransformer(),
+            'product'
+        );
     }
 
     public function includeDiscount(DiscountCriteria $discountCriteria)

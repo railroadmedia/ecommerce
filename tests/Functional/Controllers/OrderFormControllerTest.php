@@ -116,7 +116,6 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $discountCriteria = $this->fakeDiscountCriteria([
             'discount_id' => $discount['id'],
-            'product_id' => $productOne['id'],
             'type' => 'product quantity requirement',
             'min' => '1',
             'max' => '2000000',
