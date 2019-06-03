@@ -317,7 +317,7 @@ class CartService
             $this->shippingService->getShippingDueForCart($this->cart, $totalBeforeDiscounts)
         );
 
-        return round($totalBeforeDiscounts - $totalDiscountAmount, 2);
+        return max(0, round($totalBeforeDiscounts - $totalDiscountAmount, 2));
     }
 
     /**
@@ -421,7 +421,7 @@ class CartService
 
         $financeDue = $this->getTotalFinanceCosts();
 
-        return round($totalItemCostDue + $shippingDue + $totalTaxDue + $financeDue, 2);
+        return max(0, round($totalItemCostDue + $shippingDue + $totalTaxDue + $financeDue, 2));
     }
 
     /**
@@ -445,7 +445,7 @@ class CartService
                     $this->taxService->getAddressForTaxation($this->getCart())
                 );
 
-        return round($totalTaxDue, 2);
+        return max(0, round($totalTaxDue, 2));
     }
 
     /**
@@ -486,7 +486,7 @@ class CartService
             );
         }
 
-        return round($initialTotalDueBeforeShipping + $shippingDue, 2);
+        return max(0, round($initialTotalDueBeforeShipping + $shippingDue, 2));
     }
 
     /**
@@ -517,9 +517,12 @@ class CartService
 
         $totalToFinance = $totalItemCostDue + $totalTaxDue + $financeDue;
 
-        return round(
-            $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(),
-            2
+        return max(
+            0,
+            round(
+                $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(),
+                2
+            )
         );
     }
 

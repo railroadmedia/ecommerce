@@ -86,7 +86,9 @@ class CartItem implements Serializable
      */
     public function serialize()
     {
-        return serialize(['sku' => $this->getSku(), 'quantity' => $this->getQuantity()]);
+        return serialize(
+            ['sku' => $this->getSku(), 'quantity' => $this->getQuantity(), 'due-override' => $this->getDueOverride()]
+        );
     }
 
     /**
@@ -98,5 +100,6 @@ class CartItem implements Serializable
 
         $this->setSku($data['sku']);
         $this->setQuantity($data['quantity']);
+        $this->setDueOverride($data['due-override']);
     }
 }
