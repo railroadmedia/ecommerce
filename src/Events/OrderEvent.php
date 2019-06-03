@@ -21,9 +21,9 @@ class OrderEvent
      * Create a new event instance.
      *
      * @param Order $order
-     * @param Payment $payment
+     * @param Payment|null $payment
      */
-    public function __construct(Order $order, Payment $payment)
+    public function __construct(Order $order, ?Payment $payment)
     {
         $this->order = $order;
         $this->payment = $payment;
@@ -38,9 +38,9 @@ class OrderEvent
     }
 
     /**
-     * @return Payment
+     * @return Payment|null
      */
-    public function getPayment(): Payment
+    public function getPayment(): ?Payment
     {
         return $this->payment;
     }

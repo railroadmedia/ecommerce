@@ -27,6 +27,8 @@ class OrderInvoiceListener
      */
     public function handle(OrderEvent $event)
     {
-        $this->invoiceService->sendOrderInvoiceEmail($event->getOrder(), $event->getPayment());
+        if (!empty($event->getPayment())) {
+            $this->invoiceService->sendOrderInvoiceEmail($event->getOrder(), $event->getPayment());
+        }
     }
 }

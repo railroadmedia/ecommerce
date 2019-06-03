@@ -74,7 +74,7 @@ class OrderClaimingService
 
     /**
      * @param Purchaser $purchaser
-     * @param Payment $payment
+     * @param Payment|null $payment
      * @param Cart $cart
      * @param Address $shippingAddress
      *
@@ -84,14 +84,16 @@ class OrderClaimingService
      * @throws OptimisticLockException
      * @throws Throwable
      */
-    public function claimOrder(Purchaser $purchaser, Payment $payment, Cart $cart, ?Address $shippingAddress): Order
+    public function claimOrder(Purchaser $purchaser, ?Payment $payment, Cart $cart, ?Address $shippingAddress): Order
     {
         $this->cartService->setCart($cart);
 
         $totalItemsCosts = $this->cartService->getTotalItemCosts();
         $shippingCosts =
-            $cart->getShippingOverride() ?: $this->shippingService->getShippingDueForCart($cart, $totalItemsCosts);
-        $taxesDue = $cart->getTaxOverride() ?: $this->cartService->getTaxDueForOrder();
+            !is_null($cart->getShippingOverride()) ? $cart->getShippingOverride() :
+                $this->shippingService->getShippingDueForCart($cart, $totalItemsCosts);
+        $taxesDue =
+            !is_null($cart->getTaxOverride()) ? $cart->getTaxOverride() : $this->cartService->getTaxDueForOrder();
 
         // create the order
         $order = new Order();
@@ -107,25 +109,32 @@ class OrderClaimingService
         $order->setCustomer($purchaser->getType() == Purchaser::CUSTOMER_TYPE ? $purchaser->getCustomerEntity() : null);
         $order->setShippingDue($shippingCosts);
         $order->setShippingAddress($shippingAddress);
-        $order->setBillingAddress(
-            $payment->getPaymentMethod()
-                ->getBillingAddress()
-        );
+
+        if (!empty($payment)) {
+            $order->setBillingAddress(
+                $payment->getPaymentMethod()
+                    ->getBillingAddress()
+            );
+        }
+
         $order->setCreatedAt(Carbon::now());
 
         // link the payment
-        $orderPayment = new OrderPayment();
+        if (!empty($payment)) {
+            $orderPayment = new OrderPayment();
 
-        $orderPayment->setOrder($order);
-        $orderPayment->setPayment($payment);
-        $orderPayment->setCreatedAt(Carbon::now());
+            $orderPayment->setOrder($order);
+            $orderPayment->setPayment($payment);
+            $orderPayment->setCreatedAt(Carbon::now());
+
+            $this->entityManager->persist($orderPayment);
+        }
 
         if ($shippingAddress) {
             $this->entityManager->persist($shippingAddress);
         }
 
         $this->entityManager->persist($order);
-        $this->entityManager->persist($orderPayment);
 
         // create the order items
         $orderItems = $this->cartService->getOrderItemEntities();
@@ -143,7 +152,7 @@ class OrderClaimingService
 
             // create product subscriptions
             if ($orderItem->getProduct()
-                    ->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
+                    ->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION && !empty($payment)) {
 
                 $subscription = $this->createSubscription(
                     $purchaser,
@@ -171,7 +180,7 @@ class OrderClaimingService
         }
 
         // create the payment plan subscription if required
-        if ($cart->getPaymentPlanNumberOfPayments() > 1) {
+        if ($cart->getPaymentPlanNumberOfPayments() > 1 && !empty($payment)) {
 
             $subscription = $this->createSubscription(
                 $purchaser,
@@ -280,8 +289,12 @@ class OrderClaimingService
         $intervalCount = $product ? $product->getSubscriptionIntervalCount() : 1;
 
         $totalTaxDue =
-            $this->cartService->getCart()
-                ->getTaxOverride() ?: $this->taxService->getTaxesDueTotal(
+            !is_null(
+                $this->cartService->getCart()
+                    ->getTaxOverride()
+            ) ?
+                $this->cartService->getCart()
+                    ->getTaxOverride() : $this->taxService->getTaxesDueTotal(
                 $this->cartService->getTotalItemCosts(),
                 0,
                 $this->taxService->getAddressForTaxation($this->cartService->getCart())
