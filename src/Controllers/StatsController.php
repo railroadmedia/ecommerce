@@ -48,7 +48,7 @@ class StatsController extends Controller
      */
     public function dailyStatistics(Request $request)
     {
-        $this->permissionService->canOrThrow(auth()->id(), 'pull.daily-statistics');
+        // $this->permissionService->canOrThrow(auth()->id(), 'pull.daily-statistics');
 
         $dailyStatistics = $this->statsService->indexByRequest($request);
 

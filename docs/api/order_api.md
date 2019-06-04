@@ -142,7 +142,7 @@ $.ajax({
                 "street_line_2":null,
                 "city":"Myrtisview",
                 "zip":"50951-7893",
-                "state":"ea",
+                "region":"ea",
                 "country":"Ireland",
                 "created_at":"2019-04-30 18:27:36",
                 "updated_at":"2019-04-30 18:27:36"
@@ -296,7 +296,7 @@ $.ajax({
                 "street_line_2":null,
                 "city":"Myrtisview",
                 "zip":"50951-7893",
-                "state":"ea",
+                "region":"ea",
                 "country":"Ireland",
                 "created_at":"2019-04-30 18:27:36",
                 "updated_at":"2019-04-30 18:27:36"

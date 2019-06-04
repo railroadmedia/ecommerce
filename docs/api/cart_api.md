@@ -441,3 +441,92 @@ Returns the entire cart with the new totals.
     }
 }
 ```
+
+### `{ PUT /*/json/session-address }`
+
+Updates the session addresses for the cart.
+
+### Request Parameters
+
+|Type|Key|Required|Default|Options|Notes|
+|----|---|--------|-------|-------|-----|
+|body|billing_address_id||||
+|body|billing_email||||
+|body|billing_country||||
+|body|billing_region||||
+|body|billing_zip_or_postal_code||||
+|body|shipping_address_id||||
+|body|shipping_address_line_1||||
+|body|shipping_city||||
+|body|shipping_country||||
+|body|shipping_first_name||||
+|body|shipping_last_name||||
+|body|shipping_region||||
+|body|shipping_zip||||
+
+### Request Example
+
+```js   
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/json/session-address',
+    type: 'put',
+    data: {
+        billing_country: 'Canada',
+        billing_region: 'Alberta'
+    },
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+Returns the entire cart.
+
+```200 OK```
+
+```json
+{
+    "data":null,
+    "meta":{
+        "cart":{
+            "items":[
+                {
+                    "sku":"vel168022",
+                    "name":"unde",
+                    "quantity":2,
+                    "thumbnail_url":"https:\/\/lorempixel.com\/640\/480\/?29311",
+                    "description":"Omnis id consequuntur sit et reprehenderit. Quod dolores quod saepe accusantium nisi at. Vero nihil aperiam voluptas vel. Voluptates officia eius quo voluptatem hic.",
+                    "stock":23,
+                    "subscription_interval_type":"day",
+                    "subscription_interval_count":9,
+                    "price_before_discounts":865,
+                    "price_after_discounts":865
+                }
+            ],
+            "discounts":[
+
+            ],
+            "shipping_address":null,
+            "billing_address": {
+                "zip_or_postal_code": null,
+                "street_line_two": null,
+                "street_line_one": null,
+                "last_name": null,
+                "first_name": null,
+                "region": "Alberta",
+                "country": "Canada",
+                "city": null,
+            },
+            "number_of_payments":1,
+            "locked":0,
+            "totals":{
+                "shipping":0,
+                "tax":0,
+                "due":1730
+            }
+        }
+    }
+}
+```

@@ -74,8 +74,8 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
 
         // set the shipping address, since there are no physical items tax should still be set
         $shippingAddress = [
-            'shipping-country' => 'United States',
-            'shipping-state' => 'Ohio',
+            'shipping_country' => 'United States',
+            'shipping_region' => 'Ohio',
         ];
 
         $response = $this->call('PUT', '/session/address', $shippingAddress);
@@ -106,8 +106,8 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
 
         // now change the billing address so there is no more tax
         $billingAddress= [
-            'billing-country' => 'United States',
-            'billing-state' => 'Ohio',
+            'billing_country' => 'United States',
+            'billing_region' => 'Ohio',
         ];
 
         $response = $this->call('PUT', '/session/address', $billingAddress);

@@ -22,19 +22,19 @@ class SessionStoreAddressRequest extends FormRequest
     public function rules()
     {
         return [
-            'billing-address-id' => 'nullable|integer',
-            'billing-email' => 'nullable|email',
-            'billing-country' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
-            'billing-region' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
-            'billing-zip-or-postal-code' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
-            'shipping-address-id' => 'nullable|integer',
-            'shipping-address-line-1' => 'nullable',
-            'shipping-city' => 'nullable|regex:/^[a-zA-Z-_ ]+$/',
-            'shipping-country' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
-            'shipping-first-name' => 'nullable|regex:/^[a-zA-Z-_\' ]+$/',
-            'shipping-last-name' => 'nullable|regex:/^[a-zA-Z-_\' ]+$/',
-            'shipping-region' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
-            'shipping-zip' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
+            'billing_address_id' => 'nullable|integer',
+            'billing_email' => 'nullable|email',
+            'billing_country' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
+            'billing_region' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
+            'billing_zip_or_postal_code' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
+            'shipping_address_id' => 'nullable|integer',
+            'shipping_address_line_1' => 'nullable',
+            'shipping_city' => 'nullable|regex:/^[a-zA-Z-_ ]+$/',
+            'shipping_country' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
+            'shipping_first_name' => 'nullable|regex:/^[a-zA-Z-_\' ]+$/',
+            'shipping_last_name' => 'nullable|regex:/^[a-zA-Z-_\' ]+$/',
+            'shipping_region' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
+            'shipping_zip' => 'nullable|regex:/^[0-9a-zA-Z-_ ]+$/',
         ];
     }
 }

@@ -288,7 +288,7 @@ $.ajax({
                 "street_line_2":null,
                 "city":null,
                 "zip":null,
-                "state":"",
+                "region":"",
                 "country":"",
                 "created_at":"2019-04-30 21:07:51",
                 "updated_at":"2019-04-30 21:07:51"
@@ -327,7 +327,7 @@ Update an existing payment method. This endpoint does not adhere to the JSON api
 |body|month|||integer (1, 2, etc)||
 |body|year|||integer||
 |body|country|||any country||
-|body|state|||||
+|body|region|||||
 
 ### Validation Rules
 
@@ -352,7 +352,7 @@ $.ajax({
         year: 2020,
         month: 1,
         country: "Ireland",
-        state: "texas",
+        region: "texas",
     }, 
     success: function(response) {},
     error: function(response) {}

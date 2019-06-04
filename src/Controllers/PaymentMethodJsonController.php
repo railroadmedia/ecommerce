@@ -257,7 +257,7 @@ class PaymentMethodJsonController extends Controller
                     $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
                     $billingAddress->setBrand($request->get('gateway', config('ecommerce.brand')));
                     $billingAddress->setUser($user);
-                    $billingAddress->setState($card->address_state ?? '');
+                    $billingAddress->setRegion($card->address_state ?? '');
                     $billingAddress->setCountry($billingCountry ?? '');
 
                     $this->entityManager->persist($billingAddress);
@@ -341,7 +341,7 @@ class PaymentMethodJsonController extends Controller
             $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
             $billingAddress->setBrand($request->get('gateway', config('ecommerce.brand')));
             $billingAddress->setUser($user);
-            $billingAddress->setState('');
+            $billingAddress->setRegion('');
             $billingAddress->setCountry('');
 
             $this->entityManager->persist($billingAddress);
@@ -486,7 +486,7 @@ class PaymentMethodJsonController extends Controller
                 $request->get('month'),
                 $request->get('year'),
                 $request->get('country', $request->has('country') ? '' : null),
-                $request->get('state', $request->has('state') ? '' : null)
+                $request->get('region', $request->has('region') ? '' : null)
             );
 
             $expirationDate = Carbon::createFromDate(
@@ -508,7 +508,7 @@ class PaymentMethodJsonController extends Controller
 
             $address = $this->addressRepository->byId($paymentMethod->getBillingAddress());
 
-            $address->setState($card->address_state ?? '');
+            $address->setRegion($card->address_state ?? '');
             $address->setCountry($billingCountry ?? '');
             $address->setUpdatedAt(Carbon::now());
 

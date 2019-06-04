@@ -264,7 +264,7 @@ class OrderFormSubmitRequest extends FormRequest
         $address->setStreetLine1($this->get('shipping_address_line_1'));
         $address->setStreetLine2($this->get('shipping_address_line_2'));
         $address->setCity($this->get('shipping_city'));
-        $address->setState($this->get('shipping_region'));
+        $address->setRegion($this->get('shipping_region'));
         $address->setCountry($this->get('shipping_country'));
         $address->setZip($this->get('shipping_zip_or_postal_code'));
 
@@ -361,7 +361,7 @@ class OrderFormSubmitRequest extends FormRequest
         $address->setStreetLine1($this->get('billing_address_line_1'));
         $address->setStreetLine2($this->get('billing_address_line_2'));
         $address->setCity($this->get('billing_city'));
-        $address->setState($this->get('billing_region'));
+        $address->setRegion($this->get('billing_region'));
         $address->setCountry($this->get('billing_country'));
         $address->setZip($this->get('billing_zip_or_postal_code'));
 

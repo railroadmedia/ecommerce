@@ -41,19 +41,19 @@ class TaxService
 
         if ($address && array_key_exists(strtolower($address->getCountry()), config('ecommerce.product_tax_rate'))) {
             if (array_key_exists(
-                strtolower($address->getState()),
+                strtolower($address->getRegion()),
                 config('ecommerce.product_tax_rate')[strtolower($address->getCountry())]
             )) {
                 return config('ecommerce.product_tax_rate')[strtolower($address->getCountry())][strtolower(
-                    $address->getState()
+                    $address->getRegion()
                 )];
             }
             else {
                 error_log(
                     'Could not find product tax rate for address. Country: ' .
                     $address->getCountry() .
-                    ' Province: ' .
-                    $address->getState()
+                    ' Region: ' .
+                    $address->getRegion()
                 );
             }
         }
@@ -77,19 +77,19 @@ class TaxService
 
         if ($address && array_key_exists(strtolower($address->getCountry()), config('ecommerce.shipping_tax_rate'))) {
             if (array_key_exists(
-                strtolower($address->getState()),
+                strtolower($address->getRegion()),
                 config('ecommerce.shipping_tax_rate')[strtolower($address->getCountry())]
             )) {
                 return config('ecommerce.shipping_tax_rate')[strtolower($address->getCountry())][strtolower(
-                    $address->getState()
+                    $address->getRegion()
                 )];
             }
             else {
                 error_log(
                     'Could not find shipping tax rate for address. Country: ' .
                     $address->getCountry() .
-                    ' Province: ' .
-                    $address->getState()
+                    ' Region: ' .
+                    $address->getRegion()
                 );
             }
         }
@@ -113,19 +113,19 @@ class TaxService
         if ($address &&
             array_key_exists(strtolower($address->getCountry()), config('ecommerce.gst_hst_tax_rate_display_only'))) {
             if (array_key_exists(
-                strtolower($address->getState()),
+                strtolower($address->getRegion()),
                 config('ecommerce.gst_hst_tax_rate_display_only')[strtolower($address->getCountry())]
             )) {
                 return config('ecommerce.gst_hst_tax_rate_display_only')[strtolower($address->getCountry())][strtolower(
-                    $address->getState()
+                    $address->getRegion()
                 )];
             }
             else {
                 error_log(
                     'Could not find GST tax rate for address. Country: ' .
                     $address->getCountry() .
-                    ' Province: ' .
-                    $address->getState()
+                    ' Region: ' .
+                    $address->getRegion()
                 );
             }
         }

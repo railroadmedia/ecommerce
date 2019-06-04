@@ -27,11 +27,11 @@ class CartControllerTest extends EcommerceTestCase
         $this->session->flush();
 
         $country = 'United States';
-        $state = 'Alaska';
+        $region = 'Alaska';
 
         $billingAddress = new Address();
         $billingAddress->setCountry($country);
-        $billingAddress->setState($state);
+        $billingAddress->setRegion($region);
 
         $cart = Cart::fromSession();
 
@@ -84,7 +84,7 @@ class CartControllerTest extends EcommerceTestCase
                     'street_line_one' => null,
                     'last_name' => null,
                     'first_name' => null,
-                    'state' => 'Alaska',
+                    'region' => 'Alaska',
                     'country' => 'United States',
                     'city' => null,
                 ],
@@ -133,11 +133,11 @@ class CartControllerTest extends EcommerceTestCase
         $this->session->flush();
 
         $country = 'United States';
-        $state = 'Alaska';
+        $region = 'Alaska';
 
         $billingAddress = new Address();
         $billingAddress->setCountry($country);
-        $billingAddress->setState($state);
+        $billingAddress->setRegion($region);
 
         $cart = Cart::fromSession();
 
@@ -169,7 +169,7 @@ class CartControllerTest extends EcommerceTestCase
                     'street_line_one' => null,
                     'last_name' => null,
                     'first_name' => null,
-                    'state' => 'Alaska',
+                    'region' => 'Alaska',
                     'country' => 'United States',
                     'city' => null,
                 ],
@@ -199,11 +199,11 @@ class CartControllerTest extends EcommerceTestCase
         $this->session->flush();
 
         $country = 'United States';
-        $state = 'Alaska';
+        $region = 'Alaska';
 
         $billingAddress = new Address();
         $billingAddress->setCountry($country);
-        $billingAddress->setState($state);
+        $billingAddress->setRegion($region);
 
         $cart = Cart::fromSession();
 
@@ -230,7 +230,7 @@ class CartControllerTest extends EcommerceTestCase
                     'street_line_one' => null,
                     'last_name' => null,
                     'first_name' => null,
-                    'state' => 'Alaska',
+                    'region' => 'Alaska',
                     'country' => 'United States',
                     'city' => null,
                 ],
@@ -259,11 +259,11 @@ class CartControllerTest extends EcommerceTestCase
     public function test_add_many_products_to_cart()
     {
         $country = 'United States';
-        $state = 'Alaska';
+        $region = 'Alaska';
 
         $billingAddress = new Address();
         $billingAddress->setCountry($country);
-        $billingAddress->setState($state);
+        $billingAddress->setRegion($region);
 
         $cart = Cart::fromSession();
 
@@ -337,7 +337,7 @@ class CartControllerTest extends EcommerceTestCase
                     'street_line_one' => null,
                     'last_name' => null,
                     'first_name' => null,
-                    'state' => 'Alaska',
+                    'region' => 'Alaska',
                     'country' => 'United States',
                     'city' => null,
                 ],
@@ -392,11 +392,11 @@ class CartControllerTest extends EcommerceTestCase
         $this->session->flush();
 
         $country = 'United States';
-        $state = 'Alaska';
+        $region = 'Alaska';
 
         $billingAddress = new Address();
         $billingAddress->setCountry($country);
-        $billingAddress->setState($state);
+        $billingAddress->setRegion($region);
 
         $cart = Cart::fromSession();
 
@@ -428,7 +428,7 @@ class CartControllerTest extends EcommerceTestCase
                     'street_line_one' => null,
                     'last_name' => null,
                     'first_name' => null,
-                    'state' => 'Alaska',
+                    'region' => 'Alaska',
                     'country' => 'United States',
                     'city' => null,
                 ],
@@ -456,11 +456,11 @@ class CartControllerTest extends EcommerceTestCase
     public function test_add_products_available_and_not_available_to_cart()
     {
         $country = 'United States';
-        $state = 'Alaska';
+        $region = 'Alaska';
 
         $billingAddress = new Address();
         $billingAddress->setCountry($country);
-        $billingAddress->setState($state);
+        $billingAddress->setRegion($region);
 
         $cart = Cart::fromSession();
 
@@ -541,7 +541,7 @@ class CartControllerTest extends EcommerceTestCase
                     'street_line_one' => null,
                     'last_name' => null,
                     'first_name' => null,
-                    'state' => 'Alaska',
+                    'region' => 'Alaska',
                     'country' => 'United States',
                     'city' => null,
                 ],

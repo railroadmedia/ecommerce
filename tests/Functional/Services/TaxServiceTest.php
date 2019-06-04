@@ -21,12 +21,12 @@ class TaxServiceTest extends EcommerceTestCase
         $price = 100;
         $shipping = 10;
         $country = 'canada';
-        $state = 'british columbia';
+        $region = 'british columbia';
 
         $address = new Address();
 
         $address->setCountry($country);
-        $address->setState($state);
+        $address->setRegion($region);
 
         $this->assertEquals(12.5, $srv->getTaxesDueTotal($price, $shipping, $address));
     }
@@ -36,30 +36,30 @@ class TaxServiceTest extends EcommerceTestCase
         $srv = $this->app->make(TaxService::class);
 
         $country = 'canada';
-        $state = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate.canada')));
+        $region = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate.canada')));
 
         $address = new Address();
 
         $address->setCountry($country);
-        $address->setState($state);
+        $address->setRegion($region);
 
         $this->assertEquals(
-            config('ecommerce.product_tax_rate')[$country][$state],
+            config('ecommerce.product_tax_rate')[$country][$region],
             $srv->getProductTaxRate($address)
         );
     }
 
-    public function test_get_product_tax_rate_unset_state()
+    public function test_get_product_tax_rate_unset_region()
     {
         $srv = $this->app->make(TaxService::class);
 
         $country = 'canada';
-        $state = '';
+        $region = '';
 
         $address = new Address();
 
         $address->setCountry($country);
-        $address->setState($state);
+        $address->setRegion($region);
 
         $rate = $srv->getProductTaxRate($address);
 
@@ -71,12 +71,12 @@ class TaxServiceTest extends EcommerceTestCase
         $srv = $this->app->make(TaxService::class);
 
         $country = '';
-        $state = '';
+        $region = '';
 
         $address = new Address();
 
         $address->setCountry($country);
-        $address->setState($state);
+        $address->setRegion($region);
 
         $rate = $srv->getProductTaxRate($address);
 
@@ -88,15 +88,15 @@ class TaxServiceTest extends EcommerceTestCase
         $srv = $this->app->make(TaxService::class);
 
         $country = 'canada';
-        $state = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate.canada')));
+        $region = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate.canada')));
 
         $address = new Address();
 
         $address->setCountry($country);
-        $address->setState($state);
+        $address->setRegion($region);
 
         $this->assertEquals(
-            config('ecommerce.shipping_tax_rate')[$country][$state],
+            config('ecommerce.shipping_tax_rate')[$country][$region],
             $srv->getShippingTaxRate($address)
         );
     }
@@ -106,15 +106,15 @@ class TaxServiceTest extends EcommerceTestCase
         $srv = $this->app->make(TaxService::class);
 
         $country = 'canada';
-        $state = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate.canada')));
+        $region = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate.canada')));
 
         $address = new Address();
 
         $address->setCountry($country);
-        $address->setState($state);
+        $address->setRegion($region);
 
         $this->assertEquals(
-            config('ecommerce.gst_hst_tax_rate_display_only')[$country][$state],
+            config('ecommerce.gst_hst_tax_rate_display_only')[$country][$region],
             $srv->getGSTTaxRate($address)
         );
     }
@@ -125,12 +125,12 @@ class TaxServiceTest extends EcommerceTestCase
 
         $price = 100;
         $country = 'canada';
-        $state = 'british columbia';
+        $region = 'british columbia';
 
         $address = new Address();
 
         $address->setCountry($country);
-        $address->setState($state);
+        $address->setRegion($region);
 
         $this->assertEquals(12, $srv->getTaxesDueForProductCost($price, $address));
     }
@@ -141,12 +141,12 @@ class TaxServiceTest extends EcommerceTestCase
 
         $price = 100;
         $country = 'canada';
-        $state = 'british columbia';
+        $region = 'british columbia';
 
         $address = new Address();
 
         $address->setCountry($country);
-        $address->setState($state);
+        $address->setRegion($region);
 
         $this->assertEquals(5, $srv->getTaxesDueForShippingCost($price, $address));
     }
@@ -157,12 +157,12 @@ class TaxServiceTest extends EcommerceTestCase
 
         $price = 100;
         $country = 'canada';
-        $state = 'british columbia';
+        $region = 'british columbia';
 
         $address = new Address();
 
         $address->setCountry($country);
-        $address->setState($state);
+        $address->setRegion($region);
 
         $this->assertEquals(5, $srv->getTaxesDueForShippingCost($price, $address));
     }

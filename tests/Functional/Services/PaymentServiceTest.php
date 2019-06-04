@@ -52,7 +52,7 @@ class PaymentServiceTest extends EcommerceTestCase
             'city' => null,
             'type' => Address::BILLING_ADDRESS_TYPE,
             'zip' => $this->faker->postcode,
-            'state' => $this->faker->word,
+            'region' => $this->faker->word,
             'country' => 'Canada',
         ]);
 
@@ -146,7 +146,7 @@ class PaymentServiceTest extends EcommerceTestCase
             'city' => null,
             'type' => Address::BILLING_ADDRESS_TYPE,
             'zip' => $this->faker->postcode,
-            'state' => $this->faker->word,
+            'region' => $this->faker->word,
             'country' => 'Canada',
         ]);
 
@@ -250,7 +250,7 @@ class PaymentServiceTest extends EcommerceTestCase
                 'city' => null,
                 'type' => Address::BILLING_ADDRESS_TYPE,
                 'zip' => $this->faker->postcode,
-                'state' => $this->faker->word,
+                'region' => $this->faker->word,
                 'country' => 'Canada',
             ]
         );
@@ -326,7 +326,7 @@ class PaymentServiceTest extends EcommerceTestCase
         $billingAddress = new Address();
 
         $billingAddress->setZip($billingAddressData['zip']);
-        $billingAddress->setState($this->faker->word);
+        $billingAddress->setRegion($this->faker->word);
         $billingAddress->setCountry($billingAddressData['country']);
         $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
 
@@ -459,7 +459,7 @@ class PaymentServiceTest extends EcommerceTestCase
         $billingAddress = new Address();
 
         $billingAddress->setZip($this->faker->postcode);
-        $billingAddress->setState($this->faker->word);
+        $billingAddress->setRegion($this->faker->word);
         $billingAddress->setCountry($country);
         $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
 
@@ -561,7 +561,7 @@ class PaymentServiceTest extends EcommerceTestCase
         $billingAddress = new Address();
 
         $billingAddress->setZip($this->faker->postcode);
-        $billingAddress->setState($this->faker->word);
+        $billingAddress->setRegion($this->faker->word);
         $billingAddress->setCountry($country);
         $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
 

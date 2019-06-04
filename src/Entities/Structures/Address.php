@@ -17,7 +17,7 @@ class Address implements AddressInterface, Serializable
     /**
      * @var string
      */
-    protected $state;
+    protected $region;
 
     /**
      * @var string
@@ -51,7 +51,7 @@ class Address implements AddressInterface, Serializable
 
     const PROPS_MAP = [
         'country' => true,
-        'state' => true,
+        'region' => true,
         'firstName' => true,
         'lastName' => true,
         'streetLine1' => true,
@@ -62,12 +62,12 @@ class Address implements AddressInterface, Serializable
 
     public function __construct(
         ?string $country = null,
-        ?string $state = null
+        ?string $region = null
     )
     {
 
         $this->country = $country;
-        $this->state = $state;
+        $this->region = $region;
     }
 
     /**
@@ -89,17 +89,17 @@ class Address implements AddressInterface, Serializable
     /**
      * @return string|null
      */
-    public function getState(): ?string
+    public function getRegion(): ?string
     {
-        return $this->state;
+        return $this->region;
     }
 
     /**
-     * @param string $state
+     * @param string $region
      */
-    public function setState(?string $state)
+    public function setRegion(?string $region)
     {
-        $this->state = $state;
+        $this->region = $region;
     }
 
     /**
@@ -229,7 +229,7 @@ class Address implements AddressInterface, Serializable
             'street_line_one' => $this->streetLine1,
             'last_name' => $this->lastName,
             'first_name' => $this->firstName,
-            'state' => $this->state,
+            'region' => $this->region,
             'country' => $this->country,
             'city' => $this->city,
         ];
@@ -263,7 +263,7 @@ class Address implements AddressInterface, Serializable
         $address = new AddressEntity();
 
         $address->setCountry($this->getCountry());
-        $address->setState($this->getState());
+        $address->setRegion($this->getRegion());
         $address->setCity($this->getCity());
         $address->setLastName($this->getLastName());
         $address->setFirstName($this->getFirstName());
@@ -295,7 +295,7 @@ class Address implements AddressInterface, Serializable
         $this->setStreetLine1($data['street_line_one']);
         $this->setLastName($data['last_name']);
         $this->setFirstName($data['first_name']);
-        $this->setState($data['state']);
+        $this->setRegion($data['region']);
         $this->setCountry($data['country']);
         $this->setCity($data['city']);
     }

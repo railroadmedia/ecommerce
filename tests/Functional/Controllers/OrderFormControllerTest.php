@@ -37,11 +37,11 @@ class OrderFormControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
 
         $country = 'Canada';
-        $state = 'alberta';
+        $region = 'alberta';
 
         $orderData = [
             'payment_method_type' => PaymentMethod::TYPE_PAYPAL,
-            'billing_region' => $state,
+            'billing_region' => $region,
             'billing_zip_or_postal_code' => $this->faker->postcode,
             'billing_country' => $country,
             'company_name' => $this->faker->creditCardType,
@@ -50,7 +50,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             'shipping_last_name' => $this->faker->lastName,
             'shipping_address_line_1' => $this->faker->address,
             'shipping_city' => $this->faker->city,
-            'shipping_region' => $state,
+            'shipping_region' => $region,
             'shipping_zip_or_postal_code' => $this->faker->postcode,
             'shipping_country' => $country,
             'currency' => $currency
@@ -64,11 +64,11 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($country);
-        $shippingAddress->setState($state);
+        $shippingAddress->setRegion($region);
 
         $billingAddress = new Address();
         $billingAddress->setCountry($country);
-        $billingAddress->setState($state);
+        $billingAddress->setRegion($region);
 
         $shippingOption = $this->fakeShippingOption([
             'country' => $country,
@@ -228,7 +228,7 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'brand' => config('ecommerce.brand'),
                 'user_id' => $userId,
                 'zip' => $orderData['billing_zip_or_postal_code'],
-                'state' => $orderData['billing_region'],
+                'region' => $orderData['billing_region'],
                 'country' => $orderData['billing_country'],
                 'created_at' => Carbon::now()->toDateTimeString()
             ]
@@ -294,7 +294,7 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'street_line_2' => null,
                 'city' => $orderData['shipping_city'],
                 'zip' => $orderData['shipping_zip_or_postal_code'],
-                'state' => $orderData['shipping_region'],
+                'region' => $orderData['shipping_region'],
                 'country' => $orderData['shipping_country'],
                 'created_at' => Carbon::now()->toDateTimeString()
             ]

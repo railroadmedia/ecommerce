@@ -111,7 +111,7 @@ class ShippingFulfillmentJsonController extends Controller
                         ->getCity(),
                     $fulfillment->getOrder()
                         ->getShippingAddress()
-                        ->getState(),
+                        ->getRegion(),
                     $fulfillment->getOrder()
                         ->getShippingAddress()
                         ->getZip(),
@@ -164,7 +164,7 @@ class ShippingFulfillmentJsonController extends Controller
                     'Street Line 1',
                     'Street Line 2',
                     'City',
-                    'State/Province',
+                    'Region',
                     'Zip/Postal Code',
                     'Country',
                     'Is Fulfilled',

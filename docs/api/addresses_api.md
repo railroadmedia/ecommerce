@@ -63,7 +63,7 @@ $.ajax({
             "street_line_2":null,
             "city":"Lake Adanchester",
             "zip":"26707-9218",
-            "state":"sunt",
+            "region":"sunt",
             "country":"The Gambia",
             "note":"some note.",
             "created_at":"2019-04-29 18:26:45",
@@ -133,7 +133,7 @@ Create a new address.
 |body|data.attributes.street_line_2|||||
 |body|data.attributes.city|||||
 |body|data.attributes.zip|||||
-|body|data.attributes.state|yes||||
+|body|data.attributes.region|yes||||
 |body|data.attributes.country|yes||any country name||
 |body|data.relationships.customer.data.type|yes if no user specified||should be 'customer'||
 |body|data.relationships.customer.data.id|yes if no user specified||||
@@ -158,7 +158,7 @@ Create a new address.
     'data.attributes.street_line_2' => 'nullable|max:255',
     'data.attributes.city' => 'nullable|max:255',
     'data.attributes.zip' => 'nullable|max:255',
-    'data.attributes.state' => 'nullable|max:255',
+    'data.attributes.region' => 'nullable|max:255',
     'data.attributes.country' => 'required|max:255|in:' . implode(',', LocationService::countries()),
     'data.relationships.customer.data.type' => 'nullable|in:customer',
     'data.relationships.customer.data.id' => 'integer|nullable|exists:' . 'ecommerce_customers' . ',id',
@@ -184,7 +184,7 @@ $.ajax({
             street_line_2: null,
             city: "South Houston",
             zip: "33348-7377",
-            state: "sed",
+            region: "sed",
             country: "Ireland",
             note: "some note",
             created_at: "2019-04-29 18:46:48",
@@ -222,7 +222,7 @@ $.ajax({
          "street_line_2":null,
          "city":"New Lilyburgh",
          "zip":"14241",
-         "state":"rerum",
+         "region":"rerum",
          "country":"Czech Republic",
          "note":"some note.",
          "created_at":"2019-04-29 18:49:41",
@@ -276,7 +276,7 @@ Update an existing address.
 |body|data.attributes.street_line_2|||||
 |body|data.attributes.city|||||
 |body|data.attributes.zip|||||
-|body|data.attributes.state|yes||||
+|body|data.attributes.region|yes||||
 |body|data.attributes.country|yes||any country name||
 |body|data.relationships.customer.data.type|||should be 'customer'||
 |body|data.relationships.customer.data.id|||||
@@ -302,7 +302,7 @@ Update an existing address.
     'data.attributes.street_line_2' => 'nullable|max:255',
     'data.attributes.city' => 'nullable|max:255',
     'data.attributes.zip' => 'nullable|max:255',
-    'data.attributes.state' => 'nullable|max:255',
+    'data.attributes.region' => 'nullable|max:255',
     'data.attributes.country' => 'max:255|in:' . implode(',', LocationService::countries()),
     'data.relationships.customer.data.type' => 'nullable|in:customer',
     'data.relationships.customer.data.id' => 'integer|nullable|exists:' . 'ecommerce_customers' . ',id',
@@ -367,7 +367,7 @@ $.ajax({
          "street_line_2":null,
          "city":"New Lilyburgh",
          "zip":"14241",
-         "state":"rerum",
+         "region":"rerum",
          "country":"Czech Republic",
          "note":"some note",
          "created_at":"2019-04-29 18:49:41",

@@ -103,7 +103,7 @@ class Faker extends Generator
                 'street_line_2' => null,
                 'city' => $this->city,
                 'zip' => $this->postcode,
-                'state' => $this->word,
+                'region' => $this->word,
                 'country' => $this->randomElement(LocationService::countries()),
                 'note' => $this->text,
                 'created_at' => Carbon::now()

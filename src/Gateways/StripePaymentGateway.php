@@ -102,7 +102,7 @@ class StripePaymentGateway
      * @param int $expirationMonth
      * @param int $expirationYear
      * @param string $addressCountry
-     * @param string $addressState
+     * @param string $addressRegion
      *
      * @return StripeObject
      *
@@ -114,7 +114,7 @@ class StripePaymentGateway
         $expirationMonth,
         $expirationYear,
         $addressCountry,
-        $addressState
+        $addressRegion
     )
     {
         $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
@@ -131,7 +131,7 @@ class StripePaymentGateway
             $expirationMonth,
             $expirationYear,
             $addressCountry,
-            $addressState
+            $addressRegion
         );
     }
 
@@ -270,7 +270,7 @@ class StripePaymentGateway
      * @param null $country
      * @param null $addressLineOne
      * @param null $addressLineTwo
-     * @param null $state
+     * @param null $region
      * @param null $zip
      * @return \Stripe\Token
      * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
@@ -286,7 +286,7 @@ class StripePaymentGateway
         $country = null,
         $addressLineOne = null,
         $addressLineTwo = null,
-        $state = null,
+        $region = null,
         $zip = null
     )
     {
@@ -310,7 +310,7 @@ class StripePaymentGateway
                 $country,
                 $addressLineOne,
                 $addressLineTwo,
-                $state,
+                $region,
                 $zip
             );
         } catch (Exception $exception) {

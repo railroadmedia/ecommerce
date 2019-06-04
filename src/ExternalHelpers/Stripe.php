@@ -29,7 +29,7 @@ class Stripe
      * @param string|null $country
      * @param string|null $addressLineOne
      * @param string|null $addressLineTwo
-     * @param string|null $state
+     * @param string|null $region
      * @param string|null $zip
      * @return Token
      */
@@ -43,7 +43,7 @@ class Stripe
         $country = null,
         $addressLineOne = null,
         $addressLineTwo = null,
-        $state = null,
+        $region = null,
         $zip = null
     )
     {
@@ -59,7 +59,7 @@ class Stripe
                     "address_country" => $country,
                     "address_line1" => $addressLineOne,
                     "address_line2" => $addressLineTwo,
-                    "address_state" => $state,
+                    "address_state" => $region,
                     "address_zip" => $zip,
                 ]
             ]
@@ -130,7 +130,7 @@ class Stripe
      * @param int $expirationMonth
      * @param int $expirationYear
      * @param string $addressCountry
-     * @param string $addressState
+     * @param string $addressRegion
      * @return StripeObject
      */
     public function updateCard(
@@ -138,13 +138,13 @@ class Stripe
         $expirationMonth,
         $expirationYear,
         $addressCountry,
-        $addressState
+        $addressRegion
     )
     {
         $card->exp_month = $expirationMonth;
         $card->exp_year = $expirationYear;
         $card->address_country = $addressCountry;
-        $card->address_state = $addressState;
+        $card->address_state = $addressRegion;
 
         return $card->save();
     }

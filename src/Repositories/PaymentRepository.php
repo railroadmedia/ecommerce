@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Carbon\Carbon;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
@@ -99,6 +100,70 @@ class PaymentRepository extends RepositoryBase
                 ->getResult();
 
         return new ResultsQueryBuilderComposite($results, $qb);
+    }
+
+     /**
+     * @param Request $request
+     *
+     * @return Payment[]
+     */
+    public function getPaymentsForStats(Request $request): array
+    {
+        $smallDateTime =
+            $request->get(
+                'small_date_time',
+                Carbon::now()
+                    ->subDay()
+                    ->toDateTimeString()
+            );
+
+        $bigDateTime =
+            $request->get(
+                'big_date_time',
+                Carbon::now()
+                    ->subDay()
+                    ->toDateTimeString()
+            );
+
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['p', 'op', 'o', 'oi', 'sp', 's'])
+            ->from(Payment::class, 'p')
+            ->leftJoin('p.orderPayment', 'op')
+            ->leftJoin('op.order', 'o')
+            ->leftJoin('o.orderItems', 'oi')
+            ->leftJoin('p.subscriptionPayment', 'sp')
+            ->leftJoin('sp.subscription', 's')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->setParameter('smallDateTime', $smallDateTime)
+            ->setParameter('bigDateTime', $bigDateTime);
+
+        if ($request->has('brand')) {
+            $qb->andWhere(
+                    $qb->expr()->andX(
+                            $qb->expr()->orX(
+                                    $qb->expr()->isNull('o'),
+                                    $qb->expr()->eq('o.brand', ':orderBrand')
+                                ),
+                            $qb->expr()->orX(
+                                    $qb->expr()->isNull('s'),
+                                    $qb->expr()->eq('s.brand', ':subscriptionBrand')
+                                )
+                        )
+                )
+                ->setParameter('orderBrand', $request->get('brand'))
+                ->setParameter('subscriptionBrand', $request->get('brand'));
+        }
+
+        return
+            $qb->getQuery()
+                ->getResult();
     }
 
     /**

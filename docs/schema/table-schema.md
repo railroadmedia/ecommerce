@@ -57,7 +57,7 @@
 | `street_line_2` | VARCHAR(255) |  | NULL |  |
 | `city` | VARCHAR(255) |  | NULL |  |
 | `zip` | VARCHAR(255) |  | NULL |  |
-| `state` | VARCHAR(255) |  | NULL |  |
+| `region` | VARCHAR(255) |  | NULL |  |
 | `country` | VARCHAR(255) |  | NULL |  |
 | `created_at` | DATETIME | Not null |  |  |
 | `updated_at` | DATETIME |  | NULL |  |

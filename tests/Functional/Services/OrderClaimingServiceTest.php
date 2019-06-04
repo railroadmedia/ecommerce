@@ -96,7 +96,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $brand = $this->faker->word;
         $country = 'canada';
-        $state = 'alberta';
+        $region = 'alberta';
         $currency = 'USD';
 
         $userId = $this->faker->numberBetween(20, 100);
@@ -114,21 +114,21 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $billingAddress = new Address();
         $billingAddress->setCountry($country);
-        $billingAddress->setState($state);
+        $billingAddress->setRegion($region);
         $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($country);
-        $shippingAddress->setState($state);
+        $shippingAddress->setRegion($region);
         $shippingAddress->setType(Address::SHIPPING_ADDRESS_TYPE);
 
         $shippingAddressStructure = new AddressStructure();
         $shippingAddressStructure->setCountry($country);
-        $shippingAddressStructure->setState($state);
+        $shippingAddressStructure->setRegion($region);
 
         $billingAddressStructure = new AddressStructure();
         $billingAddress->setCountry($country);
-        $billingAddress->setState($state);
+        $billingAddress->setRegion($region);
 
         $creditCard = new CreditCard();
         $creditCard->setCardholderName($this->faker->name);

@@ -240,19 +240,19 @@ class CartJsonController extends Controller
     public function storeAddress(SessionStoreAddressRequest $request)
     {
         $shippingKeys = [
-            'shipping-address-line-1' => 'streetLine1',
-            'shipping-address-line-2' => 'streetLine2',
-            'shipping-city' => 'city',
-            'shipping-country' => 'country',
-            'shipping-first-name' => 'firstName',
-            'shipping-last-name' => 'lastName',
-            'shipping-region' => 'state',
-            'shipping-zip-or-postal-code' => 'zip',
+            'shipping_address_line_1' => 'streetLine1',
+            'shipping_address_line_2' => 'streetLine2',
+            'shipping_city' => 'city',
+            'shipping_country' => 'country',
+            'shipping_first_name' => 'firstName',
+            'shipping_last_name' => 'lastName',
+            'shipping_region' => 'region',
+            'shipping_zip_or_postal_code' => 'zip',
         ];
 
-        if (!empty($request->get('shipping-address-id'))) {
+        if (!empty($request->get('shipping_address_id'))) {
             /** @var $address AddressEntity */
-            $shippingAddressEntity = $this->addressRepository->find($request->get('shipping-address-id'));
+            $shippingAddressEntity = $this->addressRepository->find($request->get('shipping_address_id'));
 
             $this->cartAddressService->updateShippingAddress($shippingAddressEntity->toStructure());
         }
@@ -270,14 +270,14 @@ class CartJsonController extends Controller
         }
 
         $billingKeys = [
-            'billing-country' => 'country',
-            'billing-region' => 'state',
-            'billing-zip-or-postal-code' => 'zip',
-            'billing-email' => 'email',
+            'billing_country' => 'country',
+            'billing_region' => 'region',
+            'billing_zip_or_postal_code' => 'zip',
+            'billing_email' => 'email',
         ];
 
-        if (!empty($request->get('billing-address-id'))) {
-            $billingAddressEntity = $this->addressRepository->find($request->get('billing-address-id'));
+        if (!empty($request->get('billing_address_id'))) {
+            $billingAddressEntity = $this->addressRepository->find($request->get('billing_address_id'));
 
             $this->cartAddressService->updateBillingAddress($billingAddressEntity->toStructure());
         }

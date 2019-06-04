@@ -65,7 +65,7 @@ $.ajax({
                 "street_line_one":null,
                 "last_name":null,
                 "first_name":null,
-                "state":"ontario",
+                "region":"ontario",
                 "country":"canada",
                 "city":null
             },
@@ -75,7 +75,7 @@ $.ajax({
                 "street_line_one":null,
                 "last_name":null,
                 "first_name":null,
-                "state":"ontario",
+                "region":"ontario",
                 "country":"canada",
                 "city":null
             },
@@ -308,7 +308,7 @@ $.ajax({
                 "street_line_2":null,
                 "city":null,
                 "zip":"32552-5376",
-                "state":"illum",
+                "region":"illum",
                 "country":"Canada",
                 "created_at":"2019-05-02 16:52:39",
                 "updated_at":"2019-05-02 16:52:39"
@@ -466,7 +466,7 @@ $.ajax({
                 "street_line_2":null,
                 "city":null,
                 "zip":"32552-5376",
-                "state":"illum",
+                "region":"illum",
                 "country":"Canada",
                 "created_at":"2019-05-02 16:52:39",
                 "updated_at":"2019-05-02 16:52:39"

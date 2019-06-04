@@ -55,9 +55,9 @@ class CartAddressServiceTest extends EcommerceTestCase
         $this->session->flush();
 
         $storedCountry = $this->faker->word;
-        $storedState = null;
+        $storedRegion = null;
 
-        $storedAddress = new Address($storedCountry, $storedState);
+        $storedAddress = new Address($storedCountry, $storedRegion);
 
         $cart = Cart::fromSession();
 
@@ -66,9 +66,9 @@ class CartAddressServiceTest extends EcommerceTestCase
         $cart->toSession();
 
         $newCountry = null;
-        $newState = $this->faker->word;
+        $newRegion = $this->faker->word;
 
-        $newAddress = new Address($newCountry, $newState);
+        $newAddress = new Address($newCountry, $newRegion);
 
         $srv = $this->app->make(CartAddressService::class);
 
@@ -82,7 +82,7 @@ class CartAddressServiceTest extends EcommerceTestCase
 
         $this->assertEquals($storedCountry, $sessionAddress->getCountry());
 
-        $this->assertEquals($newState, $sessionAddress->getState());
+        $this->assertEquals($newRegion, $sessionAddress->getRegion());
     }
 
     public function test_update_address_new()
@@ -90,9 +90,9 @@ class CartAddressServiceTest extends EcommerceTestCase
         $this->session->flush();
 
         $storedCountry = $this->faker->word;
-        $storedState = null;
+        $storedRegion = null;
 
-        $storedAddress = new Address($storedCountry, $storedState);
+        $storedAddress = new Address($storedCountry, $storedRegion);
 
         $cart = Cart::fromSession();
 
@@ -101,9 +101,9 @@ class CartAddressServiceTest extends EcommerceTestCase
         $cart->toSession();
 
         $newCountry = $this->faker->word;
-        $newState = $this->faker->word;
+        $newRegion = $this->faker->word;
 
-        $newAddress = new Address($newCountry, $newState);
+        $newAddress = new Address($newCountry, $newRegion);
 
         $srv = $this->app->make(CartAddressService::class);
 
@@ -117,6 +117,6 @@ class CartAddressServiceTest extends EcommerceTestCase
 
         $this->assertEquals($newCountry, $sessionAddress->getCountry());
 
-        $this->assertEquals($newState, $sessionAddress->getState());
+        $this->assertEquals($newRegion, $sessionAddress->getRegion());
     }
 }

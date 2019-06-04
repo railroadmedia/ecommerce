@@ -53,7 +53,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 [
                     'type' => Address::BILLING_ADDRESS_TYPE,
                     'country' => 'Canada',
-                    'state' => $this->faker->word,
+                    'region' => $this->faker->word,
                     'zip' => $this->faker->postcode
                 ]
             );
@@ -118,7 +118,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 $billingAddressEntity = new Address();
 
                 $billingAddressEntity->setCountry($address['country']);
-                $billingAddressEntity->setState($address['state']);
+                $billingAddressEntity->setRegion($address['region']);
                 $billingAddressEntity->setZip($address['zip']);
 
                 $vat = $taxService->getTaxesDueForProductCost(
@@ -218,7 +218,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             [
                 'type' => Address::BILLING_ADDRESS_TYPE,
                 'country' => 'Canada',
-                'state' => $this->faker->word,
+                'region' => $this->faker->word,
                 'zip' => $this->faker->postcode
             ]
         );
@@ -285,7 +285,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         $billingAddressEntity = new Address();
 
         $billingAddressEntity->setCountry($address['country']);
-        $billingAddressEntity->setState($address['state']);
+        $billingAddressEntity->setRegion($address['region']);
         $billingAddressEntity->setZip($address['zip']);
 
         $paymentAmount = $currencyService->convertFromBase(
@@ -373,7 +373,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 [
                     'type' => Address::BILLING_ADDRESS_TYPE,
                     'country' => 'Canada',
-                    'state' => $this->faker->word,
+                    'region' => $this->faker->word,
                     'zip' => $this->faker->postcode
                 ]
             );
@@ -451,7 +451,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 [
                     'type' => Address::BILLING_ADDRESS_TYPE,
                     'country' => 'Canada',
-                    'state' => $this->faker->word,
+                    'region' => $this->faker->word,
                     'zip' => $this->faker->postcode
                 ]
             );
@@ -517,7 +517,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 $billingAddressEntity = new Address();
 
                 $billingAddressEntity->setCountry($address['country']);
-                $billingAddressEntity->setState($address['state']);
+                $billingAddressEntity->setRegion($address['region']);
                 $billingAddressEntity->setZip($address['zip']);
 
                 $vat = $taxService->getTaxesDueForProductCost(

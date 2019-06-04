@@ -3,21 +3,18 @@
 namespace Railroad\Ecommerce\Services;
 
 use Illuminate\Http\Request;
-use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Structures\DailyStatistic;
 use Railroad\Ecommerce\Entities\Structures\ProductStatistic;
-use Railroad\Ecommerce\Entities\SubscriptionPayment;
-use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
+use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\RefundRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 
 class StatsService
 {
     /**
-     * @var OrderPaymentRepository
+     * @var PaymentRepository
      */
-    protected $orderPaymentRepository;
+    protected $paymentRepository;
 
     /**
      * @var RefundRepository
@@ -25,23 +22,15 @@ class StatsService
     protected $refundRepository;
 
     /**
-     * @var SubscriptionPaymentRepository
-     */
-    protected $subscriptionPaymentRepository;
-
-    /**
-     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param PaymentRepository $paymentRepository
      * @param RefundRepository $refundRepository
-     * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
      */
     public function __construct(
-        OrderPaymentRepository $orderPaymentRepository,
-        RefundRepository $refundRepository,
-        SubscriptionPaymentRepository $subscriptionPaymentRepository
+        PaymentRepository $paymentRepository,
+        RefundRepository $refundRepository
     ) {
-        $this->orderPaymentRepository = $orderPaymentRepository;
+        $this->paymentRepository = $paymentRepository;
         $this->refundRepository = $refundRepository;
-        $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
     }
 
     /**
@@ -56,32 +45,41 @@ class StatsService
         $results = [];
         $dateFormat = 'Y-m-d';
 
-        $orderPayments = $this->orderPaymentRepository->getOrderPaymentsForStats($request);
+        $payments = $this->paymentRepository->getPaymentsForStats($request);
 
-        foreach ($orderPayments as $orderPayment) {
-            if ($orderPayment->getPayment()->getStatus() == Payment::STATUS_FAILED) {
-                continue;
+        foreach ($payments as $payment) {
+
+            $day = $payment->getCreatedAt()->format($dateFormat);
+
+            $dailyStatistic = null;
+
+            if (isset($results[$day])) {
+                $dailyStatistic = $results[$day];
+            }
+            else {
+                $dailyStatistic = new DailyStatistic($day);
             }
 
-            $day = $orderPayment->getPayment()->getCreatedAt()->format($dateFormat);
-
-            if (!isset($results[$day])) {
-                $results[$day] = new DailyStatistic($day);
+            if ($payment->getOrderPayment()) {
+                $dailyStatistic = $this->addOrderPaymentToDailyStatistic($payment, $dailyStatistic);
             }
 
-            $results[$day] = $this->addOrderPaymentToDailyStatistic($orderPayment, $results[$day]);
-        }
-
-        $subscriptionPayments = $this->subscriptionPaymentRepository->getSubscriptionPaymentsForStats($request);
-
-        foreach ($subscriptionPayments as $subscriptionPayment) {
-            $day = $subscriptionPayment->getPayment()->getCreatedAt()->format($dateFormat);
-
-            if (!isset($results[$day])) {
-                $results[$day] = new DailyStatistic($day);
+            if ($payment->getSubscriptionPayment()) {
+                $dailyStatistic = $this->addSubscriptionPaymentToDailyStatistic($payment, $dailyStatistic);
             }
 
-            $results[$day] = $this->addSubscriptionPaymentToDailyStatistic($subscriptionPayment, $results[$day]);
+            if ($payment->getStatus() != Payment::STATUS_FAILED) {
+                $paymentAmountInBaseCurrency = round($payment->getTotalPaid() / $payment->getConversionRate(), 2);
+
+                $dailyStatistic->setTotalSales(
+                    round(
+                        $dailyStatistic->getTotalSales() + $paymentAmountInBaseCurrency,
+                        2
+                    )
+                );
+            }
+
+            $results[$day] = $dailyStatistic;
         }
 
         $refunds = $this->refundRepository->getRefundsForStats($request);
@@ -107,34 +105,23 @@ class StatsService
     }
 
     /**
-     * @param OrderPayment $orderPayment
+     * @param Payment $payment
      * @param DailyStatistic $dailyStatistic
      *
      * @return DailyStatistic
      */
     public function addOrderPaymentToDailyStatistic(
-        OrderPayment $orderPayment,
+        Payment $payment,
         DailyStatistic $dailyStatistic
     ): DailyStatistic
     {
-        $payment = $orderPayment->getPayment();
-
         if ($payment->getStatus() != Payment::STATUS_FAILED) {
-
-            $paymentAmountInBaseCurrency = round($payment->getTotalPaid() / $payment->getConversionRate(), 2);
-
-            $dailyStatistic->setTotalSales(
-                round(
-                    $dailyStatistic->getTotalSales() + $paymentAmountInBaseCurrency,
-                    2
-                )
-            );
 
             $dailyStatistic->setTotalOrders($dailyStatistic->getTotalOrders() + 1);
 
             $productStatistics = $dailyStatistic->getProductStatistics();
             $day = $dailyStatistic->getDay();
-            $order = $orderPayment->getOrder();
+            $order = $payment->getOrderPayment()->getOrder();
 
             foreach ($order->getOrderItems() as $orderItem) {
                 $product = $orderItem->getProduct();
@@ -174,28 +161,17 @@ class StatsService
     }
 
     /**
-     * @param SubscriptionPayment $subscriptionPayment
+     * @param Payment $payment
      * @param DailyStatistic $dailyStatistic
      *
      * @return DailyStatistic
      */
     public function addSubscriptionPaymentToDailyStatistic(
-        SubscriptionPayment $subscriptionPayment,
+        Payment $payment,
         DailyStatistic $dailyStatistic
     ): DailyStatistic
     {
-        $payment = $subscriptionPayment->getPayment();
-
         if ($payment->getStatus() != Payment::STATUS_FAILED) {
-            $paymentAmountInBaseCurrency = round($payment->getTotalPaid() / $payment->getConversionRate(), 2);
-
-            $dailyStatistic->setTotalSales(
-                round(
-                    $dailyStatistic->getTotalSales() + $paymentAmountInBaseCurrency,
-                    2
-                )
-            );
-
             $dailyStatistic->setTotalSuccessfulRenewals($dailyStatistic->getTotalSuccessfulRenewals() + 1);
         }
         else {

@@ -117,7 +117,7 @@ class Address implements AddressInterface
      *
      * @var string
      */
-    protected $state;
+    protected $region;
 
     /**
      * @ORM\Column(type="string", nullable=true)
@@ -273,17 +273,17 @@ class Address implements AddressInterface
     /**
      * @return string|null
      */
-    public function getState(): ?string
+    public function getRegion(): ?string
     {
-        return $this->state;
+        return $this->region;
     }
 
     /**
-     * @param string $state
+     * @param string $region
      */
-    public function setState(?string $state)
+    public function setRegion(?string $region)
     {
-        $this->state = $state;
+        $this->region = $region;
     }
 
     /**
@@ -342,7 +342,7 @@ class Address implements AddressInterface
         $addressStructure = new AddressStructure();
 
         $addressStructure->setCountry($this->getCountry());
-        $addressStructure->setState($this->getState());
+        $addressStructure->setRegion($this->getRegion());
         $addressStructure->setFirstName($this->getFirstName());
         $addressStructure->setLastName($this->getLastName());
         $addressStructure->setStreetLine1($this->getStreetLine1());

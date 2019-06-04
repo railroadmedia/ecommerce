@@ -31,7 +31,7 @@ class AddressTransformer extends TransformerAbstract
             'street_line_2' => $address->getStreetLine2(),
             'city' => $address->getCity(),
             'zip' => $address->getZip(),
-            'state' => $address->getState(),
+            'region' => $address->getRegion(),
             'country' => $address->getCountry(),
             'note' => $address->getNote(),
             'created_at' => $address->getCreatedAt() ?

@@ -233,7 +233,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                         'street_line_1' => $this->faker->streetAddress,
                         'city' => $this->faker->city,
                         'zip' => $this->faker->postcode,
-                        'state' => $this->faker->word,
+                        'region' => $this->faker->word,
                         'country' => $this->faker->randomElement(LocationService::countries()),
                     ],
                 ],
@@ -463,7 +463,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'street_line_2' => $address['street_line_2'],
                 'city' => $address['city'],
                 'zip' => $address['zip'],
-                'state' => $address['state'],
+                'region' => $address['region'],
                 'country' => $address['country'],
                 'user_id' => $userId
             ]
@@ -482,7 +482,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'street_line_2' => $address['street_line_2'],
                 'city' => $address['city'],
                 'zip' => $address['zip'],
-                'state' => $address['state'],
+                'region' => $address['region'],
                 'country' => $address['country'],
                 'user_id' => $userId
             ]
@@ -620,7 +620,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $streetLine1 = $this->faker->streetAddress;
         $city = $this->faker->city;
         $zip = $this->faker->postcode;
-        $state = $this->faker->word;
+        $region = $this->faker->word;
 
         $results = $this->call(
             'PUT',
@@ -636,7 +636,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                         'street_line_1' => $streetLine1,
                         'city' => $city,
                         'zip' => $zip,
-                        'state' => $state,
+                        'region' => $region,
                         'country' => $country,
                     ],
                     'relationships' => [
@@ -677,7 +677,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'street_line_1' => $streetLine1,
                 'city' => $city,
                 'zip' => $zip,
-                'state' => $state,
+                'region' => $region,
                 'country' => $country,
             ]
         );
@@ -877,7 +877,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'street_line_2' => $address['street_line_2'],
                 'city' => $address['city'],
                 'zip' => $address['zip'],
-                'state' => $address['state'],
+                'region' => $address['region'],
                 'country' => $address['country'],
                 'user_id' => $user['id']
             ]
@@ -896,7 +896,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'street_line_2' => $address['street_line_2'],
                 'city' => $address['city'],
                 'zip' => $address['zip'],
-                'state' => $address['state'],
+                'region' => $address['region'],
                 'country' => $address['country'],
                 'user_id' => $user['id']
             ]

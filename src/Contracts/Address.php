@@ -7,14 +7,14 @@ interface Address
     /**
      * @return string|null
      */
-    public function getState(): ?string;
+    public function getRegion(): ?string;
 
     /**
      * @param string $state
      *
      * @return void
      */
-    public function setState(?string $state);
+    public function setRegion(?string $state);
 
     /**
      * @return string|null

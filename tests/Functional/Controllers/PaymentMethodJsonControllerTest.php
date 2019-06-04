@@ -553,7 +553,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'id' => $creditCard['external_id'],
             'customer' => $creditCard['external_customer_id'],
             'address_country' => $payload['country'],
-            'address_state' => $payload['state'] ?? '',
+            'address_region' => $payload['region'] ?? '',
         ];
 
         $this->stripeExternalHelperMock->method('updateCard')
@@ -669,7 +669,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'id' => $this->faker->word,
             'customer' => $this->faker->word,
             'address_country' => $payload['country'],
-            'address_state' => $payload['state'] ?? '',
+            'address_region' => $payload['region'] ?? '',
             'brand' => $this->faker->creditCardType
         ];
 
@@ -855,7 +855,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'id' => $this->faker->word,
             'customer' => $this->faker->word,
             'address_country' => $payload['country'],
-            'address_state' => $payload['state'] ?? '',
+            'address_region' => $payload['region'] ?? '',
             'brand' => $this->faker->creditCardType
         ];
 
@@ -1005,7 +1005,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'id' => $this->faker->word,
             'customer' => $this->faker->word,
             'address_country' => $payload['country'],
-            'address_state' => $payload['state'] ?? '',
+            'address_region' => $payload['region'] ?? '',
             'brand' => $this->faker->creditCardType
         ];
 
@@ -1154,7 +1154,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'id' => $this->faker->word,
             'customer' => $this->faker->word,
             'address_country' => $payload['country'],
-            'address_state' => $payload['state'] ?? '',
+            'address_region' => $payload['region'] ?? '',
             'brand' => $this->faker->creditCardType
         ];
 
@@ -1246,7 +1246,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'type' => Address::BILLING_ADDRESS_TYPE,
             'brand' => 'recordeo',
             'user_id' => $userId,
-            'state' => '',
+            'region' => '',
             'country' => '',
             'created_at' => Carbon::now()
         ]);
@@ -1931,7 +1931,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'type' => Address::BILLING_ADDRESS_TYPE,
             'brand' => 'recordeo',
             'user_id' => $userId,
-            'state' => '',
+            'region' => '',
             'country' => '',
             'created_at' => Carbon::now()
         ]);
