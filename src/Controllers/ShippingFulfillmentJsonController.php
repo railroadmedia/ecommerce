@@ -135,7 +135,8 @@ class ShippingFulfillmentJsonController extends Controller
                         ->getWeight(),
                     $fulfillment->getOrderItem()
                         ->getQuantity(),
-                    $fulfillment->getOrderItem()->getFinalPrice(),
+                    $fulfillment->getOrderItem()
+                        ->getFinalPrice(),
                     $fulfillment->getStatus(),
                     '',
                     '',
@@ -143,7 +144,8 @@ class ShippingFulfillmentJsonController extends Controller
                         Carbon::instance($fulfillment->getFulfilledOn())
                             ->timezone($request->get('timezone', 'America/Los_Angeles'))
                             ->toDateTimeString() : '',
-                    $fulfillment->getOrderItem()->getFinalPrice(),
+                    $fulfillment->getOrderItem()
+                        ->getFinalPrice(),
                 ];
             }
 
@@ -226,7 +228,7 @@ class ShippingFulfillmentJsonController extends Controller
             $fulfillment->setStatus(config('ecommerce.fulfillment_status_fulfilled'));
             $fulfillment->setCompany($request->get('shipping_company'));
             $fulfillment->setTrackingNumber($request->get('tracking_number'));
-            $fulfillment->setFulfilledOn(Carbon::now());
+            $fulfillment->setFulfilledOn($request->get('fulfilled_on', Carbon::now()));
         }
 
         $this->entityManager->flush();
