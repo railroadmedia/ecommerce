@@ -82,6 +82,10 @@ class ShippingService
             return 0;
         }
 
+        if (!$this->doesCartHaveAnyPhysicalItems($cart)) {
+            return 0;
+        }
+
         $costBeforeDiscounts = $this->shippingOptionRepository->getShippingCosts($country, $weight);
 
         return max(
