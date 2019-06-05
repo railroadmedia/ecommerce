@@ -419,7 +419,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'start_date' => Carbon::now()
                         ->subYear(2),
                     'paid_until' => Carbon::now()
-                        ->subMonths(config('ecommerce.paypal.subscription_renewal_date') + 1),
+                        ->subMonths((config('ecommerce.paypal.subscription_renewal_date') ?? 1) + 1),
                     'product_id' => $product['id'],
                     'currency' => $currency,
                     'order_id' => $order['id'],
@@ -429,6 +429,8 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'total_cycles_paid' => 1,
                     'total_cycles_due' => $this->faker->numberBetween(2, 5),
                     'payment_method_id' => $paymentMethod['id'],
+                    'is_active' => true,
+                    'canceled_on' => null,
                 ]
             );
 

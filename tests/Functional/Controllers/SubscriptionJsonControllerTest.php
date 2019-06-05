@@ -663,7 +663,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userProduct = $this->fakeUserProduct([
             'user_id' => $userId,
             'product_id' => $product['id'],
-            'expiration_date' => $subscription['paid_until']
+            'expiration_date' => $subscription['paid_until'],
+            'quantity' => 1
         ]);
 
         $this->expectsEvents([SubscriptionUpdated::class]);

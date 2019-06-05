@@ -1370,8 +1370,6 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call('PUT', '/json/session-address', $shippingAddress);
 
-        echo "\n### response: " . var_export($response->decodeResponseJson(), true) . "\n";
-
         $address->setStreetLine1($shippingAddress['shipping_address_line_1']);
         $address->setCity($shippingAddress['shipping_city']);
         $address->setFirstName($shippingAddress['shipping_first_name']);
