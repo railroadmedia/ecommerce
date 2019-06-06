@@ -200,8 +200,6 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
             $ancientSubscription->setNote(self::DEACTIVATION_NOTE);
             $ancientSubscription->setCanceledOn(Carbon::now());
             $ancientSubscription->setUpdatedAt(Carbon::now());
-
-            $this->userProductService->updateSubscriptionProducts($ancientSubscription);
         }
 
         $this->entityManager->flush();

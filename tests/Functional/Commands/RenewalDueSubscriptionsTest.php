@@ -550,14 +550,6 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                         ->toDateTimeString(),
                 ]
             );
-
-            $this->assertDatabaseMissing(
-                'ecommerce_user_products',
-                [
-                    'user_id' => $deactivatedSubscription['user_id'],
-                    'product_id' => $deactivatedSubscription['product_id']
-                ]
-            );
         }
 
         for ($i = 0; $i < count($initialSubscriptions); $i++) {
