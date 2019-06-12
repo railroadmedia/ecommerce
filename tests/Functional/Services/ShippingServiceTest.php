@@ -46,6 +46,7 @@ class ShippingServiceTest extends EcommerceTestCase
             [
                 'active' => 1,
                 'weight' => $weight,
+                'is_physical' => true,
             ]
         );
 
@@ -67,12 +68,14 @@ class ShippingServiceTest extends EcommerceTestCase
             [
                 'active' => 1,
                 'weight' => $weight1,
+                'is_physical' => true,
             ]
         );
         $product2 = $this->fakeProduct(
             [
                 'active' => 1,
                 'weight' => $weight2,
+                'is_physical' => true,
             ]
         );
 
@@ -103,6 +106,7 @@ class ShippingServiceTest extends EcommerceTestCase
             [
                 'active' => 1,
                 'weight' => $weight,
+                'is_physical' => true,
             ]
         );
 
@@ -145,6 +149,7 @@ class ShippingServiceTest extends EcommerceTestCase
             [
                 'active' => 1,
                 'weight' => $weight,
+                'is_physical' => true,
             ]
         );
 
@@ -189,6 +194,7 @@ class ShippingServiceTest extends EcommerceTestCase
             [
                 'active' => 1,
                 'weight' => $weight1,
+                'is_physical' => true,
             ]
         );
 
@@ -196,6 +202,7 @@ class ShippingServiceTest extends EcommerceTestCase
             [
                 'active' => 1,
                 'weight' => $weight2,
+                'is_physical' => true,
             ]
         );
 
@@ -249,6 +256,7 @@ class ShippingServiceTest extends EcommerceTestCase
             [
                 'active' => 1,
                 'weight' => $weight,
+                'is_physical' => true,
             ]
         );
 

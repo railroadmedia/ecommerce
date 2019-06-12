@@ -681,7 +681,7 @@ class CartService
                     ),
                     2
                 ),
-                'requires_shipping' => ($product->getWeight() != null && $product->getWeight() > 0)
+                'requires_shipping' => $product->getIsPhysical()
             ];
         }
 

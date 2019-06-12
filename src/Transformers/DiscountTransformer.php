@@ -14,6 +14,7 @@ class DiscountTransformer extends TransformerAbstract
             // product relation is nullable
             $this->defaultIncludes[] = 'product';
         }
+
         if ($discount->getDiscountCriterias()) {
             // product relation is nullable
             $this->defaultIncludes[] = 'discountCriterias';
@@ -40,38 +41,48 @@ class DiscountTransformer extends TransformerAbstract
 
     public function includeProduct(Discount $discount)
     {
-        if ($discount->getProduct() instanceof Proxy) {
-            return $this->item(
-                $discount->getProduct(),
-                new EntityReferenceTransformer(),
-                'product'
-            );
+        if (!empty($discount->getProduct())) {
+
+            if ($discount->getProduct() instanceof Proxy) {
+                return $this->item(
+                    $discount->getProduct(),
+                    new EntityReferenceTransformer(),
+                    'product'
+                );
+            }
+            else {
+                return $this->item(
+                    $discount->getProduct(),
+                    new ProductTransformer(),
+                    'product'
+                );
+            }
         }
-        else {
-            return $this->item(
-                $discount->getProduct(),
-                new ProductTransformer(),
-                'product'
-            );
-        }
+
+        return null;
     }
 
     public function includeDiscountCriterias(Discount $discount)
     {
-        if ($discount->getDiscountCriterias()
-                ->first() instanceof Proxy) {
-            return $this->collection(
-                $discount->getDiscountCriterias(),
-                new EntityReferenceTransformer(),
-                'discountCriterias'
-            );
+        if (!empty($discount->getDiscountCriterias())) {
+
+            if ($discount->getDiscountCriterias()
+                    ->first() instanceof Proxy) {
+                return $this->collection(
+                    $discount->getDiscountCriterias(),
+                    new EntityReferenceTransformer(),
+                    'discountCriterias'
+                );
+            }
+            else {
+                return $this->collection(
+                    $discount->getDiscountCriterias(),
+                    new DiscountCriteriaTransformer(true),
+                    'discountCriterias'
+                );
+            }
         }
-        else {
-            return $this->collection(
-                $discount->getDiscountCriterias(),
-                new DiscountCriteriaTransformer(true),
-                'discountCriterias'
-            );
-        }
+
+        return null;
     }
 }
