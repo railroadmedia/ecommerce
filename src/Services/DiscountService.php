@@ -318,8 +318,7 @@ class DiscountService
 
                 if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
                     $product->getCategory() == $discount->getProductCategory()) {
-                    if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
-                        $discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
+                    if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
                         $discountAmount = $discount->getAmount() * $productCartItem->getQuantity();
                         $discountedAmount = round($discountedAmount + $discountAmount, 2);
 
