@@ -79,7 +79,7 @@ class ShippingFulfillmentJsonController extends Controller
          */
         $fulfillments = $fulfillmentsAndBuilder->getResults();
 
-        if ($request->has('csv')) {
+        if ($request->has('csv') && $request->get('csv') == true) {
             $rows = [];
 
             foreach ($fulfillments as $fulfillment) {
