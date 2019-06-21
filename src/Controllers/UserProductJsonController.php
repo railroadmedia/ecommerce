@@ -159,7 +159,6 @@ class UserProductJsonController extends Controller
     public function update(UserProductUpdateRequest $request, $userProductId)
     {
         $userProduct = $this->userProductRepository->find($userProductId);
-        $oldUserProduct = clone ($userProduct);
 
         throw_if(
             is_null($userProduct),
@@ -167,6 +166,8 @@ class UserProductJsonController extends Controller
                 'Update failed, user product not found with id: ' . $userProductId
             )
         );
+
+        $oldUserProduct = clone ($userProduct);
 
         if (!$this->permissionService->can(auth()->id(), 'update.user-products')) {
             throw new NotAllowedException(
