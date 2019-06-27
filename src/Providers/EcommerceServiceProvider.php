@@ -9,6 +9,7 @@ use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\Common\Cache\RedisCache;
 use Doctrine\Common\EventManager;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
+use Doctrine\Common\Proxy\AbstractProxyFactory;
 use Doctrine\DBAL\Logging\EchoSQLLogger;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Configuration;
@@ -178,7 +179,10 @@ class EcommerceServiceProvider extends ServiceProvider
         $ormConfiguration->setResultCacheImpl($redisCache);
         $ormConfiguration->setProxyDir($proxyDir);
         $ormConfiguration->setProxyNamespace('DoctrineProxies');
-        $ormConfiguration->setAutoGenerateProxyClasses(config('ecommerce.development_mode'));
+        $ormConfiguration->setAutoGenerateProxyClasses(
+            config('ecommerce.development_mode') ? AbstractProxyFactory::AUTOGENERATE_ALWAYS :
+                AbstractProxyFactory::AUTOGENERATE_FILE_NOT_EXISTS
+        );
         $ormConfiguration->setMetadataDriverImpl($driverChain);
         $ormConfiguration->setNamingStrategy(new UnderscoreNamingStrategy(CASE_LOWER));
         $ormConfiguration->addFilter('soft-deleteable', SoftDeleteableFilter::class);
