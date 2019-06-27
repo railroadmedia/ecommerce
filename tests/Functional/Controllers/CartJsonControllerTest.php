@@ -35,6 +35,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             'weight' => 1,
             'active' => 1,
             'stock' => $this->faker->numberBetween(15, 100),
+            'is_physical' => true,
         ]);
 
         $initialQuantity = 2;
@@ -130,6 +131,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(15, 100),
+            'is_physical' => true,
         ]);
 
         $initialQuantity = 2;
@@ -220,6 +222,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => 0,
+            'is_physical' => true,
         ]);
 
         $quantity = $this->faker->numberBetween(2, 10);
@@ -345,11 +348,13 @@ class CartJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(5, 100),
+            'is_physical' => true,
         ]);
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(5, 100),
+            'is_physical' => true,
         ]);
 
         $productOneQuantity = 1;
@@ -457,6 +462,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(1, 3),
+            'is_physical' => true,
         ]);
 
         $quantity = $this->faker->numberBetween(5, 100);
@@ -523,11 +529,13 @@ class CartJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => true,
         ]);
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => true,
         ]);
 
         $randomSku1 = $this->faker->word . 'sku1';
@@ -657,11 +665,13 @@ class CartJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => true,
         ]);
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => true,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -768,6 +778,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => true,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -877,6 +888,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => true,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -951,6 +963,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => true,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -1273,6 +1286,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => true,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -1574,6 +1588,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => true,
         ]);
 
         $cartService = $this->app->make(CartService::class);

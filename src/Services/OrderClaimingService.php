@@ -323,7 +323,10 @@ class OrderClaimingService
         $subscriptionPayment->setSubscription($subscription);
         $subscriptionPayment->setPayment($payment);
 
+        $this->entityManager->persist($subscription);
         $this->entityManager->persist($subscriptionPayment);
+
+        $this->entityManager->flush();
 
         return $subscription;
     }

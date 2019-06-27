@@ -180,6 +180,8 @@ class ShippingFulfillmentController extends Controller
             }
         }
 
-        return response()->json(['success' => true, 'errors' => $errors])->setStatusCode(201);
+        return response()
+            ->json(['success' => true, 'errors' => $errors])
+            ->setStatusCode(count($errors) > 0 ? 422 : 201);
     }
 }

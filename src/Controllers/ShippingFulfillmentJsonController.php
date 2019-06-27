@@ -79,7 +79,7 @@ class ShippingFulfillmentJsonController extends Controller
          */
         $fulfillments = $fulfillmentsAndBuilder->getResults();
 
-        if ($request->has('csv')) {
+        if ($request->has('csv') && $request->get('csv') == true) {
             $rows = [];
 
             foreach ($fulfillments as $fulfillment) {
@@ -228,7 +228,15 @@ class ShippingFulfillmentJsonController extends Controller
             $fulfillment->setStatus(config('ecommerce.fulfillment_status_fulfilled'));
             $fulfillment->setCompany($request->get('shipping_company'));
             $fulfillment->setTrackingNumber($request->get('tracking_number'));
-            $fulfillment->setFulfilledOn($request->get('fulfilled_on', Carbon::now()));
+            $fulfillment->setFulfilledOn(
+                Carbon::parse(
+                    $request->get(
+                        'fulfilled_on',
+                        Carbon::now()
+                            ->toDateTimeString()
+                    )
+                )
+            );
         }
 
         $this->entityManager->flush();
