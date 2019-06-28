@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
@@ -992,15 +993,33 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
+            'price' => 128.95,
         ]);
 
         $creditCard = $this->fakeCreditCard([
             'payment_gateway_name' => 'brand',
         ]);
 
+        $currency = $this->getCurrency();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
+        ]);
+
         $paymentMethod = $this->fakePaymentMethod([
             'credit_card_id' => $creditCard['id'],
+            'billing_address_id' => $address['id'],
+            'currency' => $currency
         ]);
+
+        $taxRate =
+            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower(
+                $address['region']
+            )];
+
+        $tax = round($taxRate * $product['price'], 2);
 
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
@@ -1012,6 +1031,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'is_active' => 1,
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_yearly'),
+            'total_price' => round($product['price'] + $tax, 2),
+            'tax' => $tax
         ]);
 
         $results = $this->call(
@@ -1075,13 +1096,31 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
+            'price' => 128.95,
         ]);
 
         $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
 
+        $currency = $this->getCurrency();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
+        ]);
+
         $paymentMethod = $this->fakePaymentMethod([
             'paypal_billing_agreement_id' => $paypalBillingAgreement['id'],
+            'billing_address_id' => $address['id'],
+            'currency' => $currency
         ]);
+
+        $taxRate =
+            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower(
+                $address['region']
+            )];
+
+        $tax = round($taxRate * $product['price'], 2);
 
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
@@ -1093,6 +1132,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'is_active' => 1,
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_yearly'),
+            'total_price' => round($product['price'] + $tax, 2),
+            'tax' => $tax
         ]);
 
         $this->expectsEvents([SubscriptionRenewed::class, SubscriptionUpdated::class]);
@@ -1150,13 +1191,31 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
+            'price' => 128.95,
         ]);
 
         $creditCard = $this->fakeCreditCard();
 
+        $currency = $this->getCurrency();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
+        ]);
+
         $paymentMethod = $this->fakePaymentMethod([
             'credit_card_id' => $creditCard['id'],
+            'billing_address_id' => $address['id'],
+            'currency' => $currency
         ]);
+
+        $taxRate =
+            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower(
+                $address['region']
+            )];
+
+        $tax = round($taxRate * $product['price'], 2);
 
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
@@ -1168,6 +1227,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'is_active' => 1,
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_yearly'),
+            'total_price' => round($product['price'] + $tax, 2),
+            'tax' => $tax
         ]);
 
         $userProduct = $this->fakeUserProduct([
@@ -1226,13 +1287,31 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
+            'price' => 128.95,
         ]);
 
         $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
 
+        $currency = $this->getCurrency();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
+        ]);
+
         $paymentMethod = $this->fakePaymentMethod([
             'paypal_billing_agreement_id' => $paypalBillingAgreement['id'],
+            'billing_address_id' => $address['id'],
+            'currency' => $currency
         ]);
+
+        $taxRate =
+            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower(
+                $address['region']
+            )];
+
+        $tax = round($taxRate * $product['price'], 2);
 
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
@@ -1244,6 +1323,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'is_active' => 1,
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_yearly'),
+            'total_price' => round($product['price'] + $tax, 2),
+            'tax' => $tax
         ]);
 
         $userProduct = $this->fakeUserProduct([

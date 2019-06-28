@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Exception;
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
@@ -16,6 +17,7 @@ use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
@@ -126,9 +128,22 @@ class RenewalService
 
         $payment = new Payment();
 
-        $currency = $subscription->getCurrency();
+        /** @var $address Address */
+        $address = $paymentMethod->getBillingAddress()->toStructure();
+        $currency = $paymentMethod->getCurrency();
 
-        $chargePrice = null;
+        $subscriptionPricePerPayment = round($subscription->getTotalPrice() - $subscription->getTax(), 2);
+
+        $taxes = $this->taxService->getTaxesDueTotal(
+            $subscriptionPricePerPayment,
+            0,
+            $address
+        );
+
+        $chargePrice = $this->currencyService->convertFromBase(
+            round($subscriptionPricePerPayment + $taxes, 2),
+            $currency
+        );
 
         if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
 
@@ -142,11 +157,6 @@ class RenewalService
 //                        $paymentMethod->getBillingAddress()
 //                            ->toStructure() : null
 //                );
-
-                $chargePrice = $this->currencyService->convertFromBase(
-                    $subscription->getTotalPrice(),
-                    $currency
-                );
 
                 /** @var $method CreditCard */
                 $method = $paymentMethod->getCreditCard();
@@ -212,11 +222,6 @@ class RenewalService
 //                        $paymentMethod->getBillingAddress()
 //                            ->toStructure() : null
 //                );
-
-                $chargePrice = $this->currencyService->convertFromBase(
-                    $subscription->getTotalPrice(),
-                    $currency
-                );
 
                 /** @var $method PaypalBillingAgreement */
                 $method = $paymentMethod->getMethod();
