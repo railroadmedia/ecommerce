@@ -91,18 +91,32 @@ class PopulatePaymentTaxesTable extends Command
 
                             $productTax = 0;
                             $shippingTax = 0;
+                            $productTaxRate = 0;
+                            $shippingTaxRate = 0;
+
+                            if (!($orderData['product_due'] + $orderData['shipping_due'])) {
+                                $this->error(
+                                    sprintf(
+                                        'Order with id %s, linked to payment with id: %s has product due and shipping due sum 0',
+                                        $orderData['id'],
+                                        $paymentData['id']
+                                    )
+                                );
+                                continue;
+                            }
 
                             if ($orderData['shipping_due']) {
 
-                                if (!($orderData['product_due'] + $orderData['shipping_due'])) {
-                                    // display warning - division by 0 in next block
-                                    continue;
-                                }
+                                // todo - review & update the tax rates logic
+                                $productTaxRate = $shippingTaxRate = round(
+                                    $orderData['taxes_due'] / ($orderData['product_due'] + $orderData['shipping_due']),
+                                    2
+                                );
+                                $productTax = round($orderData['product_due'] * $productTaxRate, 2);
+                                $shippingTax = round($orderData['shipping_due'] * $shippingTaxRate, 2);
 
-                                $taxRate = round($orderData['taxes_due'] / ($orderData['product_due'] + $orderData['shipping_due']), 2);
-                                $productTax = round($orderData['product_due'] * $taxRate, 2);
-                                $shippingTax = round($orderData['shipping_due'] * $taxRate, 2);
                             } else {
+                                $productTaxRate = round($orderData['taxes_due'] / $orderData['product_due'], 2);
                                 $productTax = $orderData['taxes_due'];
                             }
 
@@ -110,8 +124,8 @@ class PopulatePaymentTaxesTable extends Command
                                 'payment_id' => $paymentData['id'],
                                 'country' => $addressData['country'],
                                 'region' => $addressData['region'],
-                                'product_rate' => $orderData['product_due'],
-                                'shipping_rate' => $orderData['shipping_due'],
+                                'product_rate' => $productTaxRate,
+                                'shipping_rate' => $shippingTaxRate,
                                 'product_taxes_paid' => $productTax,
                                 'shipping_taxes_paid' => $shippingTax,
                                 'created_at' => Carbon::now()->toDateTimeString()
@@ -142,29 +156,45 @@ class PopulatePaymentTaxesTable extends Command
                                         'ecommerce_payment_methods.billing_address_id', '=',
                                         'ecommerce_addresses.id'
                                     )
-                                    ->where('ecommerce_payment_methods.id', $paymentData['payment_method_id'])
+                                    ->where('ecommerce_payment_methods.id', $subscriptionData['payment_method_id'])
                                     ->get()
                                     ->first();
 
                                 if ($address) {
                                     $addressData = get_object_vars($address);
 
+                                    $subscriptionProductPrice = $subscriptionData['total_price'] - $subscriptionData['tax'];
+                                    $productTaxRate = $subscriptionProductPrice ?
+                                        round($subscriptionData['tax'] / $subscriptionProductPrice, 2):
+                                        0;
+
                                     $insertData[] = [
                                         'payment_id' => $paymentData['id'],
                                         'country' => $addressData['country'],
                                         'region' => $addressData['region'],
-                                        'product_rate' => round($subscriptionData['total_price'] - $subscriptionData['tax'], 2),
+                                        'product_rate' => $productTaxRate,
                                         'shipping_rate' => 0,
                                         'product_taxes_paid' => $subscriptionData['tax'],
                                         'shipping_taxes_paid' => 0,
                                         'created_at' => Carbon::now()->toDateTimeString()
                                     ];
                                 } else {
-                                    // display warning
+                                    $this->error(
+                                        sprintf(
+                                            'Subscription with id %s, linked to payment with id: %s has no address associated to its payment method',
+                                            $subscriptionData['id'],
+                                            $paymentData['id']
+                                        )
+                                    );
                                 }
 
                             } else {
-                                // display warning
+                                $this->error(
+                                    sprintf(
+                                        'Payment with id: %s has no associated order or subscription',
+                                        $paymentData['id']
+                                    )
+                                );
                             }
                         }
                     }

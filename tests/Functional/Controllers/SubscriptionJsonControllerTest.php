@@ -16,6 +16,7 @@ use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Stripe\Card;
 use Stripe\Charge;
@@ -1165,6 +1166,128 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ->addYear(1)
                     ->startOfDay()
                     ->toDateTimeString(),
+            ]
+        );
+    }
+
+    public function test_renew_subscription_different_payment_method()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn(new Charge());
+
+        $product = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+            'subscription_interval_count' => 1,
+            'price' => 128.95,
+        ]);
+
+        $creditCard = $this->fakeCreditCard([
+            'payment_gateway_name' => 'brand',
+        ]);
+
+        $currency = $this->getCurrency();
+
+        $addressOne = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
+        ]);
+
+        $paymentMethodOne = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCard['id'],
+            'billing_address_id' => $addressOne['id'],
+            'currency' => $currency
+        ]);
+
+        $taxRateOne =
+            config('ecommerce.product_tax_rate')[strtolower($addressOne['country'])][strtolower(
+                $addressOne['region']
+            )];
+
+        $taxOne = round($taxRateOne * $product['price'], 2);
+
+        $addressTwo = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'ontario',
+        ]);
+
+        $paymentMethodTwo = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCard['id'],
+            'billing_address_id' => $addressTwo['id'],
+            'currency' => $currency
+        ]);
+
+        $taxRateTwo =
+            config('ecommerce.product_tax_rate')[strtolower($addressTwo['country'])][strtolower(
+                $addressTwo['region']
+            )];
+
+        $taxTwo = round($taxRateTwo * $product['price'], 2);
+
+        $currencyService = $this->app->make(CurrencyService::class);
+
+        $expectedPaymentTotalDue = $currencyService->convertFromBase(round($product['price'] + $taxTwo, 2), $currency);
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethodTwo['id'], // *current* payment method is different from the one used to calculate subscription tax
+            'user_id' => $userId,
+            'paid_until' => Carbon::now()
+                        ->subDay(1)
+                        ->toDateTimeString(),
+            'is_active' => 1,
+            'interval_count' => 1,
+            'interval_type' => config('ecommerce.interval_type_yearly'),
+            'total_price' => round($product['price'] + $taxOne, 2),
+            'tax' => $taxOne
+        ]);
+
+        $results = $this->call(
+            'POST',
+            '/subscription-renew/' . $subscription['id']
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => Carbon::now()
+                    ->addYear(1)
+                    ->startOfDay()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscription['id'],
+                'is_active' => 1,
+                'paid_until' => Carbon::now()
+                    ->addYear(1)
+                    ->startOfDay()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        // assert payment has the tax calculated using *current* paymentMethodTwo address
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_paid' => $expectedPaymentTotalDue,
+                'payment_method_id' => $paymentMethodTwo['id']
             ]
         );
     }
