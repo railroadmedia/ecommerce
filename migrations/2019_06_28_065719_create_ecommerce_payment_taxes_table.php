@@ -18,9 +18,9 @@ class CreateEcommercePaymentTaxesTable extends Migration
             $table->integer('payment_id')->index();
             $table->string('country');
             $table->string('region')->nullable();
-            $table->decimal('product_rate');
+            $table->decimal('product_rate')->nullable();
             $table->decimal('shipping_rate')->nullable();
-            $table->decimal('product_taxes_paid');
+            $table->decimal('product_taxes_paid')->nullable();
             $table->decimal('shipping_taxes_paid')->nullable();
             $table->timestamps();
         });

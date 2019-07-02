@@ -48,6 +48,11 @@ class Payment
     protected $id;
 
     /**
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\PaymentTaxes", mappedBy="payment")
+     */
+    protected $paymentTaxes;
+
+    /**
      * @ORM\Column(type="decimal", precision=8, scale=2, name="total_due")
      *
      * @var float
@@ -153,6 +158,22 @@ class Payment
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    /**
+     * @return PaymentTaxes|null
+     */
+    public function getPaymentTaxes(): ?PaymentTaxes
+    {
+        return $this->paymentTaxes;
+    }
+
+    /**
+     * @param PaymentTaxes $paymentTaxes
+     */
+    public function setPayment(?PaymentTaxes $paymentTaxes)
+    {
+        $this->paymentTaxes = $paymentTaxes;
     }
 
     /**

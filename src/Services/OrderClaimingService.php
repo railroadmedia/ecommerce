@@ -11,6 +11,7 @@ use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\PaymentTaxes;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
@@ -139,6 +140,8 @@ class OrderClaimingService
         // create the order items
         $orderItems = $this->cartService->getOrderItemEntities();
 
+        $subscription = null;
+
         foreach ($orderItems as $orderItem) {
 
             $order->addOrderItem($orderItem);
@@ -193,6 +196,10 @@ class OrderClaimingService
             $this->entityManager->persist($subscription);
 
             event(new SubscriptionCreated($subscription));
+        }
+
+        if (!is_null($payment)) {
+            $this->populatePaymentTaxes($payment, $subscription);
         }
 
         $this->entityManager->flush();
@@ -276,8 +283,8 @@ class OrderClaimingService
                 elseif ($discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
                     // todo - confirm for subscriptions only SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE modifies the cost
                     $subscriptionPricePerPayment =
-                        $orderItem->getProduct()
-                            ->getPrice() - $discount->getAmount();
+                        round($orderItem->getProduct()
+                            ->getPrice() - $discount->getAmount(), 2);
                 }
             }
         }
@@ -295,7 +302,7 @@ class OrderClaimingService
             ) ?
                 $this->cartService->getCart()
                     ->getTaxOverride() : $this->taxService->getTaxesDueTotal(
-                $this->cartService->getTotalItemCosts(),
+                $subscriptionPricePerPayment,
                 0,
                 $this->taxService->getAddressForTaxation($this->cartService->getCart())
             );
@@ -308,7 +315,7 @@ class OrderClaimingService
         $subscription->setIsActive(true);
         $subscription->setStartDate(Carbon::now());
         $subscription->setPaidUntil($nextBillDate);
-        $subscription->setTotalPrice($subscriptionPricePerPayment + $totalTaxDue);
+        $subscription->setTotalPrice(round($subscriptionPricePerPayment + $totalTaxDue, 2));
         $subscription->setTax($totalTaxDue);
         $subscription->setCurrency($payment->getCurrency());
         $subscription->setIntervalType($intervalType);
@@ -329,5 +336,58 @@ class OrderClaimingService
         $this->entityManager->flush();
 
         return $subscription;
+    }
+
+    /**
+     * @param Payment $payment
+     * @param Subscription|null $subscription
+     *
+     * @return PaymentTaxes|null
+     *
+     * @throws Throwable
+     */
+    public function populatePaymentTaxes(
+        Payment $payment,
+        ?Subscription $subscription = null
+    ): PaymentTaxes
+    {
+        $paymentTaxes = new PaymentTaxes();
+
+        $paymentTaxes->setPayment($payment);
+
+        $address = $this->taxService->getAddressForTaxation($this->cartService->getCart());
+
+        $totalItemCostDue = 0;
+        $shippingDue = 0;
+
+        if (is_null($subscription)) {
+            $totalItemCostDue = $this->cartService->getTotalItemCosts();
+            $shippingDue =
+                !is_null($this->cartService->getCart()->getShippingOverride()) ? $this->cartService->getCart()->getShippingOverride() :
+                    $this->shippingService->getShippingDueForCart($this->cartService->getCart(), $totalItemCostDue);
+        } else {
+            // the DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE type discount is applied here in OrderClaimingService, not in cart service
+            // the resulting product due needs to match subscription
+            $totalItemCostDue = $subscription->getTotalPrice() - $subscription->getTax();
+        }
+
+        $paymentTaxes->setCountry($address->getCountry());
+        $paymentTaxes->setRegion($address->getRegion());
+        $paymentTaxes->setProductRate(
+            $this->taxService->getProductTaxRate($address)
+        );
+        $paymentTaxes->setShippingRate(
+            $this->taxService->getShippingTaxRate($address)
+        );
+        $paymentTaxes->setProductTaxesPaid(
+            $this->taxService->getTaxesDueForProductCost($totalItemCostDue, $address)
+        );
+        $paymentTaxes->setShippingTaxesPaid(
+            $this->taxService->getTaxesDueForShippingCost($shippingDue, $address)
+        );
+
+        $this->entityManager->persist($paymentTaxes);
+
+        return $paymentTaxes;
     }
 }

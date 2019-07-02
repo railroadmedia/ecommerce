@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
@@ -63,9 +64,16 @@ class RenewalServiceTest extends EcommerceTestCase
         $em->persist($creditCard);
         $em->flush();
 
+        $address = new Address('Canada', 'alberta');
+        $address->setType(Address::BILLING_ADDRESS_TYPE);
+
+        $em->persist($address);
+        $em->flush();
+
         $paymentMethod = new PaymentMethod();
 
         $paymentMethod->setCreditCard($creditCard);
+        $paymentMethod->setBillingAddress($address);
         $paymentMethod->setCurrency($this->getCurrency());
         $paymentMethod->setCreatedAt(Carbon::now());
 
@@ -81,9 +89,18 @@ class RenewalServiceTest extends EcommerceTestCase
         $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
         $product->setActive(true);
         $product->setIsPhysical(false);
+        $product->setPrice(123.58);
 
         $em->persist($product);
         $em->flush();
+
+        $taxService = $this->app->make(TaxService::class);
+        $currencyService = $this->app->make(CurrencyService::class);
+
+        $subscriptionTaxes = $taxService->getTaxesDueForProductCost(
+            $product->getPrice(),
+            $paymentMethod->getBillingAddress()->toStructure()
+        );
 
         $subscription = new Subscription();
 
@@ -94,9 +111,9 @@ class RenewalServiceTest extends EcommerceTestCase
         $subscription->setUser($user);
         $subscription->setStartDate(Carbon::now());
         $subscription->setPaidUntil(Carbon::now()->subDay(1));
-        $subscription->setTotalPrice($this->faker->randomNumber(3));
-        $subscription->setTax($this->faker->randomNumber(3));
-        $subscription->setCurrency($this->getCurrency());
+        $subscription->setTotalPrice($product->getPrice() + $subscriptionTaxes);
+        $subscription->setTax($subscriptionTaxes);
+        $subscription->setCurrency($paymentMethod->getCurrency());
         $subscription->setIntervalType(config('ecommerce.interval_type_monthly'));
         $subscription->setIntervalCount(1);
         $subscription->setTotalCyclesPaid($this->faker->randomNumber(3));
@@ -111,16 +128,8 @@ class RenewalServiceTest extends EcommerceTestCase
 
         $srv->renew($subscription);
 
-        $taxService = $this->app->make(TaxService::class);
-        $currencyService = $this->app->make(CurrencyService::class);
-
-        $vat = $taxService->getTaxesDueForProductCost(
-            $subscription->getTotalPrice(),
-            $paymentMethod->getBillingAddress()
-        );
-
         $chargePrice = $currencyService->convertFromBase(
-            $vat + $subscription->getTotalPrice(),
+            $subscription->getTotalPrice(),
             $subscription->getCurrency()
         );
 
