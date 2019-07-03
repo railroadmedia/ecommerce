@@ -28,9 +28,9 @@ class DiscountCriteriaService
     private $userProductRepository;
 
     /**
-     * @var User
+     * @var UserProviderInterface
      */
-    protected $currentUser;
+    private $userProvider;
 
     const PRODUCT_QUANTITY_REQUIREMENT_TYPE = 'product quantity requirement';
     const DATE_REQUIREMENT_TYPE = 'date requirement';
@@ -55,10 +55,7 @@ class DiscountCriteriaService
     {
         $this->productRepository = $productRepository;
         $this->userProductRepository = $userProductRepository;
-
-        if (auth()->check()) {
-            $this->currentUser = $userProvider->getCurrentUser();
-        }
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -255,7 +252,7 @@ class DiscountCriteriaService
         }
 
         $userProductsCount = $this->userProductRepository->getCountByUserDiscountCriteriaProducts(
-            $this->currentUser,
+            $this->userProvider->getCurrentUser(),
             $discountCriteria
         );
 
