@@ -28,9 +28,9 @@ class DiscountCriteriaService
     private $userProductRepository;
 
     /**
-     * @var User
+     * @var UserProviderInterface
      */
-    protected $currentUser;
+    private $userProvider;
 
     const PRODUCT_QUANTITY_REQUIREMENT_TYPE = 'product quantity requirement';
     const DATE_REQUIREMENT_TYPE = 'date requirement';
@@ -55,10 +55,7 @@ class DiscountCriteriaService
     {
         $this->productRepository = $productRepository;
         $this->userProductRepository = $userProductRepository;
-
-        if (auth()->check()) {
-            $this->currentUser = $userProvider->getCurrentUser();
-        }
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -264,7 +261,7 @@ class DiscountCriteriaService
                 $qb->expr()
                     ->between('up.quantity', ':min', ':max')
             )
-            ->setParameter('user', $this->currentUser)
+            ->setParameter('user', $this->userProvider->getCurrentUser())
             ->setParameter('product', $discountCriteria->getProduct())
             ->setParameter('now', Carbon::now())
             ->setParameter('min', (integer)$discountCriteria->getMin())
