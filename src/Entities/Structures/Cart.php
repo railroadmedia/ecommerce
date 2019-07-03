@@ -61,7 +61,12 @@ class Cart implements Serializable
     /**
      * @var float|null
      */
-    private $taxOverride;
+    private $productTaxOverride;
+
+    /**
+     * @var float|null
+     */
+    private $shippingTaxOverride;
 
     /**
      * @var float|null
@@ -279,17 +284,33 @@ class Cart implements Serializable
     /**
      * @return float|null
      */
-    public function getTaxOverride(): ?float
+    public function getProductTaxOverride(): ?float
     {
-        return $this->taxOverride;
+        return $this->productTaxOverride;
     }
 
     /**
-     * @param float|null $taxOverride
+     * @param float|null $productTaxOverride
      */
-    public function setTaxOverride(?float $taxOverride): void
+    public function setProductTaxOverride(?float $productTaxOverride): void
     {
-        $this->taxOverride = $taxOverride;
+        $this->productTaxOverride = $productTaxOverride;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getShippingTaxOverride(): ?float
+    {
+        return $this->shippingTaxOverride;
+    }
+
+    /**
+     * @param float|null $shippingTaxOverride
+     */
+    public function setShippingTaxOverride(?float $shippingTaxOverride): void
+    {
+        $this->shippingTaxOverride = $shippingTaxOverride;
     }
 
     /**

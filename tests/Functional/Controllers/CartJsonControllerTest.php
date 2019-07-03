@@ -1603,7 +1603,8 @@ class CartJsonControllerTest extends EcommerceTestCase
         );
 
         $params = [
-            'taxes_due_override' => rand(1, 100),
+            'product_taxes_due_override' => rand(1, 100),
+            'shipping_taxes_due_override' => rand(1, 100),
             'shipping_due_override' => rand(1, 100),
             'order_items_due_overrides' => [
                 [
@@ -1614,7 +1615,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         ];
 
         $productTotalDueExpected = $params['order_items_due_overrides'][0]['amount'] * $productQuantity;
-        $taxesExpected = $params['taxes_due_override'];
+        $taxesExpected = $params['product_taxes_due_override'] + $params['shipping_taxes_due_override'];
         $shippingExpected = $params['shipping_due_override'];
 
         $totalDueExpected = $productTotalDueExpected + $taxesExpected + $shippingExpected;

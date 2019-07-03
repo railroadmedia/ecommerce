@@ -81,6 +81,8 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $taxDueForOrder = rand();
         $shippingDueForOrder = rand();
 
+        // todo - update, remove mock, add the regular taxes calculus
+
         $this->cartServiceMock->method('getDueForOrder')
             ->willReturn($dueForOrder);
         $this->cartServiceMock->method('getTotalItemCosts')
@@ -127,8 +129,8 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $shippingAddressStructure->setRegion($region);
 
         $billingAddressStructure = new AddressStructure();
-        $billingAddress->setCountry($country);
-        $billingAddress->setRegion($region);
+        $billingAddressStructure->setCountry($country);
+        $billingAddressStructure->setRegion($region);
 
         $creditCard = new CreditCard();
         $creditCard->setCardholderName($this->faker->name);

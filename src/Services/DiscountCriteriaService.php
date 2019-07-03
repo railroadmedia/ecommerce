@@ -117,7 +117,7 @@ class DiscountCriteriaService
 
         foreach ($discountCriteria->getProducts() as $dcProduct) {
 
-            $productCartItem = $cart->getItemBySku($product->getSku());
+            $productCartItem = $cart->getItemBySku($dcProduct->getSku());
 
             if (
                 isset($productsMap[$dcProduct->getId()]) &&

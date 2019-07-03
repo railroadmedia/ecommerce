@@ -669,7 +669,7 @@ class DiscountServiceTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct([
             'category' => $productCategory,
             'active' => 1,
-            'stock' => $this->faker->numberBetween(10, 100),
+            'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 10, 20)
         ]);
 
@@ -721,8 +721,8 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaTwo = $this->fakeDiscountCriteria([
             'discount_id' => $discountTwo['id'],
             'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
-            'min' => Carbon::now()->subDay(1),
-            'max' => Carbon::now()->addDays(3),
+            'min' => Carbon::now()->subDay(5),
+            'max' => Carbon::now()->addDays(18),
         ]);
 
         $discountThree = $this->fakeDiscount([
@@ -761,13 +761,13 @@ class DiscountServiceTest extends EcommerceTestCase
         $discountCriteriaFour = $this->fakeDiscountCriteria([
             'discount_id' => $discountFour['id'],
             'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
-            'min' => Carbon::now()->subDay(1),
-            'max' => Carbon::now()->addDays(3),
+            'min' => Carbon::now()->subDay(10),
+            'max' => Carbon::now()->addDays(12),
         ]);
 
-        $productOneQuantity = $this->faker->numberBetween(4, 7);
+        $productOneQuantity = $this->faker->numberBetween(5, 7);
         $productTwoQuantity = $this->faker->numberBetween(1, 3);
-        $productThreeQuantity = $this->faker->numberBetween(4, 10);
+        $productThreeQuantity = $this->faker->numberBetween(5, 10);
         $productFourQuantity = $this->faker->numberBetween(1, 3);
 
         $cartService = $this->app->make(CartService::class);

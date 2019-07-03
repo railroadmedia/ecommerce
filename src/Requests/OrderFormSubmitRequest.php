@@ -211,7 +211,8 @@ class OrderFormSubmitRequest extends FormRequest
 
         if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
 
-            $cart->setTaxOverride($this->get('taxes_due_override'));
+            $cart->setProductTaxOverride($this->get('product_taxes_due_override'));
+            $cart->setShippingTaxOverride($this->get('shipping_taxes_due_override'));
             $cart->setShippingOverride($this->get('shipping_due_override'));
 
             $overrides = $this->get('order_items_due_overrides', []);

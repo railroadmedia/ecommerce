@@ -93,8 +93,24 @@ class OrderClaimingService
         $shippingCosts =
             !is_null($cart->getShippingOverride()) ? $cart->getShippingOverride() :
                 $this->shippingService->getShippingDueForCart($cart, $totalItemsCosts);
-        $taxesDue =
-            !is_null($cart->getTaxOverride()) ? $cart->getTaxOverride() : $this->cartService->getTaxDueForOrder();
+
+        $taxableAddress = $this->taxService->getAddressForTaxation($cart);
+
+        $productTaxDue =
+            !is_null($cart->getProductTaxOverride()) ? $cart->getProductTaxOverride() :
+                $this->taxService->getTaxesDueForProductCost(
+                    $totalItemsCosts,
+                    $taxableAddress
+                );
+
+        $shippingTaxDue =
+            !is_null($cart->getShippingTaxOverride()) ? $cart->getShippingTaxOverride() :
+                $this->taxService->getTaxesDueForShippingCost(
+                    $shippingCosts,
+                    $taxableAddress
+                );
+
+        $taxesDue = round($productTaxDue + $shippingTaxDue, 2);
 
         // create the order
         $order = new Order();
@@ -199,7 +215,7 @@ class OrderClaimingService
         }
 
         if (!is_null($payment)) {
-            $this->populatePaymentTaxes($payment, $subscription);
+            $this->populatePaymentTaxes($payment, $cart, $subscription);
         }
 
         $this->entityManager->flush();
@@ -236,6 +252,10 @@ class OrderClaimingService
         $subscriptionPricePerPayment = 0;
         $product = null;
 
+        // for payment plans, the taxable amount is total items costs
+        // for normal subscriptions, the taxable amount is subscription product price, with any discounts applied
+        $subscriptionTaxableAmount = 0;
+
         if (is_null($orderItem)) {
 
             $nextBillDate =
@@ -244,7 +264,9 @@ class OrderClaimingService
 
             $type = config('ecommerce.type_payment_plan');
 
-            $subscriptionPricePerPayment = $this->cartService->getDueForOrder();
+            $subscriptionPricePerPayment = $this->cartService->getDueForPaymentPlanPayments();
+
+            $subscriptionTaxableAmount = $this->cartService->getTotalItemCosts();
         }
         else {
 
@@ -287,6 +309,8 @@ class OrderClaimingService
                             ->getPrice() - $discount->getAmount(), 2);
                 }
             }
+
+            $subscriptionTaxableAmount = $subscriptionPricePerPayment;
         }
 
         $subscription = new Subscription();
@@ -295,17 +319,14 @@ class OrderClaimingService
 
         $intervalCount = $product ? $product->getSubscriptionIntervalCount() : 1;
 
+        $taxableAddress = $this->taxService->getAddressForTaxation($this->cartService->getCart());
+
         $totalTaxDue =
-            !is_null(
-                $this->cartService->getCart()
-                    ->getTaxOverride()
-            ) ?
-                $this->cartService->getCart()
-                    ->getTaxOverride() : $this->taxService->getTaxesDueTotal(
-                $subscriptionPricePerPayment,
-                0,
-                $this->taxService->getAddressForTaxation($this->cartService->getCart())
-            );
+            !is_null($this->cartService->getCart()->getProductTaxOverride()) ? $this->cartService->getCart()->getProductTaxOverride() :
+                $this->taxService->getTaxesDueForProductCost(
+                    $subscriptionTaxableAmount,
+                    $taxableAddress
+                );
 
         $subscription->setBrand($purchaser->getBrand());
         $subscription->setType($type);
@@ -340,6 +361,7 @@ class OrderClaimingService
 
     /**
      * @param Payment $payment
+     * @param Cart $cart
      * @param Subscription|null $subscription
      *
      * @return PaymentTaxes|null
@@ -348,6 +370,7 @@ class OrderClaimingService
      */
     public function populatePaymentTaxes(
         Payment $payment,
+        Cart $cart,
         ?Subscription $subscription = null
     ): PaymentTaxes
     {
@@ -355,21 +378,21 @@ class OrderClaimingService
 
         $paymentTaxes->setPayment($payment);
 
-        $address = $this->taxService->getAddressForTaxation($this->cartService->getCart());
+        $address = $this->taxService->getAddressForTaxation($cart);
 
         $totalItemCostDue = 0;
-        $shippingDue = 0;
 
-        if (is_null($subscription)) {
+        if (is_null($subscription) || $cart->getPaymentPlanNumberOfPayments() > 1) {
             $totalItemCostDue = $this->cartService->getTotalItemCosts();
-            $shippingDue =
-                !is_null($this->cartService->getCart()->getShippingOverride()) ? $this->cartService->getCart()->getShippingOverride() :
-                    $this->shippingService->getShippingDueForCart($this->cartService->getCart(), $totalItemCostDue);
         } else {
             // the DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE type discount is applied here in OrderClaimingService, not in cart service
             // the resulting product due needs to match subscription
             $totalItemCostDue = $subscription->getTotalPrice() - $subscription->getTax();
         }
+
+        $shippingDue =
+            !is_null($cart->getShippingOverride()) ? $cart->getShippingOverride() :
+                $this->shippingService->getShippingDueForCart($cart, $totalItemCostDue);
 
         $paymentTaxes->setCountry($address->getCountry());
         $paymentTaxes->setRegion($address->getRegion());
@@ -379,12 +402,23 @@ class OrderClaimingService
         $paymentTaxes->setShippingRate(
             $this->taxService->getShippingTaxRate($address)
         );
-        $paymentTaxes->setProductTaxesPaid(
-            $this->taxService->getTaxesDueForProductCost($totalItemCostDue, $address)
-        );
-        $paymentTaxes->setShippingTaxesPaid(
-            $this->taxService->getTaxesDueForShippingCost($shippingDue, $address)
-        );
+
+        $productTaxDue =
+            !is_null($cart->getProductTaxOverride()) ? $cart->getProductTaxOverride() :
+                $this->taxService->getTaxesDueForProductCost(
+                    $totalItemCostDue,
+                    $address
+                );
+
+        $shippingTaxDue =
+            !is_null($cart->getShippingTaxOverride()) ? $cart->getShippingTaxOverride() :
+                $this->taxService->getTaxesDueForShippingCost(
+                    $shippingDue,
+                    $address
+                );
+
+        $paymentTaxes->setProductTaxesPaid($productTaxDue);
+        $paymentTaxes->setShippingTaxesPaid($shippingTaxDue);
 
         $this->entityManager->persist($paymentTaxes);
 
