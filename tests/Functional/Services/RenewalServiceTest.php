@@ -64,7 +64,12 @@ class RenewalServiceTest extends EcommerceTestCase
         $em->persist($creditCard);
         $em->flush();
 
-        $address = new Address('Canada', 'alberta');
+        $country = 'Canada';
+        $region = 'alberta';
+
+        $address = new Address();
+        $address->setCountry($country);
+        $address->setRegion($region);
         $address->setType(Address::BILLING_ADDRESS_TYPE);
 
         $em->persist($address);
@@ -96,6 +101,9 @@ class RenewalServiceTest extends EcommerceTestCase
 
         $taxService = $this->app->make(TaxService::class);
         $currencyService = $this->app->make(CurrencyService::class);
+
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
 
         $subscriptionTaxes = $taxService->getTaxesDueForProductCost(
             $product->getPrice(),
@@ -168,6 +176,18 @@ class RenewalServiceTest extends EcommerceTestCase
                     ->addMonth($subscription->getIntervalCount())
                     ->startOfDay()
                     ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $country,
+                'region' => $region,
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $subscriptionTaxes,
+                'shipping_taxes_paid' => 0,
             ]
         );
     }

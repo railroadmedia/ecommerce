@@ -8,6 +8,7 @@ use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\PaymentTaxes;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
@@ -338,6 +339,28 @@ class RenewalService
 
             event(new SubscriptionRenewed($subscription, $payment));
             event(new SubscriptionUpdated($oldSubscription, $subscription));
+
+            $paymentTaxes = new PaymentTaxes();
+
+            $paymentTaxes->setPayment($payment);
+            $paymentTaxes->setCountry($address->getCountry());
+            $paymentTaxes->setRegion($address->getRegion());
+            $paymentTaxes->setProductRate(
+                $this->taxService->getProductTaxRate($address)
+            );
+            $paymentTaxes->setShippingRate(
+                $this->taxService->getShippingTaxRate($address)
+            );
+
+            $productTaxDue = $this->taxService->getTaxesDueForProductCost(
+                $subscriptionPricePerPayment,
+                $address
+            );
+
+            $paymentTaxes->setProductTaxesPaid($productTaxDue);
+            $paymentTaxes->setShippingTaxesPaid(0);
+
+            $this->entityManager->persist($paymentTaxes);
 
             $this->entityManager->flush();
 

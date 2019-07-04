@@ -93,6 +93,13 @@ class Order
     protected $customer;
 
     /**
+     * @var User
+     *
+     * @ORM\Column(type="user", name="placed_by_user_id", nullable=true)
+     */
+    protected $placedByUser;
+
+    /**
      * @ORM\Column(type="string")
      *
      * @var string
@@ -304,6 +311,22 @@ class Order
     public function setCustomer(?Customer $customer)
     {
         $this->customer = $customer;
+    }
+
+    /**
+     * @return User|null
+     */
+    public function getPlacedByUser(): ?User
+    {
+        return $this->placedByUser;
+    }
+
+    /**
+     * @param User $placedByUser
+     */
+    public function setPlacedByUser(?User $placedByUser)
+    {
+        $this->placedByUser = $placedByUser;
     }
 
     /**

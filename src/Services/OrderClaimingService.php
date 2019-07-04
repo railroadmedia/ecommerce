@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
@@ -20,6 +21,7 @@ use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Permissions\Services\PermissionService;
 use Throwable;
 
 class OrderClaimingService
@@ -33,6 +35,11 @@ class OrderClaimingService
      * @var DiscountService
      */
     private $discountService;
+
+    /**
+     * @var PermissionService
+     */
+    private $permissionService;
 
     /**
      * @var ShippingService
@@ -50,27 +57,38 @@ class OrderClaimingService
     private $taxService;
 
     /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
+    /**
      * OrderClaimingService constructor.
      *
      * @param CartService $cartService
      * @param DiscountService $discountService
      * @param ShippingService $shippingService
      * @param EcommerceEntityManager $entityManager
+     * @param PermissionService $permissionService
      * @param TaxService $taxService
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         CartService $cartService,
         DiscountService $discountService,
         ShippingService $shippingService,
         EcommerceEntityManager $entityManager,
-        TaxService $taxService
+        PermissionService $permissionService,
+        TaxService $taxService,
+        UserProviderInterface $userProvider
     )
     {
         $this->cartService = $cartService;
         $this->discountService = $discountService;
         $this->shippingService = $shippingService;
+        $this->permissionService = $permissionService;
         $this->entityManager = $entityManager;
         $this->taxService = $taxService;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -115,6 +133,15 @@ class OrderClaimingService
         // create the order
         $order = new Order();
 
+        $currentUser = $this->userProvider->getCurrentUser();
+
+        if ($currentUser &&
+            $this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
+            $currentUser->getId() != $purchaser->getId()) {
+
+            $order->setPlacedByUser($currentUser);
+        }
+
         $order->setTotalDue($this->cartService->getDueForOrder());
         $order->setProductDue($totalItemsCosts);
         $order->setFinanceDue($this->cartService->getTotalFinanceCosts());
@@ -155,8 +182,7 @@ class OrderClaimingService
 
         // create the order items
         $orderItems = $this->cartService->getOrderItemEntities();
-
-        $subscription = null;
+        $subscriptions = [];
 
         foreach ($orderItems as $orderItem) {
 
@@ -183,8 +209,12 @@ class OrderClaimingService
                 $this->entityManager->persist($subscription);
 
                 event(new SubscriptionCreated($subscription));
+
+                $subscriptions[$orderItem->getProduct()->getSku()] = $subscription;
             }
         }
+
+        $subscription = null;
 
         // create the order discounts
         $orderDiscounts = $this->discountService->getOrderDiscounts($cart, $totalItemsCosts, $shippingCosts);
@@ -215,7 +245,7 @@ class OrderClaimingService
         }
 
         if (!is_null($payment)) {
-            $this->populatePaymentTaxes($payment, $cart, $subscription);
+            $this->populatePaymentTaxes($payment, $cart, $orderItems, $subscriptions);
         }
 
         $this->entityManager->flush();
@@ -292,7 +322,7 @@ class OrderClaimingService
                 }
             }
 
-            $subscriptionPricePerPayment = $product->getPrice();
+            $subscriptionPricePerPayment = $orderItem->getFinalPrice();
 
             foreach ($orderItem->getOrderItemDiscounts() as $orderItemDiscount) {
 
@@ -362,7 +392,8 @@ class OrderClaimingService
     /**
      * @param Payment $payment
      * @param Cart $cart
-     * @param Subscription|null $subscription
+     * @param array $orderItems
+     * @param array $subscriptions
      *
      * @return PaymentTaxes|null
      *
@@ -371,7 +402,8 @@ class OrderClaimingService
     public function populatePaymentTaxes(
         Payment $payment,
         Cart $cart,
-        ?Subscription $subscription = null
+        array $orderItems,
+        array $subscriptions
     ): PaymentTaxes
     {
         $paymentTaxes = new PaymentTaxes();
@@ -382,12 +414,21 @@ class OrderClaimingService
 
         $totalItemCostDue = 0;
 
-        if (is_null($subscription) || $cart->getPaymentPlanNumberOfPayments() > 1) {
+        if (empty($subscriptions)) {
             $totalItemCostDue = $this->cartService->getTotalItemCosts();
         } else {
-            // the DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE type discount is applied here in OrderClaimingService, not in cart service
-            // the resulting product due needs to match subscription
-            $totalItemCostDue = $subscription->getTotalPrice() - $subscription->getTax();
+            foreach ($orderItems as $orderItem) {
+                if ($orderItem->getProduct()->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
+
+                    // the DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE type discount is applied here in OrderClaimingService, not in cart service
+                    // the resulting product due needs to match subscription
+
+                    $orderItemSubscription = $subscriptions[$orderItem->getProduct()->getSku()];
+                    $totalItemCostDue +=  $orderItemSubscription->getTotalPrice() - $orderItemSubscription->getTax();
+                } else {
+                    $totalItemCostDue += $orderItem->getFinalPrice();
+                }
+            }
         }
 
         $shippingDue =

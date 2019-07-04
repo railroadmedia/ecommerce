@@ -1015,12 +1015,12 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'currency' => $currency
         ]);
 
-        $taxRate =
-            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower(
-                $address['region']
-            )];
+        $expectedTaxRateProduct =
+            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateShipping =
+            config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
 
-        $tax = round($taxRate * $product['price'], 2);
+        $expectedSubscriptionTaxes = round($expectedTaxRateProduct * $product['price'], 2);
 
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
@@ -1032,8 +1032,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'is_active' => 1,
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_yearly'),
-            'total_price' => round($product['price'] + $tax, 2),
-            'tax' => $tax
+            'total_price' => round($product['price'] + $expectedSubscriptionTaxes, 2),
+            'tax' => $expectedSubscriptionTaxes
         ]);
 
         $results = $this->call(
@@ -1082,6 +1082,18 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ->toDateTimeString(),
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $address['country'],
+                'region' => $address['region'],
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $expectedSubscriptionTaxes,
+                'shipping_taxes_paid' => 0,
+            ]
+        );
     }
 
     public function test_renew_subscription_paypal()
@@ -1116,12 +1128,12 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'currency' => $currency
         ]);
 
-        $taxRate =
-            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower(
-                $address['region']
-            )];
+        $expectedTaxRateProduct =
+            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateShipping =
+            config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
 
-        $tax = round($taxRate * $product['price'], 2);
+        $expectedSubscriptionTaxes = round($expectedTaxRateProduct * $product['price'], 2);
 
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
@@ -1133,8 +1145,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'is_active' => 1,
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_yearly'),
-            'total_price' => round($product['price'] + $tax, 2),
-            'tax' => $tax
+            'total_price' => round($product['price'] + $expectedSubscriptionTaxes, 2),
+            'tax' => $expectedSubscriptionTaxes
         ]);
 
         $this->expectsEvents([SubscriptionRenewed::class, SubscriptionUpdated::class]);
@@ -1166,6 +1178,18 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ->addYear(1)
                     ->startOfDay()
                     ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $address['country'],
+                'region' => $address['region'],
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $expectedSubscriptionTaxes,
+                'shipping_taxes_paid' => 0,
             ]
         );
     }
@@ -1208,12 +1232,10 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'currency' => $currency
         ]);
 
-        $taxRateOne =
-            config('ecommerce.product_tax_rate')[strtolower($addressOne['country'])][strtolower(
-                $addressOne['region']
-            )];
+        $initialTaxRateProduct =
+            config('ecommerce.product_tax_rate')[strtolower($addressOne['country'])][strtolower($addressOne['region'])];
 
-        $taxOne = round($taxRateOne * $product['price'], 2);
+        $initialSubscriptionTaxes = round($initialTaxRateProduct * $product['price'], 2);
 
         $addressTwo = $this->fakeAddress([
             'type' => Address::BILLING_ADDRESS_TYPE,
@@ -1227,16 +1249,16 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'currency' => $currency
         ]);
 
-        $taxRateTwo =
-            config('ecommerce.product_tax_rate')[strtolower($addressTwo['country'])][strtolower(
-                $addressTwo['region']
-            )];
+        $expectedTaxRateProduct =
+            config('ecommerce.product_tax_rate')[strtolower($addressTwo['country'])][strtolower($addressTwo['region'])];
+        $expectedTaxRateShipping =
+            config('ecommerce.shipping_tax_rate')[strtolower($addressTwo['country'])][strtolower($addressTwo['region'])];
 
-        $taxTwo = round($taxRateTwo * $product['price'], 2);
+        $expectedSubscriptionTaxes = round($expectedTaxRateProduct * $product['price'], 2);
 
         $currencyService = $this->app->make(CurrencyService::class);
 
-        $expectedPaymentTotalDue = $currencyService->convertFromBase(round($product['price'] + $taxTwo, 2), $currency);
+        $expectedPaymentTotalDue = $currencyService->convertFromBase(round($product['price'] + $expectedSubscriptionTaxes, 2), $currency);
 
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
@@ -1248,8 +1270,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'is_active' => 1,
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_yearly'),
-            'total_price' => round($product['price'] + $taxOne, 2),
-            'tax' => $taxOne
+            'total_price' => round($product['price'] + $initialSubscriptionTaxes, 2),
+            'tax' => $initialSubscriptionTaxes
         ]);
 
         $results = $this->call(
@@ -1288,6 +1310,18 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             [
                 'total_paid' => $expectedPaymentTotalDue,
                 'payment_method_id' => $paymentMethodTwo['id']
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $addressTwo['country'],
+                'region' => $addressTwo['region'],
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $expectedSubscriptionTaxes,
+                'shipping_taxes_paid' => 0,
             ]
         );
     }

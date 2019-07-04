@@ -8639,6 +8639,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_submit_subscription_for_other_user()
     {
+        $userId = $this->createAndLogInNewUser();
+
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
 
@@ -8748,6 +8750,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'brand' => $brand,
                 'user_id' => $randomUser['id'],
+                'placed_by_user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedProductTaxes,
                 'shipping_due' => 0,
@@ -8832,7 +8835,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_submit_product_for_other_user()
     {
-        $adminUser = $this->createAndLogInNewUser();
+        $userId = $this->createAndLogInNewUser();
 
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
@@ -8942,6 +8945,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'brand' => $brand,
                 'user_id' => $randomUser['id'],
+                'placed_by_user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedProductTaxes,
                 'shipping_due' => 0,
@@ -9000,6 +9004,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_submit_order_on_different_branch()
     {
+        $userId = $this->createAndLogInNewUser();
+
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
 
@@ -9112,6 +9118,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'brand' => $brand,
                 'user_id' => $randomUser['id'],
+                'placed_by_user_id' => $userId,
                 'total_due' => $expectedOrderTotalDue,
                 'taxes_due' => $expectedProductTaxes,
                 'shipping_due' => 0,
