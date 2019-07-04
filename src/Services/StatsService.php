@@ -101,7 +101,7 @@ class StatsService
             );
         }
 
-        return array_values($results);
+        return array_reverse(array_values($results));
     }
 
     /**
