@@ -163,6 +163,28 @@ class UserProductService
     }
 
     /**
+     * @param int $userId
+     *
+     * @return UserProduct[]
+     *
+     * @throws ORMException
+     */
+    public function getManyUsersProducts(array $userIds)
+    {
+        $qb = $this->userProductRepository->createQueryBuilder('up');
+
+        $qb->where(
+            $qb->expr()
+                ->in('up.user', ':userIds')
+        )
+            ->setParameter('userIds', $userIds);
+
+        return $qb->getQuery()
+            ->setResultCacheDriver($this->arrayCache)
+            ->getResult();
+    }
+
+    /**
      * Get user product based on user and product.
      *
      * @param User $user
