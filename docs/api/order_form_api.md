@@ -126,7 +126,8 @@ Submit the order with whatever is currently in the cart.
 |body|account_creation_password|yes if the order has digital items or 'billing_email' is not set||||
 |body|account_creation_password_confirmation|yes if the order has digital items or 'billing_email' is not set||||
 |body|user_id|||you must pass this in all cases if you want to place orders for another user|'place-orders-for-other-users' permission is required to place orders for other users|
-|body|taxes_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
+|body|product_taxes_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
+|body|shipping_taxes_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
 |body|shipping_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
 |body|order_items_due_overrides| | |array of arrays: ['sku' => 'MYSKU', 'amount' => 100]|'place-orders-for-other-users' permission is required to override amounts|
 
@@ -183,7 +184,8 @@ $.ajax({
         account_creation_email: "reilly.fahey@emard.com",
         account_creation_password: "`riMe8x37Q{L",
         account_creation_password_confirmation: "`riMe8x37Q{L",
-        taxes_due_override: 130,
+        product_taxes_due_override: 130,
+        shipping_taxes_due_override: 15,
         shipping_due_override: 31,
         order_items_due_overrides: [
             {
@@ -213,7 +215,7 @@ $.ajax({
         "attributes":{
             "total_due":27.2,
             "product_due":25.9,
-            "taxes_due":1.3,
+            "taxes_due":145,
             "shipping_due":0,
             "finance_due":0,
             "total_paid":27.2,
@@ -350,7 +352,8 @@ $.ajax({
         account_creation_email: "reilly.fahey@emard.com",
         account_creation_password: "`riMe8x37Q{L",
         account_creation_password_confirmation: "`riMe8x37Q{L",
-        taxes_due_override: 0,
+        product_taxes_due_override: 0,
+        shipping_taxes_due_override: 0,
         shipping_due_override: 0,
         order_items_due_override_distinctio6461867: 10
     },

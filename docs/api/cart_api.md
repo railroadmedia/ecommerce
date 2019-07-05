@@ -371,7 +371,8 @@ Update total overrides in the cart.
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
-|body|taxes_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
+|body|product_taxes_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
+|body|shipping_taxes_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
 |body|shipping_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
 |body|order_items_due_overrides| | |array of arrays: ['sku' => 'MYSKU', 'amount' => 100]|'place-orders-for-other-users' permission is required to override amounts|
 
@@ -382,7 +383,8 @@ $.ajax({
     url: 'https://www.domain.com' +
         '/json/update-total-overrides',
     data: {
-        taxes_due_override: 130,
+        product_taxes_due_override: 16,
+        shipping_taxes_due_override: 8,
         shipping_due_override: 31,
         order_items_due_overrides: [
             {
@@ -434,7 +436,7 @@ Returns the entire cart with the new totals.
             "locked":0,
             "totals":{
                 "shipping":11,
-                "tax":82,
+                "tax":24,
                 "due":1730
             }
         }

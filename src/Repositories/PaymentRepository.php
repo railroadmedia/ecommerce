@@ -109,7 +109,7 @@ class PaymentRepository extends RepositoryBase
      */
     public function getPaymentsForStats(Request $request): array
     {
-        $smallDateTime =
+        $smallDate =
             $request->get(
                 'small_date_time',
                 Carbon::now()
@@ -117,13 +117,17 @@ class PaymentRepository extends RepositoryBase
                     ->toDateTimeString()
             );
 
-        $bigDateTime =
+        $smallDateTime = Carbon::parse($smallDate)->startOfDay();
+
+        $bigDate =
             $request->get(
                 'big_date_time',
                 Carbon::now()
                     ->subDay()
                     ->toDateTimeString()
             );
+
+        $bigDateTime = Carbon::parse($bigDate)->endOfDay();
 
         /** @var $qb QueryBuilder */
         $qb =

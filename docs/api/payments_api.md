@@ -132,6 +132,8 @@ Create a new payment. This DOES actually attempt to charge the user.
 |body|data.attributes.due|yes||how much to charge in their currency||
 |body|data.attributes.currency||based on IP address|||
 |body|data.attributes.payment_gateway|yes||brand to charge under, should match order/sub||
+|body|data.attributes.product_tax|yes||||
+|body|data.attributes.shipping_tax|yes||||
 |body|data.relationships.paymentMethod.data.id|yes||||
 |body|data.relationships.subscription.data.id|||subscription this payment is for||
 |body|data.relationships.order.data.id|||order this payment is for||
@@ -142,10 +144,13 @@ Create a new payment. This DOES actually attempt to charge the user.
 [
     'data.type' => 'in:payment',
     'data.attributes.due' => 'required|numeric',
+    'data.attributes.product_tax' => 'required|numeric',
+    'data.attributes.shipping_tax' => 'required|numeric',
+    'data.attributes.note' => 'nullable|string',
     'data.relationships.paymentMethod.data.id' =>
-        'numeric|nullable|exists:'.'ecommerce_payment_methods'.',id',
-    'data.relationships.order.data.id' => 'numeric|exists:'.'ecommerce_orders'.',id',
-    'data.relationships.subscription.data.id' => 'numeric|exists:'.'ecommerce_subscriptions'.',id',
+        'numeric|nullable|exists:ecommerce_payment_methods,id',
+    'data.relationships.order.data.id' => 'numeric|exists:ecommerce_orders,id',
+    'data.relationships.subscription.data.id' => 'numeric|exists:ecommerce_subscriptions,id',
 ];
 ```
 
@@ -162,6 +167,8 @@ $.ajax({
             due: 10.02,
             currency: 'CAD',
             payment_gateway: 'drumeo',
+            product_tax: 4,
+            shipping_tax: 2,
             note: 'some note'
         },
         relationships: {

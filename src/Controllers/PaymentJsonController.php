@@ -11,7 +11,9 @@ use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\PaymentTaxes;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
@@ -30,6 +32,7 @@ use Railroad\Ecommerce\Requests\PaymentCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentIndexRequest;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\ResponseService;
+use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
@@ -88,6 +91,11 @@ class PaymentJsonController extends Controller
     private $payPalPaymentGateway;
 
     /**
+     * @var TaxService
+     */
+    private $taxService;
+
+    /**
      * @var UserPaymentMethodsRepository
      */
     private $userPaymentMethodsRepository;
@@ -110,6 +118,7 @@ class PaymentJsonController extends Controller
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
      * @param SubscriptionRepository $subscriptionRepository
+     * @param TaxService $taxService
      * @param UserPaymentMethodsRepository $userPaymentMethodsRepository
      */
     public function __construct(
@@ -123,6 +132,7 @@ class PaymentJsonController extends Controller
         PermissionService $permissionService,
         StripePaymentGateway $stripePaymentGateway,
         SubscriptionRepository $subscriptionRepository,
+        TaxService $taxService,
         UserPaymentMethodsRepository $userPaymentMethodsRepository
     )
     {
@@ -136,6 +146,7 @@ class PaymentJsonController extends Controller
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
         $this->subscriptionRepository = $subscriptionRepository;
+        $this->taxService = $taxService;
         $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
     }
 
@@ -352,6 +363,8 @@ class PaymentJsonController extends Controller
             throw $exception;
         }
 
+        $subscription = null;
+
         if ($request->input('data.relationships.subscription.data.id')) {
 
             $subscriptionId = $request->input(
@@ -378,6 +391,8 @@ class PaymentJsonController extends Controller
 
             $this->entityManager->persist($subscriptionPayment);
         }
+
+        $order = null;
 
         // Save the link between order and payment and save the paid amount on order row
         if ($request->input('data.relationships.order.data.id')) {
@@ -423,6 +438,59 @@ class PaymentJsonController extends Controller
             $basedPaid = $payment->getTotalPaid() * $payment->getConversionRate();
 
             $order->setTotalPaid($basedSumPaid + $basedPaid);
+        }
+
+        if ($payment->getTotalPaid() > 0) {
+            $paymentTaxes = new PaymentTaxes();
+            $paymentTaxes->setPayment($payment);
+
+            $country = null;
+            $region = null;
+            $address = null;
+
+            if ($paymentMethod && $paymentMethod->getBillingAddress()) {
+                $country = $paymentMethod->getBillingAddress()->getCountry();
+                $region = $paymentMethod->getBillingAddress()->getRegion();
+                $address = new Address($country, $region);
+            } elseif ($subscription && $subscription->getPaymentMethod() &&
+                $subscription->getPaymentMethod()->getBillingAddress()) {
+
+                $country = $subscription->getPaymentMethod()->getBillingAddress()->getCountry();
+                $region = $subscription->getPaymentMethod()->getBillingAddress()->getRegion();
+                $address = new Address($country, $region);
+            } elseif ($order) {
+
+                if ($order->getShippingAddress()) {
+                    $country = $order->getShippingAddress()->getCountry();
+                    $region = $order->getShippingAddress()->getRegion();
+                    $address = new Address($country, $region);
+                } elseif ($order->getPaymentMethod() && $order->getPaymentMethod()->getBillingAddress()) {
+                    $country = $order->getPaymentMethod()->getBillingAddress()->getCountry();
+                    $region = $order->getPaymentMethod()->getBillingAddress()->getRegion();
+                    $address = new Address($country, $region);
+                } elseif ($order->getBillingAddress()) {
+                    $country = $order->getBillingAddress()->getCountry();
+                    $region = $order->getBillingAddress()->getRegion();
+                    $address = new Address($country, $region);
+                }
+            }
+
+            $paymentTaxes->setCountry($country);
+            $paymentTaxes->setRegion($region);
+
+            if ($address) {
+                $paymentTaxes->setProductRate(
+                    $this->taxService->getProductTaxRate($address)
+                );
+                $paymentTaxes->setShippingRate(
+                    $this->taxService->getShippingTaxRate($address)
+                );
+            }
+
+            $paymentTaxes->setProductTaxesPaid($request->input('data.attributes.product_tax'));
+            $paymentTaxes->setShippingTaxesPaid($request->input('data.attributes.shipping_tax'));
+
+            $this->entityManager->persist($paymentTaxes);
         }
 
         $this->entityManager->flush();

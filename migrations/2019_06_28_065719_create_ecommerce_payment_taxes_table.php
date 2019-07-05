@@ -16,7 +16,7 @@ class CreateEcommercePaymentTaxesTable extends Migration
         Schema::create('ecommerce_payment_taxes', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('payment_id')->index();
-            $table->string('country');
+            $table->string('country')->nullable();
             $table->string('region')->nullable();
             $table->decimal('product_rate')->nullable();
             $table->decimal('shipping_rate')->nullable();

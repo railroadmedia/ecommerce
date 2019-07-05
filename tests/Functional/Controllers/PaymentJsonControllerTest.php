@@ -49,7 +49,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -63,6 +65,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'is_primary' => true
         ]);
 
+        $productTax = $this->faker->numberBetween(1, 10);
+        $shippingTax = $this->faker->numberBetween(1, 10);
+
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+
         $response = $this->call(
             'PUT',
             '/payment',
@@ -72,7 +80,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'attributes' => [
                         'due' => $due,
                         'currency' => $currency,
-                        'payment_gateway' => $gateway
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $productTax,
+                        'shipping_tax' => $shippingTax,
                     ],
                     'relationships' => [
                         'paymentMethod' => [
@@ -125,6 +135,18 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'updated_at' => Carbon::now()->toDateTimeString(),
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $address['country'],
+                'region' => $address['region'],
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $productTax,
+                'shipping_taxes_paid' => $shippingTax,
+            ]
+        );
     }
 
     public function test_user_store_payment_order_total_paid()
@@ -169,7 +191,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -184,6 +208,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'is_primary' => true
         ]);
 
+        $productTax = $this->faker->numberBetween(1, 10);
+        $shippingTax = $this->faker->numberBetween(1, 10);
+
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+
         $response = $this->call(
             'PUT',
             '/payment',
@@ -193,7 +223,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'attributes' => [
                         'due' => $due,
                         'currency' => $currency,
-                        'payment_gateway' => $gateway
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $productTax,
+                        'shipping_tax' => $shippingTax,
                     ],
                     'relationships' => [
                         'paymentMethod' => [
@@ -255,6 +287,18 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $address['country'],
+                'region' => $address['region'],
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $productTax,
+                'shipping_taxes_paid' => $shippingTax,
+            ]
+        );
+
         // assert payment is linked to order
         $this->assertDatabaseHas(
             'ecommerce_order_payments',
@@ -293,8 +337,15 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $paypalAgreement = $this->fakePaypalBillingAgreement();
 
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
+        ]);
+
         $paymentMethod = $this->fakePaymentMethod([
             'paypal_billing_agreement_id' => $paypalAgreement['id'],
+            'billing_address_id' => $address['id'],
             'currency' => $currency
         ]);
 
@@ -302,6 +353,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'user_id' => $userId,
             'payment_method_id' => $paymentMethod['id']
         ]);
+
+        $productTax = $this->faker->numberBetween(1, 10);
+        $shippingTax = $this->faker->numberBetween(1, 10);
+
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
 
         $response = $this->call(
             'PUT',
@@ -312,7 +369,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'attributes' => [
                         'due' => $due,
                         'currency' => $currency,
-                        'payment_gateway' => $gateway
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $productTax,
+                        'shipping_tax' => $shippingTax,
                     ],
                     'relationships' => [
                         'paymentMethod' => [
@@ -367,6 +426,18 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'updated_at' => Carbon::now()->toDateTimeString(),
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $address['country'],
+                'region' => $address['region'],
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $productTax,
+                'shipping_taxes_paid' => $shippingTax,
+            ]
+        );
     }
 
     public function test_admin_store_any_payment()
@@ -395,7 +466,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -409,6 +482,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'is_primary' => true
         ]);
 
+        $productTax = $this->faker->numberBetween(1, 10);
+        $shippingTax = $this->faker->numberBetween(1, 10);
+
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+
         $response = $this->call(
             'PUT',
             '/payment',
@@ -418,7 +497,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'attributes' => [
                         'due' => $due,
                         'currency' => $currency,
-                        'payment_gateway' => $gateway
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $productTax,
+                        'shipping_tax' => $shippingTax,
                     ],
                     'relationships' => [
                         'paymentMethod' => [
@@ -471,6 +552,18 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'updated_at' => Carbon::now()->toDateTimeString(),
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $address['country'],
+                'region' => $address['region'],
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $productTax,
+                'shipping_taxes_paid' => $shippingTax,
+            ]
+        );
     }
 
     public function test_user_can_not_store_other_payment()
@@ -507,7 +600,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'attributes' => [
                         'due' => $due,
                         'currency' => $currency,
-                        'payment_gateway' => $gateway
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $this->faker->numberBetween(1, 10),
+                        'shipping_tax' => $this->faker->numberBetween(1, 10),
                     ],
                     'relationships' => [
                         'paymentMethod' => [
@@ -555,7 +650,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'attributes' => [
                         'due' => $due,
                         'currency' => $currency,
-                        'payment_gateway' => $gateway
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $this->faker->numberBetween(1, 10),
+                        'shipping_tax' => $this->faker->numberBetween(1, 10),
                     ],
                     'relationships' => [
                         'paymentMethod' => [
@@ -611,7 +708,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'attributes' => [
                         'due' => $due,
                         'currency' => $currency,
-                        'payment_gateway' => $gateway
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $this->faker->numberBetween(1, 10),
+                        'shipping_tax' => $this->faker->numberBetween(1, 10),
                     ],
                     'relationships' => [
                         'paymentMethod' => [
@@ -674,7 +773,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $address = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
@@ -688,6 +789,12 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'is_primary' => true
         ]);
 
+        $productTax = $this->faker->numberBetween(1, 10);
+        $shippingTax = $this->faker->numberBetween(1, 10);
+
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+
         $response = $this->call(
             'PUT',
             '/payment',
@@ -697,7 +804,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'attributes' => [
                         'due' => $due,
                         'currency' => $currency,
-                        'payment_gateway' => $gateway
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $productTax,
+                        'shipping_tax' => $shippingTax,
                     ],
                     'relationships' => [
                         'paymentMethod' => [
@@ -755,6 +864,18 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'message' => '',
                 'created_at' => Carbon::now()->toDateTimeString(),
                 'updated_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $address['country'],
+                'region' => $address['region'],
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $productTax,
+                'shipping_taxes_paid' => $shippingTax,
             ]
         );
 
@@ -823,7 +944,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'attributes' => [
                         'due' => $due,
                         'currency' => $currency,
-                        'payment_gateway' => $gateway
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $this->faker->numberBetween(1, 10),
+                        'shipping_tax' => $this->faker->numberBetween(1, 10),
                     ],
                     'relationships' => [
                         'paymentMethod' => [
@@ -915,7 +1038,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'attributes' => [
                         'due' => $due,
                         'currency' => $currency,
-                        'payment_gateway' => $gateway
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $this->faker->numberBetween(1, 10),
+                        'shipping_tax' => $this->faker->numberBetween(1, 10),
                     ],
                     'relationships' => [
                         'paymentMethod' => [
