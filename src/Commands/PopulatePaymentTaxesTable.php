@@ -148,6 +148,20 @@ class PopulatePaymentTaxesTable extends Command
 
                                 $subscriptionData = get_object_vars($subscription);
 
+                                $paymentMethodId = $paymentData['payment_method_id'] ?: $subscriptionData['payment_method_id'];
+
+                                if (!$paymentMethodId) {
+                                    $this->error(
+                                        sprintf(
+                                            'Subscription with id %s, linked to payment with id: %s has no payment method linked',
+                                            $subscriptionData['id'],
+                                            $paymentData['id']
+                                        )
+                                    );
+
+                                    continue;
+                                }
+
                                 $address = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                                     ->table('ecommerce_payment_methods')
                                     ->select(['ecommerce_addresses.*'])
@@ -156,7 +170,7 @@ class PopulatePaymentTaxesTable extends Command
                                         'ecommerce_payment_methods.billing_address_id', '=',
                                         'ecommerce_addresses.id'
                                     )
-                                    ->where('ecommerce_payment_methods.id', $subscriptionData['payment_method_id'])
+                                    ->where('ecommerce_payment_methods.id', $paymentMethodId)
                                     ->get()
                                     ->first();
 
@@ -187,7 +201,6 @@ class PopulatePaymentTaxesTable extends Command
                                         )
                                     );
                                 }
-
                             } else {
                                 $this->error(
                                     sprintf(

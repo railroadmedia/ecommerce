@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Session\Store;
+use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
@@ -116,9 +117,15 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $discountCriteria = $this->fakeDiscountCriteria([
             'discount_id' => $discount['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
             'type' => 'product quantity requirement',
             'min' => '1',
             'max' => '2000000',
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteria['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $productOneQuantity = 1;

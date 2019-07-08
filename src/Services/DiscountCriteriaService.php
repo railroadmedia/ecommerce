@@ -138,7 +138,8 @@ class DiscountCriteriaService
 
         // discount criteria relation 'ANY' should have matched in above foreach block & already returned true
         // unsatisfied discount criteria relation 'ALL' should have matched in above foreach block & already returned false
-        return $discountCriteria->getProductsRelationType() != DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY;
+        return $discountCriteria->getProductsRelationType() &&
+            $discountCriteria->getProductsRelationType() != DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY;
     }
 
     /**
@@ -247,7 +248,7 @@ class DiscountCriteriaService
      */
     public function productOwnRequirement(DiscountCriteria $discountCriteria): bool
     {
-        if (!auth()->check()) {
+        if (!auth()->check() || !$discountCriteria->getProductsRelationType()) {
             return false;
         }
 

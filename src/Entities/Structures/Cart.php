@@ -345,7 +345,8 @@ class Cart implements Serializable
                 'shipping-address-id' => $this->getShippingAddressId(),
                 'billing-address-id' => $this->getBillingAddressId(),
                 'payment-method-id' => $this->getPaymentMethodId(),
-                'tax-override' => $this->getTaxOverride(),
+                'product-tax-override' => $this->getProductTaxOverride(),
+                'shipping-tax-override' => $this->getShippingTaxOverride(),
                 'shipping-override' => $this->getShippingOverride(),
             ]
         );
@@ -370,7 +371,8 @@ class Cart implements Serializable
 
         $this->setPaymentMethodId($data['payment-method-id']);
 
-        $this->setTaxOverride($data['tax-override']);
+        $this->setProductTaxOverride($data['product-tax-override']);
+        $this->setShippingTaxOverride($data['shipping-tax-override']);
         $this->setShippingOverride($data['shipping-override']);
 
         $this->setCurrency($data['currency']);
