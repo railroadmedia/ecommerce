@@ -181,6 +181,14 @@ return [
                 'stripe_publishable_key' => '',
             ],
         ],
+
+        'apple_store_kit' => [
+
+        ],
+
+        'google_paly_store' => [
+
+        ],
     ],
 
     // paypal

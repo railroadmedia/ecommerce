@@ -45,4 +45,16 @@ interface UserProviderInterface
      * @return User|null
      */
     public function createUser(string $email, string $rawPassword): ?User;
+
+    /**
+     * @param User $user
+     * @return string
+     */
+    public function getUserAuthToken(User $user): string;
+
+    /**
+     * @param string $email
+     * @return User|null
+     */
+    public function getUserByEmail(string $email): ?User;
 }

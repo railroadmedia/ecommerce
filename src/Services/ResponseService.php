@@ -6,10 +6,12 @@ use Doctrine\ORM\QueryBuilder;
 use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
 use Railroad\Ecommerce\Entities\AccessCode;
+use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
+use Railroad\Ecommerce\Transformers\AppleReceiptTransformer;
 use Railroad\Ecommerce\Transformers\CartItemTransformer;
 use Railroad\Ecommerce\Transformers\DailyStatisticTransformer;
 use Railroad\Ecommerce\Transformers\DecoratedOrderTransformer;
@@ -560,6 +562,29 @@ class ResponseService extends FractalResponseService
             new DailyStatisticTransformer(),
             new JsonApiSerializer(),
             null
+        );
+    }
+
+    /**
+     * @param AppleReceipt $receipt
+     * @param string $authCode
+     *
+     * @return Fractal
+     */
+    public static function appleReceipt(
+        AppleReceipt $receipt,
+        string $authCode
+    )
+    {
+        return self::create(
+            $receipt,
+            'appleReceipt',
+            new AppleReceiptTransformer(),
+            new JsonApiSerializer()
+        )->addMeta(
+            [
+                'authCode' => $authCode,
+            ]
         );
     }
 }
