@@ -140,4 +140,33 @@ class UserProvider implements UserProviderInterface
 
         return $this->getUserById($userId);
     }
+
+    /**
+     * @param User $user
+     * @return string
+     */
+    public function getUserAuthToken(User $user): string
+    {
+        return md5($user->getEmail());
+    }
+
+    /**
+     * @param string $email
+     * @return User|null
+     */
+    public function getUserByEmail(string $email): ?User
+    {
+        $user =
+            DB::table(EcommerceTestCase::TABLES['users'])
+                ->where('email', $email)
+                ->get()
+                ->first();
+
+        if ($user) {
+            dd($user);
+            return new User($user->id, $user->email);
+        }
+
+        return null;
+    }
 }

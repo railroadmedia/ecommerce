@@ -183,12 +183,18 @@ return [
         ],
 
         'apple_store_kit' => [
-
+            'endpoint' => 'https://sandbox.itunes.apple.com/verifyReceipt',
+            'shared_secret' => 'b1ab16b41296400bbf10431d72386f5f',
         ],
 
         'google_paly_store' => [
 
         ],
+    ],
+
+    'apple_store_products_map' => [
+        'apple_store_product_id_one' => 'local_product_sku_one',
+        'apple_store_product_id_two' => 'local_product_sku_two',
     ],
 
     // paypal

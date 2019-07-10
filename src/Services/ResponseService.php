@@ -583,7 +583,7 @@ class ResponseService extends FractalResponseService
             new JsonApiSerializer()
         )->addMeta(
             [
-                'authCode' => $authCode,
+                'auth_code' => $authCode,
             ]
         );
     }

@@ -37,6 +37,7 @@ class Payment
     const TYPE_INITIAL_ORDER = 'initial_order';
     const TYPE_SUBSCRIPTION_RENEWAL = 'subscription_renewal';
     const TYPE_PAYMENT_PLAN = 'payment_plan';
+    const TYPE_INITIAL_APPLE_ORDER = 'initial_apple_order';
 
     /**
      * @ORM\Id

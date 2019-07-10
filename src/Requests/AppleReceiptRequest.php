@@ -29,8 +29,8 @@ class AppleReceiptRequest extends FormRequest
         return [
             'data.type' => 'in:appleReceipt',
             'data.attributes.receipt' => 'required',
-            'data.attributes.email' => 'nullable|max:255',
-            'data.attributes.password' => 'nullable|max:255',
+            'data.attributes.email' => 'required|max:255',
+            'data.attributes.password' => 'required|max:255',
         ];
     }
 
@@ -39,18 +39,17 @@ class AppleReceiptRequest extends FormRequest
      */
     public function onlyAllowed()
     {
-        return array_merge(
-            $this->only(
-                [
-                    'data.attributes.type',
-                    'data.attributes.receipt',
-                    'data.attributes.email',
-                    'data.attributes.password',
-                ]
-            ),
+        $data = $this->only(
             [
-                'data.attributes.brand' => $this->input('brand', config('ecommerce.brand')),
+                'data.attributes.type',
+                'data.attributes.receipt',
+                'data.attributes.email',
+                'data.attributes.password',
             ]
         );
+
+        $data['data']['attributes']['brand'] = config('ecommerce.brand');
+
+        return $data;
     }
 }
