@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Gateways;
 
+use Railroad\Ecommerce\Exceptions\AppleStoreKit\ReceiptValidationException;
 use ReceiptValidator\iTunes\Validator;
 
 class AppleStoreKitGateway

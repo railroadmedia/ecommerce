@@ -195,6 +195,15 @@ class Subscription
      */
     protected $payments;
 
+    /**
+     * Field set for apple subscriptions, used for renewal/cancel notifications received from apple
+     *
+     * @ORM\Column(type="string", name="web_order_line_item_id", nullable=true)
+     *
+     * @var string
+     */
+    protected $webOrderLineItemId;
+
     public function __construct()
     {
         $this->payments = new ArrayCollection();
@@ -526,5 +535,21 @@ class Subscription
     public function setPayments(ArrayCollection $payments): void
     {
         $this->payments = $payments;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getWebOrderLineItemId(): ?string
+    {
+        return $this->webOrderLineItemId;
+    }
+
+    /**
+     * @param string $webOrderLineItemId
+     */
+    public function setWebOrderLineItemId(string $webOrderLineItemId)
+    {
+        $this->webOrderLineItemId = $webOrderLineItemId;
     }
 }

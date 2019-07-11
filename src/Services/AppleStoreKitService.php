@@ -11,7 +11,9 @@ use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Exceptions\AppleStoreKit\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -105,9 +107,9 @@ class AppleStoreKitService
 
         $subscriptions = $this->createSubscriptions($currentPurchasedItems, $order, $payment);
 
-        // todo - create user products
-
         $this->entityManager->flush();
+
+        event(new OrderEvent($order, $payment));
 
         return $user;
     }
@@ -140,7 +142,7 @@ class AppleStoreKitService
         $totalDue = 0;
 
         foreach ($order->getOrderItems() as $orderItem) {
-            $totalDue += $orderItem->setFinalPrice();
+            $totalDue += $orderItem->getFinalPrice();
         }
 
         // todo - add values for these fields
@@ -183,7 +185,7 @@ class AppleStoreKitService
         $totalDue = 0;
 
         foreach ($orderItems as $orderItem) {
-            $totalDue += $orderItem->setFinalPrice();
+            $totalDue += $orderItem->getFinalPrice();
             $order->addOrderItem($orderItem);
         }
 
@@ -191,7 +193,7 @@ class AppleStoreKitService
         $order->setProductDue($totalDue);
         $order->setFinanceDue(0);
         $order->setTaxesDue(0);
-        $order->setTotalPaid(0);
+        $order->setTotalPaid($totalDue);
         $order->setBrand(config('ecommerce.brand'));
         $order->setUser($user);
         $order->setShippingDue(0);
@@ -255,7 +257,11 @@ class AppleStoreKitService
 
             $product = $this->getProductByAppleStoreId($item->getProductId());
 
-            $nextBillDate = null;
+            if (!$product) {
+                continue;
+            }
+
+            $nextBillDate = Carbon::now();
 
             if (!empty($product->getSubscriptionIntervalType())) {
                 if ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
@@ -296,6 +302,7 @@ class AppleStoreKitService
             $subscription->setIntervalCount($intervalCount);
             $subscription->setTotalCyclesPaid(1);
             $subscription->setTotalCyclesDue(1);
+            $subscription->setWebOrderLineItemId($item->getWebOrderLineItemId());
             $subscription->setCreatedAt(Carbon::now());
 
             $subscriptionPayment = new SubscriptionPayment();
