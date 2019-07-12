@@ -11,6 +11,7 @@ use Railroad\Ecommerce\Requests\AppleReceiptRequest;
 use Railroad\Ecommerce\Services\AppleStoreKitService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
+use Exception;
 
 class AppleStoreKitController extends Controller
 {
@@ -66,5 +67,38 @@ class AppleStoreKitController extends Controller
         $userAuthToken = $this->userProvider->getUserAuthToken($user);
 
         return ResponseService::appleReceipt($receipt, $userAuthToken);
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @throws Throwable
+     */
+    public function processNotification(Request $request)
+    {
+        if (strtolower($request->get('notification_type')) == 'renewal' ||
+            strtolower($request->get('notification_type')) == 'cancel') {
+
+            $notificationType = strtolower($request->get('notification_type')) == 'renewal' ?
+                AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE:
+                AppleReceipt::APPLE_CANCEL_NOTIFICATION_TYPE;
+
+            $receipt = new AppleReceipt();
+
+            $receipt->setReceipt($request->get('latest_receipt'));
+            $receipt->setRequestType(AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE);
+            $receipt->setNotificationType($notificationType);
+            $receipt->setBrand(config('ecommerce.brand'));
+
+            $webOrderLineItemId = $request->get('web_order_line_item_id');
+
+            try {
+                $this->appleStoreKitService->processNotification($receipt, $webOrderLineItemId);
+            } catch (Exception $e) {
+                return response()->json(['data' => $e->getMessage()], 500);
+            }
+        }
+
+        return response()->json();
     }
 }

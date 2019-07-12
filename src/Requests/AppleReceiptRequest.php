@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Requests;
 
+use Railroad\Ecommerce\Entities\AppleReceipt;
+
 class AppleReceiptRequest extends FormRequest
 {
     /**
@@ -49,6 +51,7 @@ class AppleReceiptRequest extends FormRequest
         );
 
         $data['data']['attributes']['brand'] = config('ecommerce.brand');
+        $data['data']['attributes']['requestType'] = AppleReceipt::MOBILE_APP_REQUEST_TYPE;
 
         return $data;
     }

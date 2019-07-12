@@ -364,9 +364,12 @@ class EcommerceTestCase extends BaseTestCase
     /**
      * @return int
      */
-    public function createAndLogInNewUser()
+    public function createAndLogInNewUser($email = null)
     {
-        $email = $this->faker->email;
+        if (!$email) {
+            $email = $this->faker->email;
+        }
+
         $userId =
             $this->databaseManager->table('users')
                 ->insertGetId(

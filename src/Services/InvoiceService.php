@@ -150,9 +150,10 @@ class InvoiceService
                 break;
         }
 
-        if (!empty(
-            $subscription->getPaymentMethod()
-                ->getBillingAddress()
+        if ($subscription->getPaymentMethod() &&
+            !empty(
+                $subscription->getPaymentMethod()
+                    ->getBillingAddress()
             ) && !empty(
             $subscription->getPaymentMethod()
                 ->getBillingAddress()

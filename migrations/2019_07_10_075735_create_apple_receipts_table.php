@@ -19,10 +19,13 @@ class CreateAppleReceiptsTable extends Migration
                 function (Blueprint $table) {
                     $table->increments('id');
                     $table->text('receipt');
-                    $table->string('email');
+                    $table->string('request_type');
+                    $table->string('notification_type')->nullable();
+                    $table->string('email')->nullable();
                     $table->string('brand');
                     $table->boolean('valid');
                     $table->string('validation_error')->nullable();
+                    $table->integer('payment_id')->nullable();
                     $table->timestamps();
                 }
             );

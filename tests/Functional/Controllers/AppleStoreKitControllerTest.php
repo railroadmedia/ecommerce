@@ -7,10 +7,13 @@ use Illuminate\Auth\AuthManager;
 use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
+use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
+use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\AppleStoreKit\ReceiptValidationException;
+use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use ReceiptValidator\iTunes\SandboxResponse;
@@ -172,6 +175,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'ecommerce_apple_receipts',
             [
                 'receipt' => $receipt,
+                'request_type' => AppleReceipt::MOBILE_APP_REQUEST_TYPE,
                 'email' => $email,
                 'valid' => true,
                 'validation_error' => null,
@@ -209,7 +213,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'total_due' => $productOne['price'],
                 'total_paid' => $productOne['price'],
                 'total_refunded' => 0,
-                'type' => Payment::TYPE_INITIAL_APPLE_ORDER,
+                'type' => Payment::TYPE_APPLE_INITIAL_ORDER,
                 'status' => Payment::STATUS_PAID,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
@@ -220,6 +224,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             [
                 'user_id' => 1,
                 'product_id' => $productOne['id'],
+                'is_active' => 1,
                 'paid_until' => Carbon::now()
                     ->addMonth()
                     ->toDateTimeString(),
@@ -310,6 +315,231 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'valid' => false,
                 'validation_error' => $exceptionMessage,
                 'created_at' => Carbon::now(),
+            ]
+        );
+    }
+
+    public function test_process_notification_subscription_renewal()
+    {
+        Mail::fake();
+
+        $email = $this->faker->email;
+
+        $userId  = $this->createAndLogInNewUser($email);
+        $receipt = $this->faker->word;
+
+        $product = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'price' => 12.95,
+            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+            'subscription_interval_count' => 1,
+        ]);
+
+        $webOrderLineItemId = $this->faker->word;
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => null,
+            'user_id' => $userId,
+            'total_price' => $product['price'],
+            'paid_until' => Carbon::now()
+                ->subDay()
+                ->startOfDay()
+                ->toDateTimeString(),
+            'is_active' => 0,
+            'interval_count' => 1,
+            'interval_type' => config('ecommerce.interval_type_monthly'),
+            'web_order_line_item_id' => $webOrderLineItemId
+        ]);
+
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => $product['sku'],
+            ]
+        );
+
+        $appleStoreKitGateway =
+            $this->getMockBuilder(AppleStoreKitGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $productsData = [
+            $product['sku'] => [
+                'web_order_line_item_id' => $webOrderLineItemId,
+            ],
+        ];
+
+        $validationResponse = $this->getReceiptValidationResponse($productsData);
+
+        $appleStoreKitGateway->method('validate')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(AppleStoreKitGateway::class, $appleStoreKitGateway);
+
+        $response = $this->call(
+            'POST',
+            '/apple/handle-server-notification',
+            [
+                'notification_type' => 'RENEWAL',
+                'web_order_line_item_id' => $webOrderLineItemId,
+                'latest_receipt' => $receipt,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
+                'valid' => true,
+                'validation_error' => null,
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'is_active' => 1,
+                'paid_until' => Carbon::now()
+                    ->addMonth()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'web_order_line_item_id' => $webOrderLineItemId,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => Carbon::now()
+                    ->addMonth()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        Mail::assertSent(SubscriptionInvoice::class, 1);
+
+        Mail::assertSent(
+            SubscriptionInvoice::class,
+            function ($mail) use ($email) {
+                $mail->build();
+
+                return $mail->hasTo($email) &&
+                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_sender')) &&
+                    $mail->subject(
+                        config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_email_subject')
+                    );
+            }
+        );
+    }
+
+    public function test_process_notification_subscription_cancel()
+    {
+        $userId  = $this->createAndLogInNewUser();
+        $receipt = $this->faker->word;
+
+        $product = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'price' => 12.95,
+            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+            'subscription_interval_count' => 1,
+        ]);
+
+        $webOrderLineItemId = $this->faker->word;
+
+        $paidUntil = Carbon::now()
+            ->addDays(10)
+            ->startOfDay()
+            ->toDateTimeString();
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => null,
+            'user_id' => $userId,
+            'total_price' => $product['price'],
+            'paid_until' => $paidUntil,
+            'is_active' => 1,
+            'interval_count' => 1,
+            'interval_type' => config('ecommerce.interval_type_monthly'),
+            'web_order_line_item_id' => $webOrderLineItemId
+        ]);
+
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => $product['sku'],
+            ]
+        );
+
+        $appleStoreKitGateway =
+            $this->getMockBuilder(AppleStoreKitGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $productsData = [
+            $product['sku'] => [
+                'web_order_line_item_id' => $webOrderLineItemId,
+            ],
+        ];
+
+        $validationResponse = $this->getReceiptValidationResponse($productsData);
+
+        $appleStoreKitGateway->method('validate')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(AppleStoreKitGateway::class, $appleStoreKitGateway);
+
+        $response = $this->call(
+            'POST',
+            '/apple/handle-server-notification',
+            [
+                'notification_type' => 'CANCEL',
+                'web_order_line_item_id' => $webOrderLineItemId,
+                'latest_receipt' => $receipt,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => AppleReceipt::APPLE_CANCEL_NOTIFICATION_TYPE,
+                'valid' => true,
+                'validation_error' => null,
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'paid_until' => $paidUntil,
+                'canceled_on' => Carbon::now(),
+                'web_order_line_item_id' => $webOrderLineItemId,
             ]
         );
     }

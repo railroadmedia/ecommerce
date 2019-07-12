@@ -8,6 +8,14 @@ Route::group([
 ], function () {
 
     Route::post('/apple/verify-receipt-and-process-payment', Railroad\Ecommerce\Controllers\AppleStoreKitController::class . '@processReceipt')
-        ->name('apple_store_kit.verify_receipt');
+        ->name('apple_store_kit.process_receipt');
 
+});
+
+Route::group([
+    'prefix' => config('ecommerce.route_prefix'),
+    'middleware' => config('ecommerce.route_middleware_public_groups'),
+], function () {
+    Route::post('/apple/handle-server-notification', Railroad\Ecommerce\Controllers\AppleStoreKitController::class . '@processNotification')
+        ->name('apple_store_kit.verify_receipt');
 });

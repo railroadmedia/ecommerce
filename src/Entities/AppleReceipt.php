@@ -17,6 +17,12 @@ class AppleReceipt
 {
     use TimestampableEntity;
 
+    CONST MOBILE_APP_REQUEST_TYPE = 'mobile';
+    CONST APPLE_NOTIFICATION_REQUEST_TYPE = 'notification';
+
+    CONST APPLE_RENEWAL_NOTIFICATION_TYPE = 'renewal';
+    CONST APPLE_CANCEL_NOTIFICATION_TYPE = 'cancel';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
@@ -27,6 +33,8 @@ class AppleReceipt
     protected $id;
 
     /**
+     * Base64-encoded transaction receipt
+     *
      * @ORM\Column(type="string")
      *
      * @var string
@@ -34,7 +42,25 @@ class AppleReceipt
     protected $receipt;
 
     /**
-     * @ORM\Column(type="string")
+     * Mobile app or apple notification
+     *
+     * @ORM\Column(type="string", name="request_type")
+     *
+     * @var string
+     */
+    protected $requestType;
+
+    /**
+     * For apple notification only, renewal or cancel
+     *
+     * @ORM\Column(type="string", name="notification_type", nullable=true)
+     *
+     * @var string
+     */
+    protected $notificationType;
+
+    /**
+     * @ORM\Column(type="string", nullable=true)
      *
      * @var string
      */
@@ -69,6 +95,12 @@ class AppleReceipt
     protected $validationError;
 
     /**
+     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Payment")
+     * @ORM\JoinColumn(name="payment_id", referencedColumnName="id")
+     */
+    protected $payment;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -90,6 +122,38 @@ class AppleReceipt
     public function setReceipt(string $receipt)
     {
         $this->receipt = $receipt;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getRequestType(): ?string
+    {
+        return $this->requestType;
+    }
+
+    /**
+     * @param string $requestType
+     */
+    public function setRequestType(string $requestType)
+    {
+        $this->requestType = $requestType;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getNotificationType(): ?string
+    {
+        return $this->notificationType;
+    }
+
+    /**
+     * @param string $notificationType
+     */
+    public function setNotificationType(string $notificationType)
+    {
+        $this->notificationType = $notificationType;
     }
 
     /**
@@ -170,5 +234,21 @@ class AppleReceipt
     public function setValidationError(string $validationError)
     {
         $this->validationError = $validationError;
+    }
+
+    /**
+     * @return Payment|null
+     */
+    public function getPayment(): ?Payment
+    {
+        return $this->payment;
+    }
+
+    /**
+     * @param Payment $payment
+     */
+    public function setPayment(?Payment $payment)
+    {
+        $this->payment = $payment;
     }
 }
