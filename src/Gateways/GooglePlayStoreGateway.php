@@ -2,6 +2,76 @@
 
 namespace Railroad\Ecommerce\Gateways;
 
+use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
+use ReceiptValidator\GooglePlay\SubscriptionResponse;
+use ReceiptValidator\GooglePlay\Validator;
+use Google_Client;
+use Google_Service_AndroidPublisher;
+
 class GooglePlayStoreGateway
 {
+    /**
+     * @param string $packageName
+     * @param string $productId
+     * @param string $purchaseToken
+     *
+     * @return SubscriptionResponse
+     *
+     * @throws ReceiptValidationException
+     * @throws Throwable
+     */
+    public function validate(
+        string $packageName,
+        string $productId,
+        string $purchaseToken
+    ): SubscriptionResponse
+    {
+        $validator = $this->getValidator();
+
+        $response = $validator->setPackageName($packageName)
+                        ->setProductId($productId)
+                        ->setPurchaseToken($purchaseToken)
+                        ->validateSubscription();
+
+        if ($response->getPaymentState() != 1) {
+            throw new ReceiptValidationException('Payment not received');
+        }
+
+        return $response;
+    }
+
+    /**
+     * @return Validator
+     *
+     * @throws ReceiptValidationException
+     */
+    public function getValidator(): Validator
+    {
+        $credentialsJson = config('ecommerce.payment_gateways.google_paly_store.credentials');
+
+        if (!$credentialsJson) {
+            throw new ReceiptValidationException('Invalid google play store credentials json config');
+        }
+
+        $applicationName = config('ecommerce.payment_gateways.google_paly_store.application_name');
+
+        if (!$applicationName) {
+            throw new ReceiptValidationException('Invalid google play store application name config');
+        }
+
+        $scope = config('ecommerce.payment_gateways.google_paly_store.scope');
+
+        if (!$scope) {
+            throw new ReceiptValidationException('Invalid google play store scope config');
+        }
+
+        $client = new Google_Client();
+        $client->setApplicationName($applicationName);
+        $client->useApplicationDefaultCredentials();
+        $client->setScopes($scope);
+
+        $validator = new PlayValidator(new Google_Service_AndroidPublisher($client));
+
+        return $validator;
+    }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Railroad\Ecommerce\Exceptions\AppleStoreKit;
+namespace Railroad\Ecommerce\Exceptions;
 
 use Exception;
 

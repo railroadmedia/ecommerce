@@ -2,7 +2,9 @@
 
 namespace Railroad\Ecommerce\Gateways;
 
-use Railroad\Ecommerce\Exceptions\AppleStoreKit\ReceiptValidationException;
+use GuzzleHttp\Exception\GuzzleException;
+use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
+use ReceiptValidator\iTunes\ResponseInterface;
 use ReceiptValidator\iTunes\Validator;
 
 class AppleStoreKitGateway
@@ -10,10 +12,14 @@ class AppleStoreKitGateway
     /**
      * @param string $receipt
      *
+     * @return ResponseInterface
+     *
      * @throws ReceiptValidationException
+     * @throws RunTimeException
+     * @throws GuzzleException
      * @throws Throwable
      */
-    public function validate(string $receipt)
+    public function validate(string $receipt): ResponseInterface
     {
         $validator = $this->getValidator();
 
@@ -32,7 +38,13 @@ class AppleStoreKitGateway
         return $response;
     }
 
-    public function getValidator()
+    /**
+     * @return Validator
+     *
+     * @throws ReceiptValidationException
+     * @throws Throwable
+     */
+    public function getValidator(): Validator
     {
         $endpoint = config('ecommerce.payment_gateways.apple_store_kit.endpoint');
         $sharedSecret = config('ecommerce.payment_gateways.apple_store_kit.shared_secret');
@@ -50,7 +62,10 @@ class AppleStoreKitGateway
         return $validator->setSharedSecret($sharedSecret);
     }
 
-    public function getValidationErrorMessage(int $errorCode)
+    /**
+     * @return string
+     */
+    public function getValidationErrorMessage(int $errorCode): string
     {
         switch ($errorCode) {
             case 0:

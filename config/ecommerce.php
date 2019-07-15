@@ -188,7 +188,9 @@ return [
         ],
 
         'google_paly_store' => [
-
+            'credentials' => base_path() . '/api.json',
+            'application_name' => 'com.app',
+            'scope' => ['https://www.googleapis.com/auth/androidpublisher'],
         ],
     ],
 

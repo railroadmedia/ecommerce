@@ -10,6 +10,8 @@ Route::group([
     Route::post('/apple/verify-receipt-and-process-payment', Railroad\Ecommerce\Controllers\AppleStoreKitController::class . '@processReceipt')
         ->name('apple_store_kit.process_receipt');
 
+    Route::post('/google/verify-receipt-and-process-payment', Railroad\Ecommerce\Controllers\GooglePlayStoreController::class . '@processReceipt')
+        ->name('google_play_store.process_receipt');
 });
 
 Route::group([

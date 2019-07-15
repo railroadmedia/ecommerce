@@ -12,7 +12,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Exceptions\AppleStoreKit\ReceiptValidationException;
+use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;

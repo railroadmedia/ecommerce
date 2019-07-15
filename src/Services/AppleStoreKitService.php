@@ -17,11 +17,10 @@ use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Events\OrderEvent;
-use Railroad\Ecommerce\Exceptions\AppleStoreKit\ReceiptValidationException;
+use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use ReceiptValidator\iTunes\ResponseInterface;
 use ReceiptValidator\iTunes\PurchaseItem;
 
@@ -41,11 +40,6 @@ class AppleStoreKitService
      * @var ProductRepository
      */
     private $productRepository;
-
-    /**
-     * @var SubscriptionRepository
-     */
-    private $subscriptionRepository;
 
     /**
      * @var UserProductService
@@ -70,7 +64,6 @@ class AppleStoreKitService
         AppleStoreKitGateway $appleStoreKitGateway,
         EcommerceEntityManager $entityManager,
         ProductRepository $productRepository,
-        SubscriptionRepository $subscriptionRepository,
         UserProductService $userProductService,
         UserProviderInterface $userProvider
     )
@@ -78,7 +71,6 @@ class AppleStoreKitService
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->entityManager = $entityManager;
         $this->productRepository = $productRepository;
-        $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
         $this->userProvider = $userProvider;
     }
@@ -137,14 +129,14 @@ class AppleStoreKitService
 
     /**
      * @param AppleReceipt $receipt
-     * @param string $webOrderLineItemId
+     * @param Subscription $subscription
      *
      * @throws ReceiptValidationException
      * @throws Throwable
      */
     public function processNotification(
         AppleReceipt $receipt,
-        string $webOrderLineItemId
+        Subscription $subscription
     )
     {
         $this->entityManager->persist($receipt);
@@ -161,9 +153,6 @@ class AppleStoreKitService
 
             throw $exception;
         }
-
-        $subscription = $this->subscriptionRepository
-            ->findOneBy(['webOrderLineItemId' => $webOrderLineItemId]);
 
         $oldSubscription = clone($subscription);
 
