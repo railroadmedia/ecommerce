@@ -6,6 +6,8 @@ use GuzzleHttp\Exception\GuzzleException;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use ReceiptValidator\iTunes\ResponseInterface;
 use ReceiptValidator\iTunes\Validator;
+use RunTimeException;
+use Throwable;
 
 class AppleStoreKitGateway
 {
@@ -63,6 +65,8 @@ class AppleStoreKitGateway
     }
 
     /**
+     * @param int $errorCode
+     *
      * @return string
      */
     public function getValidationErrorMessage(int $errorCode): string

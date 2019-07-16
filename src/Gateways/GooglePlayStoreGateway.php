@@ -2,11 +2,13 @@
 
 namespace Railroad\Ecommerce\Gateways;
 
+use Carbon\Carbon;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use ReceiptValidator\GooglePlay\SubscriptionResponse;
 use ReceiptValidator\GooglePlay\Validator;
 use Google_Client;
 use Google_Service_AndroidPublisher;
+use Throwable;
 
 class GooglePlayStoreGateway
 {
@@ -35,6 +37,12 @@ class GooglePlayStoreGateway
 
         if ($response->getPaymentState() != 1) {
             throw new ReceiptValidationException('Payment not received');
+        }
+
+        $seconds = intval($response->getExpiryTimeMillis() / 1000);
+
+        if (Carbon::createFromTimestamp($seconds) <= Carbon::now()) {
+            throw new ReceiptValidationException('Subscription expired');
         }
 
         return $response;

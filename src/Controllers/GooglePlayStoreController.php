@@ -2,17 +2,16 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
-use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Requests\GoogleReceiptRequest;
 use Railroad\Ecommerce\Services\GooglePlayStoreService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
-use Exception;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class GooglePlayStoreController extends Controller
 {
@@ -52,6 +51,8 @@ class GooglePlayStoreController extends Controller
     /**
      * @param GoogleReceiptRequest $request
      *
+     * @return Fractal
+     *
      * @throws ReceiptValidationException
      * @throws Throwable
      */
@@ -63,7 +64,7 @@ class GooglePlayStoreController extends Controller
 
         $receipt->setPassword($request->input('data.attributes.password'));
 
-        $user = $this->appleStoreKitService->processReceipt($receipt); // exception may be thrown
+        $user = $this->googlePlayStoreService->processReceipt($receipt); // exception may be thrown
 
         $userAuthToken = $this->userProvider->getUserAuthToken($user);
 

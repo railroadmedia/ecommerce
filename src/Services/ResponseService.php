@@ -7,6 +7,7 @@ use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\AppleReceipt;
+use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
@@ -18,6 +19,7 @@ use Railroad\Ecommerce\Transformers\DecoratedOrderTransformer;
 use Railroad\Ecommerce\Transformers\DiscountCriteriaTransformer;
 use Railroad\Ecommerce\Transformers\DiscountTransformer;
 use Railroad\Ecommerce\Transformers\FulfillmentTransformer;
+use Railroad\Ecommerce\Transformers\GoogleReceiptTransformer;
 use Railroad\Ecommerce\Transformers\OrderTransformer;
 use Railroad\Ecommerce\Transformers\PaymentMethodTransformer;
 use Railroad\Ecommerce\Transformers\PaymentTransformer;
@@ -580,6 +582,29 @@ class ResponseService extends FractalResponseService
             $receipt,
             'appleReceipt',
             new AppleReceiptTransformer(),
+            new JsonApiSerializer()
+        )->addMeta(
+            [
+                'auth_code' => $authCode,
+            ]
+        );
+    }
+
+    /**
+     * @param GoogleReceipt $receipt
+     * @param string $authCode
+     *
+     * @return Fractal
+     */
+    public static function googleReceipt(
+        GoogleReceipt $receipt,
+        string $authCode
+    )
+    {
+        return self::create(
+            $receipt,
+            'googleReceipt',
+            new GoogleReceiptTransformer(),
             new JsonApiSerializer()
         )->addMeta(
             [

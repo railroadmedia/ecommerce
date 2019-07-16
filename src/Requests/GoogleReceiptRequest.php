@@ -35,7 +35,6 @@ class GoogleReceiptRequest extends FormRequest
             'data.attributes.package_name' => 'required',
             'data.attributes.product_id' => 'required',
             'data.attributes.purchase_token' => 'required',
-            'data.attributes.receipt' => 'required',
             'data.attributes.email' => 'required|max:255',
             'data.attributes.password' => 'required|max:255',
         ];

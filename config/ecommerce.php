@@ -199,6 +199,11 @@ return [
         'apple_store_product_id_two' => 'local_product_sku_two',
     ],
 
+    'google_store_products_map' => [
+        'google_store_product_id_one' => 'local_product_sku_one',
+        'google_store_product_id_two' => 'local_product_sku_two',
+    ],
+
     // paypal
     'paypal' => [
         'agreement_route' => 'payment-method.paypal.agreement',

@@ -2,11 +2,11 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AppleReceipt;
-use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\AppleReceiptRequest;
@@ -14,6 +14,8 @@ use Railroad\Ecommerce\Services\AppleStoreKitService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Exception;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class AppleStoreKitController extends Controller
 {
@@ -61,6 +63,8 @@ class AppleStoreKitController extends Controller
     /**
      * @param AppleReceiptRequest $request
      *
+     * @return Fractal
+     *
      * @throws ReceiptValidationException
      * @throws Throwable
      */
@@ -81,6 +85,8 @@ class AppleStoreKitController extends Controller
 
     /**
      * @param Request $request
+     *
+     * @return JsonResponse
      *
      * @throws Throwable
      */

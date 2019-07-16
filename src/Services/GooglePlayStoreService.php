@@ -13,15 +13,13 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
-use Railroad\Ecommerce\Events\SubscriptionEvent;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Throwable;
 
 class GooglePlayStoreService
 {
@@ -95,13 +93,21 @@ class GooglePlayStoreService
         $this->entityManager->persist($receipt);
 
         try {
-            $validationResponse = $this->googlePlayStoreGateway
+            $this->googlePlayStoreGateway
                 ->validate(
                     $receipt->getPackageName(),
                     $receipt->getProductId(),
                     $receipt->getPurchaseToken()
                 );
+
+            $purchasedProduct = $this->getPurchasedItem($receipt);
+
+            if (!$purchasedProduct) {
+                throw new ReceiptValidationException('Purchased product not found in config');
+            }
+
             $receipt->setValid(true);
+
         } catch (ReceiptValidationException $exception) {
 
             $receipt->setValid(false);
@@ -120,15 +126,13 @@ class GooglePlayStoreService
             auth()->loginUsingId($user->getId());
         }
 
-        $currentPurchasedItems = $this->getPurchasedItems($validationResponse);
+        $orderItem = $this->createOrderItem($purchasedProduct);
 
-        $orderItems = $this->createOrderItems($currentPurchasedItems);
-
-        $order = $this->createOrder($orderItems, $user);
+        $order = $this->createOrder($orderItem, $user);
 
         $payment = $this->createOrderPayment($order);
 
-        $subscriptions = $this->createOrderSubscriptions($currentPurchasedItems, $order, $payment);
+        $this->createOrderSubscription($purchasedProduct, $order, $payment);
 
         $receipt->setPayment($payment);
 
@@ -139,16 +143,12 @@ class GooglePlayStoreService
         return $user;
     }
 
-    public function getPurchasedItems()
-    {
-        // todo - update
-        return [];
-    }
-
     /**
      * @param Order $order
      *
      * @return Payment
+     *
+     * @throws Throwable
      */
     public function createOrderPayment(Order $order): Payment
     {
@@ -186,25 +186,23 @@ class GooglePlayStoreService
     }
 
     /**
-     * @param OrderItem[] $orderItems
+     * @param OrderItem $orderItem
      * @param User $user
      *
      * @return Order
+     *
+     * @throws Throwable
      */
     public function createOrder(
-        array $orderItems,
+        OrderItem $orderItem,
         User $user
     ): Order
     {
         $order = new Order();
 
-        $totalDue = 0;
+        $totalDue = $orderItem->getFinalPrice();
 
-        foreach ($orderItems as $orderItem) {
-            $totalDue += $orderItem->getFinalPrice();
-            $order->addOrderItem($orderItem);
-        }
-
+        $order->addOrderItem($orderItem);
         $order->setTotalDue($totalDue);
         $order->setProductDue($totalDue);
         $order->setFinanceDue(0);
@@ -220,36 +218,114 @@ class GooglePlayStoreService
     }
 
     /**
-     * @param [] $purchasedItems
+     * @param Product $purchasedProduct
      *
-     * @return OrderItem[]
+     * @return OrderItem
+     *
+     * @throws Throwable
      */
-    public function createOrderItems(
-        array $purchasedItems
-    ): array
+    public function createOrderItem(
+        Product $purchasedProduct
+    ): OrderItem
     {
-        $orderItems = [];
+        $orderItem = new OrderItem();
 
-        foreach ($purchasedItems as $item) {
-            $product = $this->getProductByGoogleStoreId($item->getProductId());
+        $orderItem->setProduct($purchasedProduct);
+        $orderItem->setQuantity(1);
+        $orderItem->setWeight(0);
+        $orderItem->setInitialPrice($purchasedProduct->getPrice());
+        $orderItem->setTotalDiscounted(0);
+        $orderItem->setFinalPrice($purchasedProduct->getPrice());
+        $orderItem->setCreatedAt(Carbon::now());
 
-            if ($product) {
-                $orderItem = new OrderItem();
+        $this->entityManager->persist($orderItem);
 
-                $orderItem->setProduct($product);
-                $orderItem->setQuantity($item->getQuantity());
-                $orderItem->setWeight(0);
-                $orderItem->setInitialPrice($product->getPrice());
-                $orderItem->setTotalDiscounted(0);
-                $orderItem->setFinalPrice($product->getPrice());
-                $orderItem->setCreatedAt(Carbon::now());
+        return $orderItem;
+    }
 
-                $orderItems[] = $orderItem;
+    /**
+     * @param Product $purchasedProduct
+     * @param Order $order
+     * @param Payment $payment
+     *
+     * @return Subscription
+     *
+     * @throws Throwable
+     */
+    public function createOrderSubscription(
+        Product $purchasedProduct,
+        Order $order,
+        Payment $payment
+    ): Subscription
+    {
+        $subscription = new Subscription();
 
-                $this->entityManager->persist($orderItem);
+        $nextBillDate = Carbon::now();
+
+        if (!empty($purchasedProduct->getSubscriptionIntervalType())) {
+            if ($purchasedProduct->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
+                $nextBillDate =
+                    Carbon::now()
+                        ->addMonths($purchasedProduct->getSubscriptionIntervalCount());
+
+            }
+            elseif ($purchasedProduct->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
+                $nextBillDate =
+                    Carbon::now()
+                        ->addYears($purchasedProduct->getSubscriptionIntervalCount());
+
+            }
+            elseif ($purchasedProduct->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
+                $nextBillDate =
+                    Carbon::now()
+                        ->addDays($purchasedProduct->getSubscriptionIntervalCount());
             }
         }
 
-        return $orderItems;
+        $intervalType = $purchasedProduct ? $purchasedProduct->getSubscriptionIntervalType() : config('ecommerce.interval_type_monthly');
+
+        $intervalCount = $purchasedProduct ? $purchasedProduct->getSubscriptionIntervalCount() : 1;
+
+        $subscription->setBrand(config('ecommerce.brand'));
+        $subscription->setType(Subscription::TYPE_SUBSCRIPTION);
+        $subscription->setUser($order->getUser());
+        $subscription->setOrder($order);
+        $subscription->setProduct($purchasedProduct);
+        $subscription->setIsActive(true);
+        $subscription->setStartDate(Carbon::now());
+        $subscription->setPaidUntil($nextBillDate);
+        $subscription->setTotalPrice($purchasedProduct->getPrice());
+        $subscription->setTax(0);
+        $subscription->setCurrency($payment->getCurrency());
+        $subscription->setIntervalType($intervalType);
+        $subscription->setIntervalCount($intervalCount);
+        $subscription->setTotalCyclesPaid(1);
+        $subscription->setTotalCyclesDue(1);
+        // $subscription->setWebOrderLineItemId(); // todo - update
+        $subscription->setCreatedAt(Carbon::now());
+
+        $subscriptionPayment = new SubscriptionPayment();
+
+        $subscriptionPayment->setSubscription($subscription);
+        $subscriptionPayment->setPayment($payment);
+
+        $this->entityManager->persist($subscription);
+        $this->entityManager->persist($subscriptionPayment);
+
+        return $subscription;
+    }
+
+    /**
+     * @param GoogleReceipt $receipt
+     *
+     * @return Product|null
+     *
+     * @throws Throwable
+     */
+    public function getPurchasedItem(GoogleReceipt $receipt): ?Product
+    {
+        $productsMap = config('ecommerce.google_store_products_map');
+
+        return $this->productRepository->bySku($productsMap[$receipt->getProductId()]);
     }
 }
