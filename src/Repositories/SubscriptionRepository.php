@@ -64,9 +64,11 @@ class SubscriptionRepository extends RepositoryBase
         $qb->paginateByRequest($request)
             ->orderByRequest($request, $alias)
             ->restrictBrandsByRequest($request, $alias)
-            ->select(['s', 'p', 'o', 'pm'])
+            ->select(['s', 'p', 'o', 'pm', 'oi', 'oip'])
             ->leftJoin('s.product', 'p')
             ->leftJoin('s.order', 'o')
+            ->leftJoin('o.orderItems', 'oi')
+            ->leftJoin('oi.product', 'oip')
             ->leftJoin('s.paymentMethod', 'pm')
             ->andWhere(
                 $qb->expr()
