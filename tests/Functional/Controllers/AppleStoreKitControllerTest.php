@@ -124,11 +124,6 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $appleStoreKitGateway =
-            $this->getMockBuilder(AppleStoreKitGateway::class)
-                ->disableOriginalConstructor()
-                ->getMock();
-
         $webOrderLineItemOneId = $this->faker->word;
         $webOrderLineItemTwoId = $this->faker->word;
 
@@ -144,10 +139,8 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
 
         $validationResponse = $this->getReceiptValidationResponse($productsData);
 
-        $appleStoreKitGateway->method('validate')
+        $this->appleStoreKitGatewayMock->method('validate')
             ->willReturn($validationResponse);
-
-        $this->app->instance(AppleStoreKitGateway::class, $appleStoreKitGateway);
 
         $response = $this->call(
             'POST',
@@ -359,11 +352,6 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $appleStoreKitGateway =
-            $this->getMockBuilder(AppleStoreKitGateway::class)
-                ->disableOriginalConstructor()
-                ->getMock();
-
         $productsData = [
             $product['sku'] => [
                 'web_order_line_item_id' => $webOrderLineItemId,
@@ -372,10 +360,8 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
 
         $validationResponse = $this->getReceiptValidationResponse($productsData);
 
-        $appleStoreKitGateway->method('validate')
+        $this->appleStoreKitGatewayMock->method('validate')
             ->willReturn($validationResponse);
-
-        $this->app->instance(AppleStoreKitGateway::class, $appleStoreKitGateway);
 
         $response = $this->call(
             'POST',
@@ -492,11 +478,6 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $appleStoreKitGateway =
-            $this->getMockBuilder(AppleStoreKitGateway::class)
-                ->disableOriginalConstructor()
-                ->getMock();
-
         $productsData = [
             $product['sku'] => [
                 'web_order_line_item_id' => $webOrderLineItemId,
@@ -505,10 +486,8 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
 
         $validationResponse = $this->getReceiptValidationResponse($productsData);
 
-        $appleStoreKitGateway->method('validate')
+        $this->appleStoreKitGatewayMock->method('validate')
             ->willReturn($validationResponse);
-
-        $this->app->instance(AppleStoreKitGateway::class, $appleStoreKitGateway);
 
         $response = $this->call(
             'POST',

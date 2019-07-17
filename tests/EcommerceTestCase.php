@@ -15,8 +15,10 @@ use Railroad\Doctrine\Contracts\UserProviderInterface as DoctrineUserProviderInt
 use Railroad\Doctrine\Providers\DoctrineServiceProvider;
 use Railroad\DoctrineArrayHydrator\Contracts\UserProviderInterface as DoctrineArrayHydratorUserProviderInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Faker\Factory;
+use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Tests\Fixtures\UserProvider;
@@ -54,6 +56,7 @@ class EcommerceTestCase extends BaseTestCase
         'refunds' => 'ecommerce_refunds',
         'userStripeCustomerId' => 'ecommerce_user_stripe_customer_ids',
         'discountCriteriasProducts' => 'ecommerce_discount_criterias_products',
+        'appleReceipts' => 'ecommerce_apple_receipts',
     ];
 
     /**
@@ -90,6 +93,11 @@ class EcommerceTestCase extends BaseTestCase
      * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $paypalExternalHelperMock;
+
+    /**
+     * @var \PHPUnit\Framework\MockObject\MockObject
+     */
+    protected $appleStoreKitGatewayMock;
 
     /**
      * @var array
@@ -167,6 +175,11 @@ class EcommerceTestCase extends BaseTestCase
                 ->disableOriginalConstructor()
                 ->getMock();
         $this->app->instance(\Railroad\Ecommerce\ExternalHelpers\PayPal::class, $this->paypalExternalHelperMock);
+
+        $this->appleStoreKitGatewayMock = $this->getMockBuilder(AppleStoreKitGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+        $this->app->instance(AppleStoreKitGateway::class, $this->appleStoreKitGatewayMock);
 
         Carbon::setTestNow(Carbon::now());
 
@@ -858,6 +871,31 @@ class EcommerceTestCase extends BaseTestCase
         $discountCriteriaProduct['id'] = $discountCriteriaProductId;
 
         return $discountCriteriaProduct;
+    }
+
+    /**
+     * Helper method to seed a test apple receipt record
+     *
+     * @return array
+     */
+    public function fakeAppleReceipt($dataStub = []): array
+    {
+        $data = $dataStub + [
+                'receipt' => $this->faker->word,
+                'request_type' => AppleReceipt::MOBILE_APP_REQUEST_TYPE,
+                'brand' => config('ecommerce.brand'),
+                'valid' => true,
+                'created_at' => Carbon::now(),
+                'updated_at' => null,
+            ];
+
+        $newRecordId =
+            $this->databaseManager->table(self::TABLES['appleReceipts'])
+                ->insertGetId($data);
+
+        $data['id'] = $newRecordId;
+
+        return $data;
     }
 
     public function getCurrency()

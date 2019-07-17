@@ -36,6 +36,8 @@ class Subscription
     use TimestampableEntity, NotableEntity;
 
     const TYPE_SUBSCRIPTION = 'subscription';
+    const TYPE_APPLE_SUBSCRIPTION = 'apple_subscription';
+    const TYPE_GOOGLE_SUBSCRIPTION = 'google_subscription';
     const TYPE_PAYMENT_PLAN = 'payment plan';
 
     /**
@@ -106,6 +108,13 @@ class Subscription
      * @var \DateTime
      */
     protected $paidUntil;
+
+    /**
+     * @ORM\Column(type="datetime", name="apple_expiration_date")
+     *
+     * @var \DateTime
+     */
+    protected $appleExpirationDate;
 
     /**
      * @ORM\Column(type="datetime", name="canceled_on", nullable=true)
@@ -203,6 +212,11 @@ class Subscription
      * @var string
      */
     protected $webOrderLineItemId;
+
+    /**
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\AppleReceipt", mappedBy="subscription")
+     */
+    protected $appleReceipt;
 
     public function __construct()
     {
@@ -311,6 +325,22 @@ class Subscription
     public function setPaidUntil(DateTimeInterface $paidUntil)
     {
         $this->paidUntil = $paidUntil;
+    }
+
+    /**
+     * @return \DateTimeInterface|null
+     */
+    public function getAppleExpirationDate(): ?DateTimeInterface
+    {
+        return $this->appleExpirationDate;
+    }
+
+    /**
+     * @param \DateTimeInterface $appleExpirationDate
+     */
+    public function setAppleExpirationDate(DateTimeInterface $appleExpirationDate)
+    {
+        $this->appleExpirationDate = $appleExpirationDate;
     }
 
     /**
@@ -551,5 +581,21 @@ class Subscription
     public function setWebOrderLineItemId(string $webOrderLineItemId)
     {
         $this->webOrderLineItemId = $webOrderLineItemId;
+    }
+
+    /**
+     * @return AppleReceipt|null
+     */
+    public function getAppleReceipt(): ?AppleReceipt
+    {
+        return $this->appleReceipt;
+    }
+
+    /**
+     * @param AppleReceipt $appleReceipt
+     */
+    public function setAppleReceipt(?AppleReceipt $appleReceipt)
+    {
+        $this->appleReceipt = $appleReceipt;
     }
 }

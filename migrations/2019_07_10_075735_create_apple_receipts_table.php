@@ -26,6 +26,7 @@ class CreateAppleReceiptsTable extends Migration
                     $table->boolean('valid');
                     $table->string('validation_error')->nullable();
                     $table->integer('payment_id')->nullable();
+                    $table->integer('subscription_id')->nullable();
                     $table->timestamps();
                 }
             );

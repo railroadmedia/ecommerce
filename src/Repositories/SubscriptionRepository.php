@@ -51,6 +51,48 @@ class SubscriptionRepository extends RepositoryBase
     }
 
     /**
+     * Gets subscriptions that are related to the specified products
+     *
+     * @return array
+     */
+    public function getAppleExpiredSubscriptions()
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['s', 'r'])
+            ->from($this->getClassName(), 's')
+            ->leftJoin('s.appleReceipt', 'r')
+            ->where(
+                $qb->expr()
+                    ->lte('s.appleExpirationDate', ':now')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.type', ':appleSubscription')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.isActive', ':active')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('s.canceledOn')
+            );
+
+        /** @var $q Query */
+        $q = $qb->getQuery();
+
+        $q->setParameter('now', Carbon::now());
+        $q->setParameter('appleSubscription', Subscription::TYPE_APPLE_SUBSCRIPTION);
+        $q->setParameter('active', true);
+
+        return $q->getResult();
+    }
+
+    /**
      * @param $request
      *
      * @return ResultsQueryBuilderComposite

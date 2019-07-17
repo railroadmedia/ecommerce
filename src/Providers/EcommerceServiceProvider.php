@@ -23,6 +23,7 @@ use Railroad\Doctrine\TimestampableListener;
 use Railroad\Ecommerce\Commands\ConvertDiscountCriteriaProducsAssociation;
 use Railroad\Ecommerce\Commands\FillPaymentGatewayColumnFromPaymentMethod;
 use Railroad\Ecommerce\Commands\PopulatePaymentTaxesTable;
+use Railroad\Ecommerce\Commands\ProcessAppleExpiredSubscriptions;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Commands\SplitPaymentMethodIdsToColumns;
 use Railroad\Ecommerce\Events\GiveContentAccess;
@@ -108,6 +109,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 SplitPaymentMethodIdsToColumns::class,
                 FillPaymentGatewayColumnFromPaymentMethod::class,
                 PopulatePaymentTaxesTable::class,
+                ProcessAppleExpiredSubscriptions::class,
             ]
         );
 

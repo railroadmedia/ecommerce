@@ -101,6 +101,12 @@ class AppleReceipt
     protected $payment;
 
     /**
+     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Subscription", inversedBy="appleReceipt")
+     * @ORM\JoinColumn(name="subscription_id", referencedColumnName="id")
+     */
+    protected $subscription;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -250,5 +256,21 @@ class AppleReceipt
     public function setPayment(?Payment $payment)
     {
         $this->payment = $payment;
+    }
+
+    /**
+     * @return Subscription|null
+     */
+    public function getSubscription(): ?Subscription
+    {
+        return $this->subscription;
+    }
+
+    /**
+     * @param Subscription $subscription
+     */
+    public function setSubscription(?Subscription $subscription)
+    {
+        $this->subscription = $subscription;
     }
 }
