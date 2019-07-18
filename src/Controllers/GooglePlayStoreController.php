@@ -2,10 +2,12 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\GoogleReceiptRequest;
 use Railroad\Ecommerce\Services\GooglePlayStoreService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
@@ -15,6 +17,9 @@ use Throwable;
 
 class GooglePlayStoreController extends Controller
 {
+    const SUBSCRIPTION_RENEWED = 2;
+    const SUBSCRIPTION_CANCELED = 3;
+
 	/**
      * @var GooglePlayStoreService
      */
@@ -26,6 +31,11 @@ class GooglePlayStoreController extends Controller
     private $jsonApiHydrator;
 
     /**
+     * @var SubscriptionRepository
+     */
+    private $subscriptionRepository;
+
+    /**
      * @var UserProviderInterface
      */
     private $userProvider;
@@ -35,16 +45,19 @@ class GooglePlayStoreController extends Controller
      *
      * @param GooglePlayStoreService $googlePlayStoreService
      * @param JsonApiHydrator $jsonApiHydrator
+     * @param SubscriptionRepository $subscriptionRepository
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
         GooglePlayStoreService $googlePlayStoreService,
         JsonApiHydrator $jsonApiHydrator,
+        SubscriptionRepository $subscriptionRepository,
         UserProviderInterface $userProvider
     )
     {
         $this->googlePlayStoreService = $googlePlayStoreService;
         $this->jsonApiHydrator = $jsonApiHydrator;
+        $this->subscriptionRepository = $subscriptionRepository;
         $this->userProvider = $userProvider;
     }
 
@@ -69,5 +82,54 @@ class GooglePlayStoreController extends Controller
         $userAuthToken = $this->userProvider->getUserAuthToken($user);
 
         return ResponseService::googleReceipt($receipt, $userAuthToken);
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return JsonResponse
+     *
+     * @throws Throwable
+     */
+    public function processNotification(Request $request)
+    {
+        $message = $request->get('message');
+
+        if ($message) {
+            $encodedData = $message['data'];
+
+            $data = json_decode(base64_decode($encodedData));
+
+            $subscriptionNotification = $data->subscriptionNotification;
+
+            if (strtolower($subscriptionNotification->notificationType) == self::SUBSCRIPTION_RENEWED ||
+                strtolower($subscriptionNotification->notificationType) == self::SUBSCRIPTION_CANCELED) {
+
+                $receipt = new GoogleReceipt();
+                $notificationType = strtolower($subscriptionNotification->notificationType) == self::SUBSCRIPTION_RENEWED ?
+                    GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE:
+                    GoogleReceipt::GOOGLE_CANCEL_NOTIFICATION_TYPE;
+
+                $receipt->setPurchaseToken($subscriptionNotification->purchaseToken);
+                $receipt->setPackageName($data->packageName);
+                $receipt->setProductId($subscriptionNotification->subscriptionId);
+                $receipt->setRequestType(GoogleReceipt::GOOGLE_NOTIFICATION_REQUEST_TYPE);
+                $receipt->setNotificationType($notificationType);
+                $receipt->setBrand(config('ecommerce.brand'));
+
+                $subscription = $this->subscriptionRepository
+                    ->findOneBy(['externalAppStoreId' => $subscriptionNotification->purchaseToken]); // todo - update field name
+
+                if ($subscription) {
+                    try {
+                        $this->googlePlayStoreService->processNotification($receipt, $subscription);
+                    } catch (Exception $e) {
+                        return response()->json(['data' => $e->getMessage()], 500);
+                    }
+                }
+            }
+        }
+
+        return response()->json();
     }
 }

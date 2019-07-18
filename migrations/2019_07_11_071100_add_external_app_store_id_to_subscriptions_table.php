@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddWebOrderLineItemIdToSubscriptionsTable extends Migration
+class AddExternalAppStoreIdToSubscriptionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -20,7 +20,7 @@ class AddWebOrderLineItemIdToSubscriptionsTable extends Migration
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->string('web_order_line_item_id')->nullable();
+                    $table->text('external_app_store_id')->nullable();
                 }
             );
     }
@@ -39,7 +39,7 @@ class AddWebOrderLineItemIdToSubscriptionsTable extends Migration
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->dropColumn('web_order_line_item_id');
+                    $table->dropColumn('external_app_store_id');
                 }
             );
     }

@@ -528,7 +528,7 @@ class AppleStoreKitService
         $subscription->setIntervalCount($intervalCount);
         $subscription->setTotalCyclesPaid(1);
         $subscription->setTotalCyclesDue(1);
-        $subscription->setWebOrderLineItemId($purchasedItem->getWebOrderLineItemId());
+        $subscription->setExternalAppStoreId($purchasedItem->getWebOrderLineItemId());
         $subscription->setAppleReceipt($receipt);
         $subscription->setCreatedAt(Carbon::now());
 

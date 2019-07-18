@@ -18,10 +18,10 @@ class GoogleReceipt
     use TimestampableEntity;
 
     CONST MOBILE_APP_REQUEST_TYPE = 'mobile';
-    CONST APPLE_NOTIFICATION_REQUEST_TYPE = 'notification';
+    CONST GOOGLE_NOTIFICATION_REQUEST_TYPE = 'notification';
 
-    CONST APPLE_RENEWAL_NOTIFICATION_TYPE = 'renewal';
-    CONST APPLE_CANCEL_NOTIFICATION_TYPE = 'cancel';
+    CONST GOOGLE_RENEWAL_NOTIFICATION_TYPE = 'renewal';
+    CONST GOOGLE_CANCEL_NOTIFICATION_TYPE = 'cancel';
 
     /**
      * @ORM\Id

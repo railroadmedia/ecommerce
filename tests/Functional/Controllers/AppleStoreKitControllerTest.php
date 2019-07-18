@@ -221,7 +221,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'paid_until' => Carbon::now()
                     ->addMonth()
                     ->toDateTimeString(),
-                'web_order_line_item_id' => $webOrderLineItemOneId,
+                'external_app_store_id' => $webOrderLineItemOneId,
             ]
         );
 
@@ -342,7 +342,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'is_active' => 0,
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_monthly'),
-            'web_order_line_item_id' => $webOrderLineItemId
+            'external_app_store_id' => $webOrderLineItemId
         ]);
 
         config()->set(
@@ -407,7 +407,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                     ->addMonth()
                     ->startOfDay()
                     ->toDateTimeString(),
-                'web_order_line_item_id' => $webOrderLineItemId,
+                'external_app_store_id' => $webOrderLineItemId,
             ]
         );
 
@@ -468,7 +468,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'is_active' => 1,
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_monthly'),
-            'web_order_line_item_id' => $webOrderLineItemId
+            'external_app_store_id' => $webOrderLineItemId
         ]);
 
         config()->set(
@@ -518,7 +518,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'paid_until' => $paidUntil,
                 'canceled_on' => Carbon::now(),
-                'web_order_line_item_id' => $webOrderLineItemId,
+                'external_app_store_id' => $webOrderLineItemId,
             ]
         );
     }

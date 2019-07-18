@@ -13,6 +13,9 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Events\SubscriptionEvent;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
@@ -132,7 +135,7 @@ class GooglePlayStoreService
 
         $payment = $this->createOrderPayment($order);
 
-        $this->createOrderSubscription($purchasedProduct, $order, $payment);
+        $this->createOrderSubscription($purchasedProduct, $order, $payment, $receipt);
 
         $receipt->setPayment($payment);
 
@@ -141,6 +144,168 @@ class GooglePlayStoreService
         event(new OrderEvent($order, $payment));
 
         return $user;
+    }
+
+    /**
+     * @param GoogleReceipt $receipt
+     * @param Subscription $subscription
+     *
+     * @throws ReceiptValidationException
+     * @throws Throwable
+     */
+    public function processNotification(
+        GoogleReceipt $receipt,
+        Subscription $subscription
+    )
+    {
+        $this->entityManager->persist($receipt);
+
+        try {
+             $this->googlePlayStoreGateway
+                ->validate(
+                    $receipt->getPackageName(),
+                    $receipt->getProductId(),
+                    $receipt->getPurchaseToken()
+                );
+
+            $purchasedProduct = $this->getPurchasedItem($receipt);
+
+            if (!$purchasedProduct) {
+                throw new ReceiptValidationException('Purchased product not found in config');
+            }
+
+            $receipt->setValid(true);
+
+        } catch (ReceiptValidationException $exception) {
+
+            $receipt->setValid(false);
+            $receipt->setValidationError($exception->getMessage());
+
+            $this->entityManager->flush();
+
+            throw $exception;
+        }
+
+        $oldSubscription = clone($subscription);
+
+        $subscriptionEventType = 'renewed';
+
+        if ($receipt->getNotificationType() == GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE) {
+            $payment = $this->createSubscriptionRenewalPayment($subscription);
+
+            $this->renewSubscription($subscription, $receipt);
+
+            $receipt->setPayment($payment);
+
+            $this->entityManager->flush();
+
+            event(new SubscriptionRenewed($subscription, $payment));
+
+        } else {
+
+            $this->cancelSubscription($subscription, $receipt);
+
+            $this->entityManager->flush();
+
+            $subscriptionEventType = 'canceled';
+        }
+
+        $this->userProductService->updateSubscriptionProducts($subscription);
+
+        event(new SubscriptionUpdated($oldSubscription, $subscription));
+        event(new SubscriptionEvent($subscription->getId(), $subscriptionEventType));
+    }
+
+    /**
+     * @param Subscription $subscription
+     *
+     * @return Payment
+     */
+    public function createSubscriptionRenewalPayment(Subscription $subscription): Payment
+    {
+        $payment = new Payment();
+
+        $payment->setTotalDue($subscription->getTotalPrice());
+        $payment->setTotalPaid($subscription->getTotalPrice());
+        $payment->setTotalRefunded(0);
+        $payment->setConversionRate(1);
+        $payment->setType(Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL);
+        $payment->setExternalId('');
+        $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_GOOGLE);
+        $payment->setGatewayName(config('ecommerce.brand'));
+        $payment->setStatus(Payment::STATUS_PAID);
+        $payment->setCurrency('');
+        $payment->setCreatedAt(Carbon::now());
+
+        $this->entityManager->persist($payment);
+
+        $subscriptionPayment = new SubscriptionPayment();
+
+        $subscriptionPayment->setSubscription($subscription);
+        $subscriptionPayment->setPayment($payment);
+
+        $this->entityManager->persist($subscriptionPayment);
+
+        return $payment;
+    }
+
+    /**
+     * @param Subscription $subscription
+     * @param AppleReceipt $appleReceipt
+     */
+    public function renewSubscription(
+        Subscription $subscription,
+        GoogleReceipt $receipt
+    )
+    {
+        $nextBillDate = null;
+
+        switch ($subscription->getIntervalType()) {
+            case config('ecommerce.interval_type_monthly'):
+                $nextBillDate =
+                    Carbon::now()
+                        ->addMonths($subscription->getIntervalCount());
+                break;
+
+            case config('ecommerce.interval_type_yearly'):
+                $nextBillDate =
+                    Carbon::now()
+                        ->addYears($subscription->getIntervalCount());
+                break;
+
+            case config('ecommerce.interval_type_daily'):
+                $nextBillDate =
+                    Carbon::now()
+                        ->addDays($subscription->getIntervalCount());
+                break;
+
+            default:
+                throw new Exception("Subscription type not configured");
+                break;
+        }
+
+        $subscription->setIsActive(true);
+        $subscription->setCanceledOn(null);
+        $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
+        $subscription->setPaidUntil(
+            $nextBillDate ? $nextBillDate->startOfDay() :
+                Carbon::now()
+                    ->addMonths(1)
+        );
+        $subscription->setUpdatedAt(Carbon::now());
+    }
+
+    /**
+     * @param Subscription $subscription
+     * @param AppleReceipt $receipt
+     */
+    public function cancelSubscription($subscription, $receipt)
+    {
+        $noteFormat = 'Canceled by google notification, receipt id: %s';
+
+        $subscription->setCanceledOn(Carbon::now());
+        $subscription->setUpdatedAt(Carbon::now());
+        $subscription->setNote(sprintf($noteFormat, $receipt->getId()));
     }
 
     /**
@@ -247,6 +412,7 @@ class GooglePlayStoreService
      * @param Product $purchasedProduct
      * @param Order $order
      * @param Payment $payment
+     * @param GoogleReceipt $receipt
      *
      * @return Subscription
      *
@@ -255,7 +421,8 @@ class GooglePlayStoreService
     public function createOrderSubscription(
         Product $purchasedProduct,
         Order $order,
-        Payment $payment
+        Payment $payment,
+        GoogleReceipt $receipt
     ): Subscription
     {
         $subscription = new Subscription();
@@ -301,7 +468,7 @@ class GooglePlayStoreService
         $subscription->setIntervalCount($intervalCount);
         $subscription->setTotalCyclesPaid(1);
         $subscription->setTotalCyclesDue(1);
-        // $subscription->setWebOrderLineItemId(); // todo - update
+        $subscription->setExternalAppStoreId($receipt->getPurchaseToken());
         $subscription->setCreatedAt(Carbon::now());
 
         $subscriptionPayment = new SubscriptionPayment();

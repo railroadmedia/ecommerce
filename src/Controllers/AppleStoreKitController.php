@@ -109,7 +109,7 @@ class AppleStoreKitController extends Controller
             $webOrderLineItemId = $request->get('web_order_line_item_id');
 
             $subscription = $this->subscriptionRepository
-                ->findOneBy(['webOrderLineItemId' => $webOrderLineItemId]);
+                ->findOneBy(['externalAppStoreId' => $webOrderLineItemId]);
 
             if ($subscription) {
                 try {

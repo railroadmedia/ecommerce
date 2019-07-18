@@ -207,11 +207,11 @@ class Subscription
     /**
      * Field set for apple subscriptions, used for renewal/cancel notifications received from apple
      *
-     * @ORM\Column(type="string", name="web_order_line_item_id", nullable=true)
+     * @ORM\Column(type="string", name="external_app_store_id", nullable=true)
      *
      * @var string
      */
-    protected $webOrderLineItemId;
+    protected $externalAppStoreId;
 
     /**
      * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\AppleReceipt", mappedBy="subscription")
@@ -570,17 +570,17 @@ class Subscription
     /**
      * @return string|null
      */
-    public function getWebOrderLineItemId(): ?string
+    public function getExternalAppStoreId(): ?string
     {
-        return $this->webOrderLineItemId;
+        return $this->externalAppStoreId;
     }
 
     /**
-     * @param string $webOrderLineItemId
+     * @param string $externalAppStoreId
      */
-    public function setWebOrderLineItemId(string $webOrderLineItemId)
+    public function setExternalAppStoreId(string $externalAppStoreId)
     {
-        $this->webOrderLineItemId = $webOrderLineItemId;
+        $this->externalAppStoreId = $externalAppStoreId;
     }
 
     /**
