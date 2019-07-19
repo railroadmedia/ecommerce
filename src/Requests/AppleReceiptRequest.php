@@ -31,7 +31,12 @@ class AppleReceiptRequest extends FormRequest
         return [
             'data.type' => 'in:appleReceipt',
             'data.attributes.receipt' => 'required',
-            'data.attributes.email' => 'required|max:255',
+            'data.attributes.email' => 'required|max:255|unique:' .
+                config('ecommerce.database_info_for_unique_user_email_validation.database_connection_name') .
+                '.' .
+                config('ecommerce.database_info_for_unique_user_email_validation.table') .
+                ',' .
+                config('ecommerce.database_info_for_unique_user_email_validation.email_column'),
             'data.attributes.password' => 'required|max:255',
         ];
     }

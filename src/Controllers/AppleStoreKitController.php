@@ -2,12 +2,12 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AppleReceipt;
-use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\AppleReceiptRequest;
 use Railroad\Ecommerce\Services\AppleStoreKitService;
@@ -65,7 +65,7 @@ class AppleStoreKitController extends Controller
      *
      * @return Fractal
      *
-     * @throws ReceiptValidationException
+     * @throws GuzzleException
      * @throws Throwable
      */
     public function processReceipt(AppleReceiptRequest $request)
@@ -88,6 +88,7 @@ class AppleStoreKitController extends Controller
      *
      * @return JsonResponse
      *
+     * @throws GuzzleException
      * @throws Throwable
      */
     public function processNotification(Request $request)

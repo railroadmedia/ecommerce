@@ -4,12 +4,12 @@ namespace Railroad\Ecommerce\Exceptions;
 
 use Exception;
 
-class RefundFailedException extends Exception
+class SubscriptionRenewException extends Exception
 {
     protected $message;
 
     /**
-     * RefundFailedException constructor.
+     * SubscriptionRenewException constructor.
      *
      * @param string $message
      */
@@ -27,7 +27,7 @@ class RefundFailedException extends Exception
             [
                 'errors' => [
                     [
-                        'title' => 'Payment refund failed.',
+                        'title' => 'Subscription renew failed.',
                         'detail' => $this->message,
                     ]
                 ],

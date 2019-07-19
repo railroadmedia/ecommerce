@@ -6,7 +6,6 @@ use GuzzleHttp\Exception\GuzzleException;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use ReceiptValidator\iTunes\ResponseInterface;
 use ReceiptValidator\iTunes\Validator;
-use RunTimeException;
 use Throwable;
 
 class AppleStoreKitGateway
@@ -17,7 +16,6 @@ class AppleStoreKitGateway
      * @return ResponseInterface
      *
      * @throws ReceiptValidationException
-     * @throws RunTimeException
      * @throws GuzzleException
      * @throws Throwable
      */

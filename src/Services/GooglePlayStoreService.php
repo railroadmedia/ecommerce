@@ -193,7 +193,7 @@ class GooglePlayStoreService
         if ($receipt->getNotificationType() == GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE) {
             $payment = $this->createSubscriptionRenewalPayment($subscription);
 
-            $this->renewSubscription($subscription, $receipt);
+            $this->renewSubscription($subscription);
 
             $receipt->setPayment($payment);
 
@@ -220,6 +220,8 @@ class GooglePlayStoreService
      * @param Subscription $subscription
      *
      * @return Payment
+     *
+     * @throws Throwable
      */
     public function createSubscriptionRenewalPayment(Subscription $subscription): Payment
     {
@@ -251,12 +253,10 @@ class GooglePlayStoreService
 
     /**
      * @param Subscription $subscription
-     * @param AppleReceipt $appleReceipt
+     *
+     * @throws ReceiptValidationException
      */
-    public function renewSubscription(
-        Subscription $subscription,
-        GoogleReceipt $receipt
-    )
+    public function renewSubscription(Subscription $subscription)
     {
         $nextBillDate = null;
 
@@ -280,7 +280,7 @@ class GooglePlayStoreService
                 break;
 
             default:
-                throw new Exception("Subscription type not configured");
+                throw new ReceiptValidationException("Subscription type not configured");
                 break;
         }
 
@@ -297,9 +297,12 @@ class GooglePlayStoreService
 
     /**
      * @param Subscription $subscription
-     * @param AppleReceipt $receipt
+     * @param GoogleReceipt $receipt
      */
-    public function cancelSubscription($subscription, $receipt)
+    public function cancelSubscription(
+        Subscription $subscription,
+        GoogleReceipt $receipt
+    )
     {
         $noteFormat = 'Canceled by google notification, receipt id: %s';
 

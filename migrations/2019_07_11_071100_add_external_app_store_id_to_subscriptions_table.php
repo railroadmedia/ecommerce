@@ -20,7 +20,7 @@ class AddExternalAppStoreIdToSubscriptionsTable extends Migration
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->text('external_app_store_id')->nullable();
+                    $table->text('external_app_store_id')->after('payment_method_id')->nullable();
                 }
             );
     }

@@ -7,11 +7,13 @@ use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderPayment;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
+use Railroad\Ecommerce\Exceptions\RefundFailedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -136,6 +138,7 @@ class RefundJsonController extends Controller
      * @return Fractal
      *
      * @throws Throwable
+     * @throws Throwable
      */
     public function store(RefundCreateRequest $request)
     {
@@ -144,6 +147,19 @@ class RefundJsonController extends Controller
         $paymentId = $request->input('data.relationships.payment.data.id');
 
         $payment = $this->paymentRepository->getPaymentAndPaymentMethod($paymentId);
+
+        $mobileAppPaymentTypes = [
+            Payment::TYPE_APPLE_INITIAL_ORDER,
+            Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+            Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
+            Payment::TYPE_GOOGLE_INITIAL_ORDER,
+        ];
+
+        if ($payment && in_array($payment->getType(), $mobileAppPaymentTypes)) {
+            throw new RefundFailedException(
+                'Payments made in-app by mobile applications my not be refunded on web application'
+            );
+        }
 
         /**
          * @var $paymentMethod PaymentMethod

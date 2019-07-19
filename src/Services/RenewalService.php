@@ -15,6 +15,7 @@ use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
+use Railroad\Ecommerce\Exceptions\SubscriptionRenewException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -116,6 +117,14 @@ class RenewalService
      */
     public function renew(Subscription $subscription)
     {
+        if ($subscription->getType() == Subscription::TYPE_APPLE_SUBSCRIPTION ||
+            $subscription->getType() == Subscription::TYPE_GOOGLE_SUBSCRIPTION) {
+
+            throw new SubscriptionRenewException(
+                'Subscription made by mobile application may not be renewed by web application'
+            );
+        }
+
         $oldSubscription = clone($subscription);
 
         // check for payment plan if the user have already paid all the cycles

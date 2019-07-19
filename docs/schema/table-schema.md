@@ -76,6 +76,35 @@
 | `ecommerce_address_created_on_index` | `created_at` | INDEX |  |
 | `ecommerce_address_updated_on_index` | `updated_at` | INDEX |  |
 
+## Table: `ecommerce_apple_receipts`
+
+### Description:
+
+
+
+### Columns:
+
+| Column | Data Type | Attributes | Default | Description |
+| --- | --- | --- | --- | --- |
+| `id` | INT(10) UNSIGNED | Primary, Auto increment, Not null |  |  |
+| `receipt` | TEXT | Not null |  |  |
+| `request_type` | VARCHAR(255) | Not null |  |  |
+| `notification_type` | VARCHAR(255) |  | NULL |  |
+| `email` | VARCHAR(255) |  | NULL |  |
+| `brand` | VARCHAR(255) | Not null |  |  |
+| `valid` | TINYINT(1) | Not null |  |  |
+| `validation_error` | VARCHAR(255) |  | NULL |  |
+| `payment_id` | INT(11) |  | NULL |  |
+| `subscription_id` | INT(11) |  | NULL |  |
+| `created_at` | DATETIME | Not null |  |  |
+| `updated_at` | DATETIME |  | NULL |  |
+
+### Indices:
+
+| Name | Columns | Type | Description |
+| --- | --- | --- | --- |
+| `PRIMARY` | `id` | PRIMARY |  |
+
 ## Table: `ecommerce_credit_cards`
 
 ### Description:
@@ -230,6 +259,36 @@
 | `ecommerce_discount_product_id_index` | `product_id` | INDEX |  |
 | `ecommerce_discount_visible_index` | `visible` | INDEX |  |
 | `ecommerce_discount_product_category_index` | `product_category` | INDEX |  |
+
+## Table: `ecommerce_google_receipts`
+
+### Description:
+
+
+
+### Columns:
+
+| Column | Data Type | Attributes | Default | Description |
+| --- | --- | --- | --- | --- |
+| `id` | INT(10) UNSIGNED | Primary, Auto increment, Not null |  |  |
+| `purchase_token` | TEXT | Not null |  |  |
+| `package_name` | VARCHAR(255) | Not null |  |  |
+| `product_id` | VARCHAR(255) | Not null |  |  |
+| `request_type` | VARCHAR(255) | Not null |  |  |
+| `notification_type` | VARCHAR(255) |  | NULL |  |
+| `email` | VARCHAR(255) |  | NULL |  |
+| `brand` | VARCHAR(255) | Not null |  |  |
+| `valid` | TINYINT(1) | Not null |  |  |
+| `validation_error` | VARCHAR(255) |  | NULL |  |
+| `payment_id` | INT(11) |  | NULL |  |
+| `created_at` | DATETIME | Not null |  |  |
+| `updated_at` | DATETIME |  | NULL |  |
+
+### Indices:
+
+| Name | Columns | Type | Description |
+| --- | --- | --- | --- |
+| `PRIMARY` | `id` | PRIMARY |  |
 
 ## Table: `ecommerce_order_discounts`
 
@@ -698,6 +757,8 @@
 | `total_cycles_due` | INT(11) |  | NULL |  |
 | `total_cycles_paid` | INT(11) | Not null |  |  |
 | `payment_method_id` | INT(11) |  | NULL |  |
+| `apple_expiration_date` | DATETIME |  | NULL | |
+| `external_app_store_id` | TEXT |  | NULL | |
 | `created_at` | DATETIME | Not null |  |  |
 | `updated_at` | DATETIME |  | NULL |  |
 | `deleted_at` | DATETIME |  | NULL |  |

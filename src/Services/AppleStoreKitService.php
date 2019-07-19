@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\Order;
@@ -23,6 +25,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use ReceiptValidator\iTunes\ResponseInterface;
 use ReceiptValidator\iTunes\PurchaseItem;
+use Throwable;
 
 class AppleStoreKitService
 {
@@ -54,7 +57,7 @@ class AppleStoreKitService
     /**
      * AppleStoreKitService constructor.
      *
-     * @param AppleStoreKit $entityManager
+     * @param AppleStoreKitGateway $appleStoreKitGateway
      * @param EcommerceEntityManager $entityManager
      * @param ProductRepository $productRepository
      * @param UserProductService $userProductService
@@ -80,7 +83,8 @@ class AppleStoreKitService
      *
      * @return User
      *
-     * @throws ReceiptValidationException
+     * @throws Exception
+     * @throws GuzzleException
      * @throws Throwable
      */
     public function processReceipt(AppleReceipt $receipt): User
@@ -99,7 +103,7 @@ class AppleStoreKitService
 
             $receipt->setValid(true);
 
-        } catch (ReceiptValidationException $exception) {
+        } catch (Exception $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
@@ -123,7 +127,7 @@ class AppleStoreKitService
 
         $payment = $this->createOrderPayment($order);
 
-        $subscriptions = $this->createOrderSubscription($currentPurchasedItem, $order, $payment, $receipt);
+        $this->createOrderSubscription($currentPurchasedItem, $order, $payment, $receipt);
 
         $receipt->setPayment($payment);
 
@@ -138,7 +142,8 @@ class AppleStoreKitService
      * @param AppleReceipt $receipt
      * @param Subscription $subscription
      *
-     * @throws ReceiptValidationException
+     * @throws Exception
+     * @throws GuzzleException
      * @throws Throwable
      */
     public function processNotification(
@@ -175,7 +180,7 @@ class AppleStoreKitService
         if ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE) {
             $payment = $this->createSubscriptionRenewalPayment($subscription);
 
-            $this->renewSubscription($subscription, $receipt, $purchasedItem);
+            $this->renewSubscription($subscription, $purchasedItem);
 
             $receipt->setPayment($payment);
 
@@ -201,10 +206,14 @@ class AppleStoreKitService
     /**
      * @param Subscription $subscription
      *
+     * @throws GuzzleException
+     * @throws Throwable
      */
     public function processSubscriptionRenewal(Subscription $subscription)
     {
         $receipt = $subscription->getAppleReceipt();
+
+        $purchasedItem = null;
 
         try {
 
@@ -231,7 +240,7 @@ class AppleStoreKitService
         if ($receipt->getValid()) {
             $payment = $this->createSubscriptionRenewalPayment($subscription);
 
-            $this->renewSubscription($subscription, $receipt, $purchasedItem);
+            $this->renewSubscription($subscription, $purchasedItem);
 
             $receipt->setPayment($payment);
 
@@ -258,6 +267,8 @@ class AppleStoreKitService
      * @param Subscription $subscription
      *
      * @return Payment
+     *
+     * @throws Throwable
      */
     public function createSubscriptionRenewalPayment(Subscription $subscription): Payment
     {
@@ -289,12 +300,12 @@ class AppleStoreKitService
 
     /**
      * @param Subscription $subscription
-     * @param AppleReceipt $appleReceipt
      * @param PurchaseItem $purchasedItem
+     *
+     * @throws ReceiptValidationException
      */
     public function renewSubscription(
         Subscription $subscription,
-        AppleReceipt $appleReceipt,
         PurchaseItem $purchasedItem
     )
     {
@@ -320,7 +331,7 @@ class AppleStoreKitService
                 break;
 
             default:
-                throw new Exception("Subscription type not configured");
+                throw new ReceiptValidationException("Subscription type not configured");
                 break;
         }
 
@@ -369,6 +380,8 @@ class AppleStoreKitService
      * @param Order $order
      *
      * @return Payment
+     *
+     * @throws Throwable
      */
     public function createOrderPayment(Order $order): Payment
     {
@@ -410,6 +423,8 @@ class AppleStoreKitService
      * @param User $user
      *
      * @return Order
+     *
+     * @throws Throwable
      */
     public function createOrder(
         OrderItem $orderItem,
@@ -437,6 +452,8 @@ class AppleStoreKitService
      * @param PurchaseItem $purchasedItem
      *
      * @return OrderItem|null
+     *
+     * @throws Throwable
      */
     public function createOrderItem(
         PurchaseItem $purchasedItem
@@ -464,12 +481,14 @@ class AppleStoreKitService
     }
 
     /**
-     * @param PurchaseItem $purchasedItems
+     * @param PurchaseItem $purchasedItem
      * @param Order $order
      * @param Payment $payment
      * @param AppleReceipt $receipt
      *
      * @return Subscription
+     *
+     * @throws Throwable
      */
     public function createOrderSubscription(
         PurchaseItem $purchasedItem,
@@ -549,6 +568,8 @@ class AppleStoreKitService
      * @param string $appleStoreId
      *
      * @return Product|null
+     *
+     * @throws Throwable
      */
     public function getProductByAppleStoreId(string $appleStoreId): ?Product
     {

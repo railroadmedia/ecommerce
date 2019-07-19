@@ -73,12 +73,14 @@ class GooglePlayStoreGateway
             throw new ReceiptValidationException('Invalid google play store scope config');
         }
 
+        putenv('GOOGLE_APPLICATION_CREDENTIALS=' . $credentialsJson);
+
         $client = new Google_Client();
         $client->setApplicationName($applicationName);
         $client->useApplicationDefaultCredentials();
         $client->setScopes($scope);
 
-        $validator = new PlayValidator(new Google_Service_AndroidPublisher($client));
+        $validator = new Validator(new Google_Service_AndroidPublisher($client));
 
         return $validator;
     }

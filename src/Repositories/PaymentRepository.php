@@ -259,7 +259,7 @@ class PaymentRepository extends RepositoryBase
 
         $qb->select(['p', 'pm'])
             ->from(Payment::class, 'p')
-            ->join('p.paymentMethod', 'pm')
+            ->leftJoin('p.paymentMethod', 'pm')
             ->where(
                 $qb->expr()
                     ->eq('p.id', ':id')

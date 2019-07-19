@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Services\CurrencyService;
@@ -1298,6 +1299,65 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 'user_id' => $userId,
                 'product_id' => $product['id'],
             ]
+        );
+    }
+
+    public function test_refund_mobile_app_payment_exception()
+    {
+        $mobileAppPaymentTypes = [
+            Payment::TYPE_APPLE_INITIAL_ORDER,
+            Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+            Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
+            Payment::TYPE_GOOGLE_INITIAL_ORDER,
+        ];
+
+        $due = $this->faker->numberBetween(11, 1000);
+
+        $payment = $this->fakePayment([
+            'type' => $this->faker->randomElement($mobileAppPaymentTypes),
+            'total_due' => $due,
+            'total_refunded' => 0,
+            'conversion_rate' => 1
+        ]);
+
+        $refundAmount = $due;
+
+        $gateway = $this->faker->randomElement(
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
+        );
+
+        $response = $this->call(
+            'PUT',
+            '/refund',
+            [
+                'data' => [
+                    'type' => 'refund',
+                    'attributes' => [
+                        'refund_amount' => $refundAmount,
+                        'gateway_name' => $gateway,
+                    ],
+                    'relationships' => [
+                        'payment' => [
+                            'data' => [
+                                'type' => 'payment',
+                                'id' => $payment['id']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $this->assertEquals(400, $response->getStatusCode());
+
+        $this->assertEquals(
+            [
+                [
+                    'title' => 'Payment refund failed.',
+                    'detail' => 'Payments made in-app by mobile applications my not be refunded on web application',
+                ],
+            ],
+            $response->decodeResponseJson('errors')
         );
     }
 }

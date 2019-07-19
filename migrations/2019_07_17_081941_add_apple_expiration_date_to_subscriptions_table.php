@@ -20,7 +20,7 @@ class AddAppleExpirationDateToSubscriptionsTable extends Migration
                     /**
                      * @var $table \Illuminate\Database\Schema\Blueprint
                      */
-                    $table->dateTime('apple_expiration_date')->nullable();
+                    $table->dateTime('apple_expiration_date')->after('payment_method_id')->nullable();
                 }
             );
     }

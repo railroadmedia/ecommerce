@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\RenewalService;
@@ -107,6 +108,10 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
             )
             ->andWhere(
                 $qb->expr()
+                    ->in('s.type', ':types')
+            )
+            ->andWhere(
+                $qb->expr()
                     ->orX(
                         $qb->expr()
                             ->isNull('s.totalCyclesDue'),
@@ -126,7 +131,14 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
                     )
             )
             ->setParameter('active', true)
-            ->setParameter('zero', 0);
+            ->setParameter('zero', 0)
+            ->setParameter(
+                'types',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_PAYMENT_PLAN,
+                ]
+            );
 
         $dueSubscriptions =
             $qb->getQuery()
