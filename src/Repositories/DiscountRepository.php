@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Carbon\Carbon;
 use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
@@ -43,7 +44,17 @@ class DiscountRepository extends RepositoryBase
         $qb->paginateByRequest($request)
             ->orderByRequest($request, $alias)
             ->select([$alias, $aliasProduct])
-            ->leftJoin($alias . '.product', $aliasProduct);
+            ->leftJoin($alias . '.product', $aliasProduct)
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->isNull($alias . '.expirationDate'),
+                        $qb->expr()
+                            ->lte($alias . '.expirationDate', ':now')
+                    )
+            )
+            ->setParameter('now', Carbon::now());
 
         $results =
             $qb->getQuery()
@@ -95,7 +106,17 @@ class DiscountRepository extends RepositoryBase
                 $qb->expr()
                     ->eq('d.active', ':active')
             )
-            ->setParameter('active', true);
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->isNull('d.expirationDate'),
+                        $qb->expr()
+                            ->lte('d.expirationDate', ':now')
+                    )
+            )
+            ->setParameter('active', true)
+            ->setParameter('now', Carbon::now());
 
         return $qb->getQuery()
             ->setResultCacheDriver($this->arrayCache)
@@ -123,7 +144,17 @@ class DiscountRepository extends RepositoryBase
                 $qb->expr()
                     ->in('d.type', ':types')
             )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->isNull('d.expirationDate'),
+                        $qb->expr()
+                            ->lte('d.expirationDate', ':now')
+                    )
+            )
             ->setParameter('active', true)
+            ->setParameter('now', Carbon::now())
             ->setParameter(
                 'types',
                 [
@@ -159,7 +190,17 @@ class DiscountRepository extends RepositoryBase
                 $qb->expr()
                     ->in('d.type', ':types')
             )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->isNull('d.expirationDate'),
+                        $qb->expr()
+                            ->lte('d.expirationDate', ':now')
+                    )
+            )
             ->setParameter('active', true)
+            ->setParameter('now', Carbon::now())
             ->setParameter(
                 'types',
                 [

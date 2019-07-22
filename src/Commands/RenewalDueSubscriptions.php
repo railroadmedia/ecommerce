@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
+use DateTimeInterface;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;

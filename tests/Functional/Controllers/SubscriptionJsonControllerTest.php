@@ -975,6 +975,138 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_renew_mobile_subscription_exception()
+    {
+        Mail::fake();
+
+        $userId = $this->createAndLogInNewUser();
+
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn(new Charge());
+
+        $product = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+            'subscription_interval_count' => 1,
+            'price' => 128.95,
+        ]);
+
+        $creditCard = $this->fakeCreditCard([
+            'payment_gateway_name' => 'brand',
+        ]);
+
+        $currency = $this->getCurrency();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCard['id'],
+            'billing_address_id' => $address['id'],
+            'currency' => $currency
+        ]);
+
+        $expectedTaxRateProduct =
+            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateShipping =
+            config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+
+        $expectedSubscriptionTaxes = round($expectedTaxRateProduct * $product['price'], 2);
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'type' => $this->faker->randomElement(
+                [Subscription::TYPE_APPLE_SUBSCRIPTION, Subscription::TYPE_GOOGLE_SUBSCRIPTION]
+            ),
+            'user_id' => $userId,
+            'paid_until' => Carbon::now()
+                        ->subDay(1)
+                        ->toDateTimeString(),
+            'is_active' => 1,
+            'interval_count' => 1,
+            'interval_type' => config('ecommerce.interval_type_yearly'),
+            'total_price' => round($product['price'] + $expectedSubscriptionTaxes, 2),
+            'tax' => $expectedSubscriptionTaxes
+        ]);
+
+        $userProduct = $this->fakeUserProduct([
+            'user_id' => $userId,
+            'product_id' => $product['id'],
+            'quantity' => 1,
+            'expiration_date' => Carbon::now()
+                ->subDay(1)
+                ->toDateTimeString(),
+        ]);
+
+        $response = $this->call(
+            'POST',
+            '/subscription-renew/' . $subscription['id']
+        );
+
+        // assert the response status code
+        $this->assertEquals(402, $response->getStatusCode());
+
+        // assert the validation errors
+        $this->assertEquals(
+            [
+                'title' => 'Subscription renew failed.',
+                'detail' => 'Subscription made by mobile application may not be renewed by web application',
+            ],
+            $response->decodeResponseJson('errors')
+        );
+
+        // Assert a message was not sent to the given users...
+        Mail::assertNotSent(
+            SubscriptionInvoice::class,
+            function ($mail) {
+                $mail->build();
+
+                return $mail->hasTo(auth()->user()['email']) &&
+                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_sender')) &&
+                    $mail->subject(
+                        config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_email_subject')
+                    );
+            }
+        );
+
+        // assert a mailable was not sent
+        Mail::assertNotSent(SubscriptionInvoice::class, 1);
+
+        // assert user product expiration date and subscription paid until dates remained the same
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => Carbon::now()
+                    ->subDay(1)
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscription['id'],
+                'is_active' => 1,
+                'paid_until' => Carbon::now()
+                    ->subDay(1)
+                    ->toDateTimeString(),
+            ]
+        );
+    }
+
     public function test_renew_subscription_credit_card()
     {
         Mail::fake();

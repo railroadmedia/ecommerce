@@ -110,7 +110,7 @@ class Subscription
     protected $paidUntil;
 
     /**
-     * @ORM\Column(type="datetime", name="apple_expiration_date")
+     * @ORM\Column(type="datetime", name="apple_expiration_date", nullable=true)
      *
      * @var \DateTime
      */
@@ -338,7 +338,7 @@ class Subscription
     /**
      * @param \DateTimeInterface $appleExpirationDate
      */
-    public function setAppleExpirationDate(DateTimeInterface $appleExpirationDate)
+    public function setAppleExpirationDate(?DateTimeInterface $appleExpirationDate)
     {
         $this->appleExpirationDate = $appleExpirationDate;
     }

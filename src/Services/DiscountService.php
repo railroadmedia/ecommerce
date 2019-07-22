@@ -164,6 +164,7 @@ class DiscountService
      */
     public function getApplicableDiscountsNames(Cart $cart, float $totalDueInItems, float $totalDueInShipping): array
     {
+        //
         $applicableDiscounts = $this->getApplicableDiscounts(
             $this->discountRepository->getActiveDiscounts(),
             $cart,
@@ -233,6 +234,7 @@ class DiscountService
      */
     public function getNonShippingDiscountsForCart(Cart $cart, float $totalDueInItems, float $totalDueInShipping): array
     {
+        //
         $discountsToApply = $this->getApplicableDiscounts(
             $this->discountRepository->getActiveDiscounts(),
             $cart,
@@ -269,6 +271,7 @@ class DiscountService
      */
     public function getShippingDiscountsForCart(Cart $cart, float $totalDueInItems, float $totalDueInShipping): array
     {
+        //
         return $this->getApplicableDiscounts(
             $this->discountRepository->getActiveShippingDiscounts(),
             $cart,
@@ -295,6 +298,7 @@ class DiscountService
         float $totalDueInShipping
     ): float
     {
+        //
         $activeDiscounts = $this->getApplicableDiscounts(
             $this->discountRepository->getActiveCartItemDiscounts(),
             $cart,
@@ -351,6 +355,7 @@ class DiscountService
         float $totalDueInShipping
     ): array
     {
+        //
         $applicableDiscounts = $this->getApplicableDiscounts(
             $this->discountRepository->getActiveDiscounts(),
             $cart,
@@ -396,6 +401,7 @@ class DiscountService
         float $totalDueInShipping
     ): array
     {
+        //
         $activeDiscounts = $this->getApplicableDiscounts(
             $this->discountRepository->getActiveCartItemDiscounts(),
             $cart,

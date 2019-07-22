@@ -8,7 +8,6 @@ use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\ProductCreateRequest;
@@ -22,11 +21,6 @@ use Throwable;
 
 class ProductJsonController extends Controller
 {
-    /**
-     * @var DiscountRepository
-     */
-    private $discountRepository;
-
     /**
      * @var EcommerceEntityManager
      */
@@ -60,7 +54,6 @@ class ProductJsonController extends Controller
     /**
      * ProductJsonController constructor.
      *
-     * @param DiscountRepository $discountRepository
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param OrderItemRepository $orderItemRepository
@@ -69,7 +62,6 @@ class ProductJsonController extends Controller
      * @param RemoteStorageService $remoteStorageService
      */
     public function __construct(
-        DiscountRepository $discountRepository,
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         OrderItemRepository $orderItemRepository,
@@ -78,7 +70,6 @@ class ProductJsonController extends Controller
         RemoteStorageService $remoteStorageService
     )
     {
-        $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->orderItemRepository = $orderItemRepository;

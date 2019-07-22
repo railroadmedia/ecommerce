@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -91,6 +92,13 @@ class Discount
      * @var bool
      */
     protected $visible;
+
+    /**
+     * @ORM\Column(type="datetime", name="expiration_date", nullable=true)
+     *
+     * @var \DateTime
+     */
+    protected $expirationDate;
 
     /**
      * @ORM\OneToMany(targetEntity="DiscountCriteria", mappedBy="discount")
@@ -220,6 +228,22 @@ class Discount
     public function setVisible(bool $visible)
     {
         $this->visible = $visible;
+    }
+
+    /**
+     * @return \DateTimeInterface|null
+     */
+    public function getExpirationDate(): ?DateTimeInterface
+    {
+        return $this->expirationDate;
+    }
+
+    /**
+     * @param \DateTimeInterface $expirationDate
+     */
+    public function setExpirationDate(?DateTimeInterface $expirationDate)
+    {
+        $this->expirationDate = $expirationDate;
     }
 
     /**

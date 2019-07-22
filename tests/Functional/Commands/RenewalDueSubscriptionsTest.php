@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Commands;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\TaxService;
@@ -44,6 +45,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ->willReturn($fakerCharge);
 
         $expectedPaymentTotalDues = [];
+        $initialSubscriptions = [];
 
         for ($i = 0; $i < 10; $i++) {
 
@@ -90,16 +92,30 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 ]
             );
 
+            $subscriptionPrice = $this->faker->numberBetween(50, 100);
+            $billingAddressEntity = new Address();
+
+            $billingAddressEntity->setCountry($address['country']);
+            $billingAddressEntity->setRegion($address['region']);
+            $billingAddressEntity->setZip($address['zip']);
+
+            $vat = $taxService->getTaxesDueForProductCost(
+                $subscriptionPrice,
+                $billingAddressEntity->toStructure()
+            );
+
             $subscription = $this->fakeSubscription(
                 [
                     'user_id' => $userId,
                     'type' => $this->faker->randomElement(
-                        [Product::TYPE_DIGITAL_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
+                        [Subscription::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
                     ),
                     'start_date' => Carbon::now()
                         ->subYear(2),
                     'paid_until' => Carbon::now()
                         ->subDay(1),
+                    'is_active' => true,
+                    'canceled_on' => null,
                     'product_id' => $product['id'],
                     'currency' => $currency,
                     'order_id' => $order['id'],
@@ -109,22 +125,13 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'total_cycles_paid' => 1,
                     'total_cycles_due' => $this->faker->numberBetween(2, 5),
                     'payment_method_id' => $paymentMethod['id'],
+                    'total_price' => $subscriptionPrice,
+                    'tax' => $vat,
                 ]
             );
 
             if ($subscription['type'] != config('ecommerce.type_payment_plan')) {
                 $initialSubscriptions[] = $subscription;
-
-                $billingAddressEntity = new Address();
-
-                $billingAddressEntity->setCountry($address['country']);
-                $billingAddressEntity->setRegion($address['region']);
-                $billingAddressEntity->setZip($address['zip']);
-
-                $vat = $taxService->getTaxesDueForProductCost(
-                    $subscription['total_price'],
-                    $billingAddressEntity->toStructure()
-                );
 
                 $paymentAmount = $currencyService->convertFromBase(
                     $subscription['total_price'] + $vat,
@@ -134,6 +141,68 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 $expectedPaymentDues[$subscription['id']] = $paymentAmount;
             }
         }
+
+        // add mobile subscription
+        $creditCardMobileSub = $this->fakeCreditCard();
+
+        $addressMobileSub = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE,
+                'country' => 'Canada',
+                'region' => $this->faker->word,
+                'zip' => $this->faker->postcode
+            ]
+        );
+
+        $paymentMethodMobileSub = $this->fakePaymentMethod(
+            [
+                'credit_card_id' => $creditCardMobileSub['id'],
+                'currency' => $currency,
+                'billing_address_id' => $addressMobileSub['id']
+            ]
+        );
+
+        $productMobileSub = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
+
+        $orderMobileSub = $this->fakeOrder();
+
+        $orderItemMobileSub = $this->fakeOrderItem(
+            [
+                'order_id' => $orderMobileSub['id'],
+                'product_id' => $productMobileSub['id'],
+                'quantity' => 1
+            ]
+        );
+
+        $mobileSubscription = $this->fakeSubscription(
+            [
+                'user_id' => $userId,
+                'type' => $this->faker->randomElement(
+                    [Subscription::TYPE_APPLE_SUBSCRIPTION, Subscription::TYPE_GOOGLE_SUBSCRIPTION]
+                ),
+                'start_date' => Carbon::now()
+                    ->subYear(2),
+                'paid_until' => Carbon::now()
+                    ->subDay(1),
+                'is_active' => true,
+                'canceled_on' => null,
+                'product_id' => $productMobileSub['id'],
+                'currency' => $currency,
+                'order_id' => $orderMobileSub['id'],
+                'brand' => config('ecommerce.brand'),
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'interval_count' => 1,
+                'total_cycles_paid' => 1,
+                'total_cycles_due' => $this->faker->numberBetween(2, 5),
+                'payment_method_id' => $paymentMethod['id'],
+                'total_price' => $subscriptionPrice,
+                'tax' => $vat,
+            ]
+        );
 
         $this->artisan('renewalDueSubscriptions');
 
@@ -185,6 +254,17 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 ]
             );
         }
+
+        // assert mobile subscription was not renewed
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $mobileSubscription['id'],
+                'paid_until' => Carbon::now()
+                    ->subDay(1),
+                'is_active' => 1,
+            ]
+        );
     }
 
     public function test_command_payment_fails()
@@ -247,12 +327,23 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]
         );
 
+        $billingAddressEntity = new Address();
+
+        $billingAddressEntity->setCountry($address['country']);
+        $billingAddressEntity->setRegion($address['region']);
+        $billingAddressEntity->setZip($address['zip']);
+
+        $subscriptionPrice = $this->faker->numberBetween(50, 100);
+
+        $vat = $taxService->getTaxesDueForProductCost(
+            $subscriptionPrice,
+            $billingAddressEntity->toStructure()
+        );
+
         $subscription = $this->fakeSubscription(
             [
                 'user_id' => $userId,
-                'type' => $this->faker->randomElement(
-                    [Product::TYPE_DIGITAL_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
-                ),
+                'type' => Subscription::TYPE_SUBSCRIPTION,
                 'start_date' => Carbon::now()
                     ->subYear(2),
                 'paid_until' => Carbon::now()
@@ -266,6 +357,8 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'total_cycles_paid' => 1,
                 'total_cycles_due' => $this->faker->numberBetween(2, 5),
                 'payment_method_id' => $paymentMethod['id'],
+                'total_price' => $subscriptionPrice,
+                'tax' => $vat,
             ]
         );
 
@@ -280,20 +373,10 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]
         );
 
-        $initialSubscriptions[] = $subscription;
-
-        $billingAddressEntity = new Address();
-
-        $billingAddressEntity->setCountry($address['country']);
-        $billingAddressEntity->setRegion($address['region']);
-        $billingAddressEntity->setZip($address['zip']);
-
         $paymentAmount = $currencyService->convertFromBase(
-            $subscription['total_price'],
+            $subscription['total_price'] + $vat,
             $currency
         );
-
-        $expectedPaymentDues[$subscription['id']] = $paymentAmount;
 
         $this->artisan('renewalDueSubscriptions');
 
@@ -410,11 +493,23 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 ]
             );
 
+            $subscriptionPrice = $this->faker->numberBetween(50, 100);
+            $billingAddressEntity = new Address();
+
+            $billingAddressEntity->setCountry($address['country']);
+            $billingAddressEntity->setRegion($address['region']);
+            $billingAddressEntity->setZip($address['zip']);
+
+            $vat = $taxService->getTaxesDueForProductCost(
+                $subscriptionPrice,
+                $billingAddressEntity->toStructure()
+            );
+
             $subscription = $this->fakeSubscription(
                 [
                     'user_id' => $userId,
                     'type' => $this->faker->randomElement(
-                        [Product::TYPE_DIGITAL_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
+                        [Subscription::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
                     ),
                     'start_date' => Carbon::now()
                         ->subYear(2),
@@ -431,6 +526,8 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'payment_method_id' => $paymentMethod['id'],
                     'is_active' => true,
                     'canceled_on' => null,
+                    'total_price' => $subscriptionPrice,
+                    'tax' => $vat,
                 ]
             );
 
@@ -490,11 +587,23 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 ]
             );
 
+            $subscriptionPrice = $this->faker->numberBetween(50, 100);
+            $billingAddressEntity = new Address();
+
+            $billingAddressEntity->setCountry($address['country']);
+            $billingAddressEntity->setRegion($address['region']);
+            $billingAddressEntity->setZip($address['zip']);
+
+            $vat = $taxService->getTaxesDueForProductCost(
+                $subscriptionPrice,
+                $billingAddressEntity->toStructure()
+            );
+
             $subscription = $this->fakeSubscription(
                 [
                     'user_id' => $userId,
                     'type' => $this->faker->randomElement(
-                        [Product::TYPE_DIGITAL_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
+                        [Subscription::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
                     ),
                     'start_date' => Carbon::now()
                         ->subYear(2),
@@ -509,6 +618,8 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'total_cycles_paid' => 1,
                     'total_cycles_due' => $this->faker->numberBetween(2, 5),
                     'payment_method_id' => $paymentMethod['id'],
+                    'total_price' => $subscriptionPrice,
+                    'tax' => $vat,
                 ]
             );
 
