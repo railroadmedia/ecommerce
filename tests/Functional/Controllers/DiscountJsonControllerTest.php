@@ -58,7 +58,8 @@ class DiscountJsonControllerTest extends EcommerceTestCase
     {
         $product = $this->fakeProduct();
         $discount = $this->faker->discount([
-            'product_id' => $product['id']
+            'product_id' => $product['id'],
+            'expiration_date' => Carbon::now()->toDateTimeString(),
         ]);
 
         $results  = $this->call(
@@ -161,7 +162,8 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                     'id' => $discount['id'],
                     'type' => 'discount',
                     'attributes' => [
-                        'name' => $newName
+                        'name' => $newName,
+                        'expiration_date' => Carbon::now()->addDays(4)->toDateTimeString(),
                     ],
                 ],
             ]
@@ -186,6 +188,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                         ),
                         [
                             'name' => $newName,
+                            'expiration_date' => Carbon::now()->addDays(4)->toDateTimeString(),
                             'updated_at' => Carbon::now()->toDateTimeString()
                         ]
                     ),
@@ -228,7 +231,8 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                 $discount,
                 [
                     'name' => $newName,
-                    'updated_at' => Carbon::now()->toDateTimeString()
+                    'expiration_date' => Carbon::now()->addDays(4)->toDateTimeString(),
+                    'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
             )
         );

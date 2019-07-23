@@ -29,6 +29,7 @@ class DiscountCreateRequest extends FormRequest
             'data.attributes.amount' => 'amount',
             'data.attributes.active' => 'active',
             'data.attributes.visible' => 'visible',
+            'data.attributes.expiration_date' => 'expiration date',
             'data.attributes.note' => 'note',
         ];
     }
@@ -48,6 +49,7 @@ class DiscountCreateRequest extends FormRequest
             'data.attributes.amount' => 'required|numeric',
             'data.attributes.active' => 'required|boolean',
             'data.attributes.visible' => 'required|boolean',
+            'data.attributes.expiration_date' => 'nullable|date',
             'data.attributes.note' => 'nullable|string',
         ];
     }
@@ -66,6 +68,7 @@ class DiscountCreateRequest extends FormRequest
                 'data.attributes.amount',
                 'data.attributes.active',
                 'data.attributes.visible',
+                'data.attributes.expiration_date',
                 'data.attributes.note',
                 'data.relationships.product'
             ]

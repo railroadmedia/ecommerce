@@ -30,6 +30,9 @@ class DiscountTransformer extends TransformerAbstract
             'active' => $discount->getActive(),
             'visible' => $discount->getVisible(),
             'note' => $discount->getNote(),
+            'expiration_date' => $discount->getExpirationDate() ?
+                $discount->getExpirationDate()
+                    ->toDateTimeString() : null,
             'created_at' => $discount->getCreatedAt() ?
                 $discount->getCreatedAt()
                     ->toDateTimeString() : null,

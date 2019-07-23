@@ -57,6 +57,7 @@ $.ajax({
                 "amount":62,
                 "product_category":null,
                 "active":true,
+                "expiration_date":null,
                 "visible":true,
                 "note":"some note",
                 "created_at":"2019-04-30 17:32:40",
@@ -159,6 +160,7 @@ $.ajax({
             "product_category":null,
             "active":false,
             "visible":false,
+            "expiration_date":null,
             "note":"some note",
             "created_at":"2019-04-30 17:35:37",
             "updated_at":null
@@ -224,6 +226,7 @@ Create a new discount.
 |body|data.attributes.product_category|yes||||
 |body|data.attributes.amount|yes||||
 |body|data.attributes.active|yes||||
+|body|data.attributes.expiration_date|||||
 |body|data.attributes.visible|yes||||
 |body|data.relationships.product.id|||||
 
@@ -238,6 +241,7 @@ Create a new discount.
     'data.attributes.amount' => 'required|numeric',
     'data.attributes.active' => 'required|boolean',
     'data.attributes.visible' => 'required|boolean',
+    'data.attributes.expiration_date' => 'nullable|date',
 ];
 ```
 
@@ -294,6 +298,7 @@ $.ajax({
             "product_category":null,
             "active":false,
             "visible":false,
+            "expiration_date":null,
             "note":"some note",
             "created_at":"2019-04-30 17:35:37",
             "updated_at":null
@@ -360,6 +365,7 @@ Update an existing discount.
 |body|data.attributes.amount|||||
 |body|data.attributes.active|||||
 |body|data.attributes.visible|||||
+|body|data.attributes.expiration_date|||||
 |body|data.relationships.product.id|||||
 
 ### Validation Rules
@@ -373,6 +379,7 @@ return [
     'data.attributes.amount' => 'numeric',
     'data.attributes.active' => 'boolean',
     'data.attributes.visible' => 'boolean',
+    'data.attributes.expiration_date' => 'nullable|date',
 ];
 ```
 
@@ -389,6 +396,7 @@ $.ajax({
             attributes: {
                 name: "accusamus",
                 amount: 85,
+                expiration_date: "2019-05-01 15:32:45",
             },
         }
     }, 
@@ -414,6 +422,7 @@ $.ajax({
             "product_category":null,
             "active":false,
             "visible":false,
+            "expiration_date":"2019-05-01 15:32:45",
             "note":"some note",
             "created_at":"2019-04-30 17:35:37",
             "updated_at":null

@@ -4580,6 +4580,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'active' => true,
                 'product_id' => $product['id'],
                 'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+                'expiration_date' => Carbon::now()->addDays(2)->toDateTimeString(), // discount not expired
                 'amount' => 10
             ]
         );
@@ -5154,6 +5155,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'type' => DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE,
                 'amount' => 10,
+                'expiration_date' => Carbon::now()->addDays(2)->toDateTimeString(), // discount not expired
             ]
         );
 
@@ -6243,6 +6245,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'active' => true,
                 'type' => DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE,
                 'amount' => 25,
+                'expiration_date' => Carbon::now()->addDays(2)->toDateTimeString(), // discount not expired
             ]
         );
 
@@ -7859,6 +7862,31 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'product_id' => $productTwo['id'],
         ]);
 
+        $discountThree = $this->fakeDiscount(
+            [
+                'active' => true,
+                'product_id' => $productOne['id'],
+                'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+                'amount' => 20,
+                'expiration_date' => Carbon::now()->subDays(2)->toDateTimeString(), // discount expired
+            ]
+        );
+
+        $discountCriteriaThree = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discountThree['id'],
+                'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
+                'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
+                'min' => '1',
+                'max' => '100',
+            ]
+        );
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaThree['id'],
+            'product_id' => $productOne['id'],
+        ]);
+
         $productOneQuantity = 2;
 
         $this->cartService->addToCart(
@@ -8534,6 +8562,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product_category' => $productTwoCategory,
                 'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
                 'amount' => 10,
+                'expiration_date' => Carbon::now()->addDays(2)->toDateTimeString(), // discount not expired
             ]
         );
 

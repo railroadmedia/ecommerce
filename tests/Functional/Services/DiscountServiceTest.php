@@ -72,6 +72,7 @@ class DiscountServiceTest extends EcommerceTestCase
             'updated_at' => null,
             'active' => true,
             'visible' => false,
+            'expiration_date' => Carbon::now()->addDays(2)->toDateTimeString(), // discount not expired
             'type' => DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
             'amount' => $this->faker->numberBetween(1, 10),
         ]);
@@ -127,6 +128,30 @@ class DiscountServiceTest extends EcommerceTestCase
             'type' => DiscountCriteriaService::SHIPPING_TOTAL_REQUIREMENT_TYPE,
             'min' => $this->faker->numberBetween(1, 3),
             'max' => $this->faker->numberBetween(5, 9), // not applicable
+        ]);
+
+        $discountFive = $this->fakeDiscount([
+            'product_id' => $productOne['id'],
+            'product_category' => null,
+            'updated_at' => null,
+            'active' => true,
+            'visible' => true,
+            'expiration_date' => Carbon::now()->subDays(2)->toDateTimeString(), // discount expired
+            'type' => DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(3, 5),
+        ]);
+
+        $discountCriteriaFive = $this->fakeDiscountCriteria([
+            'discount_id' => $discountOne['id'],
+            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+            'min' => $this->faker->numberBetween(1, 100),
+            'max' => $this->faker->numberBetween(500, 1000),
+        ]);
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaFive['id'],
+            'product_id' => $productOne['id'],
         ]);
 
         $productOneQuantity = $this->faker->numberBetween(4, 7);

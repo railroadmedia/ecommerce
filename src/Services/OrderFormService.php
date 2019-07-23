@@ -17,6 +17,11 @@ use Throwable;
 class OrderFormService
 {
     /**
+     * @var ActionLogService
+     */
+    private $actionLogService;
+
+    /**
      * @var CartService
      */
     private $cartService;
@@ -49,6 +54,7 @@ class OrderFormService
     /**
      * OrderFormService constructor.
      *
+     * @param ActionLogService $actionLogService
      * @param CartService $cartService ,
      * @param OrderClaimingService $orderClaimingService ,
      * @param PaymentService $paymentService ,
@@ -57,6 +63,7 @@ class OrderFormService
      * @param ShippingService $shippingService
      */
     public function __construct(
+        ActionLogService $actionLogService,
         CartService $cartService,
         OrderClaimingService $orderClaimingService,
         PaymentService $paymentService,
@@ -65,6 +72,7 @@ class OrderFormService
         ShippingService $shippingService
     )
     {
+        $this->actionLogService = $actionLogService;
         $this->cartService = $cartService;
         $this->orderClaimingService = $orderClaimingService;
         $this->paymentService = $paymentService;
@@ -247,6 +255,29 @@ class OrderFormService
         }
 
         $order = $this->orderClaimingService->claimOrder($purchaser, $payment, $cart, $shippingAddress);
+
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
+
+            $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $order);
+
+            if (!is_null($payment)) {
+                $paymentMethod = $payment->getPaymentMethod();
+
+                $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $payment);
+                $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $paymentMethod);
+            }
+        } else {
+            $customer = $purchaser->getCustomerEntity();
+
+            $this->actionLogService->recordCustomerAction($gateway, ActionLogService::ACTION_CREATE, $order, $customer);
+
+            if (!is_null($payment)) {
+                $paymentMethod = $payment->getPaymentMethod();
+
+                $this->actionLogService->recordCustomerAction($gateway, ActionLogService::ACTION_CREATE, $payment, $customer);
+                $this->actionLogService->recordCustomerAction($gateway, ActionLogService::ACTION_CREATE, $paymentMethod, $customer);
+            }
+        }
 
         event(new GiveContentAccess($order));
 

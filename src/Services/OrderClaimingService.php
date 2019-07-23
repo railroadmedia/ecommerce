@@ -27,6 +27,11 @@ use Throwable;
 class OrderClaimingService
 {
     /**
+     * @var ActionLogService
+     */
+    private $actionLogService;
+
+    /**
      * @var CartService
      */
     private $cartService;
@@ -64,6 +69,7 @@ class OrderClaimingService
     /**
      * OrderClaimingService constructor.
      *
+     * @param ActionLogService $actionLogService
      * @param CartService $cartService
      * @param DiscountService $discountService
      * @param ShippingService $shippingService
@@ -73,6 +79,7 @@ class OrderClaimingService
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        ActionLogService $actionLogService,
         CartService $cartService,
         DiscountService $discountService,
         ShippingService $shippingService,
@@ -82,6 +89,7 @@ class OrderClaimingService
         UserProviderInterface $userProvider
     )
     {
+        $this->actionLogService = $actionLogService;
         $this->cartService = $cartService;
         $this->discountService = $discountService;
         $this->shippingService = $shippingService;
@@ -239,6 +247,8 @@ class OrderClaimingService
                 $cart->getPaymentPlanNumberOfPayments()
             );
 
+            $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $subscription);
+
             $this->entityManager->persist($subscription);
 
             event(new SubscriptionCreated($subscription));
@@ -250,9 +260,19 @@ class OrderClaimingService
 
         $this->entityManager->flush();
 
-        event(new OrderEvent($order, $payment));
+        // entities ids are needed for the next block
 
-        // product access via event?
+        if (!is_null($subscription)) {
+            $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $subscription);
+        }
+
+        if (!empty($subscriptions)) {
+            foreach ($subscriptions as $sub) {
+                $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $sub);
+            }
+        }
+
+        event(new OrderEvent($order, $payment));
 
         return $order;
     }

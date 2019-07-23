@@ -242,6 +242,7 @@
 | `product_id` | INT(11) |  | NULL |  |
 | `product_category` | VARCHAR(255) |  | NULL |  |
 | `active` | TINYINT(1) | Not null |  |  |
+| `expiration_date` | DATETIME |  |  NULL |  |
 | `visible` | TINYINT(1) |  | NULL |  |
 | `created_at` | DATETIME | Not null |  |  |
 | `updated_at` | DATETIME |  | NULL |  |

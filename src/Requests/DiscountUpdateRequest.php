@@ -28,7 +28,9 @@ class DiscountUpdateRequest extends FormRequest
             'data.attributes.type' => 'type',
             'data.attributes.amount' => 'amount',
             'data.attributes.active' => 'active',
-            'data.attributes.visible' => 'visible'
+            'data.attributes.visible' => 'visible',
+            'data.attributes.expiration_date' => 'expiration date',
+            'data.attributes.note' => 'note',
         ];
     }
 
@@ -47,6 +49,7 @@ class DiscountUpdateRequest extends FormRequest
             'data.attributes.amount' => 'numeric',
             'data.attributes.active' => 'boolean',
             'data.attributes.visible' => 'boolean',
+            'data.attributes.expiration_date' => 'nullable|date',
             'data.attributes.note' => 'nullable|string',
         ];
     }
@@ -66,8 +69,9 @@ class DiscountUpdateRequest extends FormRequest
                 'data.attributes.amount',
                 'data.attributes.active',
                 'data.attributes.visible',
+                'data.attributes.expiration_date',
                 'data.attributes.note',
-                'data.relationships.product'
+                'data.relationships.product',
             ]
         );
     }

@@ -51,7 +51,7 @@ class DiscountRepository extends RepositoryBase
                         $qb->expr()
                             ->isNull($alias . '.expirationDate'),
                         $qb->expr()
-                            ->lte($alias . '.expirationDate', ':now')
+                            ->gte($alias . '.expirationDate', ':now')
                     )
             )
             ->setParameter('now', Carbon::now());
@@ -112,7 +112,7 @@ class DiscountRepository extends RepositoryBase
                         $qb->expr()
                             ->isNull('d.expirationDate'),
                         $qb->expr()
-                            ->lte('d.expirationDate', ':now')
+                            ->gte('d.expirationDate', ':now')
                     )
             )
             ->setParameter('active', true)
@@ -150,7 +150,7 @@ class DiscountRepository extends RepositoryBase
                         $qb->expr()
                             ->isNull('d.expirationDate'),
                         $qb->expr()
-                            ->lte('d.expirationDate', ':now')
+                            ->gte('d.expirationDate', ':now')
                     )
             )
             ->setParameter('active', true)
@@ -196,7 +196,7 @@ class DiscountRepository extends RepositoryBase
                         $qb->expr()
                             ->isNull('d.expirationDate'),
                         $qb->expr()
-                            ->lte('d.expirationDate', ':now')
+                            ->gte('d.expirationDate', ':now')
                     )
             )
             ->setParameter('active', true)
