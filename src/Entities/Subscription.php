@@ -40,6 +40,10 @@ class Subscription
     const TYPE_GOOGLE_SUBSCRIPTION = 'google_subscription';
     const TYPE_PAYMENT_PLAN = 'payment plan';
 
+    // log actions names
+    const ACTION_RENEW = 'renew';
+    const ACTION_CANCEL = 'cancel';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
@@ -30,6 +31,7 @@ use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentIndexRequest;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\TaxService;
@@ -40,6 +42,11 @@ use Throwable;
 
 class PaymentJsonController extends Controller
 {
+    /**
+     * @var ActionLogService
+     */
+    private $actionLogService;
+
     /**
      * @var CreditCardRepository
      */
@@ -100,6 +107,11 @@ class PaymentJsonController extends Controller
      */
     private $userPaymentMethodsRepository;
 
+    /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
     // subscription interval type
     const INTERVAL_TYPE_DAILY = 'day';
     const INTERVAL_TYPE_MONTHLY = 'month';
@@ -108,6 +120,7 @@ class PaymentJsonController extends Controller
     /**
      * PaymentJsonController constructor.
      *
+     * @param ActionLogService $actionLogService
      * @param CreditCardRepository $creditCardRepository
      * @param CurrencyService $currencyService
      * @param EcommerceEntityManager $entityManager
@@ -120,8 +133,10 @@ class PaymentJsonController extends Controller
      * @param SubscriptionRepository $subscriptionRepository
      * @param TaxService $taxService
      * @param UserPaymentMethodsRepository $userPaymentMethodsRepository
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        ActionLogService $actionLogService,
         CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
         EcommerceEntityManager $entityManager,
@@ -133,9 +148,11 @@ class PaymentJsonController extends Controller
         StripePaymentGateway $stripePaymentGateway,
         SubscriptionRepository $subscriptionRepository,
         TaxService $taxService,
-        UserPaymentMethodsRepository $userPaymentMethodsRepository
+        UserPaymentMethodsRepository $userPaymentMethodsRepository,
+        UserProviderInterface $userProvider
     )
     {
+        $this->actionLogService = $actionLogService;
         $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;
@@ -148,6 +165,7 @@ class PaymentJsonController extends Controller
         $this->subscriptionRepository = $subscriptionRepository;
         $this->taxService = $taxService;
         $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -494,6 +512,20 @@ class PaymentJsonController extends Controller
         }
 
         $this->entityManager->flush();
+
+        /** @var $currentUser User */
+        $currentUser = $this->userProvider->getCurrentUser();
+
+        $brand = $payment->getGatewayName();
+        $actor = $currentUser->getEmail();
+        $actorId = $currentUser->getId();
+        $actorRole = $currentUser->getId() == $user->getId() ? ActionLogService::ROLE_USER : ActionLogService::ROLE_ADMIN;
+
+        if (!is_null($subscription)) {
+            $this->actionLogService->recordAction($brand, Subscription::ACTION_RENEW, $subscription, $actor, $actorId, $actorRole);
+        }
+
+        $this->actionLogService->recordAction($brand, ActionLogService::ACTION_CREATE, $payment, $actor, $actorId, $actorRole);
 
         return ResponseService::payment($payment);
     }

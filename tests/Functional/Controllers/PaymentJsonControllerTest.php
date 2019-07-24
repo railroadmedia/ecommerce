@@ -7,7 +7,9 @@ use Railroad\Ecommerce\Controllers\PaymentJsonController;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Stripe\Card;
@@ -27,7 +29,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
     public function test_user_store_payment()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
         $due = $this->faker->numberBetween(0, 1000);
         $currency = $this->getCurrency();
@@ -46,7 +49,11 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $fakerCharge->status = 'succeeded';
         $this->stripeExternalHelperMock->method('chargeCard')->willReturn($fakerCharge);
 
-        $creditCard = $this->fakeCreditCard();
+        $creditCard = $this->fakeCreditCard(
+            [
+                'payment_gateway_name' => $gateway
+            ]
+        );
 
         $address = $this->fakeAddress([
             'type' => Address::BILLING_ADDRESS_TYPE,
@@ -56,7 +63,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = $this->fakePaymentMethod([
             'credit_card_id' => $creditCard['id'],
-            'billing_address_id' => $address['id']
+            'billing_address_id' => $address['id'],
         ]);
 
         $userPaymentMethod = $this->fakeUserPaymentMethod([
@@ -145,6 +152,19 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $productTax,
                 'shipping_taxes_paid' => $shippingTax,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -443,7 +463,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     public function test_admin_store_any_payment()
     {
         $due = $this->faker->numberBetween(0, 1000);
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
         $customer = $this->fakeUser();
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
@@ -463,7 +484,11 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $fakerCharge->status = 'succeeded';
         $this->stripeExternalHelperMock->method('chargeCard')->willReturn($fakerCharge);
 
-        $creditCard = $this->fakeCreditCard();
+        $creditCard = $this->fakeCreditCard(
+            [
+                'payment_gateway_name' => $gateway
+            ]
+        );
 
         $address = $this->fakeAddress([
             'type' => Address::BILLING_ADDRESS_TYPE,
@@ -562,6 +587,19 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $productTax,
                 'shipping_taxes_paid' => $shippingTax,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }
@@ -745,7 +783,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
     public function test_user_store_payment_renew_subscription()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
         $due = $this->faker->numberBetween(0, 1000);
         $currency = $this->getCurrency();
@@ -770,7 +809,11 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'interval_count' => 1,
         ]);
 
-        $creditCard = $this->fakeCreditCard();
+        $creditCard = $this->fakeCreditCard(
+            [
+                'payment_gateway_name' => $gateway
+            ]
+        );
 
         $address = $this->fakeAddress([
             'type' => Address::BILLING_ADDRESS_TYPE,
@@ -902,6 +945,32 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             [
                 'subscription_id' => $subscription['id'],
                 'payment_id' => $decodedResponse['data']['id']
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => Subscription::class,
+                'resource_id' => 1,
+                'action_name' => Subscription::ACTION_RENEW,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }

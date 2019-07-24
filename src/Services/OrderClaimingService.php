@@ -18,6 +18,7 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -247,8 +248,6 @@ class OrderClaimingService
                 $cart->getPaymentPlanNumberOfPayments()
             );
 
-            $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $subscription);
-
             $this->entityManager->persist($subscription);
 
             event(new SubscriptionCreated($subscription));
@@ -261,14 +260,36 @@ class OrderClaimingService
         $this->entityManager->flush();
 
         // entities ids are needed for the next block
+        $actionName = ActionLogService::ACTION_CREATE;
+        $actor = $actorId = $actorRole = null;
+        $brand = $purchaser->getBrand();
+
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
+
+            /** @var $currentUser User */
+            $currentUser = $this->userProvider->getCurrentUser();
+
+            /** @var $purchaserUser User */
+            $purchaserUser = $purchaser->getUserObject();
+
+            $actor = $currentUser->getEmail();
+            $actorId = $currentUser->getId();
+            $actorRole = $currentUser->getId() == $purchaserUser->getId() ? ActionLogService::ROLE_USER : ActionLogService::ROLE_ADMIN;
+        } else {
+            $customer = $purchaser->getCustomerEntity();
+
+            $actor = $customer->getEmail();
+            $actorId = $customer->getId();
+            $actorRole = ActionLogService::ROLE_CUSTOMER;
+        }
 
         if (!is_null($subscription)) {
-            $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $subscription);
+            $this->actionLogService->recordAction($brand, $actionName, $subscription, $actor, $actorId, $actorRole);
         }
 
         if (!empty($subscriptions)) {
             foreach ($subscriptions as $sub) {
-                $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $sub);
+                $this->actionLogService->recordAction($brand, $actionName, $sub, $actor, $actorId, $actorRole);
             }
         }
 

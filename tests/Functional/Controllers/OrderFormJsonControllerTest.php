@@ -11,6 +11,7 @@ use Illuminate\Session\Store;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
@@ -19,6 +20,7 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\CurrencyService;
@@ -675,7 +677,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_submit_order_credit_card_payment()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
         $currency = $this->getCurrency();
         $fingerPrint = $this->faker->word;
         $brand = 'drumeo';
@@ -1050,9 +1053,49 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_taxes_paid' => $expectedShippingTaxes,
             ]
         );
+
+        // assert log entries
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Order::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => PaymentMethod::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
     }
 
-    public function test_submit_order_overrides() // todo - update with override specs
+    public function test_submit_order_overrides()
     {
         $userId = $this->createAndLogInNewUser();
         $currency = $this->getCurrency();
@@ -4325,7 +4368,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_submit_order_subscription()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
@@ -4467,6 +4511,59 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedProductTaxes,
                 'shipping_taxes_paid' => $expectedShippingTaxes,
+            ]
+        );
+
+        // assert log entries
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Order::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => PaymentMethod::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Subscription::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -7000,6 +7097,45 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_taxes_paid' => $expectedShippingTaxes,
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Order::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $billingEmailAddress,
+                'actor_id' => $customerId,
+                'actor_role' => ActionLogService::ROLE_CUSTOMER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $billingEmailAddress,
+                'actor_id' => $customerId,
+                'actor_role' => ActionLogService::ROLE_CUSTOMER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => PaymentMethod::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $billingEmailAddress,
+                'actor_id' => $customerId,
+                'actor_role' => ActionLogService::ROLE_CUSTOMER,
+            ]
+        );
     }
 
     public function test_submit_order_new_user()
@@ -7007,7 +7143,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->authManagerMock =
             $this->getMockBuilder(AuthManager::class)
                 ->disableOriginalConstructor()
-                ->setMethods(['guard'])
+                ->setMethods(['guard', 'id'])
                 ->getMock();
 
         $this->sessionGuardMock =
@@ -7017,6 +7153,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->authManagerMock->method('guard')
             ->willReturn($this->sessionGuardMock);
+
+        $this->authManagerMock->method('id')
+            ->willReturn(1);
 
         $this->app->instance(Factory::class, $this->authManagerMock);
 
@@ -7290,6 +7429,45 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedProductTaxes,
                 'shipping_taxes_paid' => $expectedShippingTaxes,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Order::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $accountCreationMail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $accountCreationMail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => PaymentMethod::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $accountCreationMail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -8668,7 +8846,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_submit_subscription_for_other_user()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
@@ -8860,11 +9039,64 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_taxes_paid' => $expectedShippingTaxes,
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Order::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => PaymentMethod::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Subscription::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
     }
 
     public function test_admin_submit_product_for_other_user()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
@@ -9029,11 +9261,51 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_taxes_paid' => $expectedShippingTaxes,
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Order::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => PaymentMethod::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
     }
 
     public function test_admin_submit_order_on_different_branch()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
@@ -9200,6 +9472,45 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedProductTaxes,
                 'shipping_taxes_paid' => $expectedShippingTaxes,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Order::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => PaymentMethod::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }

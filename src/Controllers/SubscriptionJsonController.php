@@ -18,6 +18,7 @@ use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\FailedSubscriptionsRequest;
 use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
 use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\ResponseService;
@@ -28,6 +29,11 @@ use Throwable;
 
 class SubscriptionJsonController extends Controller
 {
+    /**
+     * @var ActionLogService
+     */
+    private $actionLogService;
+
     /**
      * @var EcommerceEntityManager
      */
@@ -66,6 +72,7 @@ class SubscriptionJsonController extends Controller
     /**
      * SubscriptionJsonController constructor.
      *
+     * @param ActionLogService $actionLogService
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param PermissionService $permissionService
@@ -75,6 +82,7 @@ class SubscriptionJsonController extends Controller
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        ActionLogService $actionLogService,
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService,
@@ -84,6 +92,7 @@ class SubscriptionJsonController extends Controller
         UserProviderInterface $userProvider
     )
     {
+        $this->actionLogService = $actionLogService;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->permissionService = $permissionService;
@@ -241,13 +250,28 @@ class SubscriptionJsonController extends Controller
             )
         );
 
-        $response = null;
+        $response = $payment = null;
 
         try {
 
-            $this->renewalService->renew($subscription);
+            $payment = $this->renewalService->renew($subscription);
 
             $response = ResponseService::subscription($subscription);
+
+            $this->userProductService->updateSubscriptionProducts($subscription);
+
+            /** @var $currentUser User */
+            $currentUser = $this->userProvider->getCurrentUser();
+
+            $brand = $subscription->getBrand();
+            $actor = $currentUser->getEmail();
+            $actorId = $currentUser->getId();
+            $actorRole = $currentUser->getId() == $subscription->getUser()->getId() ?
+                            ActionLogService::ROLE_USER:
+                            ActionLogService::ROLE_ADMIN;
+
+            $this->actionLogService->recordAction($brand, Subscription::ACTION_RENEW, $subscription, $actor, $actorId, $actorRole);
+            $this->actionLogService->recordAction($brand, ActionLogService::ACTION_CREATE, $payment, $actor, $actorId, $actorRole);
 
         } catch (Exception $exception) {
 
@@ -261,8 +285,6 @@ class SubscriptionJsonController extends Controller
                 402
             );
         }
-
-        $this->userProductService->updateSubscriptionProducts($subscription);
 
         return $response;
     }

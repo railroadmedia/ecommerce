@@ -3,9 +3,11 @@
 namespace Railroad\Ecommerce\Services;
 
 use Exception;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\StripeCardException;
@@ -52,6 +54,11 @@ class OrderFormService
     private $shippingService;
 
     /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
+    /**
      * OrderFormService constructor.
      *
      * @param ActionLogService $actionLogService
@@ -61,6 +68,7 @@ class OrderFormService
      * @param PayPalPaymentGateway $payPalPaymentGateway ,
      * @param PurchaserService $purchaserService ,
      * @param ShippingService $shippingService
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         ActionLogService $actionLogService,
@@ -69,7 +77,8 @@ class OrderFormService
         PaymentService $paymentService,
         PayPalPaymentGateway $payPalPaymentGateway,
         PurchaserService $purchaserService,
-        ShippingService $shippingService
+        ShippingService $shippingService,
+        UserProviderInterface $userProvider
     )
     {
         $this->actionLogService = $actionLogService;
@@ -79,6 +88,7 @@ class OrderFormService
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->purchaserService = $purchaserService;
         $this->shippingService = $shippingService;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -256,27 +266,36 @@ class OrderFormService
 
         $order = $this->orderClaimingService->claimOrder($purchaser, $payment, $cart, $shippingAddress);
 
+        $actionName = ActionLogService::ACTION_CREATE;
+        $actor = $actorId = $actorRole = null;
+        $defaultBrand = config('ecommerce.default_gateway') ?? config('ecommerce.brand');
+        $brand = $request->get('gateway', $defaultBrand);
+
         if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
 
-            $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $order);
+            /** @var $currentUser User */
+            $currentUser = $this->userProvider->getCurrentUser();
 
-            if (!is_null($payment)) {
-                $paymentMethod = $payment->getPaymentMethod();
+            /** @var $purchaserUser User */
+            $purchaserUser = $purchaser->getUserObject();
 
-                $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $payment);
-                $this->actionLogService->recordUserAction($gateway, ActionLogService::ACTION_CREATE, $paymentMethod);
-            }
+            $actor = $currentUser->getEmail();
+            $actorId = $currentUser->getId();
+            $actorRole = $currentUser->getId() == $purchaserUser->getId() ? ActionLogService::ROLE_USER : ActionLogService::ROLE_ADMIN;
         } else {
             $customer = $purchaser->getCustomerEntity();
 
-            $this->actionLogService->recordCustomerAction($gateway, ActionLogService::ACTION_CREATE, $order, $customer);
+            $actor = $customer->getEmail();
+            $actorId = $customer->getId();
+            $actorRole = ActionLogService::ROLE_CUSTOMER;
+        }
 
-            if (!is_null($payment)) {
-                $paymentMethod = $payment->getPaymentMethod();
+        $this->actionLogService->recordAction($brand, $actionName, $order, $actor, $actorId, $actorRole);
 
-                $this->actionLogService->recordCustomerAction($gateway, ActionLogService::ACTION_CREATE, $payment, $customer);
-                $this->actionLogService->recordCustomerAction($gateway, ActionLogService::ACTION_CREATE, $paymentMethod, $customer);
-            }
+        if (!is_null($payment)) {
+            $paymentMethod = $payment->getPaymentMethod();
+            $this->actionLogService->recordAction($brand, $actionName, $payment, $actor, $actorId, $actorRole);
+            $this->actionLogService->recordAction($brand, $actionName, $paymentMethod, $actor, $actorId, $actorRole);
         }
 
         event(new GiveContentAccess($order));

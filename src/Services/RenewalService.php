@@ -111,7 +111,7 @@ class RenewalService
     /**
      * @param Subscription $subscription
      *
-     * @return Subscription
+     * @return Payment
      *
      * @throws Throwable
      */
@@ -419,6 +419,6 @@ class RenewalService
 
         $this->userProductService->updateSubscriptionProducts($subscription);
 
-        return $subscription;
+        return $payment;
     }
 }

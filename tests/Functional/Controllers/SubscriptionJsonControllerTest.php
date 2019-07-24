@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
@@ -16,6 +17,7 @@ use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Stripe\Card;
@@ -1230,7 +1232,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
     public function test_renew_subscription_paypal()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
+        $brand = 'drumeo';
 
         $this->permissionServiceMock->method('can')->willReturn(true);
 
@@ -1278,7 +1282,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_yearly'),
             'total_price' => round($product['price'] + $expectedSubscriptionTaxes, 2),
-            'tax' => $expectedSubscriptionTaxes
+            'tax' => $expectedSubscriptionTaxes,
+            'brand' => $brand,
         ]);
 
         $this->expectsEvents([SubscriptionRenewed::class, SubscriptionUpdated::class]);
@@ -1322,6 +1327,32 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedSubscriptionTaxes,
                 'shipping_taxes_paid' => 0,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Subscription::class,
+                'resource_id' => 1,
+                'action_name' => Subscription::ACTION_RENEW,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -1460,7 +1491,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
     public function test_renew_subscription_payment_failed_not_disabled()
     {
-        $userId = $this->createAndLogInNewUser();
+        $brand = 'drumeo';
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $this->permissionServiceMock->method('can')->willReturn(true);
 
@@ -1517,7 +1550,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_yearly'),
             'total_price' => round($product['price'] + $tax, 2),
-            'tax' => $tax
+            'tax' => $tax,
+            'brand' => $brand,
         ]);
 
         $userProduct = $this->fakeUserProduct([
@@ -1556,6 +1590,19 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',
             $subscription
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
         );
     }
 

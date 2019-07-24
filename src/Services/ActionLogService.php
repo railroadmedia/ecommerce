@@ -3,9 +3,11 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\ActionLog;
 use Railroad\Ecommerce\Entities\Customer;
 use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 class ActionLogService
 {
@@ -40,6 +42,38 @@ class ActionLogService
     {
         $this->ecommerceEntityManager = $ecommerceEntityManager;
         $this->userProvider = $userProvider;
+    }
+
+    /**
+     * @param string $brand
+     * @param string $actionName
+     * @param object $resource
+     * @param string $actor
+     * @param int $actorId
+     * @param string $actorRole
+     *
+     * @throws Throwable
+     */
+    public function recordAction(
+        string $brand,
+        string $actionName,
+        $resource,
+        string $actor,
+        int $actorId,
+        string $actorRole
+    )
+    {
+        $actionLog = $this->createActionLogEntity();
+
+        $actionLog->setBrand($brand);
+        $actionLog->setResourceName(get_class($resource));
+        $actionLog->setResourceId($resource->getId());
+        $actionLog->setActionName($actionName);
+        $actionLog->setActor($actor);
+        $actionLog->setActorId($actorId);
+        $actionLog->setActorRole($actorRole);
+
+        $this->saveActionLogEntity($actionLog);
     }
 
     /**
