@@ -13,9 +13,12 @@ use Railroad\Ecommerce\Controllers\GooglePlayStoreController;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use ReceiptValidator\GooglePlay\SubscriptionResponse;
 use Google_Service_AndroidPublisher_SubscriptionPurchase;
@@ -99,6 +102,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
     {
         $receipt = $this->faker->word;
         $email = $this->faker->email;
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
 
         $product = $this->fakeProduct(
             [
@@ -235,10 +240,52 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                     ->toDateTimeString(),
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Subscription::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Order::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
+            ]
+        );
     }
 
     public function test_process_notification_subscription_renewal()
     {
+        $brand = 'brand';
+        config()->set('ecommerce.brand', $brand);
+
         Mail::fake();
 
         $email = $this->faker->email;
@@ -385,10 +432,39 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                     );
             }
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Subscription::class,
+                'resource_id' => 1,
+                'action_name' => Subscription::ACTION_RENEW,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
+            ]
+        );
     }
 
     public function test_process_notification_subscription_cancel()
     {
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
         $userId  = $this->createAndLogInNewUser();
         $receipt = $this->faker->word;
 
@@ -483,6 +559,19 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'paid_until' => $paidUntil,
                 'canceled_on' => Carbon::now(),
                 'external_app_store_id' => $purchaseToken,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Subscription::class,
+                'resource_id' => 1,
+                'action_name' => Subscription::ACTION_CANCEL,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
             ]
         );
     }

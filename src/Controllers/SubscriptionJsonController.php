@@ -8,11 +8,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\FailedSubscriptionsRequest;
@@ -250,7 +252,19 @@ class SubscriptionJsonController extends Controller
             )
         );
 
+        $oldSubscriptionState = clone($subscription);
+
         $response = $payment = null;
+
+        /** @var $currentUser User */
+        $currentUser = $this->userProvider->getCurrentUser();
+
+        $brand = $subscription->getBrand();
+        $actor = $currentUser->getEmail();
+        $actorId = $currentUser->getId();
+        $actorRole = $currentUser->getId() == $subscription->getUser()->getId() ?
+                        ActionLogService::ROLE_USER:
+                        ActionLogService::ROLE_ADMIN;
 
         try {
 
@@ -258,22 +272,39 @@ class SubscriptionJsonController extends Controller
 
             $response = ResponseService::subscription($subscription);
 
-            $this->userProductService->updateSubscriptionProducts($subscription);
-
-            /** @var $currentUser User */
-            $currentUser = $this->userProvider->getCurrentUser();
-
-            $brand = $subscription->getBrand();
-            $actor = $currentUser->getEmail();
-            $actorId = $currentUser->getId();
-            $actorRole = $currentUser->getId() == $subscription->getUser()->getId() ?
-                            ActionLogService::ROLE_USER:
-                            ActionLogService::ROLE_ADMIN;
-
             $this->actionLogService->recordAction($brand, Subscription::ACTION_RENEW, $subscription, $actor, $actorId, $actorRole);
             $this->actionLogService->recordAction($brand, ActionLogService::ACTION_CREATE, $payment, $actor, $actorId, $actorRole);
 
         } catch (Exception $exception) {
+
+            if ($exception instanceof PaymentFailedException) {
+
+                // if a payment record/entity was created
+
+                $this->actionLogService->recordAction(
+                    $brand,
+                    Payment::ACTION_FAILED_RENEW,
+                    $exception->getPayment(),
+                    $actor,
+                    $actorId,
+                    $actorRole
+                );
+            }
+
+            if ($subscription->getNote() == RenewalService::DEACTIVATION_MESSAGE &&
+                $subscription->getIsActive() != $oldSubscriptionState->getIsActive()) {
+
+                // if subscription was deactivated in current request
+
+                $this->actionLogService->recordAction(
+                    $brand,
+                    Subscription::ACTION_DEACTIVATED,
+                    $subscription,
+                    $actor,
+                    $actorId,
+                    $actorRole
+                );
+            }
 
             $response = response()->json(
                 [
@@ -285,6 +316,8 @@ class SubscriptionJsonController extends Controller
                 402
             );
         }
+
+        $this->userProductService->updateSubscriptionProducts($subscription);
 
         return $response;
     }

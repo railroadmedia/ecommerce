@@ -27,6 +27,11 @@ use Throwable;
 class GooglePlayStoreService
 {
     /**
+     * @var ActionLogService
+     */
+    private $actionLogService;
+
+    /**
      * @var EcommerceEntityManager
      */
     private $entityManager;
@@ -59,6 +64,7 @@ class GooglePlayStoreService
     /**
      * GooglePlayStoreService constructor.
      *
+     * @param ActionLogService $actionLogService
      * @param GooglePlayStoreGateway $googlePlayStoreGateway,
      * @param EcommerceEntityManager $entityManager,
      * @param ProductRepository $productRepository,
@@ -67,6 +73,7 @@ class GooglePlayStoreService
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        ActionLogService $actionLogService,
         GooglePlayStoreGateway $googlePlayStoreGateway,
         EcommerceEntityManager $entityManager,
         ProductRepository $productRepository,
@@ -75,6 +82,7 @@ class GooglePlayStoreService
         UserProviderInterface $userProvider
     )
     {
+        $this->actionLogService = $actionLogService;
         $this->googlePlayStoreGateway = $googlePlayStoreGateway;
         $this->entityManager = $entityManager;
         $this->productRepository = $productRepository;
@@ -135,13 +143,34 @@ class GooglePlayStoreService
 
         $payment = $this->createOrderPayment($order);
 
-        $this->createOrderSubscription($purchasedProduct, $order, $payment, $receipt);
+        $subscription = $this->createOrderSubscription($purchasedProduct, $order, $payment, $receipt);
 
         $receipt->setPayment($payment);
 
         $this->entityManager->flush();
 
         event(new OrderEvent($order, $payment));
+
+        $actionName = ActionLogService::ACTION_CREATE;
+        $brand = $subscription->getBrand();
+
+        $this->actionLogService->recordSystemAction(
+            $brand,
+            $actionName,
+            $order
+        );
+
+        $this->actionLogService->recordSystemAction(
+            $brand,
+            $actionName,
+            $payment
+        );
+
+        $this->actionLogService->recordSystemAction(
+            $brand,
+            $actionName,
+            $subscription
+        );
 
         return $user;
     }
@@ -189,8 +218,13 @@ class GooglePlayStoreService
         $oldSubscription = clone($subscription);
 
         $subscriptionEventType = 'renewed';
+        $subscriptionActionName = null;
+        $brand = $subscription->getBrand();
 
         if ($receipt->getNotificationType() == GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE) {
+
+            $subscriptionActionName = Subscription::ACTION_RENEW;
+
             $payment = $this->createSubscriptionRenewalPayment($subscription);
 
             $this->renewSubscription($subscription);
@@ -201,7 +235,15 @@ class GooglePlayStoreService
 
             event(new SubscriptionRenewed($subscription, $payment));
 
+             $this->actionLogService->recordSystemAction(
+                $brand,
+                ActionLogService::ACTION_CREATE,
+                $payment
+            );
+
         } else {
+
+            $subscriptionActionName = Subscription::ACTION_CANCEL;
 
             $this->cancelSubscription($subscription, $receipt);
 
@@ -209,6 +251,12 @@ class GooglePlayStoreService
 
             $subscriptionEventType = 'canceled';
         }
+
+        $this->actionLogService->recordSystemAction(
+            $brand,
+            $subscriptionActionName,
+            $subscription
+        );
 
         $this->userProductService->updateSubscriptionProducts($subscription);
 

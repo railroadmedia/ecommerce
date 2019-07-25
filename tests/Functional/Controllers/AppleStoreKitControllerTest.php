@@ -12,9 +12,12 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use ReceiptValidator\iTunes\SandboxResponse;
 
@@ -87,6 +90,8 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
     {
         $receipt = $this->faker->word;
         $email = $this->faker->email;
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
 
         $productOne = $this->fakeProduct(
             [
@@ -258,6 +263,45 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'product_id' => $productTwo['id'],
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Subscription::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Order::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
+            ]
+        );
     }
 
     public function test_process_receipt_validation_exception()
@@ -314,6 +358,9 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
 
     public function test_process_notification_subscription_renewal()
     {
+        $brand = 'brand';
+        config()->set('ecommerce.brand', $brand);
+
         Mail::fake();
 
         $email = $this->faker->email;
@@ -429,7 +476,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         Mail::assertSent(
             SubscriptionInvoice::class,
             function ($mail) use ($email) {
-                $mail->build();
+                $mail->build(); // raises an exception if brand is not configured under ecommerce.invoice_email_details
 
                 return $mail->hasTo($email) &&
                     $mail->hasFrom(config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_sender')) &&
@@ -438,10 +485,39 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                     );
             }
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Subscription::class,
+                'resource_id' => 1,
+                'action_name' => Subscription::ACTION_RENEW,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
+            ]
+        );
     }
 
     public function test_process_notification_subscription_cancel()
     {
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
         $userId  = $this->createAndLogInNewUser();
         $receipt = $this->faker->word;
 
@@ -519,6 +595,19 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'paid_until' => $paidUntil,
                 'canceled_on' => Carbon::now(),
                 'external_app_store_id' => $webOrderLineItemId,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Subscription::class,
+                'resource_id' => 1,
+                'action_name' => Subscription::ACTION_CANCEL,
+                'actor' => ActionLogService::ACTOR_SYSTEM,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_SYSTEM,
             ]
         );
     }

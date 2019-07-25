@@ -19,6 +19,7 @@ use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Stripe\Card;
 use Stripe\Charge;
@@ -1592,13 +1593,13 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             $subscription
         );
 
-        $this->assertDatabaseMissing(
+        $this->assertDatabaseHas(
             'ecommerce_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
                 'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
+                'action_name' => Payment::ACTION_FAILED_RENEW,
                 'actor' => $userEmail,
                 'actor_id' => $userId,
                 'actor_role' => ActionLogService::ROLE_USER,
@@ -1608,7 +1609,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
     public function test_renew_subscription_payment_failed_disabled()
     {
-        $userId = $this->createAndLogInNewUser();
+        $brand = 'drumeo';
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $this->permissionServiceMock->method('can')->willReturn(true);
 
@@ -1660,7 +1663,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_yearly'),
             'total_price' => round($product['price'] + $tax, 2),
-            'tax' => $tax
+            'tax' => $tax,
+            'brand' => $brand,
         ]);
 
         $userProduct = $this->fakeUserProduct([
@@ -1707,10 +1711,36 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscription,
                 [
                     'is_active' => 0,
-                    'note' => 'De-activated due to payments failing.',
+                    'note' => RenewalService::DEACTIVATION_MESSAGE,
                     'updated_at' => Carbon::now()->toDateTimeString()
                 ]
             )
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => Payment::ACTION_FAILED_RENEW,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Subscription::class,
+                'resource_id' => 1,
+                'action_name' => Subscription::ACTION_DEACTIVATED,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
         );
     }
 

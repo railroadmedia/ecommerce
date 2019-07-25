@@ -44,6 +44,8 @@ class Payment
     const TYPE_GOOGLE_INITIAL_ORDER = 'google_initial_order';
     const TYPE_GOOGLE_SUBSCRIPTION_RENEWAL = 'google_subscription_renewal';
 
+    const ACTION_FAILED_RENEW = 'failed renewal payment';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")

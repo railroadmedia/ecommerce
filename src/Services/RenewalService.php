@@ -15,6 +15,7 @@ use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
+use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\SubscriptionRenewException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
@@ -27,6 +28,8 @@ use Throwable;
 
 class RenewalService
 {
+    const DEACTIVATION_MESSAGE = 'De-activated due to payments failing.';
+
     /**
      * @var CreditCardRepository
      */
@@ -155,6 +158,8 @@ class RenewalService
             $currency
         );
 
+        $exceptionToThrow = null;
+
         if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
 
             try {
@@ -217,7 +222,7 @@ class RenewalService
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
 
-                $paymentException = $exception;
+                $exceptionToThrow = $exception;
             }
         }
         elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
@@ -270,7 +275,7 @@ class RenewalService
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
 
-                $paymentException = $exception;
+                $exceptionToThrow = $exception;
             }
         }
         else {
@@ -401,7 +406,7 @@ class RenewalService
 
                 $subscription->setIsActive(false);
                 $subscription->setUpdatedAt(Carbon::now());
-                $subscription->setNote('De-activated due to payments failing.');
+                $subscription->setNote(self::DEACTIVATION_MESSAGE);
 
                 $this->entityManager->flush();
 
@@ -414,7 +419,10 @@ class RenewalService
 
             $this->userProductService->updateSubscriptionProducts($subscription);
 
-            throw isset($paymentException) ? $paymentException : new Exception();
+            throw PaymentFailedException::createFromException(
+                $exceptionToThrow,
+                $payment
+            );
         }
 
         $this->userProductService->updateSubscriptionProducts($subscription);

@@ -30,6 +30,11 @@ use Throwable;
 class AppleStoreKitService
 {
     /**
+     * @var ActionLogService
+     */
+    private $actionLogService;
+
+    /**
      * @var EcommerceEntityManager
      */
     private $entityManager;
@@ -57,6 +62,7 @@ class AppleStoreKitService
     /**
      * AppleStoreKitService constructor.
      *
+     * @param ActionLogService $actionLogService
      * @param AppleStoreKitGateway $appleStoreKitGateway
      * @param EcommerceEntityManager $entityManager
      * @param ProductRepository $productRepository
@@ -64,6 +70,7 @@ class AppleStoreKitService
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        ActionLogService $actionLogService,
         AppleStoreKitGateway $appleStoreKitGateway,
         EcommerceEntityManager $entityManager,
         ProductRepository $productRepository,
@@ -71,6 +78,7 @@ class AppleStoreKitService
         UserProviderInterface $userProvider
     )
     {
+        $this->actionLogService = $actionLogService;
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->entityManager = $entityManager;
         $this->productRepository = $productRepository;
@@ -127,13 +135,34 @@ class AppleStoreKitService
 
         $payment = $this->createOrderPayment($order);
 
-        $this->createOrderSubscription($currentPurchasedItem, $order, $payment, $receipt);
+        $subscription = $this->createOrderSubscription($currentPurchasedItem, $order, $payment, $receipt);
 
         $receipt->setPayment($payment);
 
         $this->entityManager->flush();
 
         event(new OrderEvent($order, $payment));
+
+        $actionName = ActionLogService::ACTION_CREATE;
+        $brand = $subscription->getBrand();
+
+        $this->actionLogService->recordSystemAction(
+            $brand,
+            $actionName,
+            $order
+        );
+
+        $this->actionLogService->recordSystemAction(
+            $brand,
+            $actionName,
+            $payment
+        );
+
+        $this->actionLogService->recordSystemAction(
+            $brand,
+            $actionName,
+            $subscription
+        );
 
         return $user;
     }
@@ -176,8 +205,13 @@ class AppleStoreKitService
         $oldSubscription = clone($subscription);
 
         $subscriptionEventType = 'renewed';
+        $subscriptionActionName = null;
+        $brand = $subscription->getBrand();
 
         if ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE) {
+
+            $subscriptionActionName = Subscription::ACTION_RENEW;
+
             $payment = $this->createSubscriptionRenewalPayment($subscription);
 
             $this->renewSubscription($subscription, $purchasedItem);
@@ -188,7 +222,15 @@ class AppleStoreKitService
 
             event(new SubscriptionRenewed($subscription, $payment));
 
+            $this->actionLogService->recordSystemAction(
+                $brand,
+                ActionLogService::ACTION_CREATE,
+                $payment
+            );
+
         } else {
+
+            $subscriptionActionName = Subscription::ACTION_CANCEL;
 
             $this->cancelSubscription($subscription, $receipt);
 
@@ -196,6 +238,12 @@ class AppleStoreKitService
 
             $subscriptionEventType = 'canceled';
         }
+
+        $this->actionLogService->recordSystemAction(
+            $brand,
+            $subscriptionActionName,
+            $subscription
+        );
 
         $this->userProductService->updateSubscriptionProducts($subscription);
 

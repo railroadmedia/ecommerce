@@ -4,9 +4,11 @@ namespace Railroad\Ecommerce\Tests\Functional\Commands;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -253,6 +255,19 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                         ->toDateTimeString()
                 ]
             );
+
+            $this->assertDatabaseHas(
+                'ecommerce_actions_log',
+                [
+                    'brand' => $initialSubscriptions[$i]['brand'],
+                    'resource_name' => Subscription::class,
+                    'resource_id' => $initialSubscriptions[$i]['id'],
+                    'action_name' => Subscription::ACTION_RENEW,
+                    'actor' => ActionLogService::ACTOR_COMMAND,
+                    'actor_id' => null,
+                    'actor_role' => ActionLogService::ROLE_COMMAND,
+                ]
+            );
         }
 
         // assert mobile subscription was not renewed
@@ -421,6 +436,32 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'currency' => $currency,
                 'created_at' => Carbon::now()
                     ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $subscription['brand'],
+                'resource_name' => Subscription::class,
+                'resource_id' => $subscription['id'],
+                'action_name' => Subscription::ACTION_DEACTIVATED,
+                'actor' => ActionLogService::ACTOR_COMMAND,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_COMMAND,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $subscription['brand'],
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => Payment::ACTION_FAILED_RENEW,
+                'actor' => ActionLogService::ACTOR_COMMAND,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_COMMAND,
             ]
         );
     }
@@ -661,6 +702,19 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                         ->toDateTimeString(),
                 ]
             );
+
+            $this->assertDatabaseHas(
+                'ecommerce_actions_log',
+                [
+                    'brand' => $deactivatedSubscription['brand'],
+                    'resource_name' => Subscription::class,
+                    'resource_id' => $deactivatedSubscription['id'],
+                    'action_name' => Subscription::ACTION_DEACTIVATED,
+                    'actor' => ActionLogService::ACTOR_COMMAND,
+                    'actor_id' => null,
+                    'actor_role' => ActionLogService::ROLE_COMMAND,
+                ]
+            );
         }
 
         for ($i = 0; $i < count($initialSubscriptions); $i++) {
@@ -709,6 +763,19 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'currency' => $currency,
                     'created_at' => Carbon::now()
                         ->toDateTimeString()
+                ]
+            );
+
+            $this->assertDatabaseHas(
+                'ecommerce_actions_log',
+                [
+                    'brand' => $initialSubscriptions[$i]['brand'],
+                    'resource_name' => Subscription::class,
+                    'resource_id' => $initialSubscriptions[$i]['id'],
+                    'action_name' => Subscription::ACTION_RENEW,
+                    'actor' => ActionLogService::ACTOR_COMMAND,
+                    'actor_id' => null,
+                    'actor_role' => ActionLogService::ROLE_COMMAND,
                 ]
             );
         }

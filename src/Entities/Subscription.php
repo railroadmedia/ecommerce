@@ -43,6 +43,7 @@ class Subscription
     // log actions names
     const ACTION_RENEW = 'renew';
     const ACTION_CANCEL = 'cancel';
+    const ACTION_DEACTIVATED = 'deactivated'; // canceled after several failed payments
 
     /**
      * @ORM\Id

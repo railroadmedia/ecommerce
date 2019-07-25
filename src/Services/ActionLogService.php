@@ -17,6 +17,8 @@ class ActionLogService
     const ROLE_CUSTOMER = 'customer';
     const ROLE_USER = 'user';
     const ROLE_ADMIN = 'administrator';
+    const ROLE_COMMAND = 'command';
+    const ROLE_SYSTEM = 'system';
 
     const ACTION_CREATE = 'create';
     const ACTION_UPDATE = 'update';
@@ -153,6 +155,7 @@ class ActionLogService
         $actionLog->setResourceId($resource->getId());
         $actionLog->setActionName($actionName);
         $actionLog->setActor(self::ACTOR_SYSTEM);
+        $actionLog->setActorRole(self::ROLE_SYSTEM);
 
         $this->saveActionLogEntity($actionLog);
     }
@@ -177,6 +180,7 @@ class ActionLogService
         $actionLog->setResourceId($resource->getId());
         $actionLog->setActionName($actionName);
         $actionLog->setActor(self::ACTOR_COMMAND);
+        $actionLog->setActorRole(self::ROLE_COMMAND);
 
         $this->saveActionLogEntity($actionLog);
     }
