@@ -7,6 +7,8 @@ use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Refund;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
@@ -55,7 +57,9 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
     public function test_user_create_own_refund_credit_card()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
+
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
         $gateway = $this->faker->randomElement(
@@ -94,7 +98,8 @@ class RefundJsonControllerTest extends EcommerceTestCase
             'total_due' => $due,
             'external_provider' => 'stripe',
             'total_refunded' => 0,
-            'conversion_rate' => $conversionRate
+            'conversion_rate' => $conversionRate,
+            'gateway_name' => $gateway,
         ]);
         
         $response = $this->call(
@@ -232,11 +237,26 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => Refund::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
     }
 
     public function test_user_create_own_refund_paypal()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
+
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
         $gateway = $this->faker->randomElement(
@@ -275,7 +295,8 @@ class RefundJsonControllerTest extends EcommerceTestCase
             'total_due' => $due,
             'external_provider' => 'stripe',
             'total_refunded' => 0,
-            'conversion_rate' => $conversionRate
+            'conversion_rate' => $conversionRate,
+            'gateway_name' => $gateway,
         ]);
 
         $response = $this->call(
@@ -413,11 +434,26 @@ class RefundJsonControllerTest extends EcommerceTestCase
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => Refund::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
     }
 
     public function test_refund_order_and_cancel_fulfilment()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
+
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
         $gateway = $this->faker->randomElement(
@@ -456,7 +492,8 @@ class RefundJsonControllerTest extends EcommerceTestCase
             'total_due' => $due,
             'external_provider' => 'stripe',
             'total_refunded' => 0,
-            'conversion_rate' => $conversionRate
+            'conversion_rate' => $conversionRate,
+            'gateway_name' => $gateway,
         ]);
 
         $product = $this->fakeProduct([
@@ -644,6 +681,19 @@ class RefundJsonControllerTest extends EcommerceTestCase
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => Refund::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }

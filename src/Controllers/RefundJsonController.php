@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderPayment;
@@ -22,8 +23,10 @@ use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
+use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
@@ -32,6 +35,11 @@ use Throwable;
 
 class RefundJsonController extends Controller
 {
+    /**
+     * @var ActionLogService
+     */
+    private $actionLogService;
+
     /**
      * @var EcommerceEntityManager
      */
@@ -78,6 +86,11 @@ class RefundJsonController extends Controller
     private $subscriptionPaymentRepository;
 
     /**
+     * @var UserPaymentMethodsRepository
+     */
+    private $userPaymentMethodsRepository;
+
+    /**
      * @var UserProductService
      */
     private $userProductService;
@@ -88,8 +101,14 @@ class RefundJsonController extends Controller
     private $userProductRepository;
 
     /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
+    /**
      * RefundJsonController constructor.
      *
+     * @param ActionLogService $actionLogService
      * @param EcommerceEntityManager $entityManager
      * @param OrderItemFulfillmentRepository $orderItemFulfillmentRepository
      * @param OrderItemRepository $orderItemRepository
@@ -100,9 +119,12 @@ class RefundJsonController extends Controller
      * @param StripePaymentGateway $stripePaymentGateway
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
      * @param UserProductService $userProductService
+     * @param UserPaymentMethodsRepository $userPaymentMethodsRepository
      * @param UserProductRepository $userProductRepository
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        ActionLogService $actionLogService,
         EcommerceEntityManager $entityManager,
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         OrderItemRepository $orderItemRepository,
@@ -112,10 +134,13 @@ class RefundJsonController extends Controller
         PermissionService $permissionService,
         StripePaymentGateway $stripePaymentGateway,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
+        UserPaymentMethodsRepository $userPaymentMethodsRepository,
         UserProductService $userProductService,
-        UserProductRepository $userProductRepository
+        UserProductRepository $userProductRepository,
+        UserProviderInterface $userProvider
     )
     {
+        $this->actionLogService = $actionLogService;
         $this->entityManager = $entityManager;
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->orderItemRepository = $orderItemRepository;
@@ -126,7 +151,9 @@ class RefundJsonController extends Controller
         $this->stripePaymentGateway = $stripePaymentGateway;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->userProductService = $userProductService;
+        $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
         $this->userProductRepository = $userProductRepository;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -302,6 +329,25 @@ class RefundJsonController extends Controller
         }
 
         $this->entityManager->flush();
+
+        $userPaymentMethod = $this->userPaymentMethodsRepository->findOneBy(['paymentMethod' => $paymentMethod]);
+
+        /** @var $user User */
+        $user = $userPaymentMethod->getUser();
+
+        /** @var $currentUser User */
+        $currentUser = $this->userProvider->getCurrentUser();
+        $userRole = $currentUser->getId() != $user->getId() ? ActionLogService::ROLE_ADMIN : ActionLogService::ROLE_USER;
+        $brand = $payment->getGatewayName();
+
+        $this->actionLogService->recordAction(
+            $brand,
+            ActionLogService::ACTION_CREATE,
+            $refund,
+            $currentUser->getEmail(),
+            $currentUser->getId(),
+            $userRole
+        );
 
         return ResponseService::refund($refund);
     }

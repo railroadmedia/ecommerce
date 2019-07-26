@@ -337,6 +337,8 @@ class PaymentService
             $setAsDefault
         );
 
+        // todo - add action log
+
         if (empty($paymentMethod)) {
             throw new PaymentFailedException('Error charging payment method');
         }
@@ -439,6 +441,8 @@ class PaymentService
             $currency,
             $setAsDefault
         );
+
+        // todo - add action log
 
         if (empty($paymentMethod)) {
             throw new PaymentFailedException('Error charging payment method');

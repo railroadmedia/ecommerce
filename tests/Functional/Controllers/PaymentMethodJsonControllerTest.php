@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Stripe\Card;
@@ -106,7 +107,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         Event::fake();
 
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $customer = $this->fakeUser();
 
@@ -245,13 +247,27 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'is_primary' => 1,
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => PaymentMethod::class,
+                'resource_id' => ($paymentMethod['id'] + 1),
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
     }
 
     public function test_user_store_credit_card_payment_method_not_default()
     {
         Event::fake();
 
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $customer = $this->fakeUser();
 
@@ -385,6 +401,19 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'payment_method_id' => $paymentResponse['data']['id'],
                 'created_at' => Carbon::now()->toDateTimeString(),
                 'is_primary' => 0,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => PaymentMethod::class,
+                'resource_id' => ($paymentMethod['id'] + 1),
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }
@@ -628,7 +657,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_update_payment_method()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
 
@@ -738,6 +768,19 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'expiration_date' => $newDate->toDateTimeString(),
                 'payment_gateway_name' => $payload['gateway'],
                 'updated_at' => Carbon::now()->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => PaymentMethod::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_UPDATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -1449,7 +1492,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     public function test_paypal_agreement()
     {
         Event::fake();
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $agreementToken = $this->faker->word;
         $agreementId = $this->faker->word;
@@ -1527,6 +1571,19 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             function ($e) use ($paymentMethodId) {
                 return $paymentMethodId == $e->getPaymentMethodId();
             }
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_actions_log',
+            [
+                'brand' => config('ecommerce.brand'),
+                'resource_name' => PaymentMethod::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
         );
     }
 

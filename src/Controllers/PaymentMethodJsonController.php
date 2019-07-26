@@ -34,6 +34,7 @@ use Railroad\Ecommerce\Requests\PaymentMethodCreatePaypalRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodSetDefaultRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodUpdateRequest;
+use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\PaymentMethodService;
@@ -45,6 +46,11 @@ use Throwable;
 
 class PaymentMethodJsonController extends Controller
 {
+    /**
+     * @var ActionLogService
+     */
+    private $actionLogService;
+
     /**
      * @var AddressRepository
      */
@@ -113,21 +119,23 @@ class PaymentMethodJsonController extends Controller
     /**
      * PaymentMethodJsonController constructor.
      *
-     * @param AddressRepository $addressRepository ,
-     * @param CreditCardRepository $creditCardRepository ,
-     * @param CurrencyService $currencyService ,
-     * @param EcommerceEntityManager $entityManager ,
-     * @param JsonApiHydrator $jsonApiHydrator ,
-     * @param PaymentMethodService $paymentMethodService ,
-     * @param PaymentMethodRepository $paymentMethodRepository ,
-     * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository ,
-     * @param PayPalPaymentGateway $payPalPaymentGateway ,
-     * @param PermissionService $permissionService ,
-     * @param StripePaymentGateway $stripePaymentGateway ,
-     * @param UserPaymentMethodsRepository $userPaymentMethodsRepository ,
+     * @param ActionLogService $actionLogService
+     * @param AddressRepository $addressRepository
+     * @param CreditCardRepository $creditCardRepository
+     * @param CurrencyService $currencyService
+     * @param EcommerceEntityManager $entityManager
+     * @param JsonApiHydrator $jsonApiHydrator
+     * @param PaymentMethodService $paymentMethodService
+     * @param PaymentMethodRepository $paymentMethodRepository
+     * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
+     * @param PayPalPaymentGateway $payPalPaymentGateway
+     * @param PermissionService $permissionService
+     * @param StripePaymentGateway $stripePaymentGateway
+     * @param UserPaymentMethodsRepository $userPaymentMethodsRepository
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        ActionLogService $actionLogService,
         AddressRepository $addressRepository,
         CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
@@ -143,6 +151,7 @@ class PaymentMethodJsonController extends Controller
         UserProviderInterface $userProvider
     )
     {
+        $this->actionLogService = $actionLogService;
         $this->addressRepository = $addressRepository;
         $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
@@ -273,6 +282,20 @@ class PaymentMethodJsonController extends Controller
                     $request->get('set_default', false)
                 );
 
+                $brand = $request->get('gateway', config('ecommerce.brand'));
+                /** @var $currentUser User */
+                $currentUser = $this->userProvider->getCurrentUser();
+                $userRole = $currentUser->getId() != $user->getId() ? ActionLogService::ROLE_ADMIN : ActionLogService::ROLE_USER;
+
+                $this->actionLogService->recordAction(
+                    $brand,
+                    ActionLogService::ACTION_CREATE,
+                    $paymentMethod,
+                    $currentUser->getEmail(),
+                    $currentUser->getId(),
+                    $userRole
+                );
+
             }
             else {
                 throw new NotAllowedException('Payment method not supported.');
@@ -331,15 +354,17 @@ class PaymentMethodJsonController extends Controller
 
             $purchaser = new Purchaser();
 
+            $brand = $request->get('gateway', config('ecommerce.brand'));
+
             $purchaser->setId($user->getId());
             $purchaser->setEmail($user->getEmail());
             $purchaser->setType(Purchaser::USER_TYPE);
-            $purchaser->setBrand($request->get('gateway', config('ecommerce.brand')));
+            $purchaser->setBrand($brand);
 
             $billingAddress = new Address();
 
             $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
-            $billingAddress->setBrand($request->get('gateway', config('ecommerce.brand')));
+            $billingAddress->setBrand($brand);
             $billingAddress->setUser($user);
             $billingAddress->setRegion('');
             $billingAddress->setCountry('');
@@ -353,6 +378,15 @@ class PaymentMethodJsonController extends Controller
                 config('ecommerce.brand'),
                 $this->currencyService->get(),
                 false
+            );
+
+            $this->actionLogService->recordAction(
+                $brand,
+                ActionLogService::ACTION_CREATE,
+                $paymentMethod,
+                $user->getEmail(),
+                $user->getId(),
+                ActionLogService::ROLE_USER
             );
 
             event(new PaypalPaymentMethodEvent($paymentMethod->getId()));
@@ -521,6 +555,22 @@ class PaymentMethodJsonController extends Controller
                     $userPaymentMethod->getUser()
                         ->getId(), $paymentMethod->getId()
                 )
+            );
+
+            $brand = $request->get('gateway');
+            /** @var $currentUser User */
+            $currentUser = $this->userProvider->getCurrentUser();
+            $userRole = $currentUser->getId() != $userPaymentMethod->getUser()->getId() ?
+                        ActionLogService::ROLE_ADMIN:
+                        ActionLogService::ROLE_USER;
+
+            $this->actionLogService->recordAction(
+                $brand,
+                ActionLogService::ACTION_UPDATE,
+                $paymentMethod,
+                $currentUser->getEmail(),
+                $currentUser->getId(),
+                $userRole
             );
 
         } catch (Card $exception) {
