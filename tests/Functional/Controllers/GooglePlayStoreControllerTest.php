@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Controllers\GooglePlayStoreController;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Entities\Payment;
@@ -18,7 +19,6 @@ use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
-use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use ReceiptValidator\GooglePlay\SubscriptionResponse;
 use Google_Service_AndroidPublisher_SubscriptionPurchase;
@@ -242,7 +242,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -255,7 +255,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Subscription::class,
@@ -268,7 +268,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Order::class,
@@ -434,7 +434,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -447,7 +447,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Subscription::class,
@@ -563,7 +563,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Subscription::class,

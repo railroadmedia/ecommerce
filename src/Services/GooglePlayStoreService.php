@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Entities\Order;

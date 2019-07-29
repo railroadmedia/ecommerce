@@ -4,12 +4,12 @@ namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
 use DateTimeInterface;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
-use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;

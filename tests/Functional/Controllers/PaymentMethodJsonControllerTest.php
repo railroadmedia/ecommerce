@@ -4,12 +4,12 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
-use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Stripe\Card;
@@ -249,7 +249,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $gateway,
                 'resource_name' => PaymentMethod::class,
@@ -405,7 +405,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $gateway,
                 'resource_name' => PaymentMethod::class,
@@ -772,7 +772,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $gateway,
                 'resource_name' => PaymentMethod::class,
@@ -1574,7 +1574,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => config('ecommerce.brand'),
                 'resource_name' => PaymentMethod::class,

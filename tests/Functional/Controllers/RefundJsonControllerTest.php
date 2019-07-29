@@ -3,12 +3,12 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Refund;
-use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
@@ -239,7 +239,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $gateway,
                 'resource_name' => Refund::class,
@@ -436,7 +436,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $gateway,
                 'resource_name' => Refund::class,
@@ -685,7 +685,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $gateway,
                 'resource_name' => Refund::class,

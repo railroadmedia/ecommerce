@@ -3,12 +3,12 @@
 namespace Railroad\Ecommerce\Tests\Functional\Commands;
 
 use Carbon\Carbon;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
-use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;

@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Order;

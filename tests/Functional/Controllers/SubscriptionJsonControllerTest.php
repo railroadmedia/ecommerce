@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
@@ -17,7 +18,6 @@ use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -1332,7 +1332,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -1345,7 +1345,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Subscription::class,
@@ -1594,7 +1594,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -1718,7 +1718,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -1731,7 +1731,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Subscription::class,

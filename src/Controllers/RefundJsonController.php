@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Routing\Controller;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderItem;
@@ -26,7 +27,6 @@ use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Requests\RefundCreateRequest;
-use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;

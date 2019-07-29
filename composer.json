@@ -18,7 +18,8 @@
     "ext-redis": "*",
     "railroad/doctrine-array-hydrator": "1.0.*",
     "ext-json": "*",
-    "aporat/store-receipt-validator": "3.2.*"
+    "aporat/store-receipt-validator": "3.2.*",
+    "railroad/railactionlog": "^0.0"
   },
   "require-dev": {
     "phpunit/phpunit": "~7.0",

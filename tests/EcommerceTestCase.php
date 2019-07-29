@@ -11,6 +11,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Orchestra\Testbench\TestCase as BaseTestCase;
+use Railroad\ActionLog\Managers\ActionLogEntityManager;
+use Railroad\ActionLog\Providers\ActionLogServiceProvider;
 use Railroad\Doctrine\Contracts\UserProviderInterface as DoctrineUserProviderInterface;
 use Railroad\Doctrine\Providers\DoctrineServiceProvider;
 use Railroad\DoctrineArrayHydrator\Contracts\UserProviderInterface as DoctrineArrayHydratorUserProviderInterface;
@@ -141,6 +143,17 @@ class EcommerceTestCase extends BaseTestCase
 
         // Run the schema update tool using our entity metadata
         $this->entityManager = app(EcommerceEntityManager::class);
+
+        // todo - find better way to share connection with ActionLogEntityManager
+        $actionLogEntitytManager = app(ActionLogEntityManager::class);
+        $config = $actionLogEntitytManager->getConfiguration();
+        $actionLogEntitytManager->close();
+        $actionLogEntitytManager = ActionLogEntityManager::create(
+            $this->entityManager->getConnection(),
+            $config,
+            $this->entityManager->getEventManager()
+        );
+        $this->app->instance(ActionLogEntityManager::class, $actionLogEntitytManager);
 
         $this->entityManager->getMetadataFactory()
             ->getCacheDriver()
@@ -292,9 +305,21 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.database_in_memory', true);
 
         // if new packages entities are required for testing, their entity directory/namespace config should be merged here
-        $app['config']->set('doctrine.entities', $defaultConfig['entities']);
+        $railactionlogEntities = [
+            [
+                'path' => __DIR__ . '/../vendor/railroad/railactionlog/src/Entities',
+                'namespace' => 'Railroad\ActionLog\Entities',
+            ]
+        ];
+        $app['config']->set('doctrine.entities', array_merge(
+            $defaultConfig['entities'],
+            $railactionlogEntities
+        ));
         $app['config']->set('doctrine.redis_host', $defaultConfig['redis_host']);
         $app['config']->set('doctrine.redis_port', $defaultConfig['redis_port']);
+
+        $app['config']->set('railactionlog.redis_host', $defaultConfig['redis_host']);
+        $app['config']->set('railactionlog.redis_port', $defaultConfig['redis_port']);
 
         // sqlite
         $app['config']->set('doctrine.development_mode', $defaultConfig['development_mode'] ?? true);
@@ -302,6 +327,14 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('doctrine.database_user', 'root');
         $app['config']->set('doctrine.database_password', 'root');
         $app['config']->set('doctrine.database_in_memory', true);
+
+        $app['config']->set('railactionlog.development_mode', $defaultConfig['development_mode'] ?? true);
+        $app['config']->set('railactionlog.database_driver', 'pdo_sqlite');
+        $app['config']->set('railactionlog.database_user', 'root');
+        $app['config']->set('railactionlog.database_password', 'root');
+        $app['config']->set('railactionlog.database_in_memory', true);
+        $app['config']->set('railactionlog.entities', $railactionlogEntities);
+        $app['config']->set('railactionlog.data_mode', 'host');
 
         $app['config']->set('ecommerce.database_connection_name', 'ecommerce_sqlite');
         $app['config']->set('database.default', 'ecommerce_sqlite');
@@ -327,6 +360,7 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(RemoteStorageServiceProvider::class);
         $app->register(CountriesServiceProvider::class);
         $app->register(PermissionsServiceProvider::class);
+        $app->register(ActionLogServiceProvider::class);
 
         $this->currencies = $defaultConfig['supported_currencies'];
         $this->defaultCurrency = $defaultConfig['default_currency'];

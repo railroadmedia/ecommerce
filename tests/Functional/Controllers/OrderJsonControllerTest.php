@@ -3,7 +3,9 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Services\CartService;
@@ -64,8 +66,13 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
     public function test_update_order()
     {
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
+        $brand = 'drumeo';
+
         $order = $this->fakeOrder(
             [
+                'brand' => $brand,
                 'user_id' => null,
                 'customer_id' => null,
                 'shipping_address_id' => null,
@@ -134,6 +141,19 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 ]
             )
         );
+
+        $this->assertDatabaseHas(
+            'railactionlog_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Order::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_UPDATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
     }
 
     public function test_update_order_validation()
@@ -177,7 +197,9 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
     public function test_update_order_items()
     {
-        $randomId = $this->faker->randomNumber();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
+        $brand = 'drumeo';
 
         $productOnePrice = $this->faker->randomFloat(2, 50, 90);
         $productOneQuantity = 1;
@@ -194,7 +216,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         $order = $this->fakeOrder(
             [
-                'user_id' => $randomId,
+                'brand' => $brand,
+                'user_id' => $userId,
                 'customer_id' => null,
                 'shipping_address_id' => null,
                 'billing_address_id' => null,
@@ -330,6 +353,19 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'quantity' => $productTwoNewQuantity,
                 'initial_price' => $productTwo['price'],
                 'final_price' => $productTwo['price'] * $productTwoNewQuantity,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'railactionlog_actions_log',
+            [
+                'brand' => $brand,
+                'resource_name' => Order::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_UPDATE,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }

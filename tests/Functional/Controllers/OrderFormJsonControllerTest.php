@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Session\Store;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Payment;
@@ -20,7 +21,6 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
-use Railroad\Ecommerce\Services\ActionLogService;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\CurrencyService;
@@ -1056,7 +1056,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert log entries
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Order::class,
@@ -1069,7 +1069,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -1082,7 +1082,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => PaymentMethod::class,
@@ -4516,7 +4516,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         // assert log entries
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Order::class,
@@ -4529,7 +4529,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -4542,7 +4542,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => PaymentMethod::class,
@@ -4555,7 +4555,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Subscription::class,
@@ -7099,7 +7099,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Order::class,
@@ -7112,7 +7112,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -7125,7 +7125,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => PaymentMethod::class,
@@ -7433,7 +7433,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Order::class,
@@ -7446,7 +7446,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -7459,7 +7459,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => PaymentMethod::class,
@@ -9041,7 +9041,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Order::class,
@@ -9054,7 +9054,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -9067,7 +9067,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => PaymentMethod::class,
@@ -9080,7 +9080,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Subscription::class,
@@ -9263,7 +9263,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Order::class,
@@ -9276,7 +9276,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -9289,7 +9289,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => PaymentMethod::class,
@@ -9476,7 +9476,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Order::class,
@@ -9489,7 +9489,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => Payment::class,
@@ -9502,7 +9502,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $brand,
                 'resource_name' => PaymentMethod::class,

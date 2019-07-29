@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Services;
 
 use Exception;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
