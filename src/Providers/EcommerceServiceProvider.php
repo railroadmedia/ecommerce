@@ -59,7 +59,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 OrderInvoiceListener::class,
             ],
             SubscriptionRenewed::class => [
-                SubscriptionInvoiceListener::class,
+                SubscriptionInvoiceListener::class
             ]
         ];
 

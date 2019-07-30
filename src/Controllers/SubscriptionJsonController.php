@@ -11,7 +11,10 @@ use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Events\Payments\SubscriptionPaymentFailed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeactivated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
@@ -272,38 +275,23 @@ class SubscriptionJsonController extends Controller
 
             $response = ResponseService::subscription($subscription);
 
-            $this->actionLogService->recordAction($brand, Subscription::ACTION_RENEW, $subscription, $actor, $actorId, $actorRole);
-            $this->actionLogService->recordAction($brand, ActionLogService::ACTION_CREATE, $payment, $actor, $actorId, $actorRole);
-
         } catch (Exception $exception) {
+
+            $payment = null;
 
             if ($exception instanceof PaymentFailedException) {
 
+                $payment = $exception->getPayment();
+
                 // if a payment record/entity was created
 
-                $this->actionLogService->recordAction(
-                    $brand,
-                    Payment::ACTION_FAILED_RENEW,
-                    $exception->getPayment(),
-                    $actor,
-                    $actorId,
-                    $actorRole
-                );
+                event(new SubscriptionPaymentFailed($payment, $subscription->getUser()));
             }
 
             if ($subscription->getNote() == RenewalService::DEACTIVATION_MESSAGE &&
                 $subscription->getIsActive() != $oldSubscriptionState->getIsActive()) {
 
-                // if subscription was deactivated in current request
-
-                $this->actionLogService->recordAction(
-                    $brand,
-                    Subscription::ACTION_DEACTIVATED,
-                    $subscription,
-                    $actor,
-                    $actorId,
-                    $actorRole
-                );
+                event(new SubscriptionDeactivated($subscription, $oldSubscriptionState));
             }
 
             $response = response()->json(

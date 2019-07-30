@@ -10,7 +10,9 @@ use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Events\Payments\SubscriptionPaymentFailed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeactivated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
@@ -517,7 +519,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('can')->willReturn(true);
 
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $product = $this->fakeProduct([
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
@@ -1330,32 +1333,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'shipping_taxes_paid' => 0,
             ]
         );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
     }
 
     public function test_renew_subscription_different_payment_method()
@@ -1517,7 +1494,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'price' => 128.95,
         ]);
 
-        $creditCard = $this->fakeCreditCard();
+        $creditCard = $this->fakeCreditCard(
+            [
+                'payment_gateway_name' => $brand,
+            ]
+        );
 
         $currency = $this->getCurrency();
 
@@ -1564,6 +1545,14 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         config()->set('ecommerce.paypal.failed_payments_before_de_activation', 3);
 
+        $this->expectsEvents([SubscriptionPaymentFailed::class]);
+        $this->doesntExpectEvents(
+            [
+                SubscriptionDeactivated::class,
+                SubscriptionRenewed::class,
+            ]
+        );
+
         $results = $this->call(
             'POST',
             '/subscription-renew/' . $subscription['id']
@@ -1592,19 +1581,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'ecommerce_subscriptions',
             $subscription
         );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => Payment::ACTION_FAILED_RENEW,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
     }
 
     public function test_renew_subscription_payment_failed_disabled()
@@ -1629,7 +1605,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'price' => 128.95,
         ]);
 
-        $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
+        $paypalBillingAgreement = $this->fakePaypalBillingAgreement(
+            [
+                'payment_gateway_name' => $brand,
+            ]
+        );
 
         $currency = $this->getCurrency();
 
@@ -1676,6 +1656,14 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         config()->set('ecommerce.paypal.failed_payments_before_de_activation', 1);
 
+        $this->expectsEvents(
+            [
+                SubscriptionDeactivated::class,
+                SubscriptionPaymentFailed::class,
+            ]
+        );
+        $this->doesntExpectEvents([SubscriptionRenewed::class]);
+
         $results = $this->call(
             'POST',
             '/subscription-renew/' . $subscription['id']
@@ -1715,32 +1703,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'updated_at' => Carbon::now()->toDateTimeString()
                 ]
             )
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => Payment::ACTION_FAILED_RENEW,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => Subscription::ACTION_DEACTIVATED,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
         );
     }
 
