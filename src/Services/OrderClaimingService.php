@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Order;
@@ -28,10 +27,6 @@ use Throwable;
 
 class OrderClaimingService
 {
-    /**
-     * @var ActionLogService
-     */
-    private $actionLogService;
 
     /**
      * @var CartService
@@ -71,7 +66,6 @@ class OrderClaimingService
     /**
      * OrderClaimingService constructor.
      *
-     * @param ActionLogService $actionLogService
      * @param CartService $cartService
      * @param DiscountService $discountService
      * @param ShippingService $shippingService
@@ -81,7 +75,6 @@ class OrderClaimingService
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        ActionLogService $actionLogService,
         CartService $cartService,
         DiscountService $discountService,
         ShippingService $shippingService,
@@ -91,7 +84,6 @@ class OrderClaimingService
         UserProviderInterface $userProvider
     )
     {
-        $this->actionLogService = $actionLogService;
         $this->cartService = $cartService;
         $this->discountService = $discountService;
         $this->shippingService = $shippingService;
@@ -259,40 +251,6 @@ class OrderClaimingService
         }
 
         $this->entityManager->flush();
-
-        // entities ids are needed for the next block
-        $actionName = ActionLogService::ACTION_CREATE;
-        $actor = $actorId = $actorRole = null;
-        $brand = $purchaser->getBrand();
-
-        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
-
-            /** @var $currentUser User */
-            $currentUser = $this->userProvider->getCurrentUser();
-
-            /** @var $purchaserUser User */
-            $purchaserUser = $purchaser->getUserObject();
-
-            $actor = $currentUser->getEmail();
-            $actorId = $currentUser->getId();
-            $actorRole = $currentUser->getId() == $purchaserUser->getId() ? ActionLogService::ROLE_USER : ActionLogService::ROLE_ADMIN;
-        } else {
-            $customer = $purchaser->getCustomerEntity();
-
-            $actor = $customer->getEmail();
-            $actorId = $customer->getId();
-            $actorRole = ActionLogService::ROLE_CUSTOMER;
-        }
-
-        if (!is_null($subscription)) {
-            $this->actionLogService->recordAction($brand, $actionName, $subscription, $actor, $actorId, $actorRole);
-        }
-
-        if (!empty($subscriptions)) {
-            foreach ($subscriptions as $sub) {
-                $this->actionLogService->recordAction($brand, $actionName, $sub, $actor, $actorId, $actorRole);
-            }
-        }
 
         event(new OrderEvent($order, $payment));
 

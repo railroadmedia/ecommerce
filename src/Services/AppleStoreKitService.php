@@ -17,9 +17,10 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
+use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
+use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
-use Railroad\Ecommerce\Events\OrderEvent;
+use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -142,28 +143,7 @@ class AppleStoreKitService
 
         $this->entityManager->flush();
 
-        event(new OrderEvent($order, $payment));
-
-        $actionName = ActionLogService::ACTION_CREATE;
-        $brand = $subscription->getBrand();
-
-        $this->actionLogService->recordSystemAction(
-            $brand,
-            $actionName,
-            $order
-        );
-
-        $this->actionLogService->recordSystemAction(
-            $brand,
-            $actionName,
-            $payment
-        );
-
-        $this->actionLogService->recordSystemAction(
-            $brand,
-            $actionName,
-            $subscription
-        );
+        event(new MobileOrderEvent($order, $payment, $subscription));
 
         return $user;
     }
@@ -203,15 +183,7 @@ class AppleStoreKitService
             throw $exception;
         }
 
-        $oldSubscription = clone($subscription);
-
-        $subscriptionEventType = 'renewed';
-        $subscriptionActionName = null;
-        $brand = $subscription->getBrand();
-
         if ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE) {
-
-            $subscriptionActionName = Subscription::ACTION_RENEW;
 
             $payment = $this->createSubscriptionRenewalPayment($subscription);
 
@@ -221,35 +193,18 @@ class AppleStoreKitService
 
             $this->entityManager->flush();
 
-            event(new SubscriptionRenewed($subscription, $payment));
-
-            $this->actionLogService->recordSystemAction(
-                $brand,
-                ActionLogService::ACTION_CREATE,
-                $payment
-            );
+            event(new MobileSubscriptionRenewed($subscription, $payment, MobileSubscriptionRenewed::ACTOR_SYSTEM));
 
         } else {
-
-            $subscriptionActionName = Subscription::ACTION_CANCEL;
 
             $this->cancelSubscription($subscription, $receipt);
 
             $this->entityManager->flush();
 
-            $subscriptionEventType = 'canceled';
+            event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));
         }
 
-        $this->actionLogService->recordSystemAction(
-            $brand,
-            $subscriptionActionName,
-            $subscription
-        );
-
         $this->userProductService->updateSubscriptionProducts($subscription);
-
-        event(new SubscriptionUpdated($oldSubscription, $subscription));
-        event(new SubscriptionEvent($subscription->getId(), $subscriptionEventType));
     }
 
     /**
@@ -282,10 +237,6 @@ class AppleStoreKitService
             $receipt->setValidationError($exception->getMessage());
         }
 
-        $oldSubscription = clone($subscription);
-
-        $subscriptionEventType = 'renewed';
-
         if ($receipt->getValid()) {
             $payment = $this->createSubscriptionRenewalPayment($subscription);
 
@@ -295,7 +246,7 @@ class AppleStoreKitService
 
             $this->entityManager->flush();
 
-            event(new SubscriptionRenewed($subscription, $payment));
+            event(new MobileSubscriptionRenewed($subscription, $payment, MobileSubscriptionRenewed::ACTOR_CONSOLE));
 
         } else {
 
@@ -303,13 +254,10 @@ class AppleStoreKitService
 
             $this->entityManager->flush();
 
-            $subscriptionEventType = 'canceled';
+            event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_CONSOLE));
         }
 
         $this->userProductService->updateSubscriptionProducts($subscription);
-
-        event(new SubscriptionUpdated($oldSubscription, $subscription));
-        event(new SubscriptionEvent($subscription->getId(), $subscriptionEventType));
     }
 
     /**

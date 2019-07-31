@@ -12,10 +12,9 @@ use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\User;
-use Railroad\Ecommerce\Events\Payments\SubscriptionPaymentFailed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeactivated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewFailed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
@@ -282,17 +281,9 @@ class SubscriptionJsonController extends Controller
             if ($exception instanceof PaymentFailedException) {
 
                 $payment = $exception->getPayment();
-
-                // if a payment record/entity was created
-
-                event(new SubscriptionPaymentFailed($payment, $subscription->getUser()));
             }
 
-            if ($subscription->getNote() == RenewalService::DEACTIVATION_MESSAGE &&
-                $subscription->getIsActive() != $oldSubscriptionState->getIsActive()) {
-
-                event(new SubscriptionDeactivated($subscription, $oldSubscriptionState));
-            }
+            event(new SubscriptionRenewFailed($subscription, $oldSubscriptionState, $payment));
 
             $response = response()->json(
                 [

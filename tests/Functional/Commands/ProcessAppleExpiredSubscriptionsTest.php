@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Commands;
 
 use Carbon\Carbon;
 use PHPUnit\Framework\MockObject\MockObject;
+use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
@@ -241,6 +242,32 @@ class ProcessAppleExpiredSubscriptionsTest extends EcommerceTestCase
                     ->addMonth()
                     ->startOfDay()
                     ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'railactionlog_actions_log',
+            [
+                'brand' => $subscriptionTwo['brand'],
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => ActionLogService::ACTOR_COMMAND,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_COMMAND,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'railactionlog_actions_log',
+            [
+                'brand' => $subscriptionTwo['brand'],
+                'resource_name' => Subscription::class,
+                'resource_id' => $subscriptionTwo['id'],
+                'action_name' => Subscription::ACTION_RENEW,
+                'actor' => ActionLogService::ACTOR_COMMAND,
+                'actor_id' => null,
+                'actor_role' => ActionLogService::ROLE_COMMAND,
             ]
         );
 

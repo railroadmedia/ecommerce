@@ -27,10 +27,14 @@ use Railroad\Ecommerce\Commands\ProcessAppleExpiredSubscriptions;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Commands\SplitPaymentMethodIdsToColumns;
 use Railroad\Ecommerce\Events\GiveContentAccess;
+use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Events\OrderEvent;
+use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
+use Railroad\Ecommerce\Listeners\MobileOrderUserProductListener;
+use Railroad\Ecommerce\Listeners\MobileSubscriptionInvoiceListener;
 use Railroad\Ecommerce\Listeners\OrderInvoiceListener;
 use Railroad\Ecommerce\Listeners\OrderShippingFulfilmentListener;
 use Railroad\Ecommerce\Listeners\OrderUserProductListener;
@@ -58,9 +62,9 @@ class EcommerceServiceProvider extends ServiceProvider
                 OrderUserProductListener::class,
                 OrderInvoiceListener::class,
             ],
-            SubscriptionRenewed::class => [
-                SubscriptionInvoiceListener::class
-            ]
+            MobileSubscriptionRenewed::class => [MobileSubscriptionInvoiceListener::class],
+            SubscriptionRenewed::class => [SubscriptionInvoiceListener::class],
+            MobileOrderEvent::class => [MobileOrderUserProductListener::class]
         ];
 
         parent::boot();

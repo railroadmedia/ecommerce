@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Services;
 
 use Exception;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
@@ -19,11 +18,6 @@ use Throwable;
 
 class OrderFormService
 {
-    /**
-     * @var ActionLogService
-     */
-    private $actionLogService;
-
     /**
      * @var CartService
      */
@@ -62,7 +56,6 @@ class OrderFormService
     /**
      * OrderFormService constructor.
      *
-     * @param ActionLogService $actionLogService
      * @param CartService $cartService ,
      * @param OrderClaimingService $orderClaimingService ,
      * @param PaymentService $paymentService ,
@@ -72,7 +65,6 @@ class OrderFormService
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        ActionLogService $actionLogService,
         CartService $cartService,
         OrderClaimingService $orderClaimingService,
         PaymentService $paymentService,
@@ -82,7 +74,6 @@ class OrderFormService
         UserProviderInterface $userProvider
     )
     {
-        $this->actionLogService = $actionLogService;
         $this->cartService = $cartService;
         $this->orderClaimingService = $orderClaimingService;
         $this->paymentService = $paymentService;
@@ -266,38 +257,6 @@ class OrderFormService
         }
 
         $order = $this->orderClaimingService->claimOrder($purchaser, $payment, $cart, $shippingAddress);
-
-        $actionName = ActionLogService::ACTION_CREATE;
-        $actor = $actorId = $actorRole = null;
-        $defaultBrand = config('ecommerce.default_gateway') ?? config('ecommerce.brand');
-        $brand = $request->get('gateway', $defaultBrand);
-
-        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
-
-            /** @var $currentUser User */
-            $currentUser = $this->userProvider->getCurrentUser();
-
-            /** @var $purchaserUser User */
-            $purchaserUser = $purchaser->getUserObject();
-
-            $actor = $currentUser->getEmail();
-            $actorId = $currentUser->getId();
-            $actorRole = $currentUser->getId() == $purchaserUser->getId() ? ActionLogService::ROLE_USER : ActionLogService::ROLE_ADMIN;
-        } else {
-            $customer = $purchaser->getCustomerEntity();
-
-            $actor = $customer->getEmail();
-            $actorId = $customer->getId();
-            $actorRole = ActionLogService::ROLE_CUSTOMER;
-        }
-
-        $this->actionLogService->recordAction($brand, $actionName, $order, $actor, $actorId, $actorRole);
-
-        if (!is_null($payment)) {
-            $paymentMethod = $payment->getPaymentMethod();
-            $this->actionLogService->recordAction($brand, $actionName, $payment, $actor, $actorId, $actorRole);
-            $this->actionLogService->recordAction($brand, $actionName, $paymentMethod, $actor, $actorId, $actorRole);
-        }
 
         event(new GiveContentAccess($order));
 

@@ -7140,10 +7140,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_submit_order_new_user()
     {
+        $accountCreationMail = $this->faker->email;
+        $accountCreationPassword = $this->faker->password;
+
         $this->authManagerMock =
             $this->getMockBuilder(AuthManager::class)
                 ->disableOriginalConstructor()
-                ->setMethods(['guard', 'id'])
+                ->setMethods(['guard', 'id', 'user'])
                 ->getMock();
 
         $this->sessionGuardMock =
@@ -7156,6 +7159,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->authManagerMock->method('id')
             ->willReturn(1);
+
+        $this->authManagerMock->method('user')
+            ->willReturn(
+                [
+                    'id' => 1,
+                    'email' => $accountCreationMail
+                ]
+            );
 
         $this->app->instance(Factory::class, $this->authManagerMock);
 
@@ -7239,9 +7250,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedProductTaxes, 2);
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedProductTaxes, 2);
-
-        $accountCreationMail = $this->faker->email;
-        $accountCreationPassword = $this->faker->password;
 
         $requestData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,

@@ -10,11 +10,10 @@ use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Events\Payments\SubscriptionPaymentFailed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeactivated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewFailed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
@@ -1545,7 +1544,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         config()->set('ecommerce.paypal.failed_payments_before_de_activation', 3);
 
-        $this->expectsEvents([SubscriptionPaymentFailed::class]);
+        $this->expectsEvents([SubscriptionRenewFailed::class]);
         $this->doesntExpectEvents(
             [
                 SubscriptionDeactivated::class,
@@ -1656,12 +1655,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         config()->set('ecommerce.paypal.failed_payments_before_de_activation', 1);
 
-        $this->expectsEvents(
-            [
-                SubscriptionDeactivated::class,
-                SubscriptionPaymentFailed::class,
-            ]
-        );
+        $this->expectsEvents([SubscriptionRenewFailed::class]);
         $this->doesntExpectEvents([SubscriptionRenewed::class]);
 
         $results = $this->call(

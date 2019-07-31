@@ -359,7 +359,6 @@ class UserProductService
         $quantity = 0
     )
     {
-
         /**
          * @var $userProduct UserProduct
          */
