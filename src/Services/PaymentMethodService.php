@@ -108,10 +108,14 @@ class PaymentMethodService
 
         $this->entityManager->persist($paymentMethod);
 
+        $identifiable = null;
+
         if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
 
+            $identifiable = $purchaser->getUserObject();
+
             $userPaymentMethods = $this->createUserPaymentMethod(
-                $purchaser->getUserObject(),
+                $identifiable,
                 $paymentMethod,
                 $setUserDefaultPaymentMethod
             );
@@ -120,8 +124,10 @@ class PaymentMethodService
         }
         elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
 
+            $identifiable = $purchaser->getCustomerEntity();
+
             $customerPaymentMethods = $this->createCustomerPaymentMethod(
-                $purchaser->getCustomerEntity(),
+                $identifiable,
                 $paymentMethod
             );
 
@@ -141,7 +147,7 @@ class PaymentMethodService
             );
         }
 
-        event(new PaymentMethodCreated($paymentMethod));
+        event(new PaymentMethodCreated($paymentMethod, $identifiable));
 
         return $paymentMethod;
     }
@@ -186,10 +192,14 @@ class PaymentMethodService
 
         $this->entityManager->persist($paymentMethod);
 
+        $identifiable = null;
+
         if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
 
+            $identifiable = $purchaser->getUserObject();
+
             $userPaymentMethods = $this->createUserPaymentMethod(
-                $purchaser->getUserObject(),
+                $identifiable,
                 $paymentMethod,
                 $setUserDefaultPaymentMethod
             );
@@ -198,8 +208,10 @@ class PaymentMethodService
         }
         elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
 
+            $identifiable = $purchaser->getCustomerEntity();
+
             $customerPaymentMethods = $this->createCustomerPaymentMethod(
-                $purchaser->getCustomerEntity(),
+                $identifiable,
                 $paymentMethod
             );
 
@@ -220,7 +232,7 @@ class PaymentMethodService
             );
         }
 
-        event(new PaymentMethodCreated($paymentMethod));
+        event(new PaymentMethodCreated($paymentMethod, $identifiable));
 
         return $paymentMethod;
     }

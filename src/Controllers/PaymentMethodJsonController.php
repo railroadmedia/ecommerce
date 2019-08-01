@@ -281,21 +281,6 @@ class PaymentMethodJsonController extends Controller
                     $request->get('currency', $this->currencyService->get()),
                     $request->get('set_default', false)
                 );
-
-                $brand = $request->get('gateway', config('ecommerce.brand'));
-                /** @var $currentUser User */
-                $currentUser = $this->userProvider->getCurrentUser();
-                $userRole = $currentUser->getId() != $user->getId() ? ActionLogService::ROLE_ADMIN : ActionLogService::ROLE_USER;
-
-                $this->actionLogService->recordAction(
-                    $brand,
-                    ActionLogService::ACTION_CREATE,
-                    $paymentMethod,
-                    $currentUser->getEmail(),
-                    $currentUser->getId(),
-                    $userRole
-                );
-
             }
             else {
                 throw new NotAllowedException('Payment method not supported.');
@@ -378,15 +363,6 @@ class PaymentMethodJsonController extends Controller
                 config('ecommerce.brand'),
                 $this->currencyService->get(),
                 false
-            );
-
-            $this->actionLogService->recordAction(
-                $brand,
-                ActionLogService::ACTION_CREATE,
-                $paymentMethod,
-                $user->getEmail(),
-                $user->getId(),
-                ActionLogService::ROLE_USER
             );
 
             event(new PaypalPaymentMethodEvent($paymentMethod->getId()));

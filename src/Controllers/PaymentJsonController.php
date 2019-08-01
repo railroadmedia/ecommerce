@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Order;
@@ -19,6 +18,8 @@ use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Events\PaymentEvent;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\TransactionFailedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
@@ -42,11 +43,6 @@ use Throwable;
 
 class PaymentJsonController extends Controller
 {
-    /**
-     * @var ActionLogService
-     */
-    private $actionLogService;
-
     /**
      * @var CreditCardRepository
      */
@@ -120,7 +116,6 @@ class PaymentJsonController extends Controller
     /**
      * PaymentJsonController constructor.
      *
-     * @param ActionLogService $actionLogService
      * @param CreditCardRepository $creditCardRepository
      * @param CurrencyService $currencyService
      * @param EcommerceEntityManager $entityManager
@@ -136,7 +131,6 @@ class PaymentJsonController extends Controller
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        ActionLogService $actionLogService,
         CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
         EcommerceEntityManager $entityManager,
@@ -152,7 +146,6 @@ class PaymentJsonController extends Controller
         UserProviderInterface $userProvider
     )
     {
-        $this->actionLogService = $actionLogService;
         $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;
@@ -513,19 +506,11 @@ class PaymentJsonController extends Controller
 
         $this->entityManager->flush();
 
-        /** @var $currentUser User */
-        $currentUser = $this->userProvider->getCurrentUser();
-
-        $brand = $payment->getGatewayName();
-        $actor = $currentUser->getEmail();
-        $actorId = $currentUser->getId();
-        $actorRole = $currentUser->getId() == $user->getId() ? ActionLogService::ROLE_USER : ActionLogService::ROLE_ADMIN;
-
         if (!is_null($subscription)) {
-            $this->actionLogService->recordAction($brand, Subscription::ACTION_RENEW, $subscription, $actor, $actorId, $actorRole);
+            event(new SubscriptionRenewed($subscription, $payment));
+        } else {
+            event(new PaymentEvent($payment, $user));
         }
-
-        $this->actionLogService->recordAction($brand, ActionLogService::ACTION_CREATE, $payment, $actor, $actorId, $actorRole);
 
         return ResponseService::payment($payment);
     }

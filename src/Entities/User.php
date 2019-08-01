@@ -3,8 +3,9 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Railroad\Doctrine\Contracts\UserEntityInterface;
+use Railroad\Ecommerce\Contracts\IdentifiableInterface;
 
-class User implements UserEntityInterface
+class User implements UserEntityInterface, IdentifiableInterface
 {
     /**
      * @var int

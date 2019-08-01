@@ -2,43 +2,46 @@
 
 namespace Railroad\Ecommerce\Events;
 
+use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\User;
+
 class PaymentEvent
 {
     /**
-     * @var int
+     * @var Payment
      */
-    protected $id;
+    protected $payment;
 
     /**
-     * @var string
+     * @var User
      */
-    protected $eventType;
+    protected $user;
 
     /**
      * Create a new event instance.
      *
-     * @param $id
-     * @param $eventType
+     * @param Payment $payment
+     * @param User $user
      */
-    public function __construct($id, $eventType)
+    public function __construct(Payment $payment, User $user)
     {
-        $this->id = $id;
-        $this->eventType = $eventType;
+        $this->payment = $payment;
+        $this->user = $user;
     }
 
     /**
-     * @return int
+     * @return Payment
      */
-    public function getId()
+    public function getPayment(): Payment
     {
-        return $this->id;
+        return $this->payment;
     }
 
     /**
-     * @return string
+     * @return User
      */
-    public function getEventType()
+    public function getUser(): User
     {
-        return $this->eventType;
+        return $this->user;
     }
 }

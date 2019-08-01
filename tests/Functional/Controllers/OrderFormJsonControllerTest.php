@@ -19,6 +19,8 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Events\OrderEvent;
+use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodCreated;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Services\CartAddressService;
@@ -829,6 +831,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
 
+        $this->expectsEvents(
+            [
+                OrderEvent::class,
+                PaymentMethodCreated::class,
+            ]
+        );
+
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
@@ -992,25 +1001,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $this->assertDatabaseHas(
-            'ecommerce_user_products',
-            [
-                'user_id' => $userId,
-                'product_id' => $productOne['id'],
-                'quantity' => $productOneQuantity,
-                'expiration_date' => null,
-            ]
-        );
-        $this->assertDatabaseHas(
-            'ecommerce_user_products',
-            [
-                'user_id' => $userId,
-                'product_id' => $productTwo['id'],
-                'quantity' => $productTwoQuantity,
-                'expiration_date' => null,
-            ]
-        );
-
         // creditCard
         $this->assertDatabaseHas(
             'ecommerce_credit_cards',
@@ -1051,46 +1041,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedProductTaxes,
                 'shipping_taxes_paid' => $expectedShippingTaxes,
-            ]
-        );
-
-        // assert log entries
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Order::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => PaymentMethod::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -4453,6 +4403,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
 
+        $this->expectsEvents(
+            [
+                OrderEvent::class,
+                PaymentMethodCreated::class,
+            ]
+        );
+
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
@@ -4460,18 +4417,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertEquals(200, $response->getStatusCode());
-
-        $this->assertDatabaseHas(
-            'ecommerce_user_products',
-            [
-                'user_id' => $userId,
-                'product_id' => $product['id'],
-                'quantity' => 1,
-                'expiration_date' => Carbon::now()
-                    ->addYear(1)
-                    ->toDateTimeString()
-            ]
-        );
 
         // billingAddress
         $this->assertDatabaseHas(
@@ -4511,59 +4456,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedProductTaxes,
                 'shipping_taxes_paid' => $expectedShippingTaxes,
-            ]
-        );
-
-        // assert log entries
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Order::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => PaymentMethod::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -6796,6 +6688,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'currency' => $currency
         ];
 
+        $this->expectsEvents(
+            [
+                OrderEvent::class,
+                PaymentMethodCreated::class,
+            ]
+        );
+
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
@@ -7073,19 +6972,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        // orderItemFulfillment
-        $this->assertDatabaseHas(
-            'ecommerce_order_item_fulfillment',
-            [
-                'status' => config('ecommerce.fulfillment_status_pending'),
-                'company' => null,
-                'tracking_number' => null,
-                'fulfilled_on' => null,
-                'created_at' => Carbon::now()
-                    ->toDateTimeString()
-            ]
-        );
-
         $this->assertDatabaseHas(
             'ecommerce_payment_taxes',
             [
@@ -7095,45 +6981,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedProductTaxes,
                 'shipping_taxes_paid' => $expectedShippingTaxes,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Order::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $billingEmailAddress,
-                'actor_id' => $customerId,
-                'actor_role' => ActionLogService::ROLE_CUSTOMER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $billingEmailAddress,
-                'actor_id' => $customerId,
-                'actor_role' => ActionLogService::ROLE_CUSTOMER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => PaymentMethod::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $billingEmailAddress,
-                'actor_id' => $customerId,
-                'actor_role' => ActionLogService::ROLE_CUSTOMER,
             ]
         );
     }
@@ -7270,6 +7117,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'account_creation_password' => $accountCreationPassword,
             'account_creation_password_confirmation' => $accountCreationPassword,
         ];
+
+        $this->expectsEvents(
+            [
+                OrderEvent::class,
+                PaymentMethodCreated::class,
+            ]
+        );
 
         $response = $this->call(
             'PUT',
@@ -7437,45 +7291,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedProductTaxes,
                 'shipping_taxes_paid' => $expectedShippingTaxes,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Order::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $accountCreationMail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $accountCreationMail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => PaymentMethod::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $accountCreationMail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -8953,6 +8768,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'brand' => $brand
         ];
 
+        $this->expectsEvents(
+            [
+                OrderEvent::class,
+                PaymentMethodCreated::class,
+            ]
+        );
+
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
@@ -8999,20 +8821,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_user_products',
-            [
-                'user_id' => $randomUser['id'],
-                'product_id' => $product['id'],
-                'quantity' => $productQuantity,
-                'expiration_date' => Carbon::now()
-                    ->addYear(1)
-                    ->toDateTimeString(),
-                'created_at' => Carbon::now()
-                    ->toDateTimeString()
-            ]
-        );
-
-        $this->assertDatabaseHas(
             'ecommerce_subscriptions',
             [
                 'type' => Subscription::TYPE_SUBSCRIPTION,
@@ -9045,58 +8853,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedProductTaxes,
                 'shipping_taxes_paid' => $expectedShippingTaxes,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Order::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => PaymentMethod::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }
@@ -9201,6 +8957,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'user_id' => $randomUser['id'],
         ];
 
+        $this->expectsEvents(
+            [
+                OrderEvent::class,
+                PaymentMethodCreated::class,
+            ]
+        );
+
         $results = $this->call(
             'PUT',
             '/json/order-form/submit',
@@ -9247,18 +9010,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_user_products',
-            [
-                'user_id' => $randomUser['id'],
-                'product_id' => $product['id'],
-                'quantity' => $productQuantity,
-                'expiration_date' => null,
-                'created_at' => Carbon::now()
-                    ->toDateTimeString()
-            ]
-        );
-
-        $this->assertDatabaseHas(
             'ecommerce_payment_taxes',
             [
                 'country' => $orderData['shipping_country'],
@@ -9267,45 +9018,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedProductTaxes,
                 'shipping_taxes_paid' => $expectedShippingTaxes,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Order::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => PaymentMethod::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }
@@ -9414,6 +9126,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'stripe_api_secret' => $this->faker->word
         ];
 
+        $this->expectsEvents(
+            [
+                OrderEvent::class,
+                PaymentMethodCreated::class,
+            ]
+        );
+
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
@@ -9460,18 +9179,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_user_products',
-            [
-                'user_id' => $randomUser['id'],
-                'product_id' => $product['id'],
-                'quantity' => $productQuantity,
-                'expiration_date' => null,
-                'created_at' => Carbon::now()
-                    ->toDateTimeString()
-            ]
-        );
-
-        $this->assertDatabaseHas(
             'ecommerce_payment_taxes',
             [
                 'country' => $country,
@@ -9480,45 +9187,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedProductTaxes,
                 'shipping_taxes_paid' => $expectedShippingTaxes,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Order::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => PaymentMethod::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }

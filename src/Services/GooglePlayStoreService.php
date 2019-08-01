@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Entities\Order;
@@ -15,9 +14,9 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
-use Railroad\Ecommerce\Events\OrderEvent;
+use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
+use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
+use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -27,11 +26,6 @@ use Throwable;
 
 class GooglePlayStoreService
 {
-    /**
-     * @var ActionLogService
-     */
-    private $actionLogService;
-
     /**
      * @var EcommerceEntityManager
      */
@@ -65,7 +59,6 @@ class GooglePlayStoreService
     /**
      * GooglePlayStoreService constructor.
      *
-     * @param ActionLogService $actionLogService
      * @param GooglePlayStoreGateway $googlePlayStoreGateway,
      * @param EcommerceEntityManager $entityManager,
      * @param ProductRepository $productRepository,
@@ -74,7 +67,6 @@ class GooglePlayStoreService
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        ActionLogService $actionLogService,
         GooglePlayStoreGateway $googlePlayStoreGateway,
         EcommerceEntityManager $entityManager,
         ProductRepository $productRepository,
@@ -83,7 +75,6 @@ class GooglePlayStoreService
         UserProviderInterface $userProvider
     )
     {
-        $this->actionLogService = $actionLogService;
         $this->googlePlayStoreGateway = $googlePlayStoreGateway;
         $this->entityManager = $entityManager;
         $this->productRepository = $productRepository;
@@ -150,28 +141,7 @@ class GooglePlayStoreService
 
         $this->entityManager->flush();
 
-        event(new OrderEvent($order, $payment));
-
-        $actionName = ActionLogService::ACTION_CREATE;
-        $brand = $subscription->getBrand();
-
-        $this->actionLogService->recordSystemAction(
-            $brand,
-            $actionName,
-            $order
-        );
-
-        $this->actionLogService->recordSystemAction(
-            $brand,
-            $actionName,
-            $payment
-        );
-
-        $this->actionLogService->recordSystemAction(
-            $brand,
-            $actionName,
-            $subscription
-        );
+        event(new MobileOrderEvent($order, $payment, $subscription));
 
         return $user;
     }
@@ -234,13 +204,7 @@ class GooglePlayStoreService
 
             $this->entityManager->flush();
 
-            event(new SubscriptionRenewed($subscription, $payment));
-
-             $this->actionLogService->recordSystemAction(
-                $brand,
-                ActionLogService::ACTION_CREATE,
-                $payment
-            );
+            event(new MobileSubscriptionRenewed($subscription, $payment, MobileSubscriptionRenewed::ACTOR_SYSTEM));
 
         } else {
 
@@ -250,19 +214,10 @@ class GooglePlayStoreService
 
             $this->entityManager->flush();
 
-            $subscriptionEventType = 'canceled';
+            event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));
         }
 
-        $this->actionLogService->recordSystemAction(
-            $brand,
-            $subscriptionActionName,
-            $subscription
-        );
-
         $this->userProductService->updateSubscriptionProducts($subscription);
-
-        event(new SubscriptionUpdated($oldSubscription, $subscription));
-        event(new SubscriptionEvent($subscription->getId(), $subscriptionEventType));
     }
 
     /**

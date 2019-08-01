@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Event;
 use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodCreated;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
@@ -151,7 +153,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
-        $address = $this->fakeAddress(['user_id' => $customer['id']]);
+        $address = $this->fakeAddress(
+            [
+                'user_id' => $customer['id'],
+                'brand' => $gateway,
+            ]
+        );
 
         $payload = [
             'card_token' => 'tok_mastercard',
@@ -216,6 +223,21 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             }
         );
 
+        Event::assertDispatched(
+            PaymentMethodCreated::class,
+            function ($e) use ($customer) {
+
+                $hasPaymentMethod = is_object($e->getPaymentMethod()) &&
+                    get_class($e->getPaymentMethod()) == PaymentMethod::class;
+
+                $hasUser = is_object($e->getUser()) &&
+                    get_class($e->getUser()) == User::class &&
+                    $e->getUser()->getId() == $customer['id'];
+
+                return $hasPaymentMethod && $hasUser;
+            }
+        );
+
         // assert payment method, credit card, link between user and payment method saved in the db
         $this->assertDatabaseHas(
             'ecommerce_payment_methods',
@@ -245,19 +267,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'payment_method_id' => $paymentResponse['data']['id'],
                 'created_at' => Carbon::now()->toDateTimeString(),
                 'is_primary' => 1,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => PaymentMethod::class,
-                'resource_id' => ($paymentMethod['id'] + 1),
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }
@@ -309,7 +318,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
-        $address = $this->fakeAddress(['user_id' => $customer['id']]);
+        $address = $this->fakeAddress(
+            [
+                'user_id' => $customer['id'],
+                'brand' => $gateway,
+            ]
+        );
 
         $payload = [
             'card_token' => 'tok_mastercard',
@@ -372,6 +386,21 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             }
         );
 
+        Event::assertDispatched(
+            PaymentMethodCreated::class,
+            function ($e) use ($customer) {
+
+                $hasPaymentMethod = is_object($e->getPaymentMethod()) &&
+                    get_class($e->getPaymentMethod()) == PaymentMethod::class;
+
+                $hasUser = is_object($e->getUser()) &&
+                    get_class($e->getUser()) == User::class &&
+                    $e->getUser()->getId() == $customer['id'];
+
+                return $hasPaymentMethod && $hasUser;
+            }
+        );
+
         // assert payment method, credit card, link between user and payment method saved in the db
         $this->assertDatabaseHas(
             'ecommerce_payment_methods',
@@ -401,19 +430,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'payment_method_id' => $paymentResponse['data']['id'],
                 'created_at' => Carbon::now()->toDateTimeString(),
                 'is_primary' => 0,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => PaymentMethod::class,
-                'resource_id' => ($paymentMethod['id'] + 1),
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }
@@ -1573,17 +1589,19 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             }
         );
 
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => config('ecommerce.brand'),
-                'resource_name' => PaymentMethod::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
+        Event::assertDispatched(
+            PaymentMethodCreated::class,
+            function ($e) use ($userId) {
+
+                $hasPaymentMethod = is_object($e->getPaymentMethod()) &&
+                    get_class($e->getPaymentMethod()) == PaymentMethod::class;
+
+                $hasUser = is_object($e->getUser()) &&
+                    get_class($e->getUser()) == User::class &&
+                    $e->getUser()->getId() == $userId;
+
+                return $hasPaymentMethod && $hasUser;
+            }
         );
     }
 

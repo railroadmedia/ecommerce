@@ -6,10 +6,10 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Events\UpdateOrderEvent;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\OrderRepository;
@@ -25,11 +25,6 @@ use Throwable;
 
 class OrderJsonController extends Controller
 {
-    /**
-     * @var ActionLogService
-     */
-    private $actionLogService;
-
     /**
      * @var EcommerceEntityManager
      */
@@ -73,7 +68,6 @@ class OrderJsonController extends Controller
     /**
      * OrderJsonController constructor.
      *
-     * @param ActionLogService $actionLogService
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param OrderRepository $orderRepository
@@ -84,7 +78,6 @@ class OrderJsonController extends Controller
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        ActionLogService $actionLogService,
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         OrderRepository $orderRepository,
@@ -95,7 +88,6 @@ class OrderJsonController extends Controller
         UserProviderInterface $userProvider
     )
     {
-        $this->actionLogService = $actionLogService;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->orderRepository = $orderRepository;
@@ -252,16 +244,7 @@ class OrderJsonController extends Controller
 
         $this->entityManager->flush();
 
-        /** @var $currentUser User */
-        $currentUser = $this->userProvider->getCurrentUser();
-
-        $brand = $order->getBrand();
-        $actor = $currentUser->getEmail();
-        $actorId = $currentUser->getId();
-        $user = $order->getUser();
-        $actorRole = (!$user || $currentUser->getId() != $user->getId()) ? ActionLogService::ROLE_ADMIN : ActionLogService::ROLE_USER;
-
-        $this->actionLogService->recordAction($brand, ActionLogService::ACTION_UPDATE, $order, $actor, $actorId, $actorRole);
+        event(new UpdateOrderEvent($order));
 
         return ResponseService::order($order);
     }

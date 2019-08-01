@@ -807,6 +807,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'paid_until' => Carbon::now()->subDays(5)->toDateTimeString(),
             'interval_type' => PaymentJsonController::INTERVAL_TYPE_MONTHLY,
             'interval_count' => 1,
+            'user_id' => $userId,
+            'brand' => $gateway
         ]);
 
         $creditCard = $this->fakeCreditCard(

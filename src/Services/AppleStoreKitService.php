@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\Order;
@@ -16,10 +15,8 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
-use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
@@ -31,11 +28,6 @@ use Throwable;
 
 class AppleStoreKitService
 {
-    /**
-     * @var ActionLogService
-     */
-    private $actionLogService;
-
     /**
      * @var EcommerceEntityManager
      */
@@ -64,7 +56,6 @@ class AppleStoreKitService
     /**
      * AppleStoreKitService constructor.
      *
-     * @param ActionLogService $actionLogService
      * @param AppleStoreKitGateway $appleStoreKitGateway
      * @param EcommerceEntityManager $entityManager
      * @param ProductRepository $productRepository
@@ -72,7 +63,6 @@ class AppleStoreKitService
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        ActionLogService $actionLogService,
         AppleStoreKitGateway $appleStoreKitGateway,
         EcommerceEntityManager $entityManager,
         ProductRepository $productRepository,
@@ -80,7 +70,6 @@ class AppleStoreKitService
         UserProviderInterface $userProvider
     )
     {
-        $this->actionLogService = $actionLogService;
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->entityManager = $entityManager;
         $this->productRepository = $productRepository;

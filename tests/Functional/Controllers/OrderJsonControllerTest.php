@@ -70,10 +70,12 @@ class OrderJsonControllerTest extends EcommerceTestCase
         $userId = $this->createAndLogInNewUser($userEmail);
         $brand = 'drumeo';
 
+        $orderUser = $this->fakeUser();
+
         $order = $this->fakeOrder(
             [
                 'brand' => $brand,
-                'user_id' => null,
+                'user_id' => $orderUser['id'],
                 'customer_id' => null,
                 'shipping_address_id' => null,
                 'billing_address_id' => null,
@@ -123,7 +125,24 @@ class OrderJsonControllerTest extends EcommerceTestCase
                             'total_due' => $newDue,
                             'note' => $newNote,
                         ]
-                    )
+                    ),
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $orderUser['id'],
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'user',
+                        'id' => $orderUser['id'],
+                        'attributes' => [
+                            'email' => $orderUser['email']
+                        ]
+                    ]
                 ]
             ],
             $response->decodeResponseJson()

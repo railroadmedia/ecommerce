@@ -7,7 +7,6 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
@@ -33,11 +32,6 @@ use Throwable;
 
 class SubscriptionJsonController extends Controller
 {
-    /**
-     * @var ActionLogService
-     */
-    private $actionLogService;
-
     /**
      * @var EcommerceEntityManager
      */
@@ -76,7 +70,6 @@ class SubscriptionJsonController extends Controller
     /**
      * SubscriptionJsonController constructor.
      *
-     * @param ActionLogService $actionLogService
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param PermissionService $permissionService
@@ -86,7 +79,6 @@ class SubscriptionJsonController extends Controller
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        ActionLogService $actionLogService,
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService,
@@ -96,7 +88,6 @@ class SubscriptionJsonController extends Controller
         UserProviderInterface $userProvider
     )
     {
-        $this->actionLogService = $actionLogService;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->permissionService = $permissionService;
@@ -257,16 +248,6 @@ class SubscriptionJsonController extends Controller
         $oldSubscriptionState = clone($subscription);
 
         $response = $payment = null;
-
-        /** @var $currentUser User */
-        $currentUser = $this->userProvider->getCurrentUser();
-
-        $brand = $subscription->getBrand();
-        $actor = $currentUser->getEmail();
-        $actorId = $currentUser->getId();
-        $actorRole = $currentUser->getId() == $subscription->getUser()->getId() ?
-                        ActionLogService::ROLE_USER:
-                        ActionLogService::ROLE_ADMIN;
 
         try {
 
