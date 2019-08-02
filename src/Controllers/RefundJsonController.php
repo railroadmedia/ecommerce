@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Routing\Controller;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderItem;
@@ -15,6 +14,7 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
+use Railroad\Ecommerce\Events\RefundEvent;
 use Railroad\Ecommerce\Exceptions\RefundFailedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
@@ -35,11 +35,6 @@ use Throwable;
 
 class RefundJsonController extends Controller
 {
-    /**
-     * @var ActionLogService
-     */
-    private $actionLogService;
-
     /**
      * @var EcommerceEntityManager
      */
@@ -108,7 +103,6 @@ class RefundJsonController extends Controller
     /**
      * RefundJsonController constructor.
      *
-     * @param ActionLogService $actionLogService
      * @param EcommerceEntityManager $entityManager
      * @param OrderItemFulfillmentRepository $orderItemFulfillmentRepository
      * @param OrderItemRepository $orderItemRepository
@@ -124,7 +118,6 @@ class RefundJsonController extends Controller
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        ActionLogService $actionLogService,
         EcommerceEntityManager $entityManager,
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         OrderItemRepository $orderItemRepository,
@@ -140,7 +133,6 @@ class RefundJsonController extends Controller
         UserProviderInterface $userProvider
     )
     {
-        $this->actionLogService = $actionLogService;
         $this->entityManager = $entityManager;
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->orderItemRepository = $orderItemRepository;
@@ -335,19 +327,7 @@ class RefundJsonController extends Controller
         /** @var $user User */
         $user = $userPaymentMethod->getUser();
 
-        /** @var $currentUser User */
-        $currentUser = $this->userProvider->getCurrentUser();
-        $userRole = $currentUser->getId() != $user->getId() ? ActionLogService::ROLE_ADMIN : ActionLogService::ROLE_USER;
-        $brand = $payment->getGatewayName();
-
-        $this->actionLogService->recordAction(
-            $brand,
-            ActionLogService::ACTION_CREATE,
-            $refund,
-            $currentUser->getEmail(),
-            $currentUser->getId(),
-            $userRole
-        );
+        event(new RefundEvent($refund, $user));
 
         return ResponseService::refund($refund);
     }

@@ -257,7 +257,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             );
 
             $this->assertDatabaseHas(
-                'ecommerce_actions_log',
+                'railactionlog_actions_log',
                 [
                     'brand' => $initialSubscriptions[$i]['brand'],
                     'resource_name' => Subscription::class,
@@ -440,7 +440,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $subscription['brand'],
                 'resource_name' => Subscription::class,
@@ -453,7 +453,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_actions_log',
+            'railactionlog_actions_log',
             [
                 'brand' => $subscription['brand'],
                 'resource_name' => Payment::class,
@@ -704,7 +704,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             );
 
             $this->assertDatabaseHas(
-                'ecommerce_actions_log',
+                'railactionlog_actions_log',
                 [
                     'brand' => $deactivatedSubscription['brand'],
                     'resource_name' => Subscription::class,
@@ -767,7 +767,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             );
 
             $this->assertDatabaseHas(
-                'ecommerce_actions_log',
+                'railactionlog_actions_log',
                 [
                     'brand' => $initialSubscriptions[$i]['brand'],
                     'resource_name' => Subscription::class,

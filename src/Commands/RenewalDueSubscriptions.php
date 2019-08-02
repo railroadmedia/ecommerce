@@ -4,9 +4,11 @@ namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
 use DateTimeInterface;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewed;
+use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewFailed;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeactivated;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
@@ -29,11 +31,6 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
      * @var string
      */
     protected $description = 'Renewal of due subscriptions.';
-
-    /**
-     * @var ActionLogService
-     */
-    private $actionLogService;
 
     /**
      * @var EcommerceEntityManager
@@ -60,14 +57,12 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     /**
      * RenewalDueSubscriptions constructor.
      *
-     * @param ActionLogService $actionLogService
      * @param EcommerceEntityManager $entityManager
      * @param RenewalService $renewalService
      * @param SubscriptionRepository $subscriptionRepository
      * @param UserProductService $userProductService
      */
     public function __construct(
-        ActionLogService $actionLogService,
         EcommerceEntityManager $entityManager,
         RenewalService $renewalService,
         SubscriptionRepository $subscriptionRepository,
@@ -76,7 +71,6 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     {
         parent::__construct();
 
-        $this->actionLogService = $actionLogService;
         $this->entityManager = $entityManager;
         $this->renewalService = $renewalService;
         $this->subscriptionRepository = $subscriptionRepository;
@@ -160,48 +154,23 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         foreach ($dueSubscriptions as $dueSubscription) {
 
             $oldSubscriptionState = clone($dueSubscription);
-            $brand = $dueSubscription->getBrand();
 
             try {
 
                 $payment = $this->renewalService->renew($dueSubscription);
 
-                $this->actionLogService->recordCommandAction(
-                    $brand,
-                    Subscription::ACTION_RENEW,
-                    $dueSubscription
-                );
-
-                $this->actionLogService->recordCommandAction(
-                    $brand,
-                    ActionLogService::ACTION_CREATE,
-                    $payment
-                );
+                event(new CommandSubscriptionRenewed($dueSubscription, $payment));
 
             } catch (Throwable $throwable) {
 
+                $payment = null;
+
                 if ($throwable instanceof PaymentFailedException) {
 
-                    // if a payment record/entity was created
-
-                    $this->actionLogService->recordCommandAction(
-                        $brand,
-                        Payment::ACTION_FAILED_RENEW,
-                        $throwable->getPayment()
-                    );
+                    $payment = $throwable->getPayment();
                 }
 
-                if ($dueSubscription->getNote() == RenewalService::DEACTIVATION_MESSAGE &&
-                    $dueSubscription->getIsActive() != $oldSubscriptionState->getIsActive()) {
-
-                    // if subscription was deactivated in current iteration
-
-                    $this->actionLogService->recordCommandAction(
-                        $brand,
-                        Subscription::ACTION_DEACTIVATED,
-                        $dueSubscription
-                    );
-                }
+                event(new CommandSubscriptionRenewFailed($dueSubscription, $oldSubscriptionState, $payment));
 
                 $this->info(
                     'Failed to renew subscription ID: ' . $dueSubscription->getId() . ' - ' . $throwable->getMessage()
@@ -273,16 +242,15 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         $this->info('De-activate ancient subscriptions. Count: ' . count($ancientSubscriptions));
 
         foreach ($ancientSubscriptions as $ancientSubscription) {
+
+            $oldSubscriptionState = clone($dueSubscription);
+
             $ancientSubscription->setIsActive(false);
             $ancientSubscription->setNote(self::DEACTIVATION_NOTE);
             $ancientSubscription->setCanceledOn(Carbon::now());
             $ancientSubscription->setUpdatedAt(Carbon::now());
 
-            $this->actionLogService->recordCommandAction(
-                $ancientSubscription->getBrand(),
-                Subscription::ACTION_DEACTIVATED,
-                $ancientSubscription
-            );
+            event(new SubscriptionDeactivated($ancientSubscription, $oldSubscriptionState));
         }
 
         $this->entityManager->flush();

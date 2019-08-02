@@ -15,6 +15,8 @@ use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewFailed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
+use Railroad\Ecommerce\Events\Subscriptions\UserSubscriptionRenewed;
+use Railroad\Ecommerce\Events\Subscriptions\UserSubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
@@ -543,7 +545,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $newPrice = $this->faker->numberBetween();
 
-        $this->expectsEvents([SubscriptionUpdated::class]);
+        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -674,7 +676,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'quantity' => 1
         ]);
 
-        $this->expectsEvents([SubscriptionUpdated::class]);
+        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -879,7 +881,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'expiration_date' => $subscription['paid_until']
         ]);
 
-        $this->expectsEvents([SubscriptionUpdated::class]);
+        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -1116,7 +1118,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
     {
         Mail::fake();
 
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $this->permissionServiceMock->method('can')->willReturn(true);
 
@@ -1231,6 +1234,19 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'shipping_taxes_paid' => 0,
             ]
         );
+
+        $this->assertDatabaseHas(
+            'railactionlog_actions_log',
+            [
+                'brand' => $subscription['brand'],
+                'resource_name' => Subscription::class,
+                'resource_id' => $subscription['id'],
+                'action_name' => Subscription::ACTION_RENEW,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
     }
 
     public function test_renew_subscription_paypal()
@@ -1289,7 +1305,13 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'brand' => $brand,
         ]);
 
-        $this->expectsEvents([SubscriptionRenewed::class, SubscriptionUpdated::class]);
+        $this->expectsEvents(
+            [
+                SubscriptionRenewed::class,
+                SubscriptionUpdated::class,
+                UserSubscriptionRenewed::class
+            ]
+        );
 
         $results = $this->call(
             'POST',
@@ -1336,7 +1358,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
     public function test_renew_subscription_different_payment_method()
     {
-        $userId = $this->createAndLogInNewUser();
+         $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $this->permissionServiceMock->method('can')->willReturn(true);
 
@@ -1462,6 +1485,19 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedSubscriptionTaxes,
                 'shipping_taxes_paid' => 0,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'railactionlog_actions_log',
+            [
+                'brand' => $subscription['brand'],
+                'resource_name' => Subscription::class,
+                'resource_id' => $subscription['id'],
+                'action_name' => Subscription::ACTION_RENEW,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }

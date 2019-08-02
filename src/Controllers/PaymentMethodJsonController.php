@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
@@ -46,11 +45,6 @@ use Throwable;
 
 class PaymentMethodJsonController extends Controller
 {
-    /**
-     * @var ActionLogService
-     */
-    private $actionLogService;
-
     /**
      * @var AddressRepository
      */
@@ -119,7 +113,6 @@ class PaymentMethodJsonController extends Controller
     /**
      * PaymentMethodJsonController constructor.
      *
-     * @param ActionLogService $actionLogService
      * @param AddressRepository $addressRepository
      * @param CreditCardRepository $creditCardRepository
      * @param CurrencyService $currencyService
@@ -135,7 +128,6 @@ class PaymentMethodJsonController extends Controller
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        ActionLogService $actionLogService,
         AddressRepository $addressRepository,
         CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
@@ -151,7 +143,6 @@ class PaymentMethodJsonController extends Controller
         UserProviderInterface $userProvider
     )
     {
-        $this->actionLogService = $actionLogService;
         $this->addressRepository = $addressRepository;
         $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
@@ -524,29 +515,13 @@ class PaymentMethodJsonController extends Controller
 
             $this->entityManager->flush();
 
-            event(new PaymentMethodUpdated($paymentMethod, $oldPaymentMethod));
+            event(new PaymentMethodUpdated($paymentMethod, $oldPaymentMethod, $userPaymentMethod->getUser()));
 
             event(
                 new UserDefaultPaymentMethodEvent(
                     $userPaymentMethod->getUser()
                         ->getId(), $paymentMethod->getId()
                 )
-            );
-
-            $brand = $request->get('gateway');
-            /** @var $currentUser User */
-            $currentUser = $this->userProvider->getCurrentUser();
-            $userRole = $currentUser->getId() != $userPaymentMethod->getUser()->getId() ?
-                        ActionLogService::ROLE_ADMIN:
-                        ActionLogService::ROLE_USER;
-
-            $this->actionLogService->recordAction(
-                $brand,
-                ActionLogService::ACTION_UPDATE,
-                $paymentMethod,
-                $currentUser->getEmail(),
-                $currentUser->getId(),
-                $userRole
             );
 
         } catch (Card $exception) {

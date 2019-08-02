@@ -15,6 +15,8 @@ use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewFailed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
+use Railroad\Ecommerce\Events\Subscriptions\UserSubscriptionRenewed;
+use Railroad\Ecommerce\Events\Subscriptions\UserSubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -217,6 +219,7 @@ class SubscriptionJsonController extends Controller
         }
 
         event(new SubscriptionUpdated($oldSubscription, $subscription));
+        event(new UserSubscriptionUpdated($oldSubscription, $subscription));
 
         $this->entityManager->flush();
 
@@ -254,6 +257,8 @@ class SubscriptionJsonController extends Controller
             $payment = $this->renewalService->renew($subscription);
 
             $response = ResponseService::subscription($subscription);
+
+            event(new UserSubscriptionRenewed($subscription, $payment));
 
         } catch (Exception $exception) {
 

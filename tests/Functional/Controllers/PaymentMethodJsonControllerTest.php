@@ -723,7 +723,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ->willReturn($updatedCard);
 
         $address = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'brand' => $gateway,
         ]);
 
         $paymentMethod = $this->fakePaymentMethod([
