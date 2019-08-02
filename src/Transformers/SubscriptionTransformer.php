@@ -14,6 +14,10 @@ class SubscriptionTransformer extends TransformerAbstract
         if ($subscription->getProduct()) {
             // product relation is nullable
             $this->defaultIncludes[] = 'product';
+        } else {
+            if (($key = array_search('product', $this->defaultIncludes)) !== false) {
+                unset($this->defaultIncludes[$key]);
+            }
         }
 
         if ($subscription->getUser()) {
