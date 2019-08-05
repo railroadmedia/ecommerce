@@ -65,8 +65,6 @@ class PaypalBillingAgreement
 
     /**
      * @param string $externalId
-     *
-     * @return PaypalBillingAgreement
      */
     public function setExternalId(string $externalId)
     {

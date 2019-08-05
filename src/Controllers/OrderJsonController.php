@@ -192,7 +192,7 @@ class OrderJsonController extends Controller
             )
         );
 
-        $order->setDeletedOn(Carbon::now());
+        $order->setDeletedAt(Carbon::now());
 
         $this->entityManager->flush();
 

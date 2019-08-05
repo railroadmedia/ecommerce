@@ -4,13 +4,11 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Doctrine\ORM\ORMException;
-use Doctrine\ORM\QueryBuilder;
 use Exception;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
-use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Throwable;

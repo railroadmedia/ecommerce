@@ -20,7 +20,6 @@ use Railroad\Ecommerce\Exceptions\SubscriptionRenewException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
@@ -114,11 +113,11 @@ class RenewalService
     /**
      * @param Subscription $subscription
      *
-     * @return Payment
+     * @return Payment|null
      *
      * @throws Throwable
      */
-    public function renew(Subscription $subscription)
+    public function renew(Subscription $subscription): ?Payment
     {
         if ($subscription->getType() == Subscription::TYPE_APPLE_SUBSCRIPTION ||
             $subscription->getType() == Subscription::TYPE_GOOGLE_SUBSCRIPTION) {
@@ -133,7 +132,7 @@ class RenewalService
         // check for payment plan if the user have already paid all the cycles
         if (($subscription->getType() == config('ecommerce.type_payment_plan')) &&
             ((int)$subscription->getTotalCyclesPaid() >= (int)$subscription->getTotalCyclesDue())) {
-            return $subscription;
+            return null;
         }
 
         /** @var $paymentMethod PaymentMethod */

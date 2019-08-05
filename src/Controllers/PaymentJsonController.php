@@ -19,7 +19,7 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\PaymentEvent;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
+use Railroad\Ecommerce\Events\Subscriptions\UserSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\TransactionFailedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
@@ -475,10 +475,6 @@ class PaymentJsonController extends Controller
                     $country = $order->getShippingAddress()->getCountry();
                     $region = $order->getShippingAddress()->getRegion();
                     $address = new Address($country, $region);
-                } elseif ($order->getPaymentMethod() && $order->getPaymentMethod()->getBillingAddress()) {
-                    $country = $order->getPaymentMethod()->getBillingAddress()->getCountry();
-                    $region = $order->getPaymentMethod()->getBillingAddress()->getRegion();
-                    $address = new Address($country, $region);
                 } elseif ($order->getBillingAddress()) {
                     $country = $order->getBillingAddress()->getCountry();
                     $region = $order->getBillingAddress()->getRegion();
@@ -507,7 +503,7 @@ class PaymentJsonController extends Controller
         $this->entityManager->flush();
 
         if (!is_null($subscription)) {
-            event(new SubscriptionRenewed($subscription, $payment));
+            event(new UserSubscriptionRenewed($subscription, $payment));
         } else {
             event(new PaymentEvent($payment, $user));
         }
@@ -563,7 +559,7 @@ class PaymentJsonController extends Controller
             )
         );
 
-        $payment->setDeletedOn(Carbon::now());
+        $payment->setDeletedAt(Carbon::now());
 
         $this->entityManager->flush();
 

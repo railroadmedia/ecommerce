@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Carbon\Carbon;
 use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\OptimisticLockException;
@@ -207,7 +208,7 @@ class UserProductJsonController extends Controller
 
         $this->permissionService->canOrThrow(auth()->id(), 'delete.user-products');
 
-        $this->entityManager->remove($userProduct);
+        $userProduct->setDeletedAt(Carbon::now());
         $this->entityManager->flush();
 
         event(new UserProductDeleted($userProduct));

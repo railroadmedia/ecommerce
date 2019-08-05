@@ -14,6 +14,7 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\RefundEvent;
 use Railroad\Ecommerce\Exceptions\RefundFailedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
@@ -244,80 +245,6 @@ class RefundJsonController extends Controller
 
         foreach ($orderItemFulfillments as $orderItemFulfillment) {
             $this->entityManager->remove($orderItemFulfillment);
-        }
-
-        // remove user products if full refund
-        if ($refund->getPaymentAmount() == $refund->getRefundedAmount()) {
-            if (count($orderPayments)) {
-
-                $orderItems = $this->orderItemRepository->getByOrders(array_values($distinctOrders));
-
-                $distinctProducts = [];
-                $productsToUsersMap = [];
-                /*
-                // structure example
-                $productsToUsersMap = [
-                    product_id_1 => [user_id_1, user_id_2, user_id_3],
-                    product_id_2 => [user_id_1, user_id_4, user_id_5]
-                ];
-                */
-
-                /**
-                 * @var $orderItem OrderItem
-                 */
-                foreach ($orderItems as $orderItem) {
-                    /**
-                     * @var $product Product
-                     */
-                    $product = $orderItem->getProduct();
-
-                    $distinctProducts[$product->getId()] = $product;
-
-                    if ($orderItem->getOrder() && $orderItem->getOrder()->getUser() &&
-                        $orderItem->getOrder()->getUser()->getId()) {
-
-                        if (!isset($productsToUsersMap[$product->getId()])) {
-                            $productsToUsersMap[$product->getId()] = [];
-                        }
-
-                        $productsToUsersMap[$product->getId()][] = $orderItem->getOrder()->getUser()->getId();
-                    }
-                }
-
-                $userProducts = $this->userProductRepository->getByProducts(array_values($distinctProducts));
-
-                foreach ($userProducts as $userProduct) {
-                    $productId = $userProduct->getProduct()->getId();
-                    $userId = $userProduct->getUser()->getId();
-
-                    if (isset($productsToUsersMap[$productId]) && in_array($userId, $productsToUsersMap[$productId])) {
-                        $this->entityManager->remove($userProduct);
-                    }
-                }
-            }
-            else {
-
-                $subscriptionPayments = $this->subscriptionPaymentRepository->getByPayment($payment);
-
-                /**
-                 * @var $subscriptionPayment SubscriptionPayment
-                 */
-                foreach ($subscriptionPayments as $subscriptionPayment) {
-                    /**
-                     * @var $subscription Subscription
-                     */
-                    $subscription = $subscriptionPayment->getSubscription();
-
-                    $subscriptionProducts = $this->userProductService->getSubscriptionProducts($subscription);
-
-                    $user = $subscription->getUser();
-
-                    $this->userProductService->removeUserProducts(
-                        $user,
-                        $subscriptionProducts
-                    );
-                }
-            }
         }
 
         $this->entityManager->flush();

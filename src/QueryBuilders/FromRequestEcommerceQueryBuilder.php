@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\QueryBuilders;
 use Carbon\Carbon;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
+use Railroad\Permissions\Services\PermissionService;
 
 class FromRequestEcommerceQueryBuilder extends QueryBuilder
 {
@@ -119,6 +120,32 @@ class FromRequestEcommerceQueryBuilder extends QueryBuilder
             )
             ->setParameter('smallDateTime', $smallDateTime)
             ->setParameter('bigDateTime', $bigDateTime);
+
+        return $this;
+    }
+
+    /**
+     * You must use andWhere or orWhere after using this method, since it uses a where statement.
+     *
+     * @param Request $request
+     * @param $entityAlias
+     * @param string $entityAttribute
+     *
+     * @return FromRequestEcommerceQueryBuilder
+     */
+    public function restrictDeletedAt(Request $request, $entityAlias, $entityAttribute = 'deletedAt')
+    {
+        $permissionService = app(PermissionService::class);
+
+        if (
+            !$permissionService->can(auth()->id(), 'show_deleted') ||
+            !$request->get('view_deleted', false)
+        ) {
+            $this->andWhere(
+                $this->expr()
+                    ->isNull($entityAlias . '.' . $entityAttribute)
+            );
+        }
 
         return $this;
     }

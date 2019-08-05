@@ -13,7 +13,6 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
-use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
@@ -186,15 +185,7 @@ class GooglePlayStoreService
             throw $exception;
         }
 
-        $oldSubscription = clone($subscription);
-
-        $subscriptionEventType = 'renewed';
-        $subscriptionActionName = null;
-        $brand = $subscription->getBrand();
-
         if ($receipt->getNotificationType() == GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE) {
-
-            $subscriptionActionName = Subscription::ACTION_RENEW;
 
             $payment = $this->createSubscriptionRenewalPayment($subscription);
 
@@ -207,8 +198,6 @@ class GooglePlayStoreService
             event(new MobileSubscriptionRenewed($subscription, $payment, MobileSubscriptionRenewed::ACTOR_SYSTEM));
 
         } else {
-
-            $subscriptionActionName = Subscription::ACTION_CANCEL;
 
             $this->cancelSubscription($subscription, $receipt);
 

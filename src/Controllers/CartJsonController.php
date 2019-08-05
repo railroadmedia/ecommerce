@@ -251,7 +251,7 @@ class CartJsonController extends Controller
         ];
 
         if (!empty($request->get('shipping_address_id'))) {
-            /** @var $address AddressEntity */
+            /** @var $shippingAddressEntity AddressEntity */
             $shippingAddressEntity = $this->addressRepository->find($request->get('shipping_address_id'));
 
             $this->cartAddressService->updateShippingAddress($shippingAddressEntity->toStructure());
@@ -277,6 +277,7 @@ class CartJsonController extends Controller
         ];
 
         if (!empty($request->get('billing_address_id'))) {
+            /** @var $billingAddressEntity AddressEntity */
             $billingAddressEntity = $this->addressRepository->find($request->get('billing_address_id'));
 
             $this->cartAddressService->updateBillingAddress($billingAddressEntity->toStructure());

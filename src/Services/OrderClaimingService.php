@@ -18,7 +18,6 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
-use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;

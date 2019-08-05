@@ -3,7 +3,8 @@
 namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
-use DateTimeInterface;
+use Doctrine\ORM\QueryBuilder;
+use Illuminate\Console\Command;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewed;
@@ -16,7 +17,7 @@ use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;
 
-class RenewalDueSubscriptions extends \Illuminate\Console\Command
+class RenewalDueSubscriptions extends Command
 {
     /**
      * The console command name.
@@ -38,7 +39,7 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
     private $entityManager;
 
     /**
-     * @var \Railroad\Ecommerce\Repositories\SubscriptionRepository
+     * @var SubscriptionRepository
      */
     private $subscriptionRepository;
 
@@ -87,7 +88,7 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         $this->info('------------------Renewal Due Subscriptions command------------------');
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->subscriptionRepository->createQueryBuilder('s');
 
@@ -153,20 +154,25 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
 
         foreach ($dueSubscriptions as $dueSubscription) {
 
+            /** @var $dueSubscription Subscription */
+
             $oldSubscriptionState = clone($dueSubscription);
 
             try {
 
                 $payment = $this->renewalService->renew($dueSubscription);
 
-                event(new CommandSubscriptionRenewed($dueSubscription, $payment));
+                if ($payment) {
+                    /** @var $payment Payment */
+                    event(new CommandSubscriptionRenewed($dueSubscription, $payment));
+                }
 
             } catch (Throwable $throwable) {
 
                 $payment = null;
 
                 if ($throwable instanceof PaymentFailedException) {
-
+                    /** @var $payment Payment */
                     $payment = $throwable->getPayment();
                 }
 
@@ -181,7 +187,7 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
         // deactivate ancient subscriptions
 
         /**
-         * @var $qb \Doctrine\ORM\QueryBuilder
+         * @var $qb QueryBuilder
          */
         $qb = $this->subscriptionRepository->createQueryBuilder('s');
 
@@ -243,7 +249,9 @@ class RenewalDueSubscriptions extends \Illuminate\Console\Command
 
         foreach ($ancientSubscriptions as $ancientSubscription) {
 
-            $oldSubscriptionState = clone($dueSubscription);
+            /** @var $ancientSubscription Subscription */
+
+            $oldSubscriptionState = clone($ancientSubscription);
 
             $ancientSubscription->setIsActive(false);
             $ancientSubscription->setNote(self::DEACTIVATION_NOTE);

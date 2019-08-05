@@ -8,9 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
-use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewFailed;
@@ -258,7 +256,9 @@ class SubscriptionJsonController extends Controller
 
             $response = ResponseService::subscription($subscription);
 
-            event(new UserSubscriptionRenewed($subscription, $payment));
+            if ($payment) {
+                event(new UserSubscriptionRenewed($subscription, $payment));
+            }
 
         } catch (Exception $exception) {
 

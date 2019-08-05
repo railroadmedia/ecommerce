@@ -193,7 +193,7 @@ class PaymentRepository extends RepositoryBase
             )
             ->andWhere(
                 $qb->expr()
-                    ->isNull('p.deletedOn')
+                    ->isNull('p.deletedAt')
             );
 
         /** @var $q Query */

@@ -148,7 +148,7 @@ class Payment
      *
      * @var \DateTime
      */
-    protected $deletedOn;
+    protected $deletedAt;
 
     /**
      * @ORM\OneToOne(targetEntity="OrderPayment", mappedBy="payment")
@@ -363,17 +363,17 @@ class Payment
     /**
      * @return \DateTimeInterface|null
      */
-    public function getDeletedOn(): ?\DateTimeInterface
+    public function getDeletedAt(): ?\DateTimeInterface
     {
-        return $this->deletedOn;
+        return $this->deletedAt;
     }
 
     /**
-     * @param \DateTimeInterface $deletedOn
+     * @param \DateTimeInterface $deletedAt
      */
-    public function setDeletedOn(?\DateTimeInterface $deletedOn)
+    public function setDeletedAt(?\DateTimeInterface $deletedAt)
     {
-        $this->deletedOn = $deletedOn;
+        $this->deletedAt = $deletedAt;
     }
 
     /**

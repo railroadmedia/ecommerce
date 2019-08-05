@@ -50,7 +50,7 @@ class OrderPaymentRepository extends RepositoryBase
             )
             ->andWhere(
                 $qb->expr()
-                    ->isNull('p.deletedOn')
+                    ->isNull('p.deletedAt')
             )
             ->setParameter('payment', $payment);
 

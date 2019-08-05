@@ -20,7 +20,10 @@ class PurchaserService
     private $ecommerceEntityManager;
 
     /**
-     * OrderClaimingService constructor.
+     * PurchaserService constructor.
+     *
+     * @param UserProviderInterface $userProvider
+     * @param EcommerceEntityManager $ecommerceEntityManager
      */
     public function __construct(UserProviderInterface $userProvider, EcommerceEntityManager $ecommerceEntityManager)
     {

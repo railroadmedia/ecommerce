@@ -23,8 +23,8 @@ class OrderTransformer extends TransformerAbstract
             'total_paid' => $order->getTotalPaid(),
             'brand' => $order->getBrand(),
             'note' => $order->getNote(),
-            'deleted_at' => $order->getDeletedOn() ?
-                $order->getDeletedOn()
+            'deleted_at' => $order->getDeletedAt() ?
+                $order->getDeletedAt()
                     ->toDateTimeString() : null,
             'created_at' => $order->getCreatedAt() ?
                 $order->getCreatedAt()

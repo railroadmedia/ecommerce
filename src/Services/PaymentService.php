@@ -18,6 +18,7 @@ use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserStripeCustomerIdRepository;
+use Throwable;
 
 /**
  * todo: needs testing
@@ -108,7 +109,6 @@ class PaymentService
     }
 
     /**
-     * @param string $gateway
      * @param int $paymentMethodId
      * @param string $currency
      * @param float $paymentAmountInBaseCurrency
@@ -231,8 +231,8 @@ class PaymentService
      *
      * @throws ORMException
      * @throws PaymentFailedException
-     * @throws \Doctrine\ORM\OptimisticLockException
-     * @throws \Throwable
+     * @throws OptimisticLockException
+     * @throws Throwable
      */
     public function chargeNewCreditCartPaymentMethod(
         Purchaser $purchaser,
@@ -337,8 +337,6 @@ class PaymentService
             $setAsDefault
         );
 
-        // todo - add action log
-
         if (empty($paymentMethod)) {
             throw new PaymentFailedException('Error charging payment method');
         }
@@ -383,7 +381,7 @@ class PaymentService
      * @throws ORMException
      * @throws OptimisticLockException
      * @throws PaymentFailedException
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function chargeNewPayPalPaymentMethod(
         Purchaser $purchaser,
@@ -441,8 +439,6 @@ class PaymentService
             $currency,
             $setAsDefault
         );
-
-        // todo - add action log
 
         if (empty($paymentMethod)) {
             throw new PaymentFailedException('Error charging payment method');

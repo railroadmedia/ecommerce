@@ -60,6 +60,13 @@ class UserProduct
     protected $expirationDate;
 
     /**
+     * @ORM\Column(type="datetime", name="deleted_at", nullable=true)
+     *
+     * @var \DateTime
+     */
+    protected $deletedAt;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -130,5 +137,21 @@ class UserProduct
     public function setProduct(?Product $product)
     {
         $this->product = $product;
+    }
+
+    /**
+     * @return \DateTimeInterface|null
+     */
+    public function getDeletedAt(): ?\DateTimeInterface
+    {
+        return $this->deletedAt;
+    }
+
+    /**
+     * @param \DateTimeInterface $deletedAt
+     */
+    public function setDeletedAt(?\DateTimeInterface $deletedAt)
+    {
+        $this->deletedAt = $deletedAt;
     }
 }

@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -58,7 +57,7 @@ class ShippingFulfillmentController extends Controller
     /**
      * Pull shipping fulfillments. If the status it's set on the requests the results are filtered by status.
      *
-     * @param Request $request
+     * @param MarkFulfilledViaCSVUploadRequest $request
      *
      * @return RedirectResponse
      *
