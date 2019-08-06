@@ -14,6 +14,7 @@ List orders.
 
 - Must be logged in
 - Must have the 'pull.orders' permission 
+- Must have the 'show_deleted' permission to pull soft-deleted orders
 
 ### Request Parameters
 
@@ -25,6 +26,7 @@ List orders.
 |query|start-date|no||any parseable date/time string|only pull orders after this time|
 |query|end-date|no||any parseable date/time string|only pull orders before this time|
 |query|user_id|no||||only pull orders for a specific user|
+|query|view_deleted|no|false|'true' or 'false'|requires 'show_deleted' permission to include soft-deleted orders|
 
 ### Request Example
 

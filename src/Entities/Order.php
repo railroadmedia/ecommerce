@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Entities;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
@@ -26,7 +27,7 @@ use Railroad\Ecommerce\Entities\Traits\NotableEntity;
  */
 class Order
 {
-    use TimestampableEntity, NotableEntity;
+    use TimestampableEntity, NotableEntity, SoftDeleteableEntity;
 
     /**
      * @ORM\Id

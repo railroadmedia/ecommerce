@@ -4,9 +4,11 @@ namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\ORMException;
+use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 
 /**
  * Class PaymentMethodRepository
@@ -14,6 +16,8 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  */
 class PaymentMethodRepository extends RepositoryBase
 {
+    use UseFormRequestQueryBuilder;
+
     /**
      * CreditCardRepository constructor.
      *
@@ -118,16 +122,19 @@ class PaymentMethodRepository extends RepositoryBase
 
     /**
      * @param $userId
+     * @param Request $request
      *
      * @return PaymentMethod[]
      */
-    public function getAllUsersPaymentMethods($userId)
+    public function getAllUsersPaymentMethods($userId, Request $request)
     {
-        $qb = $this->entityManager->createQueryBuilder();
+        $alias = 'pm';
+
+        $qb = $this->createQueryBuilder($alias);
 
         $paymentMethods =
             $qb->select(['upm', 'pm', 'cc', 'ppba'])
-                ->from(PaymentMethod::class, 'pm')
+                ->restrictSoftDeleted($request, $alias)
                 ->join('pm.userPaymentMethod', 'upm')
                 ->leftJoin('pm.creditCard', 'cc')
                 ->leftJoin('pm.paypalBillingAgreement', 'ppba')

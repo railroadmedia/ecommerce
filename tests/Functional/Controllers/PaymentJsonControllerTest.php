@@ -1211,13 +1211,27 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             $expected['data'][] = [
                 'type' => 'payment',
                 'id' => $payment['id'],
-                'attributes' => array_diff_key(
-                    $payment,
+                'attributes' => array_merge(
+                    array_diff_key(
+                        $payment,
+                        [
+                            'id' => true,
+                            'payment_method_id' => true,
+                        ]
+                    ),
                     [
-                        'id' => true,
-                        'payment_method_id' => true
+                        'deleted_at' => null,
+                        'updated_at' => null,
                     ]
-                )
+                ),
+                'relationships' => [
+                    'paymentMethod' => [
+                        'data' => [
+                            'type' => 'paymentMethod',
+                            'id' => '1',
+                        ]
+                    ]
+                ]
             ];
 
             $orderPayment = $this->fakeOrderPayment([
@@ -1240,6 +1254,25 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'payment_id' => $otherPayment['id'],
         ]);
 
+        // soft-deleted order and payment, should not be returned in response
+        $deletedOrder = $this->fakeOrder(
+            [
+                'deleted_at' => Carbon::now(),
+            ]
+        );
+
+        $deletedPayment = $this->fakePayment([
+            'total_paid' => $this->faker->numberBetween(0, 1000),
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => Carbon::now(),
+        ]);
+
+        $deletedOrderPayment = $this->fakeOrderPayment([
+            'order_id' => $otherOrder['id'],
+            'payment_id' => $otherPayment['id'],
+        ]);
+
         $response = $this->call(
             'GET',
             '/payment',
@@ -1253,9 +1286,166 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $decodedResponse = $response->decodeResponseJson();
 
-        $this->assertArraySubset(
-            $expected,
-            $decodedResponse
+        $this->assertEquals(
+            $expected['data'],
+            $decodedResponse['data']
+        );
+    }
+
+    public function test_admin_index_by_order_include_soft_deleted()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $this->permissionServiceMock->method('can')->willReturn(true);
+        $due = $this->faker->numberBetween(0, 1000);
+        $currency = $this->getCurrency();
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
+
+        $gateway = $this->faker->randomElement(
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
+        );
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')->willReturn(new Card());
+        $fakerCharge = new Charge();
+        $fakerCharge->currency = $currency;
+        $fakerCharge->amount = $due;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')->willReturn($fakerCharge);
+
+        $order = $this->fakeOrder();
+
+        $creditCard = $this->fakeCreditCard();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCard['id'],
+            'billing_address_id' => $address['id']
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        $expected = ['data' => []];
+
+        for ($i = 0; $i < 5; $i++) {
+
+            $due = $this->faker->numberBetween(0, 1000);
+
+            $payment = $this->fakePayment([
+                'total_paid' => $due,
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null
+            ]);
+
+            $expected['data'][] = [
+                'type' => 'payment',
+                'id' => $payment['id'],
+                'attributes' => array_merge(
+                    array_diff_key(
+                        $payment,
+                        [
+                            'id' => true,
+                            'payment_method_id' => true,
+                        ]
+                    ),
+                    [
+                        'deleted_at' => null,
+                        'updated_at' => null,
+                    ]
+                ),
+                'relationships' => [
+                    'paymentMethod' => [
+                        'data' => [
+                            'type' => 'paymentMethod',
+                            'id' => '1',
+                        ]
+                    ]
+                ]
+            ];
+
+            $orderPayment = $this->fakeOrderPayment([
+                'order_id' => $order['id'],
+                'payment_id' => $payment['id'],
+            ]);
+        }
+
+        $otherOrder = $this->fakeOrder();
+
+        $otherPayment = $this->fakePayment([
+            'total_paid' => $this->faker->numberBetween(0, 1000),
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null
+        ]);
+
+        $orderPayment = $this->fakeOrderPayment([
+            'order_id' => $otherOrder['id'],
+            'payment_id' => $otherPayment['id'],
+        ]);
+
+        // soft-deleted payment, should be returned in response
+        $deletedPayment = $this->fakePayment([
+            'total_paid' => $this->faker->numberBetween(0, 1000),
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => Carbon::now(),
+        ]);
+
+        $orderPayment = $this->fakeOrderPayment([
+            'order_id' => $order['id'],
+            'payment_id' => $deletedPayment['id'],
+        ]);
+
+        $expected['data'][] = [
+            'type' => 'payment',
+            'id' => $deletedPayment['id'],
+            'attributes' => array_merge(
+                array_diff_key(
+                    $deletedPayment,
+                    [
+                        'id' => true,
+                        'payment_method_id' => true,
+                    ]
+                ),
+                [
+                    'updated_at' => null,
+                ]
+            ),
+            'relationships' => [
+                'paymentMethod' => [
+                    'data' => [
+                        'type' => 'paymentMethod',
+                        'id' => '1',
+                    ]
+                ]
+            ]
+        ];
+
+        $response = $this->call(
+            'GET',
+            '/payment',
+            [
+                'order_by_column' => 'id',
+                'order_by_direction' => 'asc',
+                'limit' => 10,
+                'order_id' => $order['id'],
+                'view_deleted' => true,
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        $this->assertEquals(
+            $expected['data'],
+            $decodedResponse['data']
         );
     }
 

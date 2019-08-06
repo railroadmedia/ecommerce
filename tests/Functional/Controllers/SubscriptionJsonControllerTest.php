@@ -46,7 +46,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-
         $subscription = $this->fakeSubscription();
 
         $this->expectsEvents([SubscriptionDeleted::class]);

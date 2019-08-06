@@ -64,6 +64,7 @@ class AddressRepository extends RepositoryBase
         $qb = $this->createQueryBuilder($alias);
 
         $qb->paginateByRequest($request)
+            ->restrictSoftDeleted($request, $alias)
             ->orderByRequest($request, $alias)
             ->restrictBrandsByRequest($request, $alias)
             ->select($alias)

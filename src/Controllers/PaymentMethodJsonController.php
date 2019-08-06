@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
@@ -164,12 +165,13 @@ class PaymentMethodJsonController extends Controller
      * Get all user's payment methods with all the method details: credit card or paypal billing agreement
      *
      * @param int $userId
+     * @param Request $request
      *
      * @return Fractal
      *
      * @throws Throwable
      */
-    public function getUserPaymentMethods($userId)
+    public function getUserPaymentMethods(Request $request, $userId)
     {
         /**
          * @var $user User
@@ -187,7 +189,7 @@ class PaymentMethodJsonController extends Controller
             )
         );
 
-        $paymentMethods = $this->paymentMethodRepository->getAllUsersPaymentMethods($user->getId());
+        $paymentMethods = $this->paymentMethodRepository->getAllUsersPaymentMethods($user->getId(), $request);
 
         return ResponseService::paymentMethod(
             $paymentMethods

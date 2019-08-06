@@ -14,6 +14,7 @@ List payments.
 
 - Must be logged in
 - Must have the 'list.payments' permission
+- Must have the 'show_deleted' permission to pull soft-deleted payments
 
 ### Request Parameters
 
@@ -24,6 +25,7 @@ List payments.
 |----|---|--------|-------|-------|-----|
 |query|order_id|||pull payments for the given order id only||
 |query|subscription_id|||pull payments for the given subscription id only||
+|query|view_deleted|no|false|'true' or 'false'|requires 'show_deleted' permission to include soft-deleted payments|
 
 ### Request Example
 

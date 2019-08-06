@@ -54,6 +54,7 @@ class PaymentRepository extends RepositoryBase
         $qb = $this->createQueryBuilder($alias);
 
         $qb->paginateByRequest($request)
+            ->restrictSoftDeleted($request, $alias)
             ->orderByRequest($request, $alias)
             ->select(['p', 'pm', 'cc', 'ppba'])
             ->leftJoin('p.paymentMethod', 'pm')

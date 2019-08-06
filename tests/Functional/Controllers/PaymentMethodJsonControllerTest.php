@@ -2149,4 +2149,249 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             $response->decodeResponseJson('errors')
         );
     }
+
+    public function test_get_user_payment_methods_soft_deleted_not_included()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+        $userId = $this->createAndLogInNewUser();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'brand' => 'recordeo',
+            'user_id' => $userId,
+            'region' => '',
+            'country' => '',
+            'created_at' => Carbon::now()
+        ]);
+
+        $expectedData = [];
+
+        for ($i = 0; $i < 5; $i++) {
+            $creditCard = $this->fakeCreditCard([
+                'payment_gateway_name' => 'recordeo',
+            ]);
+
+            $paymentMethod = $this->fakePaymentMethod([
+                'credit_card_id' => $creditCard['id'],
+                'billing_address_id' => $address['id'],
+                'deleted_at' => null,
+            ]);
+
+            $userPaymentMethod = $this->fakeUserPaymentMethod([
+                'user_id' => $userId,
+                'payment_method_id' => $paymentMethod['id'],
+                'is_primary' => false
+            ]);
+
+            $expectedData[] = [
+                'type' => 'paymentMethod',
+                'id' => $paymentMethod['id'],
+                'attributes' => array_merge(
+                    array_diff_key(
+                        $paymentMethod,
+                        [
+                            'id' => true,
+                            'billing_address_id' => true,
+                        ]
+                    ),
+                    [
+                        'method_id' => $creditCard['id'],
+                        'method_type' => 'credit_card',
+                        'updated_at' => null,
+                    ]
+                ),
+                'relationships' => [
+                    'method' => [
+                        'data' => [
+                            'type' => 'creditCard',
+                            'id' => $creditCard['id'],
+                        ]
+                    ],
+                    'userPaymentMethod' => [
+                        'data' => [
+                            'type' => 'userPaymentMethod',
+                            'id' => $userPaymentMethod['id'],
+                        ]
+                    ],
+                    'billingAddress' => [
+                        'data' => [
+                            'type' => 'address',
+                            'id' => $address['id'],
+                        ]
+                    ]
+                ]
+            ];
+        }
+
+        $otherCreditCard = $this->fakeCreditCard([
+            'payment_gateway_name' => 'recordeo',
+        ]);
+
+        // soft-deleted payment method, not included in response
+        $paymentMethodSoftDeleted = $this->fakePaymentMethod([
+            'credit_card_id' => $otherCreditCard['id'],
+            'billing_address_id' => $address['id'],
+            'deleted_at' => Carbon::now(),
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethodSoftDeleted['id'],
+            'is_primary' => false
+        ]);
+
+        $response = $this->call('GET', '/user-payment-method/' . $userId);
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        $this->assertEquals(
+            $expectedData,
+            $decodedResponse['data']
+        );
+    }
+
+    public function test_get_user_payment_methods_soft_deleted_included()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+        $userId = $this->createAndLogInNewUser();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'brand' => 'recordeo',
+            'user_id' => $userId,
+            'region' => '',
+            'country' => '',
+            'created_at' => Carbon::now()
+        ]);
+
+        $expectedData = [];
+
+        for ($i = 0; $i < 5; $i++) {
+            $creditCard = $this->fakeCreditCard([
+                'payment_gateway_name' => 'recordeo',
+            ]);
+
+            $paymentMethod = $this->fakePaymentMethod([
+                'credit_card_id' => $creditCard['id'],
+                'billing_address_id' => $address['id'],
+                'deleted_at' => null,
+            ]);
+
+            $userPaymentMethod = $this->fakeUserPaymentMethod([
+                'user_id' => $userId,
+                'payment_method_id' => $paymentMethod['id'],
+                'is_primary' => false
+            ]);
+
+            $expectedData[] = [
+                'type' => 'paymentMethod',
+                'id' => $paymentMethod['id'],
+                'attributes' => array_merge(
+                    array_diff_key(
+                        $paymentMethod,
+                        [
+                            'id' => true,
+                            'billing_address_id' => true,
+                        ]
+                    ),
+                    [
+                        'method_id' => $creditCard['id'],
+                        'method_type' => 'credit_card',
+                        'updated_at' => null,
+                    ]
+                ),
+                'relationships' => [
+                    'method' => [
+                        'data' => [
+                            'type' => 'creditCard',
+                            'id' => $creditCard['id'],
+                        ]
+                    ],
+                    'userPaymentMethod' => [
+                        'data' => [
+                            'type' => 'userPaymentMethod',
+                            'id' => $userPaymentMethod['id'],
+                        ]
+                    ],
+                    'billingAddress' => [
+                        'data' => [
+                            'type' => 'address',
+                            'id' => $address['id'],
+                        ]
+                    ]
+                ]
+            ];
+        }
+
+        $otherCreditCard = $this->fakeCreditCard([
+            'payment_gateway_name' => 'recordeo',
+        ]);
+
+        // soft-deleted payment method, not included in response
+        $paymentMethodSoftDeleted = $this->fakePaymentMethod([
+            'credit_card_id' => $otherCreditCard['id'],
+            'billing_address_id' => $address['id'],
+            'deleted_at' => Carbon::now(),
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethodSoftDeleted['id'],
+            'is_primary' => false
+        ]);
+
+        $expectedData[] = [
+            'type' => 'paymentMethod',
+            'id' => $paymentMethodSoftDeleted['id'],
+            'attributes' => array_merge(
+                array_diff_key(
+                    $paymentMethodSoftDeleted,
+                    [
+                        'id' => true,
+                        'billing_address_id' => true,
+                    ]
+                ),
+                [
+                    'method_id' => $otherCreditCard['id'],
+                    'method_type' => 'credit_card',
+                    'updated_at' => null,
+                ]
+            ),
+            'relationships' => [
+                'method' => [
+                    'data' => [
+                        'type' => 'creditCard',
+                        'id' => $otherCreditCard['id'],
+                    ]
+                ],
+                'userPaymentMethod' => [
+                    'data' => [
+                        'type' => 'userPaymentMethod',
+                        'id' => $userPaymentMethod['id'],
+                    ]
+                ],
+                'billingAddress' => [
+                    'data' => [
+                        'type' => 'address',
+                        'id' => $address['id'],
+                    ]
+                ]
+            ]
+        ];
+
+        $response = $this->call(
+            'GET',
+            '/user-payment-method/' . $userId,
+            [
+                'view_deleted' => true,
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        $this->assertEquals(
+            $expectedData,
+            $decodedResponse['data']
+        );
+    }
 }

@@ -85,6 +85,7 @@ class OrderRepository extends RepositoryBase
         $qb = $this->createQueryBuilder($alias);
 
         $qb->paginateByRequest($request)
+            ->restrictSoftDeleted($request, $alias)
             ->orderByRequest($request, $alias)
             ->select(['o', 'oi', 'ba', 'sa', 'p'])
             ->leftJoin('o.orderItems', 'oi')

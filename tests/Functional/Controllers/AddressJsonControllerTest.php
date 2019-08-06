@@ -16,11 +16,20 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_pull()
     {
-        $userId = $this->createAndLogInNewUser();
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
 
         $address = $this->fakeAddress(
             [
                 'user_id' => $userId
+            ]
+        );
+
+        // add soft deleted address
+        $addressDeleted = $this->fakeAddress(
+            [
+                'user_id' => $userId,
+                'deleted_at' => Carbon::now()
             ]
         );
 
@@ -40,42 +49,161 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $this->assertArraySubset(
+        // soft deleted address will not be returned in response
+        $decodedResponse = $response->decodeResponseJson();
+
+        $this->assertEquals(
             [
-                'data' => [
-                    [
-                        'type' => 'address',
-                        'id' => $address['id'],
-                        'attributes' => array_merge(
-                            array_diff_key(
-                                $address,
-                                [
-                                    'id' => true,
-                                    'user_id' => true,
-                                    'customer_id' => true
-                                ]
-                            )
+                [
+                    'type' => 'address',
+                    'id' => $address['id'],
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $address,
+                            [
+                                'id' => true,
+                                'user_id' => true,
+                                'customer_id' => true
+                            ]
                         ),
-                        'relationships' => [
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId
-                                ]
+                        [
+                            'deleted_at' => null,
+                        ]
+                    ),
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
                             ]
                         ]
                     ]
                 ],
-                'included' => [
-                    [
-                        'type' => 'user',
-                        'id' => $userId
+            ],
+            $decodedResponse['data']
+        );
+
+        $this->assertEquals(
+            [
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => [
+                        'email' => $userEmail
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $decodedResponse['included']
+        );
+    }
+
+    public function test_admin_pull_soft_deleted()
+    {
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
+
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $address = $this->fakeAddress(
+            [
+                'user_id' => $userId
+            ]
         );
 
+        // add soft deleted address
+        $addressDeleted = $this->fakeAddress(
+            [
+                'user_id' => $userId,
+                'deleted_at' => Carbon::now()
+            ]
+        );
+
+        $otherUserId = rand();
+
+        $otherAddress = $this->fakeAddress(
+            [
+                'user_id' => $otherUserId
+            ]
+        );
+
+        $response = $this->call(
+            'GET',
+            '/address',
+            [
+                'view_deleted' => true,
+            ]
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        // soft deleted address will not be returned in response
+        $decodedResponse = $response->decodeResponseJson();
+
+        $this->assertEquals(
+            [
+                [
+                    'type' => 'address',
+                    'id' => $address['id'],
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $address,
+                            [
+                                'id' => true,
+                                'user_id' => true,
+                                'customer_id' => true
+                            ]
+                        ),
+                        [
+                            'deleted_at' => null,
+                        ]
+                    ),
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'address',
+                    'id' => $addressDeleted['id'],
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $addressDeleted,
+                            [
+                                'id' => true,
+                                'user_id' => true,
+                                'customer_id' => true
+                            ]
+                        )
+                    ),
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ]
+                    ]
+                ],
+            ],
+            $decodedResponse['data']
+        );
+
+        $this->assertEquals(
+            [
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => [
+                        'email' => $userEmail
+                    ]
+                ]
+            ],
+            $decodedResponse['included']
+        );
     }
 
     public function test_pull_multiple_brands()

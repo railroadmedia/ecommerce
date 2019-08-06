@@ -40,6 +40,9 @@ class AddressTransformer extends TransformerAbstract
             'updated_at' => $address->getUpdatedAt() ?
                 $address->getUpdatedAt()
                     ->toDateTimeString() : null,
+            'deleted_at' => $address->getDeletedAt() ?
+                $address->getDeletedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 

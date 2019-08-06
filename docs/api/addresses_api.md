@@ -15,6 +15,7 @@ List addresses.
 - Must be logged in
 - Users can pull their own addresses without any special permissions
 - Must have the 'pull.addresses' permission to pull others users or customers addresses
+- Must have the 'show_deleted' permission to pull soft-deleted addresses
 
 ### Request Parameters
 
@@ -24,6 +25,7 @@ List addresses.
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |query|user_id||logged in user id|||
+|query|view_deleted|no|false|'true' or 'false'|requires 'show_deleted' permission to include soft-deleted addresses|
 
 ### Request Example
 

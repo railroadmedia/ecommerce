@@ -610,7 +610,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
     {
         $page = 1;
         $limit = 10;
-        $nrOrders = 10;
+        $nrOrders = 7;
 
         $product = $this->fakeProduct(
             [
@@ -686,6 +686,33 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ];
         }
 
+        // add soft deleted order, not returned in response
+        $user = $this->fakeUser();
+
+        $address = $this->fakeAddress(
+            [
+                'type' => Address::SHIPPING_ADDRESS_TYPE,
+                'user_id' => $user['id']
+            ]
+        );
+
+        $order = $this->fakeOrder(
+            [
+                'updated_at' => null,
+                'billing_address_id' => null,
+                'user_id' => $user['id'],
+                'shipping_address_id' => $address['id'],
+                'deleted_at' => Carbon::now(),
+            ]
+        );
+
+        $orderItem = $this->fakeOrderItem(
+            [
+                'order_id' => $order['id'],
+                'product_id' => $product['id'],
+            ]
+        );
+
         $response = $this->call(
             'GET',
             '/orders',
@@ -693,7 +720,8 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'page' => $page,
                 'limit' => $limit,
                 'order_by_column' => 'id',
-                'order_by_direction' => 'asc'
+                'order_by_direction' => 'asc',
+                'view_deleted' => true, // field is ignored, because permission is required
             ]
         );
 
@@ -1067,6 +1095,175 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'limit' => $limit,
                 'order_by_column' => 'id',
                 'order_by_direction' => 'asc'
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        $this->assertEquals(
+            $expectedData,
+            $decodedResponse['data']
+        );
+    }
+
+    public function test_admin_pull_orders_soft_deleted()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $page = 1;
+        $limit = 10;
+        $nrOrders = 5;
+
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
+
+        $expectedData = [];
+
+        for ($i = 0; $i < $nrOrders; $i++) {
+
+            $user = $this->fakeUser();
+
+            $address = $this->fakeAddress(
+                [
+                    'type' => Address::SHIPPING_ADDRESS_TYPE,
+                    'user_id' => $user['id']
+                ]
+            );
+
+            $order = $this->fakeOrder(
+                [
+                    'deleted_at' => null,
+                    'updated_at' => null,
+                    'billing_address_id' => null,
+                    'user_id' => $user['id'],
+                    'shipping_address_id' => $address['id']
+                ]
+            );
+
+            $orderItem = $this->fakeOrderItem(
+                [
+                    'order_id' => $order['id'],
+                    'product_id' => $product['id'],
+                ]
+            );
+
+            $expectedData[] = [
+                'type' => 'order',
+                'id' => $order['id'],
+                'attributes' => array_diff_key(
+                    $order,
+                    [
+                        'id' => true,
+                        'user_id' => true,
+                        'customer_id' => true,
+                        'shipping_address_id' => true,
+                        'billing_address_id' => true
+                    ]
+                ),
+                'relationships' => [
+                    'orderItem' => [
+                        'data' => [
+                            [
+                                'type' => 'orderItem',
+                                'id' => $orderItem['id'],
+                            ]
+                        ]
+                    ],
+                    'user' => [
+                        'data' => [
+                            'type' => 'user',
+                            'id' => $user['id'],
+                        ]
+                    ],
+                    'shippingAddress' => [
+                        'data' => [
+                            'type' => 'address',
+                            'id' => $address['id'],
+                        ]
+                    ]
+                ]
+            ];
+        }
+
+        // add soft deleted order, not returned in response
+        $user = $this->fakeUser();
+
+        $address = $this->fakeAddress(
+            [
+                'type' => Address::SHIPPING_ADDRESS_TYPE,
+                'user_id' => $user['id']
+            ]
+        );
+
+        $order = $this->fakeOrder(
+            [
+                'updated_at' => null,
+                'billing_address_id' => null,
+                'user_id' => $user['id'],
+                'shipping_address_id' => $address['id'],
+                'deleted_at' => Carbon::now(),
+            ]
+        );
+
+        $orderItem = $this->fakeOrderItem(
+            [
+                'order_id' => $order['id'],
+                'product_id' => $product['id'],
+            ]
+        );
+
+        $expectedData[] = [
+            'type' => 'order',
+            'id' => $order['id'],
+            'attributes' => array_diff_key(
+                $order,
+                [
+                    'id' => true,
+                    'user_id' => true,
+                    'customer_id' => true,
+                    'shipping_address_id' => true,
+                    'billing_address_id' => true
+                ]
+            ),
+            'relationships' => [
+                'orderItem' => [
+                    'data' => [
+                        [
+                            'type' => 'orderItem',
+                            'id' => $orderItem['id'],
+                        ]
+                    ]
+                ],
+                'user' => [
+                    'data' => [
+                        'type' => 'user',
+                        'id' => $user['id'],
+                    ]
+                ],
+                'shippingAddress' => [
+                    'data' => [
+                        'type' => 'address',
+                        'id' => $address['id'],
+                    ]
+                ]
+            ]
+        ];
+
+        // $orders = $this->databaseManager->select("SELECT * FROM ecommerce_orders");
+        // dd($orders);
+
+        $response = $this->call(
+            'GET',
+            '/orders',
+            [
+                'page' => $page,
+                'limit' => $limit,
+                'order_by_column' => 'id',
+                'order_by_direction' => 'asc',
+                'view_deleted' => true,
             ]
         );
 

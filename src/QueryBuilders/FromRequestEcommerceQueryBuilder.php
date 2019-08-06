@@ -133,7 +133,7 @@ class FromRequestEcommerceQueryBuilder extends QueryBuilder
      *
      * @return FromRequestEcommerceQueryBuilder
      */
-    public function restrictDeletedAt(Request $request, $entityAlias, $entityAttribute = 'deletedAt')
+    public function restrictSoftDeleted(Request $request, $entityAlias, $entityAttribute = 'deletedAt')
     {
         $permissionService = app(PermissionService::class);
 
@@ -145,6 +145,10 @@ class FromRequestEcommerceQueryBuilder extends QueryBuilder
                 $this->expr()
                     ->isNull($entityAlias . '.' . $entityAttribute)
             );
+        } else {
+            $this->getEntityManager()
+                ->getFilters()
+                ->disable('soft-deleteable');
         }
 
         return $this;
