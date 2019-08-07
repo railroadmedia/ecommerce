@@ -14,6 +14,7 @@ List subscriptions.
 
 - Must be logged in
 - Must have the 'pull.subscriptions' permission
+- Must have the 'show_deleted' permission to pull soft-deleted subscriptions
 
 ### Request Parameters
 
@@ -23,6 +24,7 @@ List subscriptions.
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |query|user_id||logged in user id|||
+|query|view_deleted|no|false|'true' or 'false'|requires 'show_deleted' permission to include soft-deleted subscriptions|
 
 ### Request Example
 

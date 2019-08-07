@@ -2327,7 +2327,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'payment_gateway_name' => 'recordeo',
         ]);
 
-        // soft-deleted payment method, not included in response
+        // soft-deleted payment method included in response
         $paymentMethodSoftDeleted = $this->fakePaymentMethod([
             'credit_card_id' => $otherCreditCard['id'],
             'billing_address_id' => $address['id'],

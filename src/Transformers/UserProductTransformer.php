@@ -28,6 +28,9 @@ class UserProductTransformer extends TransformerAbstract
             'updated_at' => $userProduct->getUpdatedAt() ?
                 $userProduct->getUpdatedAt()
                     ->toDateTimeString() : null,
+            'deleted_at' => $userProduct->getDeletedAt() ?
+                $userProduct->getDeletedAt()
+                    ->toDateTimeString() : null,
         ];
     }
 

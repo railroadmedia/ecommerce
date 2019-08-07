@@ -75,6 +75,7 @@ class UserProductRepository extends RepositoryBase
         $qb = $this->createQueryBuilder($alias);
 
         $qb->paginateByRequest($request)
+            ->restrictSoftDeleted($request, $alias)
             ->orderByRequest($request, $alias)
             ->select([$alias, 'p'])
             ->join('a.product', 'p')

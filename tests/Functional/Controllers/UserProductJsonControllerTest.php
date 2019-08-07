@@ -17,12 +17,23 @@ class UserProductJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->fakeProduct();
+        $productOne = $this->fakeProduct();
 
-        $userProduct1 = $this->fakeUserProduct(
+        $userProductOne = $this->fakeUserProduct(
             [
                 'user_id' => $userId,
-                'product_id' => $product['id'],
+                'product_id' => $productOne['id'],
+            ]
+        );
+
+        // add soft deleted, not returned in response
+        $productTwo = $this->fakeProduct();
+
+        $userProductTwo = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $productTwo['id'],
+                'deleted_at' => Carbon::now(),
             ]
         );
 
@@ -39,10 +50,106 @@ class UserProductJsonControllerTest extends EcommerceTestCase
                 'data' => [
                     [
                         'type' => 'userProduct',
-                        'id' => $userProduct1['id'],
+                        'id' => $userProductOne['id'],
                         'attributes' => array_merge(
                             array_diff_key(
-                                $userProduct1,
+                                $userProductOne,
+                                [
+                                    'id' => true,
+                                    'user_id' => true,
+                                    'product_id' => true,
+                                ]
+                            )
+                        ),
+                        'relationships' => [
+                            'user' => [
+                                'data' => [
+                                    'type' => 'user',
+                                    'id' => $userId
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'user',
+                        'id' => $userId
+                    ]
+                ]
+            ],
+            $response->decodeResponseJson()
+        );
+
+    }
+
+    public function test_pull_soft_deleted_included()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $productOne = $this->fakeProduct();
+
+        $userProductOne = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $productOne['id'],
+            ]
+        );
+
+        // add soft deleted returned in response
+        $productTwo = $this->fakeProduct();
+
+        $userProductTwo = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $productTwo['id'],
+                'deleted_at' => Carbon::now(),
+            ]
+        );
+
+        $response = $this->call(
+            'GET',
+            '/user-product',
+            [
+                'view_deleted' => true,
+            ]
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    [
+                        'type' => 'userProduct',
+                        'id' => $userProductOne['id'],
+                        'attributes' => array_merge(
+                            array_diff_key(
+                                $userProductOne,
+                                [
+                                    'id' => true,
+                                    'user_id' => true,
+                                    'product_id' => true,
+                                ]
+                            )
+                        ),
+                        'relationships' => [
+                            'user' => [
+                                'data' => [
+                                    'type' => 'user',
+                                    'id' => $userId
+                                ]
+                            ]
+                        ]
+                    ],
+                    [
+                        'type' => 'userProduct',
+                        'id' => $userProductTwo['id'],
+                        'attributes' => array_merge(
+                            array_diff_key(
+                                $userProductTwo,
                                 [
                                     'id' => true,
                                     'user_id' => true,

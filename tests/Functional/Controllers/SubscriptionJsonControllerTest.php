@@ -104,6 +104,20 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
+        // add soft deleted subscription, should not be returned in response
+        $creditCard = $this->fakeCreditCard();
+        $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
+        $order = $this->fakeOrder();
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null,
+            'deleted_at' => Carbon::now(),
+        ]);
+
         $subscriptions = [];
 
         for ($i = 0; $i < $nrSubscriptions; $i++) {
@@ -173,6 +187,155 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'order_by_column' => 'id',
                 'order_by_direction' => 'asc',
                 'includes' => 'product',
+            ]
+        );
+
+        $this->assertEquals(
+            $subscriptions,
+            $results->decodeResponseJson('data')
+        );
+    }
+
+    public function test_pull_subscriptions_include_soft_deleted()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $page = 1;
+        $limit = 10;
+        $nrSubscriptions = $this->faker->numberBetween(15, 25);
+
+        $product = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+        ]);
+
+        // add soft deleted subscription, should be returned in response
+        $creditCard = $this->fakeCreditCard();
+        $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
+        $order = $this->fakeOrder();
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null,
+            'deleted_at' => Carbon::now(),
+        ]);
+
+        $subscriptions = [
+            [
+                'type' => 'subscription',
+                'id' => $subscription['id'],
+                'attributes' => array_diff_key(
+                    $subscription,
+                    [
+                        'id' => true,
+                        'product_id' => true,
+                        'user_id' => true,
+                        'customer_id' => true,
+                        'payment_method_id' => true,
+                        'order_id' => true
+                    ]
+                ),
+                'relationships' => [
+                    'product' => [
+                        'data' => [
+                            'type' => 'product',
+                            'id' => $product['id']
+                        ]
+                    ],
+                    'user' => [
+                        'data' => [
+                            'type' => 'user',
+                            'id' => $userId
+                        ]
+                    ],
+                    'order' => [
+                        'data' => [
+                            'type' => 'order',
+                            'id' => $order['id']
+                        ]
+                    ],
+                    'paymentMethod' => [
+                        'data' => [
+                            'type' => 'paymentMethod',
+                            'id' => $paymentMethod['id']
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        for ($i = 0; $i < $nrSubscriptions; $i++) {
+            $creditCard = $this->fakeCreditCard();
+            $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
+            $order = $this->fakeOrder();
+
+            $subscription = $this->fakeSubscription([
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null
+            ]);
+
+            if ($i < $limit - 1) {
+                $subscriptions[] = [
+                    'type' => 'subscription',
+                    'id' => $subscription['id'],
+                    'attributes' => array_diff_key(
+                        $subscription,
+                        [
+                            'id' => true,
+                            'product_id' => true,
+                            'user_id' => true,
+                            'customer_id' => true,
+                            'payment_method_id' => true,
+                            'order_id' => true
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ]
+                    ]
+                ];
+            }
+        }
+
+        $results = $this->call(
+            'GET',
+            '/subscriptions',
+            [
+                'page' => $page,
+                'limit' => $limit,
+                'order_by_column' => 'id',
+                'order_by_direction' => 'asc',
+                'includes' => 'product',
+                'view_deleted' => true,
             ]
         );
 

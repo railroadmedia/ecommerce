@@ -104,6 +104,7 @@ class SubscriptionRepository extends RepositoryBase
         $qb = $this->createQueryBuilder($alias);
 
         $qb->paginateByRequest($request)
+            ->restrictSoftDeleted($request, $alias)
             ->orderByRequest($request, $alias)
             ->restrictBrandsByRequest($request, $alias)
             ->select(['s', 'p', 'o', 'pm', 'oi', 'oip'])
@@ -111,11 +112,7 @@ class SubscriptionRepository extends RepositoryBase
             ->leftJoin('s.order', 'o')
             ->leftJoin('o.orderItems', 'oi')
             ->leftJoin('oi.product', 'oip')
-            ->leftJoin('s.paymentMethod', 'pm')
-            ->andWhere(
-                $qb->expr()
-                    ->isNull('s' . '.deletedAt')
-            );
+            ->leftJoin('s.paymentMethod', 'pm');
 
         if ($request->has('user_id')) {
 

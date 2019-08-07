@@ -14,12 +14,14 @@ List users payment methods.
 
 - Must be logged in
 - Must have the 'pull.user.payment.method' permission
+- Must have the 'show_deleted' permission to pull soft-deleted payment methods
 
 ### Request Parameters
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |query|user_id|||||
+|query|view_deleted|no|false|'true' or 'false'|requires 'show_deleted' permission to include soft-deleted payment methods|
 
 ### Request Example
 

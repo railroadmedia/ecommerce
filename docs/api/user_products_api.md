@@ -14,6 +14,7 @@ List user products.
 
 - Must be logged in
 - Must have the 'pull.user-products' permission
+- Must have the 'show_deleted' permission to pull soft-deleted user products
 
 ### Request Parameters
 
@@ -23,6 +24,7 @@ List user products.
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |query|user_id||logged in user id|||
+|query|view_deleted|no|false|'true' or 'false'|requires 'show_deleted' permission to include soft-deleted user products|
 
 ### Request Example
 

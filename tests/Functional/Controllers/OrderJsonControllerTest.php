@@ -1188,7 +1188,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ];
         }
 
-        // add soft deleted order, not returned in response
+        // add soft deleted order, returned in response
         $user = $this->fakeUser();
 
         $address = $this->fakeAddress(
@@ -1251,9 +1251,6 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 ]
             ]
         ];
-
-        // $orders = $this->databaseManager->select("SELECT * FROM ecommerce_orders");
-        // dd($orders);
 
         $response = $this->call(
             'GET',
