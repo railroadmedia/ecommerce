@@ -120,7 +120,7 @@ class GooglePlayStoreController extends Controller
                 $receipt->setBrand(config('ecommerce.brand'));
 
                 $subscription = $this->subscriptionRepository
-                    ->findOneBy(['externalAppStoreId' => $subscriptionNotification->purchaseToken]); // todo - update field name
+                    ->findOneBy(['externalAppStoreId' => $subscriptionNotification->purchaseToken]);
 
                 if ($subscription) {
                     try {

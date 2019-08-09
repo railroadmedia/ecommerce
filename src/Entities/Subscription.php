@@ -210,7 +210,7 @@ class Subscription
     protected $payments;
 
     /**
-     * Field set for apple subscriptions, used for renewal/cancel notifications received from apple
+     * Field set for apple/google subscriptions, used for renewal/cancel notifications
      *
      * @ORM\Column(type="string", name="external_app_store_id", nullable=true)
      *

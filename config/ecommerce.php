@@ -187,7 +187,7 @@ return [
             'shared_secret' => 'b1ab16b41296400bbf10431d72386f5f',
         ],
 
-        'google_paly_store' => [
+        'google_play_store' => [
             'credentials' => '/app/ecommerce/api.json',
             'application_name' => 'com.drumeo',
             'scope' => ['https://www.googleapis.com/auth/androidpublisher'],

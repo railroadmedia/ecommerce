@@ -55,19 +55,19 @@ class GooglePlayStoreGateway
      */
     public function getValidator(): Validator
     {
-        $credentialsJson = config('ecommerce.payment_gateways.google_paly_store.credentials');
+        $credentialsJson = config('ecommerce.payment_gateways.google_play_store.credentials');
 
         if (!$credentialsJson) {
             throw new ReceiptValidationException('Invalid google play store credentials json config');
         }
 
-        $applicationName = config('ecommerce.payment_gateways.google_paly_store.application_name');
+        $applicationName = config('ecommerce.payment_gateways.google_play_store.application_name');
 
         if (!$applicationName) {
             throw new ReceiptValidationException('Invalid google play store application name config');
         }
 
-        $scope = config('ecommerce.payment_gateways.google_paly_store.scope');
+        $scope = config('ecommerce.payment_gateways.google_play_store.scope');
 
         if (!$scope) {
             throw new ReceiptValidationException('Invalid google play store scope config');
