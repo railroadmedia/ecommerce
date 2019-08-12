@@ -21,6 +21,7 @@ class DailyStatisticTransformer extends TransformerAbstract
         return [
             'id' => $dailyStatistic->getId(),
             'total_sales' => $dailyStatistic->getTotalSales(),
+            'total_ales_from_renewals' => $dailyStatistic->getTotalSalesFromRenewals(),
             'total_refunded' => $dailyStatistic->getTotalRefunded(),
             'total_number_of_orders_placed' => $dailyStatistic->getTotalOrders(),
             'total_number_of_successful_subscription_renewal_payments' => $dailyStatistic->getTotalSuccessfulRenewals(),

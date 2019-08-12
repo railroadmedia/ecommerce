@@ -353,8 +353,11 @@ class AppleStoreKitService
      */
     public function getPurchasedItem(ResponseInterface $validationResponse): ?PurchaseItem
     {
+        $now = Carbon::now()->setTimezone('Etc/GMT');
+
         foreach ($validationResponse->getPurchases() as $item) {
-            if ($item->getExpiresDate() >= Carbon::now()) {
+            $expires = clone $item->getExpiresDate();
+            if ($expires->setTimezone('Etc/GMT') >= $now) {
                 return $item;
             }
         }

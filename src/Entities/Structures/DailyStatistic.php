@@ -17,6 +17,11 @@ class DailyStatistic
     /**
      * @var float
      */
+    private $totalSalesFromRenewals;
+
+    /**
+     * @var float
+     */
     private $totalRefunded;
 
     /**
@@ -43,6 +48,7 @@ class DailyStatistic
     {
         $this->day = $day;
         $this->totalSales = 0;
+        $this->totalSalesFromRenewals = 0;
         $this->totalRefunded = 0;
         $this->totalOrders = 0;
         $this->totalSuccessfulRenewals = 0;
@@ -88,6 +94,22 @@ class DailyStatistic
     public function setTotalSales(float $totalSales)
     {
         $this->totalSales = $totalSales;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getTotalSalesFromRenewals(): ?float
+    {
+        return $this->totalSalesFromRenewals;
+    }
+
+    /**
+     * @param float $totalSalesFromRenewals
+     */
+    public function setTotalSalesFromRenewals(float $totalSalesFromRenewals)
+    {
+        $this->totalSalesFromRenewals = $totalSalesFromRenewals;
     }
 
     /**
