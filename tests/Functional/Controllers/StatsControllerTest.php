@@ -7,6 +7,7 @@ use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class StatsControllerTest extends EcommerceTestCase
@@ -346,6 +347,8 @@ class StatsControllerTest extends EcommerceTestCase
             'interval_type' => config('ecommerce.interval_type_yearly'),
             'created_at' => $subscriptionOneDate->toDateTimeString(),
             'brand' => $brand,
+            'total_cycles_paid' => 1,
+            'type' => Subscription::TYPE_SUBSCRIPTION,
         ]);
 
         $paymentFive = $this->fakePayment([
@@ -393,6 +396,9 @@ class StatsControllerTest extends EcommerceTestCase
             'interval_type' => config('ecommerce.interval_type_yearly'),
             'created_at' => $subscriptionTwoDate->toDateTimeString(),
             'brand' => $brand,
+            'total_cycles_paid' => 2,
+            'type' => Subscription::TYPE_SUBSCRIPTION,
+            'total_price' => $subscriptionTwoDue,
         ]);
 
         $paymentSix = $this->fakePayment([
@@ -441,6 +447,8 @@ class StatsControllerTest extends EcommerceTestCase
             'interval_type' => config('ecommerce.interval_type_yearly'),
             'created_at' => $subscriptionThreeDate->toDateTimeString(),
             'brand' => $brand,
+            'total_cycles_paid' => 1,
+            'type' => Subscription::TYPE_SUBSCRIPTION,
         ]);
 
         $paymentSeven = $this->fakePayment([
@@ -608,9 +616,59 @@ class StatsControllerTest extends EcommerceTestCase
             'data' => [
                 [
                     'type' => 'dailyStatistic',
-                    'id' => $orderOneDate->format('Y-m-d'),
+                    'id' => $refundDate->format('Y-m-d'),
                     'attributes' => [
-                        'total_sales' => $orderOneDue,
+                        'total_sales' => 0,
+                        'total_ales_from_renewals' => 0,
+                        'total_refunded' => $refundDue,
+                        'total_number_of_orders_placed' => 0,
+                        'total_number_of_successful_subscription_renewal_payments' => 0,
+                        'total_number_of_failed_subscription_renewal_payments' => 0,
+                        'day' => $refundDate->format('Y-m-d'),
+                    ],
+                ],
+                [
+                    'type' => 'dailyStatistic',
+                    'id' => $subscriptionThreeDate->format('Y-m-d'),
+                    'attributes' => [
+                        'total_sales' => 0,
+                        'total_ales_from_renewals' => 0,
+                        'total_refunded' => 0,
+                        'total_number_of_orders_placed' => 0,
+                        'total_number_of_successful_subscription_renewal_payments' => 0,
+                        'total_number_of_failed_subscription_renewal_payments' => 1,
+                        'day' => $subscriptionThreeDate->format('Y-m-d'),
+                    ],
+                ],
+                [
+                    'type' => 'dailyStatistic',
+                    'id' => $subscriptionTwoDate->format('Y-m-d'),
+                    'attributes' => [
+                        'total_sales' => $subscriptionTwoDue,
+                        'total_ales_from_renewals' => $subscriptionTwoDue,
+                        'total_refunded' => 0,
+                        'total_number_of_orders_placed' => 0,
+                        'total_number_of_successful_subscription_renewal_payments' => 1,
+                        'total_number_of_failed_subscription_renewal_payments' => 0,
+                        'day' => $subscriptionTwoDate->format('Y-m-d'),
+                    ],
+                    'relationships' => [
+                        'productStatistic' => [
+                            'data' => [
+                                [
+                                    'type' => 'productStatistic',
+                                    'id' => $subscriptionTwoDate->format('Y-m-d') . ':' . $productFive['id'],
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'dailyStatistic',
+                    'id' => $orderFourDate->format('Y-m-d'),
+                    'attributes' => [
+                        'total_sales' => round($orderFourDue + $subscriptionOneDue, 2),
+                        'total_ales_from_renewals' => 0,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 1,
                         'total_number_of_successful_subscription_renewal_payments' => 0,
@@ -633,6 +691,7 @@ class StatsControllerTest extends EcommerceTestCase
                     'id' => $orderTwoDate->format('Y-m-d'),
                     'attributes' => [
                         'total_sales' => round($orderTwoDue + $orderThreeDue, 2),
+                        'total_ales_from_renewals' => 0,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 2,
                         'total_number_of_successful_subscription_renewal_payments' => 0,
@@ -654,7 +713,8 @@ class StatsControllerTest extends EcommerceTestCase
                     'type' => 'dailyStatistic',
                     'id' => $orderFourDate->format('Y-m-d'),
                     'attributes' => [
-                        'total_sales' => round($orderFourDue + $subscriptionOneDue, 2),
+                        'total_sales' => $orderOneDue,
+                        'total_ales_from_renewals' => 0,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 1,
                         'total_number_of_successful_subscription_renewal_payments' => 1,
@@ -712,11 +772,22 @@ class StatsControllerTest extends EcommerceTestCase
             'included' => [
                 [
                     'type' => 'productStatistic',
-                    'id' => $orderOneDate->format('Y-m-d') . ':' . $productOne['id'],
+                    'id' => $subscriptionTwoDate->format('Y-m-d') . ':' . $productFive['id'],
+                    'attributes' =>  [
+                        'sku' => $productFive['sku'],
+                        'total_quantity_sold' => 0,
+                        'total_sales' => 0,
+                        'total_renewal_sales' => $subscriptionTwoDue,
+                    ],
+                ],
+                [
+                    'type' => 'productStatistic',
+                    'id' => $orderFourDate->format('Y-m-d') . ':' . $productThree['id'],
                     'attributes' =>  [
                         'sku' => $productOne['sku'],
                         'total_quantity_sold' => 1,
-                        'total_sales' => $orderOneDue,
+                        'total_sales' => $orderFourDue,
+                        'total_renewal_sales' => 0,
                     ],
                 ],
                 [
@@ -726,6 +797,7 @@ class StatsControllerTest extends EcommerceTestCase
                         'sku' => $productTwo['sku'],
                         'total_quantity_sold' => 2,
                         'total_sales' => round($orderTwoDue + $orderThreeDue, 2),
+                        'total_renewal_sales' => 0,
                     ],
                 ],
                 [
@@ -734,7 +806,8 @@ class StatsControllerTest extends EcommerceTestCase
                     'attributes' =>  [
                         'sku' => $productThree['sku'],
                         'total_quantity_sold' => 1,
-                        'total_sales' => $orderFourDue,
+                        'total_sales' => $orderOneDue,
+                        'total_renewal_sales' => 0,
                     ],
                 ],
             ]

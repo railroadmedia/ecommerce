@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\Structures\DailyStatistic;
 use Railroad\Ecommerce\Entities\Structures\ProductStatistic;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
@@ -173,6 +174,44 @@ class StatsService
     {
         if ($payment->getStatus() != Payment::STATUS_FAILED) {
             $dailyStatistic->setTotalSuccessfulRenewals($dailyStatistic->getTotalSuccessfulRenewals() + 1);
+
+            $subscription = $payment->getSubscriptionPayment()->getSubscription();
+
+            if ($subscription->getTotalCyclesPaid() > 1 && $subscription->getType() != Subscription::TYPE_PAYMENT_PLAN) {
+                $sales = round(
+                    $subscription->getTotalPrice() + $dailyStatistic->getTotalSalesFromRenewals(),
+                    2
+                );
+
+                $dailyStatistic->setTotalSalesFromRenewals($sales);
+
+                $productStatistics = $dailyStatistic->getProductStatistics();
+                $day = $dailyStatistic->getDay();
+
+                $product = $subscription->getProduct();
+                $currentProductStatistic = null;
+                $currentProductStatisticId = $day . ':' . $product->getId();
+
+                foreach ($productStatistics as $productStatistic) {
+                    if ($productStatistic->getId() == $currentProductStatisticId) {
+                        $currentProductStatistic = $productStatistic;
+                        break;
+                    }
+                }
+
+                if (!$currentProductStatistic) {
+                    $currentProductStatistic = new ProductStatistic(
+                        $currentProductStatisticId,
+                        $product->getSku()
+                    );
+
+                    $dailyStatistic->addProductStatistics($currentProductStatistic);
+                }
+
+                $currentProductStatistic->setTotalRenewalSales(
+                    round($currentProductStatistic->getTotalRenewalSales() + $subscription->getTotalPrice(), 2)
+                );
+            }
         }
         else {
             $dailyStatistic->setTotalFailedRenewals($dailyStatistic->getTotalFailedRenewals() + 1);
