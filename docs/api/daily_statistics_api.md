@@ -51,9 +51,10 @@ $.ajax({
             "id":"2019-05-05",
             "attributes":{
                 "total_sales":80.02,
+                "total_sales_from_renewals":80.02,
                 "total_refunded":0,
-                "total_number_of_orders_placed":1,
-                "total_number_of_successful_subscription_renewal_payments":0,
+                "total_number_of_orders_placed":0,
+                "total_number_of_successful_subscription_renewal_payments":1,
                 "total_number_of_failed_subscription_renewal_payments":0,
                 "day":"2019-05-05"
             },
@@ -73,6 +74,7 @@ $.ajax({
             "id":"2019-05-10",
             "attributes":{
                 "total_sales":135.78,
+                "total_sales_from_renewals":0,
                 "total_refunded":0,
                 "total_number_of_orders_placed":2,
                 "total_number_of_successful_subscription_renewal_payments":0,
@@ -95,6 +97,7 @@ $.ajax({
             "id":"2019-05-15",
             "attributes":{
                 "total_sales":120.83,
+                "total_sales_from_renewals":0,
                 "total_refunded":0,
                 "total_number_of_orders_placed":1,
                 "total_number_of_successful_subscription_renewal_payments":1,
@@ -117,6 +120,7 @@ $.ajax({
             "id":"2019-05-20",
             "attributes":{
                 "total_sales":82.42,
+                "total_sales_from_renewals":0,
                 "total_refunded":0,
                 "total_number_of_orders_placed":0,
                 "total_number_of_successful_subscription_renewal_payments":1,
@@ -129,6 +133,7 @@ $.ajax({
             "id":"2019-05-22",
             "attributes":{
                 "total_sales":0,
+                "total_sales_from_renewals":0,
                 "total_refunded":0,
                 "total_number_of_orders_placed":0,
                 "total_number_of_successful_subscription_renewal_payments":0,
@@ -141,6 +146,7 @@ $.ajax({
             "id":"2019-05-25",
             "attributes":{
                 "total_sales":0,
+                "total_sales_from_renewals":0,
                 "total_refunded":70.06,
                 "total_number_of_orders_placed":0,
                 "total_number_of_successful_subscription_renewal_payments":0,
@@ -155,8 +161,9 @@ $.ajax({
             "id":"2019-05-05:1",
             "attributes":{
                 "sku":"explicabo441701",
-                "total_quantity_sold":1,
-                "total_sales":80.02
+                "total_quantity_sold":0,
+                "total_sales":0,
+                "total_renewal_sales":80.02
             }
         },
         {
@@ -165,7 +172,8 @@ $.ajax({
             "attributes":{
                 "sku":"enim7176916",
                 "total_quantity_sold":2,
-                "total_sales":135.78
+                "total_sales":135.78,
+                "total_renewal_sales":0
             }
         },
         {
@@ -174,7 +182,8 @@ $.ajax({
             "attributes":{
                 "sku":"alias3863776",
                 "total_quantity_sold":1,
-                "total_sales":69.95
+                "total_sales":69.95,
+                "total_renewal_sales":0
             }
         }
     ]
