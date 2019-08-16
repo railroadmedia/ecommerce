@@ -619,7 +619,7 @@ class StatsControllerTest extends EcommerceTestCase
                     'id' => $refundDate->format('Y-m-d'),
                     'attributes' => [
                         'total_sales' => 0,
-                        'total_ales_from_renewals' => 0,
+                        'total_sales_from_renewals' => 0,
                         'total_refunded' => $refundDue,
                         'total_number_of_orders_placed' => 0,
                         'total_number_of_successful_subscription_renewal_payments' => 0,
@@ -632,7 +632,7 @@ class StatsControllerTest extends EcommerceTestCase
                     'id' => $subscriptionThreeDate->format('Y-m-d'),
                     'attributes' => [
                         'total_sales' => 0,
-                        'total_ales_from_renewals' => 0,
+                        'total_sales_from_renewals' => 0,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 0,
                         'total_number_of_successful_subscription_renewal_payments' => 0,
@@ -645,7 +645,7 @@ class StatsControllerTest extends EcommerceTestCase
                     'id' => $subscriptionTwoDate->format('Y-m-d'),
                     'attributes' => [
                         'total_sales' => $subscriptionTwoDue,
-                        'total_ales_from_renewals' => $subscriptionTwoDue,
+                        'total_sales_from_renewals' => $subscriptionTwoDue,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 0,
                         'total_number_of_successful_subscription_renewal_payments' => 1,
@@ -668,7 +668,7 @@ class StatsControllerTest extends EcommerceTestCase
                     'id' => $orderFourDate->format('Y-m-d'),
                     'attributes' => [
                         'total_sales' => round($orderFourDue + $subscriptionOneDue, 2),
-                        'total_ales_from_renewals' => 0,
+                        'total_sales_from_renewals' => 0,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 1,
                         'total_number_of_successful_subscription_renewal_payments' => 0,
@@ -691,7 +691,7 @@ class StatsControllerTest extends EcommerceTestCase
                     'id' => $orderTwoDate->format('Y-m-d'),
                     'attributes' => [
                         'total_sales' => round($orderTwoDue + $orderThreeDue, 2),
-                        'total_ales_from_renewals' => 0,
+                        'total_sales_from_renewals' => 0,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 2,
                         'total_number_of_successful_subscription_renewal_payments' => 0,
@@ -714,7 +714,7 @@ class StatsControllerTest extends EcommerceTestCase
                     'id' => $orderFourDate->format('Y-m-d'),
                     'attributes' => [
                         'total_sales' => $orderOneDue,
-                        'total_ales_from_renewals' => 0,
+                        'total_sales_from_renewals' => 0,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 1,
                         'total_number_of_successful_subscription_renewal_payments' => 1,
