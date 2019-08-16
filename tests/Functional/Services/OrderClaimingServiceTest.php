@@ -99,7 +99,9 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $state = 'alberta';
         $currency = 'USD';
 
-        $userId = $this->faker->numberBetween(20, 100);
+        $this->createAndLogInNewUser(); // current user
+
+        $user = $this->fakeUser(['email' => $this->faker->email]); // order placed for
 
         $quantityOne = $this->faker->numberBetween(2, 4);
         $quantityTwo = 1;
@@ -107,8 +109,8 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $purchaser = new Purchaser();
 
-        $purchaser->setId($userId);
-        $purchaser->setEmail($this->faker->email);
+        $purchaser->setId($user['id']);
+        $purchaser->setEmail($user['email']);
         $purchaser->setBrand($brand);
         $purchaser->setType(Purchaser::USER_TYPE);
 
@@ -261,7 +263,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             'ecommerce_orders',
             [
                 'brand' => $brand,
-                'user_id' => $userId,
+                'user_id' => $user['id'],
                 'customer_id' => null,
                 'total_due' => $dueForOrder,
                 'product_due' => $totalItemCosts,
@@ -329,7 +331,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
             [
                 'brand' => $brand,
                 'product_id' => $productTwo->getId(),
-                'user_id' => $userId,
+                'user_id' => $user['id'],
                 'is_active' => true,
                 'start_date' => Carbon::now()
                     ->toDateTimeString(),
@@ -350,7 +352,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_user_products',
             [
-                'user_id' => $userId,
+                'user_id' => $user['id'],
                 'product_id' => $productOne->getId(),
                 'quantity' => $quantityOne,
                 'expiration_date' => null,
@@ -360,7 +362,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_user_products',
             [
-                'user_id' => $userId,
+                'user_id' => $user['id'],
                 'product_id' => $productTwo->getId(),
                 'quantity' => $quantityTwo,
                 'expiration_date' => Carbon::now()

@@ -24,6 +24,174 @@ class DiscountServiceTest extends EcommerceTestCase
         $this->session = $this->app->make(Store::class);
     }
 
+    public function test_get_applicable_discounts_names()
+    {
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+            'price' => $this->faker->randomFloat(2, 15, 20)
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 100),
+            'price' => $this->faker->randomFloat(2, 10, 20)
+        ]);
+
+        // prouct three not in order
+        $productThree = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+            'price' => $this->faker->randomFloat(2, 15, 20)
+        ]);
+
+        // applicable discount - no discount criteria product match required
+        $discountOne = $this->fakeDiscount([
+            'product_id' => $productOne['id'],
+            'product_category' => null,
+            'updated_at' => null,
+            'active' => true,
+            'visible' => true,
+            'type' => DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(3, 5),
+        ]);
+
+        $discountCriteriaOne = $this->fakeDiscountCriteria([
+            'discount_id' => $discountOne['id'],
+            'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+            'min' => $this->faker->numberBetween(1, 100),
+            'max' => $this->faker->numberBetween(500, 1000),
+        ]);
+
+        // not applicable discount - discount criteria product not in order
+        $discountTwo = $this->fakeDiscount([
+            'updated_at' => null,
+            'active' => true,
+            'visible' => false,
+            'expiration_date' => Carbon::now()->addDays(2)->toDateTimeString(),
+            'type' => DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(1, 10),
+        ]);
+
+        $discountCriteriaTwo = $this->fakeDiscountCriteria([
+            'discount_id' => $discountTwo['id'],
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+            'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
+            'min' => $this->faker->numberBetween(1, 2),
+            'max' => $this->faker->numberBetween(15, 20),
+        ]);
+
+        $discountCriteriaProductTwo = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteriaTwo['id'],
+            'product_id' => $productThree['id'],
+        ]);
+
+        // not applicable discount - discount expired
+        $discountThree = $this->fakeDiscount([
+            'product_id' => $productOne['id'],
+            'product_category' => null,
+            'updated_at' => null,
+            'active' => true,
+            'visible' => false,
+            'expiration_date' => Carbon::now()->subDays(2)->toDateTimeString(),
+            'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(1, 10),
+        ]);
+
+        $discountCriteriaThree = $this->fakeDiscountCriteria([
+            'discount_id' => $discountThree['id'],
+            'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+            'min' => Carbon::now()->subDays(9),
+            'max' => Carbon::now()->addDays(2),
+        ]);
+
+        // not applicable discount - criteria not met
+        $discountFour = $this->fakeDiscount([
+            'product_id' => $productTwo['id'],
+            'product_category' => null,
+            'updated_at' => null,
+            'active' => true,
+            'visible' => false,
+            'type' => DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
+            'amount' => 1
+        ]);
+
+        $discountCriteriaFour = $this->fakeDiscountCriteria([
+            'discount_id' => $discountFour['id'],
+            'type' => DiscountCriteriaService::SHIPPING_TOTAL_REQUIREMENT_TYPE,
+            'min' => $this->faker->numberBetween(1, 3),
+            'max' => $this->faker->numberBetween(5, 9),
+        ]);
+
+        // applicable discount - discount product match required, without discount criterias
+        $discountFive = $this->fakeDiscount([
+            'product_id' => $productTwo['id'],
+            'product_category' => null,
+            'updated_at' => null,
+            'active' => true,
+            'visible' => true,
+            'expiration_date' => null,
+            'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(3, 5),
+        ]);
+
+        // not applicable discount - product does not match, without discount criterias
+        $discountSix = $this->fakeDiscount([
+            'product_id' => $productThree['id'],
+            'product_category' => null,
+            'updated_at' => null,
+            'active' => true,
+            'visible' => true,
+            'expiration_date' => null,
+            'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(3, 5),
+        ]);
+
+        $productOneQuantity = $this->faker->numberBetween(4, 7);
+        $productTwoQuantity = $this->faker->numberBetween(3, 5);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity,
+            false,
+            ''
+        );
+
+        $cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $cart = Cart::fromSession();
+
+        $totalDueInItems = round(
+            $productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity,
+            2
+        );
+        $totalDueInShipping = 0;
+
+        $expectedDiscountsIds = [1, 5];
+
+        $discountService = $this->app->make(DiscountService::class);
+        $discountsNames = $discountService->getApplicableDiscountsNames($cart, $totalDueInItems, $totalDueInShipping);
+
+        // assert returned discounts count
+        $this->assertEquals(
+            count($expectedDiscountsIds),
+            count($discountsNames)
+        );
+
+        // assert returned discounts ids
+        foreach ($discountsNames as $discountData) {
+            $this->assertTrue(in_array($discountData['id'], $expectedDiscountsIds));
+        }
+    }
+
     public function test_get_total_shipping_discounted_no_overwrite()
     {
         $productOne = $this->fakeProduct([

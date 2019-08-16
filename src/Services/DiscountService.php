@@ -175,15 +175,42 @@ class DiscountService
         $shippingDiscountNames = [];
         $shippingOverwrite = false;
 
+        $cartProductIdsMap = [];
+        $cartProductCategoryMap = [];
+
+        $products = $this->productRepository->bySkus($cart->listSkus());
+
+        foreach ($products as $product) {
+            $cartProductIdsMap[$product->getId()] = true;
+
+            if (!empty($product->getCategory())) {
+                $cartProductCategoryMap[$product->getCategory()] = true;
+            }
+        }
+
         foreach ($applicableDiscounts as $discount) {
 
             if (!$discount->getVisible()) {
-                if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
+                if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
                     $shippingDiscountNames = [];
                     $shippingOverwrite = true;
                 }
 
                 continue;
+            }
+
+            if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
+                $discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+
+                if (!empty($discount->getProductCategory()) && !isset($cartProductCategoryMap[$discount->getProductCategory()])) {
+                    // if discount has set a category but no product in cart has it
+                    continue;
+                }
+
+                if (!empty($discount->getProduct()) && !isset($cartProductIdsMap[$discount->getProduct()->getId()])) {
+                    // if discount has set a product, but product not in cart
+                    continue;
+                }
             }
 
             if (in_array(
@@ -453,7 +480,7 @@ class DiscountService
 
         foreach ($activeDiscounts as $activeDiscount) {
             /** @var $activeDiscount Discount */
-            $criteriaMet = true;
+            $criteriaMet = false;
 
             foreach ($activeDiscount->getDiscountCriterias() as $discountCriteria) {
                 /** @var $discountCriteria DiscountCriteria */
@@ -464,8 +491,8 @@ class DiscountService
                     $totalDueInShipping
                 );
 
-                if (!$discountCriteriaMet) {
-                    $criteriaMet = false;
+                if ($discountCriteriaMet) {
+                    $criteriaMet = true;
                     break;
                 }
             }
