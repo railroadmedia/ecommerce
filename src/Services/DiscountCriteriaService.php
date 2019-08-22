@@ -10,7 +10,6 @@ use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
-use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Throwable;
@@ -230,6 +229,10 @@ class DiscountCriteriaService
      */
     public function productOwnRequirement(DiscountCriteria $discountCriteria): bool
     {
+        if ((integer)$discountCriteria->getMax() === 0 && !auth()->check()) {
+            return true;
+        }
+
         if (!auth()->check()) {
             return false;
         }
@@ -266,6 +269,16 @@ class DiscountCriteriaService
             ->setParameter('now', Carbon::now())
             ->setParameter('min', (integer)$discountCriteria->getMin())
             ->setParameter('max', (integer)$discountCriteria->getMax());
+
+        if ((integer)$discountCriteria->getMax() === 0) {
+            $qb->setParameter('max', PHP_INT_MAX);
+
+            $a = (integer)$qb->getQuery()
+                    ->getSingleScalarResult() === 0;
+
+            return (integer)$qb->getQuery()
+                    ->getSingleScalarResult() === 0;
+        }
 
         return (integer)$qb->getQuery()
                 ->getSingleScalarResult() > 0;
