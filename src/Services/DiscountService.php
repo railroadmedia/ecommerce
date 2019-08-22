@@ -486,7 +486,7 @@ class DiscountService
 
         foreach ($activeDiscounts as $activeDiscount) {
             /** @var $activeDiscount Discount */
-            $criteriaMet = false;
+            $criteriaMet = true;
 
             foreach ($activeDiscount->getDiscountCriterias() as $discountCriteria) {
                 /** @var $discountCriteria DiscountCriteria */
@@ -497,8 +497,8 @@ class DiscountService
                     $totalDueInShipping
                 );
 
-                if ($discountCriteriaMet) {
-                    $criteriaMet = true;
+                if (!$discountCriteriaMet) {
+                    $criteriaMet = false;
                     break;
                 }
             }

@@ -246,16 +246,25 @@ class DiscountCriteriaService
      */
     public function productOwnRequirement(DiscountCriteria $discountCriteria): bool
     {
-        if (!auth()->check() || !$discountCriteria->getProductsRelationType()) {
+        if ((integer)$discountCriteria->getMax() === 0 && !auth()->check()) {
+            return true;
+        }
+
+   		if (!auth()->check() || !$discountCriteria->getProductsRelationType()) {
             return false;
         }
 
         $userProductsCount = $this->userProductRepository->getCountByUserDiscountCriteriaProducts(
             $this->userProvider->getCurrentUser(),
-            $discountCriteria
+            $discountCriteria,
+            (integer)$discountCriteria->getMax() === 0 ? PHP_INT_MAX : null
         );
 
-        return $discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY ?
+        if ((integer)$discountCriteria->getMax() === 0) {
+            return $userProductsCount === 0;
+        }
+
+		return $discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY ?
             $userProductsCount > 0 : $userProductsCount == count($discountCriteria->getProducts());
     }
 }

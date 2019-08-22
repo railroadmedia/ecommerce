@@ -119,13 +119,15 @@ class UserProductRepository extends RepositoryBase
      * @param User $user
      * @param DiscountCriteria $discountCriteria
      *
+     * @param null $maxOverride
      * @return int
      *
      * @throws NonUniqueResultException
      */
     public function getCountByUserDiscountCriteriaProducts(
         User $user,
-        DiscountCriteria $discountCriteria
+        DiscountCriteria $discountCriteria,
+        $maxOverride = null
     ): int
     {
         /** @var $qb QueryBuilder */
@@ -160,7 +162,7 @@ class UserProductRepository extends RepositoryBase
             ->setParameter('products', $discountCriteria->getProducts())
             ->setParameter('now', Carbon::now())
             ->setParameter('min', (integer)$discountCriteria->getMin())
-            ->setParameter('max', (integer)$discountCriteria->getMax());
+            ->setParameter('max', !empty($maxOverride) ? $maxOverride : (integer)$discountCriteria->getMax());
 
         return (integer)$qb->getQuery()
                 ->getSingleScalarResult();
