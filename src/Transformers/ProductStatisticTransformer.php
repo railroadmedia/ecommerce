@@ -17,6 +17,7 @@ class ProductStatisticTransformer extends TransformerAbstract
             'total_quantity_sold' => $productStatistic->getTotalQuantitySold(),
             'total_sales' => $productStatistic->getTotalSales(),
             'total_renewal_sales' => $productStatistic->getTotalRenewalSales(),
+            'total_renewals' => $productStatistic->getTotalRenewals(),
         ];
     }
 }

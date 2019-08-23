@@ -61,11 +61,11 @@ class StatsService
                 $dailyStatistic = new DailyStatistic($day);
             }
 
-            if ($payment->getOrderPayment()) {
+            if ($payment->getOrderPayment() && $payment->getType() == Payment::TYPE_INITIAL_ORDER) {
                 $dailyStatistic = $this->addOrderPaymentToDailyStatistic($payment, $dailyStatistic);
             }
 
-            if ($payment->getSubscriptionPayment()) {
+            if ($payment->getSubscriptionPayment() && $payment->getType() == Payment::TYPE_SUBSCRIPTION_RENEWAL) {
                 $dailyStatistic = $this->addSubscriptionPaymentToDailyStatistic($payment, $dailyStatistic);
             }
 
@@ -211,6 +211,7 @@ class StatsService
                 $currentProductStatistic->setTotalRenewalSales(
                     round($currentProductStatistic->getTotalRenewalSales() + $subscription->getTotalPrice(), 2)
                 );
+                $currentProductStatistic->setTotalRenewals($currentProductStatistic->getTotalRenewals() + 1);
             }
         }
         else {
