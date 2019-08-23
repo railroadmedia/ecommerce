@@ -237,7 +237,9 @@ class OrderClaimingService
 
             $type = config('ecommerce.type_payment_plan');
 
-            $subscriptionPricePerPayment = $this->cartService->getDueForOrder();
+            $subscriptionPricePerPayment =
+                ($this->cartService->getDueForOrder() - $this->cartService->getDueForInitialPayment()) /
+                ($totalCyclesDue - 1);
         }
         else {
 
@@ -288,17 +290,23 @@ class OrderClaimingService
 
         $intervalCount = $product ? $product->getSubscriptionIntervalCount() : 1;
 
-        $totalTaxDue =
-            !is_null(
-                $this->cartService->getCart()
-                    ->getTaxOverride()
-            ) ?
-                $this->cartService->getCart()
-                    ->getTaxOverride() : $this->taxService->getTaxesDueTotal(
+        $totalTaxDue = !is_null(
+            $this->cartService->getCart()
+                ->getTaxOverride()
+        ) ?
+            $this->cartService->getCart()
+                ->getTaxOverride() : $this->taxService->getTaxesDueTotal(
                 $this->cartService->getTotalItemCosts(),
                 0,
                 $this->taxService->getAddressForTaxation($this->cartService->getCart())
             );
+
+        if (is_null($orderItem)) {
+            $subscriptionTotalPrice = $subscriptionPricePerPayment;
+        }
+        else {
+            $subscriptionTotalPrice = $subscriptionPricePerPayment + $totalTaxDue;
+        }
 
         $subscription->setBrand($purchaser->getBrand());
         $subscription->setType($type);
@@ -308,7 +316,7 @@ class OrderClaimingService
         $subscription->setIsActive(true);
         $subscription->setStartDate(Carbon::now());
         $subscription->setPaidUntil($nextBillDate);
-        $subscription->setTotalPrice($subscriptionPricePerPayment + $totalTaxDue);
+        $subscription->setTotalPrice($subscriptionTotalPrice);
         $subscription->setTax($totalTaxDue);
         $subscription->setCurrency($payment->getCurrency());
         $subscription->setIntervalType($intervalType);
