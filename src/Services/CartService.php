@@ -686,24 +686,31 @@ class CartService
         }
 
         $paymentPlanOptions = [];
+        $financeCost = config('ecommerce.financing_cost_per_order', 1);
 
         if ($orderDue > config('ecommerce.payment_plan_minimum_price')) {
 
             foreach (config('ecommerce.payment_plan_options') as $paymentPlanOption) {
-
+                $orderDueForPlan = $orderDue;
                 $label = null;
 
+                if ($numberOfPayments > 1 && $paymentPlanOption == 1) {
+                    $orderDueForPlan = $orderDue - $financeCost;
+                }
+                if ($numberOfPayments == 1 && $paymentPlanOption > 1) {
+                    $orderDueForPlan = $orderDue + $financeCost;
+                }
+
                 if ($paymentPlanOption == 1) {
-                    $label = '1 payment of $' . $orderDue;
+                    $label = '1 payment of $' . $orderDueForPlan;
                 }
                 else {
-                    $financeDue = config('ecommerce.financing_cost_per_order', 1);
                     $format = '%s payments of $%s ($%s finance charge)';
                     $label = sprintf(
                         $format,
                         $paymentPlanOption,
-                        round(($orderDue - $shippingDue) / $paymentPlanOption, 2),
-                        number_format($financeDue, 2)
+                        round(($orderDueForPlan - $shippingDue) / $paymentPlanOption, 2),
+                        number_format($financeCost, 2)
                     );
                 }
 
