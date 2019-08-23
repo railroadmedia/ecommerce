@@ -303,6 +303,7 @@ class OrderClaimingService
 
         if (is_null($orderItem)) {
             $subscriptionTotalPrice = $subscriptionPricePerPayment;
+            $totalTaxDue = $totalTaxDue / $totalCyclesDue;
         }
         else {
             $subscriptionTotalPrice = $subscriptionPricePerPayment + $totalTaxDue;
