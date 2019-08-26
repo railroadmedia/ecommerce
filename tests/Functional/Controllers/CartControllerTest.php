@@ -102,11 +102,11 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                     [
                         "value" => 2,
-                        "label" => "2 payments of $92.22 ($1.00 finance charge)",
+                        "label" => "2 payments of $92.72 ($1.00 finance charge)",
                     ],
                     [
                         "value" => 5,
-                        "label" => "5 payments of $36.89 ($1.00 finance charge)",
+                        "label" => "5 payments of $37.09 ($1.00 finance charge)",
                     ]
                 ],
             ]
@@ -355,11 +355,11 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                     [
                         "value" => 2,
-                        "label" => "2 payments of $147.99 ($1.00 finance charge)",
+                        "label" => "2 payments of $148.49 ($1.00 finance charge)",
                     ],
                     [
                         "value" => 5,
-                        "label" => "5 payments of $59.2 ($1.00 finance charge)",
+                        "label" => "5 payments of $59.4 ($1.00 finance charge)",
                     ]
                 ],
             ]
@@ -563,11 +563,11 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                     [
                         "value" => 2,
-                        "label" => "2 payments of $36.27 ($1.00 finance charge)",
+                        "label" => "2 payments of $36.77 ($1.00 finance charge)",
                     ],
                     [
                         "value" => 5,
-                        "label" => "5 payments of $14.51 ($1.00 finance charge)",
+                        "label" => "5 payments of $14.71 ($1.00 finance charge)",
                     ]
                 ],
             ]

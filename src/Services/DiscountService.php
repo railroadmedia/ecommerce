@@ -164,7 +164,6 @@ class DiscountService
      */
     public function getApplicableDiscountsNames(Cart $cart, float $totalDueInItems, float $totalDueInShipping): array
     {
-        //
         $applicableDiscounts = $this->getApplicableDiscounts(
             $this->discountRepository->getActiveDiscounts(),
             $cart,
@@ -223,9 +222,11 @@ class DiscountService
                 ]
             )) {
                 if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
-                    $shippingDiscountNames[] = [
-                        'id' => $discount->getId(),
-                        'name' => $discount->getName()
+                    $shippingDiscountNames = [
+                        [
+                            'id' => $discount->getId(),
+                            'name' => $discount->getName()
+                        ]
                     ];
                     $shippingOverwrite = true;
                 }

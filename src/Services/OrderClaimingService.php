@@ -293,7 +293,11 @@ class OrderClaimingService
 
             $type = config('ecommerce.type_payment_plan');
 
-            $subscriptionPricePerPayment = $this->cartService->getDueForPaymentPlanPayments();
+            $subscriptionPricePerPayment = round(
+                ($this->cartService->getDueForOrder() - $this->cartService->getDueForInitialPayment()) /
+                    ($totalCyclesDue - 1),
+                2
+            );
 
             $subscriptionTaxableAmount = $this->cartService->getTotalItemCosts();
         }
@@ -357,6 +361,14 @@ class OrderClaimingService
                     $taxableAddress
                 );
 
+        if (is_null($orderItem)) {
+            $subscriptionTotalPrice = $subscriptionPricePerPayment;
+            $totalTaxDue = round($totalTaxDue / $totalCyclesDue, 2);
+        }
+        else {
+            $subscriptionTotalPrice = round($subscriptionPricePerPayment + $totalTaxDue, 2);
+        }
+
         $subscription->setBrand($purchaser->getBrand());
         $subscription->setType($type);
         $subscription->setUser($purchaser->getUserObject());
@@ -365,7 +377,7 @@ class OrderClaimingService
         $subscription->setIsActive(true);
         $subscription->setStartDate(Carbon::now());
         $subscription->setPaidUntil($nextBillDate);
-        $subscription->setTotalPrice(round($subscriptionPricePerPayment + $totalTaxDue, 2));
+        $subscription->setTotalPrice($subscriptionTotalPrice);
         $subscription->setTax($totalTaxDue);
         $subscription->setCurrency($payment->getCurrency());
         $subscription->setIntervalType($intervalType);
