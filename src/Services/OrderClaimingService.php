@@ -415,13 +415,17 @@ class OrderClaimingService
         Cart $cart,
         array $orderItems,
         array $subscriptions
-    ): PaymentTaxes
+    ): ?PaymentTaxes
     {
         $paymentTaxes = new PaymentTaxes();
 
         $paymentTaxes->setPayment($payment);
 
         $address = $this->taxService->getAddressForTaxation($cart);
+
+        if (empty($address)) {
+            return null;
+        }
 
         $totalItemCostDue = 0;
 
