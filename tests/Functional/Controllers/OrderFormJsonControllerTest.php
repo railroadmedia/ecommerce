@@ -9190,4 +9190,203 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
+
+    public function test_admin_submit_product_for_other_user_discount()
+    {
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
+
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
+
+        $randomUser = $this->fakeUser();
+
+        $country = 'Canada';
+        $region = 'alberta';
+        $zip = $this->faker->postcode;
+
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+        $fakerCustomer->id = $this->faker->word . rand();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $product = $this->fakeProduct(
+            [
+                'price' => 142.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
+            ]
+        );
+
+        $discount = $this->fakeDiscount(
+            [
+                'active' => true,
+                'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+                'product_id' => $product['id'],
+                'expiration_date' => null,
+                'amount' => 10
+            ]
+        );
+
+        $discountCriteria = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discount['id'],
+                'type' => DiscountCriteriaService::PRODUCT_OWN_TYPE,
+                'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+                'min' => '1',
+                'max' => '10',
+            ]
+        );
+
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'discount_criteria_id' => $discountCriteria['id'],
+            'product_id' => $product['id'],
+        ]);
+
+        // admin has user product required by discount criteria, the user does not
+        $adminUserProduct = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+            ]
+        );
+
+        $productQuantity = 1;
+
+        $this->cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
+        );
+
+        $totalProductPrice = round($product['price'] * $productQuantity, 2);
+
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+
+        $expectedProductTaxes = round($expectedTaxRateProduct * $totalProductPrice, 2);
+        $expectedShippingTaxes = 0;
+
+        $expectedOrderTotalDue = round($totalProductPrice + $expectedProductTaxes, 2);
+
+        $orderData = [
+            'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'card_token' => $cardToken,
+            'billing_email' => $this->faker->email,
+            'billing_region' => $region,
+            'billing_zip_or_postal_code' => $zip,
+            'billing_country' => $country,
+            'gateway' => $brand,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $region,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
+            'user_id' => $randomUser['id'],
+        ];
+
+        $this->expectsEvents(
+            [
+                OrderEvent::class,
+                PaymentMethodCreated::class,
+            ]
+        );
+
+        $results = $this->call(
+            'PUT',
+            '/json/order-form/submit',
+            $orderData
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'brand' => $brand,
+                'user_id' => $randomUser['id'],
+                'placed_by_user_id' => $userId,
+                'total_due' => $expectedOrderTotalDue,
+                'taxes_due' => $expectedProductTaxes,
+                'shipping_due' => 0,
+                'total_paid' => $expectedOrderTotalDue,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_payment_methods',
+            [
+                'user_id' => $randomUser['id'],
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_addresses',
+            [
+                'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                'brand' => config('ecommerce.brand'),
+                'user_id' => $randomUser['id'],
+                'customer_id' => null,
+                'zip' => $orderData['billing_zip_or_postal_code'],
+                'region' => $orderData['billing_region'],
+                'country' => $orderData['billing_country'],
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $orderData['shipping_country'],
+                'region' => $orderData['shipping_region'],
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $expectedProductTaxes,
+                'shipping_taxes_paid' => $expectedShippingTaxes,
+            ]
+        );
+    }
 }

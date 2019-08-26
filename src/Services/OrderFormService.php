@@ -56,11 +56,11 @@ class OrderFormService
     /**
      * OrderFormService constructor.
      *
-     * @param CartService $cartService ,
-     * @param OrderClaimingService $orderClaimingService ,
-     * @param PaymentService $paymentService ,
-     * @param PayPalPaymentGateway $payPalPaymentGateway ,
-     * @param PurchaserService $purchaserService ,
+     * @param CartService $cartService
+     * @param OrderClaimingService $orderClaimingService
+     * @param PaymentService $paymentService
+     * @param PayPalPaymentGateway $payPalPaymentGateway
+     * @param PurchaserService $purchaserService
      * @param ShippingService $shippingService
      * @param UserProviderInterface $userProvider
      */
@@ -105,6 +105,10 @@ class OrderFormService
 
         // create and login the user or create the customer
         $this->purchaserService->persist($purchaser);
+
+        if ($purchaser->getType() == Purchaser::USER_TYPE) {
+            DiscountCriteriaService::setPurchaser($purchaser->getUserObject());
+        }
 
         // setup the cart
         $cart = $request->getCart();

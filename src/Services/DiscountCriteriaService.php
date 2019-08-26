@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Throwable;
@@ -19,6 +20,11 @@ class DiscountCriteriaService
      * @var ProductRepository
      */
     private $productRepository;
+
+    /**
+     * @var User
+     */
+    private static $purchaser;
 
     /**
      * @var UserProductRepository
@@ -54,6 +60,11 @@ class DiscountCriteriaService
         $this->productRepository = $productRepository;
         $this->userProductRepository = $userProductRepository;
         $this->userProvider = $userProvider;
+    }
+
+    public static function setPurchaser(User $purchaser)
+    {
+        self::$purchaser = $purchaser;
     }
 
     /**
@@ -254,8 +265,10 @@ class DiscountCriteriaService
             return false;
         }
 
+        $purchaser = $this->getPurchaser();
+
         $userProductsCount = $this->userProductRepository->getCountByUserDiscountCriteriaProducts(
-            $this->userProvider->getCurrentUser(),
+            $purchaser,
             $discountCriteria,
             (integer)$discountCriteria->getMax() === 0 ? PHP_INT_MAX : null
         );
@@ -266,5 +279,10 @@ class DiscountCriteriaService
 
 		return $discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY ?
             $userProductsCount > 0 : $userProductsCount == count($discountCriteria->getProducts());
+    }
+
+    protected function getPurchaser(): User
+    {
+        return self::$purchaser ?: $this->userProvider->getCurrentUser();
     }
 }
