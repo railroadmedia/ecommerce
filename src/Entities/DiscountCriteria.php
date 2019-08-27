@@ -25,8 +25,8 @@ class DiscountCriteria
 {
     use TimestampableEntity;
 
-    const PRODUCTS_RELATION_TYPE_ANY = 'owns any of products';
-    const PRODUCTS_RELATION_TYPE_ALL = 'owns all of products';
+    const PRODUCTS_RELATION_TYPE_ANY = 'any of products';
+    const PRODUCTS_RELATION_TYPE_ALL = 'all of products';
 
     /**
      * @ORM\Id
