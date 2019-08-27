@@ -6,6 +6,7 @@ use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Cache\ArrayCache;
+use Doctrine\Common\Cache\PhpFileCache;
 use Doctrine\Common\Cache\RedisCache;
 use Doctrine\Common\EventManager;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
@@ -150,6 +151,9 @@ class EcommerceServiceProvider extends ServiceProvider
 
         app()->instance('EcommerceRedisCache', $redisCache);
         app()->instance('EcommerceArrayCache', new ArrayCache());
+        
+        // file cache
+        $phpFileCache = new PhpFileCache($proxyDir);
 
         // annotation reader
         AnnotationRegistry::registerLoader('class_exists');
@@ -157,7 +161,7 @@ class EcommerceServiceProvider extends ServiceProvider
         $annotationReader = new AnnotationReader();
 
         $cachedAnnotationReader =
-            new CachedReader($annotationReader, $redisCache, config('ecommerce.development_mode'));
+            new CachedReader($annotationReader, $phpFileCache, config('ecommerce.development_mode'));
 
         $driverChain = new MappingDriverChain();
 
@@ -185,7 +189,7 @@ class EcommerceServiceProvider extends ServiceProvider
 
         // orm config
         $ormConfiguration = new Configuration();
-        $ormConfiguration->setMetadataCacheImpl($redisCache);
+        $ormConfiguration->setMetadataCacheImpl($phpFileCache);
         $ormConfiguration->setQueryCacheImpl($redisCache);
         $ormConfiguration->setResultCacheImpl($redisCache);
         $ormConfiguration->setProxyDir($proxyDir);
