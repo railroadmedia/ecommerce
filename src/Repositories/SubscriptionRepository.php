@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -389,6 +390,29 @@ class SubscriptionRepository extends RepositoryBase
                     ->eq('s.order', ':order')
             )
             ->setParameter('order', $order);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return Subscription[]
+     */
+    public function getPaymentMethodSubscriptions(PaymentMethod $paymentMethod): array
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select('s')
+            ->from($this->getClassName(), 's')
+            ->where(
+                $qb->expr()
+                    ->eq('s.paymentMethod', ':paymentMethod')
+            )
+            ->setParameter('paymentMethod', $paymentMethod);
 
         return $qb->getQuery()->getResult();
     }
