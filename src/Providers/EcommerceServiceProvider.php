@@ -185,7 +185,7 @@ class EcommerceServiceProvider extends ServiceProvider
         // orm config
         $ormConfiguration = new Configuration();
         $ormConfiguration->setMetadataCacheImpl($phpFileCache);
-        $ormConfiguration->setQueryCacheImpl($redisCache);
+        $ormConfiguration->setQueryCacheImpl($phpFileCache);
         $ormConfiguration->setResultCacheImpl($redisCache);
         $ormConfiguration->setProxyDir($proxyDir);
         $ormConfiguration->setProxyNamespace('DoctrineProxies');
