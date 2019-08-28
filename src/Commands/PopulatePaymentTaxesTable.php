@@ -56,6 +56,7 @@ class PopulatePaymentTaxesTable extends Command
 
         $this->databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_payments')
+            ->where('total_paid', '>', 0)
             ->orderBy('id', 'desc')
             ->chunk(
                 500,
