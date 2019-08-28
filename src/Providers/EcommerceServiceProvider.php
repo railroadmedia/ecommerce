@@ -135,12 +135,7 @@ class EcommerceServiceProvider extends ServiceProvider
         !Type::hasType(UserType::USER_TYPE) ? Type::addType(UserType::USER_TYPE, UserType::class) : null;
 
         // set proxy dir to temp folder
-        if (app()->runningUnitTests()) {
-            $proxyDir = sys_get_temp_dir();
-        }
-        else {
-            $proxyDir = sys_get_temp_dir() . '/railroad/ecommerce/proxies';
-        }
+        $proxyDir = sys_get_temp_dir();
 
         // setup redis
         $redis = new Redis();
@@ -151,7 +146,7 @@ class EcommerceServiceProvider extends ServiceProvider
 
         app()->instance('EcommerceRedisCache', $redisCache);
         app()->instance('EcommerceArrayCache', new ArrayCache());
-        
+
         // file cache
         $phpFileCache = new PhpFileCache($proxyDir);
 
