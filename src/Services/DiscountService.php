@@ -202,12 +202,16 @@ class DiscountService
             if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
                 $discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
 
-                if (!empty($discount->getProductCategory()) && !isset($cartProductCategoryMap[$discount->getProductCategory()])) {
+                if (!empty($discount->getProductCategory()) &&
+                    !isset($cartProductCategoryMap[$discount->getProductCategory()])) {
                     // if discount has set a category but no product in cart has it
                     continue;
                 }
 
-                if (!empty($discount->getProduct()) && !isset($cartProductIdsMap[$discount->getProduct()->getId()])) {
+                if (!empty($discount->getProduct()) && !isset(
+                        $cartProductIdsMap[$discount->getProduct()
+                            ->getId()]
+                    )) {
                     // if discount has set a product, but product not in cart
                     continue;
                 }
@@ -479,6 +483,12 @@ class DiscountService
     ): array
     {
         $discountsToApply = [];
+        $productsBySku = [];
+        $products = $this->productRepository->bySkus($cart->listSkus());
+
+        foreach ($products as $product) {
+            $productsBySku[$product->getSku()] = $product;
+        }
 
         foreach ($activeDiscounts as $activeDiscount) {
             /** @var $activeDiscount Discount */
@@ -499,7 +509,35 @@ class DiscountService
                 }
             }
 
-            if ($criteriaMet || empty($activeDiscount->getDiscountCriterias()->count())) {
+            // if the discount has a product id or category set, that product or a product with that
+            // category must be in the cart for it to apply
+            $hasDiscountProductInCart = false;
+
+            if (!empty($activeDiscount->getProduct()) || !empty($activeDiscount->getProductCategory())) {
+
+                foreach ($cart->getItems() as $cartItem) {
+
+                    if ($activeDiscount->getProduct()
+                            ->getSku() == $cartItem->getSku() ||
+                        $activeDiscount->getProduct()
+                            ->getCategory() == $productsBySku[$cartItem->getSku()]->getCategory()) {
+
+                        $hasDiscountProductInCart = true;
+                    }
+                }
+            } else {
+                $hasDiscountProductInCart = true;
+            }
+
+            if (!$hasDiscountProductInCart) {
+                $criteriaMet = false;
+                break;
+            }
+
+            if ($criteriaMet || empty(
+                $activeDiscount->getDiscountCriterias()
+                    ->count()
+                )) {
                 $discountsToApply[$activeDiscount->getId()] = $activeDiscount;
             }
         }
