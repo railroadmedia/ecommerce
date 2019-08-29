@@ -2445,7 +2445,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'active' => true,
                 'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
-                'amount' => 10
+                'amount' => 10,
+                'product_id' => null,
             ]
         );
 

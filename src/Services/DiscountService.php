@@ -512,20 +512,26 @@ class DiscountService
             // if the discount has a product id or category set, that product or a product with that
             // category must be in the cart for it to apply
             $hasDiscountProductInCart = false;
-
+            
             if (!empty($activeDiscount->getProduct()) || !empty($activeDiscount->getProductCategory())) {
 
                 foreach ($cart->getItems() as $cartItem) {
 
-                    if ($activeDiscount->getProduct()
-                            ->getSku() == $cartItem->getSku() ||
+                    if (!empty($activeDiscount->getProduct()) &&
                         $activeDiscount->getProduct()
-                            ->getCategory() == $productsBySku[$cartItem->getSku()]->getCategory()) {
+                            ->getSku() == $cartItem->getSku()) {
+
+                        $hasDiscountProductInCart = true;
+                    }
+
+                    if (!empty($activeDiscount->getProductCategory()) &&
+                        $activeDiscount->getProductCategory() == $productsBySku[$cartItem->getSku()]->getCategory()) {
 
                         $hasDiscountProductInCart = true;
                     }
                 }
-            } else {
+            }
+            else {
                 $hasDiscountProductInCart = true;
             }
 

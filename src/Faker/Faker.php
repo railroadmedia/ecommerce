@@ -250,7 +250,7 @@ class Faker extends Generator
                 'description' => $this->text,
                 'type' => $this->word,
                 'amount' => $this->randomNumber(2),
-                'product_id' => $this->randomNumber(2),
+                'product_id' => null,
                 'active' => $this->boolean,
                 'visible' => $this->boolean,
                 'expiration_date' => null,

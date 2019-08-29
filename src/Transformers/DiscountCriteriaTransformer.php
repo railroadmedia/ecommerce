@@ -37,7 +37,7 @@ class DiscountCriteriaTransformer extends TransformerAbstract
             'id' => $discountCriteria->getId(),
             'name' => $discountCriteria->getName(),
             'type' => $discountCriteria->getType(),
-            'product_relation_type' => $discountCriteria->getProductsRelationType(),
+            'products_relation_type' => $discountCriteria->getProductsRelationType(),
             'min' => $discountCriteria->getMin(),
             'max' => $discountCriteria->getMax(),
             'created_at' => $discountCriteria->getCreatedAt() ?
