@@ -512,7 +512,7 @@ class DiscountService
             // if the discount has a product id or category set, that product or a product with that
             // category must be in the cart for it to apply
             $hasDiscountProductInCart = false;
-            
+
             if (!empty($activeDiscount->getProduct()) || !empty($activeDiscount->getProductCategory())) {
 
                 foreach ($cart->getItems() as $cartItem) {
@@ -537,7 +537,7 @@ class DiscountService
 
             if (!$hasDiscountProductInCart) {
                 $criteriaMet = false;
-                break;
+                continue;
             }
 
             if ($criteriaMet || empty(
