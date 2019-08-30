@@ -42,7 +42,9 @@ class CartController extends Controller
 
         $this->cartService->refreshCart();
 
-        if ($request->get('locked', false) == true) {
+        $locked = (boolean)$request->get('locked', false);
+
+        if ($locked == true) {
             $this->cartService->getCart()->replaceItems([]);
         }
 
@@ -52,7 +54,7 @@ class CartController extends Controller
                 $product = $this->cartService->addToCart(
                     $productSku,
                     $quantityToAdd,
-                    $request->get('locked', false) == 'true',
+                    $locked,
                     $request->get('promo-code', '')
                 );
             } catch (AddToCartException $addToCartException) {
