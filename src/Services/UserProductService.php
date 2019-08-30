@@ -484,13 +484,16 @@ class UserProductService
     {
         $products = $this->getSubscriptionProducts($subscription);
 
-        foreach ($products as $productData) {
+        // we only want to update the expiration date of non-payment plan subscription products
+        if ($subscription->getType() != Subscription::TYPE_PAYMENT_PLAN) {
+            foreach ($products as $productData) {
 
-            $this->assignUserProduct(
-                $subscription->getUser(),
-                $productData['product'],
-                $subscription->getPaidUntil()
-            );
+                $this->assignUserProduct(
+                    $subscription->getUser(),
+                    $productData['product'],
+                    $subscription->getPaidUntil()
+                );
+            }
         }
     }
 }
