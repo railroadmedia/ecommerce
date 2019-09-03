@@ -138,7 +138,7 @@ class FromRequestEcommerceQueryBuilder extends QueryBuilder
         $permissionService = app(PermissionService::class);
 
         if (
-            !$permissionService->can(auth()->id(), 'show_deleted') ||
+            !$permissionService->can(auth()->id(), 'show_deleted') &&
             !$request->get('view_deleted', false)
         ) {
             $this->andWhere(
