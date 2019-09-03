@@ -337,6 +337,7 @@
                                             <tr>
                                                 <td>
                                                     <table class="invoice-items" cellpadding="0" cellspacing="0">
+                                                        @if(!empty($product))
                                                             <tr>
                                                                 <td>{{ $product->getName() }}</td>
                                                                 <td class="alignright">
@@ -344,6 +345,19 @@
                                                                     {{ $payment->getCurrency() }}
                                                                 </td>
                                                             </tr>
+                                                        @endif
+
+                                                        @if($subscription->getType() == Railroad\Ecommerce\Entities\Subscription::TYPE_PAYMENT_PLAN && !empty($subscription->getOrder()))
+                                                            @foreach($subscription->getOrder()->getOrderItems() as $orderItem)
+                                                                    <tr>
+                                                                        <td>{{ $orderItem->getProduct()->getName() }}</td>
+                                                                        <td class="alignright">
+                                                                            Payment Plan
+                                                                        </td>
+                                                                    </tr>
+                                                            @endforeach
+
+                                                        @endif
 
                                                         @if($subscription->getTax() > 0)
                                                             @if($gstPaid > 0)
@@ -366,6 +380,15 @@
                                                                 {{ $currencySymbol}}{{ number_format($payment->getTotalPaid(), 2) }}
                                                                 {{ $payment->getCurrency() }}</td>
                                                         </tr>
+
+                                                            @if($subscription->getType() == Railroad\Ecommerce\Entities\Subscription::TYPE_PAYMENT_PLAN && !empty($subscription->getOrder()))
+                                                                <tr>
+                                                                    <td class="alignright" width="80%">Payment #</td>
+                                                                    <td class="alignright">
+                                                                    {{ $subscription->getTotalCyclesPaid() }} /
+                                                                        {{ $subscription->getTotalCyclesPaid() }}</td>
+                                                                </tr>
+                                                            @endif
                                                     </table>
                                                 </td>
                                             </tr>
