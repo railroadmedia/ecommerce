@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
+use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\CartService;
 use Throwable;
 
@@ -17,13 +18,24 @@ class CartController extends Controller
     private $cartService;
 
     /**
+     * @var ProductRepository
+     */
+    private $productRepository;
+
+
+    /**
      * AddToCartController constructor.
      *
      * @param CartService $cartService
+     * @param ProductRepository $productRepository
      */
-    public function __construct(CartService $cartService)
+    public function __construct(
+        CartService $cartService,
+        ProductRepository $productRepository
+    )
     {
         $this->cartService = $cartService;
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -67,6 +79,27 @@ class CartController extends Controller
             }
         }
 
+        $bonusArray = [];
+        foreach($request->get('bonuses', []) as $sku => $bonus) {
+            $product = $this->productRepository->bySku($sku);
+
+            if(!empty($product)){
+                $bonusArray[] = [
+                    'description' => $product->getDescription(),
+                    'name' => $product->getName(),
+                    'price_after_discounts' => 0,
+                    'price_before_discounts' => $product->getPrice(),
+                    'quantity' => 1,
+                    'requires_shipping' => false,
+                    'sku' => $product->getSku(),
+                    'stock' => null,
+                    'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
+                    'subscription_interval_type' => $product->getSubscriptionIntervalType(),
+                    'thumbnail_url' => $product->getThumbnailUrl(),
+                ];
+            }
+        }
+
         $cartArray = $this->cartService->toArray();
 
         if (!empty($errors)) {
@@ -78,6 +111,8 @@ class CartController extends Controller
             $request->get('redirect') ? redirect()->away($request->get('redirect')) : redirect()->back();
 
         $redirectResponse->with('cart', $cartArray);
+
+        session()->put('bonuses', $bonusArray);
 
         return $redirectResponse;
     }
