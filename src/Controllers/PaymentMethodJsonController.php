@@ -14,6 +14,7 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
+use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodCreated;
 use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodDeleted;
 use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodUpdated;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
@@ -383,6 +384,7 @@ class PaymentMethodJsonController extends Controller
          * @var $paymentMethod PaymentMethod
          */
         $paymentMethod = $userPaymentMethod->getPaymentMethod();
+        $oldPaymentMethod = clone $paymentMethod;
 
         /**
          * @var $user User
@@ -405,6 +407,8 @@ class PaymentMethodJsonController extends Controller
         $userPaymentMethod->setIsPrimary(true);
 
         $this->entityManager->flush();
+
+        event(new PaymentMethodUpdated($paymentMethod, $oldPaymentMethod, $user));
 
         event(
             new UserDefaultPaymentMethodEvent(

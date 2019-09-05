@@ -3,8 +3,8 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Carbon\Carbon;
-use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
@@ -90,6 +90,31 @@ class UserProductRepository extends RepositoryBase
                 ->getResult();
 
         return new ResultsQueryBuilderComposite($results, $qb);
+    }
+
+    /**
+     * @param $userId
+     * @return array
+     */
+    public function getAllUsersProducts($userId)
+    {
+        $alias = 'a';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->select([$alias, 'p'])
+            ->join('a.product', 'p')
+            ->andWhere(
+                $qb->expr()
+                    ->eq('a.user', ':userId')
+            )
+            ->setParameter('user', $userId);
+
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return $results;
     }
 
     /**
