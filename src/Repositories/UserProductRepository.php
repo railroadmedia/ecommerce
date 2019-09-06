@@ -108,7 +108,7 @@ class UserProductRepository extends RepositoryBase
                 $qb->expr()
                     ->eq('a.user', ':userId')
             )
-            ->setParameter('user', $userId);
+            ->setParameter('userId', $userId);
 
         $results =
             $qb->getQuery()

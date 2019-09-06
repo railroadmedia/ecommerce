@@ -5,8 +5,8 @@ namespace Railroad\Ecommerce\Repositories;
 use Carbon\Carbon;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\Query;
-use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Query\Expr\Join;
+use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Order;
@@ -20,7 +20,6 @@ use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 /**
  * Class PaymentRepository
  *
- * @method Payment find($id, $lockMode = null, $lockVersion = null)
  * @method Payment findOneBy(array $criteria, array $orderBy = null)
  * @method Payment[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  * @method Payment[] findAll()
@@ -39,6 +38,34 @@ class PaymentRepository extends RepositoryBase
     public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(Payment::class));
+    }
+
+    /**
+     * @param int $id
+     * @return Payment
+     * @throws NonUniqueResultException
+     * @throws \Doctrine\ORM\NoResultException
+     */
+    public function find(int $id)
+    {
+        $alias = 'p';
+
+        /** @var $qb FromRequestEcommerceQueryBuilder */
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->select(['p', 'pm', 'cc', 'ppba', 'op', 'sp', 'o', 's'])
+            ->leftJoin('p.paymentMethod', 'pm')
+            ->leftJoin('pm.creditCard', 'cc')
+            ->leftJoin('pm.paypalBillingAgreement', 'ppba')
+            ->leftJoin('p.orderPayment', 'op')
+            ->leftJoin('p.subscriptionPayment', 'sp')
+            ->leftJoin('op.order', 'o')
+            ->leftJoin('sp.subscription', 's')
+            ->where('p.id = :paymentId')
+            ->setParameter('paymentId', $id);
+
+        return $qb->getQuery()
+                ->getSingleResult();
     }
 
     /**

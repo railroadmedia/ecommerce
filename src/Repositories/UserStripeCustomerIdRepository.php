@@ -23,17 +23,19 @@ class UserStripeCustomerIdRepository extends RepositoryBase
 
     /**
      * @param int $userId
-     *
+     * @param $gateway
      * @return UserStripeCustomerId|null
      */
-    public function getByUserId(int $userId)
+    public function getByUserId(int $userId, $gateway)
     {
         $qb = $this->entityManager->createQueryBuilder();
 
         $qb->select('usci')
             ->from(UserStripeCustomerId::class, 'usci')
             ->where('usci.user = :userId')
+            ->andWhere('usci.paymentGatewayName = :paymentGatewayName')
             ->setParameter('userId', $userId)
+            ->setParameter('paymentGatewayName', $gateway)
             ->orderBy('usci.id', 'DESC');
 
         $result = $qb->getQuery()// ->useResultCache($this->arrayCache)

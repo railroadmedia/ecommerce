@@ -255,7 +255,7 @@ class PaymentService
         if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
             $stripeCustomer = null;
 
-            $userStripeCustomerId = $this->userStripeCustomerIdRepository->getByUserId($purchaser->getId());
+            $userStripeCustomerId = $this->userStripeCustomerIdRepository->getByUserId($purchaser->getId(), $gateway);
 
             // make a new stripe customer if none exist for the user
             if (empty($userStripeCustomerId)) {
@@ -268,6 +268,7 @@ class PaymentService
 
                 $userStripeCustomerId->setUser($purchaser->getUserObject());
                 $userStripeCustomerId->setStripeCustomerId($stripeCustomer->id);
+                $userStripeCustomerId->setPaymentGatewayName($gateway);
 
                 $this->entityManager->persist($userStripeCustomerId);
             }

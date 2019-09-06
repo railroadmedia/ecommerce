@@ -49,6 +49,13 @@ class UserStripeCustomerId
     protected $stripeCustomerId;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(type="string", name="payment_gateway_name", nullable=true)
+     */
+    protected $paymentGatewayName;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -86,5 +93,21 @@ class UserStripeCustomerId
     public function setStripeCustomerId(?string $stripeCustomerId)
     {
         $this->stripeCustomerId = $stripeCustomerId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPaymentGatewayName(): ?string
+    {
+        return $this->paymentGatewayName;
+    }
+
+    /**
+     * @param string $paymentGatewayName
+     */
+    public function setPaymentGatewayName(?string $paymentGatewayName): void
+    {
+        $this->paymentGatewayName = $paymentGatewayName;
     }
 }
