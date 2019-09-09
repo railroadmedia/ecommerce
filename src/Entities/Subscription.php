@@ -45,6 +45,11 @@ class Subscription
     const ACTION_CANCEL = 'cancel';
     const ACTION_DEACTIVATED = 'deactivated'; // canceled after several failed payments
 
+    // states
+    const STATE_ACTIVE = 'active';
+    const STATE_SUSPENDED = 'suspended';
+    const STATE_CANCELED = 'canceled';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
@@ -602,5 +607,26 @@ class Subscription
     public function setAppleReceipt(?AppleReceipt $appleReceipt)
     {
         $this->appleReceipt = $appleReceipt;
+    }
+
+    /**
+     * States:
+     * - active (subscription will auto renew)
+     * - canceled (user canceled the subscription)
+     * - suspended (subscription failed to renew)
+     *
+     * @return string
+     */
+    public function getState()
+    {
+        if ($this->getIsActive()) {
+            return self::STATE_ACTIVE;
+        }
+
+        if (!empty($this->getCanceledOn())) {
+            return self::STATE_CANCELED;
+        }
+
+        return self::STATE_SUSPENDED;
     }
 }
