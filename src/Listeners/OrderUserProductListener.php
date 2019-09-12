@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Listeners;
 
+use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
@@ -56,6 +57,30 @@ class OrderUserProductListener
 
                     if ($subscription) {
                         $expirationDate = $subscription->getPaidUntil();
+                    }
+                }
+
+                // if its a non-recurring one time membership product
+                if ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME &&
+                    !empty($product->getSubscriptionIntervalType()) &&
+                    !empty($product->getSubscriptionIntervalCount())) {
+
+                    if ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
+                        $expirationDate =
+                            Carbon::now()
+                                ->addMonths($product->getSubscriptionIntervalCount());
+
+                    }
+                    elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
+                        $expirationDate =
+                            Carbon::now()
+                                ->addYears($product->getSubscriptionIntervalCount());
+
+                    }
+                    elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
+                        $expirationDate =
+                            Carbon::now()
+                                ->addDays($product->getSubscriptionIntervalCount());
                     }
                 }
 
