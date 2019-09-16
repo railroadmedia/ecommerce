@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\Cart\AddToCartException;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\CartService;
@@ -93,8 +94,10 @@ class CartController extends Controller
                     'requires_shipping' => false,
                     'sku' => $product->getSku(),
                     'stock' => null,
-                    'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
-                    'subscription_interval_type' => $product->getSubscriptionIntervalType(),
+                    'subscription_interval_type' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                        $product->getSubscriptionIntervalType() : null,
+                    'subscription_interval_count' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                        $product->getSubscriptionIntervalCount() : null,
                     'thumbnail_url' => $product->getThumbnailUrl(),
                 ];
             }

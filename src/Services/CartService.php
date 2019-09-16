@@ -281,7 +281,7 @@ class CartService
         $products = $this->productRepository->byCart($this->getCart());
 
         foreach ($products as $product) {
-            if (!empty($product->getSubscriptionIntervalType())) {
+            if (in_array($product->getType(), [Product::TYPE_DIGITAL_SUBSCRIPTION])) {
                 return true;
             }
         }
@@ -729,8 +729,10 @@ class CartService
                 'thumbnail_url' => $product->getThumbnailUrl(),
                 'description' => $product->getDescription(),
                 'stock' => $product->getStock(),
-                'subscription_interval_type' => $product->getSubscriptionIntervalType(),
-                'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
+                'subscription_interval_type' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                    $product->getSubscriptionIntervalType() : null,
+                'subscription_interval_count' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                    $product->getSubscriptionIntervalCount() : null,
                 'price_before_discounts' => $product->getPrice(),
                 'price_after_discounts' => round(
                     $product->getPrice() - $this->discountService->getItemDiscountedAmount(
