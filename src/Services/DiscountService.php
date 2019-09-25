@@ -217,39 +217,61 @@ class DiscountService
                 }
             }
 
-            if (in_array(
-                $discount->getType(),
-                [
-                    DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
-                    DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
-                    DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE
-                ]
-            )) {
-                if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
-                    $shippingDiscountNames = [
-                        [
+            if ($this->doesCartHaveAnyPhysicalItems($cart)) {
+                if (in_array(
+                    $discount->getType(),
+                    [
+                        DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
+                        DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
+                        DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE
+                    ]
+                )) {
+                    if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
+                        $shippingDiscountNames = [
+                            [
+                                'id' => $discount->getId(),
+                                'name' => $discount->getName()
+                            ]
+                        ];
+                        $shippingOverwrite = true;
+                    }
+                    elseif (!$shippingOverwrite) {
+                        $shippingDiscountNames[] = [
                             'id' => $discount->getId(),
                             'name' => $discount->getName()
-                        ]
-                    ];
-                    $shippingOverwrite = true;
+                        ];
+                    }
                 }
-                elseif (!$shippingOverwrite) {
-                    $shippingDiscountNames[] = [
+                else {
+                    $discountNames[] = [
                         'id' => $discount->getId(),
                         'name' => $discount->getName()
                     ];
                 }
             }
-            else {
-                $discountNames[] = [
-                    'id' => $discount->getId(),
-                    'name' => $discount->getName()
-                ];
-            }
         }
 
         return array_merge($discountNames, $shippingDiscountNames);
+    }
+
+    /**
+     * @param Cart $cart
+     *
+     * @return bool
+     *
+     * @throws ORMException
+     */
+    public function doesCartHaveAnyPhysicalItems(Cart $cart): bool
+    {
+        $products = $this->productRepository->byCart($cart);
+
+        foreach ($products as $product) {
+            if ($product->getIsPhysical()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
