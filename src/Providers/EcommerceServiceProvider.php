@@ -23,6 +23,7 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use Railroad\Doctrine\TimestampableListener;
 use Railroad\Ecommerce\Commands\ConvertDiscountCriteriaProducsAssociation;
 use Railroad\Ecommerce\Commands\FillPaymentGatewayColumnFromPaymentMethod;
+use Railroad\Ecommerce\Commands\FixSubscriptionTotalAndTaxes;
 use Railroad\Ecommerce\Commands\PopulatePaymentTaxesTable;
 use Railroad\Ecommerce\Commands\ProcessAppleExpiredSubscriptions;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
@@ -115,6 +116,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 FillPaymentGatewayColumnFromPaymentMethod::class,
                 PopulatePaymentTaxesTable::class,
                 ProcessAppleExpiredSubscriptions::class,
+                FixSubscriptionTotalAndTaxes::class,
             ]
         );
 

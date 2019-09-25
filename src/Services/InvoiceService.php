@@ -63,6 +63,11 @@ class InvoiceService
                 $order->getShippingAddress()
                     ->toStructure()
             );
+
+            $pstRate = $this->taxService->getPSTTaxRate(
+                $order->getShippingAddress()
+                    ->toStructure()
+            );
         }
         elseif (!empty($order->getBillingAddress()) && !empty(
             $order->getBillingAddress()
@@ -73,9 +78,15 @@ class InvoiceService
                 $order->getBillingAddress()
                     ->toStructure()
             );
+
+            $pstRate = $this->taxService->getPSTTaxRate(
+                $order->getBillingAddress()
+                    ->toStructure()
+            );
         }
         else {
             $gstRate = 0;
+            $pstRate = 0;
         }
 
         if ($gstRate > 0) {
@@ -85,12 +96,20 @@ class InvoiceService
             $gstPaid = 0;
         }
 
+        if ($pstRate > 0) {
+            $pstPaid = round(($order->getProductDue()) * $pstRate, 2);
+        }
+        else {
+            $pstPaid = 0;
+        }
+
         return [
             'order' => $order,
             'orderItems' => $order->getOrderItems(),
             'payment' => $payment,
             'currencySymbol' => $currencySymbol,
             'gstPaid' => $gstPaid,
+            'pstPaid' => $pstPaid,
             'invoiceSenderEmail' => config(
                 'ecommerce.invoice_email_details.' . $payment->getGatewayName() . '.order_invoice.invoice_sender'
             ),
@@ -165,9 +184,16 @@ class InvoiceService
                     ->getBillingAddress()
                     ->toStructure()
             );
+
+            $pstRate = $this->taxService->getPSTTaxRate(
+                $subscription->getPaymentMethod()
+                    ->getBillingAddress()
+                    ->toStructure()
+            );
         }
         else {
             $gstRate = 0;
+            $pstRate = 0;
         }
 
         if ($gstRate > 0) {
@@ -177,12 +203,20 @@ class InvoiceService
             $gstPaid = 0;
         }
 
+        if ($pstRate > 0) {
+            $pstPaid = round($payment->getTotalPaid() * $pstRate, 2);
+        }
+        else {
+            $pstPaid = 0;
+        }
+
         return [
             'subscription' => $subscription,
             'product' => $subscription->getProduct(),
             'payment' => $payment,
             'currencySymbol' => $currencySymbol,
             'gstPaid' => $gstPaid,
+            'pstPaid' => $pstPaid,
             'invoiceSenderEmail' => config(
                 'ecommerce.invoice_email_details.' . $payment->getGatewayName() . '.order_invoice.invoice_sender'
             ),

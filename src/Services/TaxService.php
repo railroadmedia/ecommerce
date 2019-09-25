@@ -133,6 +133,43 @@ class TaxService
         return 0;
     }
 
+
+    /**
+     * This is not used in calculating payment/orders totals, its only used to display PST on the invoice.
+     *
+     * @param Address|null $address
+     * @return int
+     * @throws Exception
+     */
+    public function getPSTTaxRate(?Address $address)
+    {
+        if (empty($address) || empty($address->getCountry())) {
+            return 0;
+        }
+
+        if ($address &&
+            array_key_exists(strtolower($address->getCountry()), config('ecommerce.pst_tax_rate_display_only', []))) {
+            if (array_key_exists(
+                strtolower($address->getRegion()),
+                config('ecommerce.pst_tax_rate_display_only')[strtolower($address->getCountry())]
+            )) {
+                return config('ecommerce.pst_tax_rate_display_only')[strtolower($address->getCountry())][strtolower(
+                    $address->getRegion()
+                )];
+            }
+            else {
+                error_log(
+                    'Could not find PST tax rate for address. Country: ' .
+                    $address->getCountry() .
+                    ' Region: ' .
+                    $address->getRegion()
+                );
+            }
+        }
+
+        return 0;
+    }
+
     /**
      * @param $productCosts
      * @param $shippingCosts

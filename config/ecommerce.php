@@ -102,6 +102,21 @@ return [
         ],
     ],
 
+    // this is used to show how much of the taxes the user paid went to gst in invoices
+    'pst_tax_rate_display_only' => [
+        'canada' => [
+            'british columbia' => 0.05,
+        ],
+    ],
+
+    // this is displayed on all invoices to canadian customers
+    'gst_hst_number' => [
+        'brand' => '12345 1512312',
+    ],
+
+    // displayed on invoices
+    'company_name_on_invoice' => 'My Company',
+
     // currencies
     'supported_currencies' => [
         'CAD',

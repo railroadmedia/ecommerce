@@ -231,6 +231,7 @@
         ------------------------------------- */
         .invoice {
             margin: 40px auto;
+            margin-top: 10px;
             text-align: left;
             width: 80%;
         }
@@ -323,8 +324,17 @@
                                     <td class="content-block aligncenter">
                                         <table class="invoice">
                                             <tr>
-                                                <td><br>Invoice #{{$order->getId()}}<br>
-                                                    {{ $order->getCreatedAt()->format('F j, Y') }}</td>
+                                                <td>
+                                                    <br>Invoice #{{$order->getId()}}<br>
+                                                    {{ $order->getCreatedAt()->format('F j, Y') }}<br><br>
+                                                    {{ config('ecommerce.company_name_on_invoice') }}
+
+                                                    @if($order->getTaxesDue() > 0)
+                                                        <br>GST/HST # -
+                                                        {{ config('ecommerce.gst_hst_number')[$order->getBrand()] ?? '' }}
+                                                    @endif
+                                                    <br><br>
+                                                </td>
                                             </tr>
                                             <tr>
                                                 <td>
@@ -346,15 +356,22 @@
                                                                         {{ $currencySymbol}} {{ number_format($gstPaid, 2) }}</td>
                                                                 </tr>
                                                             @endif
-
-                                                            <tr>
-                                                                <td>Total Tax</td>
-                                                                <td class="alignright">
-                                                                    {{ $currencySymbol}} {{ number_format($order->getTaxesDue(), 2) }}</td>
-                                                            </tr>
+                                                            @if($pstPaid > 0)
+                                                                <tr>
+                                                                    <td>PST</td>
+                                                                    <td class="alignright">
+                                                                        {{ $currencySymbol}} {{ number_format($pstPaid, 2) }}</td>
+                                                                </tr>
+                                                            @endif
                                                         @endif
+
                                                         <tr class="total">
-                                                            <td class="alignright" width="80%">Total</td>
+                                                            @if($order->getTotalPaid() == $order->getTotalDue())
+                                                                <td class="alignright" width="80%">Total</td>
+                                                            @else
+                                                                <td class="alignright" width="80%">First Payment Total</td>
+                                                            @endif
+
                                                             <td class="alignright">
                                                                 {{ $currencySymbol}}{{ number_format($order->getTotalPaid(), 2) }} {{ $payment->getCurrency() }}</td>
                                                         </tr>

@@ -237,6 +237,7 @@
         ------------------------------------- */
         .invoice {
             margin: 40px auto;
+            margin-top: 20px;
             text-align: left;
             width: 80%;
         }
@@ -331,8 +332,17 @@
                                     <td class="content-block aligncenter">
                                         <table class="invoice">
                                             <tr>
-                                                <td><br>Invoice #{{$payment->getId()}}<br>
-                                                    {{ $payment->getCreatedAt()->format('F j, Y') }}</td>
+                                                <td>
+                                                    <br>Invoice #{{$payment->getId()}}<br>
+                                                    {{ $payment->getCreatedAt()->format('F j, Y') }}<br><br>
+                                                    {{ config('ecommerce.company_name_on_invoice') }}
+
+                                                    @if($subscription->getTax() > 0)
+                                                        <br>GST/HST # -
+                                                        {{ config('ecommerce.gst_hst_number')[$payment->getGatewayName()] ?? '' }}
+                                                    @endif
+                                                    <br><br>
+                                                </td>
                                             </tr>
                                             <tr>
                                                 <td>
@@ -367,7 +377,13 @@
                                                                         {{ $currencySymbol}} {{ number_format($gstPaid, 2) }}</td>
                                                                 </tr>
                                                             @endif
-
+                                                            @if($pstPaid > 0)
+                                                                <tr>
+                                                                    <td>PST</td>
+                                                                    <td class="alignright">
+                                                                        {{ $currencySymbol}} {{ number_format($pstPaid, 2) }}</td>
+                                                                </tr>
+                                                            @endif
                                                             <tr>
                                                                 <td>Total Tax</td>
                                                                 <td class="alignright">
