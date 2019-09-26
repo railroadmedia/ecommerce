@@ -372,7 +372,7 @@ class DiscountService
                 $discountProduct = $discount->getProduct();
 
                 if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
-                    $product->getCategory() == $discount->getProductCategory()) {
+                    ($discount->getProductCategory() && $product->getCategory() == $discount->getProductCategory())) {
                     if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
                         $discountAmount = $discount->getAmount() * $productCartItem->getQuantity();
                         $discountedAmount = round($discountedAmount + $discountAmount, 2);
