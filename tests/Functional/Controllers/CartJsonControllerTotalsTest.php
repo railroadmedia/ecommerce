@@ -38,6 +38,9 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
+                'type' => Product::TYPE_DIGITAL_ONE_TIME,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
                 'weight' => 0,
             ]
         );
@@ -49,6 +52,9 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
                 'weight' => 2,
             ]
         );

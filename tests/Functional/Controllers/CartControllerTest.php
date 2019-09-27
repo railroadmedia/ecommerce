@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Illuminate\Session\Store;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
@@ -44,6 +45,9 @@ class CartControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'is_physical' => false,
+            'type' => Product::TYPE_DIGITAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
             'weight' => 0,
             'stock' => $this->faker->numberBetween(5, 100),
             'price' => 92.22,
@@ -274,6 +278,14 @@ class CartControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct([
             'active' => 1,
             'is_physical' => false,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'subscription_interval_type' => $this->faker->randomElement(
+                [
+                    config('ecommerce.interval_type_daily'),
+                    config('ecommerce.interval_type_monthly'),
+                    config('ecommerce.interval_type_yearly'),
+                ]
+            ),
             'stock' => $this->faker->numberBetween(5, 100),
             'price' => 47.07,
         ]);
@@ -281,6 +293,9 @@ class CartControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct([
             'active' => 1,
             'is_physical' => false,
+            'type' => Product::TYPE_DIGITAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
             'stock' => $this->faker->numberBetween(5, 100),
             'price' => 100.92,
         ]);
@@ -471,6 +486,15 @@ class CartControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct([
             'active' => 1,
             'is_physical' => false,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'subscription_interval_type' => $this->faker->randomElement(
+                [
+                    config('ecommerce.interval_type_daily'),
+                    config('ecommerce.interval_type_monthly'),
+                    config('ecommerce.interval_type_yearly'),
+                ]
+            ),
+            'subscription_interval_count' => $this->faker->numberBetween(0, 12),
             'stock' => $this->faker->numberBetween(5, 100),
             'price' => 22.82,
             'weight' => 0,
@@ -479,6 +503,9 @@ class CartControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct([
             'active' => 1,
             'is_physical' => false,
+            'type' => Product::TYPE_DIGITAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
             'stock' => $this->faker->numberBetween(5, 100),
             'price' => 1.02,
             'weight' => 0,

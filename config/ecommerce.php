@@ -261,6 +261,8 @@ return [
             'pull.addresses',
             'update.address',
             'delete.address',
+
+            'show_deleted',
         ],
     ],
 

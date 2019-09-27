@@ -274,7 +274,8 @@ class PaymentServiceTest extends EcommerceTestCase
         $userStripeCustomerId = $this->fakeUserStripeCustomerId(
             [
                 'user_id' => $userId,
-                'stripe_customer_id' => $externalCustomerId
+                'stripe_customer_id' => $externalCustomerId,
+                'payment_gateway_name' => $brand,
             ]
         );
 

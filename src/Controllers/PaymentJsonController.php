@@ -550,7 +550,7 @@ class PaymentJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.payment');
 
-        $payment = $this->paymentRepository->find($paymentId);
+        $payment = $this->paymentRepository->findOneBy(['id' => $paymentId]);
 
         throw_if(
             is_null($payment),

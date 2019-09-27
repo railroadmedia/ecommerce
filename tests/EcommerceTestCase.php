@@ -159,6 +159,10 @@ class EcommerceTestCase extends BaseTestCase
             ->getCacheDriver()
             ->deleteAll();
 
+        $this->entityManager->getConfiguration()
+            ->getResultCacheImpl()
+            ->deleteAll();
+
         // make sure laravel is using the same connection
         DB::connection()
             ->setPdo(

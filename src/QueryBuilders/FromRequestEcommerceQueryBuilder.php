@@ -138,17 +138,17 @@ class FromRequestEcommerceQueryBuilder extends QueryBuilder
         $permissionService = app(PermissionService::class);
 
         if (
-            !$permissionService->can(auth()->id(), 'show_deleted') &&
-            !$request->get('view_deleted', false)
+            $permissionService->can(auth()->id(), 'show_deleted') &&
+            $request->get('view_deleted', false)
         ) {
+            $this->getEntityManager()
+                ->getFilters()
+                ->disable('soft-deleteable');
+        } else {
             $this->andWhere(
                 $this->expr()
                     ->isNull($entityAlias . '.' . $entityAttribute)
             );
-        } else {
-            $this->getEntityManager()
-                ->getFilters()
-                ->disable('soft-deleteable');
         }
 
         return $this;

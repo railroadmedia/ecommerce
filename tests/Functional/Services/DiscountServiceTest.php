@@ -29,6 +29,7 @@ class DiscountServiceTest extends EcommerceTestCase
     {
         $productOne = $this->fakeProduct([
             'active' => 1,
+            'is_physical' => true,
             'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 15, 20)
         ]);
@@ -197,6 +198,7 @@ class DiscountServiceTest extends EcommerceTestCase
     {
         $productOne = $this->fakeProduct([
             'active' => 1,
+            'is_physical' => true,
             'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 15, 20)
         ]);
@@ -282,7 +284,7 @@ class DiscountServiceTest extends EcommerceTestCase
         ]);
 
         $discountFour = $this->fakeDiscount([
-            'product_id' => $this->faker->numberBetween(20, 30),
+            'product_id' => $productThree['id'],
             'product_category' => null,
             'updated_at' => null,
             'active' => true,
@@ -385,6 +387,7 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $productThree = $this->fakeProduct([
             'active' => 1,
+            'is_physical' => true,
             'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 15, 20)
         ]);
@@ -457,7 +460,7 @@ class DiscountServiceTest extends EcommerceTestCase
         ]);
 
         $discountFour = $this->fakeDiscount([
-            'product_id' => $this->faker->numberBetween(20, 30),
+            'product_id' => $productThree['id'],
             'product_category' => null,
             'updated_at' => null,
             'active' => true,
@@ -524,6 +527,7 @@ class DiscountServiceTest extends EcommerceTestCase
     {
         $productOne = $this->fakeProduct([
             'active' => 1,
+            'is_physical' => true,
             'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 15, 20)
         ]);
@@ -608,7 +612,7 @@ class DiscountServiceTest extends EcommerceTestCase
         ]);
 
         $discountFour = $this->fakeDiscount([
-            'product_id' => $this->faker->numberBetween(20, 30),
+            'product_id' => $productThree['id'],
             'product_category' => null,
             'updated_at' => null,
             'active' => true,
@@ -683,6 +687,7 @@ class DiscountServiceTest extends EcommerceTestCase
     {
         $productOne = $this->fakeProduct([
             'active' => 1,
+            'is_physical' => true,
             'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 15, 20)
         ]);
@@ -1026,6 +1031,7 @@ class DiscountServiceTest extends EcommerceTestCase
     {
         $productOne = $this->fakeProduct([
             'active' => 1,
+            'is_physical' => true,
             'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 15, 20)
         ]);
@@ -1113,7 +1119,7 @@ class DiscountServiceTest extends EcommerceTestCase
         ]);
 
         $discountFour = $this->fakeDiscount([
-            'product_id' => $this->faker->numberBetween(20, 30),
+            'product_id' => null,
             'product_category' => null,
             'updated_at' => null,
             'active' => true,
@@ -1196,6 +1202,7 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $productThree = $this->fakeProduct([
             'active' => 1,
+            'is_physical' => true,
             'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 15, 20)
         ]);
@@ -1271,7 +1278,7 @@ class DiscountServiceTest extends EcommerceTestCase
         ]);
 
         $discountFour = $this->fakeDiscount([
-            'product_id' => $this->faker->numberBetween(20, 30),
+            'product_id' => $productThree['id'],
             'product_category' => null,
             'updated_at' => null,
             'active' => true,
@@ -1342,6 +1349,7 @@ class DiscountServiceTest extends EcommerceTestCase
     {
         $product = $this->fakeProduct([
             'active' => 1,
+            'is_physical' => true,
             'stock' => $this->faker->numberBetween(20, 100),
             'price' => $this->faker->randomFloat(2, 15, 20)
         ]);

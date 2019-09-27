@@ -1576,7 +1576,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
     }
 
     public function test_delete_not_existing_payment()
-
     {
         $randomId = $this->faker->randomNumber();
 

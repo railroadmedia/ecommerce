@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Illuminate\Session\Store;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
@@ -32,10 +33,12 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
             'weight' => 1,
             'active' => 1,
             'stock' => $this->faker->numberBetween(15, 100),
-            'is_physical' => true,
         ]);
 
         $initialQuantity = 2;
@@ -132,6 +135,9 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(15, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $initialQuantity = 2;
@@ -223,6 +229,9 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => 0,
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $quantity = $this->faker->numberBetween(2, 10);
@@ -349,12 +358,18 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(5, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(5, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $productOneQuantity = 1;
@@ -463,6 +478,9 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(1, 3),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $quantity = $this->faker->numberBetween(5, 100);
@@ -530,12 +548,18 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $randomSku1 = $this->faker->word . 'sku1';
@@ -666,12 +690,18 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $productTwo = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -779,6 +809,9 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -889,6 +922,9 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -964,6 +1000,9 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -1065,6 +1104,9 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(3, 5),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -1175,6 +1217,9 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'weight' => 2,
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
             'stock' => $this->faker->numberBetween(3, 5),
         ]);
 
@@ -1287,6 +1332,9 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -1364,6 +1412,9 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'active' => 1,
                 'stock' => $this->faker->numberBetween(15, 100),
                 'is_physical' => true,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
                 'weight' => 10,
             ]
         );
@@ -1416,6 +1467,9 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'active' => 1,
                 'stock' => $this->faker->numberBetween(15, 100),
                 'is_physical' => true,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
                 'weight' => 10,
             ]
         );
@@ -1467,6 +1521,9 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'active' => 1,
                 'stock' => $this->faker->numberBetween(15, 100),
                 'is_physical' => true,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
                 'weight' => 10,
             ]
         );
@@ -1525,6 +1582,9 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'active' => 1,
                 'stock' => $this->faker->numberBetween(15, 100),
                 'is_physical' => true,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
                 'weight' => 10,
             ]
         );
@@ -1589,6 +1649,9 @@ class CartJsonControllerTest extends EcommerceTestCase
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
             'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
         ]);
 
         $cartService = $this->app->make(CartService::class);
