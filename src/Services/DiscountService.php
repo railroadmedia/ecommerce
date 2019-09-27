@@ -130,8 +130,13 @@ class DiscountService
                     /** @var Product $discountProduct */
                     $discountProduct = $applicableDiscount->getProduct();
 
-                    if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
-                        $product->getCategory() == $applicableDiscount->getProductCategory()) {
+                    if (
+                        ($discountProduct && $product->getId() == $discountProduct->getId()) ||
+                        (
+                            $applicableDiscount->getProductCategory() &&
+                            $product->getCategory() == $applicableDiscount->getProductCategory()
+                        )
+                    ) {
                         if ($applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
                             $discountAmount = $applicableDiscount->getAmount() * $productCartItem->getQuantity();
                             $totalItemDiscounts = round($totalItemDiscounts + $discountAmount, 2);
@@ -217,15 +222,15 @@ class DiscountService
                 }
             }
 
-            if ($this->doesCartHaveAnyPhysicalItems($cart)) {
-                if (in_array(
-                    $discount->getType(),
-                    [
-                        DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
-                        DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
-                        DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE
-                    ]
-                )) {
+            if (in_array(
+                $discount->getType(),
+                [
+                    DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE,
+                    DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE,
+                    DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE
+                ]
+            )) {
+                if ($this->doesCartHaveAnyPhysicalItems($cart)) {
                     if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
                         $shippingDiscountNames = [
                             [
@@ -242,12 +247,12 @@ class DiscountService
                         ];
                     }
                 }
-                else {
-                    $discountNames[] = [
-                        'id' => $discount->getId(),
-                        'name' => $discount->getName()
-                    ];
-                }
+            }
+            else {
+                $discountNames[] = [
+                    'id' => $discount->getId(),
+                    'name' => $discount->getName()
+                ];
             }
         }
 
