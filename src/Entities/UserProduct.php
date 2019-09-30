@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Carbon\Carbon;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -103,7 +104,8 @@ class UserProduct
      */
     public function setExpirationDate(
         ?\DateTimeInterface $expirationDate
-    ) {
+    )
+    {
         $this->expirationDate = $expirationDate;
     }
 
@@ -153,5 +155,17 @@ class UserProduct
     public function setDeletedAt(?\DateTimeInterface $deletedAt)
     {
         $this->deletedAt = $deletedAt;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isValid()
+    {
+        if (empty($this->getExpirationDate()) || $this->getExpirationDate() > Carbon::now()) {
+            return true;
+        }
+
+        return false;
     }
 }
