@@ -743,7 +743,8 @@ class CartService
                     ),
                     2
                 ),
-                'requires_shipping' => $product->getIsPhysical()
+                'requires_shipping' => $product->getIsPhysical(),
+                'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION || $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
             ];
         }
 
