@@ -162,7 +162,8 @@ class UserProduct
      */
     public function isValid()
     {
-        if (empty($this->getExpirationDate()) || $this->getExpirationDate() > Carbon::now()) {
+        if ((empty($this->getExpirationDate()) || $this->getExpirationDate() > Carbon::now()) &&
+            empty($this->getDeletedAt())) {
             return true;
         }
 
