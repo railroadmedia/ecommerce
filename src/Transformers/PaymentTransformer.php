@@ -42,6 +42,10 @@ class PaymentTransformer extends TransformerAbstract
 
     public function includePaymentMethod(Payment $payment)
     {
+        if (empty($payment->getPaymentMethod())) {
+            return null;
+        }
+
         if ($payment->getPaymentMethod() instanceof Proxy) {
             return $this->item(
                 $payment->getPaymentMethod(),

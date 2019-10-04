@@ -132,7 +132,7 @@ class Payment
 
     /**
      * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\PaymentMethod")
-     * @ORM\JoinColumn(name="payment_method_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="payment_method_id", referencedColumnName="id", nullable=true)
      */
     protected $paymentMethod;
 
