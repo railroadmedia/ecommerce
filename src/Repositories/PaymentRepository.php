@@ -65,7 +65,7 @@ class PaymentRepository extends RepositoryBase
             ->setParameter('paymentId', $id);
 
         return $qb->getQuery()
-                ->getSingleResult();
+            ->getSingleResult();
     }
 
     /**
@@ -107,9 +107,9 @@ class PaymentRepository extends RepositoryBase
         if (!empty($request->get('subscription_id'))) {
             $aliasSubscriptionPayment = 'sp';
             $qb->join(
-                    $alias . '.subscriptionPayment',
-                    $aliasSubscriptionPayment
-                )
+                $alias . '.subscriptionPayment',
+                $aliasSubscriptionPayment
+            )
                 ->where(
                     $qb->expr()
                         ->eq(
@@ -130,32 +130,34 @@ class PaymentRepository extends RepositoryBase
         return new ResultsQueryBuilderComposite($results, $qb);
     }
 
-     /**
+    /**
      * @param Request $request
      *
      * @return Payment[]
      */
     public function getPaymentsForStats(Request $request): array
     {
-        $smallDate =
-            $request->get(
-                'small_date_time',
-                Carbon::now()
-                    ->subDay()
-                    ->toDateTimeString()
-            );
+        $smallDate = $request->get(
+            'small_date_time',
+            Carbon::now()
+                ->subDay()
+                ->toDateTimeString()
+        );
 
-        $smallDateTime = Carbon::parse($smallDate)->startOfDay();
+        $smallDateTime =
+            Carbon::parse($smallDate)
+                ->startOfDay();
 
-        $bigDate =
-            $request->get(
-                'big_date_time',
-                Carbon::now()
-                    ->subDay()
-                    ->toDateTimeString()
-            );
+        $bigDate = $request->get(
+            'big_date_time',
+            Carbon::now()
+                ->subDay()
+                ->toDateTimeString()
+        );
 
-        $bigDateTime = Carbon::parse($bigDate)->endOfDay();
+        $bigDateTime =
+            Carbon::parse($bigDate)
+                ->endOfDay();
 
         /** @var $qb QueryBuilder */
         $qb =
@@ -178,24 +180,30 @@ class PaymentRepository extends RepositoryBase
 
         if ($request->has('brand')) {
             $qb->andWhere(
-                    $qb->expr()->andX(
-                            $qb->expr()->orX(
-                                    $qb->expr()->isNull('o'),
-                                    $qb->expr()->eq('o.brand', ':orderBrand')
-                                ),
-                            $qb->expr()->orX(
-                                    $qb->expr()->isNull('s'),
-                                    $qb->expr()->eq('s.brand', ':subscriptionBrand')
-                                )
-                        )
-                )
+                $qb->expr()
+                    ->andX(
+                        $qb->expr()
+                            ->orX(
+                                $qb->expr()
+                                    ->isNull('o'),
+                                $qb->expr()
+                                    ->eq('o.brand', ':orderBrand')
+                            ),
+                        $qb->expr()
+                            ->orX(
+                                $qb->expr()
+                                    ->isNull('s'),
+                                $qb->expr()
+                                    ->eq('s.brand', ':subscriptionBrand')
+                            )
+                    )
+            )
                 ->setParameter('orderBrand', $request->get('brand'))
                 ->setParameter('subscriptionBrand', $request->get('brand'));
         }
 
-        return
-            $qb->getQuery()
-                ->getResult();
+        return $qb->getQuery()
+            ->getResult();
     }
 
     /**
@@ -266,7 +274,8 @@ class PaymentRepository extends RepositoryBase
             )
             ->setParameter('order', $order);
 
-        return $qb->getQuery()->getResult();
+        return $qb->getQuery()
+            ->getResult();
     }
 
     /**
@@ -294,7 +303,8 @@ class PaymentRepository extends RepositoryBase
             )
             ->setParameter('id', $paymentId);
 
-        return $qb->getQuery()->getOneOrNullResult();
+        return $qb->getQuery()
+            ->getOneOrNullResult();
     }
 
     /**
@@ -307,10 +317,16 @@ class PaymentRepository extends RepositoryBase
         $userId,
         $paidOnly = false,
         $brand = null
-    ) {
-        $this->getEntityManager()
+    )
+    {
+        if ($this->getEntityManager()
             ->getFilters()
-            ->disable('soft-deleteable');
+            ->isEnabled('soft-deleteable')) {
+
+            $this->getEntityManager()
+                ->getFilters()
+                ->disable('soft-deleteable');
+        }
 
         $allPayments = [];
 
@@ -340,7 +356,7 @@ class PaymentRepository extends RepositoryBase
                 $qb->expr()
                     ->eq('p.gatewayName', ':brand')
             )
-            ->setParameter('brand', $brand);
+                ->setParameter('brand', $brand);
         }
 
         $payments =
@@ -378,7 +394,7 @@ class PaymentRepository extends RepositoryBase
                 $qb->expr()
                     ->eq('p.gatewayName', ':brand')
             )
-            ->setParameter('brand', $brand);
+                ->setParameter('brand', $brand);
         }
 
         $payments =
@@ -390,9 +406,14 @@ class PaymentRepository extends RepositoryBase
             $allPayments[$payment->getId()] = $payment;
         }
 
-        $this->getEntityManager()
+        if (!$this->getEntityManager()
             ->getFilters()
-            ->enable('soft-deleteable');
+            ->isEnabled('soft-deleteable')) {
+
+            $this->getEntityManager()
+                ->getFilters()
+                ->enable('soft-deleteable');
+        }
 
         return $allPayments;
     }
