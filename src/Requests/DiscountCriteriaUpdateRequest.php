@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Requests;
 
+use Railroad\Ecommerce\Entities\DiscountCriteria;
+
 class DiscountCriteriaUpdateRequest extends FormRequest
 {
     /**
@@ -26,7 +28,10 @@ class DiscountCriteriaUpdateRequest extends FormRequest
             'data.attributes.name' => 'name',
             'data.attributes.type' => 'type',
             'data.attributes.min' => 'min',
-            'data.attributes.max' => 'max'
+            'data.attributes.max' => 'max',
+            'data.attributes.products_relation_type' => 'products relation type',
+            'data.relationships.products.data.*.type' => 'product type',
+            'data.relationships.products.data.*.id' => 'product id',
         ];
     }
 
@@ -41,7 +46,16 @@ class DiscountCriteriaUpdateRequest extends FormRequest
             'data.attributes.name' => 'max:255',
             'data.attributes.type' => 'max:255',
             'data.attributes.min' => '',
-            'data.attributes.max' => ''
+            'data.attributes.max' => '',
+            'data.attributes.products_relation_type' => 'in:' . implode(
+                    ',',
+                    [
+                        DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
+                        DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+                    ]
+                ),
+            'data.relationships.products.data.*.type' => 'in:product',
+            'data.relationships.products.data.*.id' => 'numeric|exists:ecommerce_products,id',
         ];
     }
 
@@ -57,7 +71,8 @@ class DiscountCriteriaUpdateRequest extends FormRequest
                 'data.attributes.type',
                 'data.attributes.min',
                 'data.attributes.max',
-                'data.relationships.products'
+                'data.attributes.products_relation_type',
+                'data.relationships.products',
             ]
         );
     }

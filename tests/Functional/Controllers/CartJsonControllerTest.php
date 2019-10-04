@@ -99,6 +99,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'price_before_discounts'      => $product['price'],
                 'price_after_discounts'       => $product['price'],
                 'requires_shipping'           => true,
+                'is_digital'                  => !$product['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -193,6 +194,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'price_before_discounts'      => $product['price'],
                 'price_after_discounts'       => $product['price'],
                 'requires_shipping'           => true,
+                'is_digital'                  => !$product['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -426,6 +428,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'price_before_discounts'      => $productOne['price'],
                 'price_after_discounts'       => $productOne['price'],
                 'requires_shipping'           => true,
+                'is_digital'                  => !$productOne['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -443,6 +446,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'price_before_discounts'      => $productTwo['price'],
                 'price_after_discounts'       => $productTwo['price'],
                 'requires_shipping'           => true,
+                'is_digital'                  => !$productTwo['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );
@@ -623,6 +627,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'price_before_discounts'      => $productOne['price'],
                 'price_after_discounts'       => $productOne['price'],
                 'requires_shipping'           => true,
+                'is_digital'                  => !$productOne['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -640,6 +645,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'price_before_discounts'      => $productTwo['price'],
                 'price_after_discounts'       => $productTwo['price'],
                 'requires_shipping'           => true,
+                'is_digital'                  => !$productTwo['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );
@@ -773,6 +779,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'price_before_discounts'      => $productTwo['price'],
                 'price_after_discounts'       => $productTwo['price'],
                 'requires_shipping'           => true,
+                'is_digital'                  => !$productTwo['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -886,6 +893,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'price_before_discounts'      => $product['price'],
                 'price_after_discounts'       => $product['price'],
                 'requires_shipping'           => true,
+                'is_digital'                  => !$product['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1068,6 +1076,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'price_before_discounts'      => $product['price'],
                 'price_after_discounts'       => $product['price'],
                 'requires_shipping'           => true,
+                'is_digital'                  => !$product['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1181,6 +1190,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'price_before_discounts'      => $product['price'],
                 'price_after_discounts'       => $product['price'],
                 'requires_shipping'           => true,
+                'is_digital'                  => !$product['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1296,6 +1306,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'price_before_discounts'      => $product['price'],
                 'price_after_discounts'       => $product['price'],
                 'requires_shipping'           => true,
+                'is_digital'                  => !$product['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );

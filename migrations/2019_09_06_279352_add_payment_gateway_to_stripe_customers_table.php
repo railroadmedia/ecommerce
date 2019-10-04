@@ -14,7 +14,7 @@ class AddPaymentGatewayToStripeCustomersTable extends Migration
     public function up()
     {
         Schema::table('ecommerce_user_stripe_customer_ids', function (Blueprint $table) {
-            $table->string('payment_gateway_name')->after('stripe_customer_id');
+            $table->string('payment_gateway_name')->default('')->after('stripe_customer_id');
         });
     }
 

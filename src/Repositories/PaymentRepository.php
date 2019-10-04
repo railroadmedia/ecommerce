@@ -300,10 +300,18 @@ class PaymentRepository extends RepositoryBase
     /**
      * @param $userId
      * @param bool $paidOnly
+     * @param string $brand
      * @return Payment[]
      */
-    public function getAllUsersPayments($userId, $paidOnly = false)
-    {
+    public function getAllUsersPayments(
+        $userId,
+        $paidOnly = false,
+        $brand = null
+    ) {
+        $this->getEntityManager()
+            ->getFilters()
+            ->disable('soft-deleteable');
+
         $allPayments = [];
 
         // order payments
@@ -316,7 +324,7 @@ class PaymentRepository extends RepositoryBase
             ->from(Payment::class, 'p')
             ->join('p.orderPayment', 'op')
             ->join('op.order', 'o')
-            ->join('p.paymentMethod', 'pm')
+            ->leftJoin('p.paymentMethod', 'pm')
             ->where('o.user = :userId')
             ->setParameter('userId', $userId);
 
@@ -325,6 +333,14 @@ class PaymentRepository extends RepositoryBase
                 $qb->expr()
                     ->gt('p.totalPaid', 0)
             );
+        }
+
+        if ($brand) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->setParameter('brand', $brand);
         }
 
         $payments =
@@ -346,7 +362,7 @@ class PaymentRepository extends RepositoryBase
             ->from(Payment::class, 'p')
             ->join('p.subscriptionPayment', 'sp')
             ->join('sp.subscription', 's')
-            ->join('p.paymentMethod', 'pm')
+            ->leftJoin('p.paymentMethod', 'pm')
             ->where('s.user = :userId')
             ->setParameter('userId', $userId);
 
@@ -357,6 +373,14 @@ class PaymentRepository extends RepositoryBase
             );
         }
 
+        if ($brand) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->setParameter('brand', $brand);
+        }
+
         $payments =
             $qb->getQuery()
                 ->getResult();
@@ -365,6 +389,10 @@ class PaymentRepository extends RepositoryBase
             /** @var $payment Payment */
             $allPayments[$payment->getId()] = $payment;
         }
+
+        $this->getEntityManager()
+            ->getFilters()
+            ->enable('soft-deleteable');
 
         return $allPayments;
     }

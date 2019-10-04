@@ -78,6 +78,7 @@ class CartControllerTest extends EcommerceTestCase
                         'price_before_discounts' => $product['price'],
                         'price_after_discounts' => $product['price'],
                         'requires_shipping' => false,
+                        'is_digital' => !$product['is_physical'],
                     ]
                 ],
                 'discounts' => [],
@@ -329,6 +330,7 @@ class CartControllerTest extends EcommerceTestCase
                         'price_before_discounts' => $productOne['price'],
                         'price_after_discounts' => $productOne['price'],
                         'requires_shipping' => false,
+                        'is_digital' => !$productOne['is_physical'],
                     ],
                     [
                         'sku' => $productTwo['sku'],
@@ -342,6 +344,7 @@ class CartControllerTest extends EcommerceTestCase
                         'price_before_discounts' => $productTwo['price'],
                         'price_after_discounts' => $productTwo['price'],
                         'requires_shipping' => false,
+                        'is_digital' => !$productTwo['is_physical'],
                     ],
                 ],
                 'discounts' => [],
@@ -545,6 +548,7 @@ class CartControllerTest extends EcommerceTestCase
                         'price_before_discounts' => $productOne['price'],
                         'price_after_discounts' => $productOne['price'],
                         'requires_shipping' => false,
+                        'is_digital' => !$productOne['is_physical'],
                     ],
                     [
                         'sku' => $productTwo['sku'],
@@ -558,6 +562,7 @@ class CartControllerTest extends EcommerceTestCase
                         'price_before_discounts' => $productTwo['price'],
                         'price_after_discounts' => $productTwo['price'],
                         'requires_shipping' => false,
+                        'is_digital' => !$productTwo['is_physical'],
                     ],
                 ],
                 'discounts' => [],

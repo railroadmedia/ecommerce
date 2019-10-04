@@ -123,28 +123,56 @@ class PaymentMethodRepository extends RepositoryBase
     /**
      * @param $userId
      * @param Request $request
+     * @param string $brand
      *
      * @return PaymentMethod[]
      */
-    public function getAllUsersPaymentMethods($userId, Request $request)
-    {
+    public function getAllUsersPaymentMethods(
+        $userId,
+        Request $request,
+        $brand = null
+    ) {
         $alias = 'pm';
 
         $qb = $this->createQueryBuilder($alias);
 
-        $paymentMethods =
-            $qb->select(['upm', 'pm', 'cc', 'ppba'])
-                ->restrictSoftDeleted($request, $alias)
-                ->join('pm.userPaymentMethod', 'upm')
-                ->leftJoin('pm.creditCard', 'cc')
-                ->leftJoin('pm.paypalBillingAgreement', 'ppba')
-                ->where(
-                    $qb->expr()
-                        ->eq('upm.user', ':user')
-                )
-                ->setParameter('user', $userId)
-                ->getQuery()
-                ->getResult();
+        $qb->select(['upm', 'pm', 'cc', 'ppba'])
+            ->restrictSoftDeleted($request, $alias)
+            ->join('pm.userPaymentMethod', 'upm')
+            ->leftJoin('pm.creditCard', 'cc')
+            ->leftJoin('pm.paypalBillingAgreement', 'ppba')
+            ->where(
+                $qb->expr()
+                    ->eq('upm.user', ':user')
+            )
+            ->setParameter('user', $userId);
+
+        if ($brand) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->isNotNull('cc.id'),
+                                $qb->expr()
+                                    ->eq('cc.paymentGatewayName', ':ccBrand')
+                            ),
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->isNotNull('ppba.id'),
+                                $qb->expr()
+                                    ->eq('ppba.paymentGatewayName', ':ppbaBrand')
+                            )
+                    )
+            )
+            ->setParameter('ccBrand', $brand)
+            ->setParameter('ppbaBrand', $brand);
+        }
+
+        $paymentMethods = $qb->getQuery()
+            ->getResult();
 
         return $paymentMethods;
     }

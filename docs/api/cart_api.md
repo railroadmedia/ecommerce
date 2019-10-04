@@ -75,7 +75,8 @@ Returns the entire cart.
                     "subscription_interval_type":"day",
                     "subscription_interval_count":9,
                     "price_before_discounts":865,
-                    "price_after_discounts":865
+                    "price_after_discounts":865,
+                    "is_digital": false
                 }
             ],
             "discounts":[
@@ -207,7 +208,8 @@ Returns the entire cart.
                     "subscription_interval_type":"day",
                     "subscription_interval_count":9,
                     "price_before_discounts":865,
-                    "price_after_discounts":865
+                    "price_after_discounts":865,
+                    "is_digital": true
                 }
             ],
             "discounts":[
@@ -274,7 +276,8 @@ Returns the entire cart.
                     "subscription_interval_type":"day",
                     "subscription_interval_count":9,
                     "price_before_discounts":865,
-                    "price_after_discounts":865
+                    "price_after_discounts":865,
+                    "is_digital": false
                 }
             ],
             "discounts":[

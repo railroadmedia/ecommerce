@@ -205,7 +205,7 @@
 | `id` | INT(10) UNSIGNED | Primary, Auto increment, Not null |  |  |
 | `name` | VARCHAR(255) | Not null |  |  |
 | `type` | VARCHAR(255) | Not null |  |  |
-| `product_id` | INT(11) |  | NULL |  |
+| `products_relation_type` | VARCHAR(255) |  | NULL |  |
 | `min` | VARCHAR(255) | Not null |  |  |
 | `max` | VARCHAR(255) | Not null |  |  |
 | `discount_id` | INT(11) | Not null |  |  |
@@ -219,10 +219,30 @@
 | `PRIMARY` | `id` | PRIMARY |  |
 | `ecommerce_discount_criteria_name_index` | `name` | INDEX |  |
 | `ecommerce_discount_criteria_type_index` | `type` | INDEX |  |
-| `ecommerce_discount_criteria_product_id_index` | `product_id` | INDEX |  |
 | `ecommerce_discount_criteria_discount_id_index` | `discount_id` | INDEX |  |
 | `ecommerce_discount_criteria_created_on_index` | `created_at` | INDEX |  |
 | `ecommerce_discount_criteria_updated_on_index` | `updated_at` | INDEX |  |
+
+## Table: `ecommerce_discount_criterias_products`
+
+### Description:
+
+
+
+### Columns:
+
+| Column | Data Type | Attributes | Default | Description |
+| --- | --- | --- | --- | --- |
+| `discount_criteria_id` | INT(11) | Not null |  |  |
+| `product_id` | INT(11) | Not null |  |  |
+
+### Indices:
+
+| Name | Columns | Type | Description |
+| --- | --- | --- | --- |
+| `PRIMARY` | `discount_criteria_id`, `product_id` | PRIMARY |  |
+| `ecommerce_discount_criterias_products_discount_criteria_id_index	` | `discount_criteria_id` | INDEX |  |
+| `ecommerce_discount_criterias_products_product_id_index` | `product_id` | INDEX |  |
 
 ## Table: `ecommerce_discounts`
 

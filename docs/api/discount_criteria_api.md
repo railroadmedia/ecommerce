@@ -22,7 +22,9 @@ Create a new discount criteria for a discount.
 |body|data.type|yes||must be 'discountCriteria'||
 |body|data.attributes.name|yes||||
 |body|data.attributes.type|yes||'product quantity requirement', 'date requirement', 'order total requirement', 'shipping total requirement', 'shipping country requirement', 'promo code requirement', 'product own requirement'||
-|body|data.relationships.product.id|||||
+|body|data.attributes.products_relation_type|yes||'any of products', 'all of products'||
+|body|data.relationships.products.data.*.id|yes| |an existing product id | |
+|body|data.relationships.products.data.*.type|yes| |'product'| |
 |body|data.attributes.min|yes|||to be set depending on the type|
 |body|data.attributes.max|yes|||to be set depending on the type|
 
@@ -33,9 +35,17 @@ Create a new discount criteria for a discount.
     'data.type' => 'in:discountCriteria',
     'data.attributes.name' => 'required|max:255',
     'data.attributes.type' => 'required|max:255',
-    'data.relationships.product.id' => 'nullable|exists:'.'ecommerce_products'.',id',
     'data.attributes.min' => 'required',
     'data.attributes.max' => 'required',
+    'data.attributes.products_relation_type' => 'required|in:' . implode(
+            ',',
+            [
+                DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
+                DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+            ]
+        ),
+    'data.relationships.products.data.*.type' => 'required|in:product',
+    'data.relationships.products.data.*.id' => 'required|numeric|exists:ecommerce_products,id',
 ];
 ```
 
@@ -44,7 +54,7 @@ Create a new discount criteria for a discount.
 ```js   
 $.ajax({
     url: 'https://www.domain.com' +
-        '/ecommerce/address',
+        '/ecommerce/discount-criteria',
     type: 'put',
     data: {
         data: {
@@ -52,7 +62,6 @@ $.ajax({
             attributes: {
                 name: "aut",
                 type: "autem",
-                product_id: 2,
                 min: 5,
                 max: 81,
                 discount_id: 6,
@@ -60,12 +69,14 @@ $.ajax({
             },
             relationships: {
                 product: {
-                    data: {
-                        type: 'product',
-                        id: 1
-                   }
-               }
-           }
+                    data: [
+                        {
+                            type: 'product',
+                            id: 1
+                        }
+                    ]
+                }
+            }
         }
     }, 
     success: function(response) {},
@@ -98,10 +109,12 @@ $.ajax({
                 }
             },
             "product":{
-                "data":{
-                    "type":"product",
-                    "id":"2"
-                }
+                "data":[
+                    {
+                        "type":"product",
+                        "id":"2"
+                    }
+                ]
             }
         }
     },
@@ -166,9 +179,13 @@ Update an existing discount criteria.
 |body|data.type|yes||must be 'discountCriteria'||
 |body|data.attributes.name|yes||||
 |body|data.attributes.type|yes||'product quantity requirement', 'date requirement', 'order total requirement', 'shipping total requirement', 'shipping country requirement', 'promo code requirement', 'product own requirement'||
-|body|data.relationships.product.id|||||
+|body|data.attributes.products_relation_type|||'any of products', 'all of products'||
+|body|data.relationships.products.data.*.id|yes| |an existing product id | |
+|body|data.relationships.products.data.*.type|yes| |'product'| |
 |body|data.attributes.min|yes|||to be set depending on the type|
 |body|data.attributes.max|yes|||to be set depending on the type|
+
+**NOTE: the associations with discount criteria products are rewritten on each update request, only with the ones specified in the request. In other words, if previous associated discount criteria products are not specified in the update request, the associations will be removed.**
 
 ### Validation Rules
 
@@ -177,9 +194,17 @@ Update an existing discount criteria.
     'data.type' => 'in:discountCriteria',
     'data.attributes.name' => 'max:255',
     'data.attributes.type' => 'max:255',
-    'data.relationships.product.id' => 'nullable|exists:'.'ecommerce_products'.',id',
     'data.attributes.min' => '',
     'data.attributes.max' => '',
+    'data.attributes.products_relation_type' => 'in:' . implode(
+            ',',
+            [
+                DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
+                DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+            ]
+        ),
+    'data.relationships.products.data.*.type' => 'in:product',
+    'data.relationships.products.data.*.id' => 'numeric|exists:ecommerce_products,id',
 ];
 ```
 
@@ -188,7 +213,7 @@ Update an existing discount criteria.
 ```js   
 $.ajax({
     url: 'https://www.domain.com' +
-        '/ecommerce/address/3',
+        '/ecommerce/discount-criteria/3',
     type: 'patch',
     data: {
         data: {
@@ -199,10 +224,16 @@ $.ajax({
             },
             relationships: {
                 product: {
-                    data: {
-                        type: 'product',
-                        id: 5
-                   }
+                    data: [
+                        {
+                            "type":"product",
+                            "id":"2"
+                        },
+                        {
+                            "type":"product",
+                            "id":"5"
+                        }
+                    ]
                }
            }
         }
@@ -237,21 +268,20 @@ $.ajax({
                 }
             },
             "product":{
-                "data":{
-                    "type":"product",
-                    "id":"2"
-                }
+                "data":[
+                    {
+                        "type":"product",
+                        "id":"2"
+                    },
+                    {
+                        "type":"product",
+                        "id":"5"
+                    }
+                ]
             }
         }
     },
     "included":[
-        {
-            "type":"product",
-            "id":"1",
-            "attributes":[
-
-            ]
-        },
         {
             "type":"discount",
             "id":"1",
@@ -278,6 +308,13 @@ $.ajax({
         {
             "type":"product",
             "id":"2",
+            "attributes":[
+
+            ]
+        },
+        {
+            "type":"product",
+            "id":"5",
             "attributes":[
 
             ]

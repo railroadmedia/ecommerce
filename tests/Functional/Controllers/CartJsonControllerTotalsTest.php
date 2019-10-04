@@ -163,6 +163,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
                 'price_before_discounts' => $product['price'],
                 'price_after_discounts' => $product['price'],
                 'requires_shipping' => false,
+                'is_digital' => !$product['is_physical'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );

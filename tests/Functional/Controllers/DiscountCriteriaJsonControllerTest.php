@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
@@ -41,7 +42,12 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     'source' => 'data.attributes.max',
                     'detail' => 'The max field is required.',
                     'title' => 'Validation failed.'
-                ]
+                ],
+                [
+                    'source' => 'data.attributes.products_relation_type',
+                    'detail' => 'The products relation type field is required.',
+                    'title' => 'Validation failed.'
+                ],
             ],
             $results->decodeResponseJson()['errors']
         );
@@ -52,7 +58,12 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct();
 
         $discountCriteria = $this->faker->discountCriteria([
-            'product_id' => $product['id']
+            'products_relation_type' => $this->faker->randomElement(
+                [
+                    DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
+                    DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+                ]
+            )
         ]);
 
         $randomId = rand();
@@ -63,7 +74,17 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
             [
                 'data' => [
                     'type' => 'discountCriteria',
-                    'attributes' => $discountCriteria
+                    'attributes' => $discountCriteria,
+                    'relationships' => [
+                        'products' => [
+                            'data' => [
+                                [
+                                    'type' => 'product',
+                                    'id' => $product['id'],
+                                ]
+                            ]
+                        ]
+                    ]
                 ],
             ]
         );
@@ -93,6 +114,12 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         ]);
 
         $discountCriteria = $this->faker->discountCriteria([
+            'products_relation_type' => $this->faker->randomElement(
+                [
+                    DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
+                    DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+                ]
+            )
         ]);
 
         $results = $this->call(
@@ -205,9 +232,10 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_update()
+    public function test_update_replace_associated_product()
     {
         $productDiscount = $this->fakeProduct();
+        $initialProductDiscountCriteria = $this->fakeProduct();
         $productDiscountCriteria = $this->fakeProduct();
 
         $discount = $this->fakeDiscount([
@@ -218,10 +246,18 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
             'discount_id' => $discount['id']
         ]);
 
+        // in the initial state the discount criteria is associated with this product
+        $initialDiscountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'product_id' => $initialProductDiscountCriteria['id'],
+            'discount_criteria_id' => $discountCriteria['id'],
+        ]);
+
         $newDiscountCriteria = $this->faker->discountCriteria([
             'discount_id' => $discount['id'],
         ]);
 
+        // the discount criteria update action will remove initial association to $initialProductDiscountCriteria
+        // and will add new association to $productDiscountCriteria
         $results = $this->call(
             'PATCH',
             '/discount-criteria/' . $discountCriteria['id'],
@@ -235,7 +271,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                                 [
                                     'type' => 'product',
                                     'id' => $productDiscountCriteria['id']
-                                ]
+                                ],
                             ]
                         ],
                         'discount' => [
@@ -294,6 +330,148 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     'updated_at' => Carbon::now()->toDateTimeString()
                 ]
             )
+        );
+
+        // assert that the discount criteria has been associated with new $productDiscountCriteria
+        $this->assertDatabaseHas(
+            'ecommerce_discount_criterias_products',
+            [
+                'discount_criteria_id' => $discountCriteria['id'],
+                'product_id' => $productDiscountCriteria['id'],
+            ]
+        );
+
+        // assert that the discount criteria is not associated with $initialProductDiscountCriteria
+        $this->assertDatabaseMissing(
+            'ecommerce_discount_criterias_products',
+            [
+                'discount_criteria_id' => $discountCriteria['id'],
+                'product_id' => $initialProductDiscountCriteria['id'],
+            ]
+        );
+    }
+
+    public function test_update_add_associated_product()
+    {
+        $productDiscount = $this->fakeProduct();
+        $productDiscountCriteriaInitial = $this->fakeProduct();
+        $productDiscountCriteriaNew = $this->fakeProduct();
+
+        $discount = $this->fakeDiscount([
+            'product_id' => $productDiscount['id']
+        ]);
+
+        $discountCriteria = $this->fakeDiscountCriteria([
+            'discount_id' => $discount['id']
+        ]);
+
+        $initialDiscountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
+            'product_id' => $productDiscountCriteriaInitial['id'],
+            'discount_criteria_id' => $discountCriteria['id'],
+        ]);
+
+        $newDiscountCriteria = $this->faker->discountCriteria([
+            'discount_id' => $discount['id'],
+        ]);
+
+        $results = $this->call(
+            'PATCH',
+            '/discount-criteria/' . $discountCriteria['id'],
+            [
+                'data' => [
+                    'type' => 'discountCriteria',
+                    'attributes' => $newDiscountCriteria,
+                    'relationships' => [
+                        'products' => [
+                            'data' => [
+                                [
+                                    'type' => 'product',
+                                    'id' => $productDiscountCriteriaInitial['id']
+                                ],
+                                [
+                                    'type' => 'product',
+                                    'id' => $productDiscountCriteriaNew['id']
+                                ]
+                            ]
+                        ],
+                        'discount' => [
+                            'data' => [
+                                'type' => 'discount',
+                                'id' => $discount['id']
+                            ]
+                        ]
+                    ]
+                ],
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $results->getStatusCode());
+
+        // assert the new discount criteria data it's returned in JSON format
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'discountCriteria',
+                    'attributes' => array_diff_key(
+                        $newDiscountCriteria,
+                        [
+                            'discount_id' => true,
+                        ]
+                    ),
+                    'relationships' => [
+                        'discount' => [
+                            'data' => [
+                                'type' => 'discount',
+                                'id' => $discount['id']
+                            ]
+                        ],
+                        'products' => [
+                            'data' => [
+                                [
+                                    'type' => 'product',
+                                    'id' => $productDiscountCriteriaInitial['id']
+                                ],
+                                [
+                                    'type' => 'product',
+                                    'id' => $productDiscountCriteriaNew['id']
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+            ],
+            $results->decodeResponseJson()
+        );
+
+        // assert that the discount criteria data has been updated in the database
+        $this->assertDatabaseHas(
+            'ecommerce_discount_criteria',
+            array_merge(
+                $newDiscountCriteria,
+                [
+                    'id' => $discountCriteria['id'],
+                    'updated_at' => Carbon::now()->toDateTimeString()
+                ]
+            )
+        );
+
+        // assert that the discount criteria has been associated with new $productDiscountCriteriaNew
+        $this->assertDatabaseHas(
+            'ecommerce_discount_criterias_products',
+            [
+                'discount_criteria_id' => $discountCriteria['id'],
+                'product_id' => $productDiscountCriteriaNew['id'],
+            ]
+        );
+
+        // assert that the discount criteria is associated with $productDiscountCriteriaInitial
+        $this->assertDatabaseHas(
+            'ecommerce_discount_criterias_products',
+            [
+                'discount_criteria_id' => $discountCriteria['id'],
+                'product_id' => $productDiscountCriteriaInitial['id'],
+            ]
         );
     }
 
