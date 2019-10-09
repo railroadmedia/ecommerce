@@ -11,13 +11,11 @@ class SubscriptionTransformer extends TransformerAbstract
 {
     public function transform(Subscription $subscription)
     {
+        $this->defaultIncludes = [];
+
         if ($subscription->getProduct()) {
             // product relation is nullable
             $this->defaultIncludes[] = 'product';
-        } else {
-            if (($key = array_search('product', $this->defaultIncludes)) !== false) {
-                unset($this->defaultIncludes[$key]);
-            }
         }
 
         if ($subscription->getUser()) {
@@ -38,10 +36,6 @@ class SubscriptionTransformer extends TransformerAbstract
         if ($subscription->getPaymentMethod()) {
             // paymentMethod relation is nullable
             $this->defaultIncludes[] = 'paymentMethod';
-        } else {
-            if (($key = array_search('paymentMethod', $this->defaultIncludes)) !== false) {
-                unset($this->defaultIncludes[$key]);
-            }
         }
 
         return [
