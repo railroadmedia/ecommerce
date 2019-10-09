@@ -38,6 +38,10 @@ class SubscriptionTransformer extends TransformerAbstract
         if ($subscription->getPaymentMethod()) {
             // paymentMethod relation is nullable
             $this->defaultIncludes[] = 'paymentMethod';
+        } else {
+            if (($key = array_search('paymentMethod', $this->defaultIncludes)) !== false) {
+                unset($this->defaultIncludes[$key]);
+            }
         }
 
         return [
