@@ -325,7 +325,7 @@ class OrderClaimingService
                 }
             }
 
-            $subscriptionPricePerPayment = $orderItem->getFinalPrice();
+            $subscriptionPricePerPayment = $orderItem->getProduct()->getPrice();
 
             foreach ($orderItem->getOrderItemDiscounts() as $orderItemDiscount) {
 
