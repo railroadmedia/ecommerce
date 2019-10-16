@@ -47,7 +47,7 @@ class DiscountCriteriaUpdateRequest extends FormRequest
             'data.attributes.type' => 'max:255',
             'data.attributes.min' => '',
             'data.attributes.max' => '',
-            'data.attributes.products_relation_type' => 'in:' . implode(
+            'data.attributes.products_relation_type' => 'nullable|in:' . implode(
                     ',',
                     [
                         DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,

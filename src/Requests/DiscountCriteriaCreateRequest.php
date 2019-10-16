@@ -48,15 +48,15 @@ class DiscountCriteriaCreateRequest extends FormRequest
             'data.attributes.type' => 'required|max:255',
             'data.attributes.min' => 'required',
             'data.attributes.max' => 'required',
-            'data.attributes.products_relation_type' => 'required|in:' . implode(
+            'data.attributes.products_relation_type' => 'nullable|in:' . implode(
                     ',',
                     [
                         DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
                         DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
                     ]
                 ),
-            'data.relationships.products.data.*.type' => 'required|in:product',
-            'data.relationships.products.data.*.id' => 'required|numeric|exists:ecommerce_products,id',
+            'data.relationships.products.data.*.type' => 'in:product',
+            'data.relationships.products.data.*.id' => 'numeric|exists:ecommerce_products,id',
         ];
     }
 
