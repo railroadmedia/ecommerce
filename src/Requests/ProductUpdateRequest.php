@@ -70,7 +70,7 @@ class ProductUpdateRequest extends FormRequest
             'data.attributes.active' => 'boolean',
             'data.attributes.is_physical' => 'boolean',
             'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
-            'data.attributes.stock' => 'numeric',
+            'data.attributes.stock' => 'nullable|numeric',
             'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' .
                 Product::TYPE_DIGITAL_SUBSCRIPTION,
             'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' .
