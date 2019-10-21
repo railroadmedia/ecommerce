@@ -84,6 +84,12 @@ class OrderUserProductListener
                     }
                 }
 
+                if (!empty($expirationDate)) {
+                    $expirationDate = $expirationDate->addDays(
+                        config('ecommerce.days_before_access_revoked_after_expiry', 5)
+                    );
+                }
+
                 $this->userProductService->assignUserProduct(
                     $order->getUser(),
                     $product,

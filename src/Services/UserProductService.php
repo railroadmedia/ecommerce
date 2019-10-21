@@ -6,8 +6,8 @@ use Carbon\Carbon;
 use DateTimeInterface;
 use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\ORM\EntityRepository;
-use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\ORMException;
+use Doctrine\ORM\QueryBuilder;
 use Illuminate\Support\Collection;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
@@ -72,8 +72,7 @@ class UserProductService
                     ->getId() == $productId &&
                 ($userProduct->getExpirationDate() == null ||
                     Carbon::parse($userProduct->getExpirationDate()) >
-                    Carbon::now()
-                        ->subDays(config('ecommerce.days_before_access_revoked_after_expiry', 0)))) {
+                    Carbon::now())) {
 
                 return true;
             }
@@ -102,8 +101,7 @@ class UserProductService
                 ) &&
                 ($userProduct->getExpirationDate() == null ||
                     Carbon::parse($userProduct->getExpirationDate()) >
-                    Carbon::now()
-                        ->subDays(config('ecommerce.days_before_access_revoked_after_expiry', 0)))) {
+                    Carbon::now())) {
 
                 return true;
             }
@@ -492,6 +490,7 @@ class UserProductService
                     $subscription->getUser(),
                     $productData['product'],
                     $subscription->getPaidUntil()
+                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
                 );
             }
         }
