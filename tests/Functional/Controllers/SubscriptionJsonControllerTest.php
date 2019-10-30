@@ -35,6 +35,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         parent::setUp();
     }
 
+    /*
     public function test_delete()
     {
         $em = $this->app->make(EcommerceEntityManager::class);
@@ -544,7 +545,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->expectsEvents([SubscriptionCreated::class]);
 
-        $results  = $this->call(
+        $results = $this->call(
             'PUT',
             '/subscription',
             [
@@ -653,7 +654,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'user_id' => $userId,
                 'product_id' => $product['id'],
                 'quantity' => 1,
-                'expiration_date' => $subscription['paid_until'],
+                'expiration_date' => Carbon::parse($subscription['paid_until'])
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                    ->toDateTimeString(),
             ]
         );
     }
@@ -800,7 +803,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'user_id' => $userId,
                 'product_id' => $product['id'],
                 'quantity' => 1,
-                'expiration_date' => $subscription['paid_until'],
+                'expiration_date' => Carbon::parse($subscription['paid_until'])
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                    ->toDateTimeString(),
             ]
         );
     }
@@ -932,7 +937,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             array_merge(
                 $userProduct,
                 [
-                    'expiration_date' => $subscription['paid_until'],
+                    'expiration_date' => Carbon::parse($subscription['paid_until'])
+                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                        ->toDateTimeString(),
                 ]
             )
         );
@@ -1137,7 +1144,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             array_merge(
                 $userProduct,
                 [
-                    'expiration_date' => Carbon::now()->toDateTimeString(),
+                    'expiration_date' => Carbon::now()
+                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                        ->toDateTimeString(),
                     'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
             )
@@ -1259,6 +1268,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => 1,
                 'expiration_date' => Carbon::now()
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
                     ->subDay(1)
                     ->toDateTimeString(),
             ]
@@ -1368,6 +1378,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'quantity' => 1,
                 'expiration_date' => Carbon::now()
                     ->addYear(1)
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
                     ->startOfDay()
                     ->toDateTimeString(),
             ]
@@ -1488,6 +1499,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'quantity' => 1,
                 'expiration_date' => Carbon::now()
                     ->addYear(1)
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
                     ->startOfDay()
                     ->toDateTimeString(),
             ]
@@ -1612,6 +1624,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'quantity' => 1,
                 'expiration_date' => Carbon::now()
                     ->addYear(1)
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
                     ->startOfDay()
                     ->toDateTimeString(),
             ]
@@ -1737,7 +1750,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'user_id' => $userId,
             'product_id' => $product['id'],
             'quantity' => 1,
-            'expiration_date' => $subscription['paid_until']
+            'expiration_date' => Carbon::parse($subscription['paid_until'])
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                    ->toDateTimeString(),
         ]);
 
         config()->set('ecommerce.paypal.failed_payments_before_de_activation', 3);
@@ -1879,7 +1894,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             array_merge(
                 $userProduct,
                 [
-                    'expiration_date' => $subscription['paid_until'],
+                    'expiration_date' => Carbon::parse($subscription['paid_until'])
+                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                        ->toDateTimeString(),
                 ]
             )
         );
@@ -2301,6 +2318,136 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'order_by_column' => 'id',
                 'order_by_direction' => 'asc',
                 'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'big_date_time' => Carbon::now()->toDateTimeString(),
+                'small_date_time' => Carbon::now()->subDays(30)->toDateTimeString(),
+            ]
+        );
+
+        $this->assertEquals(
+            $subscriptions,
+            $response->decodeResponseJson('data')
+        );
+    }
+    */
+
+    public function test_pull_failed_billing()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $page = 1;
+        $limit = 10;
+        $nrSubscriptions = $this->faker->numberBetween(15, 25);
+
+        $product = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+        ]);
+
+        $creditCard = $this->fakeCreditCard();
+        $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
+        $order = $this->fakeOrder();
+
+        // todo - add some failed payments not in request interval
+
+        $subscriptions = [];
+
+        for ($i = 0; $i < $nrSubscriptions; $i++) {
+            $creditCard = $this->fakeCreditCard();
+            $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
+            $order = $this->fakeOrder();
+
+            $paidUntilSubDays = rand(1, 29);
+
+            $subscription = $this->fakeSubscription([
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'canceled_on' => null,
+                'is_active' => false,
+                'start_date' => Carbon::now()->subDays($paidUntilSubDays + 2),
+                'paid_until' => Carbon::now()->subDays($paidUntilSubDays)
+            ]);
+
+            $paymentData = [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null
+            ];
+
+            if ($this->faker->randomElement([true, false])) {
+                $paymentData['status'] = 'failed';
+                $paymentData['total_paid'] = 0;
+
+                if (count($subscriptions) < $limit) {
+                    $subscriptions[] = [
+                        'type' => 'subscription',
+                        'id' => $subscription['id'],
+                        'attributes' => array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'user_id' => true,
+                                'customer_id' => true,
+                                'payment_method_id' => true,
+                                'order_id' => true
+                            ]
+                        ),
+                        'relationships' => [
+                            'product' => [
+                                'data' => [
+                                    'type' => 'product',
+                                    'id' => $product['id']
+                                ]
+                            ],
+                            'user' => [
+                                'data' => [
+                                    'type' => 'user',
+                                    'id' => $userId
+                                ]
+                            ],
+                            'order' => [
+                                'data' => [
+                                    'type' => 'order',
+                                    'id' => $order['id']
+                                ]
+                            ],
+                            'paymentMethod' => [
+                                'data' => [
+                                    'type' => 'paymentMethod',
+                                    'id' => $paymentMethod['id']
+                                ]
+                            ]
+                        ]
+                    ];
+                }
+
+            } else {
+                $paymentData['status'] = 'succeeded';
+                $paymentData['total_paid'] = $this->faker->numberBetween(0, 1000);
+            }
+
+            $payment = $this->fakePayment($paymentData);
+
+            $subscriptionOnePayment = $this->fakeSubscriptionPayment([
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+            ]);
+        }
+
+        $response = $this->call(
+            'GET',
+            '/failed-billing',
+            [
+                'page' => $page,
+                'limit' => $limit,
+                'order_by_column' => 'id',
+                'order_by_direction' => 'asc',
+                'type' => Subscription::TYPE_SUBSCRIPTION,
                 'big_date_time' => Carbon::now()->toDateTimeString(),
                 'small_date_time' => Carbon::now()->subDays(30)->toDateTimeString(),
             ]

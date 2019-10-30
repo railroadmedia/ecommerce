@@ -263,6 +263,8 @@ return [
             'delete.address',
 
             'show_deleted',
+
+            'list.failed-billing',
         ],
     ],
 

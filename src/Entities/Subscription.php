@@ -207,8 +207,8 @@ class Subscription
 
     /**
      * @ORM\ManyToMany(targetEntity="Railroad\Ecommerce\Entities\Payment")
-     * @ORM\JoinTable(name="ecommerce_order_payments",
-     *      joinColumns={@ORM\JoinColumn(name="order_id", referencedColumnName="id")},
+     * @ORM\JoinTable(name="ecommerce_subscription_payments",
+     *      joinColumns={@ORM\JoinColumn(name="subscription_id", referencedColumnName="id")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="payment_id", referencedColumnName="id", unique=true)}
      *      )
      */

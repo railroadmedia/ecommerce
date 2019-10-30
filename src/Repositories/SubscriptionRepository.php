@@ -13,8 +13,10 @@ use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
+use Railroad\Ecommerce\Requests\FailedBillingSubscriptionsRequest;
 use Railroad\Ecommerce\Requests\FailedSubscriptionsRequest;
 
 /**
@@ -199,6 +201,41 @@ class SubscriptionRepository extends RepositoryBase
             ->setParameter('paidSmallDateTime', $smallDateTime)
             ->setParameter('paidBigDateTime', $bigDateTime)
             ->setParameter('type', $request->get('type'));
+
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
+    }
+
+    /**
+     * @param $request
+     *
+     * @return ResultsQueryBuilderComposite
+     */
+    public function indexFailedBillingByRequest(FailedBillingSubscriptionsRequest $request): ResultsQueryBuilderComposite
+    {
+        $smallDateTime =
+            $request->get(
+                'small_date_time',
+                Carbon::now()
+                    ->subDays(14)
+                    ->toDateTimeString()
+            );
+
+        $bigDateTime =
+            $request->get(
+                'big_date_time',
+                Carbon::now()
+                    ->toDateTimeString()
+            );
+
+        $alias = 's';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        // todo - add fetch query
 
         $results =
             $qb->getQuery()

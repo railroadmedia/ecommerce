@@ -19,6 +19,7 @@ use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Requests\FailedBillingSubscriptionsRequest;
 use Railroad\Ecommerce\Requests\FailedSubscriptionsRequest;
 use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
 use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
@@ -299,6 +300,23 @@ class SubscriptionJsonController extends Controller
         $this->permissionService->canOrThrow(auth()->id(), 'pull.failed-subscriptions');
 
         $subscriptionsAndBuilder = $this->subscriptionRepository->indexFailedByRequest($request);
+
+        return ResponseService::subscription($subscriptionsAndBuilder->getResults(), $subscriptionsAndBuilder->getQueryBuilder())
+            ->respond(200);
+    }
+
+    /**
+     * @param FailedBillingSubscriptionsRequest $request
+     *
+     * @return JsonResponse
+     *
+     * @throws Throwable
+     */
+    public function failedBilling(FailedBillingSubscriptionsRequest $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.failed-billing');
+
+        $subscriptionsAndBuilder = $this->subscriptionRepository->indexFailedBillingByRequest($request);
 
         return ResponseService::subscription($subscriptionsAndBuilder->getResults(), $subscriptionsAndBuilder->getQueryBuilder())
             ->respond(200);

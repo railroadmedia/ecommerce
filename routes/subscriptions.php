@@ -29,4 +29,7 @@ Route::group([
 
     Route::get('/failed-subscriptions', Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@failed')
         ->name('subscriptions.failed');
+
+    Route::get('/failed-billing', Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@failedBilling')
+        ->name('subscriptions.failed-billing');
 });
