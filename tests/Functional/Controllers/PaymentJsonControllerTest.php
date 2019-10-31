@@ -1273,16 +1273,16 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'payment_id' => $otherPayment['id'],
         ]);
 
-        // $response = $this->call(
-        //     'GET',
-        //     '/payment',
-        //     [
-        //         'order_by_column' => 'id',
-        //         'order_by_direction' => 'asc',
-        //         'limit' => 10,
-        //         'order_id' => $order['id']
-        //     ]
-        // );
+        $response = $this->call(
+            'GET',
+            '/payment',
+            [
+                'order_by_column' => 'id',
+                'order_by_direction' => 'asc',
+                'limit' => 10,
+                'order_id' => $order['id']
+            ]
+        );
 
         $decodedResponse = $response->decodeResponseJson();
 

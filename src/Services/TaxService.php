@@ -39,12 +39,14 @@ class TaxService
             return 0;
         }
 
+        $rate = 0;
+
         if ($address && array_key_exists(strtolower($address->getCountry()), config('ecommerce.product_tax_rate'))) {
             if (array_key_exists(
                 strtolower($address->getRegion()),
                 config('ecommerce.product_tax_rate')[strtolower($address->getCountry())]
             )) {
-                return config('ecommerce.product_tax_rate')[strtolower($address->getCountry())][strtolower(
+                $rate = config('ecommerce.product_tax_rate')[strtolower($address->getCountry())][strtolower(
                     $address->getRegion()
                 )];
             }
@@ -58,7 +60,17 @@ class TaxService
             }
         }
 
-        return 0;
+        if (
+            $address->getCountry() &&
+            $address->getRegion() &&
+            isset(config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())][strtolower($address->getRegion())])
+        ) {
+            $rate += config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())][strtolower(
+                    $address->getRegion()
+                )];
+        }
+
+        return $rate;
     }
 
     /**
@@ -75,12 +87,14 @@ class TaxService
             return 0;
         }
 
+        $rate = 0;
+
         if ($address && array_key_exists(strtolower($address->getCountry()), config('ecommerce.shipping_tax_rate'))) {
             if (array_key_exists(
                 strtolower($address->getRegion()),
                 config('ecommerce.shipping_tax_rate')[strtolower($address->getCountry())]
             )) {
-                return config('ecommerce.shipping_tax_rate')[strtolower($address->getCountry())][strtolower(
+                $rate = config('ecommerce.shipping_tax_rate')[strtolower($address->getCountry())][strtolower(
                     $address->getRegion()
                 )];
             }
@@ -94,7 +108,17 @@ class TaxService
             }
         }
 
-        return 0;
+        if (
+            $address->getCountry() &&
+            $address->getRegion() &&
+            isset(config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())][strtolower($address->getRegion())])
+        ) {
+            $rate += config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())][strtolower(
+                    $address->getRegion()
+                )];
+        }
+
+        return $rate;
     }
 
     /**
@@ -160,6 +184,42 @@ class TaxService
             else {
                 error_log(
                     'Could not find PST tax rate for address. Country: ' .
+                    $address->getCountry() .
+                    ' Region: ' .
+                    $address->getRegion()
+                );
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * This is not used in calculating payment/orders totals, its only used to display QST on the invoice.
+     *
+     * @param Address|null $address
+     * @return int
+     * @throws Exception
+     */
+    public function getQSTTaxRate(?Address $address)
+    {
+        if (empty($address) || empty($address->getCountry())) {
+            return 0;
+        }
+
+        if ($address &&
+            array_key_exists(strtolower($address->getCountry()), config('ecommerce.qst_tax_rate', []))) {
+            if (array_key_exists(
+                strtolower($address->getRegion()),
+                config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())]
+            )) {
+                return config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())][strtolower(
+                    $address->getRegion()
+                )];
+            }
+            else {
+                error_log(
+                    'Could not find QST tax rate for address. Country: ' .
                     $address->getCountry() .
                     ' Region: ' .
                     $address->getRegion()

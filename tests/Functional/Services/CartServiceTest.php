@@ -444,6 +444,11 @@ class CartServiceTest extends EcommerceTestCase
         $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
         $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
 
+        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
+            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
+            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
+        }
+
         $expectedTaxDue =
             round($expectedTaxRateProduct * $expectedItemsCost, 2) +
             round($expectedTaxRateShipping * $expectedShippingCost, 2);
@@ -513,6 +518,11 @@ class CartServiceTest extends EcommerceTestCase
 
         $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
         $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
+
+        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
+            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
+            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
+        }
 
         $expectedTaxDue =
             round($expectedTaxRateProduct * $expectedItemsCost, 2) +
@@ -584,6 +594,11 @@ class CartServiceTest extends EcommerceTestCase
 
         $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
         $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
+
+        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
+            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
+            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
+        }
 
         $expectedTaxDue =
             round($expectedTaxRateProduct * $expectedItemsCost, 2) +
@@ -724,6 +739,11 @@ class CartServiceTest extends EcommerceTestCase
 
         $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
         $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
+
+        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
+            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
+            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
+        }
 
         $expectedTaxDue =
             (round($expectedTaxRateProduct * $expectedItemsCost, 2) +

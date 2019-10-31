@@ -43,11 +43,6 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The max field is required.',
                     'title' => 'Validation failed.'
                 ],
-                [
-                    'source' => 'data.attributes.products_relation_type',
-                    'detail' => 'The products relation type field is required.',
-                    'title' => 'Validation failed.'
-                ],
             ],
             $results->decodeResponseJson()['errors']
         );

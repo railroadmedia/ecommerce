@@ -246,6 +246,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.product_tax_rate', $defaultConfig['product_tax_rate']);
         $app['config']->set('ecommerce.shipping_tax_rate', $defaultConfig['shipping_tax_rate']);
         $app['config']->set('ecommerce.gst_hst_tax_rate_display_only', $defaultConfig['gst_hst_tax_rate_display_only']);
+        $app['config']->set('ecommerce.qst_tax_rate', $defaultConfig['qst_tax_rate']);
         $app['config']->set('ecommerce.paypal', $defaultConfig['payment_gateways']['paypal']);
         $app['config']->set('ecommerce.stripe', $defaultConfig['payment_gateways']['stripe']);
         $app['config']->set('ecommerce.payment_gateways', $defaultConfig['payment_gateways']);

@@ -43,8 +43,14 @@ class TaxServiceTest extends EcommerceTestCase
         $address->setCountry($country);
         $address->setRegion($region);
 
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$country][$region];
+
+        if (isset(config('ecommerce.qst_tax_rate')[$country][$region])) {
+            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$country][$region];
+        }
+
         $this->assertEquals(
-            config('ecommerce.product_tax_rate')[$country][$region],
+            $expectedTaxRateProduct,
             $srv->getProductTaxRate($address)
         );
     }
@@ -95,8 +101,14 @@ class TaxServiceTest extends EcommerceTestCase
         $address->setCountry($country);
         $address->setRegion($region);
 
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$country][$region];
+
+        if (isset(config('ecommerce.qst_tax_rate')[$country][$region])) {
+            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$country][$region];
+        }
+
         $this->assertEquals(
-            config('ecommerce.shipping_tax_rate')[$country][$region],
+            $expectedTaxRateShipping,
             $srv->getShippingTaxRate($address)
         );
     }

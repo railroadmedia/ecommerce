@@ -109,6 +109,12 @@ return [
         ],
     ],
 
+    'qst_tax_rate' => [
+        'canada' => [
+            'quebec' => 0.09975,
+        ]
+    ],
+
     // this is displayed on all invoices to canadian customers
     'gst_hst_number' => [
         'brand' => '12345 1512312',

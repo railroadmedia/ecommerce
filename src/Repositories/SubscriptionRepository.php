@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Repositories;
 use Carbon\Carbon;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\Query;
+use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
@@ -231,11 +232,42 @@ class SubscriptionRepository extends RepositoryBase
                     ->toDateTimeString()
             );
 
-        $alias = 's';
+        $qb = $this->createQueryBuilder('s');
 
-        $qb = $this->createQueryBuilder($alias);
-
-        // todo - add fetch query
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, 's')
+            ->restrictBrandsByRequest($request, 's')
+            ->select(['s', 'pr', 'o', 'pm'])
+            ->join(
+                SubscriptionPayment::class,
+                'sp',
+                Join::WITH,
+                $qb->expr()
+                    ->eq(1, 1)
+            )
+            ->join('sp.subscription', 'sj')
+            ->join('sp.payment', 'p')
+            ->leftJoin('s.product', 'pr')
+            ->leftJoin('s.order', 'o')
+            ->leftJoin('s.paymentMethod', 'pm')
+            ->andWhere('s.id = sj.id')
+            ->andWhere('p.status = :failed')
+            ->andWhere(
+                $qb->expr()
+                    ->gt('p.createdAt', ':smallDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->lte('p.createdAt', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.type', ':type')
+            )
+            ->setParameter('failed', 'failed')
+            ->setParameter('smallDateTime', $smallDateTime)
+            ->setParameter('bigDateTime', $bigDateTime)
+            ->setParameter('type', $request->get('type'));
 
         $results =
             $qb->getQuery()
