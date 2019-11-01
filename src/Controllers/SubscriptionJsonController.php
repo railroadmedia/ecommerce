@@ -318,6 +318,52 @@ class SubscriptionJsonController extends Controller
 
         $subscriptionsAndBuilder = $this->subscriptionRepository->indexFailedBillingByRequest($request);
 
+        if ($request->has('csv') && $request->get('csv') == true) {
+            $rows = [];
+
+            foreach ($subscriptionsAndBuilder->getResults() as $subscription) {
+                $rows[] = [
+                    $subscription->getId(),
+                    $subscription->getTotalPrice(),
+                    $subscription->getUser()
+                        ->getEmail(),
+                    $subscription->getOrder()
+                        ->getId(),
+                    $subscription->getProduct()
+                        ->getId(),
+                    $subscription->getProduct()
+                        ->getName(),
+                    $subscription->getProduct()
+                        ->getSku(),
+                ];
+            }
+
+            $filePath = sys_get_temp_dir() . "/failed-billing-" . time() . ".csv";
+
+            $f = fopen($filePath, "w");
+
+            fputcsv(
+                $f,
+                [
+                    'Subscription ID',
+                    'Subscription Total Price',
+                    'Order ID',
+                    'Email',
+                    'Product ID',
+                    'Product Name',
+                    'Product SKU',
+                ]
+            );
+
+            foreach ($rows as $line) {
+                fputcsv($f, $line);
+            }
+
+            return response()
+                ->download($filePath)
+                ->deleteFileAfterSend();
+        }
+
         return ResponseService::subscription($subscriptionsAndBuilder->getResults(), $subscriptionsAndBuilder->getQueryBuilder())
             ->respond(200);
     }

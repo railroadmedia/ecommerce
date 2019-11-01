@@ -363,6 +363,13 @@
                                                                         {{ $currencySymbol}} {{ number_format($pstPaid, 2) }}</td>
                                                                 </tr>
                                                             @endif
+                                                            @if($qstPaid > 0)
+                                                                <tr>
+                                                                    <td>QST</td>
+                                                                    <td class="alignright">
+                                                                        {{ $currencySymbol}} {{ number_format($qstPaid, 2) }}</td>
+                                                                </tr>
+                                                            @endif
                                                         @endif
 
                                                         <tr class="total">
