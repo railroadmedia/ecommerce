@@ -54,6 +54,8 @@ class InvoiceService
                 break;
         }
 
+        $showQst = false;
+
         if (!empty($order->getShippingAddress()) && !empty(
             $order->getShippingAddress()
                 ->getCountry()
@@ -73,6 +75,15 @@ class InvoiceService
                 $order->getShippingAddress()
                     ->toStructure()
             );
+
+            $address = $order->getShippingAddress();
+
+            if (
+                strtolower($address->getCountry()) == 'canada'
+                && strtolower($address->getRegion()) == 'quebec'
+            ) {
+                $showQst = true;
+            }
         }
         elseif (!empty($order->getBillingAddress()) && !empty(
             $order->getBillingAddress()
@@ -93,6 +104,15 @@ class InvoiceService
                 $order->getBillingAddress()
                     ->toStructure()
             );
+
+            $address = $order->getBillingAddress();
+
+            if (
+                strtolower($address->getCountry()) == 'canada'
+                && strtolower($address->getRegion()) == 'quebec'
+            ) {
+                $showQst = true;
+            }
         }
         else {
             $gstRate = 0;
@@ -129,6 +149,7 @@ class InvoiceService
             'gstPaid' => $gstPaid,
             'pstPaid' => $pstPaid,
             'qstPaid' => $qstPaid,
+            'showQst' => $showQst,
             'invoiceSenderEmail' => config(
                 'ecommerce.invoice_email_details.' . $payment->getGatewayName() . '.order_invoice.invoice_sender'
             ),
@@ -188,6 +209,8 @@ class InvoiceService
                 break;
         }
 
+        $showQst = false;
+
         if ($subscription->getPaymentMethod() &&
             !empty(
                 $subscription->getPaymentMethod()
@@ -215,6 +238,16 @@ class InvoiceService
                     ->getBillingAddress()
                     ->toStructure()
             );
+
+            $address = $subscription->getPaymentMethod()
+                            ->getBillingAddress();
+
+            if (
+                strtolower($address->getCountry()) == 'canada'
+                && strtolower($address->getRegion()) == 'quebec'
+            ) {
+                $showQst = true;
+            }
         }
         else {
             $gstRate = 0;
@@ -251,6 +284,7 @@ class InvoiceService
             'gstPaid' => $gstPaid,
             'pstPaid' => $pstPaid,
             'qstPaid' => $qstPaid,
+            'showQst' => $showQst,
             'invoiceSenderEmail' => config(
                 'ecommerce.invoice_email_details.' . $payment->getGatewayName() . '.order_invoice.invoice_sender'
             ),

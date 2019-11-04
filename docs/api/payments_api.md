@@ -274,3 +274,40 @@ $.ajax({
 ```
 
 <!--- -------------------------------------------------------------------------------------------------------------- -->
+
+### `{ PUT /*/send-invoice/{paymentId} }`
+
+Send an email invoice for an existing payment.
+
+### Permissions
+
+- Must be logged in
+- Must have the 'send_payment_invoice' permission
+
+### Request Parameters
+
+|Type|Key|Required|Default|Options|Notes|
+|----|---|--------|-------|-------|-----|
+|path|payment id|yes||||
+
+### Request Example
+
+```js
+$.ajax({
+    url: 'https://www.domain.com' +
+        '/ecommerce/send-invoice/1',
+    type: 'put',
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+```204 OK```
+
+```json
+
+```
+
+<!--- -------------------------------------------------------------------------------------------------------------- -->

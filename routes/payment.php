@@ -22,4 +22,8 @@ Route::group([
         ])
         ->name('payment.delete');
 
+    Route::put('/send-invoice/{paymentId}', [
+            'uses' => Railroad\Ecommerce\Controllers\PaymentJsonController::class . '@sendInvoice',
+        ])
+        ->name('payment.send-invoice');
 });

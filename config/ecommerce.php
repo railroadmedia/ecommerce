@@ -271,6 +271,8 @@ return [
             'show_deleted',
 
             'list.failed-billing',
+
+            'send_payment_invoice'
         ],
     ],
 

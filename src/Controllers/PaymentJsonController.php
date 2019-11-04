@@ -34,6 +34,7 @@ use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentIndexRequest;
 use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\InvoiceService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
@@ -52,6 +53,11 @@ class PaymentJsonController extends Controller
      * @var EcommerceEntityManager
      */
     private $entityManager;
+
+    /**
+     * @var InvoiceService
+     */
+    private $invoiceService;
 
     /**
      * @var OrderRepository
@@ -134,6 +140,7 @@ class PaymentJsonController extends Controller
         CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
         EcommerceEntityManager $entityManager,
+        InvoiceService $invoiceService,
         OrderRepository $orderRepository,
         PaymentRepository $paymentRepository,
         PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
@@ -149,6 +156,7 @@ class PaymentJsonController extends Controller
         $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;
+        $this->invoiceService = $invoiceService;
         $this->orderRepository = $orderRepository;
         $this->paymentRepository = $paymentRepository;
         $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
@@ -562,6 +570,44 @@ class PaymentJsonController extends Controller
         $payment->setDeletedAt(Carbon::now());
 
         $this->entityManager->flush();
+
+        return ResponseService::empty(204);
+    }
+
+    /**
+     * Send a payment invoice email
+     *
+     * @param int $paymentId
+     *
+     * @return JsonResponse
+     *
+     * @throws Throwable
+     */
+    public function sendInvoice($paymentId)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'send_payment_invoice');
+
+        $payment = $this->paymentRepository->findOneBy(['id' => $paymentId]);
+
+        throw_if(
+            is_null($payment),
+            new NotFoundException(
+                'Invoice sending failed, payment not found with id: ' . $paymentId
+            )
+        );
+
+        $order = $payment->getOrder();
+        $subscription = $payment->getSubscription();
+
+        if (!empty($order)) {
+            $this->invoiceService->sendOrderInvoiceEmail($order, $payment);
+        } else if (!empty($subscription)) {
+            $this->invoiceService->sendSubscriptionRenewalInvoiceEmail($subscription, $payment);
+        } else {
+            throw new NotFoundException(
+                'Invoice sending failed, payment with id: ' . $paymentId . ' has no associated order or subscription'
+            );
+        }
 
         return ResponseService::empty(204);
     }

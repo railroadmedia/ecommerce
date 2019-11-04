@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
 use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Controllers\PaymentJsonController;
 use Railroad\Ecommerce\Entities\Address;
@@ -10,6 +11,8 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
+use Railroad\Ecommerce\Mail\OrderInvoice;
+use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Stripe\Card;
@@ -1593,6 +1596,138 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 ]
             ],
             $results->decodeResponseJson('errors')
+        );
+    }
+
+    public function test_send_subscription_payment_invoice()
+    {
+        $brand = 'brand';
+        config()->set('ecommerce.brand', $brand);
+
+        Mail::fake();
+
+        $email = $this->faker->email;
+        $userId  = $this->createAndLogInNewUser($email);
+
+        $creditCard = $this->fakeCreditCard();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCard['id'],
+            'billing_address_id' => $address['id']
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        $subscription = $this->fakeSubscription([
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+        ]);
+
+        $payment = $this->fakePayment([
+            'total_paid' => $this->faker->numberBetween(0, 1000),
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'gateway_name' => $brand,
+        ]);
+
+        $subscriptionPayment = $this->fakeSubscriptionPayment([
+            'subscription_id' => $subscription['id'],
+            'payment_id' => $payment['id'],
+        ]);
+
+        $response = $this->call('PUT', '/send-invoice/' . $payment['id'], []);
+
+        $this->assertEquals(204, $response->getStatusCode());
+
+        Mail::assertSent(SubscriptionInvoice::class, 1);
+
+        Mail::assertSent(
+            SubscriptionInvoice::class,
+            function ($mail) use ($email) {
+                $mail->build();
+
+                return $mail->hasTo($email) &&
+                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_sender')) &&
+                    $mail->subject(
+                        config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_email_subject')
+                    );
+            }
+        );
+    }
+
+    public function test_send_order_payment_invoice()
+    {
+        $brand = 'brand';
+        config()->set('ecommerce.brand', $brand);
+
+        Mail::fake();
+
+        $email = $this->faker->email;
+        $userId  = $this->createAndLogInNewUser($email);
+
+        $creditCard = $this->fakeCreditCard();
+
+        $address = $this->fakeAddress([
+            'type' => Address::SHIPPING_ADDRESS_TYPE,
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCard['id'],
+            'billing_address_id' => $address['id']
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        $order = $this->fakeOrder(
+            [
+                'shipping_address_id' => $address['id'],
+                'user_id' => $userId,
+            ]
+        );
+
+        $payment = $this->fakePayment([
+            'total_paid' => $this->faker->numberBetween(0, 1000),
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'gateway_name' => $brand,
+        ]);
+
+        $orderPayment = $this->fakeOrderPayment([
+            'order_id' => $order['id'],
+            'payment_id' => $payment['id'],
+        ]);
+
+        $response = $this->call('PUT', '/send-invoice/' . $payment['id'], []);
+
+        $this->assertEquals(204, $response->getStatusCode());
+
+        Mail::assertSent(OrderInvoice::class, 1);
+
+        Mail::assertSent(
+            OrderInvoice::class,
+            function ($mail) use ($email) {
+                $mail->build();
+
+                return $mail->hasTo($email) &&
+                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_sender')) &&
+                    $mail->subject(
+                        config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_email_subject')
+                    );
+            }
         );
     }
 }

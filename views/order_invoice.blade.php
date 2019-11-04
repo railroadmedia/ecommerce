@@ -363,7 +363,7 @@
                                                                         {{ $currencySymbol}} {{ number_format($pstPaid, 2) }}</td>
                                                                 </tr>
                                                             @endif
-                                                            @if($qstPaid > 0)
+                                                            @if($showQst)
                                                                 <tr>
                                                                     <td>QST</td>
                                                                     <td class="alignright">
