@@ -335,6 +335,14 @@ class SubscriptionJsonController extends Controller
                         ->getName(),
                     $subscription->getProduct()
                         ->getSku(),
+                    $subscription->getFailedPayment()
+                        ->getId(),
+                    $subscription->getFailedPayment()
+                        ->getStatus(),
+                    $subscription->getFailedPayment()
+                        ->getMessage(),
+                    $subscription->getFailedPayment()
+                        ->getCreatedAt(),
                 ];
             }
 
@@ -352,6 +360,10 @@ class SubscriptionJsonController extends Controller
                     'Product ID',
                     'Product Name',
                     'Product SKU',
+                    'Payment ID',
+                    'Payment Status',
+                    'Payment Message',
+                    'Payment Date',
                 ]
             );
 

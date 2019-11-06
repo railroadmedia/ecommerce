@@ -221,6 +221,8 @@ class RenewalService
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
 
+                $subscription->setFailedPayment($payment);
+
                 $exceptionToThrow = $exception;
             }
         }
@@ -274,6 +276,8 @@ class RenewalService
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
 
+                $subscription->setFailedPayment($payment);
+
                 $exceptionToThrow = $exception;
             }
         }
@@ -289,6 +293,8 @@ class RenewalService
             $payment->setMessage('Invalid payment method.');
             $payment->setCurrency($currency);
             $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
+
+            $subscription->setFailedPayment($payment);
         }
 
         // save payment data in DB
@@ -348,6 +354,7 @@ class RenewalService
                     Carbon::now()
                         ->addMonths(1)
             );
+            $subscription->setFailedPayment(null);
             $subscription->setUpdatedAt(Carbon::now());
 
             event(new SubscriptionRenewed($subscription, $payment));

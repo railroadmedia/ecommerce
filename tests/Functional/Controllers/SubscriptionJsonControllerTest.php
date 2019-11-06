@@ -2347,6 +2347,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $order = $this->fakeOrder();
 
         // failed billing subscription with payment date outside of request interval
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => 'failed',
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(33)
+        ]);
+
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
             'payment_method_id' => $paymentMethod['id'],
@@ -2357,16 +2366,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'canceled_on' => null,
             'is_active' => false,
             'start_date' => Carbon::now()->subDays(35),
-            'paid_until' => Carbon::now()->subDays(33)
-        ]);
-
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(33)
+            'paid_until' => Carbon::now()->subDays(33),
+            'failed_payment_id' => $payment['id'],
         ]);
 
         $subscriptionOnePayment = $this->fakeSubscriptionPayment([
@@ -2379,6 +2380,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $order = $this->fakeOrder();
 
         // failed billing payment plan with payment date outside of request interval
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => 'failed',
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(34)
+        ]);
+
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
             'payment_method_id' => $paymentMethod['id'],
@@ -2389,16 +2399,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'canceled_on' => null,
             'is_active' => false,
             'start_date' => Carbon::now()->subDays(36),
-            'paid_until' => Carbon::now()->subDays(34)
-        ]);
-
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(34)
+            'paid_until' => Carbon::now()->subDays(34),
+            'failed_payment_id' => $payment['id'],
         ]);
 
         $subscriptionOnePayment = $this->fakeSubscriptionPayment([
@@ -2415,7 +2417,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
             $paidUntilSubDays = rand(1, 29);
 
-            $subscription = $this->fakeSubscription([
+            $subscriptionData = [
                 'product_id' => $product['id'],
                 'payment_method_id' => $paymentMethod['id'],
                 'user_id' => $userId,
@@ -2426,7 +2428,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'is_active' => false,
                 'start_date' => Carbon::now()->subDays($paidUntilSubDays + 2),
                 'paid_until' => Carbon::now()->subDays($paidUntilSubDays)
-            ]);
+            ];
 
             $paymentData = [
                 'payment_method_id' => $paymentMethod['id'],
@@ -2439,56 +2441,69 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $paymentData['status'] = 'failed';
                 $paymentData['total_paid'] = 0;
 
-                if (count($subscriptions) < $limit) {
-                    $subscriptions[] = [
-                        'type' => 'subscription',
-                        'id' => $subscription['id'],
-                        'attributes' => array_diff_key(
-                            $subscription,
-                            [
-                                'id' => true,
-                                'product_id' => true,
-                                'user_id' => true,
-                                'customer_id' => true,
-                                'payment_method_id' => true,
-                                'order_id' => true
-                            ]
-                        ),
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $product['id']
-                                ]
-                            ],
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId
-                                ]
-                            ],
-                            'order' => [
-                                'data' => [
-                                    'type' => 'order',
-                                    'id' => $order['id']
-                                ]
-                            ],
-                            'paymentMethod' => [
-                                'data' => [
-                                    'type' => 'paymentMethod',
-                                    'id' => $paymentMethod['id']
-                                ]
-                            ]
-                        ]
-                    ];
-                }
-
             } else {
                 $paymentData['status'] = 'succeeded';
                 $paymentData['total_paid'] = $this->faker->numberBetween(0, 1000);
             }
 
             $payment = $this->fakePayment($paymentData);
+
+            if ($paymentData['status'] == 'failed') {
+                $subscriptionData['failed_payment_id'] = $payment['id'];
+            }
+
+            $subscription = $this->fakeSubscription($subscriptionData);
+
+            if ($paymentData['status'] == 'failed' && count($subscriptions) < $limit) {
+                $subscriptions[] = [
+                    'type' => 'subscription',
+                    'id' => $subscription['id'],
+                    'attributes' => array_diff_key(
+                        $subscription,
+                        [
+                            'id' => true,
+                            'product_id' => true,
+                            'user_id' => true,
+                            'customer_id' => true,
+                            'payment_method_id' => true,
+                            'order_id' => true,
+                            'failed_payment_id' => true,
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'failedPayment' => [
+                            'data' => [
+                                'type' => 'payment',
+                                'id' => $payment['id']
+                            ]
+                        ]
+                    ]
+                ];
+            }
 
             $subscriptionOnePayment = $this->fakeSubscriptionPayment([
                 'subscription_id' => $subscription['id'],
@@ -2535,6 +2550,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $order = $this->fakeOrder();
 
         // failed billing subscription with payment date outside of request interval
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => 'failed',
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(33)
+        ]);
+
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
             'payment_method_id' => $paymentMethod['id'],
@@ -2545,16 +2569,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'canceled_on' => null,
             'is_active' => false,
             'start_date' => Carbon::now()->subDays(35),
-            'paid_until' => Carbon::now()->subDays(33)
-        ]);
-
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(33)
+            'paid_until' => Carbon::now()->subDays(33),
+            'failed_payment_id' => $payment['id'],
         ]);
 
         $subscriptionOnePayment = $this->fakeSubscriptionPayment([
@@ -2567,6 +2583,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $order = $this->fakeOrder();
 
         // failed billing payment plan with payment date outside of request interval
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => 'failed',
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(34)
+        ]);
+
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
             'payment_method_id' => $paymentMethod['id'],
@@ -2577,16 +2602,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'canceled_on' => null,
             'is_active' => false,
             'start_date' => Carbon::now()->subDays(36),
-            'paid_until' => Carbon::now()->subDays(34)
-        ]);
-
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(34)
+            'paid_until' => Carbon::now()->subDays(34),
+            'failed_payment_id' => $payment['id'],
         ]);
 
         $subscriptionOnePayment = $this->fakeSubscriptionPayment([
@@ -2603,7 +2620,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
             $paidUntilSubDays = rand(1, 29);
 
-            $subscription = $this->fakeSubscription([
+            $subscriptionData = [
                 'product_id' => $product['id'],
                 'payment_method_id' => $paymentMethod['id'],
                 'user_id' => $userId,
@@ -2614,7 +2631,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'is_active' => false,
                 'start_date' => Carbon::now()->subDays($paidUntilSubDays + 2),
                 'paid_until' => Carbon::now()->subDays($paidUntilSubDays)
-            ]);
+            ];
 
             $paymentData = [
                 'payment_method_id' => $paymentMethod['id'],
@@ -2627,56 +2644,69 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $paymentData['status'] = 'failed';
                 $paymentData['total_paid'] = 0;
 
-                if (count($subscriptions) < $limit) {
-                    $subscriptions[] = [
-                        'type' => 'subscription',
-                        'id' => $subscription['id'],
-                        'attributes' => array_diff_key(
-                            $subscription,
-                            [
-                                'id' => true,
-                                'product_id' => true,
-                                'user_id' => true,
-                                'customer_id' => true,
-                                'payment_method_id' => true,
-                                'order_id' => true
-                            ]
-                        ),
-                        'relationships' => [
-                            'product' => [
-                                'data' => [
-                                    'type' => 'product',
-                                    'id' => $product['id']
-                                ]
-                            ],
-                            'user' => [
-                                'data' => [
-                                    'type' => 'user',
-                                    'id' => $userId
-                                ]
-                            ],
-                            'order' => [
-                                'data' => [
-                                    'type' => 'order',
-                                    'id' => $order['id']
-                                ]
-                            ],
-                            'paymentMethod' => [
-                                'data' => [
-                                    'type' => 'paymentMethod',
-                                    'id' => $paymentMethod['id']
-                                ]
-                            ]
-                        ]
-                    ];
-                }
-
             } else {
                 $paymentData['status'] = 'succeeded';
                 $paymentData['total_paid'] = $this->faker->numberBetween(0, 1000);
             }
 
             $payment = $this->fakePayment($paymentData);
+
+            if ($paymentData['status'] == 'failed') {
+                $subscriptionData['failed_payment_id'] = $payment['id'];
+            }
+
+            $subscription = $this->fakeSubscription($subscriptionData);
+
+            if ($paymentData['status'] == 'failed' && count($subscriptions) < $limit) {
+                $subscriptions[] = [
+                    'type' => 'subscription',
+                    'id' => $subscription['id'],
+                    'attributes' => array_diff_key(
+                        $subscription,
+                        [
+                            'id' => true,
+                            'product_id' => true,
+                            'user_id' => true,
+                            'customer_id' => true,
+                            'payment_method_id' => true,
+                            'order_id' => true,
+                            'failed_payment_id' => true,
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'failedPayment' => [
+                            'data' => [
+                                'type' => 'payment',
+                                'id' => $payment['id']
+                            ]
+                        ]
+                    ]
+                ];
+            }
 
             $subscriptionOnePayment = $this->fakeSubscriptionPayment([
                 'subscription_id' => $subscription['id'],
@@ -2724,6 +2754,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $order = $this->fakeOrder();
 
         // failed billing subscription with payment date outside of request interval
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => 'failed',
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(33)
+        ]);
+
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
             'payment_method_id' => $paymentMethod['id'],
@@ -2734,16 +2773,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'canceled_on' => null,
             'is_active' => false,
             'start_date' => Carbon::now()->subDays(35),
-            'paid_until' => Carbon::now()->subDays(33)
-        ]);
-
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(33)
+            'paid_until' => Carbon::now()->subDays(33),
+            'failed_payment_id' => $payment['id'],
         ]);
 
         $subscriptionOnePayment = $this->fakeSubscriptionPayment([
@@ -2756,6 +2787,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $order = $this->fakeOrder();
 
         // failed billing payment plan with payment date outside of request interval
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => 'failed',
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(34)
+        ]);
+
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
             'payment_method_id' => $paymentMethod['id'],
@@ -2766,16 +2806,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'canceled_on' => null,
             'is_active' => false,
             'start_date' => Carbon::now()->subDays(36),
-            'paid_until' => Carbon::now()->subDays(34)
-        ]);
-
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(34)
+            'paid_until' => Carbon::now()->subDays(34),
+            'failed_payment_id' => $payment['id'],
         ]);
 
         $subscriptionOnePayment = $this->fakeSubscriptionPayment([
@@ -2795,7 +2827,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
             $paidUntilSubDays = rand(1, 29);
 
-            $subscription = $this->fakeSubscription([
+            $subscriptionData = [
                 'product_id' => $product['id'],
                 'payment_method_id' => $paymentMethod['id'],
                 'user_id' => $userId,
@@ -2806,7 +2838,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'is_active' => false,
                 'start_date' => Carbon::now()->subDays($paidUntilSubDays + 2),
                 'paid_until' => Carbon::now()->subDays($paidUntilSubDays)
-            ]);
+            ];
 
             $paymentData = [
                 'payment_method_id' => $paymentMethod['id'],
@@ -2818,7 +2850,22 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             if (count($subscriptions) < $limit) {
                 $paymentData['status'] = 'failed';
                 $paymentData['total_paid'] = 0;
+                $paymentData['message'] = 'Invalid card';
 
+            } else {
+                $paymentData['status'] = 'succeeded';
+                $paymentData['total_paid'] = $this->faker->numberBetween(0, 1000);
+            }
+
+            $payment = $this->fakePayment($paymentData);
+
+            if ($paymentData['status'] == 'failed') {
+                $subscriptionData['failed_payment_id'] = $payment['id'];
+            }
+
+            $subscription = $this->fakeSubscription($subscriptionData);
+
+            if ($paymentData['status'] == 'failed' && count($subscriptions) < $limit) {
                 $subscriptions[] = [
                     $subscription['id'],
                     $subscription['total_price'],
@@ -2827,14 +2874,12 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     $product['id'],
                     $product['name'],
                     $product['sku'],
+                    $payment['id'],
+                    $payment['status'],
+                    $payment['message'],
+                    $payment['created_at']
                 ];
-
-            } else {
-                $paymentData['status'] = 'succeeded';
-                $paymentData['total_paid'] = $this->faker->numberBetween(0, 1000);
             }
-
-            $payment = $this->fakePayment($paymentData);
 
             $subscriptionOnePayment = $this->fakeSubscriptionPayment([
                 'subscription_id' => $subscription['id'],
@@ -2854,6 +2899,10 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'Product ID',
                 'Product Name',
                 'Product SKU',
+                'Payment ID',
+                'Payment Status',
+                'Payment Message',
+                'Payment Date',
             ]
         );
 

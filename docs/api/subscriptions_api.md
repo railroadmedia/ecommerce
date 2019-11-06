@@ -98,6 +98,12 @@ $.ajax({
                         "type":"paymentMethod",
                         "id":"1"
                     }
+                },
+                "failedPayment":{
+                    "data":{
+                        "type":"payment",
+                        "id":"5"
+                    }
                 }
             }
         }
@@ -127,6 +133,13 @@ $.ajax({
         {
             "type":"paymentMethod",
             "id":"1",
+            "attributes":[
+
+            ]
+        },
+        {
+            "type":"payment",
+            "id":"5",
             "attributes":[
 
             ]

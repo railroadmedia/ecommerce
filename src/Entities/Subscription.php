@@ -228,6 +228,12 @@ class Subscription
      */
     protected $appleReceipt;
 
+    /**
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\Payment")
+     * @ORM\JoinColumn(name="failed_payment_id", referencedColumnName="id", nullable=true)
+     */
+    protected $failedPayment;
+
     public function __construct()
     {
         $this->payments = new ArrayCollection();
@@ -628,5 +634,21 @@ class Subscription
         }
 
         return self::STATE_SUSPENDED;
+    }
+
+    /**
+     * @return Payment|null
+     */
+    public function getFailedPayment(): ?Payment
+    {
+        return $this->failedPayment;
+    }
+
+    /**
+     * @param Payment $payment
+     */
+    public function setFailedPayment(?Payment $payment)
+    {
+        $this->failedPayment = $payment;
     }
 }

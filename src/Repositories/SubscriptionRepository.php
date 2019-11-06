@@ -237,20 +237,11 @@ class SubscriptionRepository extends RepositoryBase
         $qb->paginateByRequest($request)
             ->orderByRequest($request, 's')
             ->restrictBrandsByRequest($request, 's')
-            ->select(['s', 'pr', 'o', 'pm'])
-            ->join(
-                SubscriptionPayment::class,
-                'sp',
-                Join::WITH,
-                $qb->expr()
-                    ->eq(1, 1)
-            )
-            ->join('sp.subscription', 'sj')
-            ->join('sp.payment', 'p')
+            ->select(['s', 'pr', 'o', 'pm', 'p'])
+            ->leftJoin('s.failedPayment', 'p')
             ->leftJoin('s.product', 'pr')
             ->leftJoin('s.order', 'o')
             ->leftJoin('s.paymentMethod', 'pm')
-            ->andWhere('s.id = sj.id')
             ->andWhere('p.status = :failed')
             ->andWhere(
                 $qb->expr()

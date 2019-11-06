@@ -780,6 +780,7 @@
 | `payment_method_id` | INT(11) |  | NULL |  |
 | `apple_expiration_date` | DATETIME |  | NULL | |
 | `external_app_store_id` | TEXT |  | NULL | |
+| `failed_payment_id` | INT(11) |  | NULL |  |
 | `created_at` | DATETIME | Not null |  |  |
 | `updated_at` | DATETIME |  | NULL |  |
 | `deleted_at` | DATETIME |  | NULL |  |
@@ -801,6 +802,7 @@
 | `ecommerce_subscription_currency_index` | `currency` | INDEX |  |
 | `ecommerce_subscription_interval_type_index` | `interval_type` | INDEX |  |
 | `ecommerce_subscription_payment_method_id_index` | `payment_method_id` | INDEX |  |
+| `ecommerce_subscription_failed_payment_id_index` | `failed_payment_id` | INDEX |  |
 | `ecommerce_subscription_created_on_index` | `created_at` | INDEX |  |
 | `ecommerce_subscription_updated_on_index` | `updated_at` | INDEX |  |
 | `ecommerce_subscription_deleted_on_index` | `deleted_at` | INDEX |  |

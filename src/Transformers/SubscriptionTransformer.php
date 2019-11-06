@@ -38,6 +38,11 @@ class SubscriptionTransformer extends TransformerAbstract
             $this->defaultIncludes[] = 'paymentMethod';
         }
 
+        if ($subscription->getFailedPayment()) {
+            // paymentMethod relation is nullable
+            $this->defaultIncludes[] = 'failedPayment';
+        }
+
         return [
             'id' => $subscription->getId(),
             'brand' => $subscription->getBrand(),
@@ -153,6 +158,24 @@ class SubscriptionTransformer extends TransformerAbstract
                 $subscription->getPaymentMethod(),
                 new PaymentMethodTransformer(),
                 'paymentMethod'
+            );
+        }
+    }
+
+    public function includeFailedPayment(Subscription $subscription)
+    {
+        if ($subscription->getFailedPayment() instanceof Proxy) {
+            return $this->item(
+                $subscription->getFailedPayment(),
+                new EntityReferenceTransformer(),
+                'payment'
+            );
+        }
+        else {
+            return $this->item(
+                $subscription->getFailedPayment(),
+                new PaymentTransformer(),
+                'payment'
             );
         }
     }
