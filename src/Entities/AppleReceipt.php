@@ -42,6 +42,13 @@ class AppleReceipt
     protected $receipt;
 
     /**
+     * @ORM\Column(type="string")
+     *
+     * @var string
+     */
+    protected $transactionId;
+
+    /**
      * Mobile app or apple notification
      *
      * @ORM\Column(type="string", name="request_type")
@@ -128,6 +135,22 @@ class AppleReceipt
     public function setReceipt(string $receipt)
     {
         $this->receipt = $receipt;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTransactionId(): ?string
+    {
+        return $this->transactionId;
+    }
+
+    /**
+     * @param string $transactionId
+     */
+    public function setTransactionId(string $transactionId)
+    {
+        $this->transactionId = $transactionId;
     }
 
     /**

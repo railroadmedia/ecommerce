@@ -5230,6 +5230,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'expiration_date' => Carbon::now()
                     ->addYear(1)
                     ->addDays(10)
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
                     ->toDateTimeString(),
             ]
         );

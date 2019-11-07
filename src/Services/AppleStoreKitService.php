@@ -21,6 +21,7 @@ use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\AppleReceiptRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use ReceiptValidator\iTunes\ResponseInterface;
 use ReceiptValidator\iTunes\PurchaseItem;
@@ -32,6 +33,11 @@ class AppleStoreKitService
      * @var EcommerceEntityManager
      */
     private $entityManager;
+
+    /**
+     * @var AppleReceiptRepository
+     */
+    private $appleReceiptRepository;
 
     /**
      * @var AppleStoreKitGateway
@@ -56,6 +62,7 @@ class AppleStoreKitService
     /**
      * AppleStoreKitService constructor.
      *
+     * @param AppleReceiptRepository $appleReceiptRepository
      * @param AppleStoreKitGateway $appleStoreKitGateway
      * @param EcommerceEntityManager $entityManager
      * @param ProductRepository $productRepository
@@ -63,6 +70,7 @@ class AppleStoreKitService
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
+        AppleReceiptRepository $appleReceiptRepository,
         AppleStoreKitGateway $appleStoreKitGateway,
         EcommerceEntityManager $entityManager,
         ProductRepository $productRepository,
@@ -70,6 +78,7 @@ class AppleStoreKitService
         UserProviderInterface $userProvider
     )
     {
+        $this->appleReceiptRepository = $appleReceiptRepository;
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->entityManager = $entityManager;
         $this->productRepository = $productRepository;
@@ -93,6 +102,16 @@ class AppleStoreKitService
         try {
 
             $validationResponse = $this->appleStoreKitGateway->validate($receipt->getReceipt());
+
+            $transactionId = $validationResponse->getLatestReceiptInfo()[0]->getTransactionId();
+
+            $usedAppleReceipt = $this->appleReceiptRepository->findOneBy(['transactionId' => $transactionId]);
+
+            if ($usedAppleReceipt) {
+                throw new ReceiptValidationException('Receipt already used');
+            }
+
+            $receipt->setTransactionId($transactionId);
 
             $currentPurchasedItem = $this->getPurchasedItem($validationResponse);
 

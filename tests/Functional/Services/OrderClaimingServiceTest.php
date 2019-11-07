@@ -343,6 +343,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
                 'quantity' => $quantityTwo,
                 'expiration_date' => Carbon::now()
                     ->addMonth($productTwo->getSubscriptionIntervalCount())
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
                     ->toDateTimeString(),
             ]
         );
