@@ -199,6 +199,9 @@ class GooglePlayStoreService
 
         } else {
 
+            // cancel subscription method needs $receipt id to record it on subscription note, thus the two flush calls
+            $this->entityManager->flush();
+
             $this->cancelSubscription($subscription, $receipt);
 
             $this->entityManager->flush();
