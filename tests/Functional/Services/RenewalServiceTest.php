@@ -119,8 +119,8 @@ class RenewalServiceTest extends EcommerceTestCase
         $subscription->setUser($user);
         $subscription->setStartDate(Carbon::now());
         $subscription->setPaidUntil(Carbon::now()->subDay(1));
-        $subscription->setTotalPrice($product->getPrice() + $subscriptionTaxes);
-        $subscription->setTax($subscriptionTaxes);
+        $subscription->setTotalPrice(round($product->getPrice() + $subscriptionTaxes, 2));
+        $subscription->setTax(round($subscriptionTaxes, 2));
         $subscription->setCurrency($paymentMethod->getCurrency());
         $subscription->setIntervalType(config('ecommerce.interval_type_monthly'));
         $subscription->setIntervalCount(1);
@@ -187,7 +187,7 @@ class RenewalServiceTest extends EcommerceTestCase
                 'region' => $region,
                 'product_rate' => $expectedTaxRateProduct,
                 'shipping_rate' => $expectedTaxRateShipping,
-                'product_taxes_paid' => $subscriptionTaxes,
+                'product_taxes_paid' => round($subscriptionTaxes, 2),
                 'shipping_taxes_paid' => 0,
             ]
         );

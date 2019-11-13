@@ -363,7 +363,7 @@ class OrderClaimingService
 
         if (is_null($orderItem)) {
             $subscriptionTotalPrice = $subscriptionPricePerPayment;
-            $totalTaxDue = round($totalTaxDue / $totalCyclesDue, 2);
+            $totalTaxDue = $totalTaxDue / $totalCyclesDue;
         }
         else {
             $subscriptionTotalPrice = round($subscriptionPricePerPayment + $totalTaxDue, 2);
@@ -378,7 +378,7 @@ class OrderClaimingService
         $subscription->setStartDate(Carbon::now());
         $subscription->setPaidUntil($nextBillDate);
         $subscription->setTotalPrice($subscriptionTotalPrice);
-        $subscription->setTax($totalTaxDue);
+        $subscription->setTax(round($totalTaxDue, 2));
         $subscription->setCurrency($payment->getCurrency());
         $subscription->setIntervalType($intervalType);
         $subscription->setIntervalCount($intervalCount);
@@ -473,8 +473,8 @@ class OrderClaimingService
                     $address
                 );
 
-        $paymentTaxes->setProductTaxesPaid($productTaxDue);
-        $paymentTaxes->setShippingTaxesPaid($shippingTaxDue);
+        $paymentTaxes->setProductTaxesPaid(round($productTaxDue, 2));
+        $paymentTaxes->setShippingTaxesPaid(round($shippingTaxDue, 2));
 
         $this->entityManager->persist($paymentTaxes);
 

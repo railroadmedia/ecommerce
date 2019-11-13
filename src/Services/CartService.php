@@ -427,7 +427,7 @@ class CartService
                     $taxableAddress
                 );
 
-        $totalTaxDue = round($productTaxDue + $shippingTaxDue, 2);
+        $totalTaxDue = $productTaxDue + $shippingTaxDue;
 
         $financeDue = $this->getTotalFinanceCosts();
 
@@ -465,7 +465,7 @@ class CartService
 
         $totalTaxDue = round($productTaxDue + $shippingTaxDue, 2);
 
-        return max(0, round($totalTaxDue, 2));
+        return max(0, $totalTaxDue);
     }
 
     /**
@@ -499,7 +499,7 @@ class CartService
                     $taxableAddress
                 );
 
-        $totalTaxDue = round($productTaxDue + $shippingTaxDue, 2);
+        $totalTaxDue = $productTaxDue + $shippingTaxDue;
 
         $financeDue = $this->getTotalFinanceCosts();
 
@@ -551,7 +551,7 @@ class CartService
                     $taxableAddress
                 );
 
-        $totalTaxDue = round($productTaxDue + $shippingTaxDue, 2);
+        $totalTaxDue = $productTaxDue + $shippingTaxDue;
 
         $financeDue = $this->getTotalFinanceCosts();
 
@@ -706,7 +706,7 @@ class CartService
 
         $totals = [
             'shipping' => $shippingDue,
-            'tax' => round($totalTaxDue, 2),
+            'tax' => $totalTaxDue,
             'due' => $due,
         ];
 

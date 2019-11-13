@@ -377,7 +377,7 @@ class RenewalService
                 $address
             );
 
-            $paymentTaxes->setProductTaxesPaid($productTaxDue);
+            $paymentTaxes->setProductTaxesPaid(round($productTaxDue, 2));
             $paymentTaxes->setShippingTaxesPaid(0);
 
             $this->entityManager->persist($paymentTaxes);

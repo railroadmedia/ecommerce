@@ -827,9 +827,18 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $this->expectsEvents(
             [
@@ -2054,9 +2063,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $currencyService = $this->app->make(CurrencyService::class);
 
@@ -2494,9 +2513,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $currencyService = $this->app->make(CurrencyService::class);
 
@@ -2938,9 +2967,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $currencyService = $this->app->make(CurrencyService::class);
 
@@ -3388,9 +3427,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $currencyService = $this->app->make(CurrencyService::class);
 
@@ -3698,9 +3747,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $currencyService = $this->app->make(CurrencyService::class);
 
@@ -4074,9 +4133,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $currencyService = $this->app->make(CurrencyService::class);
 
@@ -4607,9 +4676,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $response = $this->call(
             'PUT',
@@ -4924,9 +5003,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $response = $this->call(
             'PUT',
@@ -5355,7 +5444,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
-        $expectedTotalPrice = round($expectedTotalFromItems + $expectedProductTaxes, 2);
+        $expectedTotalPrice = round($expectedTotalFromItems + $expectedTaxRateProduct * $expectedTotalFromItems, 2);
 
         $response = $this->call(
             'PUT',
@@ -6091,9 +6180,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $expectedShippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedShippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $expectedShippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            2
+        );
 
         $results = $this->call(
             'PUT',
@@ -6276,9 +6375,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $expectedShippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedShippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $expectedShippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            2
+        );
 
         $results = $this->call(
             'PUT',
@@ -6453,9 +6562,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $expectedShippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedShippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $expectedShippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            2
+        );
 
         $results = $this->call(
             'PUT',
@@ -6651,9 +6770,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $expectedDiscountAmount = round($discount['amount'], 2);
 
@@ -7506,7 +7635,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedInitialProductPrice = $product['price'] * $productQuantity;
 
-        $expectedTotalFromItems = round($expectedInitialProductPrice, 2);
+        $expectedTotalFromItems = $expectedInitialProductPrice;
 
         $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
         $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
@@ -7514,10 +7643,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue =
-            round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes + $financeCharge, 2);
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxes
+                + $financeCharge,
+            2
+        );
 
         $totalToFinance = $expectedTotalFromItems + $expectedTaxes + $financeCharge;
 
@@ -7529,7 +7667,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             );
         }
 
-        $expectedTotalPaid = round($initialTotalDueBeforeShipping + $shippingCostAmount, 2);
+        $expectedTotalPaid = $initialTotalDueBeforeShipping + $shippingCostAmount;
 
         $currencyService = $this->app->make(CurrencyService::class);
 
@@ -7571,11 +7709,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'type' => 'order',
                     'attributes' => [
                         'total_due' => $expectedOrderTotalDue,
-                        'product_due' => $expectedTotalFromItems,
+                        'product_due' => round($expectedTotalFromItems, 2),
                         'taxes_due' => $expectedTaxes,
                         'shipping_due' => $shippingCostAmount,
                         'finance_due' => 1,
-                        'total_paid' => $expectedTotalPaid,
+                        'total_paid' => round($expectedTotalPaid, 2),
                         'brand' => $brand,
                         'created_at' => Carbon::now()
                             ->toDateTimeString(),
@@ -7934,9 +8072,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $expectedOrderTotalDue = $expectedTotalFromItems + $shippingCostAmount + $expectedTaxes;
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxRateProduct * $expectedTotalFromItems
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $currencyService = $this->app->make(CurrencyService::class);
 
@@ -8145,12 +8293,20 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             $region
         )];
 
-        $expectedTaxes =
-            round($expectedTaxRateProduct * ($expectedTotalFromItems - $discount['amount']), 2) +
-            round($expectedTaxRateShipping * $shippingCostAmount, 2);
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * ($expectedTotalFromItems - $discount['amount'])
+                + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
-        $totalDueExpected =
-            round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes - $discount['amount'], 2);
+        $totalDueExpected = round(
+            $expectedTotalFromItems
+                + $shippingCostAmount
+                + $expectedTaxRateProduct * ($expectedTotalFromItems - $discount['amount'])
+                + $expectedTaxRateShipping * $shippingCostAmount
+                - $discount['amount'],
+            2
+        );
 
         $response = $this->call('GET', '/json/order-form');
 
@@ -8749,7 +8905,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $totalProductPrice, 2);
         $expectedShippingTaxes = 0;
 
-        $expectedOrderTotalDue = round($totalProductPrice + $expectedProductTaxes, 2);
+        $expectedOrderTotalDue = round($totalProductPrice + $expectedTaxRateProduct * $totalProductPrice, 2);
 
         $orderData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,

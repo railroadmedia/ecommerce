@@ -151,8 +151,8 @@ class OrderFormControllerTest extends EcommerceTestCase
                 $orderData['shipping_region']
             )];
 
-        $expectedTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2) +
-            round($expectedTaxRateShipping * $shippingCostAmount, 2);
+        $expectedTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
 

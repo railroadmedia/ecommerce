@@ -257,7 +257,7 @@ class TaxService
      */
     public function getTaxesDueForProductCost($productCosts, ?Address $address): float
     {
-        return round($productCosts * $this->getProductTaxRate($address), 2);
+        return $productCosts * $this->getProductTaxRate($address);
     }
 
     /**
@@ -271,7 +271,7 @@ class TaxService
      */
     public function getTaxesDueForShippingCost($shippingCosts, ?Address $address): float
     {
-        return round($shippingCosts * $this->getShippingTaxRate($address), 2);
+        return $shippingCosts * $this->getShippingTaxRate($address);
     }
 
     /**

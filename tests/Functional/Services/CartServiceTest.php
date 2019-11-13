@@ -425,7 +425,7 @@ class CartServiceTest extends EcommerceTestCase
 
         $quantity = $this->faker->numberBetween(1, 3);
 
-        $shippingRegion = 'alberta';
+        $shippingRegion = 'quebec';
 
         $shippingAddress = new Address();
         $shippingAddress->setCountry($shippingCountry);
@@ -449,9 +449,7 @@ class CartServiceTest extends EcommerceTestCase
             $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
         }
 
-        $expectedTaxDue =
-            round($expectedTaxRateProduct * $expectedItemsCost, 2) +
-            round($expectedTaxRateShipping * $expectedShippingCost, 2);
+        $expectedTaxDue = round($expectedTaxRateProduct * $expectedItemsCost + $expectedTaxRateShipping * $expectedShippingCost, 2);
 
         $cart = Cart::fromSession();
 
@@ -600,9 +598,7 @@ class CartServiceTest extends EcommerceTestCase
             $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
         }
 
-        $expectedTaxDue =
-            round($expectedTaxRateProduct * $expectedItemsCost, 2) +
-            round($expectedTaxRateShipping * $expectedShippingCost, 2);
+        $expectedTaxDue = $expectedTaxRateProduct * $expectedItemsCost + $expectedTaxRateShipping * $expectedShippingCost;
 
         $totalToFinance = $expectedItemsCost + $expectedTaxDue + config('ecommerce.financing_cost_per_order');
 
@@ -657,8 +653,7 @@ class CartServiceTest extends EcommerceTestCase
 
         $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
 
-        $expectedTaxDue =
-            round($expectedTaxRateProduct * $expectedItemsCost, 2);
+        $expectedTaxDue = $expectedTaxRateProduct * $expectedItemsCost;
 
         $financeDue = config('ecommerce.financing_cost_per_order');
 
