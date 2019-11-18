@@ -13,6 +13,7 @@ use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
@@ -236,6 +237,45 @@ class PaymentRepository extends RepositoryBase
         $q = $qb->getQuery();
 
         $q->setParameter('order', $order);
+
+        return $q->getResult();
+    }
+
+    /**
+     * Returns subscription payments
+     *
+     * @param Subscription $subscription
+     *
+     * @return array
+     */
+    public function getSubscriptionPayments(Subscription $subscription): array
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['p'])
+            ->from(Payment::class, 'p')
+            ->join(
+                SubscriptionPayment::class,
+                'sp',
+                Join::WITH,
+                $qb->expr()
+                    ->eq(1, 1)
+            )
+            ->join('sp.payment', 'pj')
+            ->where('pj.id = p.id')
+            ->andWhere('sp.subscription = :subscription')
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('p.deletedAt')
+            );
+
+        /** @var $q Query */
+        $q = $qb->getQuery();
+
+        $q->setParameter('subscription', $subscription);
 
         return $q->getResult();
     }
