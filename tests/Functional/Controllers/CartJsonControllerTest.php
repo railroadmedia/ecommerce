@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
@@ -9,6 +10,8 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
+use Railroad\Ecommerce\Services\DiscountCriteriaService;
+use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class CartJsonControllerTest extends EcommerceTestCase
@@ -1746,5 +1749,304 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         // assert session cart number of payments
         $this->assertEquals(1, $cart->getPaymentPlanNumberOfPayments());
+    }
+
+    public function test_index_subscription_free_trial_days_zero_due_today_order_total()
+    {
+        $this->session->flush();
+
+        $cartService = $this->app->make(CartService::class);
+
+        // subscription that starts billing after SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE discount
+        $product = $this->fakeProduct([
+            'sku' => 'a' . $this->faker->word,
+            'price' => 12.95,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+            'subscription_interval_count' => 1,
+        ]);
+
+        $discountDaysAmount = 10;
+
+        $discount = $this->fakeDiscount(
+            [
+                'active' => true,
+                'product_id' => $product['id'],
+                'type' => DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE,
+                'amount' => $discountDaysAmount,
+                'expiration_date' => Carbon::now()->addDays(2)->toDateTimeString(), // discount not expired
+            ]
+        );
+
+        $discountCriteria = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discount['id'],
+                'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
+                'min' => Carbon::now()
+                    ->subDay(1),
+                'max' => Carbon::now()
+                    ->addDays(3),
+            ]
+        );
+
+        $cartService->addToCart(
+            $product['sku'],
+            1,
+            false,
+            ''
+        );
+
+        $response = $this->call('GET', '/json/cart');
+
+        // response asserts
+
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection count
+        $this->assertEquals(1, count($decodedResponse['meta']['cart']['items']));
+
+        // assert cart item data
+        $this->assertEquals(
+            [
+                'sku'                         => $product['sku'],
+                'name'                        => $product['name'],
+                'quantity'                    => 1,
+                'thumbnail_url'               => $product['thumbnail_url'],
+                'description'                 => $product['description'],
+                'stock'                       => $product['stock'],
+                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'subscription_interval_count' => $product['subscription_interval_count'],
+                'price_before_discounts'      => $product['price'],
+                'price_after_discounts'       => $product['price'],
+                'requires_shipping'           => false,
+                'is_digital'                  => !$product['is_physical'],
+            ],
+            $decodedResponse['meta']['cart']['items'][0]
+        );
+
+        // assert total due today is zero
+        $this->assertEquals(
+            0,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertEquals(1, count($cart->getItems()));
+
+        // assert cart item one
+        $cartItemOne = $cart->getItemBySku($product['sku']);
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals(1, $cartItemOne->getQuantity());
+    }
+
+    public function test_index_subscription_free_trial_days_and_physical()
+    {
+        $this->session->flush();
+
+        $cartService = $this->app->make(CartService::class);
+
+        // subscription that starts billing after SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE discount
+        $productOne = $this->fakeProduct([
+            'sku' => 'a' . $this->faker->word,
+            'price' => 12.95,
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+            'subscription_interval_count' => 1,
+        ]);
+
+        $discountDaysAmount = 10;
+
+        $discount = $this->fakeDiscount(
+            [
+                'active' => true,
+                'product_id' => $productOne['id'],
+                'type' => DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE,
+                'amount' => $discountDaysAmount,
+                'expiration_date' => Carbon::now()->addDays(2)->toDateTimeString(), // discount not expired
+            ]
+        );
+
+        $discountCriteria = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discount['id'],
+                'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
+                'min' => Carbon::now()
+                    ->subDay(1),
+                'max' => Carbon::now()
+                    ->addDays(3),
+            ]
+        );
+
+        // a normal physical product
+        $productTwo = $this->fakeProduct([
+            'sku' => 'b' . $this->faker->word,
+            'price' => 50.15,
+            'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+            'weight' => 1,
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(15, 100),
+        ]);
+
+        $cartService->addToCart(
+            $productOne['sku'],
+            1,
+            false,
+            ''
+        );
+
+        $productTwoQuantity = 2;
+
+        $cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $response = $this->call('GET', '/json/cart');
+
+        // response asserts
+
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection count
+        $this->assertEquals(2, count($decodedResponse['meta']['cart']['items']));
+
+        // assert cart item data
+        $this->assertEquals(
+            [
+                'sku'                         => $productOne['sku'],
+                'name'                        => $productOne['name'],
+                'quantity'                    => 1,
+                'thumbnail_url'               => $productOne['thumbnail_url'],
+                'description'                 => $productOne['description'],
+                'stock'                       => $productOne['stock'],
+                'subscription_interval_type'  => $productOne['subscription_interval_type'],
+                'subscription_interval_count' => $productOne['subscription_interval_count'],
+                'price_before_discounts'      => $productOne['price'],
+                'price_after_discounts'       => $productOne['price'],
+                'requires_shipping'           => false,
+                'is_digital'                  => !$productOne['is_physical'],
+            ],
+            $decodedResponse['meta']['cart']['items'][0]
+        );
+
+        $this->assertEquals(
+            [
+                'sku'                         => $productTwo['sku'],
+                'name'                        => $productTwo['name'],
+                'quantity'                    => $productTwoQuantity,
+                'thumbnail_url'               => $productTwo['thumbnail_url'],
+                'description'                 => $productTwo['description'],
+                'stock'                       => $productTwo['stock'],
+                'subscription_interval_type'  => $productTwo['subscription_interval_type'],
+                'subscription_interval_count' => $productTwo['subscription_interval_count'],
+                'price_before_discounts'      => $productTwo['price'],
+                'price_after_discounts'       => $productTwo['price'],
+                'requires_shipping'           => true,
+                'is_digital'                  => !$productTwo['is_physical'],
+            ],
+            $decodedResponse['meta']['cart']['items'][1]
+        );
+
+        $expectedTotalDueToday = $productTwo['price'] * $productTwoQuantity; // order total does not contain cart item product one price because of SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE discount
+
+        // assert total due
+        $this->assertEquals(
+            $expectedTotalDueToday,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertEquals(2, count($cart->getItems()));
+
+        // assert cart item one
+        $cartItemOne = $cart->getItemBySku($productOne['sku']);
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals(1, $cartItemOne->getQuantity());
+
+        // assert cart item two
+        $cartItemTwo = $cart->getItemBySku($productTwo['sku']);
+
+        $this->assertEquals(CartItem::class, get_class($cartItemTwo));
+
+        $this->assertEquals($productTwoQuantity, $cartItemTwo->getQuantity());
     }
 }

@@ -18,6 +18,7 @@ use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserStripeCustomerIdRepository;
+use Stripe\Customer;
 use Throwable;
 
 /**
@@ -250,52 +251,7 @@ class PaymentService
         $convertedPaymentAmount = $this->currencyService->convertFromBase($paymentAmountInBaseCurrency, $currency);
 
         // first get the stripe customer
-
-        // for users
-        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
-            $stripeCustomer = null;
-
-            $userStripeCustomerId = $this->userStripeCustomerIdRepository->findOneBy([
-                'user' => $purchaser->getUserObject(),
-                'paymentGatewayName' => $gateway
-            ]);
-
-            // make a new stripe customer if none exist for the user
-            if (empty($userStripeCustomerId)) {
-                $stripeCustomer = $this->stripePaymentGateway->createCustomer(
-                    $gateway,
-                    $purchaser->getEmail()
-                );
-
-                $userStripeCustomerId = new UserStripeCustomerId();
-
-                $userStripeCustomerId->setUser($purchaser->getUserObject());
-                $userStripeCustomerId->setStripeCustomerId($stripeCustomer->id);
-                $userStripeCustomerId->setPaymentGatewayName($gateway);
-
-                $this->entityManager->persist($userStripeCustomerId);
-            }
-
-            // otherwise use the users existing stripe customer
-            else {
-                $stripeCustomer = $this->stripePaymentGateway->getCustomer(
-                    $gateway,
-                    $userStripeCustomerId->getStripeCustomerId()
-                );
-            }
-        }
-
-        // for guest customers, we must always create a new stripe customer for guest orders
-        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
-            $stripeCustomer = $this->stripePaymentGateway->createCustomer(
-                $gateway,
-                $purchaser->getEmail()
-            );
-        }
-
-        if (empty($stripeCustomer)) {
-            throw new PaymentFailedException('Could not find or create customer.');
-        }
+        $stripeCustomer = $this->getStripeCustomer($purchaser, $gateway);
 
         // make the stripe card
         $card = $this->stripePaymentGateway->createCustomerCard(
@@ -315,20 +271,7 @@ class PaymentService
 
         // the charge was successful, store necessary data information
         // billing address
-        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
-            $user = $purchaser->getUserObject();
-
-            $billingAddress->setUser($user);
-        }
-        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
-            $customer = $purchaser->getCustomerEntity();
-
-            $billingAddress->setCustomer($customer);
-        }
-
-        $billingAddress->setBrand($purchaser->getBrand());
-
-        $this->entityManager->persist($billingAddress);
+        $billingAddress = $this->setupBillingAddress($purchaser, $billingAddress);
 
         // payment method
         $paymentMethod = $this->paymentMethodService->createCreditCardPaymentMethod(
@@ -342,7 +285,7 @@ class PaymentService
         );
 
         if (empty($paymentMethod)) {
-            throw new PaymentFailedException('Error charging payment method');
+            throw new PaymentFailedException('Error creating payment method');
         }
 
         // store payment in database
@@ -368,6 +311,147 @@ class PaymentService
         $this->entityManager->flush();
 
         return $payment;
+    }
+
+    /**
+     * @param Purchaser $purchaser
+     * @param Address $billingAddress
+     * @param string $gateway
+     * @param string $currency
+     * @param float $paymentAmountInBaseCurrency
+     * @param string $stripeToken
+     * @param string $paymentType
+     * @param bool $setAsDefault
+     *
+     * @return PaymentMethod
+     *
+     * @throws ORMException
+     * @throws PaymentFailedException
+     * @throws OptimisticLockException
+     * @throws Throwable
+     */
+    public function createCreditCartPaymentMethod(
+        Purchaser $purchaser,
+        Address $billingAddress,
+        string $gateway,
+        string $currency,
+        string $stripeToken,
+        bool $setAsDefault = true
+    ): PaymentMethod {
+        $stripeCustomer = $this->getStripeCustomer($purchaser, $gateway);
+
+        // make the stripe card
+        $card = $this->stripePaymentGateway->createCustomerCard(
+            $gateway,
+            $stripeCustomer,
+            $stripeToken
+        );
+
+        $billingAddress = $this->setupBillingAddress($purchaser, $billingAddress);
+
+        // payment method
+        $paymentMethod = $this->paymentMethodService->createCreditCardPaymentMethod(
+            $purchaser,
+            $billingAddress,
+            $card,
+            $stripeCustomer,
+            $gateway,
+            $currency,
+            $setAsDefault
+        );
+
+        if (empty($paymentMethod)) {
+            throw new PaymentFailedException('Error creating payment method');
+        }
+
+        return $paymentMethod;
+    }
+
+    public function setupBillingAddress(
+        Purchaser $purchaser,
+        Address $billingAddress
+    ): Address {
+        // billing address
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
+            $user = $purchaser->getUserObject();
+
+            $billingAddress->setUser($user);
+        }
+        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
+            $customer = $purchaser->getCustomerEntity();
+
+            $billingAddress->setCustomer($customer);
+        }
+
+        $billingAddress->setBrand($purchaser->getBrand());
+
+        $this->entityManager->persist($billingAddress);
+
+        return $billingAddress;
+    }
+
+    /**
+     * @param Purchaser $purchaser
+     * @param string $gateway
+     *
+     * @return Customer
+     *
+     * @throws Throwable
+     */
+    public function getStripeCustomer(
+        Purchaser $purchaser,
+        string $gateway
+    ): Customer {
+        $stripeCustomer = null;
+
+        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
+            $stripeCustomer = null;
+
+            $userStripeCustomerId = $this->userStripeCustomerIdRepository->findOneBy([
+                'user' => $purchaser->getUserObject(),
+                'paymentGatewayName' => $gateway
+            ]);
+
+            // make a new stripe customer if none exist for the user
+            if (empty($userStripeCustomerId)) {
+                $stripeCustomer = $this->stripePaymentGateway->createCustomer(
+                    $gateway,
+                    $purchaser->getEmail()
+                );
+
+                $userStripeCustomerId = new UserStripeCustomerId();
+
+                $userStripeCustomerId->setUser($purchaser->getUserObject());
+                $userStripeCustomerId->setStripeCustomerId($stripeCustomer->id);
+                $userStripeCustomerId->setPaymentGatewayName($gateway);
+
+                $this->entityManager->persist($userStripeCustomerId);
+
+                $this->entityManager->flush();
+            }
+
+            // otherwise use the users existing stripe customer
+            else {
+                $stripeCustomer = $this->stripePaymentGateway->getCustomer(
+                    $gateway,
+                    $userStripeCustomerId->getStripeCustomerId()
+                );
+            }
+        }
+
+        // for guest customers, we must always create a new stripe customer for guest orders
+        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
+            $stripeCustomer = $this->stripePaymentGateway->createCustomer(
+                $gateway,
+                $purchaser->getEmail()
+            );
+        }
+
+        if (empty($stripeCustomer)) {
+            throw new PaymentFailedException('Could not find or create customer.');
+        }
+
+        return $stripeCustomer;
     }
 
     /**
@@ -418,21 +502,7 @@ class PaymentService
         );
 
         // the charge was successful, store necessary data information
-        // billing address
-        if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
-            $user = $purchaser->getUserObject();
-
-            $billingAddress->setUser($user);
-        }
-        elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
-            $customer = $purchaser->getCustomerEntity();
-
-            $billingAddress->setCustomer($customer);
-        }
-
-        $billingAddress->setBrand($purchaser->getBrand());
-
-        $this->entityManager->persist($billingAddress);
+        $billingAddress = $this->setupBillingAddress($purchaser, $billingAddress);
 
         // payment method
         $paymentMethod = $this->paymentMethodService->createPayPalPaymentMethod(
@@ -445,7 +515,7 @@ class PaymentService
         );
 
         if (empty($paymentMethod)) {
-            throw new PaymentFailedException('Error charging payment method');
+            throw new PaymentFailedException('Error creating payment method');
         }
 
         // store payment in database
@@ -473,4 +543,53 @@ class PaymentService
         return $payment;
     }
 
+    /**
+     * @param Purchaser $purchaser
+     * @param Address $billingAddress
+     * @param string $gateway
+     * @param string $currency
+     * @param string $payPalToken
+     * @param bool $setAsDefault
+     *
+     * @return PaymentMethod
+     *
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws PaymentFailedException
+     * @throws Throwable
+     */
+    public function createPayPalPaymentMethod(
+        Purchaser $purchaser,
+        Address $billingAddress,
+        string $gateway,
+        string $currency,
+        string $payPalToken,
+        bool $setAsDefault = true
+    ) {
+        // get the agreement
+        $billingAgreementId = $this->payPalPaymentGateway->createBillingAgreement(
+            $gateway,
+            $convertedPaymentAmount,
+            $currency,
+            $payPalToken
+        );
+
+        $billingAddress = $this->setupBillingAddress($purchaser, $billingAddress);
+
+        // payment method
+        $paymentMethod = $this->paymentMethodService->createPayPalPaymentMethod(
+            $purchaser,
+            $billingAddress,
+            $billingAgreementId,
+            $gateway,
+            $currency,
+            $setAsDefault
+        );
+
+        if (empty($paymentMethod)) {
+            throw new PaymentFailedException('Error creating payment method');
+        }
+
+        return $paymentMethod;
+    }
 }

@@ -12,6 +12,7 @@ use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\PaymentTaxes;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Cart;
@@ -94,6 +95,7 @@ class OrderClaimingService
 
     /**
      * @param Purchaser $purchaser
+     * @param PaymentMethod $paymentMethod
      * @param Payment|null $payment
      * @param Cart $cart
      * @param Address $shippingAddress
@@ -104,8 +106,13 @@ class OrderClaimingService
      * @throws OptimisticLockException
      * @throws Throwable
      */
-    public function claimOrder(Purchaser $purchaser, ?Payment $payment, Cart $cart, ?Address $shippingAddress): Order
-    {
+    public function claimOrder(
+        Purchaser $purchaser,
+        PaymentMethod $paymentMethod,
+        ?Payment $payment,
+        Cart $cart,
+        ?Address $shippingAddress
+    ): Order {
         $this->cartService->setCart($cart);
 
         $totalItemsCosts = $this->cartService->getTotalItemCosts();
@@ -198,10 +205,11 @@ class OrderClaimingService
 
             // create product subscriptions
             if ($orderItem->getProduct()
-                    ->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION && !empty($payment)) {
+                    ->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
 
                 $subscription = $this->createSubscription(
                     $purchaser,
+                    $paymentMethod,
                     $payment,
                     $order,
                     $orderItem
@@ -234,6 +242,7 @@ class OrderClaimingService
 
             $subscription = $this->createSubscription(
                 $purchaser,
+                $paymentMethod,
                 $payment,
                 $order,
                 null,
@@ -258,6 +267,7 @@ class OrderClaimingService
 
     /**
      * @param Purchaser $purchaser
+     * @param PaymentMethod $paymentMethod
      * @param Payment $payment
      * @param Order $order
      * @param OrderItem|null $orderItem
@@ -269,7 +279,8 @@ class OrderClaimingService
      */
     public function createSubscription(
         Purchaser $purchaser,
-        Payment $payment,
+        PaymentMethod $paymentMethod,
+        ?Payment $payment,
         Order $order,
         ?OrderItem $orderItem,
         int $totalCyclesDue = null
@@ -284,6 +295,7 @@ class OrderClaimingService
         // for payment plans, the taxable amount is total items costs
         // for normal subscriptions, the taxable amount is subscription product price, with any discounts applied
         $subscriptionTaxableAmount = 0;
+        $totalCyclesPaid = 1;
 
         if (is_null($orderItem)) {
 
@@ -332,7 +344,10 @@ class OrderClaimingService
                 $discount = $orderItemDiscount->getDiscount();
 
                 if ($discount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
-                    $nextBillDate = $nextBillDate->addDays($discount->getAmount());
+                    $totalCyclesPaid = 0;
+                    $nextBillDate =
+                        Carbon::now()
+                            ->addDays($discount->getAmount());
 
                 }
                 elseif ($discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
@@ -379,21 +394,24 @@ class OrderClaimingService
         $subscription->setPaidUntil($nextBillDate);
         $subscription->setTotalPrice($subscriptionTotalPrice);
         $subscription->setTax($totalTaxDue);
-        $subscription->setCurrency($payment->getCurrency());
+        $subscription->setCurrency($paymentMethod->getCurrency());
         $subscription->setIntervalType($intervalType);
         $subscription->setIntervalCount($intervalCount);
-        $subscription->setTotalCyclesPaid(1);
+        $subscription->setTotalCyclesPaid($totalCyclesPaid);
         $subscription->setTotalCyclesDue($totalCyclesDue);
-        $subscription->setPaymentMethod($payment->getPaymentMethod());
+        $subscription->setPaymentMethod($paymentMethod);
         $subscription->setCreatedAt(Carbon::now());
 
-        $subscriptionPayment = new SubscriptionPayment();
-
-        $subscriptionPayment->setSubscription($subscription);
-        $subscriptionPayment->setPayment($payment);
-
         $this->entityManager->persist($subscription);
-        $this->entityManager->persist($subscriptionPayment);
+
+        if (!empty($payment)) {
+            $subscriptionPayment = new SubscriptionPayment();
+
+            $subscriptionPayment->setSubscription($subscription);
+            $subscriptionPayment->setPayment($payment);
+
+            $this->entityManager->persist($subscriptionPayment);
+        }
 
         $this->entityManager->flush();
 

@@ -117,12 +117,62 @@ class OrderFormService
         // get the total due
         $paymentAmountInBaseCurrency = $this->cartService->getDueForInitialPayment();
 
+        // if the paypal token is not set we must first redirect to paypal
+        if (
+            empty($cart->getPaymentMethodId())
+            && $request->get('payment_method_type') == PaymentMethod::TYPE_PAYPAL
+            && empty($request->get('token'))
+        ) {
+            $gateway = $request->get('gateway');
+            $config = config('ecommerce.payment_gateways')['paypal'];
+            $url = route($config[$gateway]['paypal_api_checkout_return_route']);
+
+            $checkoutUrl =
+                $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl($gateway, $url);
+
+            session()->put('order-form-input', $request->all());
+
+            return ['redirect' => $checkoutUrl];
+        }
+
+        $paymentMethod = null;
+
         // try to make the payment
         try {
+
+            if (
+                empty($cart->getPaymentMethodId())
+                && $request->get('payment_method_type') != PaymentMethod::TYPE_CREDIT_CARD
+                && $request->get('payment_method_type') != PaymentMethod::TYPE_PAYPAL
+            ) {
+                throw new PaymentFailedException('Payment method not supported.');
+            }
 
             // if its free, dont create a payment
             if ($paymentAmountInBaseCurrency == 0) {
                 $payment = null;
+
+                if (empty($cart->getPaymentMethodId())) {
+                    if ($request->get('payment_method_type') == PaymentMethod::TYPE_CREDIT_CARD) {
+                        $paymentMethod = $this->paymentService->createCreditCartPaymentMethod(
+                            $purchaser,
+                            $request->getBillingAddress(),
+                            $request->get('gateway', config('ecommerce.default_gateway')),
+                            $cart->getCurrency(),
+                            $request->get('card_token'),
+                            $request->get('set_as_default', true)
+                        );
+                    } else {
+                        $paymentMethod = $this->paymentService->createPayPalPaymentMethod(
+                            $purchaser,
+                            $request->getBillingAddress(),
+                            $request->get('gateway', config('ecommerce.default_gateway')),
+                            $cart->getCurrency(),
+                            $request->get('token'),
+                            $request->get('set_as_default', true)
+                        );
+                    }
+                }
             }
 
             // use their existing payment method if they chose one
@@ -135,6 +185,8 @@ class OrderFormService
                     $purchaser->getId(),
                     Payment::TYPE_INITIAL_ORDER
                 );
+
+                $paymentMethod = $payment->getPaymentMethod();
             }
 
             // otherwise make a new payment method
@@ -157,23 +209,7 @@ class OrderFormService
                 }
 
                 // paypal
-                elseif ($request->get('payment_method_type') == PaymentMethod::TYPE_PAYPAL ||
-                    !empty($request->get('token'))) {
-
-                    // if the paypal token is not set we must first redirect to paypal
-                    if (empty($request->get('token'))) {
-
-                        $gateway = $request->get('gateway');
-                        $config = config('ecommerce.payment_gateways')['paypal'];
-                        $url = route($config[$gateway]['paypal_api_checkout_return_route']);
-
-                        $checkoutUrl =
-                            $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl($gateway, $url);
-
-                        session()->put('order-form-input', $request->all());
-
-                        return ['redirect' => $checkoutUrl];
-                    }
+                else {
 
                     $payment = $this->paymentService->chargeNewPayPalPaymentMethod(
                         $purchaser,
@@ -188,10 +224,7 @@ class OrderFormService
 
                 }
 
-                // failure
-                else {
-                    throw new PaymentFailedException('Payment method not supported.');
-                }
+                $paymentMethod = $payment->getPaymentMethod();
             }
         } catch (PaymentFailedException $paymentFailedException) {
 
@@ -260,7 +293,7 @@ class OrderFormService
             }
         }
 
-        $order = $this->orderClaimingService->claimOrder($purchaser, $payment, $cart, $shippingAddress);
+        $order = $this->orderClaimingService->claimOrder($purchaser, $paymentMethod, $payment, $cart, $shippingAddress);
 
         event(new GiveContentAccess($order));
 
