@@ -17,7 +17,7 @@ class StripeCardException extends \Exception
 
     public function render()
     {
-        $user = current_user();
+        $user = auth()->user();
 
         return response()->json(
             [
@@ -29,7 +29,7 @@ class StripeCardException extends \Exception
                 ],
                 'meta' => [
                     'user' => $user ? [
-                        'email' => $user->getEmail()
+                        'id' => $user->getAuthIdentifier()
                     ] : null,
                 ]
             ],
