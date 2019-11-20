@@ -247,7 +247,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $cart->toSession();
 
-        $this->orderClaimingService->claimOrder($purchaser, $payment, $cart, $shippingAddress);
+        $this->orderClaimingService->claimOrder($purchaser, $paymentMethod, $payment, $cart, $shippingAddress);
 
         $this->assertDatabaseHas(
             'ecommerce_orders',

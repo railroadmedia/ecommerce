@@ -616,7 +616,8 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
     protected function getReceiptValidationResponse(
         $productsData,
         $receiptCreationDate = null,
-        $receiptStatus = 0
+        $receiptStatus = 0,
+        $transactionId = null
     )
     {
         /*
@@ -637,6 +638,10 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             $receiptCreationDate = Carbon::now();
         }
 
+        if (!$transactionId) {
+            $transactionId = $this->faker->word;
+        }
+
         $rawData = [
             'status' => $receiptStatus,
             'environment' => 'Sandbox',
@@ -645,13 +650,17 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'app_item_id' => 0,
                 'receipt_creation_date_ms' => $receiptCreationDate->tz('UTC')->getTimestamp() * 1000,
                 'in_app' => []
+            ],
+            'latest_receipt_info' => [
             ]
         ];
 
         $defaultItemData = [
             'quantity' => 1,
             'expires_date_ms' => $receiptCreationDate->addMonth(),
-            'web_order_line_item_id' => $this->faker->word
+            'web_order_line_item_id' => $this->faker->word,
+            'transaction_id' => $transactionId,
+            'purchase_date_ms' => $receiptCreationDate->tz('UTC')->getTimestamp() * 1000,
         ];
 
         foreach ($productsData as $productSku => $purchaseItemData) {
@@ -662,6 +671,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             $purchaseItemData['expires_date_ms'] = $purchaseItemData['expires_date_ms']->tz('UTC')->getTimestamp() * 1000;
 
             $rawData['receipt']['in_app'][] = $purchaseItemData;
+            $rawData['latest_receipt_info'][] = $purchaseItemData;
         }
 
         return new SandboxResponse($rawData);

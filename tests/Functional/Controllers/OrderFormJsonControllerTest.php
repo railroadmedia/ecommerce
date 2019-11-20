@@ -1492,6 +1492,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $orderItemTwoDueOverride = 0;
 
         $requestData = [
+            'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'card_token' => $fingerPrint,
             'gateway' => $brand,
             'shipping_first_name' => $this->faker->firstName,
             'shipping_last_name' => $this->faker->lastName,
@@ -5228,12 +5230,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
+        $discountDaysAmount = 10;
+
         $discount = $this->fakeDiscount(
             [
                 'active' => true,
                 'product_id' => $product['id'],
                 'type' => DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE,
-                'amount' => 10,
+                'amount' => $discountDaysAmount,
                 'expiration_date' => Carbon::now()->addDays(2)->toDateTimeString(), // discount not expired
             ]
         );
@@ -5304,9 +5308,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'start_date' => Carbon::now()
                     ->toDateTimeString(),
                 'paid_until' => Carbon::now()
-                    ->addYear(1)
-                    ->addDays(10)
+                    ->addDays($discountDaysAmount)
                     ->toDateTimeString(),
+                'total_price' => round($expectedTotalFromItems + $expectedProductTaxes, 2),
+                'tax' => $expectedProductTaxes,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_methods',
+            [
+                'credit_card_id' => 1,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
             ]
         );
 
@@ -5317,24 +5331,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => 1,
                 'expiration_date' => Carbon::now()
-                    ->addYear(1)
-                    ->addDays(10)
+                    ->addDays($discountDaysAmount)
                     ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
                     ->toDateTimeString(),
             ]
         );
 
-        $this->assertDatabaseHas(
-            'ecommerce_payment_taxes',
-            [
-                'country' => $requestData['billing_country'],
-                'region' => $requestData['billing_region'],
-                'product_rate' => $expectedTaxRateProduct,
-                'shipping_rate' => $expectedTaxRateShipping,
-                'product_taxes_paid' => $expectedProductTaxes,
-                'shipping_taxes_paid' => $expectedShippingTaxes,
-            ]
-        );
+        // subscriptions with free days discount dont create payment or payment taxes records when order is placed
     }
 
     public function test_submit_order_subscription_with_discount_recurring_amount()

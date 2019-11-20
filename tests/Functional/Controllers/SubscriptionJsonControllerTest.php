@@ -654,8 +654,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => 1,
                 'expiration_date' => Carbon::parse($subscription['paid_until'])
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                    ->toDateTimeString(),
+                                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                                        ->toDateTimeString(),
             ]
         );
     }
@@ -803,8 +803,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => 1,
                 'expiration_date' => Carbon::parse($subscription['paid_until'])
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                    ->toDateTimeString(),
+                                                ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                                                ->toDateTimeString(),
             ]
         );
     }
@@ -937,8 +937,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $userProduct,
                 [
                     'expiration_date' => Carbon::parse($subscription['paid_until'])
-                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                        ->toDateTimeString(),
+                                            ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                                            ->toDateTimeString(),
                 ]
             )
         );
@@ -1085,7 +1085,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                             ]
                         ),
                         [
-                            'paid_until' => Carbon::now()->toDateTimeString(),
+                            'paid_until' => Carbon::now()
+                                                ->toDateTimeString(),
                             'updated_at' => Carbon::now()->toDateTimeString(),
                         ]
                     ),
@@ -1144,8 +1145,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $userProduct,
                 [
                     'expiration_date' => Carbon::now()
-                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                        ->toDateTimeString(),
+                                            ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                                            ->toDateTimeString(),
                     'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
             )
@@ -1750,8 +1751,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'product_id' => $product['id'],
             'quantity' => 1,
             'expiration_date' => Carbon::parse($subscription['paid_until'])
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                    ->toDateTimeString(),
+                                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                                    ->toDateTimeString(),
         ]);
 
         config()->set('ecommerce.paypal.failed_payments_before_de_activation', 3);
@@ -1894,8 +1895,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $userProduct,
                 [
                     'expiration_date' => Carbon::parse($subscription['paid_until'])
-                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                        ->toDateTimeString(),
+                                            ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                                            ->toDateTimeString(),
                 ]
             )
         );

@@ -114,8 +114,9 @@ class DiscountService
                 $amountDiscounted = $applicableDiscount->getAmount() / 100 * $totalDueInItems;
                 $totalItemDiscounts = round($totalItemDiscounts + $amountDiscounted, 2);
             }
-            elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
-                $applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+            elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE
+                || $applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE
+                || $applicableDiscount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
                 $products = $this->productRepository->bySkus($cart->listSkus());
 
                 foreach ($products as $product) {
@@ -148,6 +149,9 @@ class DiscountService
                                 $applicableDiscount->getAmount() /
                                 100;
                             $totalItemDiscounts = round($totalItemDiscounts + $discountAmount, 2);
+                        } elseif ($applicableDiscount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
+                            // subscription discount SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE starts charging the customer after the trial days, so subscription price is subtracted from order total
+                            $totalItemDiscounts = round($totalItemDiscounts + $product->getPrice(), 2);
                         }
                     }
                 }
