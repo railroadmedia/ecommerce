@@ -5221,6 +5221,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'paid_until' => Carbon::now()
                     ->addDays($discountDaysAmount)
                     ->toDateTimeString(),
+                'total_price' => round($expectedTotalFromItems + $expectedProductTaxes, 2),
+                'tax' => $expectedProductTaxes,
             ]
         );
 
