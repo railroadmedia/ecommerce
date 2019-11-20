@@ -490,6 +490,7 @@ class UserProductService
                     $subscription->getUser(),
                     $productData['product'],
                     $subscription->getPaidUntil()
+                        ->copy()
                         ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
                 );
             }
