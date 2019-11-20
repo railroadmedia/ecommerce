@@ -335,7 +335,7 @@ class RenewalService
                     break;
 
                 default:
-                    throw new Exception("Subscription type not configured");
+                    throw new Exception("Subscription interval type not configured");
                     break;
             }
 

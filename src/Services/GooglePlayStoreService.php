@@ -276,7 +276,7 @@ class GooglePlayStoreService
                 break;
 
             default:
-                throw new ReceiptValidationException("Subscription type not configured");
+                throw new ReceiptValidationException("Subscription interval type not configured");
                 break;
         }
 
