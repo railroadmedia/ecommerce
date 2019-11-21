@@ -40,6 +40,7 @@ class ProductUpdateRequest extends FormRequest
             'data.attributes.subscription_interval_type' => 'subscription interval type',
             'data.attributes.subscription_interval_count' => 'subscription interval count',
             'data.attributes.stock' => 'stock',
+            'data.attributes.auto_decrement_stock' => 'auto decrement stock',
             'data.attributes.note' => 'note',
         ];
     }
@@ -71,6 +72,7 @@ class ProductUpdateRequest extends FormRequest
             'data.attributes.is_physical' => 'boolean',
             'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
             'data.attributes.stock' => 'nullable|numeric',
+            'data.attributes.auto_decrement_stock' => 'boolean',
             'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' .
                 Product::TYPE_DIGITAL_SUBSCRIPTION,
             'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' .
@@ -101,6 +103,7 @@ class ProductUpdateRequest extends FormRequest
                 'data.attributes.subscription_interval_type',
                 'data.attributes.subscription_interval_count',
                 'data.attributes.stock',
+                'data.attributes.auto_decrement_stock',
                 'data.attributes.note',
             ]
         );

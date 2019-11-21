@@ -203,9 +203,15 @@ class OrderClaimingService
 
             $this->entityManager->persist($orderItem);
 
+            $purchasedProduct = $orderItem->getProduct();
+
+            if ($purchasedProduct->getAutoDecrementStock() && is_numeric($purchasedProduct->getStock())) {
+                $this->entityManager->persist($purchasedProduct);
+                $purchasedProduct->setStock($purchasedProduct->getStock() - 1);
+            }
+
             // create product subscriptions
-            if ($orderItem->getProduct()
-                    ->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
+            if ($purchasedProduct->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
 
                 $subscription = $this->createSubscription(
                     $purchaser,

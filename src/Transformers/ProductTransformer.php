@@ -25,6 +25,7 @@ class ProductTransformer extends TransformerAbstract
             'subscription_interval_type' => $product->getSubscriptionIntervalType(),
             'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
             'stock' => $product->getStock(),
+            'auto_decrement_stock' => $product->getAutoDecrementStock(),
             'note' => $product->getNote(),
             'created_at' => $product->getCreatedAt() ?
                 $product->getCreatedAt()

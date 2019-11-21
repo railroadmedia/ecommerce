@@ -141,6 +141,13 @@ class Product
     protected $stock;
 
     /**
+     * @ORM\Column(type="boolean", name="auto_decrement_stock")
+     *
+     * @var bool
+     */
+    protected $autoDecrementStock;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -372,5 +379,21 @@ class Product
     public function setStock(?int $stock)
     {
         $this->stock = $stock;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAutoDecrementStock(): bool
+    {
+        return $this->autoDecrementStock;
+    }
+
+    /**
+     * @param bool $autoDecrementStock
+     */
+    public function setAutoDecrementStock(bool $autoDecrementStock)
+    {
+        $this->autoDecrementStock = $autoDecrementStock;
     }
 }

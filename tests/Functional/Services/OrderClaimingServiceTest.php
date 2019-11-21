@@ -71,6 +71,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $productOne->setIsPhysical(true);
         $productOne->setWeight($this->faker->randomFloat(2, 15, 20));
         $productOne->setStock(50);
+        $productOne->setAutoDecrementStock(false);
         $productOne->setCreatedAt(Carbon::now());
 
         $productTwo = new Product();
@@ -84,6 +85,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $productTwo->setActive(true);
         $productTwo->setIsPhysical(false);
         $productTwo->setWeight(0);
+        $productTwo->setAutoDecrementStock(false);
         $productTwo->setSubscriptionIntervalType(config('ecommerce.interval_type_monthly'));
         $productTwo->setSubscriptionIntervalCount($this->faker->numberBetween(0, 12));
         $productTwo->setCreatedAt(Carbon::now());

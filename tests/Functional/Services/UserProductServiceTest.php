@@ -38,6 +38,7 @@ class UserProductServiceTest extends EcommerceTestCase
         $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
         $product->setActive(true);
         $product->setIsPhysical(false);
+        $product->setAutoDecrementStock(false);
 
         $em->persist($product);
         $em->flush();
@@ -70,6 +71,7 @@ class UserProductServiceTest extends EcommerceTestCase
         $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
         $product->setActive(true);
         $product->setIsPhysical(false);
+        $product->setAutoDecrementStock(false);
 
         $em->persist($product);
 
@@ -123,6 +125,7 @@ class UserProductServiceTest extends EcommerceTestCase
         $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
         $product->setActive(true);
         $product->setIsPhysical(false);
+        $product->setAutoDecrementStock(false);
 
         $em->persist($product);
 
@@ -167,6 +170,7 @@ class UserProductServiceTest extends EcommerceTestCase
         $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
         $product->setActive(true);
         $product->setIsPhysical(false);
+        $product->setAutoDecrementStock(false);
 
         $em->persist($product);
 
@@ -219,6 +223,7 @@ class UserProductServiceTest extends EcommerceTestCase
         $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
         $product->setActive(true);
         $product->setIsPhysical(false);
+        $product->setAutoDecrementStock(false);
 
         $em->persist($product);
 
@@ -283,6 +288,7 @@ class UserProductServiceTest extends EcommerceTestCase
         $productOne->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
         $productOne->setActive(true);
         $productOne->setIsPhysical(false);
+        $productOne->setAutoDecrementStock(false);
 
         $em->persist($productOne);
 
@@ -295,6 +301,7 @@ class UserProductServiceTest extends EcommerceTestCase
         $productTwo->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
         $productTwo->setActive(true);
         $productTwo->setIsPhysical(false);
+        $productTwo->setAutoDecrementStock(false);
 
         $em->persist($productTwo);
 

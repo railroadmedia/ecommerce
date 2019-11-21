@@ -95,6 +95,7 @@ class RenewalServiceTest extends EcommerceTestCase
         $product->setActive(true);
         $product->setIsPhysical(false);
         $product->setPrice(123.58);
+        $product->setAutoDecrementStock(false);
 
         $em->persist($product);
         $em->flush();

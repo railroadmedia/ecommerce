@@ -246,6 +246,12 @@ class AppleStoreKitService
         }
 
         if ($receipt->getValid()) {
+            $transactionId = $validationResponse->getLatestReceiptInfo()[0]->getTransactionId();
+
+            $receipt->setTransactionId($transactionId);
+
+            $this->entityManager->persist($receipt);
+
             $payment = $this->createSubscriptionRenewalPayment($subscription);
 
             $this->renewSubscription($subscription, $purchasedItem);
@@ -374,7 +380,7 @@ class AppleStoreKitService
     {
         $now = Carbon::now()->setTimezone('Etc/GMT');
 
-        foreach ($validationResponse->getPurchases() as $item) {
+        foreach ($validationResponse->getLatestReceiptInfo()[0] as $item) {
             $expires = clone $item->getExpiresDate();
             if ($expires->setTimezone('Etc/GMT') >= $now) {
                 return $item;
