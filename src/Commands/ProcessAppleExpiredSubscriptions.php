@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
+use Exception;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\AppleStoreKitService;
@@ -62,7 +63,11 @@ class ProcessAppleExpiredSubscriptions extends \Illuminate\Console\Command
         $subscriptions = $this->subscriptionRepository->getAppleExpiredSubscriptions();
 
         foreach ($subscriptions as $subscription) {
-            $this->appleStoreKitService->processSubscriptionRenewal($subscription);
+            try {
+                $this->appleStoreKitService->processSubscriptionRenewal($subscription);
+            } catch (Exception $e) {
+                $this->error($e->getMessage());
+            }
         }
 
         $this->info('-----------------End Process Apple Expired Subscriptions command-----------------------');

@@ -102,7 +102,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'description' => $this->faker->word,
                 'is_physical' => 0,
                 'weight' => 0,
-                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
                 'subscription_interval_count' => 1,
             ]
         );
@@ -224,7 +224,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'product_id' => $productOne['id'],
                 'is_active' => 1,
                 'paid_until' => Carbon::now()
-                    ->addMonth()
+                    ->addYear()
                     ->toDateTimeString(),
                 'external_app_store_id' => $webOrderLineItemOneId,
             ]
@@ -237,7 +237,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'product_id' => $productOne['id'],
                 'quantity' => 1,
                 'expiration_date' => Carbon::now()
-                    ->addMonth()
+                    ->addYear()
                     ->toDateTimeString(),
             ]
         );
@@ -625,7 +625,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         $productsData = [
             $someProduct->getSku() => [
                 'quantity' => 1,
-                'expires_date_ms' => Carbon::now()->addMonth(),
+                'expires_date_ms' => Carbon::now()->copy()->addMonth(),
                 'web_order_line_item_id' => $this->faker->word,
                 'product_id' => key of config('ecommerce.apple_store_products_map'),
             ]

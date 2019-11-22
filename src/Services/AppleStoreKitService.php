@@ -59,6 +59,16 @@ class AppleStoreKitService
      */
     private $userProvider;
 
+    const RENEWAL_EXPIRATION_REASON = [
+        1 => 'Apple in-app: Customer canceled their subscription.',
+        2 => 'Apple in-app: Billing error.',
+        3 => 'Apple in-app: Customer did not agree to a recent price modification.',
+        4 => 'Apple in-app: Product was not available for purchase at the time of renewal.',
+        5 => 'Apple in-app: Unknown error.',
+    ];
+
+    const RENEWAL_FAILED_MESSAGE = 'Subscription renewal failed, invalid receipt validation response';
+
     /**
      * AppleStoreKitService constructor.
      *
@@ -103,7 +113,13 @@ class AppleStoreKitService
 
             $validationResponse = $this->appleStoreKitGateway->validate($receipt->getReceipt());
 
-            $transactionId = $validationResponse->getLatestReceiptInfo()[0]->getTransactionId();
+            $currentPurchasedItem = $this->getPurchasedItem($validationResponse);
+
+            if (!$currentPurchasedItem) {
+                throw new ReceiptValidationException('All purchased items are expired');
+            }
+
+            $transactionId = $currentPurchasedItem->getTransactionId();
 
             $usedAppleReceipt = $this->appleReceiptRepository->findOneBy(['transactionId' => $transactionId]);
 
@@ -112,14 +128,7 @@ class AppleStoreKitService
             }
 
             $receipt->setTransactionId($transactionId);
-
-            $currentPurchasedItem = $this->getPurchasedItem($validationResponse);
-
-            if (!$currentPurchasedItem) {
-                throw new ReceiptValidationException('All purchased items are expired');
-            }
-
-            $receipt->setValid(true);
+            $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
 
         } catch (Exception $exception) {
 
@@ -225,7 +234,7 @@ class AppleStoreKitService
     {
         $receipt = $subscription->getAppleReceipt();
 
-        $purchasedItem = null;
+        $purchasedItem = $validationResponse = null;
 
         try {
 
@@ -237,7 +246,8 @@ class AppleStoreKitService
                 throw new ReceiptValidationException('All purchased items are expired');
             }
 
-            $receipt->setValid(true);
+            $receipt->setValid($purchasedItem->getExpiresDate() > Carbon::now());
+            $receipt->setValidationError(null);
 
         } catch (ReceiptValidationException $exception) {
 
@@ -246,7 +256,7 @@ class AppleStoreKitService
         }
 
         if ($receipt->getValid()) {
-            $transactionId = $validationResponse->getLatestReceiptInfo()[0]->getTransactionId();
+            $transactionId = $purchasedItem->getTransactionId();
 
             $receipt->setTransactionId($transactionId);
 
@@ -264,11 +274,39 @@ class AppleStoreKitService
 
         } else {
 
-            $this->cancelSubscription($subscription, $receipt);
+            if (
+                !$validationResponse
+                || !is_array($validationResponse->getPendingRenewalInfo())
+                || empty($validationResponse->getPendingRenewalInfo())
+                || !$validationResponse->getPendingRenewalInfo()[0]->getAutoRenewStatus()
+            ) {
 
-            $this->entityManager->flush();
+                $intent = $validationResponse
+                    && is_array($validationResponse->getPendingRenewalInfo())
+                    && !empty($validationResponse->getPendingRenewalInfo())
+                        ? $validationResponse->getPendingRenewalInfo()[0]->getExpirationIntent() : null;
 
-            event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_CONSOLE));
+                $note = ($intent && isset(self::RENEWAL_EXPIRATION_REASON[$intent]))
+                            ? self::RENEWAL_EXPIRATION_REASON[$intent]
+                            : ($receipt->getValidationError() ?? self::RENEWAL_FAILED_MESSAGE);
+
+                $this->cancelSubscription($subscription, $receipt, $note);
+
+                $this->entityManager->flush();
+
+                event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_CONSOLE));
+            } else {
+
+                $exceptionFormat = 'Apple renewal process still pending for receipt id: %s, subscription id: %s';
+
+                throw new ReceiptValidationException(
+                    sprintf(
+                        $exceptionFormat,
+                        $receipt->getId(),
+                        $subscription->getId()
+                    )
+                );
+            }
         }
 
         $this->userProductService->updateSubscriptionProducts($subscription);
@@ -361,14 +399,18 @@ class AppleStoreKitService
     /**
      * @param Subscription $subscription
      * @param AppleReceipt $receipt
+     * @param string $note
      */
-    public function cancelSubscription($subscription, $receipt)
+    public function cancelSubscription($subscription, $receipt, $note = null)
     {
-        $noteFormat = 'Canceled by apple notification, receipt id: %s';
+        if (!$note) {
+            $noteFormat = 'Canceled by apple notification, receipt id: %s';
+            $note = sprintf($noteFormat, $receipt->getId());
+        }
 
         $subscription->setCanceledOn(Carbon::now());
         $subscription->setUpdatedAt(Carbon::now());
-        $subscription->setNote(sprintf($noteFormat, $receipt->getId()));
+        $subscription->setNote($note);
     }
 
     /**
@@ -378,13 +420,11 @@ class AppleStoreKitService
      */
     public function getPurchasedItem(ResponseInterface $validationResponse): ?PurchaseItem
     {
-        $now = Carbon::now()->setTimezone('Etc/GMT');
-
-        foreach ($validationResponse->getLatestReceiptInfo()[0] as $item) {
-            $expires = clone $item->getExpiresDate();
-            if ($expires->setTimezone('Etc/GMT') >= $now) {
-                return $item;
-            }
+        if (
+            is_array($validationResponse->getLatestReceiptInfo())
+            && !empty($validationResponse->getLatestReceiptInfo())
+        ) {
+            return $validationResponse->getLatestReceiptInfo()[0];
         }
 
         return null;

@@ -260,7 +260,7 @@ class AppleReceipt
     /**
      * @param string $validationError
      */
-    public function setValidationError(string $validationError)
+    public function setValidationError(?string $validationError)
     {
         $this->validationError = $validationError;
     }
