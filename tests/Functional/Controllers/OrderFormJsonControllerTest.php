@@ -9550,4 +9550,203 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
+
+    public function test_submit_order_with_negative_order_item_price()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+        $fakerCustomer->id = $this->faker->word . rand();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $country = 'Canada';
+        $region = 'alberta';
+        $zip = $this->faker->postcode;
+
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $productOne = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+            ]
+        );
+
+        $productTwoCategory = $this->faker->word;
+
+        $productTwo = $this->fakeProduct(
+            [
+                'price' => 24,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'category' => $productTwoCategory,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+            ]
+        );
+
+        $discount = $this->fakeDiscount(
+            [
+                'active' => true,
+                'product_id' => $productOne['id'],
+                'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+                'amount' => 1000,
+                'expiration_date' => Carbon::now()->addDays(2)->toDateTimeString(), // discount not expired
+            ]
+        );
+
+        $discountCriteria = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discount['id'],
+                'type' => DiscountCriteriaService::ORDER_TOTAL_REQUIREMENT_TYPE,
+                'min' => 5,
+                'max' => 500,
+            ]
+        );
+
+        $productOneQuantity = 2;
+
+        $this->cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity,
+            false,
+            ''
+        );
+
+        $productTwoQuantity = 3;
+
+        $this->cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $expectedProductOneTotalPrice = round($productOne['price'] * $productOneQuantity, 2);
+
+        $expectedProductOneDiscountAmount = round($productOne['price'] * $productOneQuantity, 2);
+
+        $expectedProductOneDiscountedPrice = 0;
+
+        $expectedProductTwoTotalPrice = round($productTwo['price'] * $productTwoQuantity, 2);
+
+        $expectedProductTwoDiscountAmount = 0;
+
+        $expectedProductTwoDiscountedPrice = round($productTwo['price'] * $productTwoQuantity, 2);
+
+        $expectedTotalFromItems = round($expectedProductOneDiscountedPrice + $expectedProductTwoDiscountedPrice, 2);
+
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+
+        $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
+        $expectedShippingTaxes = 0;
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedProductTaxes, 2);
+
+        $results = $this->call(
+            'PUT',
+            '/json/order-form/submit',
+            [
+                'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+                'card_token' => $cardToken,
+                'billing_region' => $region,
+                'billing_zip_or_postal_code' => $zip,
+                'billing_country' => $country,
+                'gateway' => $brand,
+                'shipping_first_name' => $this->faker->firstName,
+                'shipping_last_name' => $this->faker->lastName,
+                'shipping_address_line_1' => $this->faker->address,
+                'shipping_city' => $this->faker->city,
+                'shipping_region' => $region,
+                'shipping_zip_or_postal_code' => $this->faker->postcode,
+                'shipping_country' => $country,
+            ]
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'brand' => config('ecommerce.brand'),
+                'user_id' => $userId,
+                'total_due' => $expectedOrderTotalDue,
+                'taxes_due' => $expectedProductTaxes,
+                'shipping_due' => 0,
+                'total_paid' => $expectedOrderTotalDue,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $country,
+                'region' => $region,
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $expectedProductTaxes,
+                'shipping_taxes_paid' => $expectedShippingTaxes,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_items',
+            [
+                'product_id' => $productOne['id'],
+                'quantity' => $productOneQuantity,
+                'initial_price' => $productOne['price'],
+                'final_price' => $expectedProductOneDiscountedPrice,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_items',
+            [
+                'product_id' => $productTwo['id'],
+                'quantity' => $productTwoQuantity,
+                'initial_price' => $productTwo['price'],
+                'final_price' => $expectedProductTwoDiscountedPrice,
+            ]
+        );
+    }
 }

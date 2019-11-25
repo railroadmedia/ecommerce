@@ -347,9 +347,12 @@ class CartService
                     $totalShippingCosts
                 );
 
-                $cartItemDue = !is_null($cartItem->getDueOverride()) ? $cartItem->getDueOverride() : round(
-                    $product->getPrice() * $cartItem->getQuantity() - $discountAmount,
-                    2
+                $cartItemDue = !is_null($cartItem->getDueOverride()) ? $cartItem->getDueOverride() : max(
+                    round(
+                        $product->getPrice() * $cartItem->getQuantity() - $discountAmount,
+                        2
+                    ),
+                    0
                 );
 
                 $orderItem->setProduct($product);
@@ -734,14 +737,17 @@ class CartService
                 'subscription_interval_count' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
                     $product->getSubscriptionIntervalCount() : null,
                 'price_before_discounts' => $product->getPrice(),
-                'price_after_discounts' => round(
-                    $product->getPrice() - $this->discountService->getItemDiscountedAmount(
-                        $this->cart,
-                        $cartItem->getSku(),
-                        $totalItemCostDue,
-                        $shippingDue
+                'price_after_discounts' => max(
+                    round(
+                        $product->getPrice() - $this->discountService->getItemDiscountedAmount(
+                            $this->cart,
+                            $cartItem->getSku(),
+                            $totalItemCostDue,
+                            $shippingDue
+                        ),
+                        2
                     ),
-                    2
+                    0
                 ),
                 'requires_shipping' => $product->getIsPhysical(),
                 'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION || $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),

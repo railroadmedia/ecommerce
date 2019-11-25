@@ -184,31 +184,31 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $dueForProductOne = $productOnePrice * $quantityOne - $discountOneAmount * $quantityOne;
         $dueForProductTwo = $productTwoPrice;
 
-        $expectedTotalFromItems = round($dueForProductOne + $dueForProductTwo, 2);
+        $expectedTotalFromItems = $dueForProductOne + $dueForProductTwo;
 
         $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
         $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
 
-        $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
-        $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCost, 2);
+        $expectedProductTaxes = $expectedTaxRateProduct * $expectedTotalFromItems;
+        $expectedShippingTaxes = $expectedTaxRateShipping * $shippingCost;
 
-        $expectedTaxes = round($expectedProductTaxes + $expectedShippingTaxes, 2);
+        $expectedTaxes = $expectedProductTaxes + $expectedShippingTaxes;
 
-        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedTaxes + $shippingCost, 2);
+        $expectedOrderTotalDue = $expectedTotalFromItems + $expectedTaxes + $shippingCost;
 
         $currencyService = $this->app->make(CurrencyService::class);
 
-        $expectedPaymentTotalDue = $currencyService->convertFromBase(round($expectedOrderTotalDue, 2), $currency);
+        $expectedPaymentTotalDue = $currencyService->convertFromBase($expectedOrderTotalDue, $currency);
 
         $expectedConversionRate = $currencyService->getRate($currency);
 
         $payment = new Payment();
 
-        $payment->setTotalDue($expectedPaymentTotalDue);
+        $payment->setTotalDue(round($expectedPaymentTotalDue, 2));
         $payment->setType(Payment::TYPE_INITIAL_ORDER);
         $payment->setStatus(Payment::STATUS_PAID);
         $payment->setCurrency($currency);
-        $payment->setTotalPaid($expectedPaymentTotalDue);
+        $payment->setTotalPaid(round($expectedPaymentTotalDue, 2));
         $payment->setPaymentMethod($paymentMethod);
         $payment->setGatewayName($paymentMethod->getMethod()->getPaymentGatewayName());
         $payment->setCreatedAt(Carbon::now());
@@ -257,11 +257,11 @@ class OrderClaimingServiceTest extends EcommerceTestCase
                 'brand' => $brand,
                 'user_id' => $user['id'],
                 'customer_id' => null,
-                'total_due' => $expectedOrderTotalDue,
-                'product_due' => $expectedTotalFromItems,
-                'taxes_due' => $expectedTaxes,
+                'total_due' => round($expectedOrderTotalDue, 2),
+                'product_due' => round($expectedTotalFromItems, 2),
+                'taxes_due' => round($expectedTaxes, 2),
                 'shipping_due' => $shippingCost,
-                'total_paid' => $expectedOrderTotalDue,
+                'total_paid' => round($expectedOrderTotalDue, 2),
             ]
         );
 
@@ -272,7 +272,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
                 'quantity' => $quantityOne,
                 'weight' => $productOne->getWeight(),
                 'initial_price' => $productOne->getPrice(),
-                'total_discounted' => $discountOneAmount * $quantityOne,
+                'total_discounted' => round($discountOneAmount * $quantityOne, 2),
                 'final_price' => $orderItemOneFinalPrice,
                 'created_at' => Carbon::now()
                     ->toDateTimeString()
@@ -357,8 +357,8 @@ class OrderClaimingServiceTest extends EcommerceTestCase
                 'region' => $region,
                 'product_rate' => $expectedTaxRateProduct,
                 'shipping_rate' => $expectedTaxRateShipping,
-                'product_taxes_paid' => $expectedProductTaxes,
-                'shipping_taxes_paid' => $expectedShippingTaxes,
+                'product_taxes_paid' => round($expectedProductTaxes, 2),
+                'shipping_taxes_paid' => round($expectedShippingTaxes, 2),
             ]
         );
     }

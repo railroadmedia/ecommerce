@@ -2049,4 +2049,156 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals($productTwoQuantity, $cartItemTwo->getQuantity());
     }
+
+    public function test_add_to_cart_negative_product_price()
+    {
+        $this->session->flush();
+
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+            'price' => 5,
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 100),
+            'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+        ]);
+
+        $discount = $this->fakeDiscount(
+            [
+                'active' => true,
+                'product_id' => $productOne['id'],
+                'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+                'expiration_date' => null,
+                'amount' => 10
+            ]
+        );
+
+        $discountCriteria = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discount['id'],
+                'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
+                'min' => Carbon::now()
+                    ->subDay(1),
+                'max' => Carbon::now()
+                    ->addDays(3),
+            ]
+        );
+
+        $productOneQuantity = $this->faker->numberBetween(1, 5);
+        $productTwoQuantity = $this->faker->numberBetween(1, 5);
+
+        $response = $this->call('PUT', '/json/add-to-cart/', [
+            'products' => [
+                $productOne['sku'] => $productOneQuantity,
+                $productTwo['sku'] => $productTwoQuantity,
+            ],
+        ]);
+
+        // assert response status code
+        $this->assertEquals(201, $response->getStatusCode());
+
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ],
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection count
+        $this->assertEquals(2, count($decodedResponse['meta']['cart']['items']));
+
+        // assert cart item data
+        $this->assertEquals(
+            [
+                'sku'                         => $productOne['sku'],
+                'name'                        => $productOne['name'],
+                'quantity'                    => $productOneQuantity,
+                'thumbnail_url'               => $productOne['thumbnail_url'],
+                'description'                 => $productOne['description'],
+                'stock'                       => $productOne['stock'],
+                'subscription_interval_type'  => $productOne['subscription_interval_type'],
+                'subscription_interval_count' => $productOne['subscription_interval_count'],
+                'price_before_discounts'      => $productOne['price'],
+                'price_after_discounts'       => 0,
+                'requires_shipping'           => true,
+                'is_digital'                  => !$productOne['is_physical'],
+            ],
+            $decodedResponse['meta']['cart']['items'][0]
+        );
+
+        $this->assertEquals(
+            [
+                'sku'                         => $productTwo['sku'],
+                'name'                        => $productTwo['name'],
+                'quantity'                    => $productTwoQuantity,
+                'thumbnail_url'               => $productTwo['thumbnail_url'],
+                'description'                 => $productTwo['description'],
+                'stock'                       => $productTwo['stock'],
+                'subscription_interval_type'  => $productTwo['subscription_interval_type'],
+                'subscription_interval_count' => $productTwo['subscription_interval_count'],
+                'price_before_discounts'      => $productTwo['price'],
+                'price_after_discounts'       => $productTwo['price'],
+                'requires_shipping'           => true,
+                'is_digital'                  => !$productTwo['is_physical'],
+            ],
+            $decodedResponse['meta']['cart']['items'][1]
+        );
+
+        $totalDue = $productTwo['price'] * $productTwoQuantity;
+
+        // assert total due
+        $this->assertEquals(
+            $totalDue,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        $cart = Cart::fromSession();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertEquals(2, count($cart->getItems()));
+
+        // assert cart item one
+        $cartItemOne = $cart->getItemBySku($productOne['sku']);
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($productOneQuantity, $cartItemOne->getQuantity());
+
+        // assert cart item two
+        $cartItemTwo = $cart->getItemBySku($productTwo['sku']);
+
+        $this->assertEquals(CartItem::class, get_class($cartItemTwo));
+
+        $this->assertEquals($productTwoQuantity, $cartItemTwo->getQuantity());
+    }
 }

@@ -106,13 +106,16 @@ class DiscountService
 
         $totalItemDiscounts = 0;
 
+        $cartItemsDiscounts = [];
+        $orderDiscounts = 0;
+
         foreach ($applicableDiscounts as $applicableDiscount) {
             if ($applicableDiscount->getType() == DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE) {
-                $totalItemDiscounts = round($totalItemDiscounts + $applicableDiscount->getAmount(), 2);
+                $orderDiscounts += $applicableDiscount->getAmount();
             }
             elseif ($applicableDiscount->getType() == DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE) {
                 $amountDiscounted = $applicableDiscount->getAmount() / 100 * $totalDueInItems;
-                $totalItemDiscounts = round($totalItemDiscounts + $amountDiscounted, 2);
+                $orderDiscounts += $amountDiscounted;
             }
             elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE
                 || $applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE
@@ -138,9 +141,9 @@ class DiscountService
                             $product->getCategory() == $applicableDiscount->getProductCategory()
                         )
                     ) {
+                        $discountAmount = 0;
                         if ($applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
                             $discountAmount = $applicableDiscount->getAmount() * $productCartItem->getQuantity();
-                            $totalItemDiscounts = round($totalItemDiscounts + $discountAmount, 2);
                         }
                         elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
                             $discountAmount =
@@ -148,17 +151,36 @@ class DiscountService
                                 $product->getPrice() *
                                 $applicableDiscount->getAmount() /
                                 100;
-                            $totalItemDiscounts = round($totalItemDiscounts + $discountAmount, 2);
                         } elseif ($applicableDiscount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
                             // subscription discount SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE starts charging the customer after the trial days, so subscription price is subtracted from order total
-                            $totalItemDiscounts = round($totalItemDiscounts + $product->getPrice(), 2);
+                            $discountAmount = $product->getPrice();
+                        }
+
+                        $sku  = $product->getSku();
+
+                        if (!isset($cartItemsDiscounts[$sku])) {
+                            $cartItemsDiscounts[$sku] = 0;
+                        }
+
+                        $cartItemsDiscounts[$sku] += $discountAmount;
+
+                        if ($cartItemsDiscounts[$sku] > $productCartItem->getQuantity() * $product->getPrice()) {
+                            // avoid negative cart item price
+                            $cartItemsDiscounts[$sku] = $productCartItem->getQuantity() * $product->getPrice();
                         }
                     }
                 }
             }
         }
 
-        return (float)$totalItemDiscounts;
+        $totalItemDiscounts = array_sum($cartItemsDiscounts) + $orderDiscounts;
+
+        if ($totalItemDiscounts > $totalDueInItems) {
+            // avoid negative order price
+            $totalItemDiscounts = $totalDueInItems;
+        }
+
+        return round((float) $totalItemDiscounts, 2);
     }
 
     /**
