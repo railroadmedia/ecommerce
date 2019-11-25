@@ -7,11 +7,11 @@ use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
-use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Stripe\Error\Card as StripeCard;
 use Throwable;
@@ -52,6 +52,10 @@ class OrderFormService
      * @var UserProviderInterface
      */
     private $userProvider;
+    /**
+     * @var PaymentMethodRepository
+     */
+    private $paymentMethodRepository;
 
     /**
      * OrderFormService constructor.
@@ -63,6 +67,7 @@ class OrderFormService
      * @param PurchaserService $purchaserService
      * @param ShippingService $shippingService
      * @param UserProviderInterface $userProvider
+     * @param PaymentMethodRepository $paymentMethodRepository
      */
     public function __construct(
         CartService $cartService,
@@ -71,7 +76,8 @@ class OrderFormService
         PayPalPaymentGateway $payPalPaymentGateway,
         PurchaserService $purchaserService,
         ShippingService $shippingService,
-        UserProviderInterface $userProvider
+        UserProviderInterface $userProvider,
+        PaymentMethodRepository $paymentMethodRepository
     )
     {
         $this->cartService = $cartService;
@@ -81,6 +87,7 @@ class OrderFormService
         $this->purchaserService = $purchaserService;
         $this->shippingService = $shippingService;
         $this->userProvider = $userProvider;
+        $this->paymentMethodRepository = $paymentMethodRepository;
     }
 
     /**
@@ -172,6 +179,8 @@ class OrderFormService
                             $request->get('set_as_default', true)
                         );
                     }
+                } else {
+                    $paymentMethod = $this->paymentMethodRepository->byId($cart->getPaymentMethodId());
                 }
             }
 
