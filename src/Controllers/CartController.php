@@ -61,6 +61,8 @@ class CartController extends Controller
             $this->cartService->getCart()->replaceItems([]);
         }
 
+        $addedProducts = [];
+
         foreach ($request->get('products', []) as $productSku => $quantityToAdd) {
 
             try {
@@ -77,6 +79,12 @@ class CartController extends Controller
 
             if (empty($product)) {
                 $errors[] = 'Error adding product SKU ' . $productSku . ' to the cart.';
+            } else {
+                $addedProducts[] = [
+                    'name' => $product->getName(),
+                    'description' => $product->getDescription(),
+                    'thumbnail' => $product->getThumbnailUrl(),
+                ];
             }
         }
 
@@ -116,6 +124,12 @@ class CartController extends Controller
         $redirectResponse->with('cart', $cartArray);
 
         session()->put('bonuses', $bonusArray);
+
+        if (!empty($addedProducts)) {
+            session()->flash('addedProducts', $addedProducts);
+            session()->flash('cartNumberOfItems', count($cartArray['items']));
+            session()->flash('cartSubTotal', $cartArray['totals']['due']);
+        }
 
         return $redirectResponse;
     }
