@@ -168,7 +168,7 @@ class OrderFormService
                             $request->get('card_token'),
                             $request->get('set_as_default', true)
                         );
-                    } else {
+                    } elseif ($request->get('payment_method_type') == PaymentMethod::TYPE_PAYPAL) {
                         $paymentMethod = $this->paymentService->createPayPalPaymentMethod(
                             $purchaser,
                             $request->getBillingAddress(),

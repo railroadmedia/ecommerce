@@ -108,7 +108,7 @@ class OrderClaimingService
      */
     public function claimOrder(
         Purchaser $purchaser,
-        PaymentMethod $paymentMethod,
+        ?PaymentMethod $paymentMethod,
         ?Payment $payment,
         Cart $cart,
         ?Address $shippingAddress
