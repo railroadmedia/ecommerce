@@ -206,10 +206,6 @@ class SubscriptionJsonController extends Controller
             $request->onlyAllowed()
         );
 
-        if ($subscription->getIsActive() === false && !$subscription->getCanceledOn()) {
-            $subscription->setCanceledOn(Carbon::now());
-        }
-
         if ($subscription->getTotalPrice()) {
 
             $subscription->setTotalPrice(
