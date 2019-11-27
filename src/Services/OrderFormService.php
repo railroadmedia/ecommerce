@@ -147,11 +147,10 @@ class OrderFormService
         // try to make the payment
         try {
 
-            if (
-                empty($cart->getPaymentMethodId())
-                && $request->get('payment_method_type') != PaymentMethod::TYPE_CREDIT_CARD
-                && $request->get('payment_method_type') != PaymentMethod::TYPE_PAYPAL
-            ) {
+            if (empty($cart->getPaymentMethodId()) &&
+                $request->get('payment_method_type') != PaymentMethod::TYPE_CREDIT_CARD &&
+                $request->get('payment_method_type') != PaymentMethod::TYPE_PAYPAL &&
+                $paymentAmountInBaseCurrency != 0) {
                 throw new PaymentFailedException('Payment method not supported.');
             }
 
@@ -169,7 +168,7 @@ class OrderFormService
                             $request->get('card_token'),
                             $request->get('set_as_default', true)
                         );
-                    } else {
+                    } elseif ($request->get('payment_method_type') == PaymentMethod::TYPE_PAYPAL) {
                         $paymentMethod = $this->paymentService->createPayPalPaymentMethod(
                             $purchaser,
                             $request->getBillingAddress(),
