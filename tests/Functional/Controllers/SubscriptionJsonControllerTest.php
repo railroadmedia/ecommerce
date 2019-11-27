@@ -809,7 +809,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_cancel_subscription()
+    public function test_de_activate_subscription()
     {
         $this->permissionServiceMock->method('can')->willReturn(true);
 
@@ -832,7 +832,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'payment_method_id' => $paymentMethod['id'],
             'user_id' => $userId,
             'order_id' => $order['id'],
-            'updated_at' => null
+            'updated_at' => null,
+            'canceled_on' => null,
         ]);
 
         $userProduct = $this->fakeUserProduct([
@@ -877,7 +878,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                         ),
                         [
                             'is_active' => false,
-                            'canceled_on' => Carbon::now()->toDateTimeString(),
+                            'canceled_on' => null,
                             'updated_at' => Carbon::now()->toDateTimeString(),
                         ]
                     ),
@@ -924,6 +925,141 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscription,
                 [
                     'is_active' => false,
+                    'canceled_on' => null,
+                    'updated_at' => Carbon::now()->toDateTimeString(),
+                ]
+            )
+        );
+
+        // assert user product was set
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            array_merge(
+                $userProduct,
+                [
+                    'expiration_date' => Carbon::parse($subscription['paid_until'])
+                                            ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                                            ->toDateTimeString(),
+                ]
+            )
+        );
+    }
+
+    public function test_cancel_subscription()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $product = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+        ]);
+
+        $discount = $this->faker->discount([
+            'product_id' => $product['id']
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod();
+
+        $order = $this->fakeOrder();
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null,
+            'canceled_on' => null,
+            'is_active' => true,
+        ]);
+
+        $userProduct = $this->fakeUserProduct([
+            'user_id' => $userId,
+            'product_id' => $product['id'],
+            'expiration_date' => $subscription['paid_until'],
+            'quantity' => 1
+        ]);
+
+        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+
+        $results = $this->call(
+            'PATCH',
+            '/subscription/' . $subscription['id'],
+            [
+                'data' => [
+                    'type' => 'subscription',
+                    'attributes' => ['canceled_on' => Carbon::now()->toDateTimeString()]
+                ],
+            ]
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'subscription',
+                    'id' => $subscription['id'],
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'payment_method_id' => true,
+                                'user_id' => true,
+                                'order_id' => true,
+                                'customer_id' => true,
+                                'updated_at' => true
+                            ]
+                        ),
+                        [
+                            'canceled_on' => Carbon::now()->toDateTimeString(),
+                            'updated_at' => Carbon::now()->toDateTimeString(),
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'product',
+                        'id' => $product['id'],
+                    ]
+                ]
+            ],
+            $results->decodeResponseJson()
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            array_merge(
+                $subscription,
+                [
                     'canceled_on' => Carbon::now()->toDateTimeString(),
                     'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
