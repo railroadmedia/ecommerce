@@ -43,6 +43,7 @@ class DiscountCriteriaService
     const SHIPPING_COUNTRY_REQUIREMENT_TYPE = 'shipping country requirement';
     const PROMO_CODE_REQUIREMENT_TYPE = 'promo code requirement';
     const PRODUCT_OWN_TYPE = 'product own requirement';
+    const CART_ITEMS_TOTAL_REQUIREMENT_TYPE = 'cart items total requirement';
 
     /**
      * DiscountCriteriaService constructor.
@@ -101,6 +102,8 @@ class DiscountCriteriaService
                 return $this->promoCodeRequirement($discountCriteria, $cart);
             case self::PRODUCT_OWN_TYPE:
                 return $this->productOwnRequirement($discountCriteria);
+            case self::CART_ITEMS_TOTAL_REQUIREMENT_TYPE:
+                return $this->cartItemsTotalRequirement($discountCriteria, $cart);
             default:
                 return false;
         }
@@ -279,6 +282,23 @@ class DiscountCriteriaService
 
 		return $discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY ?
             $userProductsCount > 0 : $userProductsCount == count($discountCriteria->getProducts());
+    }
+
+    /**
+     * @param DiscountCriteria $discountCriteria ,
+     * @param Cart $cart
+     *
+     * @return bool
+     */
+    public function cartItemsTotalRequirement(DiscountCriteria $discountCriteria, Cart $cart): bool
+    {
+        $cartItemsCount = 0;
+
+        foreach ($cart->getItems() as $cartItem) {
+            $cartItemsCount += $cartItem->getQuantity();
+        }
+
+        return $cartItemsCount >= $discountCriteria->getMin() && $cartItemsCount <= $discountCriteria->getMax();
     }
 
     protected function getPurchaser(): User

@@ -27,6 +27,138 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
         $this->session = $this->app->make(Store::class);
     }
 
+    public function test_cart_items_total_requirement_met()
+    {
+        $this->session->flush();
+
+        $userId = $this->createAndLogInNewUser();
+
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 100),
+        ]);
+
+        $discount = $this->fakeDiscount([
+            'product_id' => $productOne['id'],
+            'product_category' => null,
+            'updated_at' => null,
+            'active' => true,
+            'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(1, 10)
+        ]);
+
+        $discountCriteriaData = $this->fakeDiscountCriteria([
+            'type' => DiscountCriteriaService::CART_ITEMS_TOTAL_REQUIREMENT_TYPE,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+            'min' => $this->faker->numberBetween(1, 3),
+            'max' => $this->faker->numberBetween(15, 20)
+        ]);
+
+        $productOneQuantity = $this->faker->numberBetween(3, 5);
+        $productTwoQuantity = $this->faker->numberBetween(3, 5);
+        // total quantity is between discount criteria min/max
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity,
+            false,
+            ''
+        );
+
+        $cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $cart = Cart::fromSession();
+
+        $em = $this->app->make(EcommerceEntityManager::class);
+
+        $discountCriteria = $em->getRepository(DiscountCriteria::class)
+                                ->find($discountCriteriaData['id']);
+
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
+            ->cartItemsTotalRequirement($discountCriteria, $cart);
+
+        $this->assertTrue($metCriteria);
+    }
+
+    public function test_cart_items_total_requirement_met_not_met()
+    {
+        $this->session->flush();
+
+        $userId = $this->createAndLogInNewUser();
+
+        $productOne = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(20, 100),
+        ]);
+        $productTwo = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 100),
+        ]);
+
+        $discount = $this->fakeDiscount([
+            'product_id' => $productOne['id'],
+            'product_category' => null,
+            'updated_at' => null,
+            'active' => true,
+            'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
+            'amount' => $this->faker->numberBetween(1, 10)
+        ]);
+
+        $discountCriteriaData = $this->fakeDiscountCriteria([
+            'type' => DiscountCriteriaService::CART_ITEMS_TOTAL_REQUIREMENT_TYPE,
+            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+            'min' => $this->faker->numberBetween(1, 3),
+            'max' => $this->faker->numberBetween(15, 20)
+        ]);
+
+        $productOneQuantity = $this->faker->numberBetween(25, 30);
+        $productTwoQuantity = $this->faker->numberBetween(25, 30);
+        // total quantity is not between discount criteria min/max
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart(
+            $productOne['sku'],
+            $productOneQuantity,
+            false,
+            ''
+        );
+
+        $cartService->addToCart(
+            $productTwo['sku'],
+            $productTwoQuantity,
+            false,
+            ''
+        );
+
+        $cart = Cart::fromSession();
+
+        $em = $this->app->make(EcommerceEntityManager::class);
+
+        $discountCriteria = $em->getRepository(DiscountCriteria::class)
+                                ->find($discountCriteriaData['id']);
+
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
+            ->cartItemsTotalRequirement($discountCriteria, $cart);
+
+        $this->assertFalse($metCriteria);
+    }
+
     public function test_discount_criteria_met_for_order_not_met()
     {
         $this->session->flush();
