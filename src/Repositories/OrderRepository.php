@@ -94,11 +94,11 @@ class OrderRepository extends RepositoryBase
             ->leftJoin('o.shippingAddress', 'sa');
 
         if ($request->has('start-date')) {
-            $startDate = Carbon::parse($request->get('start-date'));
+            $startDate = Carbon::parse($request->get('start-date', Carbon::now()->subMonth()->toDateTimeString()));
         }
 
         if ($request->has('end-date')) {
-            $endDate = Carbon::parse($request->get('end-date'));
+            $endDate = Carbon::parse($request->get('end-date', Carbon::now()->toDateTimeString()));
         }
 
         if (isset($startDate) && isset($endDate)) {
