@@ -145,7 +145,7 @@ class Product
      *
      * @var bool
      */
-    protected $autoDecrementStock;
+    protected $autoDecrementStock = false;
 
     /**
      * @return int|null
