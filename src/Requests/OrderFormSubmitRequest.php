@@ -179,6 +179,7 @@ class OrderFormSubmitRequest extends FormRequest
             unset($rules['currency']);
             unset($rules['billing_region']);
             unset($rules['billing_zip_or_postal_code']);
+            unset($rules['gateway']);
 
             $rules['payment_plan_number_of_payments'] = 'integer|in:1';
         }
