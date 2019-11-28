@@ -101,11 +101,11 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $productOne = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
+            'stock' => $this->faker->numberBetween(30, 100),
         ]);
         $productTwo = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(10, 100),
+            'stock' => $this->faker->numberBetween(30, 100),
         ]);
 
         $discount = $this->fakeDiscount([
@@ -290,8 +290,8 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
             'product_id' => $productOne['id'],
         ]);
 
-        $productOneQuantity = $this->faker->numberBetween(1, 5); // quantity is less than discount criteria min/max
-        $productTwoQuantity = $this->faker->numberBetween(1, 5); // quantity is less than discount criteria min/max
+        $productOneQuantity = $this->faker->numberBetween(1, 4); // quantity is less than discount criteria min/max
+        $productTwoQuantity = $this->faker->numberBetween(1, 4); // quantity is less than discount criteria min/max
 
         $cartService = $this->app->make(CartService::class);
 

@@ -283,7 +283,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $productOne->setBrand($this->faker->word);
         $productOne->setName($this->faker->word);
-        $productOne->setSku($this->faker->word);
+        $productOne->setSku($this->faker->word . $this->faker->word . $this->faker->word);
         $productOne->setPrice($this->faker->randomNumber(4));
         $productOne->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
         $productOne->setActive(true);
@@ -296,7 +296,7 @@ class UserProductServiceTest extends EcommerceTestCase
 
         $productTwo->setBrand($this->faker->word);
         $productTwo->setName($this->faker->word);
-        $productTwo->setSku($this->faker->word);
+        $productTwo->setSku($this->faker->word . $this->faker->word . $this->faker->word);
         $productTwo->setPrice($this->faker->randomNumber(4));
         $productTwo->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
         $productTwo->setActive(true);

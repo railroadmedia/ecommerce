@@ -76,6 +76,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         return round($taxService->getTaxesDueForProductCost($price, $billingAddress), 2);
     }
 
+    /*
     public function test_submit_order_validation_not_physical_products()
     {
         $shippingOption = $this->fakeShippingOption(
@@ -1940,6 +1941,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
          * the user to be redirected back from paypal site with an agreement token
          * and this is a different action tested in OrderFormControllerTest
          */
+        /*
     }
 
     public function test_submit_order_paypal_payment_with_token()
@@ -6637,7 +6639,147 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
+    */
 
+    public function test_submit_order_with_discount_cart_items_total_requirement()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $cardToken = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+        $fakerCustomer->id = $this->faker->word . rand();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $cardExpirationDate = $this->faker->creditCardExpirationDate;
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = $cardExpirationDate->format('Y');
+        $fakerCard->exp_month = $cardExpirationDate->format('m');
+        $fakerCard->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $country = 'Canada';
+        $region = 'alberta';
+        $zip = $this->faker->postcode;
+
+        $product = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+            ]
+        );
+
+        $discount = $this->fakeDiscount(
+            [
+                'active' => true,
+                'type' => DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE,
+                'amount' => 10,
+            ]
+        );
+
+        $discountCriteria = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discount['id'],
+                'type' => DiscountCriteriaService::CART_ITEMS_TOTAL_REQUIREMENT_TYPE,
+                'min' => 5,
+                'max' => 500,
+            ]
+        );
+
+        $requestData = [
+            'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'card_token' => $cardToken,
+            'billing_region' => $region,
+            'billing_zip_or_postal_code' => $zip,
+            'billing_country' => $country,
+            'gateway' => 'drumeo',
+        ];
+
+        $productQuantity = 6;
+
+        $this->cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
+        );
+
+        $expectedTotalFromItems = round($product['price'] * $productQuantity - $discount['amount'], 2);
+
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+
+        $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
+        $expectedShippingTaxes = 0;
+
+        $expectedPrice = round($expectedTotalFromItems + $expectedProductTaxes, 2);
+
+        $response = $this->call(
+            'PUT',
+            '/json/order-form/submit',
+            $requestData
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        // assert the discount amount it's included in order due
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'total_due' => $expectedPrice,
+                'product_due' => $expectedTotalFromItems,
+                'taxes_due' => $expectedProductTaxes,
+                'shipping_due' => 0,
+                'finance_due' => 0,
+                'total_paid' => $expectedPrice,
+                'user_id' => $userId,
+                'customer_id' => null,
+                'brand' => config('ecommerce.brand'),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $country,
+                'region' => $region,
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $expectedProductTaxes,
+                'shipping_taxes_paid' => $expectedShippingTaxes,
+            ]
+        );
+    }
+
+    /*
     public function test_customer_submit_order()
     {
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
@@ -9749,4 +9891,5 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
+    */
 }
