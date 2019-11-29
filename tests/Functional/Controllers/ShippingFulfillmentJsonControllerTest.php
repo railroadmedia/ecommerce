@@ -616,12 +616,9 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'DELETE',
-            '/fulfillment',
-            [
-                'order_id' => $order['id'],
-            ]
+            '/fulfillment/' . $order['id']
         );
-
+        
         $this->assertDatabaseMissing(
             'ecommerce_order_item_fulfillment',
             [
@@ -685,11 +682,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'DELETE',
-            '/fulfillment',
-            [
-                'order_id' => $order['id'],
-                'order_item_id' => $orderItemOne['id'],
-            ]
+            '/fulfillment/' . $order['id'] . '/' . $orderItemOne['id']
         );
 
         $this->assertDatabaseMissing(
@@ -713,10 +706,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
     {
         $results = $this->call(
             'DELETE',
-            '/fulfillment',
-            [
-                'order_id' => rand()
-            ]
+            '/fulfillment/' . rand()
         );
 
         $this->assertEquals(422, $results->status());

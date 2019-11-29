@@ -34,7 +34,6 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 0,
@@ -48,7 +47,6 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
         $productPhysical = $this->fakeProduct(
             [
                 'price' => 12.95,
-                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
                 'is_physical' => 1,
@@ -160,8 +158,8 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
                 'stock' => $product['stock'],
                 'subscription_interval_type' => $product['subscription_interval_type'],
                 'subscription_interval_count' => $product['subscription_interval_count'],
-                'price_before_discounts' => $product['price'],
-                'price_after_discounts' => $product['price'],
+                'price_before_discounts' => $product['price'] * $initialQuantity,
+                'price_after_discounts' => $product['price'] * $initialQuantity,
                 'requires_shipping' => false,
                 'is_digital' => !$product['is_physical'],
             ],

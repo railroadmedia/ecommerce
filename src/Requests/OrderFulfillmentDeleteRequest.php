@@ -21,9 +21,6 @@ class OrderFulfillmentDeleteRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            'order_item_id' => 'integer|nullable|exists:' . 'ecommerce_order_item_fulfillment' . ',order_item_id',
-            'order_id' => 'integer|required|exists:' . 'ecommerce_order_item_fulfillment' . ',order_id'
-        ];
+        return [];
     }
 }

@@ -368,7 +368,7 @@ Returns an empty response if there were no errors.
 
 <!--- -------------------------------------------------------------------------------------------------------------- -->
 
-### `{ DELETE /*/payment-method/{ID} }`
+### `{ DELETE /*/fulfillment/{orderId}/{orderItemId?} }`
 
 Delete an existing fulfillment or all fulfillments for an order.
 
@@ -381,8 +381,8 @@ Delete an existing fulfillment or all fulfillments for an order.
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
-|body|order_item_id|||if this is not set, all order item fulfilments for the order_id will be deleted||
-|body|order_id|yes||||
+|path|orderId|||if this is not set, all order item fulfilments for the order_id will be deleted||
+|path|orderItemId|yes||||
 
 
 ### Request Example
@@ -390,12 +390,8 @@ Delete an existing fulfillment or all fulfillments for an order.
 ```js   
 $.ajax({
     url: 'https://www.domain.com' +
-        '/ecommerce/fulfillment',
+        '/ecommerce/fulfillment/21',
     type: 'delete', 
-    data: {
-        order_item_id: 4152,
-        order_id: 8373,
-    }, 
     success: function(response) {},
     error: function(response) {}
 });
@@ -404,11 +400,8 @@ $.ajax({
 ```js   
 $.ajax({
     url: 'https://www.domain.com' +
-        '/ecommerce/fulfillment',
+        '/ecommerce/fulfillment/1613/972',
     type: 'delete', 
-    data: {
-        order_id: 8373,
-    }, 
     success: function(response) {},
     error: function(response) {}
 });

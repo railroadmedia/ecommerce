@@ -254,18 +254,26 @@ class ShippingFulfillmentJsonController extends Controller
      *
      * @param OrderFulfillmentDeleteRequest $request
      *
+     * @param $orderId
+     * @param null $orderItemId
      * @return JsonResponse
      *
-     * @throws Throwable
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws \Railroad\Permissions\Exceptions\NotAllowedException
      */
-    public function delete(OrderFulfillmentDeleteRequest $request)
+    public function delete(OrderFulfillmentDeleteRequest $request, $orderId,  $orderItemId = null)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.fulfillment');
 
         $fulfillments = $this->orderItemFulfillmentRepository->getByOrderAndOrderItem(
-            $request->get('order_id'),
-            $request->get('order_item_id')
+            $orderId,
+            $orderItemId
         );
+
+        if (empty($fulfillments)) {
+            return ResponseService::empty(422) ;
+        }
 
         foreach ($fulfillments as $fulfillment) {
             $this->entityManager->remove($fulfillment);

@@ -24,9 +24,9 @@ Route::group(
             ->name('fulfillment.fulfilled');
 
         Route::delete(
-            '/fulfillment',
+            '/fulfillment/{orderId}/{orderItemId?}',
             Railroad\Ecommerce\Controllers\ShippingFulfillmentJsonController::class . '@delete'
         )
-            ->name('fulfillment.fulfilled');
+            ->name('fulfillment.delete');
     }
 );
