@@ -43,7 +43,7 @@ class DiscountCriteriaService
     const SHIPPING_COUNTRY_REQUIREMENT_TYPE = 'shipping country requirement';
     const PROMO_CODE_REQUIREMENT_TYPE = 'promo code requirement';
     const PRODUCT_OWN_TYPE = 'product own requirement';
-    const CART_ITEMS_TOTAL_REQUIREMENT_TYPE = 'cart items total requirement';
+    const CART_ITEMS_TOTAL_REQUIREMENT_TYPE = 'total cart items requirement';
 
     /**
      * DiscountCriteriaService constructor.
