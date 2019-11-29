@@ -6,6 +6,132 @@ The column names should be used as the keys for requests.
 
 # JSON Endpoints
 
+### `{ GET /*/customer-payment-method/{CUSTOMER ID} }`
+
+List customer payment methods.
+
+### Permissions
+
+- Must be logged in
+- Must have the 'pull.customer.payment.method' permission
+- Must have the 'show_deleted' permission to pull soft-deleted payment methods
+
+### Request Parameters
+
+|Type|Key|Required|Default|Options|Notes|
+|----|---|--------|-------|-------|-----|
+|query|customer_id|||||
+|query|view_deleted|no|false|'true' or 'false'|requires 'show_deleted' permission to include soft-deleted payment methods|
+
+### Request Example
+
+```js   
+$.ajax({
+    url: 'https://www.domain.com' +
+        '/ecommerce/customer-payment-method/43',
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+```200 OK```
+
+```json
+{
+  "data": [
+    {
+      "type": "paymentMethod",
+      "id": "126315",
+      "attributes": {
+        "method_id": 88561,
+        "method_type": "credit_card",
+        "currency": "USD",
+        "note": null,
+        "deleted_at": null,
+        "created_at": "2019-11-29 11:46:19",
+        "updated_at": "2019-11-29 11:46:19"
+      },
+      "relationships": {
+        "method": {
+          "data": {
+            "type": "creditCard",
+            "id": "88561"
+          }
+        },
+        "billingAddress": {
+          "data": {
+            "type": "address",
+            "id": "176064"
+          }
+        }
+      }
+    }
+  ],
+  "included": [
+    {
+      "type": "customer",
+      "id": "19282",
+      "attributes": {
+        "brand": "drumeo",
+        "phone": null,
+        "email": "wava.quigley@hotmail.com",
+        "note": null,
+        "created_at": "2019-11-29 11:46:15",
+        "updated_at": "2019-11-29 11:46:15"
+      }
+    },
+    {
+      "type": "creditCard",
+      "id": "88561",
+      "attributes": {
+        "fingerprint": "p1raZanLcARD5xTT",
+        "last_four_digits": 4444,
+        "cardholder_name": null,
+        "company_name": "MasterCard",
+        "expiration_date": "2020-11-29 11:46:18",
+        "external_id": "card_1Fk7vRKoDqdTNxK1JQ7Y697D",
+        "external_customer_id": "cus_GGfF5yTJO9nRi7",
+        "payment_gateway_name": "drumeo",
+        "created_at": "2019-11-29 11:46:18",
+        "updated_at": "2019-11-29 11:46:18"
+      }
+    },
+    {
+      "type": "address",
+      "id": "176064",
+      "attributes": {
+        "type": "billing",
+        "brand": "drumeo",
+        "first_name": "",
+        "last_name": "",
+        "street_line_1": "",
+        "street_line_2": "",
+        "city": "",
+        "zip": "",
+        "region": "",
+        "country": "",
+        "note": null,
+        "created_at": "2019-11-29 11:46:18",
+        "updated_at": "2019-11-29 11:46:18",
+        "deleted_at": null
+      },
+      "relationships": {
+        "customer": {
+          "data": {
+            "type": "customer",
+            "id": "19282"
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+<!--- -------------------------------------------------------------------------------------------------------------- -->
+
 ### `{ GET /*/user-payment-method/{USER ID} }`
 
 List users payment methods.

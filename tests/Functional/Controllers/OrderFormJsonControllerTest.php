@@ -76,7 +76,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         return round($taxService->getTaxesDueForProductCost($price, $billingAddress), 2);
     }
 
-    /*
     public function test_submit_order_validation_not_physical_products()
     {
         $shippingOption = $this->fakeShippingOption(
@@ -1941,7 +1940,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
          * the user to be redirected back from paypal site with an agreement token
          * and this is a different action tested in OrderFormControllerTest
          */
-        /*
     }
 
     public function test_submit_order_paypal_payment_with_token()
@@ -6639,7 +6637,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
-    */
 
     public function test_submit_order_with_discount_cart_items_total_requirement()
     {
@@ -6779,7 +6776,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    /*
     public function test_customer_submit_order()
     {
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
@@ -9891,5 +9887,4 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
-    */
 }

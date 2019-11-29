@@ -24,6 +24,7 @@ List subscriptions.
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
 |query|user_id||logged in user id|||
+|query|customer_id|no|||only pull subscriptions for a specific customer|
 |query|view_deleted|no|false|'true' or 'false'|requires 'show_deleted' permission to include soft-deleted subscriptions|
 
 ### Request Example

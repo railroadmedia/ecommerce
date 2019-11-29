@@ -115,6 +115,11 @@ class OrderRepository extends RepositoryBase
                 ->setParameter('userId', $request->get('user_id'));
         }
 
+        if ($request->has('customer_id')) {
+            $qb->andWhere('IDENTITY(o.customer) = :customerId')
+                ->setParameter('customerId', $request->get('customer_id'));
+        }
+
         $results =
             $qb->getQuery()
                 ->getResult();

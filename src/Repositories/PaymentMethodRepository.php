@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Repositories;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
+use Railroad\Ecommerce\Entities\Customer;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -146,6 +147,63 @@ class PaymentMethodRepository extends RepositoryBase
                     ->eq('upm.user', ':user')
             )
             ->setParameter('user', $userId);
+
+        if ($brand) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->isNotNull('cc.id'),
+                                $qb->expr()
+                                    ->eq('cc.paymentGatewayName', ':ccBrand')
+                            ),
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->isNotNull('ppba.id'),
+                                $qb->expr()
+                                    ->eq('ppba.paymentGatewayName', ':ppbaBrand')
+                            )
+                    )
+            )
+            ->setParameter('ccBrand', $brand)
+            ->setParameter('ppbaBrand', $brand);
+        }
+
+        $paymentMethods = $qb->getQuery()
+            ->getResult();
+
+        return $paymentMethods;
+    }
+
+    /**
+     * @param Customer $customer
+     * @param Request $request
+     * @param string $brand
+     *
+     * @return PaymentMethod[]
+     */
+    public function getCustomerPaymentMethods(
+        Customer $customer,
+        Request $request,
+        $brand = null
+    ) {
+        $alias = 'pm';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->select(['cpm', 'pm', 'cc', 'ppba'])
+            ->restrictSoftDeleted($request, $alias)
+            ->join('pm.customerPaymentMethod', 'cpm')
+            ->leftJoin('pm.creditCard', 'cc')
+            ->leftJoin('pm.paypalBillingAgreement', 'ppba')
+            ->where(
+                $qb->expr()
+                    ->eq('cpm.customer', ':customer')
+            )
+            ->setParameter('customer', $customer);
 
         if ($brand) {
             $qb->andWhere(

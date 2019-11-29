@@ -73,6 +73,11 @@ class PaymentMethod
     protected $userPaymentMethod;
 
     /**
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\CustomerPaymentMethods", mappedBy="paymentMethod")
+     */
+    protected $customerPaymentMethod;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -198,5 +203,13 @@ class PaymentMethod
     public function getUserPaymentMethod()
     {
         return $this->userPaymentMethod;
+    }
+
+    /**
+     * @return CustomerPaymentMethods
+     */
+    public function getCustomerPaymentMethod()
+    {
+        return $this->customerPaymentMethod;
     }
 }

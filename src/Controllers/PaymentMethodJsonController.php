@@ -10,6 +10,7 @@ use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
+use Railroad\Ecommerce\Entities\Customer;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\User;
@@ -29,6 +30,7 @@ use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
+use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
@@ -61,6 +63,11 @@ class PaymentMethodJsonController extends Controller
      * @var CurrencyService
      */
     private $currencyService;
+
+    /**
+     * @var CustomerRepository
+     */
+    private $customerRepository;
 
     /**
      * @var EcommerceEntityManager
@@ -133,6 +140,7 @@ class PaymentMethodJsonController extends Controller
         AddressRepository $addressRepository,
         CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
+        CustomerRepository $customerRepository,
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PaymentMethodService $paymentMethodService,
@@ -148,6 +156,7 @@ class PaymentMethodJsonController extends Controller
         $this->addressRepository = $addressRepository;
         $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
+        $this->customerRepository = $customerRepository;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->paymentMethodService = $paymentMethodService;
@@ -160,7 +169,39 @@ class PaymentMethodJsonController extends Controller
         $this->userProvider = $userProvider;
     }
 
-    // todo: add func to get customers payment methods
+    /**
+     * Get customer payment methods with all the method details: credit card or paypal billing agreement
+     *
+     * @param int $userId
+     * @param Request $request
+     *
+     * @return Fractal
+     *
+     * @throws Throwable
+     */
+    public function getCustomerPaymentMethods(Request $request, $customerId)
+    {
+        /**
+         * @var $customer Customer
+         */
+        $customer = $this->customerRepository->findOneBy(['id' => $customerId]);
+
+        // todo - ask if a customer should be able to pull his own payment method in an interface and adjust permissions check
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.customer.payment.method');
+
+        throw_if(
+            is_null($customer),
+            new NotFoundException(
+                'Pull failed, customer not found with id: ' . $customerId
+            )
+        );
+
+        $paymentMethods = $this->paymentMethodRepository->getCustomerPaymentMethods($customer, $request);
+
+        return ResponseService::paymentMethod(
+            $paymentMethods
+        );
+    }
 
     /**
      * Get all user's payment methods with all the method details: credit card or paypal billing agreement

@@ -36,4 +36,7 @@ Route::group([
         Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@getUserPaymentMethods')
         ->name('user.payment-method.index');
 
+    Route::get('/customer-payment-method/{customerId}',
+        Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@getCustomerPaymentMethods')
+        ->name('user.payment-method.index');
 });

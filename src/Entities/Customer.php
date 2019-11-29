@@ -8,7 +8,7 @@ use Railroad\Ecommerce\Contracts\IdentifiableInterface;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
 /**
- * @ORM\Entity()
+ * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\CustomerRepository")
  * @ORM\Table(
  *     name="ecommerce_customers",
  *     indexes={

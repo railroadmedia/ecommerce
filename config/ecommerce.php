@@ -242,6 +242,7 @@ return [
             'update.payment.method',
             'delete.payment.method',
             'pull.user.payment.method',
+            'pull.customer.payment.method',
 
             'create.payment',
             'delete.payment',

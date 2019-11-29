@@ -129,6 +129,11 @@ class SubscriptionRepository extends RepositoryBase
                 ->setParameter('user', $user);
         }
 
+        if ($request->has('customer_id')) {
+            $qb->andWhere('IDENTITY(s.customer) = :customerId')
+                ->setParameter('customerId', $request->get('customer_id'));
+        }
+
         $results =
             $qb->getQuery()
                 ->getResult();
