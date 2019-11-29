@@ -736,10 +736,10 @@ class CartService
                     $product->getSubscriptionIntervalType() : null,
                 'subscription_interval_count' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
                     $product->getSubscriptionIntervalCount() : null,
-                'price_before_discounts' => $product->getPrice(),
+                'price_before_discounts' => $product->getPrice() * $cartItem->getQuantity(),
                 'price_after_discounts' => max(
                     round(
-                        $product->getPrice() - $this->discountService->getItemDiscountedAmount(
+                        ($product->getPrice() * $cartItem->getQuantity()) - $this->discountService->getItemDiscountedAmount(
                             $this->cart,
                             $cartItem->getSku(),
                             $totalItemCostDue,
