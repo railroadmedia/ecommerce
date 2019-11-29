@@ -325,12 +325,12 @@ class SubscriptionJsonController extends Controller
                         ->getEmail(),
                     $subscription->getOrder()
                         ->getId(),
-                    $subscription->getProduct()
-                        ->getId(),
-                    $subscription->getProduct()
-                        ->getName(),
-                    $subscription->getProduct()
-                        ->getSku(),
+                    !empty($subscription->getProduct()) ? $subscription->getProduct()
+                        ->getId() : '',
+                    !empty($subscription->getProduct()) ? $subscription->getProduct()
+                        ->getName() : '',
+                    !empty($subscription->getProduct()) ? $subscription->getProduct()
+                        ->getSku() : '',
                     $subscription->getFailedPayment()
                         ->getId(),
                     $subscription->getFailedPayment()
