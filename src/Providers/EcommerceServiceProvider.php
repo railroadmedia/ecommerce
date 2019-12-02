@@ -88,6 +88,7 @@ class EcommerceServiceProvider extends ServiceProvider
         if (config('ecommerce.autoload_all_routes', true) == true) {
             $this->loadRoutesFrom(__DIR__ . '/../../routes/access_codes.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/address.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/customer.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/discount.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/discount_criteria.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/order.php');

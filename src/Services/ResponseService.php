@@ -13,6 +13,7 @@ use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
 use Railroad\Ecommerce\Transformers\AppleReceiptTransformer;
+use Railroad\Ecommerce\Transformers\CustomerTransformer;
 use Railroad\Ecommerce\Transformers\CartItemTransformer;
 use Railroad\Ecommerce\Transformers\DailyStatisticTransformer;
 use Railroad\Ecommerce\Transformers\DecoratedOrderTransformer;
@@ -611,5 +612,29 @@ class ResponseService extends FractalResponseService
                 'auth_code' => $authCode,
             ]
         );
+    }
+
+    /**
+     * @param $entityOrEntities
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     *
+     * @return Fractal
+     */
+    public static function customer(
+        $entityOrEntities,
+        $customersOrders,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    )
+    {
+        return self::create(
+            $entityOrEntities,
+            'customer',
+            new CustomerTransformer($customersOrders),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
     }
 }

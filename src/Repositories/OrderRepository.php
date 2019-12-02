@@ -9,6 +9,7 @@ use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Customer;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
@@ -155,5 +156,35 @@ class OrderRepository extends RepositoryBase
         return
             $qb->getQuery()
                 ->getOneOrNullResult();
+    }
+
+    /**
+     * @param Customer[] $customers
+     *
+     * @return Order[]
+     *
+     * @throws NonUniqueResultException
+     */
+    public function getCustomersOrders(array $customers): array
+    {
+        /**
+         * @var $qb QueryBuilder
+         */
+        $qb = $this->createQueryBuilder('o');
+
+        $qb->select(['o', 'oi', 'ba', 'sa', 'p'])
+            ->leftJoin('o.orderItems', 'oi')
+            ->leftJoin('oi.product', 'p')
+            ->leftJoin('o.billingAddress', 'ba')
+            ->leftJoin('o.shippingAddress', 'sa')
+            ->where(
+                $qb->expr()
+                    ->in('o.customer', ':customers')
+            )
+            ->setParameter('customers', $customers);
+
+        return
+            $qb->getQuery()
+                ->getResult();
     }
 }

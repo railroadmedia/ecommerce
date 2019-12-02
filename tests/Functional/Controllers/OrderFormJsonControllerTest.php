@@ -8470,8 +8470,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                                 'stock' => $productOne['stock'],
                                 'subscription_interval_type' => $productOne['subscription_interval_type'],
                                 'subscription_interval_count' => $productOne['subscription_interval_count'],
-                                'price_before_discounts' => $productOne['price'],
-                                'price_after_discounts' => $productOne['price'],
+                                'price_before_discounts' => $productOne['price'] * $productOneQuantity,
+                                'price_after_discounts' => $productOne['price'] * $productOneQuantity,
                             ],
                             [
                                 'sku' => $productTwo['sku'],
@@ -8482,8 +8482,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                                 'stock' => $productTwo['stock'],
                                 'subscription_interval_type' => $productTwo['subscription_interval_type'],
                                 'subscription_interval_count' => $productTwo['subscription_interval_count'],
-                                'price_before_discounts' => $productTwo['price'],
-                                'price_after_discounts' => $productTwo['price'],
+                                'price_before_discounts' => $productTwo['price'] * $productTwoQuantity,
+                                'price_after_discounts' => $productTwo['price'] * $productTwoQuantity,
                             ]
                         ],
                         'discounts' => [],
