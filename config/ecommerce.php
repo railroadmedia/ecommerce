@@ -239,6 +239,8 @@ return [
             'delete.shipping.option',
             'pull.shipping.options',
 
+            'pull.customers',
+
             'update.payment.method',
             'delete.payment.method',
             'pull.user.payment.method',

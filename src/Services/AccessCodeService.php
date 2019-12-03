@@ -10,6 +10,7 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionAccessCode;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserProduct;
+use Railroad\Ecommerce\Events\UserProducts\UserProductCreated;
 use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\AccessCodeRepository;
@@ -94,12 +95,12 @@ class AccessCodeService
 
         $accessCodeProducts = $this->productRepository->byAccessCode($accessCode);
 
-        $subscriptions = $this->subscriptionRepository->getProductsSubscriptions($accessCodeProducts);
+        // get user active subscriptions, should be just one
+        $subscriptions = $this->subscriptionRepository->getUserActiveSubscription($user);
 
         $processedProductsIds = [];
 
         // extend subscriptions
-
         foreach ($subscriptions as $subscription) {
             /**
              * @var $subscription Subscription
@@ -120,37 +121,47 @@ class AccessCodeService
                 continue;
             }
 
-            /**
-             * @var $product Product
-             */
-            $product = $subscription->getProduct();
-            $intervalCount = $product->getSubscriptionIntervalCount();
+            foreach ($accessCodeProducts as $product) {
 
-            switch ($product->getSubscriptionIntervalType()) {
-                case config('ecommerce.interval_type_monthly'):
-                    $endDate = $subscriptionEndDate->addMonths($intervalCount);
-                    break;
+                if ($product->getType() != Product::TYPE_DIGITAL_SUBSCRIPTION) {
+                    // for subscription extending, only subscription products are processed in this block
+                    continue;
+                }
 
-                case config('ecommerce.interval_type_yearly'):
-                    $endDate = $subscriptionEndDate->addYears($intervalCount);
-                    break;
+                /**
+                 * @var $product Product
+                 */
 
-                case config('ecommerce.interval_type_daily'):
-                    $endDate = $subscriptionEndDate->addDays($intervalCount);
-                    break;
+                $intervalCount = $product->getSubscriptionIntervalCount();
 
-                default:
-                    $format = 'Unknown subscription interval type for product id %s: %s';
-                    $message = sprintf($format, $product->getId(), $product->getSubscriptionIntervalType());
+                switch ($product->getSubscriptionIntervalType()) {
+                    case config('ecommerce.interval_type_monthly'):
+                        $subscriptionEndDate = $subscriptionEndDate->addMonths($intervalCount);
+                        break;
 
-                    throw new UnprocessableEntityException($message);
-                    break;
+                    case config('ecommerce.interval_type_yearly'):
+                        $subscriptionEndDate = $subscriptionEndDate->addYears($intervalCount);
+                        break;
+
+                    case config('ecommerce.interval_type_daily'):
+                        $subscriptionEndDate = $subscriptionEndDate->addDays($intervalCount);
+                        break;
+
+                    default:
+                        $format = 'Unknown subscription interval type for product id %s: %s';
+                        $message = sprintf($format, $product->getId(), $product->getSubscriptionIntervalType());
+
+                        throw new UnprocessableEntityException($message);
+                        break;
+                }
+
+                $processedProductsIds[$product->getId()] = true;
             }
 
             $subscription->setIsActive(true);
             $subscription->setCanceledOn(null);
             $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
-            $subscription->setPaidUntil($endDate->startOfDay());
+            $subscription->setPaidUntil($subscriptionEndDate->startOfDay());
             $subscription->setUpdatedAt(Carbon::now());
 
             $subscriptionAccessCode = new SubscriptionAccessCode();
@@ -162,7 +173,7 @@ class AccessCodeService
 
             $this->entityManager->persist($subscriptionAccessCode);
 
-            $processedProductsIds[$product->getId()] = true;
+            $this->userProductService->updateSubscriptionProducts($subscription);
         }
 
         // add user products
@@ -210,6 +221,8 @@ class AccessCodeService
             $userProduct->setExpirationDate($expirationDate);
 
             $this->entityManager->persist($userProduct);
+
+            event(new UserProductCreated($userProduct));
         }
 
         $accessCode->setIsClaimed(true);

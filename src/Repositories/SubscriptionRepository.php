@@ -15,6 +15,7 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 use Railroad\Ecommerce\Requests\FailedBillingSubscriptionsRequest;
@@ -399,6 +400,43 @@ class SubscriptionRepository extends RepositoryBase
         }
 
         return $subscriptions[0] ?? null;
+    }
+
+    /**
+     * @param User $user
+     *
+     * @return Subscription[]|null
+     */
+    public function getUserActiveSubscription(User $user)
+    {
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select('s')
+            ->from($this->getClassName(), 's')
+            ->where(
+                $qb->expr()
+                    ->eq('s.user', ':user')
+            )
+            ->andWhere('s.isActive = true')
+            ->andWhere(
+                $qb->expr()
+                    ->gt('s.paidUntil', ':now')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('s.canceledOn')
+            )
+            ->setParameter('user', $user)
+            ->setParameter(
+                'now',
+                Carbon::now()
+                    ->toDateTimeString()
+            );
+
+        return $qb->getQuery()
+                    ->getResult();
     }
 
     /**
