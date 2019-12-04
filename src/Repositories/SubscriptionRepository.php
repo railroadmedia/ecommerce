@@ -104,6 +104,15 @@ class SubscriptionRepository extends RepositoryBase
      */
     public function indexByRequest(Request $request): ResultsQueryBuilderComposite
     {
+        if ($this->getEntityManager()
+            ->getFilters()
+            ->isEnabled('soft-deleteable')) {
+
+            $this->getEntityManager()
+                ->getFilters()
+                ->disable('soft-deleteable');
+        }
+
         $alias = 's';
 
         $qb = $this->createQueryBuilder($alias);
@@ -138,6 +147,15 @@ class SubscriptionRepository extends RepositoryBase
         $results =
             $qb->getQuery()
                 ->getResult();
+
+        if (!$this->getEntityManager()
+            ->getFilters()
+            ->isEnabled('soft-deleteable')) {
+
+            $this->getEntityManager()
+                ->getFilters()
+                ->enable('soft-deleteable');
+        }
 
         return new ResultsQueryBuilderComposite($results, $qb);
     }

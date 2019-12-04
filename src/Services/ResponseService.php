@@ -623,7 +623,7 @@ class ResponseService extends FractalResponseService
      */
     public static function customer(
         $entityOrEntities,
-        $customersOrders,
+        $customersOrders = [],
         QueryBuilder $queryBuilder = null,
         array $includes = []
     )

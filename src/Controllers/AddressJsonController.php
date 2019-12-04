@@ -91,22 +91,14 @@ class AddressJsonController extends Controller
     {
         $currentUserId = $this->userProvider->getCurrentUserId();
 
-        if ($request->get('user_id') !== $currentUserId) {
+        if (
+            (!empty($request->get('user_id')) && $request->get('user_id') !== $currentUserId)
+            || !empty($request->get('customer_id'))
+        ) {
             $this->permissionService->canOrThrow($currentUserId, 'pull.addresses');
         }
 
-        if (!empty($request->get('customer_id'))) {
-            // todo: customers
-            $this->permissionService->canOrThrow($currentUserId, 'pull.addresses');
-
-        }
-        else {
-            $user = $this->userProvider->getUserById(
-                $request->get('user_id', $currentUserId)
-            );
-
-            $addressesAndBuilder = $this->addressRepository->indexByRequest($request, $user);
-        }
+        $addressesAndBuilder = $this->addressRepository->indexByRequest($request, $currentUserId);
 
         return ResponseService::address(
             $addressesAndBuilder->getResults(),

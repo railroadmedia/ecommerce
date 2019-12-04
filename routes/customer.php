@@ -10,4 +10,6 @@ Route::group([
     Route::get('/customers', Railroad\Ecommerce\Controllers\CustomerJsonController::class . '@index')
         ->name('customers.index');
 
+    Route::get('/customer/{id}', Railroad\Ecommerce\Controllers\CustomerJsonController::class . '@show')
+        ->name('customer.show');
 });

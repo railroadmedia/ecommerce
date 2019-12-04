@@ -632,6 +632,13 @@ class PaymentMethodJsonController extends Controller
             );
         }
 
+        throw_if(
+            !empty($paymentMethod->getDeletedAt()),
+            new NotAllowedException(
+                'Payment method already soft-deleted'
+            )
+        );
+
         $this->entityManager->remove($paymentMethod);
         $this->entityManager->flush();
 

@@ -54,10 +54,11 @@ class AddressRepository extends RepositoryBase
 
     /**
      * @param Request $request
-     * @param User $user
+     * @param int $currentUserId
+     *
      * @return ResultsQueryBuilderComposite
      */
-    public function indexByRequest(Request $request, User $user)
+    public function indexByRequest(Request $request, $currentUserId)
     {
         $alias = 'a';
 
@@ -67,12 +68,21 @@ class AddressRepository extends RepositoryBase
             ->restrictSoftDeleted($request, $alias)
             ->orderByRequest($request, $alias)
             ->restrictBrandsByRequest($request, $alias)
-            ->select($alias)
-            ->andWhere(
+            ->select($alias);
+
+        if (!empty($request->get('customer_id'))) {
+            $qb->andWhere(
                 $qb->expr()
-                    ->eq('a.user', ':user')
+                    ->eq('IDENTITY(a.customer)', ':customerId')
             )
-            ->setParameter('user', $user);
+            ->setParameter('customerId', $request->get('customer_id'));
+        } else {
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq('a.user', ':userId')
+            )
+            ->setParameter('userId', $request->get('user_id', $currentUserId));
+        }
 
         $results =
             $qb->getQuery()

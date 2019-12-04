@@ -260,3 +260,52 @@ All included entities have values under attributes key, omitted here
   }
 }
 ```
+
+<!--- -------------------------------------------------------------------------------------------------------------- -->
+
+### `{ GET /*/customer/{CUSTOMER ID} }`
+
+Get a customer.
+
+### Permissions
+
+- Must be logged in
+- Must have the 'pull.customers' permission 
+
+### Request Parameters
+
+|Type|Key|Required|Default|Options|Notes|
+|----|---|--------|-------|-------|-----|
+|path|customer id|yes||||
+
+### Request Example
+
+```js   
+$.ajax({
+    url: 'https://www.domain.com' +
+        '/customer/1',
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+```200 OK```
+
+```json
+{
+    "data": {
+        "type": "customer",
+        "id": "1",
+        "attributes": {
+            "brand": "brand",
+            "phone": "(546) 232-5556 x5841",
+            "email": "wilderman.fredy@gmail.com",
+            "note": "Nisi fuga et aperiam rerum et earum repellendus blanditiis. In occaecati assumenda perspiciatis possimus tenetur aut cumque. Ratione numquam earum quos occaecati maxime.",
+            "created_at": "2019-12-04 14:54:14",
+            "updated_at": null
+        }
+    }
+}
+```

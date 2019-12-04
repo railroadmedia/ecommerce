@@ -141,9 +141,17 @@ class FromRequestEcommerceQueryBuilder extends QueryBuilder
             $permissionService->can(auth()->id(), 'show_deleted') &&
             $request->get('view_deleted', false)
         ) {
-            $this->getEntityManager()
-                ->getFilters()
-                ->disable('soft-deleteable');
+            // if the user has 'show_deleted' permission and the request has view_deleted flag true, check entity manager settings
+            if (
+                $this->getEntityManager()
+                    ->getFilters()
+                    ->isEnabled('soft-deleteable')
+            ) {
+                // if the soft delete filter is enabled, toggle it
+                $this->getEntityManager()
+                    ->getFilters()
+                    ->disable('soft-deleteable');
+            }
         } else {
             $this->andWhere(
                 $this->expr()

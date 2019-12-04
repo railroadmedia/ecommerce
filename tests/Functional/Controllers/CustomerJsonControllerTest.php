@@ -236,4 +236,49 @@ class CustomerJsonControllerTest extends EcommerceTestCase
         $this->assertEquals($expected['data'], $decodedResponse['data']);
         $this->assertEquals($expected['included'], $decodedResponse['included']);
     }
+
+    public function test_show_existing()
+    {
+        $customer = $this->fakeCustomer([
+            'updated_at' => null,
+        ]);
+
+        $response = $this->call('GET', '/customer/' . $customer['id']);
+
+        $this->assertEquals(
+            [
+                'data' => [
+                    'type' => 'customer',
+                    'id' => 1,
+                    'attributes' => array_diff_key(
+                        $customer,
+                        ['id' => true]
+                    ),
+                ]
+            ],
+            $response->decodeResponseJson()
+        );
+    }
+
+    public function test_show_not_existing()
+    {
+        $id = $this->faker->numberBetween(1, 1000);
+
+        $response = $this->call('GET', '/customer/' . $id);
+
+        $this->assertEquals(404, $response->getStatusCode());
+
+        // assert not found error
+        $this->assertEquals(
+            [
+                'errors' => [
+                    [
+                        'detail' => 'Customer not found with id: ' . $id,
+                        'title' => 'Not found.',
+                    ]
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+    }
 }

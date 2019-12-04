@@ -195,7 +195,6 @@ class PaymentMethodRepository extends RepositoryBase
         $qb = $this->createQueryBuilder($alias);
 
         $qb->select(['cpm', 'pm', 'cc', 'ppba'])
-            ->restrictSoftDeleted($request, $alias)
             ->join('pm.customerPaymentMethod', 'cpm')
             ->leftJoin('pm.creditCard', 'cc')
             ->leftJoin('pm.paypalBillingAgreement', 'ppba')

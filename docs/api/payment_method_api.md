@@ -14,7 +14,6 @@ List customer payment methods.
 
 - Must be logged in
 - Must have the 'pull.customer.payment.method' permission
-- Must have the 'show_deleted' permission to pull soft-deleted payment methods
 
 ### Request Parameters
 

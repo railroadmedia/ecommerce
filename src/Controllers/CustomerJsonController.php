@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Services\ResponseService;
@@ -70,5 +71,21 @@ class CustomerJsonController extends Controller
                 $customersAndBuilder->getQueryBuilder()
             )
             ->respond(200);
+    }
+
+    public function show($id)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.customers');
+
+        $customer = $this->customerRepository->find($id);
+
+        throw_if(
+            is_null($customer),
+            new NotFoundException(
+                'Customer not found with id: ' . $id
+            )
+        );
+
+        return ResponseService::customer($customer);
     }
 }
