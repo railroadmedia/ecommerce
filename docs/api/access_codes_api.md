@@ -15,22 +15,78 @@ Used to claim an action code for an existing or new user.
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
-|body|access_code|true|||The exact access code without dashes or spaces.|
-|body|email|if not logged in|||Email for the new user to be created.|
-|body|password|if not logged in|||Raw password for the new user to be created.|
-|body|password_confirmation|if not logged in|||Confirm password.|
+|body|access_code|no|||The exact access code without dashes or spaces. If not specified, will concat all code1 . code2 . code3 . code4 . code5 . code6 request params|
+|body|credentials_type|yes||values should be either 'new' or 'existing'||
+|body|user_email|required if credentials_type param is 'existing'||||
+|body|user_password|required if credentials_type param is 'existing'||||
+|body|email|required if credentials_type param is 'new'|||Email for the new user to be created.|
+|body|password|required if credentials_type param is 'new'|||Raw password for the new user to be created.|
+|body|password_confirmation|required if credentials_type param is 'new'|||Confirm password.|
 |query/body|redirect|true|previous url||Where to redirect after the request is processed.|
 
 
 ### Request Example
 
+Create new account with full 24 chars access code
+
 ```html
 <form method="post" action="/ecommerce/access-codes/redeem">
+    <input type="hidden" name="credentials_type" value="new">
+    <input type="hidden" name="redirect" value="/members">
     <input type="text" name="access_code">
     
     <input type="text" name="email">
     <input type="password" name="password">
     <input type="password" name="password_confirmation">
+</form>
+```
+
+### Response Example
+
+Redirect back with \['success' => true\] or redirect to passed in 'redirect' parameter with same message.
+
+### Request Example
+
+Create new account with access code split in six inputs of 4 chars each
+
+```html
+<form method="post" action="/ecommerce/access-codes/redeem">
+    <input type="hidden" name="credentials_type" value="new">
+    <input type="hidden" name="redirect" value="/members">
+    <input type="text" name="code1">
+    <input type="text" name="code2">
+    <input type="text" name="code3">
+    <input type="text" name="code4">
+    <input type="text" name="code5">
+    <input type="text" name="code6">
+
+    <input type="text" name="email">
+    <input type="password" name="password">
+    <input type="password" name="password_confirmation">
+</form>
+```
+
+### Response Example
+
+Redirect back with \['success' => true\] or redirect to passed in 'redirect' parameter with same message.
+
+### Request Example
+
+Use existing account with access code split in six inputs of 4 chars each
+
+```html
+<form method="post" action="/ecommerce/access-codes/redeem">
+    <input type="hidden" name="credentials_type" value="new">
+    <input type="hidden" name="redirect" value="/members">
+    <input type="text" name="code1">
+    <input type="text" name="code2">
+    <input type="text" name="code3">
+    <input type="text" name="code4">
+    <input type="text" name="code5">
+    <input type="text" name="code6">
+
+    <input type="text" name="user_email">
+    <input type="password" name="user_password">
 </form>
 ```
 

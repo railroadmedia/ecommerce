@@ -49,16 +49,30 @@ class AccessCodeController extends Controller
     {
         $user = null;
 
-        if ($request->has('email')) {
-            // create new user
-            $user = $this->userProvider->createUser($request->get('email'), $request->get('password'));
+        if ($request->has('user_email')) {
 
-            auth()->loginUsingId($user->getId(), true);
+            if (
+                $this->userProvider->checkCredentials(
+                    $request->get('user_email'),
+                    $request->get('user_password')
+                )
+            ) {
+
+                $user = $this->userProvider->getUserByEmail($request->get('user_email'));
+
+            } else {
+
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->withErrors(['Invalid credentials.']);
+            }
+
+        } else {
+            $user = $this->userProvider->createUser($request->get('email'), $request->get('password'));
         }
-        else {
-            // use existing user
-            $user = $this->userProvider->getCurrentUser();
-        }
+
+        auth()->loginUsingId($user->getId(), true);
 
         $this->accessCodeService->claim($request->get('access_code'), $user);
 
