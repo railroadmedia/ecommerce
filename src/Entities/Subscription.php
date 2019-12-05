@@ -237,6 +237,7 @@ class Subscription
     public function __construct()
     {
         $this->payments = new ArrayCollection();
+        $this->tax = 0;
     }
 
     /**
