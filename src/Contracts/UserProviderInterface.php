@@ -57,4 +57,12 @@ interface UserProviderInterface
      * @return User|null
      */
     public function getUserByEmail(string $email): ?User;
+
+    /**
+     * @param string $email
+     * @param string $password
+     *
+     * @return bool
+     */
+    public function checkCredentials(string $email, string $password): bool;
 }

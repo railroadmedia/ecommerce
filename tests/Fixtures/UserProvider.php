@@ -169,4 +169,15 @@ class UserProvider implements UserProviderInterface
 
         return null;
     }
+
+    /**
+     * @param string $email
+     * @param string $password
+     *
+     * @return bool
+     */
+    public function checkCredentials(string $email, string $password): bool
+    {
+        return true;
+    }
 }

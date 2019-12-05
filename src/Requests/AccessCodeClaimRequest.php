@@ -70,4 +70,21 @@ class AccessCodeClaimRequest extends FormRequest
             'password' => 'required_if:credentials_type,new|confirmed',
         ];
     }
+
+    /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'access_code.max' => 'The access code is invalid',
+            'access_code.exists' => 'The access code is invalid',
+            'user_email.required_if' => 'The existing user email field is required',
+            'user_password.required_if' => 'The existing user password field is required',
+            'email.required_if' => 'The email field is required',
+            'password.required_if' => 'The password field is required',
+        ];
+    }
 }
