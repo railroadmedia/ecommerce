@@ -12,4 +12,9 @@ Route::group([
 
     Route::get('/customer/{id}', Railroad\Ecommerce\Controllers\CustomerJsonController::class . '@show')
         ->name('customer.show');
+
+    Route::patch('/customer/{discountId}', [
+            'uses' => Railroad\Ecommerce\Controllers\CustomerJsonController::class . '@update',
+        ])
+        ->name('customer.update');
 });

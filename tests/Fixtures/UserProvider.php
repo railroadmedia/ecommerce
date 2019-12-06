@@ -163,7 +163,6 @@ class UserProvider implements UserProviderInterface
                 ->first();
 
         if ($user) {
-            dd($user);
             return new User($user->id, $user->email);
         }
 

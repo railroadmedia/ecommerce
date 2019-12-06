@@ -60,6 +60,8 @@ class CustomerJsonController extends Controller
     )
     {
         $this->customerRepository = $customerRepository;
+        $this->entityManager = $entityManager;
+        $this->jsonApiHydrator = $jsonApiHydrator;
         $this->orderRepository = $orderRepository;
         $this->permissionService = $permissionService;
     }

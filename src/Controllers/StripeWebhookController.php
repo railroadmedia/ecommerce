@@ -59,6 +59,7 @@ class StripeWebhookController extends Controller
             new NotFoundException('Bad JSON body from Stripe!')
         );
 
+        // docs about event: https://stripe.com/docs/api/events/types#event_types-customer.source.updated
         throw_if(
             ($data['type'] != 'customer.source.updated'),
             new NotFoundException(
@@ -66,6 +67,8 @@ class StripeWebhookController extends Controller
             )
         );
 
+        // data.object is a source (e.g., card)
+        // docs about card object: https://stripe.com/docs/api/cards/object
         $creditCards = $this->creditCardRepository->findByExternalId($data['data']['object']['id']);
 
         $expirationDate = Carbon::createFromDate(

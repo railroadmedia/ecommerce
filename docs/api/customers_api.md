@@ -309,3 +309,76 @@ $.ajax({
     }
 }
 ```
+
+<!--- -------------------------------------------------------------------------------------------------------------- -->
+
+### `{ PATCH /*/customer/{CUSTOMER ID} }`
+
+Update an existing customer.
+
+### Permissions
+
+- Must be logged in
+- Must have the 'update.customers' permission.
+
+### Request Parameters
+
+[Notable](request_notable_parameter.md)
+<br>
+
+|Type|Key|Required|Default|Options|Notes|
+|----|---|--------|-------|-------|-----|
+|body|data.type|yes||must be 'customer'||
+|body|data.attributes.note|||||
+
+### Validation Rules
+
+```php
+return [
+    'data.type' => 'in:customer',
+    'data.attributes.note' => 'nullable|string',
+];
+```
+
+### Request Example
+
+```js   
+$.ajax({
+    url: 'https://www.domain.com' +
+        '/ecommerce/customer/3',
+    type: 'patch',
+    data: {
+        data: {
+            type: 'customer',
+            attributes: {
+                note: "In occaecati assumenda perspiciatis possimus",
+            },
+        }
+    }, 
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+```200 OK```
+
+```json
+{
+    "data": {
+        "type": "customer",
+        "id": "3",
+        "attributes": {
+            "brand": "brand",
+            "phone": "(546) 232-5556 x5841",
+            "email": "wilderman.fredy@gmail.com",
+            "note": "In occaecati assumenda perspiciatis possimus",
+            "created_at": "2019-12-04 14:54:14",
+            "updated_at": null
+        }
+    }
+}
+```
+
+<!--- -------------------------------------------------------------------------------------------------------------- -->

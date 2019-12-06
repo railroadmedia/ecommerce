@@ -22,6 +22,7 @@ class CustomerUpdateRequest extends FormRequest
     public function attributes()
     {
         return [
+            'data.type' => 'json data type',
             'data.attributes.note' => 'note',
         ];
     }
@@ -34,6 +35,7 @@ class CustomerUpdateRequest extends FormRequest
     public function rules()
     {
         return [
+            'data.type' => 'in:customer',
             'data.attributes.note' => 'nullable|string',
         ];
     }

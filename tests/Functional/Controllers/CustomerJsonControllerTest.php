@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
+use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -277,6 +278,76 @@ class CustomerJsonControllerTest extends EcommerceTestCase
                         'title' => 'Not found.',
                     ]
                 ],
+            ],
+            $response->decodeResponseJson()
+        );
+    }
+
+    public function test_update_not_existing()
+    {
+        $id = $this->faker->numberBetween(1, 1000);
+
+        $response = $this->call(
+            'PATCH',
+            '/customer/' . $id,
+            [
+                'note' => $this->faker->word,
+            ]
+        );
+
+        // assert not found error
+        $this->assertEquals(
+            [
+                'errors' => [
+                    [
+                        'detail' => 'Update failed, customer not found with id: ' . $id,
+                        'title' => 'Not found.',
+                    ]
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+    }
+
+    public function test_update()
+    {
+        $customer = $this->fakeCustomer([
+            'updated_at' => null,
+        ]);
+
+        $note = $this->faker->word;
+
+        $response = $this->call(
+            'PATCH',
+            '/customer/' . $customer['id'],
+            [
+                
+                'data' => [
+                    'id' => $customer['id'],
+                    'type' => 'customer',
+                    'attributes' => [
+                        'note' => $note
+                    ]
+                ],
+            ]
+        );
+
+        $this->assertEquals(
+            [
+                'data' => [
+                    'type' => 'customer',
+                    'id' => 1,
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $customer,
+                            ['id' => true]
+                        ),
+                        [
+                            'note' => $note,
+                            'updated_at' => Carbon::now()->toDateTimeString(),
+                        ]
+                    )
+                ]
             ],
             $response->decodeResponseJson()
         );

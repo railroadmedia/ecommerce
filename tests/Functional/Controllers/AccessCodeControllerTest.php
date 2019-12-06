@@ -3,14 +3,49 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Auth\AuthManager;
+use Illuminate\Auth\SessionGuard;
+use Illuminate\Contracts\Auth\Factory;
+use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class AccessCodeControllerTest extends EcommerceTestCase
 {
+    use WithoutMiddleware;
+
+    /**
+     * @var MockObject|AuthManager
+     */
+    protected $authManagerMock;
+
+    /**
+     * @var MockObject|SessionGuard
+     */
+    protected $sessionGuardMock;
+
     protected function setUp()
     {
         parent::setUp();
+
+        $this->authManagerMock =
+            $this->getMockBuilder(AuthManager::class)
+                ->disableOriginalConstructor()
+                ->setMethods(['guard'])
+                ->getMock();
+
+        $this->sessionGuardMock =
+            $this->getMockBuilder(SessionGuard::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $this->authManagerMock->method('guard')
+            ->willReturn($this->sessionGuardMock);
+
+        $this->app->instance(Factory::class, $this->authManagerMock);
+
+        $this->sessionGuardMock->method('loginUsingId')
+            ->willReturn(true);
     }
 
     public function test_claim_validation()
@@ -18,13 +53,45 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $response = $this->call('POST', '/access-codes/redeem', []);
 
         $response->assertSessionHasErrors(
-            ['access_code', 'email', 'password']
+            ['access_code', 'credentials_type']
+        );
+    }
+
+    public function test_claim_validation_existing()
+    {
+        $response = $this->call(
+            'POST',
+            '/access-codes/redeem',
+            [
+                'access_code' => $this->faker->shuffleString($this->faker->bothify('???###???###???###???###')),
+                'credentials_type' => 'existing'
+            ]
+        );
+
+        $response->assertSessionHasErrors(
+            ['user_email', 'user_password']
+        );
+    }
+
+    public function test_claim_validation_new()
+    {
+        $response = $this->call(
+            'POST',
+            '/access-codes/redeem',
+            [
+                'access_code' => $this->faker->shuffleString($this->faker->bothify('???###???###???###???###')),
+                'credentials_type' => 'new'
+            ]
+        );
+
+        $response->assertSessionHasErrors(
+            ['email', 'password']
         );
     }
 
     public function test_claim_create_user_product_with_expiration()
     {
-        $userId  = $this->createAndLogInNewUser();
+        $user  = $this->fakeUser();
 
         $product = $this->fakeProduct([
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
@@ -39,7 +106,10 @@ class AccessCodeControllerTest extends EcommerceTestCase
         ]);
 
         $response = $this->call('POST', '/access-codes/redeem', [
-            'access_code' => $accessCode['code']
+            'access_code' => $accessCode['code'],
+            'credentials_type' => 'existing',
+            'user_email' => $user['email'],
+            'user_password' => $this->faker->word,
         ]);
 
         $this->assertEquals(302, $response->getStatusCode());
@@ -51,7 +121,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_user_products',
             [
-                'user_id' => $userId,
+                'user_id' => $user['id'],
                 'product_id' => $product['id'],
                 'expiration_date' => Carbon::now()
                     ->addYear(1)
@@ -66,7 +136,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => true,
-                'claimer_id' => $userId,
+                'claimer_id' => $user['id'],
                 'claimed_on' => Carbon::now()->toDateTimeString()
             ]
         );
@@ -74,7 +144,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_create_user_product_without_expiration()
     {
-        $userId  = $this->createAndLogInNewUser();
+        $user  = $this->fakeUser();
 
         $product = $this->fakeProduct([
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
@@ -89,7 +159,10 @@ class AccessCodeControllerTest extends EcommerceTestCase
         ]);
 
         $response = $this->call('POST', '/access-codes/redeem', [
-            'access_code' => $accessCode['code']
+            'access_code' => $accessCode['code'],
+            'credentials_type' => 'existing',
+            'user_email' => $user['email'],
+            'user_password' => $this->faker->word,
         ]);
 
         $this->assertEquals(302, $response->getStatusCode());
@@ -101,7 +174,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_user_products',
             [
-                'user_id' => $userId,
+                'user_id' => $user['id'],
                 'product_id' => $product['id'],
                 'expiration_date' => null
             ]
@@ -113,7 +186,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => true,
-                'claimer_id' => $userId,
+                'claimer_id' => $user['id'],
                 'claimed_on' => Carbon::now()->toDateTimeString()
             ]
         );
@@ -121,7 +194,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_extend_active_subscription()
     {
-        $userId  = $this->createAndLogInNewUser();
+        $user  = $this->fakeUser();
 
         $product = $this->fakeProduct([
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
@@ -132,7 +205,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
             'payment_method_id' => null,
-            'user_id' => $userId,
+            'user_id' => $user['id'],
             'paid_until' => Carbon::now()
                 ->addMonths(2)
                 ->startOfDay()
@@ -149,7 +222,10 @@ class AccessCodeControllerTest extends EcommerceTestCase
         ]);
 
         $response = $this->call('POST', '/access-codes/redeem', [
-            'access_code' => $accessCode['code']
+            'access_code' => $accessCode['code'],
+            'credentials_type' => 'existing',
+            'user_email' => $user['email'],
+            'user_password' => $this->faker->word,
         ]);
 
         $this->assertEquals(302, $response->getStatusCode());
@@ -161,7 +237,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',
             [
-                'user_id' => $userId,
+                'user_id' => $user['id'],
                 'product_id' => $product['id'],
                 'paid_until' => Carbon::now()
                     ->addYear(1)
@@ -177,7 +253,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => true,
-                'claimer_id' => $userId,
+                'claimer_id' => $user['id'],
                 'claimed_on' => Carbon::now()->toDateTimeString()
             ]
         );
@@ -195,7 +271,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_create_user_product_expired_subscription()
     {
-        $userId  = $this->createAndLogInNewUser();
+        $user  = $this->fakeUser();
 
         $product = $this->fakeProduct([
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
@@ -206,7 +282,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $subscription = $this->fakeSubscription([
             'product_id' => $product['id'],
             'payment_method_id' => null,
-            'user_id' => $userId,
+            'user_id' => $user['id'],
             'paid_until' => Carbon::now()
                 ->subMonths(2)
                 ->startOfDay()
@@ -223,7 +299,10 @@ class AccessCodeControllerTest extends EcommerceTestCase
         ]);
 
         $response = $this->call('POST', '/access-codes/redeem', [
-            'access_code' => $accessCode['code']
+            'access_code' => $accessCode['code'],
+            'credentials_type' => 'existing',
+            'user_email' => $user['email'],
+            'user_password' => $this->faker->word,
         ]);
 
         $this->assertEquals(302, $response->getStatusCode());
@@ -235,7 +314,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_user_products',
             [
-                'user_id' => $userId,
+                'user_id' => $user['id'],
                 'product_id' => $product['id'],
                 'expiration_date' => Carbon::now()
                     ->addYear(1)
@@ -250,7 +329,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
             [
                 'id' => $accessCode['id'],
                 'is_claimed' => true,
-                'claimer_id' => $userId,
+                'claimer_id' => $user['id'],
                 'claimed_on' => Carbon::now()->toDateTimeString()
             ]
         );

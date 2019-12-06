@@ -240,6 +240,7 @@ return [
             'pull.shipping.options',
 
             'pull.customers',
+            'update.customers',
 
             'update.payment.method',
             'delete.payment.method',
