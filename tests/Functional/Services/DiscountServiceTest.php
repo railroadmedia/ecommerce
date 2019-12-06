@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Services;
 use Carbon\Carbon;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
@@ -18,11 +19,17 @@ class DiscountServiceTest extends EcommerceTestCase
      */
     protected $session;
 
+    /**
+     * @var $productRepository ProductRepository
+     */
+    protected $productRepository;
+
     public function setUp()
     {
         parent::setUp();
 
         $this->session = $this->app->make(Store::class);
+        $this->productRepository = $this->app->make(ProductRepository::class);
     }
 
     public function test_get_applicable_discounts_names()
@@ -1460,7 +1467,7 @@ class DiscountServiceTest extends EcommerceTestCase
 
         $cartItemDiscountAmount = $discountService->getItemDiscountedAmount(
             $cart,
-            $product['sku'],
+            $this->productRepository->findProduct($product['id']),
             $totalDueInItems,
             $totalDueInShipping
         );
