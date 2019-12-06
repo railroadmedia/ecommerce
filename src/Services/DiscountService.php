@@ -365,7 +365,7 @@ class DiscountService
 
     /**
      * @param Cart $cart
-     * @param string $itemSku
+     * @param Product $product
      * @param float $totalDueInItems
      * @param float $totalDueInShipping
      *
@@ -376,7 +376,7 @@ class DiscountService
      */
     public function getItemDiscountedAmount(
         Cart $cart,
-        string $itemSku,
+        Product $product,
         float $totalDueInItems,
         float $totalDueInShipping
     ): float
@@ -387,8 +387,6 @@ class DiscountService
             $totalDueInItems,
             $totalDueInShipping
         );
-
-        $product = $this->productRepository->bySku($itemSku);
 
         /** @var CartItem $productCartItem */
         $productCartItem = $cart->getItemBySku($product->getSku());

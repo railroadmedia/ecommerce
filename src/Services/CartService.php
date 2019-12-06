@@ -342,7 +342,7 @@ class CartService
 
                 $discountAmount = $this->discountService->getItemDiscountedAmount(
                     $this->getCart(),
-                    $product->getSku(),
+                    $product,
                     $totalItemCosts,
                     $totalShippingCosts
                 );
@@ -743,7 +743,7 @@ class CartService
                     round(
                         ($product->getPrice() * $cartItem->getQuantity()) - $this->discountService->getItemDiscountedAmount(
                             $this->cart,
-                            $cartItem->getSku(),
+                            $product,
                             $totalItemCostDue,
                             $shippingDue
                         ),

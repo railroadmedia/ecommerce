@@ -9,8 +9,8 @@ use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Cart;
-use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\QueryBuilders\FromRequestEcommerceQueryBuilder;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 
 /**
@@ -20,6 +20,11 @@ use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 class ProductRepository extends RepositoryBase
 {
     use UseFormRequestQueryBuilder;
+
+    /**
+     * @var array
+     */
+    private $cache = [];
 
     /**
      * CreditCardRepository constructor.
@@ -76,9 +81,9 @@ class ProductRepository extends RepositoryBase
         $qb = $this->createQueryBuilder($alias);
 
         $qb->where(
-                $qb->expr()
-                    ->in('p.active', ':activity')
-            )
+            $qb->expr()
+                ->in('p.active', ':activity')
+        )
             ->andWhere(
                 $qb->expr()
                     ->eq('p.id', ':id')
@@ -86,7 +91,8 @@ class ProductRepository extends RepositoryBase
             ->setParameter('activity', $activity)
             ->setParameter('id', $productId);
 
-        return $qb->getQuery()->getOneOrNullResult();
+        return $qb->getQuery()
+            ->getOneOrNullResult();
     }
 
     /**
@@ -96,6 +102,12 @@ class ProductRepository extends RepositoryBase
      */
     public function all()
     {
+        $key = md5(get_class() . __FUNCTION__ . json_encode(func_get_args()));
+
+        if (isset($this->cache[$key])) {
+            return $this->cache[$key];
+        }
+
         $qb = $this->entityManager->createQueryBuilder();
 
         $q =
@@ -105,7 +117,9 @@ class ProductRepository extends RepositoryBase
                 ->setQueryCacheDriver($this->arrayCache)
                 ->setResultCacheDriver($this->arrayCache);
 
-        return $q->getResult();
+        $this->cache[$key] = $q->getResult();
+
+        return $this->cache[$key];
     }
 
     /**
@@ -117,6 +131,12 @@ class ProductRepository extends RepositoryBase
      */
     public function bySkus(array $skus)
     {
+        $key = md5(get_class() . __FUNCTION__ . json_encode(func_get_args()));
+
+        if (isset($this->cache[$key])) {
+            return $this->cache[$key];
+        }
+
         $qb = $this->entityManager->createQueryBuilder();
 
         $q =
@@ -131,7 +151,9 @@ class ProductRepository extends RepositoryBase
                 ->setQueryCacheDriver($this->arrayCache)
                 ->setResultCacheDriver($this->arrayCache);
 
-        return $q->getResult();
+        $this->cache[$key] = $q->getResult();
+
+        return $this->cache[$key];
     }
 
     /**
