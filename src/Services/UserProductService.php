@@ -157,6 +157,7 @@ class UserProductService
 
         return $qb->getQuery()
             ->setResultCacheDriver($this->arrayCache)
+            ->setQueryCacheDriver($this->arrayCache)
             ->getResult();
     }
 
@@ -179,6 +180,7 @@ class UserProductService
 
         return $qb->getQuery()
             ->setResultCacheDriver($this->arrayCache)
+            ->setQueryCacheDriver($this->arrayCache)
             ->getResult();
     }
 

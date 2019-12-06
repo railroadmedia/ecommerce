@@ -72,7 +72,7 @@ class SubscriptionRepository extends RepositoryBase
             ->leftJoin('s.appleReceipt', 'r')
             ->where(
                 $qb->expr()
-                    ->lte('s.appleExpirationDate', ':now')
+                    ->lte('s.appleExpirationDate', 'CURRENT_TIMESTAMP()')
             )
             ->andWhere(
                 $qb->expr()
@@ -90,7 +90,6 @@ class SubscriptionRepository extends RepositoryBase
         /** @var $q Query */
         $q = $qb->getQuery();
 
-        $q->setParameter('now', Carbon::now());
         $q->setParameter('appleSubscription', Subscription::TYPE_APPLE_SUBSCRIPTION);
         $q->setParameter('active', true);
 

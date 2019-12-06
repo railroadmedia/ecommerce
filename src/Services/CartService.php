@@ -717,9 +717,11 @@ class CartService
             $this->discountService->getApplicableDiscountsNames($this->cart, $totalItemCostDue, $shippingDue) ?? [];
 
         $items = [];
+        $productsBySku = $this->productRepository->bySkus($this->cart->listSkus());
+        $productsBySku = key_array_of_entities_by($productsBySku, 'getSku');
 
         foreach ($this->cart->getItems() as $cartItem) {
-            $product = $this->productRepository->bySku($cartItem->getSku());
+            $product = $productsBySku[$cartItem->getSku()];
 
             if (empty($product)) {
                 continue;

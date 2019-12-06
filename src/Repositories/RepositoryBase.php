@@ -113,6 +113,7 @@ class RepositoryBase
                 ->where('a.id = :id')
                 ->getQuery()
                 ->setParameter('id', $id)
+                ->setQueryCacheDriver($this->arrayCache)
                 ->setResultCacheDriver($this->arrayCache);
 
         return $q->getResult()[0] ?? null;

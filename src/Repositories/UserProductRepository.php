@@ -174,7 +174,7 @@ class UserProductRepository extends RepositoryBase
                 $qb->expr()
                     ->orX(
                         $qb->expr()
-                            ->gte('up.expirationDate', ':now'),
+                            ->gte('up.expirationDate', 'CURRENT_TIMESTAMP()'),
                         $qb->expr()
                             ->isNull('up.expirationDate')
                     )
@@ -185,7 +185,6 @@ class UserProductRepository extends RepositoryBase
             )
             ->setParameter('user', $user)
             ->setParameter('products', $discountCriteria->getProducts())
-            ->setParameter('now', Carbon::now())
             ->setParameter('min', (integer)$discountCriteria->getMin())
             ->setParameter('max', !empty($maxOverride) ? $maxOverride : (integer)$discountCriteria->getMax());
 

@@ -102,6 +102,7 @@ class ProductRepository extends RepositoryBase
             $qb->select('p')
                 ->from(Product::class, 'p')
                 ->getQuery()
+                ->setQueryCacheDriver($this->arrayCache)
                 ->setResultCacheDriver($this->arrayCache);
 
         return $q->getResult();
@@ -127,6 +128,7 @@ class ProductRepository extends RepositoryBase
                 )
                 ->getQuery()
                 ->setParameter('skus', $skus)
+                ->setQueryCacheDriver($this->arrayCache)
                 ->setResultCacheDriver($this->arrayCache);
 
         return $q->getResult();
@@ -174,6 +176,7 @@ class ProductRepository extends RepositoryBase
                 )
                 ->getQuery()
                 ->setResultCacheDriver($this->arrayCache)
+                ->setQueryCacheDriver($this->arrayCache)
                 ->setParameter('ids', array_keys($productIds));
 
         return $q->getResult();

@@ -51,10 +51,9 @@ class DiscountRepository extends RepositoryBase
                         $qb->expr()
                             ->isNull($alias . '.expirationDate'),
                         $qb->expr()
-                            ->gte($alias . '.expirationDate', ':now')
+                            ->gte($alias . '.expirationDate', 'CURRENT_TIMESTAMP()')
                     )
-            )
-            ->setParameter('now', Carbon::now());
+            );
 
         $results =
             $qb->getQuery()
@@ -78,6 +77,7 @@ class DiscountRepository extends RepositoryBase
             ->from(Discount::class, 'd')
             ->leftJoin('d.product', 'p')
             ->leftJoin('d.discountCriterias', 'dc')
+            ->leftJoin('dc.products', 'dcp')
             ->andWhere(
                 $qb->expr()
                     ->eq('d.id', ':id')
@@ -86,6 +86,7 @@ class DiscountRepository extends RepositoryBase
 
         return $qb->getQuery()
             ->setResultCacheDriver($this->arrayCache)
+            ->setQueryCacheDriver($this->arrayCache)
             ->getOneOrNullResult();
     }
 
@@ -99,9 +100,11 @@ class DiscountRepository extends RepositoryBase
     {
         $qb = $this->entityManager->createQueryBuilder();
 
-        $qb->select(['d', 'dc'])
+        $qb->select(['d', 'dc', 'p', 'dcp'])
             ->from(Discount::class, 'd')
+            ->leftJoin('d.product', 'p')
             ->leftJoin('d.discountCriterias', 'dc')
+            ->leftJoin('dc.products', 'dcp')
             ->where(
                 $qb->expr()
                     ->eq('d.active', ':active')
@@ -112,14 +115,16 @@ class DiscountRepository extends RepositoryBase
                         $qb->expr()
                             ->isNull('d.expirationDate'),
                         $qb->expr()
-                            ->gte('d.expirationDate', ':now')
+                            ->gte('d.expirationDate', 'CURRENT_TIMESTAMP()')
                     )
             )
-            ->setParameter('active', true)
-            ->setParameter('now', Carbon::now());
+            ->setParameter('active', true);
 
         return $qb->getQuery()
             ->setResultCacheDriver($this->arrayCache)
+            ->setQueryCacheDriver($this->arrayCache)
+            ->useQueryCache(true)
+            ->useResultCache(true)
             ->getResult();
     }
 
@@ -133,9 +138,11 @@ class DiscountRepository extends RepositoryBase
     {
         $qb = $this->entityManager->createQueryBuilder();
 
-        $qb->select(['d', 'dc'])
+        $qb->select(['d', 'dc', 'p'])
             ->from(Discount::class, 'd')
             ->leftJoin('d.discountCriterias', 'dc')
+            ->leftJoin('d.product', 'p')
+            ->leftJoin('dc.products', 'dcp')
             ->where(
                 $qb->expr()
                     ->eq('d.active', ':active')
@@ -150,11 +157,10 @@ class DiscountRepository extends RepositoryBase
                         $qb->expr()
                             ->isNull('d.expirationDate'),
                         $qb->expr()
-                            ->gte('d.expirationDate', ':now')
+                            ->gte('d.expirationDate', 'CURRENT_TIMESTAMP()')
                     )
             )
             ->setParameter('active', true)
-            ->setParameter('now', Carbon::now())
             ->setParameter(
                 'types',
                 [
@@ -166,6 +172,7 @@ class DiscountRepository extends RepositoryBase
 
         return $qb->getQuery()
             ->setResultCacheDriver($this->arrayCache)
+            ->setQueryCacheDriver($this->arrayCache)
             ->getResult();
     }
 
@@ -179,9 +186,11 @@ class DiscountRepository extends RepositoryBase
     {
         $qb = $this->entityManager->createQueryBuilder();
 
-        $qb->select(['d', 'dc'])
+        $qb->select(['d', 'dc', 'p'])
             ->from(Discount::class, 'd')
+            ->leftJoin('d.product', 'p')
             ->leftJoin('d.discountCriterias', 'dc')
+            ->leftJoin('dc.products', 'dcp')
             ->where(
                 $qb->expr()
                     ->eq('d.active', ':active')
@@ -196,11 +205,10 @@ class DiscountRepository extends RepositoryBase
                         $qb->expr()
                             ->isNull('d.expirationDate'),
                         $qb->expr()
-                            ->gte('d.expirationDate', ':now')
+                            ->gte('d.expirationDate', 'CURRENT_TIMESTAMP()')
                     )
             )
             ->setParameter('active', true)
-            ->setParameter('now', Carbon::now())
             ->setParameter(
                 'types',
                 [
@@ -213,6 +221,7 @@ class DiscountRepository extends RepositoryBase
 
         return $qb->getQuery()
             ->setResultCacheDriver($this->arrayCache)
+            ->setQueryCacheDriver($this->arrayCache)
             ->getResult();
     }
 }

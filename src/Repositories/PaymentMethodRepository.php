@@ -48,7 +48,8 @@ class PaymentMethodRepository extends RepositoryBase
                 ->where('pm.id = :id')
                 ->getQuery()
                 ->setParameter('id', $id)
-                ->setResultCacheDriver($this->arrayCache);
+                ->setResultCacheDriver($this->arrayCache)
+                ->setQueryCacheDriver($this->arrayCache);
 
         return $q->getOneOrNullResult();
     }
