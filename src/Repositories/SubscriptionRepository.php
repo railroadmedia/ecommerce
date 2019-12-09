@@ -119,13 +119,7 @@ class SubscriptionRepository extends RepositoryBase
         $qb->paginateByRequest($request)
             ->restrictSoftDeleted($request, $alias)
             ->orderByRequest($request, $alias)
-            ->restrictBrandsByRequest($request, $alias)
-            ->select(['s', 'p', 'o', 'pm', 'oi', 'oip'])
-            ->leftJoin('s.product', 'p')
-            ->leftJoin('s.order', 'o')
-            ->leftJoin('o.orderItems', 'oi')
-            ->leftJoin('oi.product', 'oip')
-            ->leftJoin('s.paymentMethod', 'pm');
+            ->restrictBrandsByRequest($request, $alias);
 
         if ($request->has('user_id')) {
 
@@ -133,18 +127,41 @@ class SubscriptionRepository extends RepositoryBase
 
             $qb->andWhere(
                 $qb->expr()
-                    ->eq('s' . '.user', ':user')
+                    ->eq($alias . '.user', ':user')
             )
                 ->setParameter('user', $user);
         }
 
         if ($request->has('customer_id')) {
-            $qb->andWhere('IDENTITY(s.customer) = :customerId')
+            $qb->andWhere('IDENTITY(' . $alias . '.customer) = :customerId')
                 ->setParameter('customerId', $request->get('customer_id'));
         }
 
+        $subscriptionsPage = $qb
+                ->getQuery()
+                ->getResult();
+
+        $subscriptionsIds = [];
+
+        foreach ($subscriptionsPage as $subscription) {
+            $subscriptionsIds[] = $subscription->getId();
+        }
+
+        // 1st query, made with $qb, only pulls subscriptions, to be able to paginate them correctly
+        // this query may yield more results than the request limit, due to the 'one to many' relation between orders and order items, loaded by fetch join
+        $decoratedQb = $this->createQueryBuilder($alias);
+
+        $decoratedQb->orderByRequest($request, $alias)
+            ->select(['s', 'p', 'o', 'pm', 'oi', 'oip'])
+            ->leftJoin('s.product', 'p')
+            ->leftJoin('s.order', 'o')
+            ->leftJoin('o.orderItems', 'oi')
+            ->leftJoin('oi.product', 'oip')
+            ->leftJoin('s.paymentMethod', 'pm')
+            ->where($decoratedQb->expr()->in('s.id', $subscriptionsIds));
+
         $results =
-            $qb->getQuery()
+            $decoratedQb->getQuery()
                 ->getResult();
 
         if (!$this->getEntityManager()

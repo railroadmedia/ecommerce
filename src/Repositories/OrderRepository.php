@@ -87,12 +87,7 @@ class OrderRepository extends RepositoryBase
 
         $qb->paginateByRequest($request)
             ->restrictSoftDeleted($request, $alias)
-            ->orderByRequest($request, $alias)
-            ->select(['o', 'oi', 'ba', 'sa', 'p'])
-            ->leftJoin('o.orderItems', 'oi')
-            ->leftJoin('oi.product', 'p')
-            ->leftJoin('o.billingAddress', 'ba')
-            ->leftJoin('o.shippingAddress', 'sa');
+            ->orderByRequest($request, $alias);
 
         if ($request->has('start-date')) {
             $startDate = Carbon::parse($request->get('start-date', Carbon::now()->subMonth()->toDateTimeString()));
@@ -121,8 +116,30 @@ class OrderRepository extends RepositoryBase
                 ->setParameter('customerId', $request->get('customer_id'));
         }
 
+        $ordersPage = $qb
+                ->getQuery()
+                ->getResult();
+
+        $ordersIds = [];
+
+        foreach ($ordersPage as $order) {
+            $ordersIds[] = $order->getId();
+        }
+
+        // 1st query, made with $qb, only pulls orders, to be able to paginate them correctly
+        // this query may yield more results than the request limit, due to the 'one to many' relation between orders and order items
+        $decoratedQb = $this->createQueryBuilder($alias);
+
+        $decoratedQb->orderByRequest($request, $alias)
+            ->select(['o', 'oi', 'ba', 'sa', 'p'])
+            ->leftJoin('o.orderItems', 'oi')
+            ->leftJoin('oi.product', 'p')
+            ->leftJoin('o.billingAddress', 'ba')
+            ->leftJoin('o.shippingAddress', 'sa')
+            ->where($decoratedQb->expr()->in('o.id', $ordersIds));
+
         $results =
-            $qb->getQuery()
+            $decoratedQb->getQuery()
                 ->getResult();
 
         return new ResultsQueryBuilderComposite($results, $qb);
