@@ -453,7 +453,7 @@ class GooglePlayStoreService
         $intervalCount = $purchasedProduct ? $purchasedProduct->getSubscriptionIntervalCount() : 1;
 
         $subscription->setBrand(config('ecommerce.brand'));
-        $subscription->setType(Subscription::TYPE_SUBSCRIPTION);
+        $subscription->setType(Subscription::TYPE_GOOGLE_SUBSCRIPTION);
         $subscription->setUser($order->getUser());
         $subscription->setOrder($order);
         $subscription->setProduct($purchasedProduct);
