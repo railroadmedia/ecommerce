@@ -305,6 +305,7 @@ return [
 
     // redirects
     'post_purchase_redirect_digital_items' => '/members',
+    'post_purchase_redirect_customer_order' => '/thankyou',
 
     // constants
     'billing_address' => 'billing',

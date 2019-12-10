@@ -126,6 +126,10 @@ class OrderRepository extends RepositoryBase
             $ordersIds[] = $order->getId();
         }
 
+        if (empty($ordersIds)) {
+            return new ResultsQueryBuilderComposite([], $qb);
+        }
+
         // 1st query, made with $qb, only pulls orders, to be able to paginate them correctly
         // this query may yield more results than the request limit, due to the 'one to many' relation between orders and order items
         $decoratedQb = $this->createQueryBuilder($alias);

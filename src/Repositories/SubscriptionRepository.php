@@ -147,6 +147,10 @@ class SubscriptionRepository extends RepositoryBase
             $subscriptionsIds[] = $subscription->getId();
         }
 
+        if (empty($subscriptionsIds)) {
+            return new ResultsQueryBuilderComposite([], $qb);
+        }
+
         // 1st query, made with $qb, only pulls subscriptions, to be able to paginate them correctly
         // this query may yield more results than the request limit, due to the 'one to many' relation between orders and order items, loaded by fetch join
         $decoratedQb = $this->createQueryBuilder($alias);

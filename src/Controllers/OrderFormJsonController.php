@@ -122,8 +122,13 @@ class OrderFormJsonController extends Controller
         $result = $this->orderFormService->processOrderFormSubmit($request);
 
         if (isset($result['order'])) {
-            return ResponseService::order($result['order'])
-                ->addMeta(['redirect' => config('ecommerce.post_purchase_redirect_digital_items')]);
+            if (!empty($result['order']->getCustomer())) {
+                return ResponseService::order($result['order'])
+                    ->addMeta(['redirect' => config('ecommerce.post_purchase_redirect_customer_order')]);
+            } else {
+                return ResponseService::order($result['order'])
+                    ->addMeta(['redirect' => config('ecommerce.post_purchase_redirect_digital_items')]);
+            }
         }
         elseif (isset($result['errors'])) {
             $errors = [];
