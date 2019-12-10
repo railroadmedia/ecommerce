@@ -150,7 +150,7 @@ class AccessCodeJsonController extends Controller
             )
         );
 
-        $accessCode = $this->accessCodeService->claim($request->get('access_code'), $user);
+        $accessCode = $this->accessCodeService->claim($request->get('access_code'), $user, $request->get('context'));
 
         return ResponseService::accessCode($accessCode)
             ->respond(200);

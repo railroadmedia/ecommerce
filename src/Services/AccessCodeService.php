@@ -10,6 +10,7 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionAccessCode;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserProduct;
+use Railroad\Ecommerce\Events\AccessCodeClaimed;
 use Railroad\Ecommerce\Events\UserProducts\UserProductCreated;
 use Railroad\Ecommerce\Exceptions\UnprocessableEntityException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -85,11 +86,12 @@ class AccessCodeService
      * @param string $rawAccessCode
      * @param User $user
      *
+     * @param null $context
      * @return AccessCode
      *
      * @throws Throwable
      */
-    public function claim(string $rawAccessCode, User $user): AccessCode
+    public function claim(string $rawAccessCode, User $user, $context = null): AccessCode
     {
         $accessCode = $this->accessCodeRepository->findOneBy(['code' => $rawAccessCode]);
 
@@ -232,6 +234,8 @@ class AccessCodeService
 
         $this->entityManager->persist($accessCode);
         $this->entityManager->flush();
+
+        event(new AccessCodeClaimed($accessCode, $user, $context));
 
         return $accessCode;
     }

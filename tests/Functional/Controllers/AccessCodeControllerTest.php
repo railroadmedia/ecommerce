@@ -7,7 +7,9 @@ use Illuminate\Auth\AuthManager;
 use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
+use Illuminate\Support\Facades\Event;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Events\AccessCodeClaimed;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class AccessCodeControllerTest extends EcommerceTestCase
@@ -142,6 +144,64 @@ class AccessCodeControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_claim_create_user_product_with_expiration_with_context_event()
+    {
+        $user  = $this->fakeUser();
+        $context = $this->faker->word;
+
+        $product = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+            'subscription_interval_count' => 1,
+        ]);
+
+        $accessCode = $this->fakeAccessCode([
+            'product_ids' => [$product['id']],
+            'is_claimed' => 0,
+            'claimed_on' => null
+        ]);
+
+        $this->expectsEvents([AccessCodeClaimed::class]);
+
+        $response = $this->call('POST', '/access-codes/redeem', [
+            'access_code' => $accessCode['code'],
+            'credentials_type' => 'existing',
+            'user_email' => $user['email'],
+            'user_password' => $this->faker->word,
+            'context' => $context,
+        ]);
+
+        $this->assertEquals(302, $response->getStatusCode());
+
+        // assert the session has the success message
+        $response->assertSessionHas('success', true);
+
+        // assert the user product data was saved in the db
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $user['id'],
+                'product_id' => $product['id'],
+                'expiration_date' => Carbon::now()
+                    ->addYear(1)
+                    ->startOfDay()
+                    ->toDateTimeString()
+            ]
+        );
+
+        // assert access code was set as claimed
+        $this->assertDatabaseHas(
+            'ecommerce_access_codes',
+            [
+                'id' => $accessCode['id'],
+                'is_claimed' => true,
+                'claimer_id' => $user['id'],
+                'claimed_on' => Carbon::now()->toDateTimeString()
+            ]
+        );
+    }
+
+
     public function test_claim_create_user_product_without_expiration()
     {
         $user  = $this->fakeUser();
@@ -157,6 +217,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'is_claimed' => 0,
             'claimed_on' => null
         ]);
+
+        $this->expectsEvents([AccessCodeClaimed::class]);
 
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],
@@ -220,6 +282,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'is_claimed' => 0,
             'claimed_on' => null
         ]);
+
+        $this->expectsEvents([AccessCodeClaimed::class]);
 
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],
@@ -297,6 +361,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'is_claimed' => 0,
             'claimed_on' => null
         ]);
+
+        $this->expectsEvents([AccessCodeClaimed::class]);
 
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],

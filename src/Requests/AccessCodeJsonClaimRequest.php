@@ -28,6 +28,7 @@ class AccessCodeJsonClaimRequest extends FormRequest
                 'ecommerce_access_codes' .
                 ',code,is_claimed,0',
             'claim_for_user_id' => 'required|integer',
+            'context' => 'string|nullable',
         ];
     }
 }

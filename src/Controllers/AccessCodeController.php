@@ -74,7 +74,7 @@ class AccessCodeController extends Controller
 
         auth()->loginUsingId($user->getId(), true);
 
-        $this->accessCodeService->claim($request->get('access_code'), $user);
+        $this->accessCodeService->claim($request->get('access_code'), $user, $request->get('context'));
 
         $message = ['success' => true];
 
