@@ -292,8 +292,8 @@ class Faker extends Generator
                 'user_id' => $this->randomNumber(),
                 'customer_id' => null,
                 'brand' => config('ecommerce.brand'),
-                'shipping_address_id' => $this->randomNumber(),
-                'billing_address_id' => $this->randomNumber(),
+                'shipping_address_id' => null,
+                'billing_address_id' => null,
                 'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),

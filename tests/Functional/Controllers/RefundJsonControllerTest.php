@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
-use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Services\CurrencyService;
@@ -65,7 +64,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $gateway = $this->faker->randomElement(
             array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
-        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $refund = new \stdClass();
         $refund->id = $this->faker->word;
         $this->stripeExternalHelperMock->method('createRefund')
@@ -262,7 +260,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $gateway = $this->faker->randomElement(
             array_keys(config('ecommerce.payment_gateways')['paypal'])
         );
-        $methodType = PaymentMethod::TYPE_PAYPAL;
         $refundId = $this->faker->word;
         $this->paypalExternalHelperMock->method('createTransactionRefund')
             ->willReturn($refundId);
@@ -276,7 +273,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
 
         $paymentMethod = $this->fakePaymentMethod([
             'paypal_billing_agreement_id' => $paypalBillingAgreement['id'],
-            'method_type' => $methodType,
             'billing_address_id' => $address['id']
         ]);
 
@@ -459,7 +455,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $gateway = $this->faker->randomElement(
             array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
-        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $refund = new \stdClass();
         $refund->id = $this->faker->word;
         $this->stripeExternalHelperMock->method('createRefund')
@@ -706,7 +701,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
         $gateway = $this->faker->randomElement(
             array_keys(config('ecommerce.payment_gateways')['stripe'])
         );
-        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
         $refund = new \stdClass();
         $refund->id = $this->faker->word;
         $this->stripeExternalHelperMock->method('createRefund')

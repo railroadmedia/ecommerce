@@ -184,7 +184,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'data' => [
                     'type' => 'paymentMethod',
                     'attributes' => [
-                        'method_type' => $payload['method_type'],
                         'currency' => $currency,
                         'created_at' => Carbon::now()->toDateTimeString()
                     ],
@@ -349,7 +348,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'data' => [
                     'type' => 'paymentMethod',
                     'attributes' => [
-                        'method_type' => $payload['method_type'],
                         'currency' => $currency,
                         'created_at' => Carbon::now()->toDateTimeString()
                     ],
@@ -2195,8 +2193,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                         ]
                     ),
                     [
-                        'method_id' => $creditCard['id'],
-                        'method_type' => 'credit_card',
                         'updated_at' => null,
                     ]
                 ),
@@ -2295,8 +2291,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                         ]
                     ),
                     [
-                        'method_id' => $creditCard['id'],
-                        'method_type' => 'credit_card',
                         'updated_at' => null,
                     ]
                 ),
@@ -2352,8 +2346,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     ]
                 ),
                 [
-                    'method_id' => $otherCreditCard['id'],
-                    'method_type' => 'credit_card',
                     'updated_at' => null,
                 ]
             ),

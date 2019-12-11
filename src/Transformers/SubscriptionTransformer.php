@@ -79,20 +79,11 @@ class SubscriptionTransformer extends TransformerAbstract
 
     public function includeProduct(Subscription $subscription)
     {
-        if ($subscription->getProduct() instanceof Proxy) {
-            return $this->item(
-                $subscription->getProduct(),
-                new EntityReferenceTransformer(),
-                'product'
-            );
-        }
-        else {
-            return $this->item(
-                $subscription->getProduct(),
-                new ProductTransformer(),
-                'product'
-            );
-        }
+        return $this->item(
+            $subscription->getProduct(),
+            new ProductTransformer(),
+            'product'
+        );
     }
 
     public function includeUser(Subscription $subscription)
@@ -128,38 +119,20 @@ class SubscriptionTransformer extends TransformerAbstract
 
     public function includeOrder(Subscription $subscription)
     {
-        if ($subscription->getOrder() instanceof Proxy) {
-            return $this->item(
-                $subscription->getOrder(),
-                new EntityReferenceTransformer(),
-                'order'
-            );
-        }
-        else {
-            return $this->item(
-                $subscription->getOrder(),
-                new OrderTransformer(),
-                'order'
-            );
-        }
+        return $this->item(
+            $subscription->getOrder(),
+            new OrderTransformer(),
+            'order'
+        );
     }
 
     public function includePaymentMethod(Subscription $subscription)
     {
-        if ($subscription->getPaymentMethod() instanceof Proxy) {
-            return $this->item(
-                $subscription->getPaymentMethod(),
-                new EntityReferenceTransformer(),
-                'paymentMethod'
-            );
-        }
-        else {
-            return $this->item(
-                $subscription->getPaymentMethod(),
-                new PaymentMethodTransformer(),
-                'paymentMethod'
-            );
-        }
+        return $this->item(
+            $subscription->getPaymentMethod(),
+            new PaymentMethodTransformer(),
+            'paymentMethod'
+        );
     }
 
     public function includeFailedPayment(Subscription $subscription)

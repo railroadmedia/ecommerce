@@ -18,6 +18,8 @@ class AccessCodeTransformer extends TransformerAbstract
 
     public function transform(AccessCode $accessCode)
     {
+        $this->defaultIncludes = [];
+
         if ($accessCode->getClaimer()) {
             $this->defaultIncludes[] = 'claimer';
         }

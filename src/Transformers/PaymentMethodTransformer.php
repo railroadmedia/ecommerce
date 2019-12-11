@@ -23,9 +23,6 @@ class PaymentMethodTransformer extends TransformerAbstract
 
         return [
             'id' => $paymentMethod->getId(),
-            'method_id' => $paymentMethod->getMethod()
-                ->getId(),
-            'method_type' => $paymentMethod->getMethodType(),
             'currency' => $paymentMethod->getCurrency(),
             'note' => $paymentMethod->getNote(),
             'deleted_at' => $paymentMethod->getDeletedAt() ?
@@ -62,26 +59,22 @@ class PaymentMethodTransformer extends TransformerAbstract
 
     public function includeMethod(PaymentMethod $paymentMethod)
     {
-        if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
-
+        if (!empty($paymentMethod->getCreditCard())) {
             return $this->item(
                 $paymentMethod->getMethod(),
                 new CreditCardTransformer(),
                 'creditCard'
             );
-
         }
-        elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
 
+        if (!empty($paymentMethod->getPaypalBillingAgreement())) {
             return $this->item(
                 $paymentMethod->getMethod(),
                 new PaypalBillingAgreementTransformer(),
                 'paypalBillingAgreement'
             );
+        }
 
-        }
-        else {
-            throw new Exception('Invalid payment method type for ID: ' . $paymentMethod->getId());
-        }
+        return null;
     }
 }

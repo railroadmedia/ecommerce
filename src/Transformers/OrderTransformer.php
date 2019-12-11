@@ -41,21 +41,15 @@ class OrderTransformer extends TransformerAbstract
             return null;
         }
 
-        if ($order->getOrderItems()
-                ->first() instanceof Proxy) {
-            return $this->collection(
-                $order->getOrderItems(),
-                new EntityReferenceTransformer(),
-                'orderItem'
-            );
-        }
-        else {
-            return $this->collection(
-                $order->getOrderItems(),
-                new OrderItemTransformer(),
-                'orderItem'
-            );
-        }
+        $transformer = new OrderItemTransformer();
+        $defaultIncludes = $transformer->getDefaultIncludes();
+        $transformer->setDefaultIncludes(array_diff($defaultIncludes, ['order']));
+
+        return $this->collection(
+            $order->getOrderItems(),
+            $transformer,
+            'orderItem'
+        );
     }
 
     public function includeUser(Order $order)
@@ -103,22 +97,11 @@ class OrderTransformer extends TransformerAbstract
             return null;
         }
 
-        if ($order->getBillingAddress() instanceof Proxy) {
-            return $this->item(
-                $order->getBillingAddress(),
-                new EntityReferenceTransformer(),
-                'address'
-            );
-        }
-        elseif (!empty($order->getBillingAddress())) {
-            return $this->item(
-                $order->getBillingAddress(),
-                new AddressTransformer(),
-                'address'
-            );
-        }
-
-        return null;
+        return $this->item(
+            $order->getBillingAddress(),
+            new AddressTransformer(),
+            'address'
+        );
     }
 
     public function includeShippingAddress(Order $order)

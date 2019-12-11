@@ -34,24 +34,15 @@ class OrderItemTransformer extends TransformerAbstract
             return null;
         }
 
-        if ($orderItem->getOrder() instanceof Proxy) {
-            return $this->item(
-                $orderItem->getOrder(),
-                new EntityReferenceTransformer(),
-                'order'
-            );
-        }
-        else {
-            $transformer = new OrderTransformer();
-            $defaultIncludes = $transformer->getDefaultIncludes();
-            $transformer->setDefaultIncludes(array_diff($defaultIncludes, ['orderItem']));
+        $transformer = new OrderTransformer();
+        $defaultIncludes = $transformer->getDefaultIncludes();
+        $transformer->setDefaultIncludes(array_diff($defaultIncludes, ['orderItem']));
 
-            return $this->item(
-                $orderItem->getOrder(),
-                $transformer,
-                'order'
-            );
-        }
+        return $this->item(
+            $orderItem->getOrder(),
+            $transformer,
+            'order'
+        );
     }
 
     public function includeProduct(OrderItem $orderItem)
@@ -60,23 +51,14 @@ class OrderItemTransformer extends TransformerAbstract
             return null;
         }
         
-        if ($orderItem->getProduct() instanceof Proxy) {
-            return $this->item(
-                $orderItem->getProduct(),
-                new EntityReferenceTransformer(),
-                'product'
-            );
-        }
-        else {
-            $transformer = new ProductTransformer();
-            $defaultIncludes = $transformer->getDefaultIncludes();
-            $transformer->setDefaultIncludes(array_diff($defaultIncludes, ['product']));
+        $transformer = new ProductTransformer();
+        $defaultIncludes = $transformer->getDefaultIncludes();
+        $transformer->setDefaultIncludes(array_diff($defaultIncludes, ['product']));
 
-            return $this->item(
-                $orderItem->getProduct(),
-                $transformer,
-                'product'
-            );
-        }
+        return $this->item(
+            $orderItem->getProduct(),
+            $transformer,
+            'product'
+        );
     }
 }

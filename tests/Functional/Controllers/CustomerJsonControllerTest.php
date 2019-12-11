@@ -122,6 +122,34 @@ class CustomerJsonControllerTest extends EcommerceTestCase
             ],
             'included' => [
                 [
+                    'type' => 'product',
+                    'id' => 1,
+                    'attributes' => array_diff_key(
+                        $product,
+                        ['id' => true]
+                    )
+                ],
+                [
+                    'type' => 'orderItem',
+                    'id' => 1,
+                    'attributes' => array_diff_key(
+                        $orderItem,
+                        [
+                            'id' => true,
+                            'order_id' => true,
+                            'product_id' => true,
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => 1,
+                            ]
+                        ]
+                    ]
+                ],
+                [
                     'type' => 'address',
                     'id' => 1,
                     'attributes' => array_diff_key(
@@ -173,12 +201,6 @@ class CustomerJsonControllerTest extends EcommerceTestCase
                         ]
                     ),
                     'relationships' => [
-                        'customer' => [
-                            'data' => [
-                                'type' => 'customer',
-                                'id' => 1,
-                            ]
-                        ],
                         'billingAddress' => [
                             'data' => [
                                 'type' => 'address',
@@ -191,38 +213,12 @@ class CustomerJsonControllerTest extends EcommerceTestCase
                                 'id' => 2,
                             ]
                         ],
-                    ]
-                ],
-                [
-                    'type' => 'product',
-                    'id' => 1,
-                    'attributes' => array_diff_key(
-                        $product,
-                        ['id' => true]
-                    )
-                ],
-                [
-                    'type' => 'orderItem',
-                    'id' => 1,
-                    'attributes' => array_diff_key(
-                        $orderItem,
-                        [
-                            'id' => true,
-                            'order_id' => true,
-                            'product_id' => true,
-                        ]
-                    ),
-                    'relationships' => [
-                        'order' => [
+                        'orderItem' => [
                             'data' => [
-                                'type' => 'order',
-                                'id' => 1,
-                            ]
-                        ],
-                        'product' => [
-                            'data' => [
-                                'type' => 'product',
-                                'id' => 1,
+                                [
+                                    'type' => 'orderItem',
+                                    'id' => 1,
+                                ]
                             ]
                         ],
                     ]
@@ -235,6 +231,7 @@ class CustomerJsonControllerTest extends EcommerceTestCase
         $decodedResponse = $response->decodeResponseJson();
 
         $this->assertEquals($expected['data'], $decodedResponse['data']);
+
         $this->assertEquals($expected['included'], $decodedResponse['included']);
     }
 
