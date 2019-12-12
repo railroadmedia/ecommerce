@@ -259,6 +259,7 @@ class EcommerceTestCase extends BaseTestCase
 
         $app['config']->set('ecommerce.invoice_email_details', $defaultConfig['invoice_email_details']);
 
+        $app['config']->set('ecommerce.days_before_access_revoked_after_expiry', $defaultConfig['days_before_access_revoked_after_expiry']);
         $app['config']->set('ecommerce.payment_plan_minimum_price', $defaultConfig['payment_plan_minimum_price']);
         $app['config']->set('ecommerce.payment_plan_options', $defaultConfig['payment_plan_options']);
         $app['config']->set('ecommerce.financing_cost_per_order', $defaultConfig['financing_cost_per_order']);

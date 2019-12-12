@@ -141,9 +141,15 @@ class RenewalService
         $payment = new Payment();
 
         /** @var $address Address */
-        $address = $paymentMethod->getBillingAddress()->toStructure();
+        if (!empty($paymentMethod->getBillingAddress())) {
+            $address = $paymentMethod->getBillingAddress()->toStructure();
+        } else {
+            $address = new Address();
+        }
+
         $currency = $paymentMethod->getCurrency();
 
+        // support for legacy tax
         $subscriptionPricePerPayment = round($subscription->getTotalPrice() - $subscription->getTax(), 2);
 
         $taxes = $this->taxService->getTaxesDueTotal(

@@ -80,7 +80,9 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
             $product = $this->fakeProduct(
                 [
-                    'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+                    'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                    'subscription_interval_type' => 'month',
+                    'subscription_interval_count' => 1,
                 ]
             );
 
@@ -233,6 +235,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'quantity' => 1,
                     'expiration_date' => Carbon::now()
                         ->addMonth($initialSubscriptions[$i]['interval_count'])
+                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry'))
                         ->startOfDay()
                         ->toDateTimeString(),
                 ]
@@ -465,6 +468,252 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]
         );
     }
+
+    public function test_command_no_addresses()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $due = $this->faker->numberBetween(0, 1000);
+
+        $currency = $this->getCurrency();
+
+        $currencyService = $this->app->make(CurrencyService::class);
+        $taxService = $this->app->make(TaxService::class);
+
+        $expectedConversionRate = $currencyService->getRate($currency);
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $fakerCharge = new Charge();
+        $fakerCharge->currency = $currency;
+        $fakerCharge->amount = $due;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $expectedPaymentTotalDues = [];
+        $initialSubscriptions = [];
+
+        for ($i = 0; $i < 1; $i++) {
+
+            $creditCard = $this->fakeCreditCard();
+
+            $paymentMethod = $this->fakePaymentMethod(
+                [
+                    'credit_card_id' => $creditCard['id'],
+                    'currency' => $currency,
+                    'billing_address_id' => null
+                ]
+            );
+
+            $payment = $this->fakePayment(
+                [
+                    'payment_method_id' => $paymentMethod['id'],
+                    'currency' => $currency,
+                    'total_due' => $this->faker->numberBetween(1, 100),
+                ]
+            );
+
+            $product = $this->fakeProduct(
+                [
+                    'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                    'subscription_interval_type' => 'month',
+                    'subscription_interval_count' => 1,
+                ]
+            );
+
+            $order = $this->fakeOrder();
+
+            $orderItem = $this->fakeOrderItem(
+                [
+                    'order_id' => $order['id'],
+                    'product_id' => $product['id'],
+                    'quantity' => 1
+                ]
+            );
+
+            $subscriptionPrice = $this->faker->numberBetween(50, 100);
+
+            $vat = 3.99;
+
+            $subscription = $this->fakeSubscription(
+                [
+                    'user_id' => $userId,
+                    'type' => $this->faker->randomElement(
+                        [Subscription::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
+                    ),
+                    'start_date' => Carbon::now()
+                        ->subYear(2),
+                    'paid_until' => Carbon::now()
+                        ->subDay(1),
+                    'is_active' => true,
+                    'canceled_on' => null,
+                    'product_id' => $product['id'],
+                    'currency' => $currency,
+                    'order_id' => $order['id'],
+                    'brand' => config('ecommerce.brand'),
+                    'interval_type' => config('ecommerce.interval_type_monthly'),
+                    'interval_count' => 1,
+                    'total_cycles_paid' => 1,
+                    'total_cycles_due' => $this->faker->numberBetween(2, 5),
+                    'payment_method_id' => $paymentMethod['id'],
+                    'total_price' => $subscriptionPrice,
+                    'tax' => $vat,
+                ]
+            );
+
+            if ($subscription['type'] != config('ecommerce.type_payment_plan')) {
+                $initialSubscriptions[] = $subscription;
+
+                $paymentAmount = $currencyService->convertFromBase(
+                    $subscription['total_price'],
+                    $currency
+                );
+
+                $expectedPaymentDues[$subscription['id']] = $paymentAmount;
+            }
+        }
+
+        // add mobile subscription
+        $creditCardMobileSub = $this->fakeCreditCard();
+
+        $addressMobileSub = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE,
+                'country' => 'Canada',
+                'region' => $this->faker->word,
+                'zip' => $this->faker->postcode
+            ]
+        );
+
+        $paymentMethodMobileSub = $this->fakePaymentMethod(
+            [
+                'credit_card_id' => $creditCardMobileSub['id'],
+                'currency' => $currency,
+                'billing_address_id' => $addressMobileSub['id']
+            ]
+        );
+
+        $productMobileSub = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
+
+        $orderMobileSub = $this->fakeOrder();
+
+        $orderItemMobileSub = $this->fakeOrderItem(
+            [
+                'order_id' => $orderMobileSub['id'],
+                'product_id' => $productMobileSub['id'],
+                'quantity' => 1
+            ]
+        );
+
+        $mobileSubscription = $this->fakeSubscription(
+            [
+                'user_id' => $userId,
+                'type' => $this->faker->randomElement(
+                    [Subscription::TYPE_APPLE_SUBSCRIPTION, Subscription::TYPE_GOOGLE_SUBSCRIPTION]
+                ),
+                'start_date' => Carbon::now()
+                    ->subYear(2),
+                'paid_until' => Carbon::now()
+                    ->subDay(1),
+                'is_active' => true,
+                'canceled_on' => null,
+                'product_id' => $productMobileSub['id'],
+                'currency' => $currency,
+                'order_id' => $orderMobileSub['id'],
+                'brand' => config('ecommerce.brand'),
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'interval_count' => 1,
+                'total_cycles_paid' => 1,
+                'total_cycles_due' => $this->faker->numberBetween(2, 5),
+                'payment_method_id' => $paymentMethod['id'],
+                'total_price' => $subscriptionPrice,
+                'tax' => $vat,
+            ]
+        );
+
+        $this->artisan('renewalDueSubscriptions');
+
+        for ($i = 0; $i < count($initialSubscriptions); $i++) {
+            $this->assertDatabaseHas(
+                'ecommerce_subscriptions',
+                [
+                    'id' => $initialSubscriptions[$i]['id'],
+                    'paid_until' => Carbon::now()
+                        ->addMonth($initialSubscriptions[$i]['interval_count'])
+                        ->startOfDay()
+                        ->toDateTimeString(),
+                    'is_active' => 1,
+                    'total_cycles_paid' => $initialSubscriptions[$i]['total_cycles_paid'] + 1,
+                    'updated_at' => Carbon::now()
+                        ->toDateTimeString(),
+                ]
+            );
+
+            // assert user products assignation
+            $this->assertDatabaseHas(
+                'ecommerce_user_products',
+                [
+                    'user_id' => $initialSubscriptions[$i]['user_id'],
+                    'product_id' => $initialSubscriptions[$i]['product_id'],
+                    'quantity' => 1,
+                    'expiration_date' => Carbon::now()
+                        ->addMonth($initialSubscriptions[$i]['interval_count'])
+                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry'))
+                        ->startOfDay()
+                        ->toDateTimeString(),
+                ]
+            );
+
+            $this->assertDatabaseHas(
+                'ecommerce_payments',
+                [
+                    'total_due' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
+                    'total_paid' => round($expectedPaymentDues[$initialSubscriptions[$i]['id']], 2),
+                    'total_refunded' => 0,
+                    'conversion_rate' => $expectedConversionRate,
+                    'type' => config('ecommerce.renewal_payment_type'),
+                    'external_id' => $fakerCharge->id,
+                    'external_provider' => 'stripe',
+                    'status' => 'succeeded',
+                    'message' => '',
+                    'currency' => $currency,
+                    'created_at' => Carbon::now()
+                        ->toDateTimeString()
+                ]
+            );
+
+            $this->assertDatabaseHas(
+                'railactionlog_actions_log',
+                [
+                    'brand' => $initialSubscriptions[$i]['brand'],
+                    'resource_name' => Subscription::class,
+                    'resource_id' => $initialSubscriptions[$i]['id'],
+                    'action_name' => Subscription::ACTION_RENEW,
+                    'actor' => ActionLogService::ACTOR_COMMAND,
+                    'actor_id' => null,
+                    'actor_role' => ActionLogService::ROLE_COMMAND,
+                ]
+            );
+        }
+
+        // assert mobile subscription was not renewed
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $mobileSubscription['id'],
+                'paid_until' => Carbon::now()
+                    ->subDay(1),
+                'is_active' => 1,
+            ]
+        );
+    }
+
 
     public function test_ancient_subscriptions_deactivation()
     {
