@@ -237,7 +237,7 @@ class Payment
      */
     public function getConversionRate(): ?float
     {
-        return $this->conversionRate;
+        return $this->conversionRate === 0 || is_null($this->conversionRate) ? 1 : $this->conversionRate;
     }
 
     /**
