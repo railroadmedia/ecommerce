@@ -156,9 +156,9 @@ class CartService
             throw new ProductNotActiveException($product);
         }
 
-        if ($product->getStock() !== null && $product->getStock() < $quantity) {
-            throw new ProductOutOfStockException($product);
-        }
+//        if ($product->getStock() !== null && $product->getStock() < $quantity) {
+//            throw new ProductOutOfStockException($product);
+//        }
 
         $this->cart->setItem(new CartItem($sku, $quantity));
 
