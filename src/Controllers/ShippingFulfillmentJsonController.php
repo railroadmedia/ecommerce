@@ -41,18 +41,17 @@ class ShippingFulfillmentJsonController extends Controller
     /**
      * ShippingFulfillmentJsonController constructor.
      *
-     * @param EcommerceEntityManager $entityManager
-     * @param OrderItemFulfillmentRepository $orderItemFulfillmentRepository
-     * @param PermissionService $permissionService
-     * @param UserProviderInterface $userProvider
+     * @param  EcommerceEntityManager  $entityManager
+     * @param  OrderItemFulfillmentRepository  $orderItemFulfillmentRepository
+     * @param  PermissionService  $permissionService
+     * @param  UserProviderInterface  $userProvider
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
         PermissionService $permissionService,
         UserProviderInterface $userProvider
-    )
-    {
+    ) {
         $this->entityManager = $entityManager;
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->permissionService = $permissionService;
@@ -62,11 +61,11 @@ class ShippingFulfillmentJsonController extends Controller
     /**
      * Pull shipping fulfillments. If the status it's set on the requests the results are filtered by status.
      *
-     * @param Request $request
-     *
-     * @return JsonResponse
+     * @param  Request  $request
      *
      * @throws Throwable
+     * @return JsonResponse
+     *
      */
     public function index(Request $request)
     {
@@ -83,15 +82,33 @@ class ShippingFulfillmentJsonController extends Controller
             $rows = [];
 
             foreach ($fulfillments as $fulfillment) {
+                $email = '';
+
+                if ( ! empty(
+                $fulfillment->getOrder()
+                    ->getUser()
+                )
+                ) {
+                    $email = $fulfillment->getOrder()
+                        ->getUser()
+                        ->getEmail();
+                } elseif ( ! empty(
+                $fulfillment->getOrder()
+                    ->getCustomer()
+                )
+                ) {
+                    $email = $fulfillment->getOrder()
+                        ->getCustomer()
+                        ->getEmail();
+                }
+
                 $rows[] = [
                     $fulfillment->getOrder()
                         ->getId(),
                     Carbon::instance($fulfillment->getCreatedAt())
                         ->timezone($request->get('timezone', 'America/Los_Angeles'))
                         ->toDateTimeString(),
-                    $fulfillment->getOrder()
-                        ->getUser()
-                        ->getEmail(),
+                    $email,
                     '',
                     '',
                     $fulfillment->getOrder()
@@ -140,16 +157,15 @@ class ShippingFulfillmentJsonController extends Controller
                     $fulfillment->getStatus(),
                     '',
                     '',
-                    !empty($fulfillment->getFulfilledOn()) ?
-                        Carbon::instance($fulfillment->getFulfilledOn())
-                            ->timezone($request->get('timezone', 'America/Los_Angeles'))
-                            ->toDateTimeString() : '',
+                    ! empty($fulfillment->getFulfilledOn()) ? Carbon::instance($fulfillment->getFulfilledOn())
+                        ->timezone($request->get('timezone', 'America/Los_Angeles'))
+                        ->toDateTimeString() : '',
                     $fulfillment->getOrderItem()
                         ->getFinalPrice(),
                 ];
             }
 
-            $filePath = sys_get_temp_dir() . "/shippers-export-" . time() . ".csv";
+            $filePath = sys_get_temp_dir()."/shippers-export-".time().".csv";
 
             $f = fopen($filePath, "w");
 
@@ -202,11 +218,11 @@ class ShippingFulfillmentJsonController extends Controller
      * Fulfilled order or order item. If the order_item_id it's set on the request only the order item it's fulfilled,
      * otherwise entire order it's fulfilled.
      *
-     * @param OrderFulfilledRequest $request
-     *
-     * @return JsonResponse
+     * @param  OrderFulfilledRequest  $request
      *
      * @throws Throwable
+     * @return JsonResponse
+     *
      */
     public function markShippingFulfilled(OrderFulfilledRequest $request)
     {
@@ -242,7 +258,7 @@ class ShippingFulfillmentJsonController extends Controller
         $this->entityManager->flush();
 
         throw_if(
-            !$found,
+            ! $found,
             new NotFoundException('Fulfilled failed.')
         );
 
@@ -252,17 +268,18 @@ class ShippingFulfillmentJsonController extends Controller
     /**
      * Delete order or order item fulfillment.
      *
-     * @param OrderFulfillmentDeleteRequest $request
+     * @param  OrderFulfillmentDeleteRequest  $request
      *
      * @param $orderId
-     * @param null $orderItemId
-     * @return JsonResponse
+     * @param  null  $orderItemId
      *
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      * @throws \Railroad\Permissions\Exceptions\NotAllowedException
+     * @return JsonResponse
+     *
      */
-    public function delete(OrderFulfillmentDeleteRequest $request, $orderId,  $orderItemId = null)
+    public function delete(OrderFulfillmentDeleteRequest $request, $orderId, $orderItemId = null)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.fulfillment');
 
@@ -272,7 +289,7 @@ class ShippingFulfillmentJsonController extends Controller
         );
 
         if (empty($fulfillments)) {
-            return ResponseService::empty(422) ;
+            return ResponseService::empty(422);
         }
 
         foreach ($fulfillments as $fulfillment) {

@@ -392,7 +392,13 @@ class OrderClaimingService
 
         $subscription->setBrand($purchaser->getBrand());
         $subscription->setType($type);
-        $subscription->setUser($purchaser->getUserObject());
+
+        if ($purchaser->getType() == Purchaser::USER_TYPE) {
+            $subscription->setUser($purchaser->getUserObject());
+        }elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE) {
+            $subscription->setCustomer($purchaser->getCustomerEntity());
+        }
+
         $subscription->setOrder($order);
         $subscription->setProduct(is_null($orderItem) ? null : $orderItem->getProduct());
         $subscription->setIsActive(true);
