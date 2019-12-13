@@ -4,12 +4,13 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Exception;
-use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\PaymentTaxes;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
+use Railroad\Ecommerce\Entities\Structures\Address;
+use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
@@ -73,6 +74,10 @@ class RenewalService
      * @var UserProductService
      */
     protected $userProductService;
+    /**
+     * @var PaymentService
+     */
+    private $paymentService;
 
     /**
      * RenewalService constructor.
@@ -86,6 +91,7 @@ class RenewalService
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
      * @param TaxService $taxService
      * @param UserProductService $userProductService
+     * @param PaymentService $paymentService
      */
     public function __construct(
         CreditCardRepository $creditCardRepository,
@@ -96,7 +102,8 @@ class RenewalService
         PayPalPaymentGateway $payPalPaymentGateway,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         TaxService $taxService,
-        UserProductService $userProductService
+        UserProductService $userProductService,
+        PaymentService $paymentService
     )
     {
         $this->creditCardRepository = $creditCardRepository;
@@ -108,6 +115,7 @@ class RenewalService
         $this->paypalPaymentGateway = $payPalPaymentGateway;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->userProductService = $userProductService;
+        $this->paymentService = $paymentService;
     }
 
     /**
@@ -137,6 +145,12 @@ class RenewalService
 
         /** @var $paymentMethod PaymentMethod */
         $paymentMethod = $subscription->getPaymentMethod();
+
+        if (empty($paymentMethod)) {
+            throw new Exception(
+                "Subscription with ID: " . $subscription->getId() . " does not have an attached payment method."
+            );
+        }
 
         $payment = new Payment();
 
@@ -181,10 +195,34 @@ class RenewalService
                 /** @var $method CreditCard */
                 $method = $paymentMethod->getCreditCard();
 
-                $customer = $this->stripePaymentGateway->getCustomer(
-                    $method->getPaymentGatewayName(),
-                    $method->getExternalCustomerId()
-                );
+                if (empty($method->getExternalCustomerId()) && !empty($subscription->getUser())) {
+                    $tempPurchaser = new Purchaser();
+                    $tempPurchaser->setId(
+                        $subscription->getUser()
+                            ->getId()
+                    );
+                    $tempPurchaser->setBrand(
+                        $paymentMethod->getCreditCard()
+                            ->getPaymentGatewayName()
+                    );
+                    $tempPurchaser->setEmail(
+                        $subscription->getUser()
+                            ->getEmail()
+                    );
+                    $tempPurchaser->setType(Purchaser::USER_TYPE);
+
+                    $customer =
+                        $this->paymentService->getStripeCustomer(
+                            $tempPurchaser,
+                            $paymentMethod->getCreditCard()
+                                ->getPaymentGatewayName()
+                        );
+                } else {
+                    $customer = $this->stripePaymentGateway->getCustomer(
+                        $method->getPaymentGatewayName(),
+                        $method->getExternalCustomerId()
+                    );
+                }
 
                 $card = $this->stripePaymentGateway->getCard(
                     $customer,

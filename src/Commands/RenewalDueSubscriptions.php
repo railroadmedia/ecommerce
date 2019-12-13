@@ -170,10 +170,6 @@ class RenewalDueSubscriptions extends Command
             } catch (Throwable $throwable) {
 
                 error_log($throwable);
-                var_dump($throwable->getMessage());
-                var_dump($throwable->getTraceAsString());
-                var_dump($throwable->getLine());
-                var_dump($throwable->getFile());
 
                 $payment = null;
 
