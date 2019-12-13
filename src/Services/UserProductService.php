@@ -215,7 +215,7 @@ class UserProductService
             ->setParameter('product', $product);
 
         return $qb->getQuery()
-            ->getOneOrNullResult();
+            ->getResult()[0] ?? null;
     }
 
     /**
