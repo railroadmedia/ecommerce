@@ -207,6 +207,115 @@ class PaymentRepository extends RepositoryBase
             ->getResult();
     }
 
+    public function getDailyTotalSalesStats($day, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(p.totalPaid) as totalSales')
+            ->from(Payment::class, 'p')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->setParameter('smallDateTime', $day)
+            ->setParameter('bigDateTime', $day->copy()->endOfDay());
+
+        if ($brand) {
+            $qb->leftJoin('p.orderPayment', 'op')
+                ->leftJoin('op.order', 'o')
+                ->leftJoin('p.subscriptionPayment', 'sp')
+                ->leftJoin('sp.subscription', 's')
+                ->andWhere(
+                    $qb->expr()
+                        ->andX(
+                            $qb->expr()
+                                ->orX(
+                                    $qb->expr()
+                                        ->isNull('o'),
+                                    $qb->expr()
+                                        ->eq('o.brand', ':orderBrand')
+                                ),
+                            $qb->expr()
+                                ->orX(
+                                    $qb->expr()
+                                        ->isNull('s'),
+                                    $qb->expr()
+                                        ->eq('s.brand', ':subscriptionBrand')
+                                )
+                        )
+                )
+                ->setParameter('orderBrand', $brand)
+                ->setParameter('subscriptionBrand', $brand);
+        }
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+
+    public function getDailyTotalOrdersStats($day, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('COUNT(p.id) as totalOrders')
+            ->from(Payment::class, 'p')
+            ->join('p.orderPayment', 'op')
+            ->join('op.order', 'o')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->setParameter('smallDateTime', $day)
+            ->setParameter('bigDateTime', $day->copy()->endOfDay());
+
+        if ($brand) {
+            $qb->andWhere(
+                    $qb->expr()
+                        ->orX(
+                            $qb->expr()
+                                ->isNull('o'),
+                            $qb->expr()
+                                ->eq('o.brand', ':brand')
+                        )
+                )
+                ->setParameter('brand', $brand);
+        }
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+
+    public function getDailyTotalSalesFromRenewals($day, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(p.totalPaid) as totalRenewals')
+            ->from(Payment::class, 'p')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere($qb->expr()->eq('p.type', ':renew'))
+            ->setParameter('smallDateTime', $day)
+            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('renew', Payment::TYPE_SUBSCRIPTION_RENEWAL);
+
+        // dd($qb->getQuery()->getSql());
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+
     /**
      * Returns order payments with associated payments
      *

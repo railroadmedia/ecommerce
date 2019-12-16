@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
@@ -32,6 +33,71 @@ class StatsService
     ) {
         $this->paymentRepository = $paymentRepository;
         $this->refundRepository = $refundRepository;
+    }
+
+    public function newIndexByRequest(Request $request): array
+    {
+        $results = [];
+        $dateFormat = 'Y-m-d';
+
+        $smallDate = $request->get(
+            'small_date_time',
+            Carbon::now()
+                ->subDay()
+                ->toDateTimeString()
+        );
+
+        $smallDateTime =
+            Carbon::parse($smallDate)
+                ->startOfDay();
+
+        $bigDate = $request->get(
+            'big_date_time',
+            Carbon::now()
+                ->subDay()
+                ->toDateTimeString()
+        );
+
+        $bigDateTime =
+            Carbon::parse($bigDate)
+                ->endOfDay();
+
+        if ($smallDateTime > $bigDateTime) {
+            $tmp = $bigDate;
+
+            $bigDate = $smallDateTime;
+
+            $smallDateTime = $tmp;
+        }
+
+        $currentDay = $smallDateTime->copy();
+
+        $brand = $request->get('brand');
+
+        while($currentDay < $bigDate) {
+
+            $day = $currentDay->format($dateFormat);
+
+            $dailyStatistic = new DailyStatistic($day);
+
+            $totalSales = $this->paymentRepository->getDailyTotalSalesStats($currentDay, $brand);
+
+            $dailyStatistic->setTotalSales($totalSales ?? 0);
+
+            $totalOrders = $this->paymentRepository->getDailyTotalOrdersStats($currentDay, $brand);
+
+            $dailyStatistic->setTotalOrders($totalOrders ?? 0);
+
+            $totalRenewal = $this->paymentRepository->getDailyTotalSalesFromRenewals($currentDay, $brand);
+
+            $dailyStatistic->setTotalSalesFromRenewals($totalRenewal ?? 0);
+
+            $results[$day] = $dailyStatistic;
+
+            $currentDay->addDay();
+        }
+
+        return $results;
     }
 
     /**

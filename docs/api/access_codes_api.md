@@ -355,3 +355,163 @@ $.ajax({
 ```
 
 <!--- -------------------------------------------------------------------------------------------------------------- -->
+
+### `{ POST /*/access-codes/claim }`
+
+Used to claim an action code for an existing user.
+
+### Permissions
+
+- Must be logged in
+- Must have the 'claim.access_codes' permission
+
+### Request Parameters
+
+|Type|Key|Required|Default|Options|Notes|
+|----|---|--------|-------|-------|-----|
+|body|access_code|yes|||The exact access code without dashes or spaces.|
+|body|claim_for_user_id|yes||||
+|body|context|no||||
+
+### Validation Rules
+
+```php
+[
+    'access_code' => 'required|max:24|exists:' .
+        config('ecommerce.database_connection_name') .
+        '.' .
+        'ecommerce_access_codes' .
+        ',code,is_claimed,0',
+    'claim_for_user_id' => 'required|integer',
+    'context' => 'string|nullable',
+];
+```
+
+### Request Example
+
+```js   
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/access-codes/claim',
+    type: 'post',
+    data: {
+        access_code: 'AAB6KN5DUBRPUTR6JUDUD4U8', 
+        claim_for_user_id: '128762'
+    }, 
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+```201 OK```
+
+```json
+{
+  "data": {
+    "type": "accessCode",
+    "id": "10",
+    "attributes": {
+      "code": "A5Z6K88IU92PU3B6J1SSD4U8",
+      "brand": "drumeo",
+      "product_ids": [
+        124
+      ],
+      "is_claimed": true,
+      "note": null,
+      "claimed_on": "2019-12-16 13:11:12",
+      "created_at": "2015-10-21 16:39:53",
+      "updated_at": "2019-12-16 13:11:12"
+    },
+    "relationships": {
+      "claimer": {
+        "data": {
+          "type": "user",
+          "id": "342760"
+        }
+      }
+    }
+  },
+  "included": [
+    {
+      "type": "user",
+      "id": "342760",
+      "attributes": {
+        "email": "reilly.fahey@emard.com",
+      }
+    }
+  ]
+}
+```
+
+<!--- -------------------------------------------------------------------------------------------------------------- -->
+
+### `{ POST /*/access-codes/release }`
+
+Used to release an action code.
+
+### Permissions
+
+- Must be logged in
+- Must have the 'release.access_codes' permission
+
+### Request Parameters
+
+|Type|Key|Required|Default|Options|Notes|
+|----|---|--------|-------|-------|-----|
+|body|access_code_id|yes|||The access code id to be released.|
+
+### Validation Rules
+
+```php
+[
+    'access_code_id' => 'required|max:24|exists:' .
+        config('ecommerce.database_connection_name') .
+        '.' .
+        'ecommerce_access_codes' .
+        ',id,is_claimed,1'
+];
+```
+
+### Request Example
+
+```js   
+$.ajax({
+    url: 'https://www.musora.com' +
+        '/ecommerce/access-codes/release',
+    type: 'post',
+    data: {
+        access_code_id: '10'
+    }, 
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+### Response Example
+
+```201 OK```
+
+```json
+{
+  "data": {
+    "type": "accessCode",
+    "id": "10",
+    "attributes": {
+      "code": "AAB6KN5DUBRPUTR6JUDUD4U8",
+      "brand": "drumeo",
+      "product_ids": [
+        124
+      ],
+      "is_claimed": false,
+      "note": null,
+      "claimed_on": null,
+      "created_at": "2015-10-21 16:39:53",
+      "updated_at": "2019-12-16 13:19:34"
+    }
+  }
+}
+```
+
+<!--- -------------------------------------------------------------------------------------------------------------- -->
