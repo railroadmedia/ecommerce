@@ -353,6 +353,7 @@ class StatsControllerTest extends EcommerceTestCase
             'brand' => $brand,
             'total_cycles_paid' => 1,
             'type' => Subscription::TYPE_SUBSCRIPTION,
+            'total_price' => $subscriptionOneDue,
         ]);
 
         $paymentFive = $this->fakePayment([
@@ -651,7 +652,7 @@ class StatsControllerTest extends EcommerceTestCase
                     'type' => 'dailyStatistic',
                     'id' => $subscriptionTwoDate->format('Y-m-d'),
                     'attributes' => [
-                        'total_sales' => $subscriptionTwoDue,
+                        'total_sales' => 0,
                         'total_sales_from_renewals' => $subscriptionTwoDue,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 0,
@@ -674,8 +675,8 @@ class StatsControllerTest extends EcommerceTestCase
                     'type' => 'dailyStatistic',
                     'id' => $orderFourDate->format('Y-m-d'),
                     'attributes' => [
-                        'total_sales' => round($orderFourDue + $subscriptionOneDue, 2),
-                        'total_sales_from_renewals' => 0,
+                        'total_sales' => $orderFourDue,
+                        'total_sales_from_renewals' => $subscriptionOneDue,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 1,
                         'total_number_of_successful_subscription_renewal_payments' => 1,
@@ -688,6 +689,10 @@ class StatsControllerTest extends EcommerceTestCase
                                 [
                                     'type' => 'productStatistic',
                                     'id' => $orderFourDate->format('Y-m-d') . ':' . $productThree['id'],
+                                ],
+                                [
+                                    'type' => 'productStatistic',
+                                    'id' => $subscriptionOneDate->format('Y-m-d') . ':' . $productFour['id'],
                                 ]
                             ]
                         ]
@@ -761,6 +766,17 @@ class StatsControllerTest extends EcommerceTestCase
                         'total_sales' => $orderFourDue,
                         'total_renewal_sales' => 0,
                         'total_renewals' => 0,
+                    ],
+                ],
+                [
+                    'type' => 'productStatistic',
+                    'id' => $subscriptionOneDate->format('Y-m-d') . ':' . $productFour['id'],
+                    'attributes' =>  [
+                        'sku' => $productFour['sku'],
+                        'total_quantity_sold' => 0,
+                        'total_sales' => 0,
+                        'total_renewal_sales' => $subscriptionOneDue,
+                        'total_renewals' => 1,
                     ],
                 ],
                 [

@@ -8,11 +8,17 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\Structures\DailyStatistic;
 use Railroad\Ecommerce\Entities\Structures\ProductStatistic;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\RefundRepository;
 
 class StatsService
 {
+    /**
+     * @var EcommerceEntityManager
+     */
+    private $entityManager;
+
     /**
      * @var PaymentRepository
      */
@@ -24,18 +30,28 @@ class StatsService
     protected $refundRepository;
 
     /**
+     * @param EcommerceEntityManager $entityManager
      * @param PaymentRepository $paymentRepository
      * @param RefundRepository $refundRepository
      */
     public function __construct(
+        EcommerceEntityManager $entityManager,
         PaymentRepository $paymentRepository,
         RefundRepository $refundRepository
     ) {
+        $this->entityManager = $entityManager;
         $this->paymentRepository = $paymentRepository;
         $this->refundRepository = $refundRepository;
     }
 
-    public function newIndexByRequest(Request $request): array
+    /**
+     * Get daily statistics
+     *
+     * @param Request $request
+     *
+     * @return DailyStatistic[]
+     */
+    public function indexByRequest(Request $request): array
     {
         $results = [];
         $dateFormat = 'Y-m-d';
@@ -76,215 +92,146 @@ class StatsService
 
         while($currentDay < $bigDate) {
 
+            $add = false;
+
+            $dailyOrdersProductsMap = [];
+
             $day = $currentDay->format($dateFormat);
 
             $dailyStatistic = new DailyStatistic($day);
 
             $totalSales = $this->paymentRepository->getDailyTotalSalesStats($currentDay, $brand);
 
+            if ($totalSales) {
+                $add = true;
+            }
+
             $dailyStatistic->setTotalSales($totalSales ?? 0);
 
             $totalOrders = $this->paymentRepository->getDailyTotalOrdersStats($currentDay, $brand);
+
+            if ($totalOrders) {
+                $add = true;
+            }
 
             $dailyStatistic->setTotalOrders($totalOrders ?? 0);
 
             $totalRenewal = $this->paymentRepository->getDailyTotalSalesFromRenewals($currentDay, $brand);
 
+            if ($totalRenewal) {
+                $add = true;
+            }
+
             $dailyStatistic->setTotalSalesFromRenewals($totalRenewal ?? 0);
 
-            $results[$day] = $dailyStatistic;
+            $totalSuccessfulRenewal = $this->paymentRepository->getDailyTotalSuccessfulRenewals($currentDay, $brand);
 
-            $currentDay->addDay();
-        }
-
-        return $results;
-    }
-
-    /**
-     * Get daily statistics
-     *
-     * @param Request $request
-     *
-     * @return DailyStatistic[]
-     */
-    public function indexByRequest(Request $request): array
-    {
-        $results = [];
-        $dateFormat = 'Y-m-d';
-
-        $payments = $this->paymentRepository->getPaymentsForStats($request);
-
-        foreach ($payments as $payment) {
-
-            $day = $payment->getCreatedAt()->format($dateFormat);
-
-            $dailyStatistic = null;
-
-            if (isset($results[$day])) {
-                $dailyStatistic = $results[$day];
-            }
-            else {
-                $dailyStatistic = new DailyStatistic($day);
+            if ($totalSuccessfulRenewal) {
+                $add = true;
             }
 
-            if ($payment->getOrderPayment() && $payment->getType() == Payment::TYPE_INITIAL_ORDER) {
-                $dailyStatistic = $this->addOrderPaymentToDailyStatistic($payment, $dailyStatistic);
+            $dailyStatistic->setTotalSuccessfulRenewals($totalSuccessfulRenewal ?? 0);
+
+            $totalFailedRenewal = $this->paymentRepository->getDailyTotalFailedRenewals($currentDay, $brand);
+
+            if ($totalFailedRenewal) {
+                $add = true;
             }
 
-            if ($payment->getSubscriptionPayment() && $payment->getType() == Payment::TYPE_SUBSCRIPTION_RENEWAL) {
-                $dailyStatistic = $this->addSubscriptionPaymentToDailyStatistic($payment, $dailyStatistic);
+            $dailyStatistic->setTotalFailedRenewals($totalFailedRenewal ?? 0);
+
+            $totalRefunds = $this->refundRepository->getDailyTotalRefunds($currentDay, $brand);
+
+            if ($totalRefunds) {
+                $add = true;
             }
 
-            if ($payment->getStatus() != Payment::STATUS_FAILED) {
-                $paymentAmountInBaseCurrency = round($payment->getTotalPaid() / $payment->getConversionRate(), 2);
+            $dailyStatistic->setTotalRefunded($totalRefunds ?? 0);
 
-                $dailyStatistic->setTotalSales(
-                    round(
-                        $dailyStatistic->getTotalSales() + $paymentAmountInBaseCurrency,
-                        2
-                    )
-                );
+            $dailyOrdersProductsData = $this->paymentRepository->getDailyOrdersProductStatistic($currentDay, $brand);
+
+            if (!empty($dailyOrdersProductsData)) {
+                $add = true;
             }
 
-            $results[$day] = $dailyStatistic;
-        }
-
-        $refunds = $this->refundRepository->getRefundsForStats($request);
-
-        foreach ($refunds as $refund) {
-            $day = $refund->getCreatedAt()->format($dateFormat);
-
-            if (!isset($results[$day])) {
-                $results[$day] = new DailyStatistic($day);
-            }
-
-            $dailyStatistic = $results[$day];
-
-            $dailyStatistic->setTotalRefunded(
-                round(
-                    $dailyStatistic->getTotalRefunded() + $refund->getRefundedAmount(),
-                    2
-                )
-            );
-        }
-
-        return array_reverse(array_values($results));
-    }
-
-    /**
-     * @param Payment $payment
-     * @param DailyStatistic $dailyStatistic
-     *
-     * @return DailyStatistic
-     */
-    public function addOrderPaymentToDailyStatistic(
-        Payment $payment,
-        DailyStatistic $dailyStatistic
-    ): DailyStatistic
-    {
-        if ($payment->getStatus() != Payment::STATUS_FAILED) {
-
-            $dailyStatistic->setTotalOrders($dailyStatistic->getTotalOrders() + 1);
-
-            $productStatistics = $dailyStatistic->getProductStatistics();
-            $day = $dailyStatistic->getDay();
-            $order = $payment->getOrderPayment()->getOrder();
-
-            foreach ($order->getOrderItems() as $orderItem) {
-                $product = $orderItem->getProduct();
+            foreach ($dailyOrdersProductsData as $productData) {
                 $currentProductStatistic = null;
-                $currentProductStatisticId = $day . ':' . $product->getId();
+                $currentProductStatisticId = $day . ':' . $productData['id'];
 
-                foreach ($productStatistics as $productStatistic) {
-                    if ($productStatistic->getId() == $currentProductStatisticId) {
-                        $currentProductStatistic = $productStatistic;
-                        break;
-                    }
-                }
-
-                if (!$currentProductStatistic) {
+                if (!isset($dailyOrdersProductsMap[$currentProductStatisticId])) {
                     $currentProductStatistic = new ProductStatistic(
                         $currentProductStatisticId,
-                        $product->getSku()
+                        $productData['sku']
                     );
 
                     $dailyStatistic->addProductStatistics($currentProductStatistic);
+
+                    $dailyOrdersProductsMap[$currentProductStatisticId] = $currentProductStatistic;
+                } else {
+                    $currentProductStatistic = $dailyOrdersProductsMap[$currentProductStatisticId];
                 }
 
                 $currentProductStatistic->setTotalQuantitySold(
-                    $currentProductStatistic->getTotalQuantitySold() + $orderItem->getQuantity()
+                    $currentProductStatistic->getTotalQuantitySold() + $productData['sold']
                 );
 
                 $currentProductStatistic->setTotalSales(
                     round(
-                        $currentProductStatistic->getTotalSales() + $orderItem->getFinalPrice(),
+                        $currentProductStatistic->getTotalSales() + $productData['sales'],
                         2
                     )
                 );
             }
-        }
 
-        return $dailyStatistic;
-    }
+            $dailySubscriptionsProductsData = $this->paymentRepository->getDailySubscriptionsProductStatistic(
+                $currentDay,
+                $brand
+            );
 
-    /**
-     * @param Payment $payment
-     * @param DailyStatistic $dailyStatistic
-     *
-     * @return DailyStatistic
-     */
-    public function addSubscriptionPaymentToDailyStatistic(
-        Payment $payment,
-        DailyStatistic $dailyStatistic
-    ): DailyStatistic
-    {
-        if ($payment->getStatus() != Payment::STATUS_FAILED) {
-            $dailyStatistic->setTotalSuccessfulRenewals($dailyStatistic->getTotalSuccessfulRenewals() + 1);
+            if (!empty($dailySubscriptionsProductsData)) {
+                $add = true;
+            }
 
-            $subscription = $payment->getSubscriptionPayment()->getSubscription();
-
-            if ($subscription->getTotalCyclesPaid() > 1 && $subscription->getType() != Subscription::TYPE_PAYMENT_PLAN) {
-                $sales = round(
-                    $subscription->getTotalPrice() + $dailyStatistic->getTotalSalesFromRenewals(),
-                    2
-                );
-
-                $dailyStatistic->setTotalSalesFromRenewals($sales);
-
-                $productStatistics = $dailyStatistic->getProductStatistics();
-                $day = $dailyStatistic->getDay();
-
-                $product = $subscription->getProduct();
+            foreach ($dailySubscriptionsProductsData as $productData) {
                 $currentProductStatistic = null;
-                $currentProductStatisticId = $day . ':' . $product->getId();
+                $currentProductStatisticId = $day . ':' . $productData['id'];
 
-                foreach ($productStatistics as $productStatistic) {
-                    if ($productStatistic->getId() == $currentProductStatisticId) {
-                        $currentProductStatistic = $productStatistic;
-                        break;
-                    }
-                }
-
-                if (!$currentProductStatistic) {
+                if (!isset($dailyOrdersProductsMap[$currentProductStatisticId])) {
                     $currentProductStatistic = new ProductStatistic(
                         $currentProductStatisticId,
-                        $product->getSku()
+                        $productData['sku']
                     );
 
                     $dailyStatistic->addProductStatistics($currentProductStatistic);
+
+                    $dailyOrdersProductsMap[$currentProductStatisticId] = $currentProductStatistic;
+                } else {
+                    $currentProductStatistic = $dailyOrdersProductsMap[$currentProductStatisticId];
                 }
 
                 $currentProductStatistic->setTotalRenewalSales(
-                    round($currentProductStatistic->getTotalRenewalSales() + $subscription->getTotalPrice(), 2)
+                    round(
+                        $currentProductStatistic->getTotalRenewalSales() + $productData['sales'],
+                        2
+                    )
                 );
 
-                $currentProductStatistic->setTotalRenewals($currentProductStatistic->getTotalRenewals() + 1);
+                $currentProductStatistic->setTotalRenewals(
+                    $currentProductStatistic->getTotalRenewals() + $productData['sold']
+                );
             }
-        }
-        else {
-            $dailyStatistic->setTotalFailedRenewals($dailyStatistic->getTotalFailedRenewals() + 1);
+
+            if ($add) {
+                $results[$day] = $dailyStatistic;
+            }
+
+            $dailyOrdersProductsMap = null;
+
+            $this->entityManager->clear();
+
+            $currentDay->addDay();
         }
 
-        return $dailyStatistic;
+        return array_reverse(array_values($results));
     }
 }

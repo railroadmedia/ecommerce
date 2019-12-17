@@ -51,61 +51,60 @@ class RefundRepository extends EntityRepository
     }
 
     /**
-     * @param Request $request
+     * Returns the total SUM of refund.refundedAmount of specified day
      *
-     * @return Order[]
+     * @param string $day
+     * @param string $brand
+     *
+     * @return float
      */
-    public function getRefundsForStats(Request $request): array
+    public function getDailyTotalRefunds($day, $brand)
     {
-        $smallDateTime =
-            $request->get(
-                'small_date_time',
-                Carbon::now()
-                    ->subDay()
-                    ->toDateTimeString()
-            );
-
-        $bigDateTime =
-            $request->get(
-                'big_date_time',
-                Carbon::now()
-                    ->subDay()
-                    ->toDateTimeString()
-            );
-
         /** @var $qb QueryBuilder */
         $qb =
             $this->getEntityManager()
                 ->createQueryBuilder();
 
-        $qb->select(['r', 'p', 'op', 'o', 'sp', 's'])
+        $qb->select('SUM(r.refundedAmount) as totalRefunds')
             ->from(Refund::class, 'r')
-            ->join('r.payment', 'p')
-            ->leftJoin('p.orderPayment', 'op')
-            ->leftJoin('op.order', 'o')
-            ->leftJoin('p.subscriptionPayment', 'sp')
-            ->leftJoin('sp.subscription', 's')
             ->where(
                 $qb->expr()
                     ->between('r.createdAt', ':smallDateTime', ':bigDateTime')
             )
-            ->setParameter('smallDateTime', $smallDateTime)
-            ->setParameter('bigDateTime', $bigDateTime);
+            ->setParameter('smallDateTime', $day)
+            ->setParameter('bigDateTime', $day->copy()->endOfDay());
 
-        if ($request->has('brand')) {
-            $qb->andWhere(
-                $qb->expr()
-                    ->orX(
-                        $qb->expr()->eq('o.brand', ':obrand'),
-                        $qb->expr()->eq('s.brand', ':sbrand')
-                    )
-            )
-                ->setParameter('obrand', $request->get('brand'))
-                ->setParameter('sbrand', $request->get('brand'));
+        if ($brand) {
+            $qb->join('r.payment', 'p')
+                ->leftJoin('p.orderPayment', 'op')
+                ->leftJoin('op.order', 'o')
+                ->leftJoin('p.subscriptionPayment', 'sp')
+                ->leftJoin('sp.subscription', 's')
+                ->andWhere(
+                    $qb->expr()
+                        ->andX(
+                            $qb->expr()
+                                ->orX(
+                                    $qb->expr()
+                                        ->isNull('o'),
+                                    $qb->expr()
+                                        ->eq('o.brand', ':orderBrand')
+                                ),
+                            $qb->expr()
+                                ->orX(
+                                    $qb->expr()
+                                        ->isNull('s'),
+                                    $qb->expr()
+                                        ->eq('s.brand', ':subscriptionBrand')
+                                )
+                        )
+                )
+                ->setParameter('orderBrand', $brand)
+                ->setParameter('subscriptionBrand', $brand);
         }
 
         return
             $qb->getQuery()
-                ->getResult();
+                ->getSingleScalarResult();
     }
 }

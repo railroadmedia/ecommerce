@@ -132,81 +132,13 @@ class PaymentRepository extends RepositoryBase
     }
 
     /**
-     * @param Request $request
+     * Returns the total SUM of payment.totalPaid of non-failed TYPE_INITIAL_ORDER payments of specified day
      *
-     * @return Payment[]
+     * @param string $day
+     * @param string $brand
+     *
+     * @return float
      */
-    public function getPaymentsForStats(Request $request): array
-    {
-        $smallDate = $request->get(
-            'small_date_time',
-            Carbon::now()
-                ->subDay()
-                ->toDateTimeString()
-        );
-
-        $smallDateTime =
-            Carbon::parse($smallDate)
-                ->startOfDay();
-
-        $bigDate = $request->get(
-            'big_date_time',
-            Carbon::now()
-                ->subDay()
-                ->toDateTimeString()
-        );
-
-        $bigDateTime =
-            Carbon::parse($bigDate)
-                ->endOfDay();
-
-        /** @var $qb QueryBuilder */
-        $qb =
-            $this->getEntityManager()
-                ->createQueryBuilder();
-
-        $qb->select(['p', 'op', 'o', 'oi', 'sp', 's'])
-            ->from(Payment::class, 'p')
-            ->leftJoin('p.orderPayment', 'op')
-            ->leftJoin('op.order', 'o')
-            ->leftJoin('o.orderItems', 'oi')
-            ->leftJoin('p.subscriptionPayment', 'sp')
-            ->leftJoin('sp.subscription', 's')
-            ->where(
-                $qb->expr()
-                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
-            )
-            ->setParameter('smallDateTime', $smallDateTime)
-            ->setParameter('bigDateTime', $bigDateTime);
-
-        if ($request->has('brand')) {
-            $qb->andWhere(
-                $qb->expr()
-                    ->andX(
-                        $qb->expr()
-                            ->orX(
-                                $qb->expr()
-                                    ->isNull('o'),
-                                $qb->expr()
-                                    ->eq('o.brand', ':orderBrand')
-                            ),
-                        $qb->expr()
-                            ->orX(
-                                $qb->expr()
-                                    ->isNull('s'),
-                                $qb->expr()
-                                    ->eq('s.brand', ':subscriptionBrand')
-                            )
-                    )
-            )
-                ->setParameter('orderBrand', $request->get('brand'))
-                ->setParameter('subscriptionBrand', $request->get('brand'));
-        }
-
-        return $qb->getQuery()
-            ->getResult();
-    }
-
     public function getDailyTotalSalesStats($day, $brand)
     {
         /** @var $qb QueryBuilder */
@@ -220,8 +152,12 @@ class PaymentRepository extends RepositoryBase
                 $qb->expr()
                     ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
             )
+            ->andWhere($qb->expr()->eq('p.type', ':initialOrder'))
+            ->andWhere($qb->expr()->neq('p.status', ':failed'))
             ->setParameter('smallDateTime', $day)
-            ->setParameter('bigDateTime', $day->copy()->endOfDay());
+            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('initialOrder', Payment::TYPE_INITIAL_ORDER)
+            ->setParameter('failed', Payment::STATUS_FAILED);
 
         if ($brand) {
             $qb->leftJoin('p.orderPayment', 'op')
@@ -254,6 +190,14 @@ class PaymentRepository extends RepositoryBase
         return $qb->getQuery()->getSingleScalarResult();
     }
 
+    /**
+     * Returns the total number of orders that have non-failed TYPE_INITIAL_ORDER payments of specified day
+     *
+     * @param string $day
+     * @param string $brand
+     *
+     * @return int
+     */
     public function getDailyTotalOrdersStats($day, $brand)
     {
         /** @var $qb QueryBuilder */
@@ -269,18 +213,17 @@ class PaymentRepository extends RepositoryBase
                 $qb->expr()
                     ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
             )
+            ->andWhere($qb->expr()->eq('p.type', ':initialOrder'))
+            ->andWhere($qb->expr()->neq('p.status', ':failed'))
             ->setParameter('smallDateTime', $day)
-            ->setParameter('bigDateTime', $day->copy()->endOfDay());
+            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('initialOrder', Payment::TYPE_INITIAL_ORDER)
+            ->setParameter('failed', Payment::STATUS_FAILED);
 
         if ($brand) {
             $qb->andWhere(
                     $qb->expr()
-                        ->orX(
-                            $qb->expr()
-                                ->isNull('o'),
-                            $qb->expr()
-                                ->eq('o.brand', ':brand')
-                        )
+                        ->eq('o.brand', ':brand')
                 )
                 ->setParameter('brand', $brand);
         }
@@ -288,6 +231,14 @@ class PaymentRepository extends RepositoryBase
         return $qb->getQuery()->getSingleScalarResult();
     }
 
+    /**
+     * Returns the total SUM of payment.totalPaid of non-failed TYPE_SUBSCRIPTION_RENEWAL payments of specified day
+     *
+     * @param string $day
+     * @param string $brand
+     *
+     * @return float
+     */
     public function getDailyTotalSalesFromRenewals($day, $brand)
     {
         /** @var $qb QueryBuilder */
@@ -307,13 +258,206 @@ class PaymentRepository extends RepositoryBase
                     ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
             )
             ->andWhere($qb->expr()->eq('p.type', ':renew'))
+            ->andWhere($qb->expr()->neq('p.status', ':failed'))
             ->setParameter('smallDateTime', $day)
             ->setParameter('bigDateTime', $day->copy()->endOfDay())
-            ->setParameter('renew', Payment::TYPE_SUBSCRIPTION_RENEWAL);
+            ->setParameter('renew', Payment::TYPE_SUBSCRIPTION_RENEWAL)
+            ->setParameter('failed', Payment::STATUS_FAILED);
 
-        // dd($qb->getQuery()->getSql());
+        if ($brand) {
+            $qb->leftJoin('p.subscriptionPayment', 'sp')
+                ->leftJoin('sp.subscription', 's')
+                ->andWhere(
+                    $qb->expr()
+                        ->eq('s.brand', ':brand')
+                )
+                ->setParameter('brand', $brand);
+        }
 
         return $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * Returns the total number of non-failed TYPE_SUBSCRIPTION_RENEWAL payments of specified day
+     *
+     * @param string $day
+     * @param string $brand
+     *
+     * @return int
+     */
+    public function getDailyTotalSuccessfulRenewals($day, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('COUNT(p.id) as totalRenewals')
+            ->from(Payment::class, 'p')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere($qb->expr()->eq('p.type', ':renew'))
+            ->andWhere($qb->expr()->neq('p.status', ':failed'))
+            ->setParameter('smallDateTime', $day)
+            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('renew', Payment::TYPE_SUBSCRIPTION_RENEWAL)
+            ->setParameter('failed', Payment::STATUS_FAILED);
+
+        if ($brand) {
+            $qb->leftJoin('p.subscriptionPayment', 'sp')
+                ->leftJoin('sp.subscription', 's')
+                ->andWhere(
+                    $qb->expr()
+                        ->eq('s.brand', ':brand')
+                )
+                ->setParameter('brand', $brand);
+        }
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * Returns the total number of failed TYPE_SUBSCRIPTION_RENEWAL payments of specified day
+     *
+     * @param string $day
+     * @param string $brand
+     *
+     * @return int
+     */
+    public function getDailyTotalFailedRenewals($day, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('COUNT(p.id) as totalRenewals')
+            ->from(Payment::class, 'p')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere($qb->expr()->eq('p.type', ':renew'))
+            ->andWhere($qb->expr()->eq('p.status', ':failed'))
+            ->setParameter('smallDateTime', $day)
+            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('renew', Payment::TYPE_SUBSCRIPTION_RENEWAL)
+            ->setParameter('failed', Payment::STATUS_FAILED);
+
+        if ($brand) {
+            $qb->leftJoin('p.subscriptionPayment', 'sp')
+                ->leftJoin('sp.subscription', 's')
+                ->andWhere(
+                    $qb->expr()
+                        ->eq('s.brand', ':brand')
+                )
+                ->setParameter('brand', $brand);
+        }
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * Returns the aggregated order items's products, of non-failed paid orders,
+     *   each with SUM(oreder_item.finalPrice) AS sales and COUNT(product.id) AS sold
+     *   grouped by product.id
+     *
+     * @param string $day
+     * @param string $brand
+     *
+     * @return array
+     */
+    public function getDailyOrdersProductStatistic($day, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select(['pr.id', 'pr.sku', 'SUM(oi.finalPrice) AS sales', 'COUNT(pr.id) AS sold'])
+            ->from(Payment::class, 'p')
+            ->join('p.orderPayment', 'op')
+            ->join('op.order', 'o')
+            ->leftJoin('o.orderItems', 'oi')
+            ->leftJoin('oi.product', 'pr')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere($qb->expr()->neq('p.status', ':failed'))
+            ->groupBy('pr.id')
+            ->setParameter('smallDateTime', $day)
+            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('failed', Payment::STATUS_FAILED);
+
+        if ($brand) {
+            $qb->andWhere(
+                    $qb->expr()
+                        ->eq('o.brand', ':brand')
+                )
+                ->setParameter('brand', $brand);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Returns the aggregated subscription's products, with non-failed TYPE_SUBSCRIPTION_RENEWAL payments,
+     *   each with SUM(subscription.totalPrice) AS sales and COUNT(product.id) AS sold
+     *   grouped by product.id
+     *
+     * @param string $day
+     * @param string $brand
+     *
+     * @return array
+     */
+    public function getDailySubscriptionsProductStatistic($day, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select(['pr.id', 'pr.sku', 'SUM(s.totalPrice) AS sales', 'COUNT(pr.id) AS sold'])
+            ->from(Payment::class, 'p')
+            ->join('p.subscriptionPayment', 'sp')
+            ->join('sp.subscription', 's')
+            ->join('s.product', 'pr')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere($qb->expr()->eq('s.type', ':subscription'))
+            ->andWhere($qb->expr()->eq('p.type', ':renew'))
+            ->andWhere($qb->expr()->neq('p.status', ':failed'))
+            ->groupBy('pr.id')
+            ->setParameter('smallDateTime', $day)
+            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('subscription', Subscription::TYPE_SUBSCRIPTION)
+            ->setParameter('renew', Payment::TYPE_SUBSCRIPTION_RENEWAL)
+            ->setParameter('failed', Payment::STATUS_FAILED);
+
+        if ($brand) {
+            $qb->andWhere(
+                    $qb->expr()
+                        ->eq('s.brand', ':brand')
+                )
+                ->setParameter('brand', $brand);
+        }
+
+        return $qb->getQuery()->getResult();
     }
 
     /**
