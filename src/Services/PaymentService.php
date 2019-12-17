@@ -152,7 +152,23 @@ class PaymentService
                 throw new PaymentFailedException('Credit card not found.');
             }
 
-            $customer = $this->stripePaymentGateway->getCustomer($gateway, $creditCard->getExternalCustomerId());
+            if (empty($creditCard->getExternalCustomerId()) && !empty($userId)) {
+                $tempPurchaser = new Purchaser();
+                $tempPurchaser->setId($userId);
+                $tempPurchaser->setBrand($gateway);
+                $tempPurchaser->setEmail(
+                    $paymentMethod->getUserPaymentMethod()
+                        ->getUser()
+                        ->getEmail()
+                );
+                $tempPurchaser->setType(Purchaser::USER_TYPE);
+
+                $customer = $this->getStripeCustomer($tempPurchaser, $gateway);
+            }
+            else {
+                $customer = $this->stripePaymentGateway->getCustomer($gateway, $creditCard->getExternalCustomerId());
+            }
+
             $card = $this->stripePaymentGateway->getCard($customer, $creditCard->getExternalId(), $gateway);
 
             $charge = $this->stripePaymentGateway->chargeCustomerCard(
