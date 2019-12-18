@@ -276,7 +276,9 @@ return [
 
             'list.failed-billing',
 
-            'send_payment_invoice'
+            'send_payment_invoice',
+
+            'pull.accounting',
         ],
     ],
 

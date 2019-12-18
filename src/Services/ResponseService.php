@@ -10,7 +10,9 @@ use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Structures\Address;
+use Railroad\Ecommerce\Entities\Structures\AccountingProductTotals;
 use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
+use Railroad\Ecommerce\Transformers\AccountingProductsTotalsTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
 use Railroad\Ecommerce\Transformers\AppleReceiptTransformer;
 use Railroad\Ecommerce\Transformers\CustomerTransformer;
@@ -636,5 +638,21 @@ class ResponseService extends FractalResponseService
             $queryBuilder
         )
             ->parseIncludes($includes);
+    }
+
+    /**
+     * @param AccountingProductTotals $accountingProductsTotals
+     *
+     * @return Fractal
+     */
+    public static function accountingProductsTotals(AccountingProductTotals $accountingProductsTotals)
+    {
+        return self::create(
+            $accountingProductsTotals,
+            'accountingProductsTotals',
+            new AccountingProductsTotalsTransformer(),
+            new JsonApiSerializer(),
+            null
+        );
     }
 }
