@@ -582,7 +582,7 @@ class PaymentService
         // get the agreement
         $billingAgreementId = $this->payPalPaymentGateway->createBillingAgreement(
             $gateway,
-            $convertedPaymentAmount,
+            0, // billing agreements do not have a value attached they can be charged whatever
             $currency,
             $payPalToken
         );
