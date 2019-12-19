@@ -117,8 +117,8 @@ class AppleStoreKitController extends Controller
                     $this->appleStoreKitService->processNotification($receipt, $subscription);
                 } catch (Exception $e) {
                     error_log($e);
-                    
-                    return response()->json(['data' => $e->getMessage()], 500);
+
+                    return response()->json();
                 }
             }
         }
