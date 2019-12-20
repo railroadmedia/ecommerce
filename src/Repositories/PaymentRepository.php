@@ -406,11 +406,9 @@ class PaymentRepository extends RepositoryBase
                 $qb->expr()
                     ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
             )
-            ->andWhere($qb->expr()->eq('p.type', ':initialOrder'))
             ->andWhere($qb->expr()->neq('p.status', ':failed'))
             ->setParameter('smallDateTime', $day)
             ->setParameter('bigDateTime', $day->copy()->endOfDay())
-            ->setParameter('initialOrder', Payment::TYPE_INITIAL_ORDER)
             ->setParameter('failed', Payment::STATUS_FAILED);
 
         if ($brand) {
@@ -467,11 +465,9 @@ class PaymentRepository extends RepositoryBase
                 $qb->expr()
                     ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
             )
-            ->andWhere($qb->expr()->eq('p.type', ':initialOrder'))
             ->andWhere($qb->expr()->neq('p.status', ':failed'))
             ->setParameter('smallDateTime', $day)
             ->setParameter('bigDateTime', $day->copy()->endOfDay())
-            ->setParameter('initialOrder', Payment::TYPE_INITIAL_ORDER)
             ->setParameter('failed', Payment::STATUS_FAILED);
 
         if ($brand) {

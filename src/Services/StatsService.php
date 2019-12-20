@@ -155,6 +155,10 @@ class StatsService
             }
 
             foreach ($dailyOrdersProductsData as $productData) {
+                if (empty($productData['sku'])) {
+                    continue;
+                }
+
                 $currentProductStatistic = null;
                 $currentProductStatisticId = $day . ':' . $productData['id'];
 
