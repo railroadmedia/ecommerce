@@ -211,6 +211,8 @@ class InvoiceService
 
         $showQst = false;
 
+        $priceBeforeTaxes = round($subscription->getTotalPrice() - $subscription->getTax(), 2);
+
         if ($subscription->getPaymentMethod() &&
             !empty(
                 $subscription->getPaymentMethod()
@@ -256,21 +258,21 @@ class InvoiceService
         }
 
         if ($gstRate > 0) {
-            $gstPaid = round($payment->getTotalPaid() * $gstRate, 2);
+            $gstPaid = round($priceBeforeTaxes * $gstRate, 2);
         }
         else {
             $gstPaid = 0;
         }
 
         if ($pstRate > 0) {
-            $pstPaid = round($payment->getTotalPaid() * $pstRate, 2);
+            $pstPaid = round($priceBeforeTaxes * $pstRate, 2);
         }
         else {
             $pstPaid = 0;
         }
 
         if ($qstRate > 0) {
-            $qstPaid = round($payment->getTotalPaid() * $qstRate, 2);
+            $qstPaid = round($priceBeforeTaxes * $qstRate, 2);
         }
         else {
             $qstPaid = 0;

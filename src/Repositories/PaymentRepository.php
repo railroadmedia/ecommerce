@@ -132,6 +132,260 @@ class PaymentRepository extends RepositoryBase
     }
 
     /**
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     * @param string $brand
+     *
+     * @return float
+     */
+    public function getPaymentsTaxPaid(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(o.taxesDue)')
+            ->from(Payment::class, 'p')
+            ->join('p.orderPayment', 'op')
+            ->join('op.order', 'o')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->neq('p.status', ':notFailed')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('notFailed', Payment::STATUS_FAILED);
+
+        $ordersTax = $qb->getQuery()->getSingleScalarResult();
+
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(s.tax)')
+            ->from(Payment::class, 'p')
+            ->join('p.subscriptionPayment', 'sp')
+            ->join('sp.subscription', 's')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.type', ':renewal')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->neq('p.status', ':notFailed')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('renewal', Payment::TYPE_SUBSCRIPTION_RENEWAL)
+            ->setParameter('notFailed', Payment::STATUS_FAILED);
+
+        $subscriptionsTax = $qb->getQuery()->getSingleScalarResult();
+
+        return $ordersTax + $subscriptionsTax;
+    }
+
+    /**
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     * @param string $brand
+     *
+     * @return float
+     */
+    public function getPaymentsShippingPaid(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(o.shippingDue) as shippingTotal')
+            ->from(Payment::class, 'p')
+            ->join('p.orderPayment', 'op')
+            ->join('op.order', 'o')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->neq('p.status', ':notFailed')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('notFailed', Payment::STATUS_FAILED);
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     * @param string $brand
+     *
+     * @return float
+     */
+    public function getPaymentsFinancePaid(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(o.financeDue)')
+            ->from(Payment::class, 'p')
+            ->join('p.orderPayment', 'op')
+            ->join('op.order', 'o')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->neq('p.status', ':notFailed')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('notFailed', Payment::STATUS_FAILED);
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     * @param string $brand
+     *
+     * @return float
+     */
+    public function getPaymentsNetProduct(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(oi.finalPrice)')
+            ->from(Payment::class, 'p')
+            ->join('p.orderPayment', 'op')
+            ->join('op.order', 'o')
+            ->join('o.orderItems', 'oi')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->neq('p.status', ':notFailed')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('notFailed', Payment::STATUS_FAILED);
+
+        $ordersProductsDue = $qb->getQuery()->getSingleScalarResult();
+
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(s.totalPrice - s.tax)')
+            ->from(Payment::class, 'p')
+            ->join('p.subscriptionPayment', 'sp')
+            ->join('sp.subscription', 's')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.type', ':renewal')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->neq('p.status', ':notFailed')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('renewal', Payment::TYPE_SUBSCRIPTION_RENEWAL)
+            ->setParameter('notFailed', Payment::STATUS_FAILED);
+
+        $subscriptionsProductsDue = $qb->getQuery()->getSingleScalarResult();
+
+        return $ordersProductsDue + $subscriptionsProductsDue;
+    }
+
+    /**
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     * @param string $brand
+     *
+     * @return float
+     */
+    public function getPaymentsNetPaid(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(p.totalPaid)')
+            ->from(Payment::class, 'p')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand);
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
      * Returns the total SUM of payment.totalPaid of non-failed TYPE_INITIAL_ORDER payments of specified day
      *
      * @param string $day

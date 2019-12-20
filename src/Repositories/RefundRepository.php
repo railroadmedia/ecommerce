@@ -107,4 +107,38 @@ class RefundRepository extends EntityRepository
             $qb->getQuery()
                 ->getSingleScalarResult();
     }
+
+    /**
+     * Returns the total SUM of payments refunded amount
+     *
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     * @param string $brand
+     *
+     * @return float
+     */
+    public function getRefundPaid(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(r.refundedAmount) as refundedTotal')
+            ->from(Refund::class, 'r')
+            ->join('r.payment', 'p')
+            ->where(
+                $qb->expr()
+                    ->between('r.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand);
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
 }
