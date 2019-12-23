@@ -234,6 +234,13 @@ class Subscription
      */
     protected $failedPayment;
 
+    /**
+     * @ORM\Column(type="string")
+     *
+     * @var string
+     */
+    protected $cancellationReason;
+
     public function __construct()
     {
         $this->payments = new ArrayCollection();
@@ -651,5 +658,21 @@ class Subscription
     public function setFailedPayment(?Payment $payment)
     {
         $this->failedPayment = $payment;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCancellationReason(): ?string
+    {
+        return $this->cancellationReason;
+    }
+
+    /**
+     * @param $cancellationReason
+     */
+    public function setCancellationReason($cancellationReason)
+    {
+        $this->cancellationReason = $cancellationReason;
     }
 }
