@@ -131,6 +131,101 @@ class PaymentRepository extends RepositoryBase
         return new ResultsQueryBuilderComposite($results, $qb);
     }
 
+    public function getOrdersProductsData(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select(
+                [
+                    'o.id as orderId',
+                    'o.totalDue',
+                    'o.productDue',
+                    'o.taxesDue',
+                    'o.shippingDue',
+                    'o.financeDue',
+                    'o.totalPaid',
+                    'oi.id as orderItemId',
+                    'oi.quantity',
+                    'oi.finalPrice',
+                    'pr.id as productId',
+                    'pr.sku as productSku',
+                    'pr.weight as productWeight',
+                ]
+            )
+            ->from(Payment::class, 'p')
+            ->join('p.orderPayment', 'op')
+            ->join('op.order', 'o')
+            ->join('o.orderItems', 'oi')
+            ->join('oi.product', 'pr')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->neq('p.status', ':notFailed')
+            )
+            ->orderBy('o.id', 'ASC')
+            ->addOrderBy('oi.id', 'ASC')
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('notFailed', Payment::STATUS_FAILED);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function getSubscriptionsProductsData(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select(
+                [
+                    's.id as subscriptionId',
+                    's.totalPrice',
+                    's.tax',
+                    'pr.id as productId',
+                    'pr.sku as productSku',
+                ]
+            )
+            ->from(Payment::class, 'p')
+            ->join('p.subscriptionPayment', 'sp')
+            ->join('sp.subscription', 's')
+            ->join('s.product', 'pr')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.type', ':renewal')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->neq('p.status', ':notFailed')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('renewal', Payment::TYPE_SUBSCRIPTION_RENEWAL)
+            ->setParameter('notFailed', Payment::STATUS_FAILED);
+
+        return $qb->getQuery()->getResult();
+    }
+
     /**
      * @param Carbon $smallDate
      * @param Carbon $bigDate

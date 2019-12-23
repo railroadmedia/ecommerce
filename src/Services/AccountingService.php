@@ -104,6 +104,104 @@ class AccountingService
 
         $result->setNetPaid($netPaid);
 
+        // $start = microtime(true);
+        $ordersProductsData = $this->paymentRepository->getOrdersProductsData($smallDateTime, $bigDateTime, $brand);
+        // $totTime = microtime(true) - $start;
+
+        // dd($totTime);
+
+        $ordersMap = [];
+        $productsMap = [];
+
+        foreach ($ordersProductsData as $orderProductData) {
+            if (!isset($ordersMap[$orderProductData['orderId']])) {
+                $ordersMap[$orderProductData['orderId']] = [
+                    'totalDue' => $orderProductData['totalDue'],
+                    'productDue' => $orderProductData['productDue'],
+                    'taxesDue' => $orderProductData['taxesDue'],
+                    'shippingDue' => $orderProductData['shippingDue'],
+                    'financeDue' => $orderProductData['financeDue'],
+                    'totalPaid' => $orderProductData['totalPaid'],
+                    'weight' => 0,
+                    'items' => []
+                ];
+            }
+
+            $ordersMap[$orderProductData['orderId']]['weight'] += $orderProductData['productWeight'];
+
+            $ordersMap[$orderProductData['orderId']]['items'][$orderProductData['productId']] = [
+                'quantity' => $orderProductData['quantity'],
+                'finalPrice' => $orderProductData['finalPrice'],
+                'productSku' => $orderProductData['productSku'],
+                'productWeight' => $orderProductData['productWeight'],
+            ];
+
+            // todo - maybe fix the finalPrice
+        }
+
+        foreach ($ordersMap as $orderId => $orderData) {
+            $taxRatio = $shippingRatio = $orderDueToPaidRatio = $totalDueForProducts = 0;
+
+            if ($orderData['totalDue'] != 0 && $orderData['totalDue'] != null) {
+                $taxRatio = $orderData['taxesDue'] ? $orderData['taxesDue'] / $orderData['totalDue'] : 0;
+                $shippingRatio = $orderData['shippingDue'] ? $orderData['shippingDue'] / $orderData['totalDue'] : 0;
+                $orderDueToPaidRatio = $orderData['totalPaid'] ? $orderData['totalPaid'] / $orderData['totalDue'] : 0;
+                $totalDueForProducts = $orderData['totalDue'] - $orderData['taxesDue'] - $orderData['shippingDue'] - $orderData['financeDue'];
+                $totalPaidForProducts = round($totalDueForProducts * $orderDueToPaidRatio, 2);
+            }
+
+            foreach ($orderData['items'] as $productId => $productData) {
+                $thisOrdersItemOrderRatio = $totalDueForProducts ? $productData['finalPrice'] / $totalDueForProducts : 0;
+                $taxForItem = $orderData['totalPaid'] * $taxRatio * $thisOrdersItemOrderRatio;
+                $thisOrdersItemOrderWeightRatio = 1;
+
+                if ($orderData['weight'] > 0) {
+                    $thisOrdersItemOrderWeightRatio =
+                        ($productData['productWeight'] ?? 0) / $orderData['weight'];
+                }
+
+                $shippingForItem = $orderData['totalPaid'] * $shippingRatio * $thisOrdersItemOrderWeightRatio;
+
+                if (!isset($productsMap[$productId])) {
+                    $productsMap[$productId] = [
+                        'taxPaid' => 0,
+                        'shippingPaid' => 0,
+                    ];
+                }
+
+                $productsMap[$productId]['taxPaid'] += $taxForItem;
+                $productsMap[$productId]['shippingPaid'] += $shippingForItem;
+            }
+        }
+
+        // $start = microtime(true);
+        $subscriptionsProductsData = $this->paymentRepository->getSubscriptionsProductsData($smallDateTime, $bigDateTime, $brand);
+        // $totTime = microtime(true) - $start;
+
+        // dd($totTime);
+
+        foreach ($subscriptionsProductsData as $subscriptionProductData) {
+            if (!isset($productsMap[$subscriptionProductData['productId']])) {
+                $productsMap[$subscriptionProductData['productId']] = [
+                    'taxPaid' => 0,
+                    'shippingPaid' => 0,
+                ];
+            }
+
+            $productsMap[$subscriptionProductData['productId']]['taxPaid'] += $subscriptionProductData['tax'];
+        }
+
+        // dd($ordersMap);
+        // dd($ordersMap[121029]); // no tax, no shipping
+
+        // dd($ordersMap[119541]); // has tax, has shipping
+        // dd($ordersMap[119539]); // has tax, no shipping
+        // dd($ordersMap[119545]); // no tax, has shipping
+
+        dd($productsMap);
+
+        // dd($totTime);
+
         return $result;
     }
 }
