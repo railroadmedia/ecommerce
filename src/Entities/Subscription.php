@@ -372,6 +372,8 @@ class Subscription
      */
     public function getCanceledOn(): ?DateTimeInterface
     {
+        if(is_null($this->canceledOn)) $this->setCancellationReason(null);
+
         return $this->canceledOn;
     }
 
@@ -669,7 +671,7 @@ class Subscription
     }
 
     /**
-     * @param $cancellationReason
+     * @param string|null $cancellationReason
      */
     public function setCancellationReason($cancellationReason)
     {
