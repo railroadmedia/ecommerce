@@ -240,12 +240,12 @@ class RefundJsonController extends Controller
             $distinctOrders[$order->getId()] = $order;
         }
 
-        $orderItemFulfillments = $this->orderItemFulfillmentRepository
-                                        ->getByOrders(array_values($distinctOrders));
-
-        foreach ($orderItemFulfillments as $orderItemFulfillment) {
-            $this->entityManager->remove($orderItemFulfillment);
-        }
+//        $orderItemFulfillments = $this->orderItemFulfillmentRepository
+//                                        ->getByOrders(array_values($distinctOrders));
+//
+//        foreach ($orderItemFulfillments as $orderItemFulfillment) {
+//            $this->entityManager->remove($orderItemFulfillment);
+//        }
 
         $this->entityManager->flush();
 

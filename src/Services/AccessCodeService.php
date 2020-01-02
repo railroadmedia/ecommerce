@@ -215,6 +215,24 @@ class AccessCodeService
                     break;
             }
 
+            if($product->getSku() === 'DLM-6mo'){
+                /*
+                 * 6-month PDF code (sku: "DLM-6mo") purchaser will generally not be the one the one redeeming it, but
+                 * their account will have DLM-6mo recorded as an purchased product. Thus that product it cannot be an
+                 * edge-granting product, lest the purchaser also get access when redeemed by another user.
+                 *
+                 * Instead, in these cases we assign redeemer a different product that grants edge in the desired
+                 * manner. Namely, for six months, but not renewing. (sku: "edge-membership-6-months")
+                 *
+                 * So far this is the only situation such a thing is needed, thus this hard-coded section rather than a
+                 * more complicated solution.
+                 *
+                 * Jonathan M, Jan 2020
+                 */
+                $expirationDate = Carbon::now()->addMonths(6)->startOfDay();
+                $product = $this->productRepository->bySku('edge-membership-6-months');
+            }
+
             $userProduct = new UserProduct();
 
             $userProduct->setUser($user);
