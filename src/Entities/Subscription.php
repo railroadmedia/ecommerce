@@ -372,8 +372,6 @@ class Subscription
      */
     public function getCanceledOn(): ?DateTimeInterface
     {
-        if(is_null($this->canceledOn)) $this->setCancellationReason(null);
-
         return $this->canceledOn;
     }
 
