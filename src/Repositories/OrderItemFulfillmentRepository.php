@@ -60,8 +60,11 @@ class OrderItemFulfillmentRepository extends RepositoryBase
             $qb->restrictBetweenTimes($request, 'oif');
         }
 
-        $qb->paginateByRequest($request, 1, 25)
-            ->orderByRequest($request, 'oif')
+        if (!$request->has('csv') || $request->get('csv') != true) {
+            $qb->paginateByRequest($request, 1, 25);
+        }
+
+        $qb->orderByRequest($request, 'oif')
             ->restrictBetweenTimes($request, 'oif')
             ->select(['oif', 'oc', 'o', 'oi', 'oip', 'osa', 'osac'])
             ->join('oif.order', 'o')
