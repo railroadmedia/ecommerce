@@ -10,6 +10,7 @@ use Doctrine\Common\Cache\PhpFileCache;
 use Doctrine\Common\Cache\RedisCache;
 use Doctrine\Common\EventManager;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
+use Doctrine\Common\Persistence\Mapping\RuntimeReflectionService;
 use Doctrine\Common\Proxy\AbstractProxyFactory;
 use Doctrine\DBAL\Logging\EchoSQLLogger;
 use Doctrine\DBAL\Types\Type;
@@ -28,6 +29,8 @@ use Railroad\Ecommerce\Commands\PopulatePaymentTaxesTable;
 use Railroad\Ecommerce\Commands\ProcessAppleExpiredSubscriptions;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Commands\SplitPaymentMethodIdsToColumns;
+use Railroad\Ecommerce\Entities\Customer;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Events\OrderEvent;
@@ -232,6 +235,23 @@ class EcommerceServiceProvider extends ServiceProvider
                 ->getConfiguration()
                 ->setSQLLogger($logger);
         }
+
+        // link users entity
+        $userClassMetaData = $entityManager->getClassMetadata(User::class);
+        $userClassMetaData
+            ->setPrimaryTable(
+                ['name' => config('ecommerce.users_table_name'), 'options' => ['readonly' => 'readonly_database']]
+            );
+        $userClassMetaData
+            ->mapField(
+                array(
+                    'fieldName' => 'email',
+                    'type' => 'text',
+                    'nullable' => false,
+                    'columnName' => 'email'
+                )
+            );
+        $userClassMetaData->wakeupReflection(new RuntimeReflectionService());
 
         app()->instance(EcommerceEntityManager::class, $entityManager);
     }

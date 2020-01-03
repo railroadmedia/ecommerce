@@ -54,13 +54,19 @@ class OrderItemFulfillmentRepository extends RepositoryBase
 
         $qb = $this->createQueryBuilder('oif');
 
-        $qb->orderByRequest($request, 'oif')
-            ->restrictBetweenTimes($request, 'oif')
-            ->select(['oif', 'oc', 'o', 'oi', 'oip', 'osa', 'osac'])
+        $qb->orderByRequest($request, 'oif');
+
+        if (!empty($request->get('small_date_time'))) {
+            $qb->restrictBetweenTimes($request, 'oif');
+        }
+
+        $qb->paginateByRequest($request, 1, 25)
+            ->select(['oif', 'o', 'oi', 'oip', 'osa', 'oc', 'osac', 'ou'])
             ->join('oif.order', 'o')
             ->join('o.shippingAddress', 'osa')
             ->join('oif.orderItem', 'oi')
             ->join('oi.product', 'oip')
+            ->leftJoin('o.user', 'ou')
             ->leftJoin('o.customer', 'oc')
             ->leftJoin('osa.customer', 'osac')
             ->andWhere(
@@ -69,8 +75,20 @@ class OrderItemFulfillmentRepository extends RepositoryBase
             )
             ->setParameter('statuses', $statuses);
 
-        $results =
-            $qb->getQuery()
+        if (!empty($request->get('search_term'))) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->like('ou.email', ':term'),
+                        $qb->expr()
+                            ->like('oc.email', ':term')
+                    )
+            )
+                ->setParameter('term', '%' . $request->get('search_term') . '%');
+        }
+
+        $results = $qb->getQuery()
                 ->getResult();
 
         return new ResultsQueryBuilderComposite($results, $qb);

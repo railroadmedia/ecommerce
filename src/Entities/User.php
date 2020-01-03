@@ -2,13 +2,23 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Doctrine\ORM\Mapping as ORM;
 use Railroad\Doctrine\Contracts\UserEntityInterface;
 use Railroad\Ecommerce\Contracts\IdentifiableInterface;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
+/**
+ * User
+ *
+ * @ORM\Entity(readOnly=true)
+ * @ORM\Table(name="NULL")
+ */
 class User implements UserEntityInterface, IdentifiableInterface, JWTSubject
 {
     /**
+     * @ORM\Id
+     * @ORM\Column(type="integer")
+     *
      * @var int
      */
     private $id;

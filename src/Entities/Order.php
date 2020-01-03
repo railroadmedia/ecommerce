@@ -83,7 +83,8 @@ class Order
     /**
      * @var User
      *
-     * @ORM\Column(type="user", name="user_id", nullable=true)
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\User", cascade={refresh})
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
      */
     protected $user;
 

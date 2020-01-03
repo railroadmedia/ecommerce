@@ -328,4 +328,9 @@ return [
 
     'subscription_renewal_date' => 1,
     'failed_payments_before_de_activation' => 1,
+
+    // user database info
+    // user table must be in the same database as ecommerce
+    'users_table_name' => 'usora_users',
+    'users_table_email_column_name' => 'email',
 ];
