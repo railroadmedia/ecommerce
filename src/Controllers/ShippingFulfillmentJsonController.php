@@ -101,6 +101,19 @@ class ShippingFulfillmentJsonController extends Controller
                         ->getCustomer()
                         ->getEmail();
                 }
+                
+                if (empty(
+                $fulfillment->getOrder()
+                    ->getShippingAddress()
+                )
+                ) {
+                    error_log(
+                        'Warning, order for fulfillment does not have shipping address. Order ID: '
+                        .$fulfillment->getOrder()
+                            ->getId()
+                    );
+                    continue;
+                }
 
                 $rows[] = [
                     $fulfillment->getOrder()

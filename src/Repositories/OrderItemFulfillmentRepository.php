@@ -56,11 +56,13 @@ class OrderItemFulfillmentRepository extends RepositoryBase
 
         $qb->orderByRequest($request, 'oif')
             ->restrictBetweenTimes($request, 'oif')
-            ->select(['oif', 'o', 'oi', 'oip', 'osa'])
+            ->select(['oif', 'oc', 'o', 'oi', 'oip', 'osa', 'osac'])
             ->join('oif.order', 'o')
             ->join('o.shippingAddress', 'osa')
             ->join('oif.orderItem', 'oi')
             ->join('oi.product', 'oip')
+            ->leftJoin('o.customer', 'oc')
+            ->leftJoin('osa.customer', 'osac')
             ->andWhere(
                 $qb->expr()
                     ->in('oif.status', ':statuses')
