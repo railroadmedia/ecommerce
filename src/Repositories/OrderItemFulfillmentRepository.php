@@ -54,7 +54,14 @@ class OrderItemFulfillmentRepository extends RepositoryBase
 
         $qb = $this->createQueryBuilder('oif');
 
-        $qb->orderByRequest($request, 'oif')
+        $qb->orderByRequest($request, 'oif');
+
+        if (!empty($request->get('small_date_time'))) {
+            $qb->restrictBetweenTimes($request, 'oif');
+        }
+
+        $qb->paginateByRequest($request, 1, 25)
+            ->orderByRequest($request, 'oif')
             ->restrictBetweenTimes($request, 'oif')
             ->select(['oif', 'oc', 'o', 'oi', 'oip', 'osa', 'osac'])
             ->join('oif.order', 'o')
@@ -68,6 +75,14 @@ class OrderItemFulfillmentRepository extends RepositoryBase
                     ->in('oif.status', ':statuses')
             )
             ->setParameter('statuses', $statuses);
+
+        if (!empty($request->get('order_id'))) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq('o.id', ':orderId')
+            )
+                ->setParameter('orderId', $request->get('order_id'));
+        }
 
         $results =
             $qb->getQuery()

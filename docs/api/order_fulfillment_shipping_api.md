@@ -17,18 +17,30 @@ Get all orders and items that need to be fulfilled between the specified dates.
 
 ### Request Parameters
 
-[Ordered](request_ordering_parameters.md)
+[Paginated](request_pagination_parameters.md) | [Ordered](request_ordering_parameters.md)
 <br>
+
 
 |Type|Key|Required|Default|Options|Notes|
 |----|---|--------|-------|-------|-----|
-|query|small_date_time||1 month before today|||
-|query|big_date_time||today|||
+|query|order_id||||the order id to filter by|
+|query|small_date_time|||||
+|query|big_date_time|||||
 |query|csv||false|if set to true, will return CSV file download||
 
 ### Request Example
 
 ```js   
+$.ajax({
+    url: 'https://www.domain.com' +
+        '/ecommerce/fulfillment',
+    data: {
+        order_id: 123, 
+    }, 
+    success: function(response) {},
+    error: function(response) {}
+});
+
 $.ajax({
     url: 'https://www.domain.com' +
         '/ecommerce/fulfillment',
