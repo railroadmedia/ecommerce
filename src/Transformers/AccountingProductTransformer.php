@@ -5,7 +5,7 @@ namespace Railroad\Ecommerce\Transformers;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Structures\AccountingProduct;
 
-class AccountingProductsTotalsTransformer extends TransformerAbstract
+class AccountingProductTransformer extends TransformerAbstract
 {
     public function transform(AccountingProduct $accountingProduct)
     {

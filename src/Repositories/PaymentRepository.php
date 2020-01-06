@@ -151,6 +151,7 @@ class PaymentRepository extends RepositoryBase
                     'oi.finalPrice',
                     'pr.id as productId',
                     'pr.sku as productSku',
+                    'pr.name as productName',
                     'pr.weight as productWeight',
                 ]
             )
@@ -194,6 +195,7 @@ class PaymentRepository extends RepositoryBase
                     's.totalPrice',
                     's.tax',
                     'pr.id as productId',
+                    'pr.name as productName',
                     'pr.sku as productSku',
                 ]
             )

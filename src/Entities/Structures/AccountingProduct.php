@@ -66,9 +66,9 @@ class AccountingProduct
      */
     private $netPaid;
 
-    public function __construct(Product $product)
+    public function __construct($productId)
     {
-        $this->id = $product->getId();
+        $this->id = $productId;
     }
 
     /**
