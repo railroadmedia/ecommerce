@@ -7,6 +7,7 @@ use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
@@ -30,6 +31,97 @@ class RefundRepository extends EntityRepository
     public function __construct(EcommerceEntityManager $em)
     {
         parent::__construct($em, $em->getClassMetadata(Refund::class));
+    }
+
+    public function getAccountingOrderProductsData(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select(
+                [
+                    'r.refundedAmount',
+                    'o.id as orderId',
+                    'o.totalDue',
+                    'o.productDue',
+                    'o.taxesDue',
+                    'o.shippingDue',
+                    'o.financeDue',
+                    'o.totalPaid',
+                    'oi.id as orderItemId',
+                    'oi.quantity',
+                    'oi.finalPrice',
+                    'pr.id as productId',
+                    'pr.sku as productSku',
+                    'pr.name as productName',
+                    'pr.weight as productWeight',
+                ]
+            )
+            ->from(Refund::class, 'r')
+            ->join('r.payment', 'p')
+            ->join('p.orderPayment', 'op')
+            ->join('op.order', 'o')
+            ->join('o.orderItems', 'oi')
+            ->join('oi.product', 'pr')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->orderBy('o.id', 'ASC')
+            ->addOrderBy('oi.id', 'ASC')
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function getAccountingSubscriptionProductsData(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select(
+                [
+                    'r.paymentAmount',
+                    'r.refundedAmount',
+                    's.id as subscriptionId',
+                    's.totalPrice',
+                    's.tax',
+                    'pr.id as productId',
+                    'pr.name as productName',
+                    'pr.sku as productSku',
+                ]
+            )
+            ->from(Refund::class, 'r')
+            ->join('r.payment', 'p')
+            ->join('p.subscriptionPayment', 'sp')
+            ->join('sp.subscription', 's')
+            ->join('s.product', 'pr')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.type', ':renewal')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('renewal', Payment::TYPE_SUBSCRIPTION_RENEWAL);
+
+        return $qb->getQuery()->getResult();
     }
 
     public function getPaymentsRefunds(array $payments): array
