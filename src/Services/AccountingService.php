@@ -49,7 +49,7 @@ class AccountingService
         $smallDate = $request->get(
             'small_date_time',
             Carbon::now()
-                ->subDay()
+                ->subDay(30)
                 ->startOfDay()
                 ->toDateTimeString()
         );
@@ -138,7 +138,8 @@ class AccountingService
 
         foreach ($ordersMap as $orderId => $orderData) {
 
-            $totalForPhysical = 0;
+            $paidPhysical = [];
+            $freePhysical = [];
 
             foreach ($orderData['items'] as $productId => $productData) {
 
@@ -164,13 +165,17 @@ class AccountingService
                     ];
                 }
 
-                $tax = $shipping = $finance = 0;
+                $tax = $finance = 0;
 
                 $tax = $oderItemRatio * $orderData['taxesDue'];
                 $productsMap[$productId]['taxPaid'] += $tax;
 
-                if ((float)$productData['productWeight'] > 0) {
-                    $totalForPhysical += $productData['finalPrice'];
+                if ((float)$orderData['shippingDue'] > 0 && (float)$productData['productWeight'] > 0) {
+                    if ((float)$productData['finalPrice'] > 0) {
+                        $paidPhysical[] = $productId;
+                    } else {
+                        $freePhysical[] = $productId;
+                    }
                 }
 
                 if ((float)$orderData['financeDue'] > 0) {
@@ -179,7 +184,7 @@ class AccountingService
                 }
 
                 $productsMap[$productId]['netProduct'] += $productData['finalPrice'];
-                $productsMap[$productId]['netPaid'] += $productData['finalPrice'] + $tax + $shipping + $finance;
+                $productsMap[$productId]['netPaid'] += $productData['finalPrice'] + $tax + $finance;
                 $productsMap[$productId]['quantity'] += $productData['quantity'];
 
                 if ($productData['finalPrice'] == 0) {
@@ -187,12 +192,15 @@ class AccountingService
                 }
             }
 
-            if ((float)$orderData['shippingDue'] > 0 && $totalForPhysical) {
-                foreach ($orderData['items'] as $productId => $productData) {
-                    if ((float)$productData['finalPrice'] > 0 && (float)$productData['productWeight'] > 0) {
-                        $oderItemRatio = $productData['finalPrice'] / $totalForPhysical;
-                        $shipping = $oderItemRatio * $orderData['shippingDue'];
-                        $productsMap[$productId]['shippingPaid'] += $shipping;
+            if ((float)$orderData['shippingDue'] > 0) {
+                $shippingProducts = empty($paidPhysical) ? $freePhysical : $paidPhysical;
+
+                if (count($shippingProducts) > 0) {
+                    $shippingPerProduct = (float)$orderData['shippingDue'] / count($shippingProducts);
+
+                    foreach ($shippingProducts as $productId) {
+                        $productsMap[$productId]['shippingPaid'] += $shippingPerProduct;
+                        $productsMap[$productId]['netPaid'] += $shippingPerProduct;
                     }
                 }
             }

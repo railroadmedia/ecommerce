@@ -44,7 +44,7 @@ class AccountingJsonController extends Controller
      */
     public function productTotals(Request $request)
     {
-        // $this->permissionService->canOrThrow(auth()->id(), 'pull.accounting');
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.accounting');
 
         $accountingProductsTotals = $this->accountingService->indexByRequest($request);
 
