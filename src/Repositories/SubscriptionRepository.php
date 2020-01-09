@@ -269,12 +269,16 @@ class SubscriptionRepository extends RepositoryBase
                     ->toDateTimeString()
             );
 
+        $smallDateTime = Carbon::parse($smallDateTime)->startOfDay()->toDateTimeString();
+
         $bigDateTime =
             $request->get(
                 'big_date_time',
                 Carbon::now()
                     ->toDateTimeString()
             );
+
+        $bigDateTime = Carbon::parse($bigDateTime)->endOfDay()->toDateTimeString();
 
         $qb = $this->createQueryBuilder('s');
 

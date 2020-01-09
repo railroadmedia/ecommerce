@@ -170,6 +170,16 @@ class AccountingProductTotals
      */
     public function addProductStatistics(AccountingProduct $accountingProduct)
     {
-        $this->accountingProducts[] = $accountingProduct;
+        $this->accountingProducts[$accountingProduct->getId()] = $accountingProduct;
+    }
+
+    public function orderAccountingProductsBySku()
+    {
+        usort(
+            $this->accountingProducts,
+            function (AccountingProduct $a, AccountingProduct $b) {
+                return strcmp($a->getSku(), $b->getSku());
+            }
+        );
     }
 }

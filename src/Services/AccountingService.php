@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\Structures\AccountingProduct;
 use Railroad\Ecommerce\Entities\Structures\AccountingProductTotals;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
+use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\RefundRepository;
 use Throwable;
 
@@ -23,18 +24,26 @@ class AccountingService
     private $refundRepository;
 
     /**
+     * @var ProductRepository
+     */
+    private $productRepository;
+
+    /**
      * AccountingService constructor.
      *
      * @param PaymentRepository $paymentRepository
      * @param RefundRepository $refundRepository
+     * @param ProductRepository $productRepository
      */
     public function __construct(
         PaymentRepository $paymentRepository,
-        RefundRepository $refundRepository
+        RefundRepository $refundRepository,
+        ProductRepository $productRepository
     )
     {
         $this->paymentRepository = $paymentRepository;
         $this->refundRepository = $refundRepository;
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -49,8 +58,7 @@ class AccountingService
         $smallDate = $request->get(
             'small_date_time',
             Carbon::now()
-                ->subDay(30)
-                ->startOfDay()
+                ->subWeek()
                 ->toDateTimeString()
         );
 
@@ -61,8 +69,6 @@ class AccountingService
         $bigDate = $request->get(
             'big_date_time',
             Carbon::now()
-                ->subDay()
-                ->endOfDay()
                 ->toDateTimeString()
         );
 
@@ -346,6 +352,36 @@ class AccountingService
             $result->addProductStatistics($productStatistics);
         }
 
+        // accounting also needs rows with all 0's for products without data
+        $allProducts = $this->productRepository->all();
+
+        // if brand is passed in, only add products from that brand
+        foreach ($allProducts as $productIndex => $product) {
+            if (!empty($brand) && $product->getBrand() != $brand) {
+                continue;
+            }
+
+            if (empty($result->getAccountingProducts()[$product->getId()])) {
+                $productStatistics = new AccountingProduct($product->getId());
+
+                $productStatistics->setName($product->getName());
+                $productStatistics->setSku($product->getSku());
+                $productStatistics->setTaxPaid(0);
+                $productStatistics->setShippingPaid(0);
+                $productStatistics->setFinancePaid(0);
+                $productStatistics->setLessRefunded(0);
+                $productStatistics->setTotalQuantity(0);
+                $productStatistics->setRefundedQuantity(0);
+                $productStatistics->setFreeQuantity(0);
+                $productStatistics->setNetProduct(0);
+                $productStatistics->setNetPaid(0);
+
+                $result->addProductStatistics($productStatistics);
+            }
+        }
+
+        $result->orderAccountingProductsBySku();
+        
         return $result;
     }
 }

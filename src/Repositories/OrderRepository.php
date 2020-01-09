@@ -90,11 +90,11 @@ class OrderRepository extends RepositoryBase
             ->orderByRequest($request, $alias);
 
         if ($request->has('start-date')) {
-            $startDate = Carbon::parse($request->get('start-date', Carbon::now()->subMonth()->toDateTimeString()));
+            $startDate = Carbon::parse($request->get('start-date', Carbon::now()->subMonth()->toDateTimeString()))->startOfDay();
         }
 
         if ($request->has('end-date')) {
-            $endDate = Carbon::parse($request->get('end-date', Carbon::now()->toDateTimeString()));
+            $endDate = Carbon::parse($request->get('end-date', Carbon::now()->toDateTimeString()))->endOfDay();
         }
 
         if (isset($startDate) && isset($endDate)) {

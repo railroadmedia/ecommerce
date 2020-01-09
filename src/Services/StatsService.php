@@ -59,7 +59,7 @@ class StatsService
         $smallDate = $request->get(
             'small_date_time',
             Carbon::now()
-                ->subDay()
+                ->subWeek()
                 ->toDateTimeString()
         );
 
@@ -70,13 +70,13 @@ class StatsService
         $bigDate = $request->get(
             'big_date_time',
             Carbon::now()
-                ->subDay()
                 ->toDateTimeString()
         );
 
         $bigDateTime =
             Carbon::parse($bigDate)
-                ->endOfDay();
+                ->addDay()
+                ->startOfDay();
 
         if ($smallDateTime > $bigDateTime) {
             $tmp = $bigDate;
@@ -90,7 +90,7 @@ class StatsService
 
         $brand = $request->get('brand');
 
-        while($currentDay < $bigDate) {
+        while($currentDay <= Carbon::parse($bigDate)) {
 
             $add = false;
 
