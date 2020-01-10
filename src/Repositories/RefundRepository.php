@@ -66,7 +66,7 @@ class RefundRepository extends EntityRepository
             ->join('oi.product', 'pr')
             ->where(
                 $qb->expr()
-                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+                    ->between('r.createdAt', ':smallDateTime', ':bigDateTime')
             )
             ->andWhere(
                 $qb->expr()
@@ -106,7 +106,7 @@ class RefundRepository extends EntityRepository
             ->join('s.product', 'pr')
             ->where(
                 $qb->expr()
-                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+                    ->between('r.createdAt', ':smallDateTime', ':bigDateTime')
             )
             ->andWhere(
                 $qb->expr()
@@ -120,6 +120,53 @@ class RefundRepository extends EntityRepository
             ->setParameter('bigDateTime', $bigDate)
             ->setParameter('brand', $brand)
             ->setParameter('renewal', Payment::TYPE_SUBSCRIPTION_RENEWAL);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function getAccountingPaymentPlansProductsData(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select(
+                [
+                    'r.paymentAmount',
+                    'r.refundedAmount',
+                    's.id as subscriptionId',
+                    's.totalPrice',
+                    'o.id as orderId',
+                    'oi.id as orderItemId',
+                    'oi.finalPrice',
+                    'pr.id as productId',
+                    'pr.name as productName',
+                    'pr.sku as productSku',
+                ]
+            )
+            ->from(Refund::class, 'r')
+            ->join('r.payment', 'p')
+            ->join('p.subscriptionPayment', 'sp')
+            ->join('sp.subscription', 's')
+            ->join('s.order', 'o')
+            ->join('o.orderItems', 'oi')
+            ->join('oi.product', 'pr')
+            ->where(
+                $qb->expr()
+                    ->between('r.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.type', ':pp')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('pp', Payment::TYPE_PAYMENT_PLAN);
 
         return $qb->getQuery()->getResult();
     }

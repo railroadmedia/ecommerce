@@ -12,6 +12,7 @@ use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -228,6 +229,56 @@ class PaymentRepository extends RepositoryBase
         return $qb->getQuery()->getResult();
     }
 
+    public function getPaymentPlansProductsData(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select(
+                [
+                    's.id as subscriptionId',
+                    's.totalPrice',
+                    'o.id as orderId',
+                    'oi.id as orderItemId',
+                    'oi.finalPrice',
+                    'pr.id as productId',
+                    'pr.name as productName',
+                    'pr.sku as productSku',
+                ]
+            )
+            ->from(Payment::class, 'p')
+            ->join('p.subscriptionPayment', 'sp')
+            ->join('sp.subscription', 's')
+            ->join('s.order', 'o')
+            ->join('o.orderItems', 'oi')
+            ->join('oi.product', 'pr')
+            ->where(
+                $qb->expr()
+                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.type', ':pp')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->neq('p.status', ':notFailed')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('pp', Payment::TYPE_PAYMENT_PLAN)
+            ->setParameter('notFailed', Payment::STATUS_FAILED);
+
+        return $qb->getQuery()->getResult();
+    }
+
     /**
      * @param Carbon $smallDate
      * @param Carbon $bigDate
@@ -434,7 +485,12 @@ class PaymentRepository extends RepositoryBase
             )
             ->andWhere(
                 $qb->expr()
-                    ->eq('p.type', ':renewal')
+                    ->orX(
+                        $qb->expr()
+                            ->eq('p.type', ':renewal'),
+                        $qb->expr()
+                            ->eq('p.type', ':pp')
+                    )
             )
             ->andWhere(
                 $qb->expr()
@@ -444,6 +500,7 @@ class PaymentRepository extends RepositoryBase
             ->setParameter('bigDateTime', $bigDate)
             ->setParameter('brand', $brand)
             ->setParameter('renewal', Payment::TYPE_SUBSCRIPTION_RENEWAL)
+            ->setParameter('pp', Payment::TYPE_PAYMENT_PLAN)
             ->setParameter('notFailed', Payment::STATUS_FAILED);
 
         $subscriptionsProductsDue = $qb->getQuery()->getSingleScalarResult();
@@ -475,11 +532,42 @@ class PaymentRepository extends RepositoryBase
                 $qb->expr()
                     ->eq('p.gatewayName', ':brand')
             )
+            ->andWhere(
+                $qb->expr()
+                    ->neq('p.status', ':notFailed')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand)
+            ->setParameter('notFailed', Payment::STATUS_FAILED);
+
+        $paid = $qb->getQuery()->getSingleScalarResult();
+
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(r.refundedAmount)')
+            ->from(Refund::class, 'r')
+            ->join('r.payment', 'p')
+            ->where(
+                $qb->expr()
+                    ->between('r.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
             ->setParameter('smallDateTime', $smallDate)
             ->setParameter('bigDateTime', $bigDate)
             ->setParameter('brand', $brand);
 
-        return $qb->getQuery()->getSingleScalarResult();
+        $refunded = $qb->getQuery()->getSingleScalarResult();
+
+        // dd($paid); // 6879.23 - not matching
+        // dd($refunded); // 1119.25 - matching
+
+        return $paid - $refunded;
     }
 
     /**
