@@ -19,7 +19,7 @@
     "railroad/doctrine-array-hydrator": "1.0.*",
     "ext-json": "*",
     "aporat/store-receipt-validator": "3.2.*",
-    "railroad/railactionlog": "^0.0",
+    "railroad/railactionlog": "0.0.*",
     "tymon/jwt-auth": "1.0.0-rc.2"
   },
   "require-dev": {
