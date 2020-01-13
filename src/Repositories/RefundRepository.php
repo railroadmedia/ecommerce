@@ -41,6 +41,7 @@ class RefundRepository extends EntityRepository
 
         $qb = $qb->select(
                 [
+                    'r.id as refundId',
                     'r.refundedAmount',
                     'o.id as orderId',
                     'o.totalDue',
@@ -89,6 +90,7 @@ class RefundRepository extends EntityRepository
 
         $qb = $qb->select(
                 [
+                    'r.id as refundId',
                     'r.paymentAmount',
                     'r.refundedAmount',
                     's.id as subscriptionId',
@@ -124,6 +126,35 @@ class RefundRepository extends EntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    public function getBrandRefunds(Carbon $smallDate, Carbon $bigDate, $brand)
+    {
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select(
+                [
+                    'r.id as refundId',
+                    'r.refundedAmount',
+                ]
+            )
+            ->from(Refund::class, 'r')
+            ->join('r.payment', 'p')
+            ->where(
+                $qb->expr()
+                    ->between('r.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.gatewayName', ':brand')
+            )
+            ->setParameter('smallDateTime', $smallDate)
+            ->setParameter('bigDateTime', $bigDate)
+            ->setParameter('brand', $brand);
+
+        return $qb->getQuery()->getResult();
+    }
+
     public function getAccountingPaymentPlansProductsData(Carbon $smallDate, Carbon $bigDate, $brand)
     {
         $qb =
@@ -132,6 +163,7 @@ class RefundRepository extends EntityRepository
 
         $qb = $qb->select(
                 [
+                    'r.id as refundId',
                     'r.paymentAmount',
                     'r.refundedAmount',
                     's.id as subscriptionId',

@@ -128,7 +128,7 @@ class AccountingService
                     'financeDue' => $orderProductData['financeDue'],
                     'totalPaid' => $orderProductData['totalPaid'],
                     'weight' => 0,
-                    'items' => []
+                    'items' => [],
                 ];
             }
 
@@ -156,7 +156,11 @@ class AccountingService
 
                 $oderItemRatio = 0;
 
-                if ($orderData['productDue'] != 0 && $orderData['productDue'] != null && $productData['finalPrice']) {
+                if (
+                    $orderData['productDue'] != 0
+                    && $orderData['productDue'] != null
+                    && $productData['finalPrice']
+                ) {
                     $oderItemRatio = $productData['finalPrice'] / $orderData['productDue'];
                 }
 
@@ -230,7 +234,7 @@ class AccountingService
                 $ordersMap[$orderProductData['orderId']] = [
                     'productDue' => 0,
                     'totalPrice' => $orderProductData['totalPrice'],
-                    'items' => []
+                    'items' => [],
                 ];
             }
 
@@ -251,7 +255,11 @@ class AccountingService
 
                 $oderItemRatio = 0;
 
-                if ($orderData['productDue'] != 0 && $orderData['productDue'] != null && $productData['finalPrice']) {
+                if (
+                    $orderData['productDue'] != 0
+                    && $orderData['productDue'] != null
+                    && $productData['finalPrice']
+                ) {
                     $oderItemRatio = $productData['finalPrice'] / $orderData['productDue'];
                 }
 
@@ -317,24 +325,39 @@ class AccountingService
         $refundOrdersMap = [];
 
         foreach ($refundOrdersProductsData as $refundOrdersProductData) {
-            if (!isset($refundOrdersMap[$refundOrdersProductData['orderId']])) {
-                $refundOrdersMap[$refundOrdersProductData['orderId']] = [
+            $orderId = $refundOrdersProductData['orderId'];
+            $refundId = $refundOrdersProductData['refundId'];
+            if (!isset($refundOrdersMap[$orderId])) {
+                $refundOrdersMap[$orderId] = [
+                    'firstRefundId' => $refundId,
                     'totalDue' => $refundOrdersProductData['totalDue'],
-                    'refundedAmount' => $refundOrdersProductData['refundedAmount'],
                     'productDue' => 0,
                     'taxesDue' => $refundOrdersProductData['taxesDue'],
                     'shippingDue' => $refundOrdersProductData['shippingDue'],
                     'financeDue' => $refundOrdersProductData['financeDue'],
                     'totalPaid' => $refundOrdersProductData['totalPaid'],
                     'weight' => 0,
-                    'items' => []
+                    'items' => [],
+                    'hasPaidItems' => false,
+                    'refunds' => []
                 ];
             }
 
             // some orders have NULL productDue in mysql, thus order items sum is recalculated
-            $refundOrdersMap[$refundOrdersProductData['orderId']]['productDue'] += $refundOrdersProductData['finalPrice'];
+            if ($refundId == $refundOrdersMap[$orderId]['firstRefundId']) {
+                // an order may have multiple refunds, the if condition ensures correct productDue calculus
+                $refundOrdersMap[$orderId]['productDue'] += $refundOrdersProductData['finalPrice'];
+            }
 
-            $refundOrdersMap[$refundOrdersProductData['orderId']]['items'][$refundOrdersProductData['productId']] = [
+            if ((float)$refundOrdersProductData['finalPrice'] > 0) {
+                $refundOrdersMap[$orderId]['hasPaidItems'] = true;
+            }
+
+            if (!isset($refundOrdersMap[$orderId]['refunds'][$refundId])) {
+                $refundOrdersMap[$orderId]['refunds'][$refundId] = $refundOrdersProductData['refundedAmount'];
+            }
+
+            $refundOrdersMap[$orderId]['items'][$refundOrdersProductData['productId']] = [
                 'quantity' => $refundOrdersProductData['quantity'],
                 'finalPrice' => $refundOrdersProductData['finalPrice'],
                 'productSku' => $refundOrdersProductData['productSku'],
@@ -349,12 +372,17 @@ class AccountingService
 
                 $oderItemRatio = 0;
 
-                if (
-                    $refundOrderData['productDue'] != 0
-                    && $refundOrderData['productDue'] != null
-                    && $productData['finalPrice']
-                ) {
-                    $oderItemRatio = $productData['finalPrice'] / $refundOrderData['productDue'];
+                if ($refundOrderData['hasPaidItems']) {
+                    if (
+                        $refundOrderData['productDue'] != 0
+                        && $refundOrderData['productDue'] != null
+                        && $productData['finalPrice']
+                    ) {
+                        $oderItemRatio = $productData['finalPrice'] / $refundOrderData['productDue'];
+                    }
+                } else {
+                    $orderItemsCount = count($refundOrderData['items']) > 0 ? count($refundOrderData['items']) : 1;
+                    $oderItemRatio = 1 / $orderItemsCount;
                 }
 
                 if (!isset($productsMap[$productId])) {
@@ -373,11 +401,20 @@ class AccountingService
                     ];
                 }
 
-                $refundedForProduct = $oderItemRatio * $refundOrderData['refundedAmount'];
-                $productsMap[$productId]['refunded'] += $refundedForProduct;
-                $productsMap[$productId]['quantity'] -= $productData['quantity'];
-                $productsMap[$productId]['refundedQuantity'] += $productData['quantity'];
-                $productsMap[$productId]['netPaid'] -= $refundedForProduct;
+                $refundQuantityProcessed = false;
+
+                foreach ($refundOrderData['refunds'] as $refundId => $refundedAmount) {
+                    $refundedForProduct = $oderItemRatio * $refundedAmount;
+                    $productsMap[$productId]['refunded'] += $refundedForProduct;
+                    $productsMap[$productId]['netPaid'] -= $refundedForProduct;
+
+                    if (!$refundQuantityProcessed) {
+                        // process refund quantity only once, even on multiple refunds
+                        $refundQuantityProcessed = true;
+                        $productsMap[$productId]['quantity'] -= $productData['quantity'];
+                        $productsMap[$productId]['refundedQuantity'] += $productData['quantity'];
+                    }
+                }
             }
         }
 
@@ -388,15 +425,15 @@ class AccountingService
         $refundSubscriptionsMap = [];
 
         foreach ($refundSubscriptionsProductsData as $refundProductData) {
-            if (!isset($productsMap[$subscriptionProductData['productId']])) {
-                $productsMap[$subscriptionProductData['productId']] = [
+            if (!isset($productsMap[$refundProductData['productId']])) {
+                $productsMap[$refundProductData['productId']] = [
                     'taxPaid' => 0,
                     'shippingPaid' => 0,
                     'financePaid' => 0,
                     'netProduct' => 0,
                     'netPaid' => 0,
-                    'productSku' => $subscriptionProductData['productSku'],
-                    'productName' => $subscriptionProductData['productName'],
+                    'productSku' => $refundProductData['productSku'],
+                    'productName' => $refundProductData['productName'],
                     'refunded' => 0,
                     'quantity' => 0,
                     'refundedQuantity' => 0,
@@ -418,19 +455,35 @@ class AccountingService
         $refundOrdersMap = [];
 
         foreach ($refundPaymentPlansProductsData as $refundOrdersProductData) {
-            if (!isset($refundOrdersMap[$refundOrdersProductData['orderId']])) {
-                $refundOrdersMap[$refundOrdersProductData['orderId']] = [
+            $orderId = $refundOrdersProductData['orderId'];
+            $refundId = $refundOrdersProductData['refundId'];
+            if (!isset($refundOrdersMap[$orderId])) {
+                $refundOrdersMap[$orderId] = [
+                    'firstRefundId' => $refundId,
                     'productDue' => 0,
                     'totalPrice' => $refundOrdersProductData['totalPrice'],
                     'refundedAmount' => $refundOrdersProductData['refundedAmount'],
-                    'items' => []
+                    'items' => [],
+                    'hasPaidItems' => false,
+                    'refunds' => []
                 ];
             }
 
-            // some orders have NULL productDue in mysql, thus order items sum is recalculated
-            $ordersMap[$refundOrdersProductData['orderId']]['productDue'] += $refundOrdersProductData['finalPrice'];
+            if ((float)$refundOrdersProductData['finalPrice'] > 0) {
+                $refundOrdersMap[$refundOrdersProductData['orderId']]['hasPaidItems'] = true;
+            }
 
-            $refundOrdersMap[$refundOrdersProductData['orderId']]['items'][$refundOrdersProductData['productId']] = [
+            // some orders have NULL productDue in mysql, thus order items sum is recalculated
+            if ($refundId == $refundOrdersMap[$orderId]['firstRefundId']) {
+                // an order may have multiple refunds, the if condition ensures correct productDue calculus
+                $refundOrdersMap[$orderId]['productDue'] += $refundOrdersProductData['finalPrice'];
+            }
+
+            if (!isset($refundOrdersMap[$orderId]['refunds'][$refundId])) {
+                $refundOrdersMap[$orderId]['refunds'][$refundId] = $refundOrdersProductData['refundedAmount'];
+            }
+
+            $refundOrdersMap[$orderId]['items'][$refundOrdersProductData['productId']] = [
                 'finalPrice' => $refundOrdersProductData['finalPrice'],
                 'productSku' => $refundOrdersProductData['productSku'],
                 'productName' => $refundOrdersProductData['productName'],
@@ -443,12 +496,17 @@ class AccountingService
 
                 $oderItemRatio = 0;
 
-                if (
-                    $refundOrderData['productDue'] != 0
-                    && $refundOrderData['productDue'] != null
-                    && $productData['finalPrice']
-                ) {
-                    $oderItemRatio = $productData['finalPrice'] / $refundOrderData['productDue'];
+                if ($refundOrderData['hasPaidItems']) {
+                    if (
+                        $refundOrderData['productDue'] != 0
+                        && $refundOrderData['productDue'] != null
+                        && $productData['finalPrice']
+                    ) {
+                        $oderItemRatio = $productData['finalPrice'] / $refundOrderData['productDue'];
+                    }
+                } else {
+                    $orderItemsCount = count($refundOrderData['items']) > 0 ? count($refundOrderData['items']) : 1;
+                    $oderItemRatio = 1 / $orderItemsCount;
                 }
 
                 if (!isset($productsMap[$productId])) {
@@ -467,9 +525,11 @@ class AccountingService
                     ];
                 }
 
-                $refundedForProduct = $oderItemRatio * $refundOrderData['refundedAmount'];
-                $productsMap[$productId]['refunded'] += $refundedForProduct;
-                $productsMap[$productId]['netPaid'] -= $refundedForProduct;
+                foreach ($refundOrderData['refunds'] as $refundId => $refundedAmount) {
+                    $refundedForProduct = $oderItemRatio * $refundedAmount;
+                    $productsMap[$productId]['refunded'] += $refundedForProduct;
+                    $productsMap[$productId]['netPaid'] -= $refundedForProduct;
+                }
 
                 // quantity data for payment plans refunds is considered only on initial order payment
             }

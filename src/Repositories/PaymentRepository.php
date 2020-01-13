@@ -549,7 +549,7 @@ class PaymentRepository extends RepositoryBase
 
         $qb = $qb->select('SUM(r.refundedAmount)')
             ->from(Refund::class, 'r')
-            ->join('r.payment', 'p')
+            ->leftJoin('r.payment', 'p')
             ->where(
                 $qb->expr()
                     ->between('r.createdAt', ':smallDateTime', ':bigDateTime')
@@ -558,14 +558,15 @@ class PaymentRepository extends RepositoryBase
                 $qb->expr()
                     ->eq('p.gatewayName', ':brand')
             )
+            ->andWhere(
+                $qb->expr()
+                    ->isNotNull('p.id')
+            )
             ->setParameter('smallDateTime', $smallDate)
             ->setParameter('bigDateTime', $bigDate)
             ->setParameter('brand', $brand);
 
         $refunded = $qb->getQuery()->getSingleScalarResult();
-
-        // dd($paid); // 6879.23 - not matching
-        // dd($refunded); // 1119.25 - matching
 
         return $paid - $refunded;
     }
