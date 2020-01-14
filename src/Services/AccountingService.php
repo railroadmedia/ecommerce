@@ -234,6 +234,7 @@ class AccountingService
                 $ordersMap[$orderProductData['orderId']] = [
                     'productDue' => 0,
                     'totalPrice' => $orderProductData['totalPrice'],
+                    'tax' => $orderProductData['tax'],
                     'items' => [],
                 ];
             }
@@ -279,7 +280,7 @@ class AccountingService
                     ];
                 }
 
-                $paidForOrderItem = $orderData['totalPrice'] * $oderItemRatio;
+                $paidForOrderItem = ($orderData['totalPrice'] - $orderData['tax']) * $oderItemRatio;
 
                 $productsMap[$productId]['netProduct'] += $paidForOrderItem;
                 $productsMap[$productId]['netPaid'] += $paidForOrderItem;

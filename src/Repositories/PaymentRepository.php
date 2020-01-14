@@ -160,7 +160,7 @@ class PaymentRepository extends RepositoryBase
             ->join('p.orderPayment', 'op')
             ->join('op.order', 'o')
             ->join('o.orderItems', 'oi')
-            ->join('oi.product', 'pr')
+            ->leftJoin('oi.product', 'pr')
             ->where(
                 $qb->expr()
                     ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
@@ -203,10 +203,14 @@ class PaymentRepository extends RepositoryBase
             ->from(Payment::class, 'p')
             ->join('p.subscriptionPayment', 'sp')
             ->join('sp.subscription', 's')
-            ->join('s.product', 'pr')
+            ->leftJoin('s.product', 'pr')
             ->where(
                 $qb->expr()
                     ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.type', ':sub')
             )
             ->andWhere(
                 $qb->expr()
@@ -223,6 +227,7 @@ class PaymentRepository extends RepositoryBase
             ->setParameter('smallDateTime', $smallDate)
             ->setParameter('bigDateTime', $bigDate)
             ->setParameter('brand', $brand)
+            ->setParameter('sub', Subscription::TYPE_SUBSCRIPTION)
             ->setParameter('renewal', Payment::TYPE_SUBSCRIPTION_RENEWAL)
             ->setParameter('notFailed', Payment::STATUS_FAILED);
 
@@ -240,6 +245,7 @@ class PaymentRepository extends RepositoryBase
                 [
                     's.id as subscriptionId',
                     's.totalPrice',
+                    's.tax',
                     'o.id as orderId',
                     'oi.id as orderItemId',
                     'oi.finalPrice',
@@ -253,7 +259,7 @@ class PaymentRepository extends RepositoryBase
             ->join('sp.subscription', 's')
             ->join('s.order', 'o')
             ->join('o.orderItems', 'oi')
-            ->join('oi.product', 'pr')
+            ->leftJoin('oi.product', 'pr')
             ->where(
                 $qb->expr()
                     ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
@@ -264,7 +270,11 @@ class PaymentRepository extends RepositoryBase
             )
             ->andWhere(
                 $qb->expr()
-                    ->eq('p.type', ':pp')
+                    ->eq('s.type', ':pp')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('p.type', ':ppp')
             )
             ->andWhere(
                 $qb->expr()
@@ -273,7 +283,8 @@ class PaymentRepository extends RepositoryBase
             ->setParameter('smallDateTime', $smallDate)
             ->setParameter('bigDateTime', $bigDate)
             ->setParameter('brand', $brand)
-            ->setParameter('pp', Payment::TYPE_PAYMENT_PLAN)
+            ->setParameter('pp', Subscription::TYPE_PAYMENT_PLAN)
+            ->setParameter('ppp', Payment::TYPE_PAYMENT_PLAN)
             ->setParameter('notFailed', Payment::STATUS_FAILED);
 
         return $qb->getQuery()->getResult();
@@ -486,10 +497,23 @@ class PaymentRepository extends RepositoryBase
             ->andWhere(
                 $qb->expr()
                     ->orX(
+                        // either subscriptions or payment plans, not initial order
                         $qb->expr()
-                            ->eq('p.type', ':renewal'),
+                            ->andX(
+                                // subscription type payment plan & payment type payment plan
+                                $qb->expr()
+                                    ->eq('s.type', ':pp'),
+                                $qb->expr()
+                                    ->eq('p.type', ':ppp')
+                            ),
                         $qb->expr()
-                            ->eq('p.type', ':pp')
+                            ->andX(
+                                // subscription type subscription & payment type renewal
+                                $qb->expr()
+                                    ->eq('s.type', ':sub'),
+                                $qb->expr()
+                                    ->eq('p.type', ':renewal')
+                            )
                     )
             )
             ->andWhere(
@@ -499,8 +523,10 @@ class PaymentRepository extends RepositoryBase
             ->setParameter('smallDateTime', $smallDate)
             ->setParameter('bigDateTime', $bigDate)
             ->setParameter('brand', $brand)
+            ->setParameter('pp', Subscription::TYPE_PAYMENT_PLAN)
+            ->setParameter('ppp', Payment::TYPE_PAYMENT_PLAN)
+            ->setParameter('sub', Subscription::TYPE_SUBSCRIPTION)
             ->setParameter('renewal', Payment::TYPE_SUBSCRIPTION_RENEWAL)
-            ->setParameter('pp', Payment::TYPE_PAYMENT_PLAN)
             ->setParameter('notFailed', Payment::STATUS_FAILED);
 
         $subscriptionsProductsDue = $qb->getQuery()->getSingleScalarResult();
