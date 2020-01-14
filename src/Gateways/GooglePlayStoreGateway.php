@@ -35,10 +35,6 @@ class GooglePlayStoreGateway
                         ->setPurchaseToken($purchaseToken)
                         ->validateSubscription();
 
-        if ($response->getPaymentState() != 1) {
-            throw new ReceiptValidationException('Payment not received');
-        }
-
         $seconds = intval($response->getExpiryTimeMillis() / 1000);
 
         if (Carbon::createFromTimestamp($seconds) <= Carbon::now()) {
