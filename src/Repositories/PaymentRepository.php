@@ -153,7 +153,7 @@ class PaymentRepository extends RepositoryBase
                     'pr.id as productId',
                     'pr.sku as productSku',
                     'pr.name as productName',
-                    'pr.weight as productWeight',
+                    'pr.type as productType',
                 ]
             )
             ->from(Payment::class, 'p')
@@ -350,12 +350,17 @@ class PaymentRepository extends RepositoryBase
             )
             ->andWhere(
                 $qb->expr()
+                    ->eq('s.type', ':sub')
+            )
+            ->andWhere(
+                $qb->expr()
                     ->neq('p.status', ':notFailed')
             )
             ->setParameter('smallDateTime', $smallDate)
             ->setParameter('bigDateTime', $bigDate)
             ->setParameter('brand', $brand)
             ->setParameter('renewal', Payment::TYPE_SUBSCRIPTION_RENEWAL)
+            ->setParameter('sub', Subscription::TYPE_SUBSCRIPTION)
             ->setParameter('notFailed', Payment::STATUS_FAILED);
 
         $subscriptionsTax = $qb->getQuery()->getSingleScalarResult();
@@ -397,6 +402,12 @@ class PaymentRepository extends RepositoryBase
             ->setParameter('bigDateTime', $bigDate)
             ->setParameter('brand', $brand)
             ->setParameter('notFailed', Payment::STATUS_FAILED);
+
+        /*
+        suming up rounded order's shipping due will not ensure same result as PHP rounded 'order items ratio' * order shipping due
+        query to test:
+        SELECT SUM(ROUND(e0_.shipping_due, 2)) AS sclr_0 FROM ecommerce_payments e1_ INNER JOIN ecommerce_order_payments e2_ ON e1_.id = e2_.payment_id INNER JOIN ecommerce_orders e0_ ON e2_.order_id = e0_.id WHERE (e1_.created_at BETWEEN '2019-12-01 00:00:00' AND '2019-12-31 23:59:59') AND e1_.gateway_name = 'drumeo' AND e1_.status <> 'failed'
+        */
 
         return $qb->getQuery()->getSingleScalarResult();
     }
@@ -532,69 +543,6 @@ class PaymentRepository extends RepositoryBase
         $subscriptionsProductsDue = $qb->getQuery()->getSingleScalarResult();
 
         return $ordersProductsDue + $subscriptionsProductsDue;
-    }
-
-    /**
-     * @param Carbon $smallDate
-     * @param Carbon $bigDate
-     * @param string $brand
-     *
-     * @return float
-     */
-    public function getPaymentsNetPaid(Carbon $smallDate, Carbon $bigDate, $brand)
-    {
-        /** @var $qb QueryBuilder */
-        $qb =
-            $this->getEntityManager()
-                ->createQueryBuilder();
-
-        $qb = $qb->select('SUM(p.totalPaid)')
-            ->from(Payment::class, 'p')
-            ->where(
-                $qb->expr()
-                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->eq('p.gatewayName', ':brand')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->neq('p.status', ':notFailed')
-            )
-            ->setParameter('smallDateTime', $smallDate)
-            ->setParameter('bigDateTime', $bigDate)
-            ->setParameter('brand', $brand)
-            ->setParameter('notFailed', Payment::STATUS_FAILED);
-
-        $paid = $qb->getQuery()->getSingleScalarResult();
-
-        $qb =
-            $this->getEntityManager()
-                ->createQueryBuilder();
-
-        $qb = $qb->select('SUM(r.refundedAmount)')
-            ->from(Refund::class, 'r')
-            ->leftJoin('r.payment', 'p')
-            ->where(
-                $qb->expr()
-                    ->between('r.createdAt', ':smallDateTime', ':bigDateTime')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->eq('p.gatewayName', ':brand')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->isNotNull('p.id')
-            )
-            ->setParameter('smallDateTime', $smallDate)
-            ->setParameter('bigDateTime', $bigDate)
-            ->setParameter('brand', $brand);
-
-        $refunded = $qb->getQuery()->getSingleScalarResult();
-
-        return $paid - $refunded;
     }
 
     /**

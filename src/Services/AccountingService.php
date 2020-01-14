@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\AccountingProduct;
 use Railroad\Ecommerce\Entities\Structures\AccountingProductTotals;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
@@ -82,34 +83,35 @@ class AccountingService
         $result = new AccountingProductTotals($smallDate, $bigDate);
 
         $totalTax = $this->paymentRepository->getPaymentsTaxPaid($smallDateTime, $bigDateTime, $brand);
-        $totalTax = $totalTax ? round($totalTax, 2) : 0;
+        $totalTaxRounded = $totalTax ? round($totalTax, 2) : 0;
 
-        $result->setTaxPaid($totalTax);
+        $result->setTaxPaid($totalTaxRounded);
 
         $totalShipping = $this->paymentRepository->getPaymentsShippingPaid($smallDateTime, $bigDateTime, $brand);
-        $totalShipping = $totalShipping ? round($totalShipping, 2) : 0;
+        $totalShippingRounded = $totalShipping ? round($totalShipping, 2) : 0;
 
-        $result->setShippingPaid($totalShipping);
+        $result->setShippingPaid($totalShippingRounded);
 
         $totalFinance = $this->paymentRepository->getPaymentsFinancePaid($smallDateTime, $bigDateTime, $brand);
-        $totalFinance = $totalFinance ? round($totalFinance, 2) : 0;
+        $totalFinanceRounded = $totalFinance ? round($totalFinance, 2) : 0;
 
-        $result->setFinancePaid($totalFinance);
+        $result->setFinancePaid($totalFinanceRounded);
 
         $totalRefund = $this->refundRepository->getRefundPaid($smallDateTime, $bigDateTime, $brand);
-        $totalRefund = $totalRefund ? round($totalRefund, 2) : 0;
+        $totalRefundRounded = $totalRefund ? round($totalRefund, 2) : 0;
 
-        $result->setRefunded($totalRefund);
+        $result->setRefunded($totalRefundRounded);
 
         $netProduct = $this->paymentRepository->getPaymentsNetProduct($smallDateTime, $bigDateTime, $brand);
-        $netProduct = $netProduct ? round($netProduct, 2) : 0;
+        $netProductRounded = $netProduct ? round($netProduct, 2) : 0;
 
-        $result->setNetProduct($netProduct);
+        $result->setNetProduct($netProductRounded);
 
-        $netPaid = $this->paymentRepository->getPaymentsNetPaid($smallDateTime, $bigDateTime, $brand);
-        $netPaid = $netPaid ? round($netPaid, 2) : 0;
+        // sum up mysql calculated sub-totals, minus refunds
+        $netPaid = $totalTax + $totalShipping + $totalFinance + $netProduct - $totalRefund;
+        $netPaidRounded = $netPaid ? round($netPaid, 2) : 0;
 
-        $result->setNetPaid($netPaid);
+        $result->setNetPaid($netPaidRounded);
 
         // fetch orders data
         $ordersProductsData = $this->paymentRepository->getOrdersProductsData($smallDateTime, $bigDateTime, $brand);
@@ -127,12 +129,9 @@ class AccountingService
                     'shippingDue' => $orderProductData['shippingDue'],
                     'financeDue' => $orderProductData['financeDue'],
                     'totalPaid' => $orderProductData['totalPaid'],
-                    'weight' => 0,
                     'items' => [],
                 ];
             }
-
-            $ordersMap[$orderProductData['orderId']]['weight'] += $orderProductData['productWeight'];
 
             // some orders have NULL productDue in mysql, thus order items sum is recalculated
             $ordersMap[$orderProductData['orderId']]['productDue'] += $orderProductData['finalPrice'];
@@ -142,7 +141,7 @@ class AccountingService
                 'finalPrice' => $orderProductData['finalPrice'],
                 'productSku' => $orderProductData['productSku'],
                 'productName' => $orderProductData['productName'],
-                'productWeight' => $orderProductData['productWeight'],
+                'productType' => $orderProductData['productType'],
             ];
         }
 
@@ -185,7 +184,7 @@ class AccountingService
                 $tax = $oderItemRatio * $orderData['taxesDue'];
                 $productsMap[$productId]['taxPaid'] += $tax;
 
-                if ((float)$orderData['shippingDue'] > 0 && (float)$productData['productWeight'] > 0) {
+                if ((float)$orderData['shippingDue'] > 0 && $productData['productType'] == Product::TYPE_PHYSICAL_ONE_TIME) {
                     if ((float)$productData['finalPrice'] > 0) {
                         $paidPhysical[] = $productId;
                     } else {
