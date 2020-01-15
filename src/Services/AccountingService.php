@@ -539,6 +539,10 @@ class AccountingService
 
         foreach ($productsMap as $productId => $productData) {
 
+            if (empty($productData['productName'])) {
+                continue;
+            }
+
             $productStatistics = new AccountingProduct($productId);
 
             $productStatistics->setName($productData['productName']);
