@@ -58,11 +58,11 @@ class GooglePlayStoreService
     /**
      * GooglePlayStoreService constructor.
      *
-     * @param GooglePlayStoreGateway $googlePlayStoreGateway,
-     * @param EcommerceEntityManager $entityManager,
-     * @param ProductRepository $productRepository,
-     * @param SubscriptionRepository $subscriptionRepository,
-     * @param UserProductService $userProductService,
+     * @param GooglePlayStoreGateway $googlePlayStoreGateway ,
+     * @param EcommerceEntityManager $entityManager ,
+     * @param ProductRepository $productRepository ,
+     * @param SubscriptionRepository $subscriptionRepository ,
+     * @param UserProductService $userProductService ,
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
@@ -72,8 +72,7 @@ class GooglePlayStoreService
         SubscriptionRepository $subscriptionRepository,
         UserProductService $userProductService,
         UserProviderInterface $userProvider
-    )
-    {
+    ) {
         $this->googlePlayStoreGateway = $googlePlayStoreGateway;
         $this->entityManager = $entityManager;
         $this->productRepository = $productRepository;
@@ -90,17 +89,16 @@ class GooglePlayStoreService
      * @throws ReceiptValidationException
      * @throws Throwable
      */
-    public function processReceipt(GoogleReceipt $receipt): User
-    {
+    public function processReceipt(GoogleReceipt $receipt)
+    : User {
         $this->entityManager->persist($receipt);
 
         try {
-            $this->googlePlayStoreGateway
-                ->validate(
-                    $receipt->getPackageName(),
-                    $receipt->getProductId(),
-                    $receipt->getPurchaseToken()
-                );
+            $googleResponse = $this->googlePlayStoreGateway->validate(
+                $receipt->getPackageName(),
+                $receipt->getProductId(),
+                $receipt->getPurchaseToken()
+            );
 
             $purchasedProduct = $this->getPurchasedItem($receipt);
 
@@ -132,9 +130,20 @@ class GooglePlayStoreService
 
         $order = $this->createOrder($orderItem, $user);
 
-        $payment = $this->createOrderPayment($order);
+        if ($googleResponse->getPaymentState() == 2) {
+            $isTrial = true;
 
-        $subscription = $this->createOrderSubscription($purchasedProduct, $order, $payment, $receipt);
+            $order->setTotalDue(0);
+            $order->setTotalPaid(0);
+
+            $payment = null;
+        } else {
+            $isTrial = false;
+
+            $payment = $this->createOrderPayment($order);
+        }
+
+        $subscription = $this->createOrderSubscription($purchasedProduct, $order, $payment, $receipt, $isTrial);
 
         $receipt->setPayment($payment);
 
@@ -155,17 +164,15 @@ class GooglePlayStoreService
     public function processNotification(
         GoogleReceipt $receipt,
         Subscription $subscription
-    )
-    {
+    ) {
         $this->entityManager->persist($receipt);
 
         try {
-             $this->googlePlayStoreGateway
-                ->validate(
-                    $receipt->getPackageName(),
-                    $receipt->getProductId(),
-                    $receipt->getPurchaseToken()
-                );
+            $this->googlePlayStoreGateway->validate(
+                $receipt->getPackageName(),
+                $receipt->getProductId(),
+                $receipt->getPurchaseToken()
+            );
 
             $purchasedProduct = $this->getPurchasedItem($receipt);
 
@@ -219,8 +226,8 @@ class GooglePlayStoreService
      *
      * @throws Throwable
      */
-    public function createSubscriptionRenewalPayment(Subscription $subscription): Payment
-    {
+    public function createSubscriptionRenewalPayment(Subscription $subscription)
+    : Payment {
         $payment = new Payment();
 
         $payment->setTotalDue($subscription->getTotalPrice());
@@ -298,8 +305,7 @@ class GooglePlayStoreService
     public function cancelSubscription(
         Subscription $subscription,
         GoogleReceipt $receipt
-    )
-    {
+    ) {
         $noteFormat = 'Canceled by google notification, receipt id: %s';
 
         $subscription->setCanceledOn(Carbon::now());
@@ -314,8 +320,8 @@ class GooglePlayStoreService
      *
      * @throws Throwable
      */
-    public function createOrderPayment(Order $order): Payment
-    {
+    public function createOrderPayment(Order $order)
+    : Payment {
         $totalDue = 0;
 
         foreach ($order->getOrderItems() as $orderItem) {
@@ -360,8 +366,8 @@ class GooglePlayStoreService
     public function createOrder(
         OrderItem $orderItem,
         User $user
-    ): Order
-    {
+    )
+    : Order {
         $order = new Order();
 
         $totalDue = $orderItem->getFinalPrice();
@@ -390,8 +396,8 @@ class GooglePlayStoreService
      */
     public function createOrderItem(
         Product $purchasedProduct
-    ): OrderItem
-    {
+    )
+    : OrderItem {
         $orderItem = new OrderItem();
 
         $orderItem->setProduct($purchasedProduct);
@@ -410,45 +416,52 @@ class GooglePlayStoreService
     /**
      * @param Product $purchasedProduct
      * @param Order $order
-     * @param Payment $payment
+     * @param Payment|null $payment
      * @param GoogleReceipt $receipt
-     *
+     * @param boolean $isTrial
      * @return Subscription
-     *
-     * @throws Throwable
+     * @throws \Doctrine\ORM\ORMException
      */
     public function createOrderSubscription(
         Product $purchasedProduct,
         Order $order,
-        Payment $payment,
-        GoogleReceipt $receipt
-    ): Subscription
-    {
+        ?Payment $payment,
+        GoogleReceipt $receipt,
+        $isTrial
+    )
+    : Subscription {
         $subscription = new Subscription();
 
         $nextBillDate = Carbon::now();
 
-        if (!empty($purchasedProduct->getSubscriptionIntervalType())) {
-            if ($purchasedProduct->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
-                $nextBillDate =
-                    Carbon::now()
-                        ->addMonths($purchasedProduct->getSubscriptionIntervalCount());
+        if ($isTrial) {
+            $nextBillDate =
+                Carbon::now()
+                    ->addDays(config('ecommerce.trial_days_number'));
+        } else {
+            if (!empty($purchasedProduct->getSubscriptionIntervalType())) {
+                if ($purchasedProduct->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
+                    $nextBillDate =
+                        Carbon::now()
+                            ->addMonths($purchasedProduct->getSubscriptionIntervalCount());
 
-            }
-            elseif ($purchasedProduct->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
-                $nextBillDate =
-                    Carbon::now()
-                        ->addYears($purchasedProduct->getSubscriptionIntervalCount());
+                } elseif ($purchasedProduct->getSubscriptionIntervalType() ==
+                    config('ecommerce.interval_type_yearly')) {
+                    $nextBillDate =
+                        Carbon::now()
+                            ->addYears($purchasedProduct->getSubscriptionIntervalCount());
 
-            }
-            elseif ($purchasedProduct->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
-                $nextBillDate =
-                    Carbon::now()
-                        ->addDays($purchasedProduct->getSubscriptionIntervalCount());
+                } elseif ($purchasedProduct->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
+                    $nextBillDate =
+                        Carbon::now()
+                            ->addDays($purchasedProduct->getSubscriptionIntervalCount());
+                }
             }
         }
 
-        $intervalType = $purchasedProduct ? $purchasedProduct->getSubscriptionIntervalType() : config('ecommerce.interval_type_monthly');
+        $intervalType =
+            $purchasedProduct ? $purchasedProduct->getSubscriptionIntervalType() :
+                config('ecommerce.interval_type_monthly');
 
         $intervalCount = $purchasedProduct ? $purchasedProduct->getSubscriptionIntervalCount() : 1;
 
@@ -462,7 +475,7 @@ class GooglePlayStoreService
         $subscription->setPaidUntil($nextBillDate);
         $subscription->setTotalPrice($purchasedProduct->getPrice());
         $subscription->setTax(0);
-        $subscription->setCurrency($payment->getCurrency());
+        $subscription->setCurrency('');
         $subscription->setIntervalType($intervalType);
         $subscription->setIntervalCount($intervalCount);
         $subscription->setTotalCyclesPaid(1);
@@ -470,13 +483,16 @@ class GooglePlayStoreService
         $subscription->setExternalAppStoreId($receipt->getPurchaseToken());
         $subscription->setCreatedAt(Carbon::now());
 
-        $subscriptionPayment = new SubscriptionPayment();
+        if ($payment) {
+            $subscriptionPayment = new SubscriptionPayment();
 
-        $subscriptionPayment->setSubscription($subscription);
-        $subscriptionPayment->setPayment($payment);
+            $subscriptionPayment->setSubscription($subscription);
+            $subscriptionPayment->setPayment($payment);
+
+            $this->entityManager->persist($subscriptionPayment);
+        }
 
         $this->entityManager->persist($subscription);
-        $this->entityManager->persist($subscriptionPayment);
 
         return $subscription;
     }
@@ -488,8 +504,8 @@ class GooglePlayStoreService
      *
      * @throws Throwable
      */
-    public function getPurchasedItem(GoogleReceipt $receipt): ?Product
-    {
+    public function getPurchasedItem(GoogleReceipt $receipt)
+    : ?Product {
         $productsMap = config('ecommerce.google_store_products_map');
 
         return $this->productRepository->bySku($productsMap[$receipt->getProductId()]);

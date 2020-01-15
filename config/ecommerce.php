@@ -328,4 +328,6 @@ return [
 
     'subscription_renewal_date' => 1,
     'failed_payments_before_de_activation' => 1,
+
+    'trial_days_number' => 7
 ];

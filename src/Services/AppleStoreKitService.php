@@ -86,8 +86,7 @@ class AppleStoreKitService
         ProductRepository $productRepository,
         UserProductService $userProductService,
         UserProviderInterface $userProvider
-    )
-    {
+    ) {
         $this->appleReceiptRepository = $appleReceiptRepository;
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->entityManager = $entityManager;
@@ -105,8 +104,8 @@ class AppleStoreKitService
      * @throws GuzzleException
      * @throws Throwable
      */
-    public function processReceipt(AppleReceipt $receipt): User
-    {
+    public function processReceipt(AppleReceipt $receipt)
+    : User {
         $this->entityManager->persist($receipt);
 
         try {
@@ -152,11 +151,22 @@ class AppleStoreKitService
 
         $order = $this->createOrder($orderItem, $user);
 
-        $payment = $this->createOrderPayment($order);
+        if ($currentPurchasedItem->isTrialPeriod() || $currentPurchasedItem->isInIntroOfferPeriod()) {
+            $isTrial = true;
 
-        $subscription = $this->createOrderSubscription($currentPurchasedItem, $order, $payment, $receipt);
+            $order->setTotalDue(0);
+            $order->setTotalPaid(0);
 
-        $receipt->setPayment($payment);
+            $payment = null;
+        } else {
+            $isTrial = false;
+
+            $payment = $this->createOrderPayment($order);
+
+            $receipt->setPayment($payment);
+        }
+
+        $subscription = $this->createOrderSubscription($currentPurchasedItem, $order, $payment, $receipt, $isTrial);
 
         $this->entityManager->flush();
 
@@ -176,8 +186,7 @@ class AppleStoreKitService
     public function processNotification(
         AppleReceipt $receipt,
         Subscription $subscription
-    )
-    {
+    ) {
         $this->entityManager->persist($receipt);
 
         try {
@@ -274,21 +283,21 @@ class AppleStoreKitService
 
         } else {
 
-            if (
-                !$validationResponse
-                || !is_array($validationResponse->getPendingRenewalInfo())
-                || empty($validationResponse->getPendingRenewalInfo())
-                || !$validationResponse->getPendingRenewalInfo()[0]->getAutoRenewStatus()
-            ) {
+            if (!$validationResponse ||
+                !is_array($validationResponse->getPendingRenewalInfo()) ||
+                empty($validationResponse->getPendingRenewalInfo()) ||
+                !$validationResponse->getPendingRenewalInfo()[0]->getAutoRenewStatus()) {
 
-                $intent = $validationResponse
-                    && is_array($validationResponse->getPendingRenewalInfo())
-                    && !empty($validationResponse->getPendingRenewalInfo())
-                        ? $validationResponse->getPendingRenewalInfo()[0]->getExpirationIntent() : null;
+                $intent =
+                    $validationResponse &&
+                    is_array($validationResponse->getPendingRenewalInfo()) &&
+                    !empty($validationResponse->getPendingRenewalInfo()) ?
+                        $validationResponse->getPendingRenewalInfo()[0]->getExpirationIntent() : null;
 
-                $note = ($intent && isset(self::RENEWAL_EXPIRATION_REASON[$intent]))
-                            ? self::RENEWAL_EXPIRATION_REASON[$intent]
-                            : ($receipt->getValidationError() ?? self::RENEWAL_FAILED_MESSAGE);
+                $note =
+                    ($intent && isset(self::RENEWAL_EXPIRATION_REASON[$intent])) ?
+                        self::RENEWAL_EXPIRATION_REASON[$intent] :
+                        ($receipt->getValidationError() ?? self::RENEWAL_FAILED_MESSAGE);
 
                 $this->cancelSubscription($subscription, $receipt, $note);
 
@@ -319,8 +328,8 @@ class AppleStoreKitService
      *
      * @throws Throwable
      */
-    public function createSubscriptionRenewalPayment(Subscription $subscription): Payment
-    {
+    public function createSubscriptionRenewalPayment(Subscription $subscription)
+    : Payment {
         $payment = new Payment();
 
         $payment->setTotalDue($subscription->getTotalPrice());
@@ -356,8 +365,7 @@ class AppleStoreKitService
     public function renewSubscription(
         Subscription $subscription,
         PurchaseItem $purchasedItem
-    )
-    {
+    ) {
         $nextBillDate = null;
 
         switch ($subscription->getIntervalType()) {
@@ -418,12 +426,10 @@ class AppleStoreKitService
      *
      * @return PurchaseItem|null
      */
-    public function getPurchasedItem(ResponseInterface $validationResponse): ?PurchaseItem
-    {
-        if (
-            is_array($validationResponse->getLatestReceiptInfo())
-            && !empty($validationResponse->getLatestReceiptInfo())
-        ) {
+    public function getPurchasedItem(ResponseInterface $validationResponse)
+    : ?PurchaseItem {
+        if (is_array($validationResponse->getLatestReceiptInfo()) &&
+            !empty($validationResponse->getLatestReceiptInfo())) {
             return $validationResponse->getLatestReceiptInfo()[0];
         }
 
@@ -437,8 +443,8 @@ class AppleStoreKitService
      *
      * @throws Throwable
      */
-    public function createOrderPayment(Order $order): Payment
-    {
+    public function createOrderPayment(Order $order)
+    : Payment {
         $totalDue = 0;
 
         foreach ($order->getOrderItems() as $orderItem) {
@@ -483,8 +489,8 @@ class AppleStoreKitService
     public function createOrder(
         OrderItem $orderItem,
         User $user
-    ): Order
-    {
+    )
+    : Order {
         $order = new Order();
 
         $order->addOrderItem($orderItem);
@@ -511,8 +517,8 @@ class AppleStoreKitService
      */
     public function createOrderItem(
         PurchaseItem $purchasedItem
-    ): ?OrderItem
-    {
+    )
+    : ?OrderItem {
         $product = $this->getProductByAppleStoreId($purchasedItem->getProductId());
 
         $orderItem = null;
@@ -537,20 +543,21 @@ class AppleStoreKitService
     /**
      * @param PurchaseItem $purchasedItem
      * @param Order $order
-     * @param Payment $payment
+     * @param Payment|null $payment
      * @param AppleReceipt $receipt
-     *
-     * @return Subscription
-     *
+     * @param boolean $isTrial
+     * @return Subscription|null
      * @throws Throwable
+     * @throws \Doctrine\ORM\ORMException
      */
     public function createOrderSubscription(
         PurchaseItem $purchasedItem,
         Order $order,
-        Payment $payment,
-        AppleReceipt $receipt
-    ): ?Subscription
-    {
+        ?Payment $payment,
+        AppleReceipt $receipt,
+        $isTrial
+    )
+    : ?Subscription {
         $subscription = new Subscription();
 
         $product = $this->getProductByAppleStoreId($purchasedItem->getProductId());
@@ -561,20 +568,22 @@ class AppleStoreKitService
 
         $nextBillDate = Carbon::now();
 
-        if (!empty($product->getSubscriptionIntervalType())) {
+        if ($isTrial) {
+            $nextBillDate =
+                Carbon::now()
+                    ->addDays(config('ecommerce.trial_days_number'));
+        } elseif (!empty($product->getSubscriptionIntervalType())) {
             if ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
                 $nextBillDate =
                     Carbon::now()
                         ->addMonths($product->getSubscriptionIntervalCount());
 
-            }
-            elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
+            } elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
                 $nextBillDate =
                     Carbon::now()
                         ->addYears($product->getSubscriptionIntervalCount());
 
-            }
-            elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
+            } elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
                 $nextBillDate =
                     Carbon::now()
                         ->addDays($product->getSubscriptionIntervalCount());
@@ -596,7 +605,7 @@ class AppleStoreKitService
         $subscription->setAppleExpirationDate($purchasedItem->getExpiresDate());
         $subscription->setTotalPrice($product->getPrice());
         $subscription->setTax(0);
-        $subscription->setCurrency($payment->getCurrency());
+        $subscription->setCurrency('');
         $subscription->setIntervalType($intervalType);
         $subscription->setIntervalCount($intervalCount);
         $subscription->setTotalCyclesPaid(1);
@@ -605,15 +614,18 @@ class AppleStoreKitService
         $subscription->setAppleReceipt($receipt);
         $subscription->setCreatedAt(Carbon::now());
 
-        $subscriptionPayment = new SubscriptionPayment();
-
-        $subscriptionPayment->setSubscription($subscription);
-        $subscriptionPayment->setPayment($payment);
-
         $receipt->setSubscription($subscription);
 
+        if ($payment) {
+            $subscriptionPayment = new SubscriptionPayment();
+
+            $subscriptionPayment->setSubscription($subscription);
+            $subscriptionPayment->setPayment($payment);
+
+            $this->entityManager->persist($subscriptionPayment);
+        }
+
         $this->entityManager->persist($subscription);
-        $this->entityManager->persist($subscriptionPayment);
 
         return $subscription;
     }
@@ -625,8 +637,8 @@ class AppleStoreKitService
      *
      * @throws Throwable
      */
-    public function getProductByAppleStoreId(string $appleStoreId): ?Product
-    {
+    public function getProductByAppleStoreId(string $appleStoreId)
+    : ?Product {
         $productsMap = config('ecommerce.apple_store_products_map');
 
         if (isset($productsMap[$appleStoreId])) {
