@@ -108,6 +108,11 @@ class GooglePlayStoreService
 
             $receipt->setValid(true);
 
+            $receipt->setOrderId(
+                $googleResponse->getRawResponse()
+                    ->getOrderId()
+            );
+
         } catch (ReceiptValidationException $exception) {
 
             $receipt->setValid(false);

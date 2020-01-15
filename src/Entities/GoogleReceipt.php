@@ -119,6 +119,13 @@ class GoogleReceipt
     protected $payment;
 
     /**
+     * @ORM\Column(type="string", name="order_id")
+     *
+     * @var string
+     */
+    protected $orderId;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -300,5 +307,21 @@ class GoogleReceipt
     public function setPayment(?Payment $payment)
     {
         $this->payment = $payment;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getOrderId(): ?string
+    {
+        return $this->orderId;
+    }
+
+    /**
+     * @param string $orderId
+     */
+    public function setOrderId(string $orderId)
+    {
+        $this->orderId = $orderId;
     }
 }
