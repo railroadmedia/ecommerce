@@ -690,6 +690,17 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'paid_until' => Carbon::now()->addMonth()->addYear()->subMinute()->toDateTimeString(),
             ]
         );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $userId,
+                'product_id' => $subscriptionProduct2['id'],
+                'quantity' => 1,
+                'expiration_date' => Carbon::now()->addMonth()->addYear()->subMinute()
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))->toDateTimeString()
+            ]
+        );
     }
 
     public function test_payment_plan_not_cancelled_on_new_membership_sub_purchase()

@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
+use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;
 
 class DuplicateSubscriptionHandler
@@ -25,21 +26,28 @@ class DuplicateSubscriptionHandler
      * @var UserProductRepository
      */
     private $userProductRepository;
+    /**
+     * @var UserProductService
+     */
+    private $userProductService;
 
     /**
      * DuplicateSubscriptionHandler constructor.
      * @param SubscriptionRepository $subscriptionRepository
      * @param EcommerceEntityManager $ecommerceEntityManager
      * @param UserProductRepository $userProductRepository
+     * @param UserProductService $userProductService
      */
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
         EcommerceEntityManager $ecommerceEntityManager,
-        UserProductRepository $userProductRepository
+        UserProductRepository $userProductRepository,
+        UserProductService $userProductService
     ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->ecommerceEntityManager = $ecommerceEntityManager;
         $this->userProductRepository = $userProductRepository;
+        $this->userProductService = $userProductService;
     }
 
     public function handle(OrderEvent $orderEvent)
@@ -145,6 +153,8 @@ class DuplicateSubscriptionHandler
                     $this->ecommerceEntityManager->flush($mostRecentlyPurchasedActiveSubscription);
 
                     event(new SubscriptionUpdated($oldUserSubscription, $mostRecentlyPurchasedActiveSubscription));
+
+                    $this->userProductService->updateSubscriptionProducts($mostRecentlyPurchasedActiveSubscription);
 
                     // cancel all the other ones
                     foreach ($allUsersSubscriptions as $userSubscription) {
