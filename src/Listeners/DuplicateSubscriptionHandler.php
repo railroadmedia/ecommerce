@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
+use Throwable;
 
 class DuplicateSubscriptionHandler
 {
@@ -43,8 +44,14 @@ class DuplicateSubscriptionHandler
 
     public function handle(OrderEvent $orderEvent)
     {
-        if (!empty($orderEvent->getOrder()->getUser())) {
-            $this->cancelAndExtendDuplicateSubscriptions($orderEvent->getOrder()->getUser()->getId());
+        try {
+            if (!empty($orderEvent->getOrder()->getUser())) {
+                $this->cancelAndExtendDuplicateSubscriptions($orderEvent->getOrder()->getUser()->getId());
+            }
+
+        } catch (Throwable $exception) {
+            error_log('--- Error with duplicate subscription handling in ecommerce package.');
+            error_log($exception);
         }
     }
 
