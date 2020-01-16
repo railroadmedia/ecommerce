@@ -34,6 +34,7 @@ use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
+use Railroad\Ecommerce\Listeners\DuplicateSubscriptionHandler;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
 use Railroad\Ecommerce\Listeners\MobileOrderUserProductListener;
 use Railroad\Ecommerce\Listeners\MobileSubscriptionInvoiceListener;
@@ -63,6 +64,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 OrderShippingFulfilmentListener::class,
                 OrderUserProductListener::class,
                 OrderInvoiceListener::class,
+                DuplicateSubscriptionHandler::class,
             ],
             MobileSubscriptionRenewed::class => [MobileSubscriptionInvoiceListener::class],
             SubscriptionRenewed::class => [SubscriptionInvoiceListener::class],

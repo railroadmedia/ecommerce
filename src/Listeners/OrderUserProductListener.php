@@ -56,7 +56,7 @@ class OrderUserProductListener
                     );
 
                     if ($subscription) {
-                        $expirationDate = $subscription->getPaidUntil();
+                        $expirationDate = $subscription->getPaidUntil()->copy();
                     }
                 }
 

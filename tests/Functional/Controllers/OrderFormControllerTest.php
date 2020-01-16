@@ -12,9 +12,7 @@ use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class OrderFormControllerTest extends EcommerceTestCase
@@ -362,4 +360,516 @@ class OrderFormControllerTest extends EcommerceTestCase
             ]
         );
     }
+
+    public function test_existing_active_subs_get_cancelled_on_lifetime_purchase()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $currency = $this->getCurrency();
+
+        $country = 'Canada';
+        $region = 'alberta';
+
+        $orderData = [
+            'payment_method_type' => PaymentMethod::TYPE_PAYPAL,
+            'billing_region' => $region,
+            'billing_zip_or_postal_code' => $this->faker->postcode,
+            'billing_country' => $country,
+            'company_name' => $this->faker->creditCardType,
+            'gateway' => config('ecommerce.brand'),
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $region,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
+            'currency' => $currency
+        ];
+
+        $session = $this->app->make(Store::class);
+
+        $session->flush();
+
+        $this->session(['order-form-input' => $orderData]);
+
+        $shippingAddress = new Address();
+        $shippingAddress->setCountry($country);
+        $shippingAddress->setRegion($region);
+
+        $billingAddress = new Address();
+        $billingAddress->setCountry($country);
+        $billingAddress->setRegion($region);
+
+        $subscriptionProduct = $this->fakeProduct([
+            'price' => 12.95,
+            'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_YEARLY',
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+            'subscription_interval_count' => 1,
+            'brand' => 'drumeo',
+        ]);
+
+        $lifetimeProduct = $this->fakeProduct([
+            'price' => 247,
+            'sku' => 'DRUMEO_MEMBERSHIP_LIFETIME',
+            'type' => Product::TYPE_DIGITAL_ONE_TIME,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+            'brand' => 'drumeo',
+        ]);
+
+        $cart = Cart::fromSession();
+
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->setItem(new CartItem($subscriptionProduct['sku'], 1));
+
+        $cart->toSession();
+
+        $billingAgreementId = rand(1,100);
+
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
+            ->willReturn($billingAgreementId);
+
+        $transactionId = rand(1,100);
+
+        $this->paypalExternalHelperMock->method('createReferenceTransaction')
+            ->willReturn($transactionId);
+
+        config()->set('ecommerce.paypal.agreement_fulfilled_path', 'order.submit.paypal');
+
+        $paypalToken = $this->faker->word;
+
+        $this->entityManager->clear();
+
+        $response = $this->call(
+            'GET',
+            '/order-form/submit-paypal',
+            ['token' => $paypalToken]
+        );
+
+        // assert response code
+        $this->assertEquals(302, $response->getStatusCode());
+
+        // assert session results
+        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('order');
+
+        // assert database - all persisted entities
+
+        // assert database records
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $userId,
+                'product_id' => $subscriptionProduct['id'],
+                'quantity' => 1,
+                'created_at' => Carbon::now()->toDateTimeString()
+            ]
+        );
+
+        // order & based order prices
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'product_id' => $subscriptionProduct['id'],
+                'is_active' => true,
+                'user_id' => $userId,
+            ]
+        );
+
+        // now that we have a active recurring sub, order a lifetime and make sure it gets cancelled
+
+        $cart = new Cart();
+
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->setItem(new CartItem($lifetimeProduct['sku'], 1));
+
+        $cart->toSession();
+
+        $this->cartService->setCart($cart);
+
+        $this->session(['order-form-input' => $orderData]);
+
+        $response = $this->call(
+            'GET',
+            '/order-form/submit-paypal',
+            ['token' => $paypalToken, 'payment_method_type' => 'paypal']
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'product_id' => $subscriptionProduct['id'],
+                'is_active' => false,
+                'canceled_on' => Carbon::now()->toDateTimeString(),
+                'user_id' => $userId,
+            ]
+        );
+    }
+
+    public function test_existing_active_subs_get_cancelled_on_new_sub_purchase_and_date_is_extended()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $currency = $this->getCurrency();
+
+        $country = 'Canada';
+        $region = 'alberta';
+
+        $orderData = [
+            'payment_method_type' => PaymentMethod::TYPE_PAYPAL,
+            'billing_region' => $region,
+            'billing_zip_or_postal_code' => $this->faker->postcode,
+            'billing_country' => $country,
+            'company_name' => $this->faker->creditCardType,
+            'gateway' => config('ecommerce.brand'),
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $region,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
+            'currency' => $currency
+        ];
+
+        $session = $this->app->make(Store::class);
+
+        $session->flush();
+
+        $this->session(['order-form-input' => $orderData]);
+
+        $shippingAddress = new Address();
+        $shippingAddress->setCountry($country);
+        $shippingAddress->setRegion($region);
+
+        $billingAddress = new Address();
+        $billingAddress->setCountry($country);
+        $billingAddress->setRegion($region);
+
+        $subscriptionProduct1 = $this->fakeProduct([
+            'price' => 12.95,
+            'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_MONTHLY',
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+            'subscription_interval_count' => 1,
+            'brand' => 'drumeo',
+        ]);
+
+        $subscriptionProduct2 = $this->fakeProduct([
+            'price' => 222.95,
+            'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_YEARLY',
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+            'subscription_interval_count' => 1,
+            'brand' => 'drumeo',
+        ]);
+
+        $cart = Cart::fromSession();
+
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->setItem(new CartItem($subscriptionProduct1['sku'], 1));
+
+        $cart->toSession();
+
+        $billingAgreementId = rand(1,100);
+
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
+            ->willReturn($billingAgreementId);
+
+        $transactionId = rand(1,100);
+
+        $this->paypalExternalHelperMock->method('createReferenceTransaction')
+            ->willReturn($transactionId);
+
+        config()->set('ecommerce.paypal.agreement_fulfilled_path', 'order.submit.paypal');
+
+        $paypalToken = $this->faker->word;
+
+        $this->entityManager->clear();
+
+        $response = $this->call(
+            'GET',
+            '/order-form/submit-paypal',
+            ['token' => $paypalToken]
+        );
+
+        // assert response code
+        $this->assertEquals(302, $response->getStatusCode());
+
+        // assert session results
+        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('order');
+
+        // assert database - all persisted entities
+
+        // assert database records
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $userId,
+                'product_id' => $subscriptionProduct1['id'],
+                'quantity' => 1,
+                'created_at' => Carbon::now()->toDateTimeString()
+            ]
+        );
+
+        // order & based order prices
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'product_id' => $subscriptionProduct1['id'],
+                'is_active' => true,
+                'user_id' => $userId,
+                'paid_until' => Carbon::now()->addMonth()->toDateTimeString(),
+            ]
+        );
+
+        // now that we have a active recurring sub, order another
+        // and make sure the dates are adjusted and the old one is cancelled
+
+        Carbon::setTestNow(Carbon::now()->addMinute());
+
+        $cart = new Cart();
+
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->setItem(new CartItem($subscriptionProduct2['sku'], 1));
+
+        $cart->toSession();
+
+        $this->cartService->setCart($cart);
+
+        $this->session(['order-form-input' => $orderData]);
+
+        $response = $this->call(
+            'GET',
+            '/order-form/submit-paypal',
+            ['token' => $paypalToken, 'payment_method_type' => 'paypal']
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'product_id' => $subscriptionProduct1['id'],
+                'is_active' => false,
+                'canceled_on' => Carbon::now()->toDateTimeString(),
+                'user_id' => $userId,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'product_id' => $subscriptionProduct2['id'],
+                'is_active' => true,
+                'canceled_on' => null,
+                'user_id' => $userId,
+                'paid_until' => Carbon::now()->addMonth()->addYear()->subMinute()->toDateTimeString(),
+            ]
+        );
+    }
+
+    public function test_payment_plan_not_cancelled_on_new_membership_sub_purchase()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $currency = $this->getCurrency();
+
+        $country = 'Canada';
+        $region = 'alberta';
+
+        $orderData = [
+            'payment_method_type' => PaymentMethod::TYPE_PAYPAL,
+            'billing_region' => $region,
+            'billing_zip_or_postal_code' => $this->faker->postcode,
+            'billing_country' => $country,
+            'company_name' => $this->faker->creditCardType,
+            'gateway' => config('ecommerce.brand'),
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $region,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
+            'currency' => $currency,
+        ];
+
+        $session = $this->app->make(Store::class);
+
+        $session->flush();
+
+        $this->session(
+            [
+                'order-form-input' => array_merge($orderData, ['payment_plan_number_of_payments' => 2])
+            ]
+        );
+
+        $shippingAddress = new Address();
+        $shippingAddress->setCountry($country);
+        $shippingAddress->setRegion($region);
+
+        $billingAddress = new Address();
+        $billingAddress->setCountry($country);
+        $billingAddress->setRegion($region);
+
+        $packProduct = $this->fakeProduct([
+            'price' => 100.95,
+            'sku' => 'DRUMEO_PACK_PRODUCT',
+            'type' => Product::TYPE_DIGITAL_ONE_TIME,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+            'brand' => 'drumeo',
+        ]);
+
+        $subscriptionProduct2 = $this->fakeProduct([
+            'price' => 222.95,
+            'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_YEARLY',
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'active' => 1,
+            'description' => $this->faker->word,
+            'is_physical' => 0,
+            'weight' => 0,
+            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+            'subscription_interval_count' => 1,
+            'brand' => 'drumeo',
+        ]);
+
+        $cart = Cart::fromSession();
+
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->setItem(new CartItem($packProduct['sku'], 1));
+
+        $cart->toSession();
+
+        $billingAgreementId = rand(1,100);
+
+        $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
+            ->willReturn($billingAgreementId);
+
+        $transactionId = rand(1,100);
+
+        $this->paypalExternalHelperMock->method('createReferenceTransaction')
+            ->willReturn($transactionId);
+
+        config()->set('ecommerce.paypal.agreement_fulfilled_path', 'order.submit.paypal');
+
+        $paypalToken = $this->faker->word;
+
+        $this->entityManager->clear();
+
+        $response = $this->call(
+            'GET',
+            '/order-form/submit-paypal',
+            ['token' => $paypalToken]
+        );
+
+        // assert response code
+        $this->assertEquals(302, $response->getStatusCode());
+
+        // assert session results
+        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('order');
+
+        // assert database - all persisted entities
+
+        // assert database records
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $userId,
+                'product_id' => $packProduct['id'],
+                'quantity' => 1,
+                'created_at' => Carbon::now()->toDateTimeString()
+            ]
+        );
+
+        // order & based order prices
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'product_id' => null,
+                'type' => 'payment plan',
+                'is_active' => true,
+                'user_id' => $userId,
+                'paid_until' => Carbon::now()->addMonth()->toDateTimeString(),
+            ]
+        );
+
+        // now that we have a active recurring sub, order another
+        // and make sure the dates are adjusted and the old one is cancelled
+
+        Carbon::setTestNow(Carbon::now()->addMinute());
+
+        $cart = new Cart();
+
+        $cart->setShippingAddress($shippingAddress);
+        $cart->setBillingAddress($billingAddress);
+
+        $cart->setItem(new CartItem($subscriptionProduct2['sku'], 1));
+
+        $cart->toSession();
+
+        $this->cartService->setCart($cart);
+
+        $this->session(['order-form-input' => $orderData]);
+
+        $response = $this->call(
+            'GET',
+            '/order-form/submit-paypal',
+            ['token' => $paypalToken, 'payment_method_type' => 'paypal']
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'product_id' => null,
+                'type' => 'payment plan',
+                'is_active' => true,
+                'user_id' => $userId,
+                'paid_until' => Carbon::now()->subMinute()->addMonth()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'product_id' => $subscriptionProduct2['id'],
+                'is_active' => true,
+                'canceled_on' => null,
+                'user_id' => $userId,
+                'paid_until' => Carbon::now()->addYear()->toDateTimeString(),
+            ]
+        );
+    }
+
+
 }

@@ -353,6 +353,22 @@ class EcommerceTestCase extends BaseTestCase
             ]
         );
 
+        $app['config']->set('ecommerce.membership_product_syncing_info', [
+            'drumeo' => [
+                'membership_product_skus' => [
+                    'DRUMEO_MEMBERSHIP_RECURRING_YEARLY',
+                    'DRUMEO_MEMBERSHIP_RECURRING_MONTHLY',
+                    'DRUMEO_MEMBERSHIP_LIFETIME',
+                ],
+            ],
+            'pianote]' => [
+                'membership_product_skus' => [
+                    'PIANOTE_MEMBERSHIP_RECURRING_YEARLY',
+                    'PIANOTE_MEMBERSHIP_LIFETIME',
+                ],
+            ]
+        ]);
+
         $app->register(DoctrineServiceProvider::class);
 
         // allows access to built in user auth

@@ -94,7 +94,7 @@ class UserProductRepository extends RepositoryBase
 
     /**
      * @param $userId
-     * @return array
+     * @return UserProduct[]
      */
     public function getAllUsersProducts($userId)
     {

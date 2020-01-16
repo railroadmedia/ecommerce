@@ -231,6 +231,22 @@ return [
         'agreement_fulfilled_path' => '/test'
     ],
 
+    // membership subscription duplicate syncing
+    'membership_product_syncing_info' => [
+        'brand_1' => [
+            'membership_product_skus' => [
+                'SKU-1',
+                'SKU-2',
+            ],
+        ],
+        'brand_2' => [
+            'membership_product_skus' => [
+                'SKU-5',
+                'SKU-6',
+            ],
+        ],
+    ],
+
     // permissions
     'role_abilities' => [
         'administrator' => [
