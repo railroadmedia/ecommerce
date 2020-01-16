@@ -571,7 +571,7 @@ class AppleStoreKitService
         if ($isTrial) {
             $nextBillDate =
                 Carbon::now()
-                    ->addDays(config('ecommerce.trial_days_number'));
+                    ->addDays(config('ecommerce.trial_days_number', 7));
         } elseif (!empty($product->getSubscriptionIntervalType())) {
             if ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
                 $nextBillDate =

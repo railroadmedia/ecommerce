@@ -442,7 +442,7 @@ class GooglePlayStoreService
         if ($isTrial) {
             $nextBillDate =
                 Carbon::now()
-                    ->addDays(config('ecommerce.trial_days_number'));
+                    ->addDays(config('ecommerce.trial_days_number',7));
         } else {
             if (!empty($purchasedProduct->getSubscriptionIntervalType())) {
                 if ($purchasedProduct->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
