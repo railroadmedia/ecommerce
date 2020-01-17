@@ -99,8 +99,11 @@ class ShippingFulfillmentController extends Controller
         }
 
         unset($csvAsArray[0]);
+        $counter = 0;
 
         foreach ($csvAsArray as $csvRowIndex => $csvRow) {
+            $counter++;
+
             if (empty($csvRow[$orderIdColumnIndex])) {
                 $errors[] = [
                     'title' => 'Data Error',
@@ -175,9 +178,14 @@ class ShippingFulfillmentController extends Controller
                 $fulfillmentForOrder->setFulfilledOn(Carbon::parse($csvRow[$fulfilledOnColumnIndex]));
 
                 $this->entityManager->persist($fulfillmentForOrder);
+            }
+
+            if ($counter % 100 == 0) {
                 $this->entityManager->flush();
             }
         }
+
+        $this->entityManager->flush();
 
         return response()
             ->json(['success' => true, 'errors' => $errors])
