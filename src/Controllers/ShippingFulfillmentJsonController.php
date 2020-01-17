@@ -175,6 +175,7 @@ class ShippingFulfillmentJsonController extends Controller
                         ->toDateTimeString() : '',
                     $fulfillment->getOrderItem()
                         ->getFinalPrice(),
+                    $fulfillment->getOrder()->getBrand()
                 ];
             }
 
@@ -211,6 +212,7 @@ class ShippingFulfillmentJsonController extends Controller
                     'Tracking Number',
                     'Fulfilled On',
                     'Order Total $',
+                    'Brand',
                 ]
             );
 
