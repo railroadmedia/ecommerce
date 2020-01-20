@@ -119,6 +119,7 @@ List access codes.
 |query|page||1||Which page to load, will be {limit} long.|
 |query|limit||10||How many to load per page.|
 |query|brands||configured default brand|must be an array of brands|Limit results to codes that belong to specific brands.|
+|query|claimer_id|false|||Only return access codes claimed by this user|
 
 
 ### Request Example

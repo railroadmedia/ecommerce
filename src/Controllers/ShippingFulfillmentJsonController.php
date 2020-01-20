@@ -225,7 +225,10 @@ class ShippingFulfillmentJsonController extends Controller
                 ->deleteFileAfterSend();
         }
 
-        return ResponseService::fulfillment($fulfillmentsAndBuilder->getResults())
+        return ResponseService::fulfillment(
+                $fulfillmentsAndBuilder->getResults(),
+                $fulfillmentsAndBuilder->getQueryBuilder()
+            )
             ->respond(200);
     }
 

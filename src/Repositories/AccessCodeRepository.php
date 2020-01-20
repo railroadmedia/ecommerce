@@ -58,4 +58,35 @@ class AccessCodeRepository extends RepositoryBase
 
         return new ResultsQueryBuilderComposite($results, $qb);
     }
+
+    /**
+     * @param Request $request
+     *
+     * @return ResultsQueryBuilderComposite
+     */
+    public function indexByRequest(Request $request)
+    {
+        $alias = 'a';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->restrictBrandsByRequest($request, $alias)
+            ->select($alias);
+
+        if (!empty($request->get('claimer_id'))) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq('a.claimer', ':claimerId')
+            )
+            ->setParameter('claimerId', $request->get('claimer_id'));
+        }
+
+        $results =
+            $qb->getQuery()
+                ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
+    }
 }
