@@ -241,6 +241,7 @@ class AccessCodeService
             $userProduct->setExpirationDate($expirationDate);
 
             $this->entityManager->persist($userProduct);
+            $this->entityManager->flush();
 
             event(new UserProductCreated($userProduct));
         }
