@@ -196,7 +196,7 @@ class ShippingFulfillmentJsonController extends Controller
                     'Street Line 1',
                     'Street Line 2',
                     'City',
-                    'Region',
+                    'State/Province',
                     'Zip/Postal Code',
                     'Country',
                     'Is Fulfilled',

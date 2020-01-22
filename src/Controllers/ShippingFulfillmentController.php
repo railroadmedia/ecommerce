@@ -105,57 +105,51 @@ class ShippingFulfillmentController extends Controller
             $counter++;
 
             if (empty($csvRow[$orderIdColumnIndex])) {
-                $errors[] = [
-                    'title' => 'Data Error',
-                    'source' => 'csv_file',
-                    'detail' => 'Missing "Order - Number" at row: ' .
-                        ($csvRowIndex + 1) .
-                        ' column: ' .
-                        ($orderIdColumnIndex + 1) .
-                        '. Please review.',
-                ];
+                $errors[] = 'Missing "Order - Number" at row: ' .
+                    ($csvRowIndex + 1) .
+                    ' column: ' .
+                    ($orderIdColumnIndex + 1) .
+                    '. Please review.';
 
                 continue;
             }
 
             if (empty($csvRow[$shippingCompanyColumnIndex])) {
-                $errors[] = [
-                    'title' => 'Data Error',
-                    'source' => 'csv_file',
-                    'detail' => 'Missing "Shipment - Service" name at row: ' .
-                        ($csvRowIndex + 1) .
-                        ' column: ' .
-                        ($shippingCompanyColumnIndex + 1) .
-                        '. Please review.',
-                ];
+                $errors[] = 'Missing "Shipment - Service" name at row: ' .
+                    ($csvRowIndex + 1) .
+                    ' column: ' .
+                    ($shippingCompanyColumnIndex + 1) .
+                    '. Please review.';
 
                 continue;
             }
 
             if (empty($csvRow[$trackingNumberColumnIndex])) {
-                $errors[] = [
-                    'title' => 'Data Error',
-                    'source' => 'csv_file',
-                    'detail' => 'Missing "Shipment - Tracking Number" at row: ' .
-                        ($csvRowIndex + 1) .
-                        ' column: ' .
-                        ($trackingNumberColumnIndex + 1) .
-                        '. Please review.',
-                ];
+                $errors[] = 'Missing "Shipment - Tracking Number" at row: ' .
+                    ($csvRowIndex + 1) .
+                    ' column: ' .
+                    ($trackingNumberColumnIndex + 1) .
+                    '. Please review.';
 
                 continue;
             }
 
             if (empty($csvRow[$fulfilledOnColumnIndex])) {
-                $errors[] = [
-                    'title' => 'Data Error',
-                    'source' => 'csv_file',
-                    'detail' => 'Missing "Date - Shipped Date" at row: ' .
-                        ($csvRowIndex + 1) .
-                        ' column: ' .
-                        ($fulfilledOnColumnIndex + 1) .
-                        '. Please review.',
-                ];
+                $errors[] = 'Missing "Date - Shipped Date" at row: ' .
+                    ($csvRowIndex + 1) .
+                    ' column: ' .
+                    ($fulfilledOnColumnIndex + 1) .
+                    '. Please review.';
+
+                continue;
+            }
+
+            if (!is_numeric($csvRow[$orderIdColumnIndex])) {
+                $errors[] = 'Invalid "Order - Number", skipping ' .
+                    ($csvRowIndex + 1) .
+                    ' column: ' .
+                    ($fulfilledOnColumnIndex + 1) .
+                    '.';
 
                 continue;
             }
