@@ -252,9 +252,11 @@ class RefundJsonController extends Controller
         $userPaymentMethod = $this->userPaymentMethodsRepository->findOneBy(['paymentMethod' => $paymentMethod]);
 
         /** @var $user User */
-        $user = $userPaymentMethod->getUser();
+        if (!empty($userPaymentMethod) && !empty($userPaymentMethod->getUser())) {
+            $user = $userPaymentMethod->getUser();
 
-        event(new RefundEvent($refund, $user));
+            event(new RefundEvent($refund, $user));
+        }
 
         return ResponseService::refund($refund);
     }
