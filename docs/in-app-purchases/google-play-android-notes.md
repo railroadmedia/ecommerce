@@ -3,7 +3,9 @@
 - The order IDs for a given purchase token look very similar. They are the same except for each additional renewal payment, an increment number is added to the end of the order ID. For example:
 
 ```
-'To help you track transactions relating to a given subscription, Google payments provides a base Merchant Order Number for all recurrences of the subscription and denotes each recurring transaction by appending an integer as follows:' - Google
+'To help you track transactions relating to a given subscription, 
+Google payments provides a base Merchant Order Number for all recurrences 
+of the subscription and denotes each recurring transaction by appending an integer as follows:' - Google
 
 GPA.1234-5678-9012-34567 (base order number)
 GPA.1234-5678-9012-34567..0 (first renewal orderID)
