@@ -132,10 +132,15 @@ class DiscountCriteriaService
             $productCartItem = $cart->getItemBySku($dcProduct->getSku());
 
             if (
-                isset($productsMap[$dcProduct->getId()]) &&
+            (isset($productsMap[$dcProduct->getId()]) &&
                 $productCartItem &&
                 ($productCartItem->getQuantity() >= (integer)$discountCriteria->getMin()) &&
                 ($productCartItem->getQuantity() <= (integer)$discountCriteria->getMax())
+                ||
+                ((integer)$discountCriteria->getMin() == 0 &&
+                (integer)$discountCriteria->getMax() == 0 &&
+                empty($productCartItem))
+            )
             ) {
                 // if dcProduct is in cart with valid quantity
                 if ($discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY) {
