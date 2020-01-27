@@ -203,7 +203,7 @@ class ProcessAppleExpiredSubscriptionsTest extends EcommerceTestCase
                 'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
                 'valid' => 1,
                 'validation_error' => null,
-                'created_at' => Carbon::now(),
+                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 

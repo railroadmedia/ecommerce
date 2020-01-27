@@ -419,7 +419,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'product_id' => $subscription['product_id'],
                 'quantity' => 1,
                 'expiration_date' => Carbon::now()
-                    ->subDay(1)
+                    ->addDays(4)
                     ->toDateTimeString(),
             ]
         );
@@ -992,6 +992,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'quantity' => 1,
                     'expiration_date' => Carbon::now()
                         ->addMonth($initialSubscriptions[$i]['interval_count'])
+                        ->addDays(5)
                         ->startOfDay()
                         ->toDateTimeString(),
                 ]

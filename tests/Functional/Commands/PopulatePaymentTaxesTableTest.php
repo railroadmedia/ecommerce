@@ -171,6 +171,7 @@ class PopulatePaymentTaxesTableTest extends EcommerceTestCase
 
         $paymentThree = $this->fakePayment(
             [
+                'payment_method_id' => $paymentMethodOne['id'],
                 'type' => Payment::TYPE_INITIAL_ORDER,
                 'status' => Payment::STATUS_PAID,
                 'currency' => $this->getCurrency(),
