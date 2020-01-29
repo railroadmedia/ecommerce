@@ -102,6 +102,11 @@ class GooglePlayStoreController extends Controller
 
             $data = json_decode(base64_decode($encodedData));
 
+            // we should return something for test notifications
+            if (!empty($data->testNotification)) {
+                return response()->json();
+            }
+
             $subscriptionNotification = $data->subscriptionNotification;
 
             if (strtolower($subscriptionNotification->notificationType) == self::SUBSCRIPTION_RENEWED ||
