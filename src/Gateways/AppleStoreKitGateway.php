@@ -31,7 +31,7 @@ class AppleStoreKitGateway
             throw new ReceiptValidationException(
                 $this->getValidationErrorMessage(
                     $response->getResultCode()
-                )
+                ), null, $response
             );
         }
 

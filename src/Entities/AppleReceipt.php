@@ -114,6 +114,13 @@ class AppleReceipt
     protected $subscription;
 
     /**
+     * @ORM\Column(type="text", name="raw_receipt_response", nullable=true)
+     *
+     * @var string
+     */
+    protected $rawReceiptResponse;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -295,5 +302,21 @@ class AppleReceipt
     public function setSubscription(?Subscription $subscription)
     {
         $this->subscription = $subscription;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getRawReceiptResponse()
+    {
+        return $this->rawReceiptResponse;
+    }
+
+    /**
+     * @param string|null $rawReceiptResponse
+     */
+    public function setRawReceiptResponse($rawReceiptResponse): void
+    {
+        $this->rawReceiptResponse = $rawReceiptResponse;
     }
 }

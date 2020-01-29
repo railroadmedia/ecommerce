@@ -177,6 +177,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'email' => $email,
                 'valid' => true,
                 'validation_error' => null,
+                'raw_receipt_response' => serialize($validationResponse),
                 'created_at' => Carbon::now(),
             ]
         );
@@ -315,8 +316,28 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 ->disableOriginalConstructor()
                 ->getMock();
 
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => 'test1',
+                $this->faker->word => 'test2',
+            ]
+        );
+
+        $productsData = [
+            'test1' => [
+                'web_order_line_item_id' => 1,
+            ],
+            'test2' => [ // expired product
+                'web_order_line_item_id' => 2,
+                'expires_date_ms' => Carbon::now()->subMonth()
+            ]
+        ];
+
+        $validationResponse = $this->getReceiptValidationResponse($productsData);
+
         $appleStoreKitGateway->method('validate')
-            ->willThrowException(new ReceiptValidationException($exceptionMessage));
+            ->willThrowException(new ReceiptValidationException($exceptionMessage, null, $validationResponse));
 
         $this->app->instance(AppleStoreKitGateway::class, $appleStoreKitGateway);
 
@@ -351,6 +372,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'email' => $email,
                 'valid' => false,
                 'validation_error' => $exceptionMessage,
+                'raw_receipt_response' => serialize($validationResponse),
                 'created_at' => Carbon::now(),
             ]
         );
@@ -428,6 +450,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
                 'valid' => true,
                 'validation_error' => null,
+                'raw_receipt_response' => serialize($validationResponse),
                 'created_at' => Carbon::now(),
             ]
         );
