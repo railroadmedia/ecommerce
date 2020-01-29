@@ -495,21 +495,6 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        Mail::assertSent(SubscriptionInvoice::class, 1);
-
-        Mail::assertSent(
-            SubscriptionInvoice::class,
-            function ($mail) use ($email) {
-                $mail->build(); // raises an exception if brand is not configured under ecommerce.invoice_email_details
-
-                return $mail->hasTo($email) &&
-                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_sender')) &&
-                    $mail->subject(
-                        config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_email_subject')
-                    );
-            }
-        );
-
         $this->assertDatabaseHas(
             'railactionlog_actions_log',
             [
