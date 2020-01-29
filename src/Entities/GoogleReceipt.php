@@ -126,6 +126,13 @@ class GoogleReceipt
     protected $orderId;
 
     /**
+     * @ORM\Column(type="text", name="raw_receipt_response", nullable=true)
+     *
+     * @var string
+     */
+    protected $rawReceiptResponse;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -312,16 +319,32 @@ class GoogleReceipt
     /**
      * @return string|null
      */
-    public function getOrderId(): ?string
+    public function getOrderId()
     {
         return $this->orderId;
     }
 
     /**
-     * @param string $orderId
+     * @param string|null $orderId
      */
-    public function setOrderId(string $orderId)
+    public function setOrderId($orderId)
     {
         $this->orderId = $orderId;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getRawReceiptResponse()
+    {
+        return $this->rawReceiptResponse;
+    }
+
+    /**
+     * @param string|null $rawReceiptResponse
+     */
+    public function setRawReceiptResponse($rawReceiptResponse): void
+    {
+        $this->rawReceiptResponse = $rawReceiptResponse;
     }
 }

@@ -15,16 +15,16 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
-use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\AppleReceiptRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
-use ReceiptValidator\iTunes\ResponseInterface;
 use ReceiptValidator\iTunes\PurchaseItem;
+use ReceiptValidator\iTunes\ResponseInterface;
 use Throwable;
 
 class AppleStoreKitService
@@ -104,8 +104,8 @@ class AppleStoreKitService
      * @throws GuzzleException
      * @throws Throwable
      */
-    public function processReceipt(AppleReceipt $receipt)
-    : User {
+    public function processReceipt(AppleReceipt $receipt): User
+    {
         $this->entityManager->persist($receipt);
 
         try {
@@ -115,7 +115,7 @@ class AppleStoreKitService
             $currentPurchasedItem = $this->getPurchasedItem($validationResponse);
 
             if (!$currentPurchasedItem) {
-                throw new ReceiptValidationException('All purchased items are expired');
+                throw new ReceiptValidationException('All purchased items are expired', null, $validationResponse);
             }
 
             $transactionId = $currentPurchasedItem->getTransactionId();
@@ -123,21 +123,27 @@ class AppleStoreKitService
             $usedAppleReceipt = $this->appleReceiptRepository->findOneBy(['transactionId' => $transactionId]);
 
             if ($usedAppleReceipt) {
-                throw new ReceiptValidationException('Receipt already used');
+                throw new ReceiptValidationException('Receipt already used', null, $validationResponse);
             }
 
             $receipt->setTransactionId($transactionId);
             $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
+            $receipt->setRawReceiptResponse(serialize($validationResponse));
 
-        } catch (Exception $exception) {
+        } catch (ReceiptValidationException $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
+            $receipt->setRawReceiptResponse(serialize($exception->getAppleResponse()));
 
+            $this->entityManager->persist($receipt);
             $this->entityManager->flush();
 
             throw $exception;
         }
+
+        $this->entityManager->persist($receipt);
+        $this->entityManager->flush();
 
         $user = $this->userProvider->getUserByEmail($receipt->getEmail());
 
@@ -195,19 +201,26 @@ class AppleStoreKitService
             $purchasedItem = $this->getPurchasedItem($validationResponse);
 
             if (!$purchasedItem) {
-                throw new ReceiptValidationException('All purchased items are expired');
+                throw new ReceiptValidationException('All purchased items are expired', null, $validationResponse);
             }
 
             $receipt->setValid(true);
+            $receipt->setRawReceiptResponse(serialize($validationResponse));
+
         } catch (ReceiptValidationException $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
+            $receipt->setRawReceiptResponse(serialize($exception->getAppleResponse()));
 
+            $this->entityManager->persist($receipt);
             $this->entityManager->flush();
 
             throw $exception;
         }
+
+        $this->entityManager->persist($receipt);
+        $this->entityManager->flush();
 
         if ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE) {
 
@@ -252,17 +265,25 @@ class AppleStoreKitService
             $purchasedItem = $this->getPurchasedItem($validationResponse);
 
             if (!$purchasedItem) {
-                throw new ReceiptValidationException('All purchased items are expired');
+                throw new ReceiptValidationException('All purchased items are expired', null, $validationResponse);
             }
 
             $receipt->setValid($purchasedItem->getExpiresDate() > Carbon::now());
             $receipt->setValidationError(null);
+            $receipt->setRawReceiptResponse(serialize($validationResponse));
 
         } catch (ReceiptValidationException $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
+            $receipt->setRawReceiptResponse(serialize($exception->getAppleResponse()));
+
+            $this->entityManager->persist($receipt);
+            $this->entityManager->flush();
         }
+
+        $this->entityManager->persist($receipt);
+        $this->entityManager->flush();
 
         if ($receipt->getValid()) {
             $transactionId = $purchasedItem->getTransactionId();
@@ -328,8 +349,8 @@ class AppleStoreKitService
      *
      * @throws Throwable
      */
-    public function createSubscriptionRenewalPayment(Subscription $subscription)
-    : Payment {
+    public function createSubscriptionRenewalPayment(Subscription $subscription): Payment
+    {
         $payment = new Payment();
 
         $payment->setTotalDue($subscription->getTotalPrice());
@@ -426,8 +447,8 @@ class AppleStoreKitService
      *
      * @return PurchaseItem|null
      */
-    public function getPurchasedItem(ResponseInterface $validationResponse)
-    : ?PurchaseItem {
+    public function getPurchasedItem(ResponseInterface $validationResponse): ?PurchaseItem
+    {
         if (is_array($validationResponse->getLatestReceiptInfo()) &&
             !empty($validationResponse->getLatestReceiptInfo())) {
             return $validationResponse->getLatestReceiptInfo()[0];
@@ -443,8 +464,8 @@ class AppleStoreKitService
      *
      * @throws Throwable
      */
-    public function createOrderPayment(Order $order)
-    : Payment {
+    public function createOrderPayment(Order $order): Payment
+    {
         $totalDue = 0;
 
         foreach ($order->getOrderItems() as $orderItem) {
@@ -489,8 +510,7 @@ class AppleStoreKitService
     public function createOrder(
         OrderItem $orderItem,
         User $user
-    )
-    : Order {
+    ): Order {
         $order = new Order();
 
         $order->addOrderItem($orderItem);
@@ -517,8 +537,7 @@ class AppleStoreKitService
      */
     public function createOrderItem(
         PurchaseItem $purchasedItem
-    )
-    : ?OrderItem {
+    ): ?OrderItem {
         $product = $this->getProductByAppleStoreId($purchasedItem->getProductId());
 
         $orderItem = null;
@@ -556,8 +575,7 @@ class AppleStoreKitService
         ?Payment $payment,
         AppleReceipt $receipt,
         $isTrial
-    )
-    : ?Subscription {
+    ): ?Subscription {
         $subscription = new Subscription();
 
         $product = $this->getProductByAppleStoreId($purchasedItem->getProductId());
@@ -637,8 +655,8 @@ class AppleStoreKitService
      *
      * @throws Throwable
      */
-    public function getProductByAppleStoreId(string $appleStoreId)
-    : ?Product {
+    public function getProductByAppleStoreId(string $appleStoreId): ?Product
+    {
         $productsMap = config('ecommerce.apple_store_products_map');
 
         if (isset($productsMap[$appleStoreId])) {

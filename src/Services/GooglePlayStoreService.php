@@ -113,11 +113,18 @@ class GooglePlayStoreService
                     ->getOrderId()
             );
 
+            $receipt->setRawReceiptResponse(serialize($googleResponse));
+
+            $this->entityManager->persist($receipt);
+            $this->entityManager->flush();
+
         } catch (ReceiptValidationException $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
+            $receipt->setRawReceiptResponse(serialize($exception->getGoogleSubscriptionResponse()));
 
+            $this->entityManager->persist($receipt);
             $this->entityManager->flush();
 
             throw $exception;
@@ -173,7 +180,7 @@ class GooglePlayStoreService
         $this->entityManager->persist($receipt);
 
         try {
-            $this->googlePlayStoreGateway->validate(
+            $googleResponse = $this->googlePlayStoreGateway->validate(
                 $receipt->getPackageName(),
                 $receipt->getProductId(),
                 $receipt->getPurchaseToken()
@@ -187,11 +194,20 @@ class GooglePlayStoreService
 
             $receipt->setValid(true);
 
+            $receipt->setOrderId(
+                $googleResponse->getRawResponse()
+                    ->getOrderId()
+            );
+
+            $receipt->setRawReceiptResponse(serialize($googleResponse));
+
         } catch (ReceiptValidationException $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
+            $receipt->setRawReceiptResponse(serialize($exception->getGoogleSubscriptionResponse()));
 
+            $this->entityManager->persist($receipt);
             $this->entityManager->flush();
 
             throw $exception;

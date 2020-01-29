@@ -38,10 +38,33 @@ class GooglePlayStoreGateway
         $seconds = intval($response->getExpiryTimeMillis() / 1000);
 
         if (Carbon::createFromTimestamp($seconds) <= Carbon::now()) {
-            throw new ReceiptValidationException('Subscription expired');
+            throw new ReceiptValidationException('Subscription expired', $response);
         }
 
         return $response;
+    }
+    /**
+     * @param string $packageName
+     * @param string $productId
+     * @param string $purchaseToken
+     *
+     * @return SubscriptionResponse
+     *
+     * @throws ReceiptValidationException
+     * @throws Throwable
+     */
+    public function getResponse(
+        string $packageName,
+        string $productId,
+        string $purchaseToken
+    ): SubscriptionResponse
+    {
+        $validator = $this->getValidator();
+
+        return $validator->setPackageName($packageName)
+                        ->setProductId($productId)
+                        ->setPurchaseToken($purchaseToken)
+                        ->validateSubscription();
     }
 
     /**
