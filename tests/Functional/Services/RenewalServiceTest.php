@@ -31,8 +31,11 @@ class RenewalServiceTest extends EcommerceTestCase
             ->getCacheDriver()
             ->deleteAll();
 
-        $this->stripeExternalHelperMock->method('retrieveCustomer')
-            ->willReturn(new Customer());
+        $stripeCustomer = new Customer();
+        $stripeCustomer->id = rand();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($stripeCustomer);
         $this->stripeExternalHelperMock->method('retrieveCard')
             ->willReturn(new Card());
 
