@@ -5,7 +5,9 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use Railroad\RemoteStorage\Services\RemoteStorageService;
 
 class ProductJsonControllerTest extends EcommerceTestCase
 {
@@ -489,7 +491,6 @@ class ProductJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $filenameAbsolute = $this->faker->image(sys_get_temp_dir());
         /*
         Faker\Provider\Image::image returns false from block:
 
@@ -503,11 +504,23 @@ class ProductJsonControllerTest extends EcommerceTestCase
         to be re-tested
         */
 
-        $filenameRelative = $this->getFilenameRelativeFromAbsolute($filenameAbsolute);
+        $filenameRelative = 'tests/Fixtures/Files/test_upload_image.jpg';
+
+        $remoteStorageService =
+            $this->getMockBuilder(RemoteStorageService::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $remoteStorageService->method('put')
+            ->willReturn(true);
+        $remoteStorageService->method('url')
+            ->willReturn(storage_path('app') . '/' . $filenameRelative);
+
+        $this->app->instance(RemoteStorageService::class, $remoteStorageService);
 
         $response = $this->call('PUT', '/product/upload', [
             'target' => $filenameRelative,
-            'file'   => new UploadedFile($filenameAbsolute, $filenameRelative)
+            'file'   => new UploadedFile($filenameRelative, $filenameRelative)
         ]);
 
         $this->assertEquals(200, $response->status());

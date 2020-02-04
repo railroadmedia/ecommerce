@@ -44,7 +44,7 @@ class AccessCodeRepository extends RepositoryBase
 
         $qb->paginateByRequest($request)
             ->orderByRequest($request, $alias)
-            ->restrictBrandsByRequest($request, $alias, [])
+            ->restrictBrandsByRequest($request, $alias)
             ->select($alias)
             ->andWhere(
                 $qb->expr()

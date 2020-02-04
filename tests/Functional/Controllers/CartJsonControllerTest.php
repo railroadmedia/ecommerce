@@ -246,7 +246,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         ]);
 
         // assert response status code
-        $this->assertEquals(403, $response->getStatusCode());
+        $this->assertEquals(201, $response->getStatusCode());
 
         // assert cart structure
         $response->assertJsonStructure(
@@ -263,7 +263,6 @@ class CartJsonControllerTest extends EcommerceTestCase
                             'tax',
                             'due'
                         ],
-                        'errors',
                     ]
                 ]
             ]
@@ -274,15 +273,9 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
 
-        // assert items collection is empty
-        $this->assertTrue(empty($decodedResponse['meta']['cart']['items']));
+        $this->assertFalse(empty($decodedResponse['meta']['cart']['items']));
 
-        $this->assertEquals(
-            ['Product ' . $product['name'] . ' is currently out of stock, please check back later.'],
-            $decodedResponse['meta']['cart']['errors']
-        );
-
-        $this->assertEquals(
+        $this->assertNotEquals(
             0,
             $decodedResponse['meta']['cart']['totals']['due']
         );
@@ -293,7 +286,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart items collection is empty
         $this->assertTrue(is_array($cart->getItems()));
 
-        $this->assertTrue(empty($cart->getItems()));
+        $this->assertFalse(empty($cart->getItems()));
     }
 
     public function test_add_inexistent_product_to_cart()
@@ -497,7 +490,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         ]);
 
         // assert response status code
-        $this->assertEquals(403, $response->getStatusCode());
+        $this->assertEquals(201, $response->getStatusCode());
 
         // assert cart structure
         $response->assertJsonStructure(
@@ -514,7 +507,6 @@ class CartJsonControllerTest extends EcommerceTestCase
                             'tax',
                             'due'
                         ],
-                        'errors',
                     ]
                 ]
             ]
@@ -525,15 +517,9 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
 
-        // assert items collection is empty
-        $this->assertTrue(empty($decodedResponse['meta']['cart']['items']));
+        $this->assertFalse(empty($decodedResponse['meta']['cart']['items']));
 
-        $this->assertEquals(
-            ['Product ' . $product['name'] . ' is currently out of stock, please check back later.'],
-            $decodedResponse['meta']['cart']['errors']
-        );
-
-        $this->assertEquals(
+        $this->assertNotEquals(
             0,
             $decodedResponse['meta']['cart']['totals']['due']
         );
@@ -544,7 +530,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart items collection is empty
         $this->assertTrue(is_array($cart->getItems()));
 
-        $this->assertTrue(empty($cart->getItems()));
+        $this->assertFalse(empty($cart->getItems()));
     }
 
     public function test_add_products_available_and_not_available_to_cart()

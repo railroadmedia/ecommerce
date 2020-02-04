@@ -135,6 +135,7 @@ class CartControllerTest extends EcommerceTestCase
 
     public function test_add_product_with_stock_empty_to_cart()
     {
+        // this has been de-activated, people can still buy products with stock=0
         $this->session->flush();
 
         $country = 'United States';
@@ -152,10 +153,16 @@ class CartControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'active' => 1,
+            'is_physical' => false,
+            'type' => Product::TYPE_DIGITAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+            'weight' => 0,
             'stock' => 0,
+            'price' => 92.22,
         ]);
 
-        $quantity = $this->faker->numberBetween(2, 10);
+        $quantity = 2;
 
         $response = $this->call('GET', '/add-to-cart/', [
             'products' => [$product['sku'] => $quantity],
@@ -165,7 +172,22 @@ class CartControllerTest extends EcommerceTestCase
         $response->assertSessionHas(
             'cart',
             [
-                'items' => [],
+                'items' => [
+                    [
+                        'sku' => $product['sku'],
+                        'name' => $product['name'],
+                        'quantity' => $quantity,
+                        'thumbnail_url' => $product['thumbnail_url'],
+                        'description' => $product['description'],
+                        'stock' => $product['stock'],
+                        'subscription_interval_type' => $product['subscription_interval_type'],
+                        'subscription_interval_count' => $product['subscription_interval_count'],
+                        'price_before_discounts' => $product['price'] * $quantity,
+                        'price_after_discounts' => $product['price'] * $quantity,
+                        'requires_shipping' => false,
+                        'is_digital' => !$product['is_physical'],
+                    ]
+                ],
                 'discounts' => [],
                 'shipping_address' => null,
                 'billing_address' => [
@@ -183,10 +205,22 @@ class CartControllerTest extends EcommerceTestCase
                 'totals' => [
                     'shipping' => 0,
                     'tax' => 0,
-                    'due' => 0
+                    'due' => $product['price'] * $quantity
                 ],
-                'errors' => ['Product ' . $product['name'] . ' is currently out of stock, please check back later.'],
-                'payment_plan_options' => [],
+                'payment_plan_options' => [
+                    [
+                        "value" => 1,
+                        "label" => "1 payment of $184.44",
+                    ],
+                    [
+                        "value" => 2,
+                        "label" => "2 payments of $92.72 ($1.00 finance charge)",
+                    ],
+                    [
+                        "value" => 5,
+                        "label" => "5 payments of $37.09 ($1.00 finance charge)",
+                    ]
+                ],
             ]
         );
 
@@ -196,7 +230,7 @@ class CartControllerTest extends EcommerceTestCase
         // assert cart items collection is empty
         $this->assertTrue(is_array($cart->getItems()));
 
-        $this->assertTrue(empty($cart->getItems()));
+        $this->assertFalse(empty($cart->getItems()));
     }
 
     public function test_add_inexistent_product_to_cart()
@@ -407,6 +441,8 @@ class CartControllerTest extends EcommerceTestCase
 
     public function test_add_to_cart_higher_amount_than_product_stock()
     {
+        // this has been de-activated, people can still buy products with stock=0
+
         $this->session->flush();
 
         $country = 'United States';
@@ -424,10 +460,16 @@ class CartControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'active' => 1,
-            'stock' => $this->faker->numberBetween(1, 3),
+            'is_physical' => false,
+            'type' => Product::TYPE_DIGITAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+            'weight' => 0,
+            'stock' => 1,
+            'price' => 92.22,
         ]);
 
-        $quantity = $this->faker->numberBetween(5, 100);
+        $quantity = 2;
 
         $response = $this->call('GET', '/add-to-cart/', [
             'products' => [$product['sku'] => $quantity],
@@ -437,7 +479,22 @@ class CartControllerTest extends EcommerceTestCase
         $response->assertSessionHas(
             'cart',
             [
-                'items' => [],
+                'items' => [
+                    [
+                        'sku' => $product['sku'],
+                        'name' => $product['name'],
+                        'quantity' => $quantity,
+                        'thumbnail_url' => $product['thumbnail_url'],
+                        'description' => $product['description'],
+                        'stock' => $product['stock'],
+                        'subscription_interval_type' => $product['subscription_interval_type'],
+                        'subscription_interval_count' => $product['subscription_interval_count'],
+                        'price_before_discounts' => $product['price'] * $quantity,
+                        'price_after_discounts' => $product['price'] * $quantity,
+                        'requires_shipping' => false,
+                        'is_digital' => !$product['is_physical'],
+                    ]
+                ],
                 'discounts' => [],
                 'shipping_address' => null,
                 'billing_address' => [
@@ -455,10 +512,22 @@ class CartControllerTest extends EcommerceTestCase
                 'totals' => [
                     'shipping' => 0,
                     'tax' => 0,
-                    'due' => 0
+                    'due' => $product['price'] * $quantity
                 ],
-                'errors' => ['Product ' . $product['name'] . ' is currently out of stock, please check back later.'],
-                'payment_plan_options' => [],
+                'payment_plan_options' => [
+                    [
+                        "value" => 1,
+                        "label" => "1 payment of $184.44",
+                    ],
+                    [
+                        "value" => 2,
+                        "label" => "2 payments of $92.72 ($1.00 finance charge)",
+                    ],
+                    [
+                        "value" => 5,
+                        "label" => "5 payments of $37.09 ($1.00 finance charge)",
+                    ]
+                ],
             ]
         );
 
@@ -468,7 +537,7 @@ class CartControllerTest extends EcommerceTestCase
         // assert cart items collection is empty
         $this->assertTrue(is_array($cart->getItems()));
 
-        $this->assertTrue(empty($cart->getItems()));
+        $this->assertFalse(empty($cart->getItems()));
     }
 
     public function test_add_products_available_and_not_available_to_cart()
