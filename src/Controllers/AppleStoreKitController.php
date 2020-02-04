@@ -70,6 +70,9 @@ class AppleStoreKitController extends Controller
      */
     public function processReceipt(AppleReceiptRequest $request)
     {
+        error_log('AppleStoreKitController processReceipt Request Dump --------------------------------------------------');
+        error_log(var_export($request->input(), true));
+
         $receipt = new AppleReceipt();
 
         $this->jsonApiHydrator->hydrate($receipt, $request->onlyAllowed());
@@ -93,6 +96,9 @@ class AppleStoreKitController extends Controller
      */
     public function processNotification(Request $request)
     {
+        error_log('AppleStoreKitController processNotification Request Dump --------------------------------------------------');
+        error_log(var_export($request->input(), true));
+
         if (strtolower($request->get('notification_type')) == 'renewal' ||
             strtolower($request->get('notification_type')) == 'cancel') {
 

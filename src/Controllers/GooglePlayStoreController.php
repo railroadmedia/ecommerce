@@ -73,6 +73,9 @@ class GooglePlayStoreController extends Controller
      */
     public function processReceipt(GoogleReceiptRequest $request)
     {
+        error_log('GooglePlayStoreController processReceipt Request Dump --------------------------------------------------');
+        error_log(var_export($request->input(), true));
+        
         $receipt = new GoogleReceipt();
 
         $this->jsonApiHydrator->hydrate($receipt, $request->onlyAllowed());
@@ -95,6 +98,9 @@ class GooglePlayStoreController extends Controller
      */
     public function processNotification(Request $request)
     {
+        error_log('GooglePlayStoreController processNotification Request Dump --------------------------------------------------');
+        error_log(var_export($request->input(), true));
+
         $message = $request->get('message');
 
         if ($message) {

@@ -68,7 +68,6 @@ class EcommerceServiceProvider extends ServiceProvider
                 OrderInvoiceListener::class,
                 DuplicateSubscriptionHandler::class,
             ],
-            MobileSubscriptionRenewed::class => [MobileSubscriptionInvoiceListener::class],
             SubscriptionRenewed::class => [SubscriptionInvoiceListener::class],
             MobileOrderEvent::class => [MobileOrderUserProductListener::class]
         ];

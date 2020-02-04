@@ -589,22 +589,22 @@ class AppleStoreKitService
         if ($isTrial) {
             $nextBillDate =
                 Carbon::now()
-                    ->addDays(config('ecommerce.trial_days_number', 7));
+                    ->addDays(config('ecommerce.trial_days_number', 7) + 1);
         } elseif (!empty($product->getSubscriptionIntervalType())) {
             if ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
                 $nextBillDate =
                     Carbon::now()
-                        ->addMonths($product->getSubscriptionIntervalCount());
+                        ->addMonths($product->getSubscriptionIntervalCount())->addDays(1);
 
             } elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
                 $nextBillDate =
                     Carbon::now()
-                        ->addYears($product->getSubscriptionIntervalCount());
+                        ->addYears($product->getSubscriptionIntervalCount())->addDays(1);
 
             } elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
                 $nextBillDate =
                     Carbon::now()
-                        ->addDays($product->getSubscriptionIntervalCount());
+                        ->addDays($product->getSubscriptionIntervalCount() + 1);
             }
         }
 
