@@ -128,13 +128,13 @@ class AppleStoreKitService
 
             $receipt->setTransactionId($transactionId);
             $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
-            $receipt->setRawReceiptResponse(serialize($validationResponse));
+            $receipt->setRawReceiptResponse(base64_encode(serialize($validationResponse)));
 
         } catch (ReceiptValidationException $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
-            $receipt->setRawReceiptResponse(serialize($exception->getAppleResponse()));
+            $receipt->setRawReceiptResponse(base64_encode(serialize($exception->getAppleResponse())));
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();
@@ -205,13 +205,13 @@ class AppleStoreKitService
             }
 
             $receipt->setValid(true);
-            $receipt->setRawReceiptResponse(serialize($validationResponse));
+            $receipt->setRawReceiptResponse(base64_encode(serialize($validationResponse)));
 
         } catch (ReceiptValidationException $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
-            $receipt->setRawReceiptResponse(serialize($exception->getAppleResponse()));
+            $receipt->setRawReceiptResponse(base64_encode(serialize($exception->getAppleResponse())));
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();
@@ -270,13 +270,13 @@ class AppleStoreKitService
 
             $receipt->setValid($purchasedItem->getExpiresDate() > Carbon::now());
             $receipt->setValidationError(null);
-            $receipt->setRawReceiptResponse(serialize($validationResponse));
+            $receipt->setRawReceiptResponse(base64_encode(serialize($validationResponse)));
 
         } catch (ReceiptValidationException $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
-            $receipt->setRawReceiptResponse(serialize($exception->getAppleResponse()));
+            $receipt->setRawReceiptResponse(base64_encode(serialize($exception->getAppleResponse())));
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();

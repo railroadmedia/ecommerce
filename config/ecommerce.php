@@ -300,6 +300,7 @@ return [
 
     // product access day offset
     'days_before_access_revoked_after_expiry' => 5,
+    'days_before_access_revoked_after_expiry_in_app_purchases_only' => 3,
 
     // invoices
     'invoice_email_details' => [

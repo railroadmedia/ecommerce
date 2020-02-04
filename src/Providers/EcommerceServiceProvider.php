@@ -24,6 +24,7 @@ use Railroad\Doctrine\TimestampableListener;
 use Railroad\Ecommerce\Commands\ConvertDiscountCriteriaProducsAssociation;
 use Railroad\Ecommerce\Commands\FillPaymentGatewayColumnFromPaymentMethod;
 use Railroad\Ecommerce\Commands\FindDuplicateSubscriptionsAndLifetimesWithSubscriptions;
+use Railroad\Ecommerce\Commands\FixSerializeErrorInAppPurchaseTables;
 use Railroad\Ecommerce\Commands\FixSubscriptionTotalAndTaxes;
 use Railroad\Ecommerce\Commands\PopulatePaymentTaxesTable;
 use Railroad\Ecommerce\Commands\ProcessAppleExpiredSubscriptions;
@@ -123,6 +124,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 ProcessAppleExpiredSubscriptions::class,
                 FixSubscriptionTotalAndTaxes::class,
                 FindDuplicateSubscriptionsAndLifetimesWithSubscriptions::class,
+                FixSerializeErrorInAppPurchaseTables::class,
             ]
         );
 

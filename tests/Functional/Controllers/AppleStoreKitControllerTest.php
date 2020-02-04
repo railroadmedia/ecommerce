@@ -177,7 +177,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'email' => $email,
                 'valid' => true,
                 'validation_error' => null,
-                'raw_receipt_response' => serialize($validationResponse),
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
             ]
         );
@@ -226,6 +226,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'is_active' => 1,
                 'paid_until' => Carbon::now()
                     ->addYear()
+                    ->addDay()
                     ->toDateTimeString(),
                 'external_app_store_id' => $webOrderLineItemOneId,
             ]
@@ -239,6 +240,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'quantity' => 1,
                 'expiration_date' => Carbon::now()
                     ->addYear()
+                    ->addDay()
                     ->toDateTimeString(),
             ]
         );
@@ -372,7 +374,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'email' => $email,
                 'valid' => false,
                 'validation_error' => $exceptionMessage,
-                'raw_receipt_response' => serialize($validationResponse),
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
             ]
         );
@@ -450,7 +452,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
                 'valid' => true,
                 'validation_error' => null,
-                'raw_receipt_response' => serialize($validationResponse),
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
             ]
         );
