@@ -10,12 +10,10 @@ use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Controllers\GooglePlayStoreController;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use ReceiptValidator\GooglePlay\SubscriptionResponse;
@@ -60,6 +58,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
 
     public function test_get_real_responses()
     {
+        // see: docs/in-app-purchases/android-receipt-data-dump.md
         // to use this, put the google api json credentials file in the root, named api.json
 
         config()->set('ecommerce.payment_gateways.google_play_store', [
@@ -405,8 +404,6 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             ]
         );
 
-        $receipt = $this->faker->word;
-
         $product = $this->fakeProduct([
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'price' => 12.95,
@@ -522,32 +519,6 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'expiration_date' => $expiryTime
                     ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
                     ->toDateTimeString(),
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
             ]
         );
     }
@@ -666,38 +637,6 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'cancellation_reason' => $cancelReason,
             ]
         );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => Subscription::ACTION_CANCEL,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
-            ]
-        );
-    }
-
-    protected function getReceiptValidationResponse(
-        $paymentState = 1,
-        $orderId = null,
-        $expiryTimestamp = null
-    ): SubscriptionResponse {
-
-        $dependency = new Google_Service_AndroidPublisher_SubscriptionPurchase();
-
-        $dependency->setPaymentState($paymentState);
-        $dependency->setOrderId($orderId ?? $this->faker->word . $this->faker->numberBetween());
-        $dependency->setExpiryTimeMillis(
-            $expiryTimestamp ?? Carbon::now()
-                ->addMonth()
-                ->getTimestamp() * 1000
-        );
-
-        return new SubscriptionResponse($dependency);
     }
 
     /**
