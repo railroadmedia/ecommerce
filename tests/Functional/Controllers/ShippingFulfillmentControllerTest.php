@@ -311,16 +311,8 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
             [
                 "success" => true,
                 "errors" => [
-                    [
-                        'title' => 'Data Error',
-                        'source' => 'csv_file',
-                        'detail' => 'Missing "Shipment - Service" name at row: 2 column: 5. Please review.',
-                    ],
-                    [
-                        'title' => 'Data Error',
-                        'source' => 'csv_file',
-                        'detail' => 'Missing "Shipment - Service" name at row: 3 column: 5. Please review.',
-                    ],
+                    'Missing "Shipment - Service" name at row: 2 column: 5. Please review.',
+                    'Missing "Shipment - Service" name at row: 3 column: 5. Please review.',
                 ]
             ],
             $response->decodeResponseJson()
@@ -419,11 +411,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
             [
                 "success" => true,
                 "errors" => [
-                    [
-                        'title' => 'Data Error',
-                        'source' => 'csv_file',
-                        'detail' => 'Missing "Shipment - Service" name at row: 3 column: 5. Please review.',
-                    ],
+                    'Missing "Shipment - Service" name at row: 3 column: 5. Please review.',
                 ],
             ],
             $response->decodeResponseJson()
@@ -516,16 +504,8 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
             [
                 "success" => true,
                 "errors" => [
-                    [
-                        'title' => 'Data Error',
-                        'source' => 'csv_file',
-                        'detail' => 'Missing "Order - Number" at row: 2 column: 1. Please review.',
-                    ],
-                    [
-                        'title' => 'Data Error',
-                        'source' => 'csv_file',
-                        'detail' => 'Missing "Order - Number" at row: 3 column: 1. Please review.',
-                    ],
+                    'Missing "Order - Number" at row: 2 column: 1. Please review.',
+                    'Missing "Order - Number" at row: 3 column: 1. Please review.',
                 ]
             ],
             $response->decodeResponseJson()

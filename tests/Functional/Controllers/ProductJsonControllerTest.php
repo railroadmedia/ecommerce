@@ -504,7 +504,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
         to be re-tested
         */
 
-        $filenameRelative = 'tests/Fixtures/Files/test_upload_image.jpg';
+        $fileAbsolutePath = dirname(__FILE__) . '/../../Fixtures/Files/test_upload_image.jpg';
 
         $remoteStorageService =
             $this->getMockBuilder(RemoteStorageService::class)
@@ -514,19 +514,19 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $remoteStorageService->method('put')
             ->willReturn(true);
         $remoteStorageService->method('url')
-            ->willReturn(storage_path('app') . '/' . $filenameRelative);
+            ->willReturn($fileAbsolutePath);
 
         $this->app->instance(RemoteStorageService::class, $remoteStorageService);
 
         $response = $this->call('PUT', '/product/upload', [
-            'target' => $filenameRelative,
-            'file'   => new UploadedFile($filenameRelative, $filenameRelative)
+            'target' => $fileAbsolutePath,
+            'file'   => new UploadedFile($fileAbsolutePath, $fileAbsolutePath)
         ]);
 
         $this->assertEquals(200, $response->status());
 
         $this->assertEquals(
-            storage_path('app') . '/' . $filenameRelative,
+            $fileAbsolutePath,
             $response->decodeResponseJson('meta')['url']
         );
     }

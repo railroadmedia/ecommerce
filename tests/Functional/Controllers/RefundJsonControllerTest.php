@@ -661,8 +661,8 @@ class RefundJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        // assert shipping fulfillment deleted
-        $this->assertDatabaseMissing(
+        // assert shipping fulfillment is no longer deleted automatically
+        $this->assertDatabaseHas(
             'ecommerce_order_item_fulfillment',
             [
                 'id' => $orderItemFulfillment['id'],
