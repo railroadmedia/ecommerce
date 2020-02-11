@@ -117,7 +117,7 @@ class AppleStoreKitServiceTest extends EcommerceTestCase
 
         $validationResponse = $this->getReceiptValidationResponse($productsData);
 
-        $this->appleStoreKitGatewayMock->method('validate')
+        $this->appleStoreKitGatewayMock->method('getResponse')
             ->willReturn($validationResponse);
 
         $appleStoreKitService = $this->app->make(AppleStoreKitService::class);
@@ -236,7 +236,7 @@ class AppleStoreKitServiceTest extends EcommerceTestCase
 
         $validationResponse = $this->getReceiptValidationResponse($productsData, Carbon::now()->subMonth());
 
-        $this->appleStoreKitGatewayMock->method('validate')
+        $this->appleStoreKitGatewayMock->method('getResponse')
             ->willReturn($validationResponse);
 
         $appleStoreKitService = $this->app->make(AppleStoreKitService::class);

@@ -1120,4 +1120,26 @@ class PaymentRepository extends RepositoryBase
 
         return $allPayments;
     }
+
+    /**
+     * @param string $externalId
+     * @param string $externalProvider
+     *
+     * @return Payment|null
+     */
+    public function getByExternalIdAndProvider($externalId, $externalProvider)
+    {
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select('p')
+            ->from(Payment::class, 'p')
+            ->where($qb->expr()->eq('externalId', ':externalId'))
+            ->andWhere($qb->expr()->eq('externalProvider', ':externalProvider'))
+            ->setParameter('externalId', $externalId)
+            ->setParameter('externalProvider', $externalProvider);
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
 }

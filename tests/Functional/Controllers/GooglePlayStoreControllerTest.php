@@ -58,7 +58,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
 
     public function test_get_real_responses()
     {
-        // see: docs/in-app-purchases/android-receipt-data-dump.md
+        // see: docs/in-app-purchases/android-receipt-data-dump.txt
         // to use this, put the google api json credentials file in the root, named api.json
 
         config()->set('ecommerce.payment_gateways.google_play_store', [
