@@ -7,6 +7,7 @@ use Illuminate\Auth\AuthManager;
 use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
 use Railroad\ActionLog\Services\ActionLogService;
@@ -86,6 +87,241 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         ], $response->decodeResponseJson('errors'));
     }
 
+    public function test_process_receipt_initial_trial_purchase()
+    {
+        $receipt = $this->faker->word;
+        $transactionId = $this->faker->word;
+        $webOrderItemId = $this->faker->word;
+        $subscriptionExpirationDate = Carbon::now()->addDays(7);
+        $email = $this->faker->email;
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $productOne = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => $productOne['sku'],
+            ]
+        );
+
+        $validationResponse = $this->getInitialPurchaseReceiptResponse($transactionId, $webOrderItemId, $productOne['sku'], $subscriptionExpirationDate, false);
+
+        $this->appleStoreKitGatewayMock->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $response = $this->call(
+            'POST',
+            '/apple/verify-receipt-and-process-payment',
+            [
+                'data' => [
+                    'attributes' => [
+                        'receipt' => $receipt,
+                        'email' => $email,
+                        'password' => $this->faker->word,
+                    ]
+                ]
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert response has meta key with auth code
+        $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::MOBILE_APP_REQUEST_TYPE,
+                'email' => $email,
+                'valid' => true,
+                'validation_error' => null,
+                'transaction_id' => $transactionId,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // we dont want order rows
+        $this->assertDatabaseMissing(
+            'ecommerce_orders',
+            [
+                'id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_payments',
+            [
+                'id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'user_id' => 1,
+                'product_id' => $productOne['id'],
+                'is_active' => 1,
+                'paid_until' => $subscriptionExpirationDate->toDateTimeString(),
+                'external_app_store_id' => $webOrderItemId,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $productOne['id'],
+                'quantity' => 1,
+                'expiration_date' => $subscriptionExpirationDate
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString()
+            ]
+        );
+    }
+
+    public function test_process_receipt_initial_non_trial_purchase()
+    {
+        $receipt = $this->faker->word;
+        $transactionId = $this->faker->word;
+        $webOrderItemId = $this->faker->word;
+        $subscriptionExpirationDate = Carbon::now()->addDays(7);
+        $email = $this->faker->email;
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $productOne = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => $productOne['sku'],
+            ]
+        );
+
+        $validationResponse = $this->getInitialPurchaseReceiptResponse($transactionId, $webOrderItemId, $productOne['sku'], $subscriptionExpirationDate, false);
+
+        $this->appleStoreKitGatewayMock->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $response = $this->call(
+            'POST',
+            '/apple/verify-receipt-and-process-payment',
+            [
+                'data' => [
+                    'attributes' => [
+                        'receipt' => $receipt,
+                        'email' => $email,
+                        'password' => $this->faker->word,
+                    ]
+                ]
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert response has meta key with auth code
+        $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::MOBILE_APP_REQUEST_TYPE,
+                'email' => $email,
+                'valid' => true,
+                'validation_error' => null,
+                'transaction_id' => $transactionId,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // we dont want order rows
+        $this->assertDatabaseMissing(
+            'ecommerce_orders',
+            [
+                'id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $productOne['price'],
+                'total_paid' => $productOne['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'user_id' => 1,
+                'product_id' => $productOne['id'],
+                'is_active' => 1,
+                'paid_until' => $subscriptionExpirationDate->toDateTimeString(),
+                'external_app_store_id' => $webOrderItemId,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => 1,
+                'payment_id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $productOne['id'],
+                'quantity' => 1,
+                'expiration_date' => $subscriptionExpirationDate
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString()
+            ]
+        );
+    }
+
     public function test_process_receipt()
     {
         $receipt = $this->faker->word;
@@ -160,6 +396,8 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 ]
             ]
         );
+
+        dd($response->getContent());
 
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
@@ -389,7 +627,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
 
         $email = $this->faker->email;
 
-        $userId  = $this->createAndLogInNewUser($email);
+        $userId = $this->createAndLogInNewUser($email);
         $receipt = $this->faker->word;
 
         $product = $this->fakeProduct([
@@ -529,7 +767,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
 
-        $userId  = $this->createAndLogInNewUser();
+        $userId = $this->createAndLogInNewUser();
         $receipt = $this->faker->word;
 
         $product = $this->fakeProduct([
@@ -621,6 +859,37 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'actor_role' => ActionLogService::ROLE_SYSTEM,
             ]
         );
+    }
+
+    protected function getInitialPurchaseReceiptResponse($transactionId, $webOrderItemId, $productSku, Carbon $expirationDate, bool $isTrial)
+    {
+        // first purchase item needs transaction id and expiration date
+        $appleProductsMap = array_flip(config('ecommerce.apple_store_products_map'));
+
+        $purchaseItemArray = [
+            'quantity' => 1,
+            'product_id' => $appleProductsMap[$productSku],
+            'expires_date_ms' => $expirationDate->timestamp * 1000,
+            'transaction_id' => $transactionId,
+            'web_order_line_item_id' => $webOrderItemId,
+            'purchase_date_ms' => Carbon::now()->timestamp * 1000,
+            'original_purchase_date' => Carbon::now()->timestamp * 1000,
+            'is_trial_period' => $isTrial,
+        ];
+
+        $rawData = [
+            'status' => 0,
+            'environment' => 'Sandbox',
+            'latest_receipt_info' => [$purchaseItemArray,],
+            'receipt' => [
+                'receipt_type' => 'ProductionSandbox',
+                'app_item_id' => 0,
+                'receipt_creation_date_ms' => Carbon::now()->timestamp * 1000,
+                'in_app' => [$purchaseItemArray],
+            ],
+        ];
+
+        return new SandboxResponse($rawData);
     }
 
     protected function getReceiptValidationResponse(

@@ -347,7 +347,7 @@ class AppleStoreKitService
         $subscription->setProduct($product);
 
         if (!empty($appleResponse->getPendingRenewalInfo()[0]) && !$appleResponse->getPendingRenewalInfo()[0]->getAutoRenewStatus()) {
-            $subscription->setCanceledOn($latestPurchaseItem->getCancellationDate());
+            $subscription->setCanceledOn($latestPurchaseItem->getCancellationDate()->copy());
             $subscription->setCancellationReason(
                 self::RENEWAL_EXPIRATION_REASON[$appleResponse->getPendingRenewalInfo()[0]->getExpirationIntent()] ?? ''
             );
@@ -357,9 +357,9 @@ class AppleStoreKitService
             $subscription->setIsActive($latestPurchaseItem->getExpiresDate() > Carbon::now());
         }
 
-        $subscription->setStartDate($latestPurchaseItem->getOriginalPurchaseDate());
-        $subscription->setPaidUntil($latestPurchaseItem->getExpiresDate());
-        $subscription->setAppleExpirationDate($latestPurchaseItem->getExpiresDate());
+        $subscription->setStartDate($firstPurchasedItem->getPurchaseDate());
+        $subscription->setPaidUntil($latestPurchaseItem->getExpiresDate()->copy());
+        $subscription->setAppleExpirationDate($latestPurchaseItem->getExpiresDate()->copy());
 
         $subscription->setTotalPrice($product->getPrice());
         $subscription->setTax(0);
@@ -371,7 +371,7 @@ class AppleStoreKitService
         $subscription->setTotalCyclesPaid(0);
         $subscription->setTotalCyclesDue(null);
 
-        // external app store id should always be the first purchase item
+        // external app store id should always be the first purchase item web order item id
         $subscription->setExternalAppStoreId($firstPurchasedItem->getWebOrderLineItemId());
         $subscription->setAppleReceipt($receipt);
 
@@ -380,6 +380,12 @@ class AppleStoreKitService
         // sync payments
         // 1 payment for every purchase item
         foreach ($appleResponse->getLatestReceiptInfo() as $purchaseItem) {
+
+            // we dont want to add zero dollar trial payments
+            if ($purchaseItem->isTrialPeriod()) {
+                continue;
+            }
+
             $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
 
             $existingPayment = $this->paymentRepository->getByExternalIdAndProvider($purchaseItem->getTransactionId(), Payment::EXTERNAL_PROVIDER_APPLE);
@@ -405,7 +411,9 @@ class AppleStoreKitService
             $existingPayment->setStatus(Payment::STATUS_PAID);
             $existingPayment->setCurrency('USD');
 
+            $this->entityManager->persist($subscription);
             $this->entityManager->persist($existingPayment);
+            $this->entityManager->flush();
 
             // save the payment to the subscription
             $subscriptionPayment = $this->subscriptionPaymentRepository->getByPayment($existingPayment);
@@ -418,6 +426,7 @@ class AppleStoreKitService
             $subscriptionPayment->setPayment($existingPayment);
 
             $this->entityManager->persist($subscriptionPayment);
+            $this->entityManager->flush();
         }
 
         $receipt->setSubscription($subscription);

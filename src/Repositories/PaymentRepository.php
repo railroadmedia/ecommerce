@@ -1133,10 +1133,10 @@ class PaymentRepository extends RepositoryBase
             $this->getEntityManager()
                 ->createQueryBuilder();
 
-        $qb->select('p')
+        $qb->select(['p'])
             ->from(Payment::class, 'p')
-            ->where($qb->expr()->eq('externalId', ':externalId'))
-            ->andWhere($qb->expr()->eq('externalProvider', ':externalProvider'))
+            ->where($qb->expr()->eq('p.externalId', ':externalId'))
+            ->andWhere($qb->expr()->eq('p.externalProvider', ':externalProvider'))
             ->setParameter('externalId', $externalId)
             ->setParameter('externalProvider', $externalProvider);
 
