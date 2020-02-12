@@ -38,6 +38,7 @@ class Payment
 
     const TYPE_INITIAL_ORDER = 'initial_order';
     const TYPE_SUBSCRIPTION_RENEWAL = 'subscription_renewal';
+    const TYPE_PAYPAL_SUBSCRIPTION_RENEWAL = 'paypal_subscription_renewal';
     const TYPE_PAYMENT_PLAN = 'payment_plan';
     const TYPE_APPLE_INITIAL_ORDER = 'apple_initial_order';
     const TYPE_APPLE_SUBSCRIPTION_RENEWAL = 'apple_subscription_renewal';
