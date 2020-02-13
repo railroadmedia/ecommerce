@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\Payment;
+use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
@@ -73,13 +74,12 @@ class PaypalWebhookController extends Controller
             && !empty($request->get('txn_id'))
             && !empty($request->get('payment_gross'))
         ) {
-            // todo - this subscription field needs to be updated/added
             $subscription = $this->subscriptionRepository->findOneBy(
-                ['external_id' => $request->get('recurring_payment_id')]
+                ['paypalRecurringProfileId' => $request->get('recurring_payment_id')]
             );
 
-            $payment = $this->paymentRepository->->findOneBy(
-                ['external_id' => $request->get('txn_id')]
+            $payment = $this->paymentRepository->findOneBy(
+                ['externalId' => $request->get('txn_id')]
             );
 
             if (empty($payment) && !empty($subscription)) {

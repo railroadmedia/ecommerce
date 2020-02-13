@@ -38,6 +38,7 @@ class Subscription
     const TYPE_SUBSCRIPTION = 'subscription';
     const TYPE_APPLE_SUBSCRIPTION = 'apple_subscription';
     const TYPE_GOOGLE_SUBSCRIPTION = 'google_subscription';
+    const TYPE_PAYPAL_SUBSCRIPTION = 'paypal_recurring_profile_subscription';
     const TYPE_PAYMENT_PLAN = 'payment plan';
 
     // log actions names
@@ -222,6 +223,15 @@ class Subscription
      * @var string
      */
     protected $externalAppStoreId;
+
+    /**
+     * Field set for paypal recurring profile subscriptions, used for renewal notifications
+     *
+     * @ORM\Column(type="string", name="paypal_recurring_profile_id", nullable=true)
+     *
+     * @var string
+     */
+    protected $paypalRecurringProfileId;
 
     /**
      * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\AppleReceipt", mappedBy="subscription")
@@ -605,6 +615,22 @@ class Subscription
     public function setExternalAppStoreId(string $externalAppStoreId)
     {
         $this->externalAppStoreId = $externalAppStoreId;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getPaypalRecurringProfileId(): ?string
+    {
+        return $this->paypalRecurringProfileId;
+    }
+
+    /**
+     * @param string $paypalRecurringProfileId
+     */
+    public function setPaypalRecurringProfileId(string $paypalRecurringProfileId)
+    {
+        $this->paypalRecurringProfileId = $paypalRecurringProfileId;
     }
 
     /**

@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class PaypalWebhookControllerTest extends EcommerceTestCase
@@ -30,6 +31,7 @@ class PaypalWebhookControllerTest extends EcommerceTestCase
         $user = $this->fakeUser();
 
         $subscription = $this->fakeSubscription([
+            'type' => Subscription::TYPE_PAYPAL_SUBSCRIPTION,
             'product_id' => $product['id'],
             'payment_method_id' => null,
             'user_id' => $user['id'],
@@ -40,8 +42,8 @@ class PaypalWebhookControllerTest extends EcommerceTestCase
             'interval_count' => 1,
             'interval_type' => config('ecommerce.interval_type_yearly'),
             'total_price' => $product['price'],
-            'tax' => 0
-            // todo - add/rename subscription external id
+            'tax' => 0,
+            'paypal_recurring_profile_id' => $recurringPaymentId,
         ]);
 
         $results = $this->call(
@@ -68,7 +70,9 @@ class PaypalWebhookControllerTest extends EcommerceTestCase
                         ->addYear(1)
                         ->startOfDay()
                         ->toDateTimeString(),
-                    'updated_at' => Carbon::now(),
+                    'updated_at' => Carbon::now()
+                        ->toDateTimeString(),
+                    'total_cycles_paid' => $subscription['total_cycles_paid'] + 1
                 ]
             )
         );
@@ -80,6 +84,7 @@ class PaypalWebhookControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'expiration_date' => Carbon::now()
                     ->addYear(1)
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry'))
                     ->startOfDay()
                     ->toDateTimeString()
             ]
@@ -93,6 +98,7 @@ class PaypalWebhookControllerTest extends EcommerceTestCase
                 'total_refunded' => 0,
                 'type' => Payment::TYPE_PAYPAL_SUBSCRIPTION_RENEWAL,
                 'payment_method_id' => null,
+                'external_id' => $txnId,
                 'external_provider' => Payment::EXTERNAL_PROVIDER_PAYPAL,
                 'currency' => '',
                 'conversion_rate' => 1,

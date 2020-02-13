@@ -109,6 +109,7 @@ class EcommerceServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__ . '/../../routes/subscriptions.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/user_product.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/mobile_app.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/paypal_webhook.php');
         }
 
         // commands
