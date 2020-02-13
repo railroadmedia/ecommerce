@@ -21,332 +21,289 @@ class ProcessAppleExpiredSubscriptionsTest extends EcommerceTestCase
 
     public function test_command()
     {
-        $userOne = $this->fakeUser();
+        // lets do:
+        // 1 successful renewal
+        // 1 deactivation/expired renewal
 
-        $productOne = $this->fakeProduct(
+        $user1 = $this->fakeUser();
+        $user2 = $this->fakeUser();
+
+        $product = $this->fakeProduct(
             [
-                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-            ]
-        );
-
-        // inactive ancient subscription
-        $subscriptionOne = $this->fakeSubscription(
-            [
-                'user_id' => $userOne['id'],
-                'type' => Subscription::TYPE_APPLE_SUBSCRIPTION,
-                'start_date' => Carbon::now()
-                    ->subYear(2),
-                'paid_until' => Carbon::now()
-                    ->subDay(1),
-                'apple_expiration_date' => Carbon::now()
-                    ->subDays(7),
-                'is_active' => false,
-                'canceled_on' => Carbon::now()
-                    ->subDays(7),
-                'product_id' => $productOne['id'],
-                'brand' => config('ecommerce.brand'),
-                'interval_type' => config('ecommerce.interval_type_monthly'),
-                'interval_count' => 1,
-                'total_cycles_paid' => 1,
-                'total_cycles_due' => $this->faker->numberBetween(2, 5),
-                'total_price' => $productOne['price'],
-            ]
-        );
-
-        $appleReceiptOneText = $this->faker->word . $this->faker->word;
-        $appleReceiptOne = $this->fakeAppleReceipt(
-            [
-                'subscription_id' => $subscriptionOne['id'],
-                'receipt' => $appleReceiptOneText,
-                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
-                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
-            ]
-        );
-
-        $userTwo = $this->fakeUser();
-
-        $productTwo = $this->fakeProduct(
-            [
-                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-            ]
-        );
-
-        // active subscription with expiration date in the past
-        $subscriptionTwo = $this->fakeSubscription(
-            [
-                'user_id' => $userTwo['id'],
-                'type' => Subscription::TYPE_APPLE_SUBSCRIPTION,
-                'start_date' => Carbon::now()
-                    ->subYear(2),
-                'paid_until' => Carbon::now()
-                    ->subDay(1),
-                'apple_expiration_date' => Carbon::now()
-                    ->subDay(1),
-                'product_id' => $productTwo['id'],
-                'brand' => config('ecommerce.brand'),
-                'interval_type' => config('ecommerce.interval_type_monthly'),
-                'interval_count' => 1,
-                'total_cycles_paid' => 1,
-                'total_cycles_due' => $this->faker->numberBetween(2, 5),
-                'total_price' => $productTwo['price'],
-            ]
-        );
-
-        $appleReceiptTwoText = $this->faker->word . $this->faker->word;
-        $appleReceiptTwo = $this->fakeAppleReceipt(
-            [
-                'subscription_id' => $subscriptionTwo['id'],
-                'receipt' => $appleReceiptTwoText,
-                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
-                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
-            ]
-        );
-
-        $userThree = $this->fakeUser();
-
-        $productThree = $this->fakeProduct(
-            [
-                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-            ]
-        );
-
-        // active subscription with expiration date in future
-        $subscriptionThree = $this->fakeSubscription(
-            [
-                'user_id' => $userThree['id'],
-                'type' => Subscription::TYPE_APPLE_SUBSCRIPTION,
-                'start_date' => Carbon::now()
-                    ->subYear(2),
-                'paid_until' => Carbon::now()
-                    ->addDay(1),
-                'apple_expiration_date' => Carbon::now()
-                    ->addDay(1),
-                'product_id' => $productThree['id'],
-                'brand' => config('ecommerce.brand'),
-                'interval_type' => config('ecommerce.interval_type_monthly'),
-                'interval_count' => 1,
-                'total_cycles_paid' => 1,
-                'total_cycles_due' => $this->faker->numberBetween(2, 5),
-                'total_price' => $productThree['price'],
-            ]
-        );
-
-        $appleReceiptThreeText = $this->faker->word . $this->faker->word;
-        $appleReceiptThree = $this->fakeAppleReceipt(
-            [
-                'subscription_id' => $subscriptionThree['id'],
-                'receipt' => $appleReceiptThreeText,
-                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
-                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
-            ]
-        );
-
-        $this->fakeUserProduct(
-            [
-                'user_id' => $userThree['id'],
-                'product_id' => $productThree['id'],
-                'quantity' => 1,
-                'expiration_date' => Carbon::now()
-                    ->addDay(1),
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
             ]
         );
 
         config()->set(
             'ecommerce.apple_store_products_map',
             [
-                $this->faker->word => $productOne['sku'],
-                $this->faker->word => $productTwo['sku'],
-                $this->faker->word => $productThree['sku'],
+                $this->faker->word => $product['sku'],
             ]
         );
 
-        $webOrderLineItemId = $this->faker->word;
+        // to be successfully renewed
+        $webOrderLineItemId1 = $this->faker->word;
+        $appleReceipt1 = $this->faker->word;
 
-        $productsData = [
-            $productTwo['sku'] => [
-                'web_order_line_item_id' => $webOrderLineItemId,
+        $subscription1 = $this->fakeSubscription(
+            [
+                'user_id' => $user1['id'],
+                'type' => Subscription::TYPE_APPLE_SUBSCRIPTION,
+                'start_date' => Carbon::now()
+                    ->subYear(2),
+                'paid_until' => Carbon::now()
+                    ->subDay(1),
+                'apple_expiration_date' => Carbon::now()
+                    ->subDay(1),
+                'is_active' => true,
+                'canceled_on' => null,
+                'product_id' => $product['id'],
+                'brand' => config('ecommerce.brand'),
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'interval_count' => 1,
+                'total_cycles_paid' => 1,
+                'total_cycles_due' => $this->faker->numberBetween(2, 5),
+                'total_price' => $product['price'],
+                'external_app_store_id' => $webOrderLineItemId1
+            ]
+        );
+
+        $appleReceipt1 = $this->fakeAppleReceipt(
+            [
+                'subscription_id' => $subscription1['id'],
+                'receipt' => $appleReceipt1,
+                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
+            ]
+        );
+
+        // deactivation renewal
+        $webOrderLineItemId2 = $this->faker->word;
+        $appleReceipt2 = $this->faker->word;
+
+        $subscription2 = $this->fakeSubscription(
+            [
+                'user_id' => $user2['id'],
+                'type' => Subscription::TYPE_APPLE_SUBSCRIPTION,
+                'start_date' => Carbon::now(),
+                'paid_until' => Carbon::now()
+                    ->subDay(1),
+                'apple_expiration_date' => Carbon::now()
+                    ->subDays(7),
+                'is_active' => true,
+                'canceled_on' => null,
+                'product_id' => $product['id'],
+                'brand' => config('ecommerce.brand'),
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'interval_count' => 1,
+                'total_cycles_paid' => 1,
+                'total_cycles_due' => $this->faker->numberBetween(2, 5),
+                'total_price' => $product['price'],
+                'external_app_store_id' => $webOrderLineItemId2
+            ]
+        );
+
+        $appleReceipt2 = $this->fakeAppleReceipt(
+            [
+                'subscription_id' => $subscription2['id'],
+                'receipt' => $appleReceipt2,
+                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
+            ]
+        );
+
+        $appleProductsMap = array_flip(config('ecommerce.apple_store_products_map'));
+
+        // -------------------------------------------------------------------------
+        // first validation response, successful renewal
+        $originalTransactionId1 = $this->faker->word;
+        $renewalTransactionId1 = $this->faker->word;
+        $expirationDate1 = Carbon::now()->addDays(31);
+
+        $originalPurchaseItemArray1 = [
+            'quantity' => 1,
+            'product_id' => $appleProductsMap[$product['sku']],
+            'expires_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'transaction_id' => $originalTransactionId1,
+            'web_order_line_item_id' => $webOrderLineItemId1,
+            'purchase_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'original_purchase_date' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'is_trial_period' => true,
+        ];
+
+        $renewalPurchaseItemArray1 = [
+            'quantity' => 1,
+            'product_id' => $appleProductsMap[$product['sku']],
+            'expires_date_ms' => $expirationDate1->timestamp * 1000,
+            'transaction_id' => $renewalTransactionId1,
+            'web_order_line_item_id' => $this->faker->word,
+            'purchase_date_ms' => Carbon::now()->timestamp * 1000,
+            'original_purchase_date' => Carbon::now()->timestamp * 1000,
+            'is_trial_period' => false,
+        ];
+
+        $rawData1 = [
+            'status' => 0,
+            'environment' => 'Sandbox',
+            'latest_receipt_info' => [$renewalPurchaseItemArray1, $originalPurchaseItemArray1],
+            'receipt' => [
+                'receipt_type' => 'ProductionSandbox',
+                'app_item_id' => 0,
+                'receipt_creation_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+                'in_app' => [$renewalPurchaseItemArray1, $originalPurchaseItemArray1],
             ],
         ];
 
-        $validationResponse = $this->getReceiptValidationResponse($productsData);
+        $validationResponse1 = new SandboxResponse($rawData1);
 
-        $this->appleStoreKitGatewayMock->method('validate')
-            ->willReturn($validationResponse);
+        // -------------------------------------------------------------------------
+        // second validation response, subscription is deactivated/expired
+        $originalTransactionId2 = $this->faker->word;
+        $renewalTransactionId2 = $this->faker->word;
+        $expirationDate2 = Carbon::now()->subDays(3);
+        $expirationIntentNumber2 = 1;
+
+        $originalPurchaseItemArray2 = [
+            'quantity' => 1,
+            'product_id' => $appleProductsMap[$product['sku']],
+            'expires_date_ms' => $expirationDate2->timestamp * 1000,
+            'transaction_id' => $originalTransactionId2,
+            'web_order_line_item_id' => $webOrderLineItemId2,
+            'purchase_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'original_purchase_date' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'is_trial_period' => true,
+        ];
+
+        $pendingRenewalInfoArray2 = [
+            [
+                'product_id' => 'drumeo_app_monthly_member',
+                'auto_renew_product_id' => 'drumeo_app_monthly_member',
+                'original_transaction_id' => $originalTransactionId2,
+                'auto_renew_status' => false,
+                'expiration_intent' => $expirationIntentNumber2,
+                'is_in_billing_retry_period' => false,
+            ]
+        ];
+
+        $rawData2 = [
+            'status' => 0,
+            'environment' => 'Sandbox',
+            'latest_receipt_info' => [$originalPurchaseItemArray2],
+            'receipt' => [
+                'receipt_type' => 'ProductionSandbox',
+                'app_item_id' => 0,
+                'receipt_creation_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+                'in_app' => [$originalPurchaseItemArray2],
+            ],
+            'pending_renewal_info' => $pendingRenewalInfoArray2
+        ];
+
+        $validationResponse2 = new SandboxResponse($rawData2);
+
+        $this->appleStoreKitGatewayMock->method('getResponse')
+            ->willReturn($validationResponse1, $validationResponse2);
 
         $this->artisan('ProcessAppleExpiredSubscriptions');
 
-        // assert ancient subscription was not renewed
-        $this->assertDatabaseMissing(
+        // assert ancient subscription was renewed
+        $this->assertDatabaseHas(
             'ecommerce_subscriptions',
             [
-                'id' => $subscriptionOne['id'],
-                'user_id' => $userOne['id'],
-                'product_id' => $productOne['id'],
+                'id' => $subscription1['id'],
+                'user_id' => $user1['id'],
+                'product_id' => $product['id'],
+                "type" => "apple_subscription",
                 'is_active' => 1,
+                'canceled_on' => null,
+                'paid_until' => $expirationDate1->toDateTimeString(),
+                'apple_expiration_date' => $expirationDate1->toDateTimeString(),
             ]
         );
 
-        $this->assertDatabaseMissing(
+        $this->assertDatabaseHas(
             'ecommerce_user_products',
             [
-                'user_id' => $userOne['id'],
-                'product_id' => $productOne['id'],
-            ]
-        );
-
-        // assert expired subscription was renewed
-        $this->assertDatabaseHas(
-            'ecommerce_apple_receipts',
-            [
-                'receipt' => $appleReceiptTwoText,
-                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
-                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
-                'valid' => 1,
-                'validation_error' => null,
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'user_id' => $user1['id'],
+                'product_id' => $product['id'],
+                'expiration_date' => $expirationDate1
+                    ->copy()
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString()
             ]
         );
 
         $this->assertDatabaseHas(
             'ecommerce_payments',
             [
-                'total_due' => $productTwo['price'],
-                'total_paid' => $productTwo['price'],
+                'id' => 1,
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
                 'total_refunded' => 0,
                 'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
+                'external_id' => $renewalTransactionId1,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 
         $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => 1,
+                'payment_id' => 1,
+            ]
+        );
+
+        // assert deactivated subscription was not renewed
+        $this->assertDatabaseHas(
             'ecommerce_subscriptions',
             [
-                'user_id' => $userTwo['id'],
-                'product_id' => $productTwo['id'],
-                'is_active' => 1,
-                'paid_until' => Carbon::now()
-                    ->addMonth()
-                    ->startOfDay()
-                    ->toDateTimeString(),
+                'id' => $subscription2['id'],
+                'user_id' => $user2['id'],
+                'product_id' => $product['id'],
+                "type" => "apple_subscription",
+                'is_active' => 0,
+                'canceled_on' => null,
+                'paid_until' => $expirationDate2->toDateTimeString(),
+                'apple_expiration_date' => $expirationDate2->toDateTimeString(),
             ]
         );
 
         $this->assertDatabaseHas(
             'ecommerce_user_products',
             [
-                'user_id' => $userTwo['id'],
-                'product_id' => $productTwo['id'],
-                'quantity' => 1,
-                'expiration_date' => Carbon::now()
-                    ->addMonth()
-                    ->startOfDay()
-                    ->toDateTimeString(),
+                'user_id' => $user2['id'],
+                'product_id' => $product['id'],
+                'expiration_date' => $expirationDate2
+                    ->copy()
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString()
             ]
         );
 
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
+        $this->assertDatabaseMissing(
+            'ecommerce_payments',
             [
-                'brand' => $subscriptionTwo['brand'],
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => ActionLogService::ACTOR_COMMAND,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_COMMAND,
+                'id' => 2,
             ]
         );
 
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
+        $this->assertDatabaseMissing(
+            'ecommerce_payments',
             [
-                'brand' => $subscriptionTwo['brand'],
-                'resource_name' => Subscription::class,
-                'resource_id' => $subscriptionTwo['id'],
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => ActionLogService::ACTOR_COMMAND,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_COMMAND,
+                'external_id' => $renewalTransactionId2,
             ]
         );
 
-        // assert non-expired subscription not modified
-        $this->assertDatabaseHas(
-            'ecommerce_subscriptions',
+        $this->assertDatabaseMissing(
+            'ecommerce_subscription_payments',
             [
-                'id' => $subscriptionThree['id'],
-                'user_id' => $userThree['id'],
-                'product_id' => $productThree['id'],
-                'is_active' => 1,
-                'paid_until' => Carbon::now()
-                    ->addDay(1),
+                'subscription_id' => 2,
+                'payment_id' => 2,
             ]
         );
-
-        $this->assertDatabaseHas(
-            'ecommerce_user_products',
-            [
-                'user_id' => $userThree['id'],
-                'product_id' => $productThree['id'],
-                'quantity' => 1,
-                'expiration_date' => Carbon::now()
-                    ->addDay(1),
-            ]
-        );
-    }
-
-    protected function getReceiptValidationResponse(
-        $productsData,
-        $receiptCreationDate = null,
-        $receiptStatus = 0
-    )
-    {
-        /*
-        // $productsData structure example
-        $productsData = [
-            $someProduct->getSku() => [
-                'quantity' => 1,
-                'expires_date_ms' => Carbon::now()->addMonth(),
-                'web_order_line_item_id' => $this->faker->word,
-                'product_id' => key of config('ecommerce.apple_store_products_map'),
-            ]
-        ];
-        */
-
-        $appleProductsMap = array_flip(config('ecommerce.apple_store_products_map'));
-
-        if (!$receiptCreationDate) {
-            $receiptCreationDate = Carbon::now();
-        }
-
-        $rawData = [
-            'status' => $receiptStatus,
-            'environment' => 'Sandbox',
-            'receipt' => [
-                'receipt_type' => 'ProductionSandbox',
-                'app_item_id' => 0,
-                'receipt_creation_date_ms' => $receiptCreationDate->tz('UTC')->getTimestamp() * 1000,
-                'in_app' => []
-            ]
-        ];
-
-        $defaultItemData = [
-            'quantity' => 1,
-            'expires_date_ms' => $receiptCreationDate->addMonth(),
-            'web_order_line_item_id' => $this->faker->word
-        ];
-
-        foreach ($productsData as $productSku => $purchaseItemData) {
-
-            $purchaseItemData = array_merge($defaultItemData, $purchaseItemData);
-
-            $purchaseItemData['product_id'] = $appleProductsMap[$productSku];
-            $purchaseItemData['expires_date_ms'] = $purchaseItemData['expires_date_ms']->tz('UTC')->getTimestamp() * 1000;
-
-            $rawData['receipt']['in_app'][] = $purchaseItemData;
-        }
-
-        return new SandboxResponse($rawData);
     }
 }

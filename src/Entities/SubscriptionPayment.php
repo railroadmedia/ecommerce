@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Carbon\Carbon;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -80,5 +81,15 @@ class SubscriptionPayment
     public function setPayment(?Payment $payment)
     {
         $this->payment = $payment;
+    }
+
+    /**
+     * Returns createdAt.
+     *
+     * @return \DateTime
+     */
+    public function getCreatedAt()
+    {
+        return !empty($this->createdAt) ? $this->createdAt : Carbon::now();
     }
 }

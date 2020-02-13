@@ -37,6 +37,23 @@ class AppleStoreKitGateway
 
         return $response;
     }
+    /**
+     * @param string $receipt
+     *
+     * @return ResponseInterface
+     *
+     * @throws ReceiptValidationException
+     * @throws GuzzleException
+     * @throws Throwable
+     */
+    public function getResponse(string $receipt): ResponseInterface
+    {
+        $validator = $this->getValidator();
+
+        $validator->setReceiptData($receipt);
+
+        return $validator->validate();
+    }
 
     /**
      * @return Validator

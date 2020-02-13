@@ -540,6 +540,29 @@ class SubscriptionRepository extends RepositoryBase
     }
 
     /**
+     * @param $externalAppStoreId
+     * @return Subscription|null
+     */
+    public function getByExternalAppStoreId($externalAppStoreId)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select('s')
+            ->from($this->getClassName(), 's')
+            ->where(
+                $qb->expr()
+                    ->eq('s.externalAppStoreId', ':externalAppStoreId')
+            )
+            ->setMaxResults(1)
+            ->setParameter('externalAppStoreId', $externalAppStoreId);
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
+    /**
      * @param Order $order
      *
      * @return Subscription[]

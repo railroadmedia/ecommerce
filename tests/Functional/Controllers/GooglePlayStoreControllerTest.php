@@ -10,15 +10,11 @@ use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Controllers\GooglePlayStoreController;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
-use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
-use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use ReceiptValidator\GooglePlay\SubscriptionResponse;
 
@@ -62,6 +58,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
 
     public function test_get_real_responses()
     {
+        // see: docs/in-app-purchases/android-receipt-data-dump.txt
         // to use this, put the google api json credentials file in the root, named api.json
 
         config()->set('ecommerce.payment_gateways.google_play_store', [
@@ -76,11 +73,11 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $gateway = app(GooglePlayStoreGateway::class);
 
         // change these manually to pull real data
-        $response = $gateway->getResponse(
-            'com.drumeo',
-            'drumeo_app_1_month_member',
-            'kjlodknlagepgpeinbiljjfg.AO-J1Oy9PGdSDwwHwez8qy7o9aABZyU4gaYEr98lv1v_8Xg8dswA0mN6vdCUrUD-oG0BreD9wDhnqhklghoETFigquzPFc5O62GsM3XdNQzuqSAGsYYw6YgXwdnaMCxjfNX9D-ZrBxGV'
-        );
+//        $response = $gateway->getResponse(
+//            'com.drumeo',
+//            'drumeo_app_1_month_member',
+//            'kjlodknlagepgpeinbiljjfg.AO-J1Oy9PGdSDwwHwez8qy7o9aABZyU4gaYEr98lv1v_8Xg8dswA0mN6vdCUrUD-oG0BreD9wDhnqhklghoETFigquzPFc5O62GsM3XdNQzuqSAGsYYw6YgXwdnaMCxjfNX9D-ZrBxGV'
+//        );
 
 //        dd($response);
 
@@ -131,48 +128,13 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
          */
     }
 
-    public function test_process_receipt_validation()
-    {
-        $response = $this->call('POST', '/google/verify-receipt-and-process-payment', []);
-
-        //assert the response status code
-        $this->assertEquals(422, $response->getStatusCode());
-
-        // assert that all the validation errors are returned
-        $this->assertEquals([
-            [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.package_name',
-                'detail' => 'The package name field is required.',
-            ],
-            [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.product_id',
-                'detail' => 'The product id field is required.',
-            ],
-            [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.purchase_token',
-                'detail' => 'The purchase token field is required.',
-            ],
-            [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.email',
-                'detail' => 'The email field is required.',
-            ],
-            [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.password',
-                'detail' => 'The password field is required.',
-            ],
-        ], $response->decodeResponseJson('errors'));
-    }
-
-    public function test_process_receipt_trial_order()
+    public function test_new_trial_order_success()
     {
         $orderId = $this->faker->word . rand();
         $email = $this->faker->email;
+        $expiryTime = Carbon::now()->addWeek();
         $brand = 'drumeo';
+
         config()->set('ecommerce.brand', $brand);
 
         $product = $this->fakeProduct(
@@ -203,9 +165,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 ->disableOriginalConstructor()
                 ->getMock();
 
-        $validationResponse = $this->getReceiptValidationResponse(1, $orderId);
+        $validationResponse = $this->getTestReceiptInitialTrial($orderId, $expiryTime->timestamp);
 
-        $googleStoreKitGateway->method('validate')
+        $googleStoreKitGateway->method('getResponse')
             ->willReturn($validationResponse);
 
         $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
@@ -248,44 +210,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'valid' => true,
                 'validation_error' => null,
                 'order_id' => $orderId,
-                'raw_receipt_response' => serialize($validationResponse),
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
-            ]
-        );
-
-        // // assert database records were created for productOne
-        $this->assertDatabaseHas(
-            'ecommerce_orders',
-            [
-                'id' => 1,
-                'total_due' => $product['price'],
-                'product_due' => $product['price'],
-                'taxes_due' => 0,
-                'shipping_due' => 0,
-                'finance_due' => 0,
-                'total_paid' => $product['price'],
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'ecommerce_order_items',
-            [
-                'product_id' => $product['id'],
-                'quantity' => 1,
-                'initial_price' => $product['price'],
-                'final_price' => $product['price'],
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'ecommerce_payments',
-            [
-                'total_due' => $product['price'],
-                'total_paid' => $product['price'],
-                'total_refunded' => 0,
-                'type' => Payment::TYPE_GOOGLE_INITIAL_ORDER,
-                'status' => Payment::STATUS_PAID,
-                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 
@@ -295,9 +221,22 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'is_active' => 1,
-                'paid_until' => Carbon::now()
-                    ->addMonth()
-                    ->toDateTimeString(),
+                'paid_until' => Carbon::now()->addWeek()->toDateTimeString(),
+            ]
+        );
+
+        // make sure a payment and order is not created, since its just a trial sign up
+        $this->assertDatabaseMissing(
+            'ecommerce_payments',
+            [
+                'type' => Payment::TYPE_GOOGLE_INITIAL_ORDER,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_orders',
+            [
+                'id' => 1,
             ]
         );
 
@@ -308,49 +247,143 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => 1,
                 'expiration_date' => Carbon::now()
-                    ->addMonth()
+                    ->addWeek()
+
+                    // 1 day buffer
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
                     ->toDateTimeString(),
             ]
         );
+    }
 
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
+    public function test_new_trial_order_token_cannot_be_used_twice()
+    {
+        $orderId = $this->faker->word . rand();
+        $email = $this->faker->email;
+        $newEmail = $this->faker->email;
+        $expiryTime = Carbon::now()->addWeek();
+        $brand = 'drumeo';
+
+        config()->set('ecommerce.brand', $brand);
+
+        $product = $this->fakeProduct(
             [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
             ]
         );
 
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
             [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
+                $googleProductId => $product['sku'],
             ]
         );
 
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptInitialTrial($orderId, $expiryTime->timestamp);
+
+        $googleStoreKitGateway->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $response = $this->call(
+            'POST',
+            '/google/verify-receipt-and-process-payment',
             [
-                'brand' => $brand,
-                'resource_name' => Order::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
+                'data' => [
+                    'attributes' => [
+                        'package_name' => $packageName,
+                        'product_id' => $googleProductId,
+                        'purchase_token' => $purchaseToken,
+                        'email' => $email,
+                        'password' => $this->faker->word,
+                    ]
+                ]
             ]
         );
+
+        // should fail validation, we cant let other users claim the same token
+        $response = $this->call(
+            'POST',
+            '/google/verify-receipt-and-process-payment',
+            [
+                'data' => [
+                    'attributes' => [
+                        'package_name' => $packageName,
+                        'product_id' => $googleProductId,
+                        'purchase_token' => $purchaseToken,
+                        'email' => $newEmail,
+                        'password' => $this->faker->word,
+                    ]
+                ]
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(422, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert response has meta key with auth code
+        $this->assertEquals('Validation failed.', $decodedResponse['errors'][0]['title']);
+        $this->assertEquals('data.attributes.purchase_token', $decodedResponse['errors'][0]['source']);
+        $this->assertEquals('The purchase token has already been taken.', $decodedResponse['errors'][0]['detail']);
+    }
+
+
+    public function test_process_receipt_validation()
+    {
+        $response = $this->call('POST', '/google/verify-receipt-and-process-payment', []);
+
+        //assert the response status code
+        $this->assertEquals(422, $response->getStatusCode());
+
+        // assert that all the validation errors are returned
+        $this->assertEquals([
+            [
+                'title' => 'Validation failed.',
+                'source' => 'data.attributes.package_name',
+                'detail' => 'The package name field is required.',
+            ],
+            [
+                'title' => 'Validation failed.',
+                'source' => 'data.attributes.product_id',
+                'detail' => 'The product id field is required.',
+            ],
+            [
+                'title' => 'Validation failed.',
+                'source' => 'data.attributes.purchase_token',
+                'detail' => 'The purchase token field is required.',
+            ],
+            [
+                'title' => 'Validation failed.',
+                'source' => 'data.attributes.email',
+                'detail' => 'The email field is required.',
+            ],
+            [
+                'title' => 'Validation failed.',
+                'source' => 'data.attributes.password',
+                'detail' => 'The password field is required.',
+            ],
+        ], $response->decodeResponseJson('errors'));
     }
 
     public function test_process_notification_subscription_renewal()
@@ -359,6 +392,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $orderId = $this->faker->word . rand();
+        $expiryTime = Carbon::now()->addMonth();
 
         Mail::fake();
 
@@ -369,8 +403,6 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'email' => $email,
             ]
         );
-
-        $receipt = $this->faker->word;
 
         $product = $this->fakeProduct([
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
@@ -411,9 +443,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 ->disableOriginalConstructor()
                 ->getMock();
 
-        $validationResponse = $this->getReceiptValidationResponse(1, $orderId);
+        $validationResponse = $this->getTestReceiptPaidRenewal($orderId, $expiryTime->timestamp);
 
-        $googleStoreKitGateway->method('validate')
+        $googleStoreKitGateway->method('getResponse')
             ->willReturn($validationResponse);
 
         $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
@@ -450,7 +482,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'valid' => true,
                 'validation_error' => null,
                 'order_id' => $orderId,
-                'raw_receipt_response' => serialize($validationResponse),
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
             ]
         );
@@ -473,10 +505,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'is_active' => 1,
-                'paid_until' => Carbon::now()
-                    ->addMonth()
-                    ->startOfDay()
-                    ->toDateTimeString(),
+                'paid_until' => $expiryTime->toDateTimeString(),
                 'external_app_store_id' => $purchaseToken,
             ]
         );
@@ -487,37 +516,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'quantity' => 1,
-                'expiration_date' => Carbon::now()
-                    ->addMonth()
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                    ->startOfDay()
+                'expiration_date' => $expiryTime
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
                     ->toDateTimeString(),
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
             ]
         );
     }
@@ -528,6 +529,12 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $userId = $this->createAndLogInNewUser();
+
+        $expiryTime = Carbon::now()->addDays(2);
+        $cancelTime = Carbon::now();
+        $cancelReason = 2;
+        $orderId = $this->faker->word . rand();
+
         $receipt = $this->faker->word;
 
         $product = $this->fakeProduct([
@@ -571,9 +578,14 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 ->disableOriginalConstructor()
                 ->getMock();
 
-        $validationResponse = $this->getReceiptValidationResponse();
+        $validationResponse = $this->getTestReceiptSubscriptionCancel(
+            $orderId,
+            $cancelReason,
+            $expiryTime->timestamp,
+            $cancelTime->timestamp
+        );
 
-        $googleStoreKitGateway->method('validate')
+        $googleStoreKitGateway->method('getResponse')
             ->willReturn($validationResponse);
 
         $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
@@ -609,7 +621,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'notification_type' => GoogleReceipt::GOOGLE_CANCEL_NOTIFICATION_TYPE,
                 'valid' => true,
                 'validation_error' => null,
-                'raw_receipt_response' => serialize($validationResponse),
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
             ]
         );
@@ -619,41 +631,72 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'user_id' => 1,
                 'product_id' => $product['id'],
-                'paid_until' => $paidUntil,
-                'canceled_on' => Carbon::now(),
+                'paid_until' => $expiryTime->toDateTimeString(),
+                'canceled_on' => $cancelTime->toDateTimeString(),
                 'external_app_store_id' => $purchaseToken,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => Subscription::ACTION_CANCEL,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
+                'cancellation_reason' => $cancelReason,
             ]
         );
     }
 
-    protected function getReceiptValidationResponse(
-        $paymentState = 1,
-        $orderId = null,
-        $expiryTimestamp = null
+    /**
+     * @param $orderId
+     * @param $expiryTimestamp
+     * @return SubscriptionResponse
+     */
+    protected function getTestReceiptInitialTrial($orderId, $expiryTimestamp): SubscriptionResponse
+    {
+        $dependency = new Google_Service_AndroidPublisher_SubscriptionPurchase();
+
+        $dependency->setAutoRenewing(true);
+        $dependency->setPaymentState(2);
+        $dependency->setOrderId($orderId);
+        $dependency->setExpiryTimeMillis($expiryTimestamp * 1000);
+
+        return new SubscriptionResponse($dependency);
+    }
+
+    /**
+     * @param $orderId
+     * @param $expiryTimestamp
+     * @return SubscriptionResponse
+     */
+    protected function getTestReceiptPaidRenewal($orderId, $expiryTimestamp): SubscriptionResponse
+    {
+        $dependency = new Google_Service_AndroidPublisher_SubscriptionPurchase();
+
+        $dependency->setAutoRenewing(true);
+        $dependency->setPaymentState(1);
+        $dependency->setOrderId($orderId);
+        $dependency->setExpiryTimeMillis($expiryTimestamp * 1000);
+
+        return new SubscriptionResponse($dependency);
+    }
+
+    /**
+     * @param $orderId
+     * @param $cancelReasonNumber
+     * @param $expiryTimestamp
+     * @param $cancelTimestamp
+     * @return SubscriptionResponse
+     */
+    protected function getTestReceiptSubscriptionCancel(
+        $orderId,
+        $cancelReasonNumber,
+        $expiryTimestamp,
+        $cancelTimestamp
     ): SubscriptionResponse {
 
         $dependency = new Google_Service_AndroidPublisher_SubscriptionPurchase();
 
-        $dependency->setPaymentState($paymentState);
-        $dependency->setOrderId($orderId ?? $this->faker->word . $this->faker->numberBetween());
-        $dependency->setExpiryTimeMillis(
-            $expiryTimestamp ?? Carbon::now()
-                ->addMonth()
-                ->getTimestamp() * 1000
-        );
+        $dependency->setAutoRenewing(false);
+        $dependency->setCancelReason($cancelReasonNumber);
+
+        // if its still in the trial period, will be 2, otherwise null
+        $dependency->setPaymentState($this->faker->randomElement([2, null]));
+        $dependency->setOrderId($orderId);
+        $dependency->setExpiryTimeMillis($expiryTimestamp * 1000);
+        $dependency->setUserCancellationTimeMillis($cancelTimestamp * 1000);
 
         return new SubscriptionResponse($dependency);
     }

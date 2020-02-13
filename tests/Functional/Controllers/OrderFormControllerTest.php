@@ -649,6 +649,8 @@ class OrderFormControllerTest extends EcommerceTestCase
         // now that we have a active recurring sub, order another
         // and make sure the dates are adjusted and the old one is cancelled
 
+        $oldTestNow = Carbon::now();
+
         Carbon::setTestNow(Carbon::now()->addMinute());
 
         $cart = new Cart();
@@ -687,7 +689,7 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'is_active' => true,
                 'canceled_on' => null,
                 'user_id' => $userId,
-                'paid_until' => Carbon::now()->addMonth()->addYear()->subMinute()->toDateTimeString(),
+                'paid_until' => Carbon::now()->addMonth()->addYear()->addDay()->subMinute()->toDateTimeString(),
             ]
         );
 
@@ -697,10 +699,12 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'user_id' => $userId,
                 'product_id' => $subscriptionProduct2['id'],
                 'quantity' => 1,
-                'expiration_date' => Carbon::now()->addMonth()->addYear()->subMinute()
+                'expiration_date' => Carbon::now()->addMonth()->addDay()->addYear()->subMinute()
                     ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))->toDateTimeString()
             ]
         );
+
+        Carbon::setTestNow($oldTestNow);
     }
 
     public function test_payment_plan_not_cancelled_on_new_membership_sub_purchase()

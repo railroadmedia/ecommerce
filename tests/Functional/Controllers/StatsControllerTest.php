@@ -652,7 +652,7 @@ class StatsControllerTest extends EcommerceTestCase
                     'type' => 'dailyStatistic',
                     'id' => $subscriptionTwoDate->format('Y-m-d'),
                     'attributes' => [
-                        'total_sales' => 0,
+                        'total_sales' => $subscriptionTwoDue,
                         'total_sales_from_renewals' => $subscriptionTwoDue,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 0,
@@ -675,7 +675,7 @@ class StatsControllerTest extends EcommerceTestCase
                     'type' => 'dailyStatistic',
                     'id' => $orderFourDate->format('Y-m-d'),
                     'attributes' => [
-                        'total_sales' => $orderFourDue,
+                        'total_sales' => $orderFourDue + $subscriptionOneDue,
                         'total_sales_from_renewals' => $subscriptionOneDue,
                         'total_refunded' => 0,
                         'total_number_of_orders_placed' => 1,

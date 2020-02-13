@@ -7,6 +7,7 @@ use Illuminate\Auth\AuthManager;
 use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
 use Railroad\ActionLog\Services\ActionLogService;
@@ -67,28 +68,34 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         $this->assertEquals(422, $response->getStatusCode());
 
         // assert that all the validation errors are returned
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.receipt',
-                'detail' => 'The receipt field is required.',
+                [
+                    'title' => 'Validation failed.',
+                    'source' => 'data.attributes.receipt',
+                    'detail' => 'The receipt field is required.',
+                ],
+                [
+                    'title' => 'Validation failed.',
+                    'source' => 'data.attributes.email',
+                    'detail' => 'The email field is required.',
+                ],
+                [
+                    'title' => 'Validation failed.',
+                    'source' => 'data.attributes.password',
+                    'detail' => 'The password field is required.',
+                ]
             ],
-            [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.email',
-                'detail' => 'The email field is required.',
-            ],
-            [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.password',
-                'detail' => 'The password field is required.',
-            ]
-        ], $response->decodeResponseJson('errors'));
+            $response->decodeResponseJson('errors')
+        );
     }
 
-    public function test_process_receipt()
+    public function test_process_receipt_initial_trial_purchase()
     {
         $receipt = $this->faker->word;
+        $transactionId = $this->faker->word;
+        $webOrderItemId = $this->faker->word;
+        $subscriptionExpirationDate = Carbon::now()->addDays(7);
         $email = $this->faker->email;
         $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
@@ -107,44 +114,23 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $productTwo = $this->fakeProduct(
-            [
-                'sku' => 'product-two',
-                'price' => 247,
-                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-                'active' => 1,
-                'description' => $this->faker->word,
-                'is_physical' => 0,
-                'weight' => 0,
-                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
-                'subscription_interval_count' => 1,
-            ]
-        );
-
         config()->set(
             'ecommerce.apple_store_products_map',
             [
                 $this->faker->word => $productOne['sku'],
-                $this->faker->word => $productTwo['sku'],
             ]
         );
 
-        $webOrderLineItemOneId = $this->faker->word;
-        $webOrderLineItemTwoId = $this->faker->word;
+        $validationResponse =
+            $this->getInitialPurchaseReceiptResponse(
+                $transactionId,
+                $webOrderItemId,
+                $productOne['sku'],
+                $subscriptionExpirationDate,
+                true
+            );
 
-        $productsData = [
-            $productOne['sku'] => [
-                'web_order_line_item_id' => $webOrderLineItemOneId,
-            ],
-            $productTwo['sku'] => [ // expired product
-                'web_order_line_item_id' => $webOrderLineItemTwoId,
-                'expires_date_ms' => Carbon::now()->subMonth()
-            ]
-        ];
-
-        $validationResponse = $this->getReceiptValidationResponse($productsData);
-
-        $this->appleStoreKitGatewayMock->method('validate')
+        $this->appleStoreKitGatewayMock->method('getResponse')
             ->willReturn($validationResponse);
 
         $response = $this->call(
@@ -177,32 +163,137 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'email' => $email,
                 'valid' => true,
                 'validation_error' => null,
-                'raw_receipt_response' => serialize($validationResponse),
-                'created_at' => Carbon::now(),
+                'transaction_id' => $transactionId,
+                'subscription_id' => 1,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 
-        // assert database records were created for productOne
-        $this->assertDatabaseHas(
+        // we dont want order rows
+        $this->assertDatabaseMissing(
             'ecommerce_orders',
             [
                 'id' => 1,
-                'total_due' => $productOne['price'],
-                'product_due' => $productOne['price'],
-                'taxes_due' => 0,
-                'shipping_due' => 0,
-                'finance_due' => 0,
-                'total_paid' => $productOne['price'],
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_payments',
+            [
+                'id' => 1,
             ]
         );
 
         $this->assertDatabaseHas(
-            'ecommerce_order_items',
+            'ecommerce_subscriptions',
             [
+                'user_id' => 1,
+                'product_id' => $productOne['id'],
+                'is_active' => 1,
+                'paid_until' => $subscriptionExpirationDate->toDateTimeString(),
+                'external_app_store_id' => $webOrderItemId,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
                 'product_id' => $productOne['id'],
                 'quantity' => 1,
-                'initial_price' => $productOne['price'],
-                'final_price' => $productOne['price'],
+                'expiration_date' => $subscriptionExpirationDate
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString()
+            ]
+        );
+    }
+
+    public function test_process_receipt_initial_non_trial_purchase()
+    {
+        $receipt = $this->faker->word;
+        $transactionId = $this->faker->word;
+        $webOrderItemId = $this->faker->word;
+        $subscriptionExpirationDate = Carbon::now()->addDays(7);
+        $email = $this->faker->email;
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $productOne = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => $productOne['sku'],
+            ]
+        );
+
+        $validationResponse =
+            $this->getInitialPurchaseReceiptResponse(
+                $transactionId,
+                $webOrderItemId,
+                $productOne['sku'],
+                $subscriptionExpirationDate,
+                false
+            );
+
+        $this->appleStoreKitGatewayMock->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $response = $this->call(
+            'POST',
+            '/apple/verify-receipt-and-process-payment',
+            [
+                'data' => [
+                    'attributes' => [
+                        'receipt' => $receipt,
+                        'email' => $email,
+                        'password' => $this->faker->word,
+                    ]
+                ]
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert response has meta key with auth code
+        $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::MOBILE_APP_REQUEST_TYPE,
+                'email' => $email,
+                'valid' => true,
+                'validation_error' => null,
+                'transaction_id' => $transactionId,
+                'subscription_id' => 1,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // we dont want order rows
+        $this->assertDatabaseMissing(
+            'ecommerce_orders',
+            [
+                'id' => 1,
             ]
         );
 
@@ -212,7 +303,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'total_due' => $productOne['price'],
                 'total_paid' => $productOne['price'],
                 'total_refunded' => 0,
-                'type' => Payment::TYPE_APPLE_INITIAL_ORDER,
+                'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
@@ -224,10 +315,16 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $productOne['id'],
                 'is_active' => 1,
-                'paid_until' => Carbon::now()
-                    ->addYear()
-                    ->toDateTimeString(),
-                'external_app_store_id' => $webOrderLineItemOneId,
+                'paid_until' => $subscriptionExpirationDate->toDateTimeString(),
+                'external_app_store_id' => $webOrderItemId,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => 1,
+                'payment_id' => 1,
             ]
         );
 
@@ -237,70 +334,9 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $productOne['id'],
                 'quantity' => 1,
-                'expiration_date' => Carbon::now()
-                    ->addYear()
-                    ->toDateTimeString(),
-            ]
-        );
-
-        // assert database records were not created for the expired productTwo
-        $this->assertDatabaseMissing(
-            'ecommerce_order_items',
-            [
-                'product_id' => $productTwo['id'],
-            ]
-        );
-
-        $this->assertDatabaseMissing(
-            'ecommerce_subscriptions',
-            [
-                'product_id' => $productTwo['id'],
-            ]
-        );
-
-        $this->assertDatabaseMissing(
-            'ecommerce_user_products',
-            [
-                'product_id' => $productTwo['id'],
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Order::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
+                'expiration_date' => $subscriptionExpirationDate
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString()
             ]
         );
     }
@@ -308,6 +344,9 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
     public function test_process_receipt_validation_exception()
     {
         $receipt = $this->faker->word;
+        $transactionId = $this->faker->word;
+        $webOrderItemId = $this->faker->word;
+        $subscriptionExpirationDate = Carbon::now()->addDays(7);
         $email = $this->faker->email;
         $exceptionMessage = $this->faker->word;
 
@@ -324,19 +363,15 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $productsData = [
-            'test1' => [
-                'web_order_line_item_id' => 1,
-            ],
-            'test2' => [ // expired product
-                'web_order_line_item_id' => 2,
-                'expires_date_ms' => Carbon::now()->subMonth()
-            ]
-        ];
+        $validationResponse = $this->getInitialPurchaseReceiptResponse(
+            $transactionId,
+            $webOrderItemId,
+            'test1',
+            $subscriptionExpirationDate,
+            false
+        );
 
-        $validationResponse = $this->getReceiptValidationResponse($productsData);
-
-        $appleStoreKitGateway->method('validate')
+        $appleStoreKitGateway->method('getResponse')
             ->willThrowException(new ReceiptValidationException($exceptionMessage, null, $validationResponse));
 
         $this->app->instance(AppleStoreKitGateway::class, $appleStoreKitGateway);
@@ -372,7 +407,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'email' => $email,
                 'valid' => false,
                 'validation_error' => $exceptionMessage,
-                'raw_receipt_response' => serialize($validationResponse),
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
             ]
         );
@@ -387,32 +422,40 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
 
         $email = $this->faker->email;
 
-        $userId  = $this->createAndLogInNewUser($email);
+        $userId = $this->createAndLogInNewUser($email);
         $receipt = $this->faker->word;
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'price' => 12.95,
-            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
-            'subscription_interval_count' => 1,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
 
-        $webOrderLineItemId = $this->faker->word;
+        $originalWebOrderLineItemId = $this->faker->word;
+        $renewalWebOrderLineItemId = $this->faker->word;
+        $originalTransactionId = $this->faker->word;
+        $renewalTransactionId = $this->faker->word;
+        $expirationDate = Carbon::now()->addYear();
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => null,
-            'user_id' => $userId,
-            'total_price' => $product['price'],
-            'paid_until' => Carbon::now()
-                ->subDay()
-                ->startOfDay()
-                ->toDateTimeString(),
-            'is_active' => 0,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_monthly'),
-            'external_app_store_id' => $webOrderLineItemId
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $userId,
+                'total_price' => $product['price'],
+                'paid_until' => Carbon::now()
+                    ->subDay()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 0,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $originalWebOrderLineItemId
+            ]
+        );
 
         config()->set(
             'ecommerce.apple_store_products_map',
@@ -421,15 +464,17 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $productsData = [
-            $product['sku'] => [
-                'web_order_line_item_id' => $webOrderLineItemId,
-            ],
-        ];
+        $validationResponse =
+            $this->getFirstRenewalPurchaseReceiptResponse(
+                $originalTransactionId,
+                $renewalTransactionId,
+                $originalWebOrderLineItemId,
+                $renewalWebOrderLineItemId,
+                $product['sku'],
+                $expirationDate->copy()
+            );
 
-        $validationResponse = $this->getReceiptValidationResponse($productsData);
-
-        $this->appleStoreKitGatewayMock->method('validate')
+        $this->appleStoreKitGatewayMock->method('getResponse')
             ->willReturn($validationResponse);
 
         $response = $this->call(
@@ -437,7 +482,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             '/apple/handle-server-notification',
             [
                 'notification_type' => 'RENEWAL',
-                'web_order_line_item_id' => $webOrderLineItemId,
+                'web_order_line_item_id' => $renewalWebOrderLineItemId,
                 'latest_receipt' => $receipt,
             ]
         );
@@ -450,7 +495,8 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
                 'valid' => true,
                 'validation_error' => null,
-                'raw_receipt_response' => serialize($validationResponse),
+                'subscription_id' => 1,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
             ]
         );
@@ -463,6 +509,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'total_refunded' => 0,
                 'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
+                'external_id' => $renewalTransactionId,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
@@ -470,14 +517,12 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',
             [
+                'id' => 1,
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'is_active' => 1,
-                'paid_until' => Carbon::now()
-                    ->addMonth()
-                    ->startOfDay()
-                    ->toDateTimeString(),
-                'external_app_store_id' => $webOrderLineItemId,
+                'paid_until' => $expirationDate->toDateTimeString(),
+                'external_app_store_id' => $originalWebOrderLineItemId,
             ]
         );
 
@@ -487,74 +532,66 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'quantity' => 1,
-                'expiration_date' => Carbon::now()
-                    ->addMonth()
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                    ->startOfDay()
-                    ->toDateTimeString(),
+                'expiration_date' => $expirationDate
+                    ->copy()
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString()
             ]
         );
 
         $this->assertDatabaseHas(
-            'railactionlog_actions_log',
+            'ecommerce_subscription_payments',
             [
-                'brand' => $brand,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
+                'subscription_id' => 1,
+                'payment_id' => 1,
             ]
         );
     }
 
-    public function test_process_notification_subscription_cancel()
+
+    public function test_process_notification_subscription_renewal_multiple()
     {
-        $brand = 'drumeo';
+        $brand = 'brand';
         config()->set('ecommerce.brand', $brand);
 
-        $userId  = $this->createAndLogInNewUser();
+        Mail::fake();
+
+        $email = $this->faker->email;
+
+        $userId = $this->createAndLogInNewUser($email);
         $receipt = $this->faker->word;
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'price' => 12.95,
-            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
-            'subscription_interval_count' => 1,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
 
-        $webOrderLineItemId = $this->faker->word;
+        $originalWebOrderLineItemId = $this->faker->word;
+        $renewalWebOrderLineItemId = $this->faker->word;
+        $originalTransactionId = $this->faker->word;
+        $renewalTransactionId = $this->faker->word;
+        $expirationDate = Carbon::now()->addYear();
 
-        $paidUntil = Carbon::now()
-            ->addDays(10)
-            ->startOfDay()
-            ->toDateTimeString();
-
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => null,
-            'user_id' => $userId,
-            'total_price' => $product['price'],
-            'paid_until' => $paidUntil,
-            'is_active' => 1,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_monthly'),
-            'external_app_store_id' => $webOrderLineItemId
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $userId,
+                'total_price' => $product['price'],
+                'paid_until' => Carbon::now()
+                    ->subDay()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 0,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $originalWebOrderLineItemId
+            ]
+        );
 
         config()->set(
             'ecommerce.apple_store_products_map',
@@ -563,15 +600,219 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $productsData = [
-            $product['sku'] => [
-                'web_order_line_item_id' => $webOrderLineItemId,
-            ],
-        ];
+        $validationResponse =
+            $this->getFirstRenewalPurchaseReceiptResponse(
+                $originalTransactionId,
+                $renewalTransactionId,
+                $originalWebOrderLineItemId,
+                $renewalWebOrderLineItemId,
+                $product['sku'],
+                $expirationDate->copy()
+            );
 
-        $validationResponse = $this->getReceiptValidationResponse($productsData);
+        $this->appleStoreKitGatewayMock->method('getResponse')
+            ->willReturn($validationResponse);
 
-        $this->appleStoreKitGatewayMock->method('validate')
+        $response = $this->call(
+            'POST',
+            '/apple/handle-server-notification',
+            [
+                'notification_type' => 'RENEWAL',
+                'web_order_line_item_id' => $renewalWebOrderLineItemId,
+                'latest_receipt' => $receipt,
+            ]
+        );
+
+        $response = $this->call(
+            'POST',
+            '/apple/handle-server-notification',
+            [
+                'notification_type' => 'RENEWAL',
+                'web_order_line_item_id' => $renewalWebOrderLineItemId,
+                'latest_receipt' => $receipt,
+            ]
+        );
+
+        $response = $this->call(
+            'POST',
+            '/apple/handle-server-notification',
+            [
+                'notification_type' => 'RENEWAL',
+                'web_order_line_item_id' => $renewalWebOrderLineItemId,
+                'latest_receipt' => $receipt,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'id' => 1,
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
+                'valid' => true,
+                'validation_error' => null,
+                'subscription_id' => 1,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'id' => 2,
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
+                'valid' => true,
+                'validation_error' => null,
+                'subscription_id' => 1,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'id' => 3,
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
+                'valid' => true,
+                'validation_error' => null,
+                'subscription_id' => 1,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'id' => 1,
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'external_id' => $renewalTransactionId,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_payments',
+            [
+                'id' => 2,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => 1,
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'is_active' => 1,
+                'paid_until' => $expirationDate->toDateTimeString(),
+                'external_app_store_id' => $originalWebOrderLineItemId,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_subscriptions',
+            [
+                'id' => 2,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => $expirationDate
+                    ->copy()
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_user_products',
+            [
+                'id' => 2,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => 1,
+                'payment_id' => 1,
+            ]
+        );
+    }
+
+    public function test_process_notification_subscription_deactivated()
+    {
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $receipt = $this->faker->word;
+        $originalWebOrderLineItemId = $this->faker->word;
+        $renewalWebOrderLineItemId = $this->faker->word;
+        $originalTransactionId = $this->faker->word;
+        $renewalTransactionId = $this->faker->word;
+        $expirationDate = Carbon::now()->addDays(12);
+
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $userId,
+                'total_price' => $product['price'],
+                'paid_until' => $expirationDate,
+                'is_active' => 1,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $originalWebOrderLineItemId
+            ]
+        );
+
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => $product['sku'],
+            ]
+        );
+
+        $validationResponse =
+            $this->getDeactivatedReceiptResponse(
+                $originalTransactionId,
+                $renewalTransactionId,
+                $originalWebOrderLineItemId,
+                $renewalWebOrderLineItemId,
+                $product['sku'],
+                $expirationDate,
+                2
+            );
+
+        $this->appleStoreKitGatewayMock->method('getResponse')
             ->willReturn($validationResponse);
 
         $response = $this->call(
@@ -579,7 +820,6 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             '/apple/handle-server-notification',
             [
                 'notification_type' => 'CANCEL',
-                'web_order_line_item_id' => $webOrderLineItemId,
                 'latest_receipt' => $receipt,
             ]
         );
@@ -599,88 +839,438 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',
             [
+                'id' => 1,
                 'user_id' => 1,
                 'product_id' => $product['id'],
-                'paid_until' => $paidUntil,
-                'canceled_on' => Carbon::now(),
-                'external_app_store_id' => $webOrderLineItemId,
+                'is_active' => 0,
+                'paid_until' => $expirationDate->toDateTimeString(),
+                'external_app_store_id' => $originalWebOrderLineItemId,
             ]
         );
 
         $this->assertDatabaseHas(
-            'railactionlog_actions_log',
+            'ecommerce_payments',
             [
-                'brand' => $brand,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => Subscription::ACTION_CANCEL,
-                'actor' => ActionLogService::ACTOR_SYSTEM,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_SYSTEM,
+                'id' => 1,
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'external_id' => $originalTransactionId,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'id' => 2,
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'external_id' => $renewalTransactionId,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => $expirationDate
+                    ->copy()
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => 1,
+                'payment_id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => 1,
+                'payment_id' => 2,
             ]
         );
     }
 
-    protected function getReceiptValidationResponse(
-        $productsData,
-        $receiptCreationDate = null,
-        $receiptStatus = 0,
-        $transactionId = null
+    public function test_process_notification_subscription_cancelled_with_refund()
+    {
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $receipt = $this->faker->word;
+        $originalWebOrderLineItemId = $this->faker->word;
+        $renewalWebOrderLineItemId = $this->faker->word;
+        $originalTransactionId = $this->faker->word;
+        $renewalTransactionId = $this->faker->word;
+        $expirationDate = Carbon::now()->subDays(1);
+        $canceledOnDate = Carbon::now()->subHour(1);
+
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $userId,
+                'total_price' => $product['price'],
+                'paid_until' => $expirationDate,
+                'is_active' => 1,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $originalWebOrderLineItemId
+            ]
+        );
+
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => $product['sku'],
+            ]
+        );
+
+        $validationResponse =
+            $this->getCancelledAndRefundedReceiptResponse(
+                $originalTransactionId,
+                $renewalTransactionId,
+                $originalWebOrderLineItemId,
+                $renewalWebOrderLineItemId,
+                $product['sku'],
+                $expirationDate,
+                $canceledOnDate,
+                1
+            );
+
+        $this->appleStoreKitGatewayMock->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $response = $this->call(
+            'POST',
+            '/apple/handle-server-notification',
+            [
+                'notification_type' => 'CANCEL',
+                'latest_receipt' => $receipt,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => AppleReceipt::APPLE_CANCEL_NOTIFICATION_TYPE,
+                'valid' => false,
+                'validation_error' => null,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => 1,
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'is_active' => 0,
+                'paid_until' => $expirationDate->toDateTimeString(),
+                'external_app_store_id' => $originalWebOrderLineItemId,
+                'canceled_on' => $canceledOnDate->toDateTimeString(),
+                'cancellation_reason' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'id' => 1,
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'external_id' => $originalTransactionId,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'id' => 2,
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => $product['price'],
+                'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'external_id' => $renewalTransactionId,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => $expirationDate
+                    ->copy()
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => 1,
+                'payment_id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => 1,
+                'payment_id' => 2,
+            ]
+        );
+    }
+
+
+    protected function getInitialPurchaseReceiptResponse(
+        $transactionId,
+        $webOrderItemId,
+        $productSku,
+        Carbon $expirationDate,
+        bool $isTrial
     )
     {
-        /*
-        // $productsData structure example
-        $productsData = [
-            $someProduct->getSku() => [
-                'quantity' => 1,
-                'expires_date_ms' => Carbon::now()->copy()->addMonth(),
-                'web_order_line_item_id' => $this->faker->word,
-                'product_id' => key of config('ecommerce.apple_store_products_map'),
-            ]
-        ];
-        */
-
+        // first purchase item needs transaction id and expiration date
         $appleProductsMap = array_flip(config('ecommerce.apple_store_products_map'));
 
-        if (!$receiptCreationDate) {
-            $receiptCreationDate = Carbon::now();
-        }
-
-        if (!$transactionId) {
-            $transactionId = $this->faker->word;
-        }
+        $purchaseItemArray = [
+            'quantity' => 1,
+            'product_id' => $appleProductsMap[$productSku],
+            'expires_date_ms' => $expirationDate->timestamp * 1000,
+            'transaction_id' => $transactionId,
+            'web_order_line_item_id' => $webOrderItemId,
+            'purchase_date_ms' => Carbon::now()->timestamp * 1000,
+            'original_purchase_date' => Carbon::now()->timestamp * 1000,
+            'is_trial_period' => $isTrial,
+        ];
 
         $rawData = [
-            'status' => $receiptStatus,
+            'status' => 0,
             'environment' => 'Sandbox',
+            'latest_receipt_info' => [$purchaseItemArray,],
             'receipt' => [
                 'receipt_type' => 'ProductionSandbox',
                 'app_item_id' => 0,
-                'receipt_creation_date_ms' => $receiptCreationDate->tz('UTC')->getTimestamp() * 1000,
-                'in_app' => []
+                'receipt_creation_date_ms' => Carbon::now()->timestamp * 1000,
+                'in_app' => [$purchaseItemArray],
             ],
-            'latest_receipt_info' => [
+        ];
+
+        return new SandboxResponse($rawData);
+    }
+
+    protected function getFirstRenewalPurchaseReceiptResponse(
+        $originalTransactionId,
+        $renewalTransactionId,
+        $subscriptionWebOrderItemId,
+        $renewalWebOrderItemId,
+        $productSku,
+        Carbon $expirationDate
+    )
+    {
+        // first purchase item needs transaction id and expiration date
+        $appleProductsMap = array_flip(config('ecommerce.apple_store_products_map'));
+
+        $originalPurchaseItemArray = [
+            'quantity' => 1,
+            'product_id' => $appleProductsMap[$productSku],
+            'expires_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'transaction_id' => $originalTransactionId,
+            'web_order_line_item_id' => $subscriptionWebOrderItemId,
+            'purchase_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'original_purchase_date' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'is_trial_period' => true,
+        ];
+
+        $renewalPurchaseItemArray = [
+            'quantity' => 1,
+            'product_id' => $appleProductsMap[$productSku],
+            'expires_date_ms' => $expirationDate->timestamp * 1000,
+            'transaction_id' => $renewalTransactionId,
+            'web_order_line_item_id' => $renewalWebOrderItemId,
+            'purchase_date_ms' => Carbon::now()->timestamp * 1000,
+            'original_purchase_date' => Carbon::now()->timestamp * 1000,
+            'is_trial_period' => false,
+        ];
+
+        $rawData = [
+            'status' => 0,
+            'environment' => 'Sandbox',
+            'latest_receipt_info' => [$renewalPurchaseItemArray, $originalPurchaseItemArray],
+            'receipt' => [
+                'receipt_type' => 'ProductionSandbox',
+                'app_item_id' => 0,
+                'receipt_creation_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+                'in_app' => [$renewalPurchaseItemArray, $originalPurchaseItemArray],
+            ],
+        ];
+
+        return new SandboxResponse($rawData);
+    }
+
+    protected function getDeactivatedReceiptResponse(
+        $originalTransactionId,
+        $renewalTransactionId,
+        $subscriptionWebOrderItemId,
+        $renewalWebOrderItemId,
+        $productSku,
+        Carbon $expirationDate,
+        $expirationIntentNumber
+    )
+    {
+        // first purchase item needs transaction id and expiration date
+        $appleProductsMap = array_flip(config('ecommerce.apple_store_products_map'));
+
+        $originalPurchaseItemArray = [
+            'quantity' => 1,
+            'product_id' => $appleProductsMap[$productSku],
+            'expires_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'transaction_id' => $originalTransactionId,
+            'web_order_line_item_id' => $subscriptionWebOrderItemId,
+            'purchase_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'original_purchase_date' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'is_trial_period' => false,
+        ];
+
+        $renewalPurchaseItemArray = [
+            'quantity' => 1,
+            'product_id' => $appleProductsMap[$productSku],
+            'expires_date_ms' => $expirationDate->timestamp * 1000,
+            'transaction_id' => $renewalTransactionId,
+            'web_order_line_item_id' => $renewalWebOrderItemId,
+            'purchase_date_ms' => Carbon::now()->timestamp * 1000,
+            'original_purchase_date' => Carbon::now()->timestamp * 1000,
+            'is_trial_period' => false,
+        ];
+
+        $pendingRenewalInfoArray = [
+            [
+                'product_id' => 'drumeo_app_monthly_member',
+                'auto_renew_product_id' => 'drumeo_app_monthly_member',
+                'original_transaction_id' => $originalTransactionId,
+                'auto_renew_status' => false,
+                'expiration_intent' => $expirationIntentNumber,
+                'is_in_billing_retry_period' => false,
             ]
         ];
 
-        $defaultItemData = [
-            'quantity' => 1,
-            'expires_date_ms' => $receiptCreationDate->addMonth(),
-            'web_order_line_item_id' => $this->faker->word,
-            'transaction_id' => $transactionId,
-            'purchase_date_ms' => $receiptCreationDate->tz('UTC')->getTimestamp() * 1000,
+        $rawData = [
+            'status' => 0,
+            'environment' => 'Sandbox',
+            'latest_receipt_info' => [$renewalPurchaseItemArray, $originalPurchaseItemArray],
+            'receipt' => [
+                'receipt_type' => 'ProductionSandbox',
+                'app_item_id' => 0,
+                'receipt_creation_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+                'in_app' => [$renewalPurchaseItemArray, $originalPurchaseItemArray],
+            ],
+            'pending_renewal_info' => $pendingRenewalInfoArray
         ];
 
-        foreach ($productsData as $productSku => $purchaseItemData) {
+        return new SandboxResponse($rawData);
+    }
 
-            $purchaseItemData = array_merge($defaultItemData, $purchaseItemData);
+    protected function getCancelledAndRefundedReceiptResponse(
+        $originalTransactionId,
+        $renewalTransactionId,
+        $subscriptionWebOrderItemId,
+        $renewalWebOrderItemId,
+        $productSku,
+        Carbon $expirationDate,
+        Carbon $cancellationDate,
+        $cancellationReasonNumber
+    )
+    {
+        // first purchase item needs transaction id and expiration date
+        $appleProductsMap = array_flip(config('ecommerce.apple_store_products_map'));
 
-            $purchaseItemData['product_id'] = $appleProductsMap[$productSku];
-            $purchaseItemData['expires_date_ms'] = $purchaseItemData['expires_date_ms']->tz('UTC')->getTimestamp() * 1000;
+        $originalPurchaseItemArray = [
+            'quantity' => 1,
+            'product_id' => $appleProductsMap[$productSku],
+            'expires_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'transaction_id' => $originalTransactionId,
+            'web_order_line_item_id' => $subscriptionWebOrderItemId,
+            'purchase_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'original_purchase_date' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'is_trial_period' => false,
+        ];
 
-            $rawData['receipt']['in_app'][] = $purchaseItemData;
-            $rawData['latest_receipt_info'][] = $purchaseItemData;
-        }
+        $renewalPurchaseItemArray = [
+            'quantity' => 1,
+            'product_id' => $appleProductsMap[$productSku],
+            'expires_date_ms' => $expirationDate->timestamp * 1000,
+            'transaction_id' => $renewalTransactionId,
+            'web_order_line_item_id' => $renewalWebOrderItemId,
+            'purchase_date_ms' => Carbon::now()->timestamp * 1000,
+            'original_purchase_date' => Carbon::now()->timestamp * 1000,
+            'is_trial_period' => false,
+            'cancellation_date_ms' => $cancellationDate->timestamp * 1000,
+            'cancellation_reason' => $cancellationReasonNumber,
+        ];
+
+        $pendingRenewalInfoArray = [
+            [
+                'product_id' => 'drumeo_app_monthly_member',
+                'auto_renew_product_id' => 'drumeo_app_monthly_member',
+                'original_transaction_id' => $originalTransactionId,
+                'auto_renew_status' => false,
+                'expiration_intent' => null,
+                'is_in_billing_retry_period' => false,
+            ]
+        ];
+
+        $rawData = [
+            'status' => 0,
+            'environment' => 'Sandbox',
+            'latest_receipt_info' => [$renewalPurchaseItemArray, $originalPurchaseItemArray],
+            'receipt' => [
+                'receipt_type' => 'ProductionSandbox',
+                'app_item_id' => 0,
+                'receipt_creation_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
+                'in_app' => [$renewalPurchaseItemArray, $originalPurchaseItemArray],
+            ],
+            'pending_renewal_info' => $pendingRenewalInfoArray
+        ];
 
         return new SandboxResponse($rawData);
     }

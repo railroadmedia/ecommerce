@@ -26,25 +26,24 @@ class MobileOrderEvent
     /**
      * Create a new event instance.
      *
-     * @param Order $order
+     * @param Order|null $order
      * @param Payment|null $payment
      * @param Subscription|null $subscription
      */
     public function __construct(
-        Order $order,
+        ?Order $order,
         ?Payment $payment,
         ?Subscription $subscription
-    )
-    {
+    ) {
         $this->order = $order;
         $this->payment = $payment;
         $this->subscription = $subscription;
     }
 
     /**
-     * @return Order
+     * @return Order|null
      */
-    public function getOrder(): Order
+    public function getOrder(): ?Order
     {
         return $this->order;
     }

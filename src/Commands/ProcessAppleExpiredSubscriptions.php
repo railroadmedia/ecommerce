@@ -54,7 +54,8 @@ class ProcessAppleExpiredSubscriptions extends \Illuminate\Console\Command
     /**
      * Execute the console command.
      *
-     * @throws Throwable
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Throwable
      */
     public function handle()
     {
