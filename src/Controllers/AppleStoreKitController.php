@@ -70,7 +70,9 @@ class AppleStoreKitController extends Controller
      */
     public function processReceipt(AppleReceiptRequest $request)
     {
-        error_log('AppleStoreKitController processReceipt Request Dump --------------------------------------------------');
+        error_log(
+            'AppleStoreKitController processReceipt Request Dump --------------------------------------------------'
+        );
         error_log(var_export($request->input(), true));
 
         $receipt = new AppleReceipt();
@@ -96,14 +98,16 @@ class AppleStoreKitController extends Controller
      */
     public function processNotification(Request $request)
     {
-        error_log('AppleStoreKitController processNotification Request Dump --------------------------------------------------');
+        error_log(
+            'AppleStoreKitController processNotification Request Dump --------------------------------------------------'
+        );
         error_log(var_export($request->input(), true));
 
         if (strtolower($request->get('notification_type')) == 'renewal' ||
             strtolower($request->get('notification_type')) == 'cancel') {
 
             $notificationType = strtolower($request->get('notification_type')) == 'renewal' ?
-                AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE:
+                AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE :
                 AppleReceipt::APPLE_CANCEL_NOTIFICATION_TYPE;
 
             $receipt = new AppleReceipt();
@@ -113,19 +117,12 @@ class AppleStoreKitController extends Controller
             $receipt->setNotificationType($notificationType);
             $receipt->setBrand(config('ecommerce.brand'));
 
-            $webOrderLineItemId = $request->get('web_order_line_item_id');
+            try {
+                $this->appleStoreKitService->processNotification($receipt);
+            } catch (Exception $e) {
+                error_log($e);
 
-            $subscription = $this->subscriptionRepository
-                ->findOneBy(['externalAppStoreId' => $webOrderLineItemId]);
-
-            if ($subscription) {
-                try {
-                    $this->appleStoreKitService->processNotification($receipt, $subscription);
-                } catch (Exception $e) {
-                    error_log($e);
-
-                    return response()->json();
-                }
+                return response()->json();
             }
         }
 

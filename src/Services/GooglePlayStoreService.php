@@ -210,7 +210,7 @@ class GooglePlayStoreService
             event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));
         }
 
-        $this->userProductService->updateSubscriptionProducts($subscription);
+        $this->userProductService->updateSubscriptionProductsApp($subscription);
     }
 
     /**

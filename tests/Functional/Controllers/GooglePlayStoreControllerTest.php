@@ -517,7 +517,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => 1,
                 'expiration_date' => $expiryTime
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
                     ->toDateTimeString(),
             ]
         );

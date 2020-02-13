@@ -498,4 +498,30 @@ class UserProductService
             }
         }
     }
+
+    /**
+     * Updates subscription user products
+     *
+     * @param Subscription $subscription
+     *
+     * @throws Throwable
+     */
+    public function updateSubscriptionProductsApp(Subscription $subscription)
+    {
+        $products = $this->getSubscriptionProducts($subscription);
+
+        // we only want to update the expiration date of non-payment plan subscription products
+        if ($subscription->getType() != Subscription::TYPE_PAYMENT_PLAN) {
+            foreach ($products as $productData) {
+
+                $this->assignUserProduct(
+                    $subscription->getUser(),
+                    $productData['product'],
+                    $subscription->getPaidUntil()
+                        ->copy()
+                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
+                );
+            }
+        }
+    }
 }

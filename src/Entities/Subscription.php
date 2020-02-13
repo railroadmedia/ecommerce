@@ -241,6 +241,11 @@ class Subscription
      */
     protected $cancellationReason;
 
+    /**
+     * @var Payment|null
+     */
+    protected $latestPayment;
+
     public function __construct()
     {
         $this->payments = new ArrayCollection();
@@ -674,5 +679,21 @@ class Subscription
     public function setCancellationReason($cancellationReason)
     {
         $this->cancellationReason = $cancellationReason;
+    }
+
+    /**
+     * @return Payment|null
+     */
+    public function getLatestPayment(): ?Payment
+    {
+        return $this->latestPayment;
+    }
+
+    /**
+     * @param Payment|null $latestPayment
+     */
+    public function setLatestPayment(?Payment $latestPayment): void
+    {
+        $this->latestPayment = $latestPayment;
     }
 }

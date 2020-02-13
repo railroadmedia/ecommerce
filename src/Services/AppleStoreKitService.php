@@ -185,10 +185,7 @@ class AppleStoreKitService
      * @throws GuzzleException
      * @throws Throwable
      */
-    public function processNotification(
-        AppleReceipt $receipt,
-        Subscription $subscription
-    )
+    public function processNotification(AppleReceipt $receipt)
     {
         $this->entityManager->persist($receipt);
 
@@ -222,15 +219,20 @@ class AppleStoreKitService
 
         if ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE) {
 
-            event(new MobileSubscriptionRenewed($subscription, end($subscription->getPayments()), MobileSubscriptionRenewed::ACTOR_SYSTEM));
+            event(
+                new MobileSubscriptionRenewed(
+                    $subscription,
+                    $subscription->getLatestPayment(),
+                    MobileSubscriptionRenewed::ACTOR_SYSTEM
+                )
+            );
 
         } elseif (!empty($subscription->getCanceledOn())) {
 
             event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));
-
         }
 
-        $this->userProductService->updateSubscriptionProducts($subscription);
+        $this->userProductService->updateSubscriptionProductsApp($subscription);
 
         $this->entityManager->flush();
     }
@@ -244,8 +246,6 @@ class AppleStoreKitService
     public function processSubscriptionRenewal(Subscription $subscription)
     {
         $receipt = $subscription->getAppleReceipt();
-
-        $purchasedItem = $appleResponse = null;
 
         try {
 
@@ -272,7 +272,7 @@ class AppleStoreKitService
 
         $subscription = $this->syncSubscription($appleResponse, $receipt);
 
-        $this->userProductService->updateSubscriptionProducts($subscription);
+        $this->userProductService->updateSubscriptionProductsApp($subscription);
     }
 
     /**
@@ -333,7 +333,8 @@ class AppleStoreKitService
 
         // if a subscription with this external id already exists, just update it
         // the subscription external ID should always be set to the first purchase item web order line item ID
-        $subscription = $this->subscriptionRepository->getByExternalAppStoreId($firstPurchasedItem->getWebOrderLineItemId());
+        $subscription =
+            $this->subscriptionRepository->getByExternalAppStoreId($firstPurchasedItem->getWebOrderLineItemId());
 
         if (empty($subscription)) {
             $subscription = new Subscription();
@@ -346,12 +347,20 @@ class AppleStoreKitService
         $subscription->setType(Subscription::TYPE_APPLE_SUBSCRIPTION);
         $subscription->setProduct($product);
 
-        if (!empty($appleResponse->getPendingRenewalInfo()[0]) && !$appleResponse->getPendingRenewalInfo()[0]->getAutoRenewStatus()) {
-            $subscription->setCanceledOn($latestPurchaseItem->getCancellationDate()->copy());
-            $subscription->setCancellationReason(
-                self::RENEWAL_EXPIRATION_REASON[$appleResponse->getPendingRenewalInfo()[0]->getExpirationIntent()] ?? ''
+        if (!empty($appleResponse->getPendingRenewalInfo()[0])) {
+            $subscription->setIsActive($appleResponse->getPendingRenewalInfo()[0]->getAutoRenewStatus());
+            $subscription->setCanceledOn(
+                !empty($latestPurchaseItem->getCancellationDate()) ?
+                    $latestPurchaseItem->getCancellationDate()->copy() : null
             );
-            $subscription->setIsActive(false);
+
+            if (!empty($subscription->getCanceledOn())) {
+                $subscription->setCancellationReason($latestPurchaseItem->getRawResponse()['cancellation_reason']);
+            } else {
+                $subscription->setCancellationReason(
+                    self::RENEWAL_EXPIRATION_REASON[$appleResponse->getPendingRenewalInfo()[0]->getExpirationIntent()] ?? ''
+                );
+            }
         } else {
             $subscription->setCanceledOn(null);
             $subscription->setIsActive($latestPurchaseItem->getExpiresDate() > Carbon::now());
@@ -379,7 +388,7 @@ class AppleStoreKitService
 
         // sync payments
         // 1 payment for every purchase item
-        foreach ($appleResponse->getLatestReceiptInfo() as $purchaseItem) {
+        foreach (array_reverse($appleResponse->getLatestReceiptInfo()) as $purchaseItem) {
 
             // we dont want to add zero dollar trial payments
             if ($purchaseItem->isTrialPeriod()) {
@@ -388,7 +397,11 @@ class AppleStoreKitService
 
             $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
 
-            $existingPayment = $this->paymentRepository->getByExternalIdAndProvider($purchaseItem->getTransactionId(), Payment::EXTERNAL_PROVIDER_APPLE);
+            $existingPayment =
+                $this->paymentRepository->getByExternalIdAndProvider(
+                    $purchaseItem->getTransactionId(),
+                    Payment::EXTERNAL_PROVIDER_APPLE
+                );
 
             if (empty($existingPayment)) {
                 $existingPayment = new Payment();
@@ -400,7 +413,13 @@ class AppleStoreKitService
             $existingPayment->setTotalDue($product->getPrice());
             $existingPayment->setTotalPaid($product->getPrice());
 
-            $existingPayment->setTotalRefunded(0);
+            // if it has a cancellation date it means the transaction was refunded
+            if (!empty($purchaseItem->getCancellationDate())) {
+                $existingPayment->setTotalRefunded($product->getPrice());
+            } else {
+                $existingPayment->setTotalRefunded(0);
+            }
+
             $existingPayment->setConversionRate(1);
 
             $existingPayment->setType(Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL);
@@ -427,6 +446,8 @@ class AppleStoreKitService
 
             $this->entityManager->persist($subscriptionPayment);
             $this->entityManager->flush();
+
+            $subscription->setLatestPayment($existingPayment);
         }
 
         $receipt->setSubscription($subscription);
