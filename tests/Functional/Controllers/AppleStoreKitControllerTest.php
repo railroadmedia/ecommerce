@@ -164,6 +164,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'valid' => true,
                 'validation_error' => null,
                 'transaction_id' => $transactionId,
+                'subscription_id' => 1,
                 'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
@@ -282,6 +283,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'valid' => true,
                 'validation_error' => null,
                 'transaction_id' => $transactionId,
+                'subscription_id' => 1,
                 'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
@@ -493,6 +495,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
                 'valid' => true,
                 'validation_error' => null,
+                'subscription_id' => 1,
                 'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
             ]
@@ -649,6 +652,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
                 'valid' => true,
                 'validation_error' => null,
+                'subscription_id' => 1,
                 'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
             ]
@@ -663,6 +667,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
                 'valid' => true,
                 'validation_error' => null,
+                'subscription_id' => 1,
                 'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
             ]
@@ -677,6 +682,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
                 'valid' => true,
                 'validation_error' => null,
+                'subscription_id' => 1,
                 'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
             ]

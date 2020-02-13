@@ -248,7 +248,6 @@ class AppleStoreKitService
         $receipt = $subscription->getAppleReceipt();
 
         try {
-
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt->getReceipt());
 
             $purchasedItem = $this->getLatestPurchasedItem($appleResponse);
@@ -386,6 +385,8 @@ class AppleStoreKitService
 
         $subscription->setCreatedAt(Carbon::now());
 
+        $receipt->setSubscription($subscription);
+
         // sync payments
         // 1 payment for every purchase item
         foreach (array_reverse($appleResponse->getLatestReceiptInfo()) as $purchaseItem) {
@@ -449,8 +450,6 @@ class AppleStoreKitService
 
             $subscription->setLatestPayment($existingPayment);
         }
-
-        $receipt->setSubscription($subscription);
 
         $this->entityManager->persist($receipt);
         $this->entityManager->persist($subscription);
