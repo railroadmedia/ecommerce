@@ -436,7 +436,7 @@ class AppleStoreKitService
             $this->entityManager->flush();
 
             // save the payment to the subscription
-            $subscriptionPayment = $this->subscriptionPaymentRepository->getByPayment($existingPayment);
+            $subscriptionPayment = $this->subscriptionPaymentRepository->getByPayment($existingPayment)[0] ?? null;
 
             if (empty($subscriptionPayment)) {
                 $subscriptionPayment = new SubscriptionPayment();
