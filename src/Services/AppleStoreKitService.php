@@ -430,6 +430,9 @@ class AppleStoreKitService
             $existingPayment->setGatewayName(config('ecommerce.brand'));
             $existingPayment->setStatus(Payment::STATUS_PAID);
             $existingPayment->setCurrency('USD');
+            $existingPayment->setCreatedAt(
+                !empty($purchaseItem->getPurchaseDate()) ? $purchaseItem->getPurchaseDate() : Carbon::now()
+            );
 
             $this->entityManager->persist($subscription);
             $this->entityManager->persist($existingPayment);
