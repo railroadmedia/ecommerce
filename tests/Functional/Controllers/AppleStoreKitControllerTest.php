@@ -858,7 +858,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
                 'external_id' => $originalTransactionId,
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'created_at' => Carbon::now()->subDays(7)->toDateTimeString(),
             ]
         );
 
@@ -1012,7 +1012,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
                 'external_id' => $originalTransactionId,
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'created_at' => Carbon::now()->subDays(7)->toDateTimeString(),
             ]
         );
 

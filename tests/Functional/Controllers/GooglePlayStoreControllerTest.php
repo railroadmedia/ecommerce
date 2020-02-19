@@ -256,6 +256,149 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_new_order_trial_already_used()
+    {
+        // If the customer already used their trial time in the past google will charge them the full amount
+        // on initial order. It's dictated by the payment state
+        $orderId = $this->faker->word . rand();
+        $email = $this->faker->email;
+        $expiryTime = Carbon::now()->addMonth();
+        $startTime = Carbon::now();
+        $brand = 'drumeo';
+
+        config()->set('ecommerce.brand', $brand);
+
+        $product = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
+            [
+                $googleProductId => $product['sku'],
+            ]
+        );
+
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptPaidRenewal($orderId, $expiryTime->timestamp, $startTime->timestamp);
+
+        $googleStoreKitGateway->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $response = $this->call(
+            'POST',
+            '/google/verify-receipt-and-process-payment',
+            [
+                'data' => [
+                    'attributes' => [
+                        'package_name' => $packageName,
+                        'product_id' => $googleProductId,
+                        'purchase_token' => $purchaseToken,
+                        'email' => $email,
+                        'password' => $this->faker->word,
+                    ]
+                ]
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert response has meta key with auth code
+        $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
+
+        $this->assertDatabaseHas(
+            'ecommerce_google_receipts',
+            [
+                'package_name' => $packageName,
+                'product_id' => $googleProductId,
+                'purchase_token' => $purchaseToken,
+                'request_type' => GoogleReceipt::MOBILE_APP_REQUEST_TYPE,
+                'email' => $email,
+                'valid' => true,
+                'validation_error' => null,
+                'order_id' => $orderId,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'is_active' => 1,
+                'paid_until' => $expiryTime->toDateTimeString(),
+                'start_date' => $startTime->toDateTimeString(),
+                'created_at' => $startTime->toDateTimeString(),
+            ]
+        );
+
+        // make sure a payment and order is not created, since its just a trial sign up
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'created_at' => $startTime->toDateTimeString(),
+            ]
+        );
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'id' => 1,
+                'subscription_id' => 1,
+                'payment_id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_orders',
+            [
+                'id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => $expiryTime
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString(),
+            ]
+        );
+    }
+
     public function test_new_trial_order_token_cannot_be_used_twice()
     {
         $orderId = $this->faker->word . rand();
@@ -386,13 +529,14 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         ], $response->decodeResponseJson('errors'));
     }
 
-    public function test_process_notification_subscription_renewal()
+    public function test_process_notification_subscription_renewal_one()
     {
         $brand = 'brand';
         config()->set('ecommerce.brand', $brand);
 
-        $orderId = $this->faker->word . rand();
-        $expiryTime = Carbon::now()->addMonth();
+        $orderId = $this->faker->word . rand() . '..0';
+        $expiryTime = Carbon::now()->addMonth(1);
+        $startTime = Carbon::now()->subDays(7);
 
         Mail::fake();
 
@@ -443,7 +587,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 ->disableOriginalConstructor()
                 ->getMock();
 
-        $validationResponse = $this->getTestReceiptPaidRenewal($orderId, $expiryTime->timestamp);
+        $validationResponse = $this->getTestReceiptPaidRenewal($orderId, $expiryTime->timestamp, $startTime->timestamp);
 
         $googleStoreKitGateway->method('getResponse')
             ->willReturn($validationResponse);
@@ -495,7 +639,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'total_refunded' => 0,
                 'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'created_at' => $expiryTime->copy()->subMonth()->toDateTimeString(),
             ]
         );
 
@@ -507,6 +651,356 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'is_active' => 1,
                 'paid_until' => $expiryTime->toDateTimeString(),
                 'external_app_store_id' => $purchaseToken,
+                'start_date' => $startTime->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => $expiryTime
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
+                    ->toDateTimeString(),
+            ]
+        );
+    }
+
+    public function test_process_notification_subscription_renewal_two()
+    {
+        $brand = 'brand';
+        config()->set('ecommerce.brand', $brand);
+
+        $orderId = $this->faker->word . rand() . '..1';
+        $expiryTime = Carbon::now()->addMonth()->subHour();
+        $startTime = Carbon::now()->subDays(7)->subMonth();
+
+        Mail::fake();
+
+        $email = $this->faker->email;
+
+        $user = $this->fakeUser(
+            [
+                'email' => $email,
+            ]
+        );
+
+        $product = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'price' => 12.95,
+            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+            'subscription_interval_count' => 1,
+        ]);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => null,
+            'user_id' => $user['id'],
+            'total_price' => $product['price'],
+            'paid_until' => Carbon::now()
+                ->subDay()
+                ->startOfDay()
+                ->toDateTimeString(),
+            'is_active' => 0,
+            'interval_count' => 1,
+            'interval_type' => config('ecommerce.interval_type_monthly'),
+            'external_app_store_id' => $purchaseToken
+        ]);
+
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
+            [
+                $googleProductId => $product['sku'],
+            ]
+        );
+
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptPaidRenewal($orderId, $expiryTime->timestamp, $startTime->timestamp);
+
+        $googleStoreKitGateway->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $requestData = [
+            'subscriptionNotification' => [
+                'notificationType' => GooglePlayStoreController::SUBSCRIPTION_RENEWED,
+                'purchaseToken' => $purchaseToken,
+                'subscriptionId' => $googleProductId,
+            ],
+            'packageName' => $packageName
+        ];
+
+        $enceodedRequestData = base64_encode(json_encode($requestData));
+
+        $response = $this->call(
+            'POST',
+            '/google/handle-server-notification',
+            [
+                'message' => [
+                    'data' => $enceodedRequestData,
+                ]
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_google_receipts',
+            [
+                'purchase_token' => $purchaseToken,
+                'package_name' => $packageName,
+                'product_id' => $googleProductId,
+                'request_type' => GoogleReceipt::GOOGLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE,
+                'valid' => true,
+                'validation_error' => null,
+                'order_id' => $orderId,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'id' => 1,
+                'external_id' => $orderId,
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'created_at' => Carbon::now()->subHour()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'id' => 2,
+                'external_id' => substr($orderId, 0, strlen($orderId) - 1) . '0',
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'created_at' => Carbon::now()->subMonth()->subHour()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'is_active' => 1,
+                'paid_until' => $expiryTime->toDateTimeString(),
+                'external_app_store_id' => $purchaseToken,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => $expiryTime
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
+                    ->toDateTimeString(),
+            ]
+        );
+    }
+
+    public function test_process_notification_subscription_renewal_two_ensure_no_dupes()
+    {
+        $brand = 'brand';
+        config()->set('ecommerce.brand', $brand);
+
+        $orderId = $this->faker->word . rand() . '..1';
+        $expiryTime = Carbon::now()->addMonth();
+        $startTime = Carbon::now()->subDays(7)->subMonth();
+
+        Mail::fake();
+
+        $email = $this->faker->email;
+
+        $user = $this->fakeUser(
+            [
+                'email' => $email,
+            ]
+        );
+
+        $product = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'price' => 12.95,
+            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+            'subscription_interval_count' => 1,
+        ]);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => null,
+            'user_id' => $user['id'],
+            'total_price' => $product['price'],
+            'paid_until' => Carbon::now()
+                ->subDay()
+                ->startOfDay()
+                ->toDateTimeString(),
+            'is_active' => 0,
+            'interval_count' => 1,
+            'interval_type' => config('ecommerce.interval_type_monthly'),
+            'external_app_store_id' => $purchaseToken
+        ]);
+
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
+            [
+                $googleProductId => $product['sku'],
+            ]
+        );
+
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptPaidRenewal($orderId, $expiryTime->timestamp, $startTime->timestamp);
+
+        $googleStoreKitGateway->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $requestData = [
+            'subscriptionNotification' => [
+                'notificationType' => GooglePlayStoreController::SUBSCRIPTION_RENEWED,
+                'purchaseToken' => $purchaseToken,
+                'subscriptionId' => $googleProductId,
+            ],
+            'packageName' => $packageName
+        ];
+
+        $enceodedRequestData = base64_encode(json_encode($requestData));
+
+        $response = $this->call(
+            'POST',
+            '/google/handle-server-notification',
+            [
+                'message' => [
+                    'data' => $enceodedRequestData,
+                ]
+            ]
+        );
+
+        $response = $this->call(
+            'POST',
+            '/google/handle-server-notification',
+            [
+                'message' => [
+                    'data' => $enceodedRequestData,
+                ]
+            ]
+        );
+
+        $response = $this->call(
+            'POST',
+            '/google/handle-server-notification',
+            [
+                'message' => [
+                    'data' => $enceodedRequestData,
+                ]
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_google_receipts',
+            [
+                'purchase_token' => $purchaseToken,
+                'package_name' => $packageName,
+                'product_id' => $googleProductId,
+                'request_type' => GoogleReceipt::GOOGLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE,
+                'valid' => true,
+                'validation_error' => null,
+                'order_id' => $orderId,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'id' => 1,
+                'external_id' => $orderId,
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'id' => 2,
+                'external_id' => substr($orderId, 0, strlen($orderId) - 1) . '0',
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'created_at' => Carbon::now()->subMonth()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_payments',
+            [
+                'id' => 3,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_subscription_payments',
+            [
+                'id' => 3,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'is_active' => 1,
+                'paid_until' => $expiryTime->toDateTimeString(),
+                'external_app_store_id' => $purchaseToken,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_subscriptions',
+            [
+                'id' => 2,
             ]
         );
 
@@ -659,9 +1153,10 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
     /**
      * @param $orderId
      * @param $expiryTimestamp
+     * @param $startTimestamp
      * @return SubscriptionResponse
      */
-    protected function getTestReceiptPaidRenewal($orderId, $expiryTimestamp): SubscriptionResponse
+    protected function getTestReceiptPaidRenewal($orderId, $expiryTimestamp, $startTimestamp): SubscriptionResponse
     {
         $dependency = new Google_Service_AndroidPublisher_SubscriptionPurchase();
 
@@ -669,6 +1164,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $dependency->setPaymentState(1);
         $dependency->setOrderId($orderId);
         $dependency->setExpiryTimeMillis($expiryTimestamp * 1000);
+        $dependency->setStartTimeMillis($startTimestamp * 1000);
 
         return new SubscriptionResponse($dependency);
     }
