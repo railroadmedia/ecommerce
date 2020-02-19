@@ -899,10 +899,8 @@ class RefundJsonControllerTest extends EcommerceTestCase
     public function test_refund_mobile_app_payment_exception()
     {
         $mobileAppPaymentTypes = [
-            Payment::TYPE_APPLE_INITIAL_ORDER,
             Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
             Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
-            Payment::TYPE_GOOGLE_INITIAL_ORDER,
         ];
 
         $due = $this->faker->numberBetween(11, 1000);

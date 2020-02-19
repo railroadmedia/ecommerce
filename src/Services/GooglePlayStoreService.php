@@ -195,7 +195,7 @@ class GooglePlayStoreService
 
         if ($receipt->getNotificationType() == GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE) {
 
-            $payment = $this->createSubscriptionRenewalPayment($subscription);
+            $payment = $this->createSubscriptionRenewalPayment($subscription, $receipt->getOrderId());
 
             $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
 
@@ -216,11 +216,12 @@ class GooglePlayStoreService
     /**
      * @param Subscription $subscription
      *
+     * @param $receiptOrderId
      * @return Payment
      *
-     * @throws Throwable
+     * @throws ORMException
      */
-    public function createSubscriptionRenewalPayment(Subscription $subscription): Payment
+    public function createSubscriptionRenewalPayment(Subscription $subscription, $receiptOrderId): Payment
     {
         $payment = new Payment();
 
@@ -229,8 +230,10 @@ class GooglePlayStoreService
         $payment->setTotalRefunded(0);
         $payment->setConversionRate(1);
         $payment->setType(Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL);
-        $payment->setExternalId('');
+
+        $payment->setExternalId($receiptOrderId);
         $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_GOOGLE);
+
         $payment->setGatewayName(config('ecommerce.brand'));
         $payment->setStatus(Payment::STATUS_PAID);
         $payment->setCurrency(config('ecommerce.default_currency'));

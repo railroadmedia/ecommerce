@@ -229,7 +229,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $this->assertDatabaseMissing(
             'ecommerce_payments',
             [
-                'type' => Payment::TYPE_GOOGLE_INITIAL_ORDER,
+                'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
             ]
         );
 

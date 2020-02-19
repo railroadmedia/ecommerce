@@ -169,10 +169,8 @@ class RefundJsonController extends Controller
         $payment = $this->paymentRepository->getPaymentAndPaymentMethod($paymentId);
 
         $mobileAppPaymentTypes = [
-            Payment::TYPE_APPLE_INITIAL_ORDER,
             Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
             Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
-            Payment::TYPE_GOOGLE_INITIAL_ORDER,
         ];
 
         if ($payment && in_array($payment->getType(), $mobileAppPaymentTypes)) {
