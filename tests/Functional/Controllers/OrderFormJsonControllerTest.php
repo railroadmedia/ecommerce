@@ -1446,6 +1446,270 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_submit_order_overrides_subscription()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $currency = $this->getCurrency();
+        $fingerPrint = $this->faker->word;
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $country = 'Canada';
+        $region = 'alberta';
+        $zip = $this->faker->postcode;
+
+        $product = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => false,
+                'weight' => 0.20,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+                'sku' => $this->faker->word,
+            ]
+        );
+
+        $productTaxesDueOverride = $this->faker->randomFloat(2, 5, 10);
+        $orderItemOneDueOverride = $this->faker->randomFloat(2, 10, 50);
+
+        $requestData = [
+            'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'billing_region' => $region,
+            'billing_zip_or_postal_code' => $zip,
+            'billing_country' => $country,
+            'company_name' => $this->faker->creditCardType,
+            'gateway' => $brand,
+            'card_token' => $fingerPrint,
+            'currency' => $currency,
+            'product_taxes_due_override' => $productTaxesDueOverride,
+            'order_items_due_overrides' => [
+                [
+                    'sku' => $product['sku'],
+                    'amount' => $orderItemOneDueOverride,
+                ],
+            ],
+        ];
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+        $fakerCustomer = new Customer();
+        $fakerCustomer->email = $this->faker->email;
+        $fakerCustomer->id = $this->faker->word . rand();
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $fingerPrint;
+        $fakerCard->brand = $this->faker->word;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = 2020;
+        $fakerCard->exp_month = 12;
+        $fakerCard->id = $this->faker->word;
+        $fakerCard->customer = $fakerCustomer->id;
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+        $fakerCharge->id = $this->faker->word;
+        $fakerCharge->currency = 'cad';
+        $fakerCharge->amount = 100;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $this->cartService->addToCart(
+            $product['sku'],
+            1,
+            false,
+            ''
+        );
+
+        $expectedTotalFromItems = $orderItemOneDueOverride;
+
+        $expectedTaxes = round($productTaxesDueOverride, 2);
+
+        $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedTaxes, 2);
+
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
+
+        $this->permissionServiceMock->method('can')
+            ->willReturn(true);
+
+        $response = $this->call(
+            'PUT',
+            '/json/order-form/submit',
+            $requestData
+        );
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'order',
+                    'attributes' => [
+                        'total_due' => $expectedOrderTotalDue,
+                        'product_due' => round($expectedTotalFromItems, 2),
+                        'taxes_due' => $expectedTaxes,
+                        'shipping_due' => 0,
+                        'finance_due' => 0,
+                        'total_paid' => $expectedOrderTotalDue,
+                        'brand' => $brand,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ],
+                        'billingAddress' => [
+                            'data' => ['type' => 'address']
+                        ],
+                    ]
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $product['id'],
+                    'attributes' => array_diff_key(
+                        $product,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => 1,
+                        'weight' => $product['weight'],
+                        'initial_price' => $product['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $orderItemOneDueOverride,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => null,
+                        'last_name' => null,
+                        'street_line_1' => null,
+                        'street_line_2' => null,
+                        'city' => null,
+                        'zip' => $requestData['billing_zip_or_postal_code'],
+                        'region' => $requestData['billing_region'],
+                        'country' => $requestData['billing_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ]
+                ],
+            ],
+            $response->decodeResponseJson()['included']
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => Carbon::now()
+                    ->addYear(1)
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'total_due' => $expectedOrderTotalDue,
+                'product_due' => $expectedTotalFromItems,
+                'taxes_due' => $expectedTaxes,
+                'shipping_due' => 0,
+                'finance_due' => 0,
+                'total_paid' => $expectedOrderTotalDue,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_items',
+            [
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'initial_price' => $product['price'],
+                'final_price' => $orderItemOneDueOverride,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $country,
+                'region' => $region,
+                'product_rate' => $expectedTaxRateProduct,
+                'product_taxes_paid' => $productTaxesDueOverride,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'brand' => $brand,
+                'product_id' => $product['id'],
+                'user_id' => $userId,
+                'is_active' => "1",
+                'start_date' => Carbon::now()
+                    ->toDateTimeString(),
+                'paid_until' => Carbon::now()
+                    ->addYear(1)
+                    ->toDateTimeString(),
+                'total_price' => round($expectedTotalFromItems + $productTaxesDueOverride, 2),
+                'tax' => $productTaxesDueOverride,
+            ]
+        );
+    }
+
     public function test_submit_order_overrides_zero_dollar_total()
     {
         $userId = $this->createAndLogInNewUser();

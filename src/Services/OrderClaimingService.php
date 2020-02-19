@@ -218,7 +218,8 @@ class OrderClaimingService
                     $paymentMethod,
                     $payment,
                     $order,
-                    $orderItem
+                    $orderItem,
+                    $cart
                 );
 
                 $this->entityManager->persist($subscription);
@@ -251,6 +252,7 @@ class OrderClaimingService
                 $paymentMethod,
                 $payment,
                 $order,
+                null,
                 null,
                 $cart->getPaymentPlanNumberOfPayments()
             );
@@ -289,6 +291,7 @@ class OrderClaimingService
         ?Payment $payment,
         Order $order,
         ?OrderItem $orderItem,
+        ?Cart $cart,
         int $totalCyclesDue = null
     ): Subscription
     {
@@ -343,7 +346,14 @@ class OrderClaimingService
                 }
             }
 
+            $productPriceOverride = false;
             $subscriptionPricePerPayment = $orderItem->getProduct()->getPrice();
+            $cartItem = $cart ? $cart->getItemBySku($product->getSku()) : null;
+
+            if ($cart && $cartItem && $cartItem->getDueOverride()) {
+                $subscriptionPricePerPayment = $cartItem->getDueOverride();
+                $productPriceOverride = true;
+            }
 
             foreach ($orderItem->getOrderItemDiscounts() as $orderItemDiscount) {
 
@@ -356,7 +366,10 @@ class OrderClaimingService
                             ->addDays($discount->getAmount());
 
                 }
-                elseif ($discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
+                elseif (
+                    $discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE
+                    && !$productPriceOverride
+                ) {
                     // todo - confirm for subscriptions only SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE modifies the cost
                     $subscriptionPricePerPayment =
                         round($orderItem->getProduct()
