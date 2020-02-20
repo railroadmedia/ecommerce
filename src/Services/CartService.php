@@ -711,6 +711,8 @@ class CartService
             'shipping' => $shippingDue,
             'tax' => $totalTaxDue,
             'due' => $due,
+            'product_taxes' => round($productTaxDue, 2),
+            'shipping_taxes' => round($shippingTaxDue, 2),
         ];
 
         $discounts =
