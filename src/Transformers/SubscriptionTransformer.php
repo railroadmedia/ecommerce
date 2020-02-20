@@ -57,6 +57,7 @@ class SubscriptionTransformer extends TransformerAbstract
             'canceled_on' => $subscription->getCanceledOn() ?
                 $subscription->getCanceledOn()
                     ->toDateTimeString() : null,
+            'cancellation_reason' => $subscription->getCancellationReason(),
             'note' => $subscription->getNote(),
             'total_price' => $subscription->getTotalPrice(),
             'tax' => $subscription->getTax(),

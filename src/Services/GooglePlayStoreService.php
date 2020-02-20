@@ -68,6 +68,13 @@ class GooglePlayStoreService
      */
     private $subscriptionPaymentRepository;
 
+    public static $cancellationReasonMap = [
+        0 => 'User canceled the subscription',
+        1 => 'Subscription was canceled by the system, for example because of a billing problem',
+        2 => 'Subscription was replaced with a new subscription',
+        3 => 'Subscription was canceled by the developer',
+    ];
+
     /**
      * GooglePlayStoreService constructor.
      *
@@ -267,11 +274,22 @@ class GooglePlayStoreService
         $subscription->setStartDate(Carbon::createFromTimestampMs($googleSubscriptionResponse->getStartTimeMillis()));
         $subscription->setPaidUntil(Carbon::createFromTimestampMs($googleSubscriptionResponse->getExpiryTimeMillis()));
 
-        if (!empty($googleSubscriptionResponse->getUserCancellationTimeMillis())) {
+        $subscription->setCanceledOn(null);
+        $subscription->setCancellationReason(null);
+
+        if (!empty($googleSubscriptionResponse->getUserCancellationTimeMillis()) ||
+            !empty($googleSubscriptionResponse->getCancelReason())) {
+
             $subscription->setCanceledOn(
-                Carbon::createFromTimestampMs($googleSubscriptionResponse->getUserCancellationTimeMillis())
+                !empty($googleSubscriptionResponse->getUserCancellationTimeMillis()) ?
+                    Carbon::createFromTimestampMs($googleSubscriptionResponse->getUserCancellationTimeMillis()) :
+                    null
             );
-            $subscription->setCancellationReason($googleSubscriptionResponse->getCancelReason());
+            $subscription->setCancellationReason(
+                self::$cancellationReasonMap[$googleSubscriptionResponse->getCancelReason()]
+                ??
+                $googleSubscriptionResponse->getCancelReason()
+            );
         }
 
         $subscription->setTotalPrice($purchasedProduct->getPrice());
