@@ -977,7 +977,10 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'tax' => 0,
                 'due' => 0,
                 'product_taxes' => 0,
-                'shipping_taxes' => 0
+                'shipping_taxes' => 0,
+                'shipping_before_override' => 0,
+                'product_taxes_before_override' => 0,
+                'shipping_taxes_before_override' => 0,
             ],
             $decodedResponse['meta']['cart']['totals']
         );

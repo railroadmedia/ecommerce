@@ -685,34 +685,43 @@ class CartService
 
         $totalItemCostDue = $this->getTotalItemCosts();
 
+        $shippingDueBeforeOverride = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
+
         $shippingDue =
             !is_null($this->cart->getShippingOverride()) ? $this->cart->getShippingOverride() :
-                $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
+                $shippingDueBeforeOverride;
 
         $taxableAddress = $this->taxService->getAddressForTaxation($this->getCart());
 
+        $productTaxDueBeforeOverride = $this->taxService->getTaxesDueForProductCost(
+            $totalItemCostDue,
+            $taxableAddress
+        );
+
         $productTaxDue =
             !is_null($this->cart->getProductTaxOverride()) ? $this->cart->getProductTaxOverride() :
-                $this->taxService->getTaxesDueForProductCost(
-                    $totalItemCostDue,
-                    $taxableAddress
-                );
+                $productTaxDueBeforeOverride;
+
+        $shippingTaxDueBeforeOverride = $this->taxService->getTaxesDueForShippingCost(
+            $shippingDue,
+            $taxableAddress
+        );
 
         $shippingTaxDue =
             !is_null($this->cart->getShippingTaxOverride()) ? $this->cart->getShippingTaxOverride() :
-                $this->taxService->getTaxesDueForShippingCost(
-                    $shippingDue,
-                    $taxableAddress
-                );
+                $shippingTaxDueBeforeOverride;
 
         $totalTaxDue = round($productTaxDue + $shippingTaxDue, 2);
 
         $totals = [
             'shipping' => $shippingDue,
+            'shipping_before_override' => $shippingDueBeforeOverride,
             'tax' => $totalTaxDue,
             'due' => $due,
             'product_taxes' => round($productTaxDue, 2),
+            'product_taxes_before_override' => round($productTaxDueBeforeOverride, 2),
             'shipping_taxes' => round($shippingTaxDue, 2),
+            'shipping_taxes_before_override' => round($shippingTaxDueBeforeOverride, 2),
         ];
 
         $discounts =
