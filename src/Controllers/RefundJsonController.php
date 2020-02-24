@@ -6,17 +6,11 @@ use Carbon\Carbon;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Order;
-use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderPayment;
-use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
-use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Refund;
-use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\RefundEvent;
-use Railroad\Ecommerce\Exceptions\RefundFailedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -168,17 +162,6 @@ class RefundJsonController extends Controller
 
         $payment = $this->paymentRepository->getPaymentAndPaymentMethod($paymentId);
 
-        $mobileAppPaymentTypes = [
-            Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
-            Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
-        ];
-
-        if ($payment && in_array($payment->getType(), $mobileAppPaymentTypes)) {
-            throw new RefundFailedException(
-                'Payments made in-app by mobile applications my not be refunded on web application'
-            );
-        }
-
         /**
          * @var $paymentMethod PaymentMethod
          */
@@ -186,16 +169,15 @@ class RefundJsonController extends Controller
 
         $refundExternalId = null;
 
-        if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
-            $refundExternalId = $this->stripePaymentGateway->refund(
-                $request->input('data.attributes.gateway_name'),
-                $request->input('data.attributes.refund_amount'),
-                $payment->getExternalId(),
-                $request->input('data.attributes.note')
-            );
-        }
-        else {
-            if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
+        if (!empty($paymentMethod)) {
+            if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
+                $refundExternalId = $this->stripePaymentGateway->refund(
+                    $request->input('data.attributes.gateway_name'),
+                    $request->input('data.attributes.refund_amount'),
+                    $payment->getExternalId(),
+                    $request->input('data.attributes.note')
+                );
+            } elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
                 $refundExternalId = $this->payPalPaymentGateway->refund(
                     $request->input('data.attributes.refund_amount'),
                     $payment->getCurrency(),
@@ -247,13 +229,15 @@ class RefundJsonController extends Controller
 
         $this->entityManager->flush();
 
-        $userPaymentMethod = $this->userPaymentMethodsRepository->findOneBy(['paymentMethod' => $paymentMethod]);
+        if (!empty($paymentMethod)) {
+            $userPaymentMethod = $this->userPaymentMethodsRepository->findOneBy(['paymentMethod' => $paymentMethod]);
 
-        /** @var $user User */
-        if (!empty($userPaymentMethod) && !empty($userPaymentMethod->getUser())) {
-            $user = $userPaymentMethod->getUser();
+            /** @var $user User */
+            if (!empty($userPaymentMethod) && !empty($userPaymentMethod->getUser())) {
+                $user = $userPaymentMethod->getUser();
 
-            event(new RefundEvent($refund, $user));
+                event(new RefundEvent($refund, $user));
+            }
         }
 
         return ResponseService::refund($refund);

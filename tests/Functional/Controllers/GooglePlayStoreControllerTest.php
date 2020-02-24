@@ -15,6 +15,7 @@ use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
+use Railroad\Ecommerce\Services\GooglePlayStoreService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use ReceiptValidator\GooglePlay\SubscriptionResponse;
 
@@ -1128,7 +1129,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'paid_until' => $expiryTime->toDateTimeString(),
                 'canceled_on' => $cancelTime->toDateTimeString(),
                 'external_app_store_id' => $purchaseToken,
-                'cancellation_reason' => $cancelReason,
+                'cancellation_reason' => GooglePlayStoreService::$cancellationReasonMap[$cancelReason],
             ]
         );
     }

@@ -940,16 +940,14 @@ class RefundJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->assertEquals(400, $response->getStatusCode());
+        $this->assertEquals(200, $response->getStatusCode());
 
-        $this->assertEquals(
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
             [
-                [
-                    'title' => 'Payment refund failed.',
-                    'detail' => 'Payments made in-app by mobile applications my not be refunded on web application',
-                ],
-            ],
-            $response->decodeResponseJson('errors')
+                'id' => $payment['id'],
+                'total_refunded' => $payment['total_refunded'] + $refundAmount,
+            ]
         );
     }
 }
