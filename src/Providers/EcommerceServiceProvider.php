@@ -21,6 +21,7 @@ use Gedmo\SoftDeleteable\Filter\SoftDeleteableFilter;
 use Gedmo\SoftDeleteable\SoftDeleteableListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Railroad\Doctrine\TimestampableListener;
+use Railroad\Ecommerce\Commands\AddDailyMembershipStats;
 use Railroad\Ecommerce\Commands\ConvertDiscountCriteriaProducsAssociation;
 use Railroad\Ecommerce\Commands\FillPaymentGatewayColumnFromPaymentMethod;
 use Railroad\Ecommerce\Commands\FindDuplicateSubscriptionsAndLifetimesWithSubscriptions;
@@ -116,6 +117,7 @@ class EcommerceServiceProvider extends ServiceProvider
         // commands
         $this->commands(
             [
+                AddDailyMembershipStats::class,
                 ConvertDiscountCriteriaProducsAssociation::class,
                 RenewalDueSubscriptions::class,
                 SplitPaymentMethodIdsToColumns::class,
