@@ -25,7 +25,7 @@ class CreateMembershipStatsTable extends Migration
                     $table->integer('canceled');
                     $table->integer('canceled_state');
                     $table->string('interval_type');
-                    $table->dateTime('stats_date');
+                    $table->date('stats_date');
                     $table->timestamps();
                 }
             );

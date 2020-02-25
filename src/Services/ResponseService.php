@@ -23,6 +23,7 @@ use Railroad\Ecommerce\Transformers\DiscountCriteriaTransformer;
 use Railroad\Ecommerce\Transformers\DiscountTransformer;
 use Railroad\Ecommerce\Transformers\FulfillmentTransformer;
 use Railroad\Ecommerce\Transformers\GoogleReceiptTransformer;
+use Railroad\Ecommerce\Transformers\MembershipStatsTransformer;
 use Railroad\Ecommerce\Transformers\OrderTransformer;
 use Railroad\Ecommerce\Transformers\PaymentMethodTransformer;
 use Railroad\Ecommerce\Transformers\PaymentTransformer;
@@ -651,6 +652,22 @@ class ResponseService extends FractalResponseService
             $accountingProductsTotals,
             'accountingProductsTotals',
             new AccountingProductsTotalsTransformer(),
+            new JsonApiSerializer(),
+            null
+        );
+    }
+
+    /**
+     * @param array $stats
+     *
+     * @return Fractal
+     */
+    public static function membershipStats(array $stats)
+    {
+        return self::create(
+            $stats,
+            'membershipStats',
+            new MembershipStatsTransformer(),
             new JsonApiSerializer(),
             null
         );

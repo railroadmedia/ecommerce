@@ -81,7 +81,7 @@ class MembershipStats
     protected $intervalType;
 
     /**
-     * @ORM\Column(type="datetime", name="stats_date")
+     * @ORM\Column(type="date", name="stats_date")
      *
      * @var \DateTime
      */

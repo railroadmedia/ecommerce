@@ -18,6 +18,7 @@ use Railroad\Doctrine\Providers\DoctrineServiceProvider;
 use Railroad\DoctrineArrayHydrator\Contracts\UserProviderInterface as DoctrineArrayHydratorUserProviderInterface;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AppleReceipt;
+use Railroad\Ecommerce\Entities\MembershipStats;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Faker\Factory;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
@@ -59,6 +60,7 @@ class EcommerceTestCase extends BaseTestCase
         'userStripeCustomerId' => 'ecommerce_user_stripe_customer_ids',
         'discountCriteriasProducts' => 'ecommerce_discount_criterias_products',
         'appleReceipts' => 'ecommerce_apple_receipts',
+        'membershipStats' => 'ecommerce_membership_stats',
     ];
 
     /**
@@ -950,6 +952,40 @@ class EcommerceTestCase extends BaseTestCase
 
         $newRecordId =
             $this->databaseManager->table(self::TABLES['appleReceipts'])
+                ->insertGetId($data);
+
+        $data['id'] = $newRecordId;
+
+        return $data;
+    }
+
+    /**
+     * Helper method to seed a test apple receipt record
+     *
+     * @return array
+     */
+    public function fakeMembershipStats($dataStub = []): array
+    {
+        $data = $dataStub + [
+                'new' => $this->faker->randomNumber(2, true),
+                'active_state' => $this->faker->randomNumber(2, true),
+                'expired' => $this->faker->randomNumber(2, true),
+                'suspended_state' => $this->faker->randomNumber(2, true),
+                'canceled' => $this->faker->randomNumber(2, true),
+                'canceled_state' => $this->faker->randomNumber(2, true),
+                'interval_type' => $this->faker->randomElement([
+                    MembershipStats::TYPE_ONE_MONTH,
+                    MembershipStats::TYPE_SIX_MONTHS,
+                    MembershipStats::TYPE_ONE_YEAR,
+                    MembershipStats::TYPE_LIFETIME,
+                ]),
+                'stats_date' => Carbon::now()->subDays($this->faker->randomNumber(2, true)),
+                'created_at' => Carbon::now(),
+                'updated_at' => null,
+            ];
+
+        $newRecordId =
+            $this->databaseManager->table(self::TABLES['membershipStats'])
                 ->insertGetId($data);
 
         $data['id'] = $newRecordId;
