@@ -212,17 +212,27 @@ class OrderFormSubmitRequest extends FormRequest
 
         if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
 
-            $cart->setProductTaxOverride($this->get('product_taxes_due_override'));
-            $cart->setShippingTaxOverride($this->get('shipping_taxes_due_override'));
-            $cart->setShippingOverride($this->get('shipping_due_override'));
+            if ($this->has('product_taxes_due_override')) {
+                $cart->setProductTaxOverride($this->get('product_taxes_due_override'));
+            }
 
-            $overrides = $this->get('order_items_due_overrides', []);
+            if ($this->has('shipping_taxes_due_override')) {
+                $cart->setShippingTaxOverride($this->get('shipping_taxes_due_override'));
+            }
 
-            if (!empty($overrides) && is_array($overrides)) {
-                foreach ($overrides as $override) {
-                    foreach ($cart->getItems() as $cartItem) {
-                        if ($override['sku'] == $cartItem->getSku() && !is_null($override['amount'])) {
-                            $cartItem->setDueOverride($override['amount']);
+            if ($this->has('shipping_due_override')) {
+                $cart->setShippingOverride($this->get('shipping_due_override'));
+            }
+
+            if ($this->has('order_items_due_overrides')) {
+                $overrides = $this->get('order_items_due_overrides', []);
+
+                if (!empty($overrides) && is_array($overrides)) {
+                    foreach ($overrides as $override) {
+                        foreach ($cart->getItems() as $cartItem) {
+                            if ($override['sku'] == $cartItem->getSku() && !is_null($override['amount'])) {
+                                $cartItem->setDueOverride($override['amount']);
+                            }
                         }
                     }
                 }
