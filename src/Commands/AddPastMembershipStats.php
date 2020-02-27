@@ -58,7 +58,7 @@ class AddPastMembershipStats extends Command
      */
     public function handle()
     {
-        $startDateString = $this->argument('startDate') ?: '2017-01-01';
+        $startDateString = $this->argument('startDate') ?: '2015-01-01';
         $startDate = Carbon::parse($startDateString);
 
         $endDate = $this->argument('endDate') ?
@@ -93,7 +93,7 @@ class AddPastMembershipStats extends Command
         $now = Carbon::now()
                 ->toDateTimeString();
 
-        for ($i = 0; $i < $days; $i++) {
+        for ($i = 0; $i <= $days; $i++) {
 
             $statsDate = $smallDate->copy()
                             ->addDays($i)
@@ -158,6 +158,12 @@ class AddPastMembershipStats extends Command
 
                 $insertData = [];
             }
+        }
+
+        if (!empty($insertData)) {
+            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                ->table('ecommerce_membership_stats')
+                ->insert($insertData);
         }
 
         $finish = microtime(true) - $start;
@@ -356,19 +362,23 @@ EOT;
 
                         $itemData = get_object_vars($item);
 
-                        $start = $itemData['created_at'] < $smallDate ? $smallDate : $itemData['created_at'];
+                        $createdAt = Carbon::parse($itemData['created_at']);
 
-                        $end = $bigDate;
+                        $start = $createdAt < $smallDate ? $smallDate : $createdAt;
+
+                        $end = $bigDate->copy()->addDays(1); // the update query uses end interval exclusive
 
                         if ($itemData['canceled_on']) {
-                            $end = $itemData['canceled_on'];
-                        } else if (
-                            !$itemData['is_active']
-                            && $itemData['paid_until']
-                            && $itemData['paid_until'] < $bigDate
-                        ) {
-                            $end = $itemData['paid_until'];
+                            $canceledOn = Carbon::parse($itemData['canceled_on']);
+                            $end = $canceledOn > $end ? $end : $canceledOn;
                         }
+
+                        if ($itemData['paid_until']) {
+                            $paidUntil = Carbon::parse($itemData['paid_until']);
+                            $end = $paidUntil > $end ? $end : $paidUntil;
+                        }
+
+                        // at this point $end represents the smallest non-null value of ($bigDate, $canceledOn, $paidUntil)
 
                         $intervalType = null;
 
@@ -384,8 +394,8 @@ EOT;
 
                         $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_membership_stats')
-                            ->where('stats_date', '>=', $start)
-                            ->where('stats_date', '<=', $end)
+                            ->where('stats_date', '>=', $start->toDateString())
+                            ->where('stats_date', '<', $end->toDateString())
                             ->where('interval_type', $intervalType)
                             ->increment('active_state');
                     }
@@ -409,7 +419,6 @@ EOT;
             ->table('ecommerce_subscriptions')
             ->whereNotNull('paid_until')
             ->where('paid_until', '<=', $bigDate)
-            ->where('is_active', 0)
             ->where(function ($query) {
                 $query->where(function ($query) {
                         $query->where('interval_type', config('ecommerce.interval_type_monthly'))
@@ -432,7 +441,8 @@ EOT;
 
                         $itemData = get_object_vars($item);
 
-                        $start = $itemData['paid_until'] < $smallDate ? $smallDate : $itemData['paid_until'];
+                        $paidUntil = Carbon::parse($itemData['paid_until']);
+                        $start = $paidUntil < $smallDate ? $smallDate : $paidUntil;
 
                         $end = $bigDate;
 
@@ -450,8 +460,8 @@ EOT;
 
                         $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_membership_stats')
-                            ->where('stats_date', '>=', $start)
-                            ->where('stats_date', '<=', $end)
+                            ->where('stats_date', '>=', $start->toDateString())
+                            ->where('stats_date', '<=', $end->toDateString())
                             ->where('interval_type', $intervalType)
                             ->increment('suspended_state');
                     }
@@ -497,7 +507,9 @@ EOT;
 
                         $itemData = get_object_vars($item);
 
-                        $start = $itemData['canceled_on'] < $smallDate ? $smallDate : $itemData['canceled_on'];
+                        $canceledOn = Carbon::parse($itemData['canceled_on']);
+
+                        $start = $canceledOn < $smallDate ? $smallDate : $canceledOn;
 
                         $end = $bigDate;
 
@@ -515,8 +527,8 @@ EOT;
 
                         $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_membership_stats')
-                            ->where('stats_date', '>=', $start)
-                            ->where('stats_date', '<=', $end)
+                            ->where('stats_date', '>=', $start->toDateString())
+                            ->where('stats_date', '<=', $end->toDateString())
                             ->where('interval_type', $intervalType)
                             ->increment('canceled_state');
                     }
@@ -538,10 +550,79 @@ EOT;
             ->table('ecommerce_products')
             ->whereIn('sku', self::LIFETIME_SKUS)
             ->get()
-            ->pluck('id');
+            ->pluck('id')
+            ->toArray();
 
-        // update new field with statement
+        $sql = <<<'EOT'
+UPDATE ecommerce_membership_stats ms
+INNER JOIN (
+    SELECT
+        COUNT(id) AS new,
+        DATE(created_at) AS stats_date
+    FROM ecommerce_user_products
+    WHERE
+        product_id IN (%s)
+        AND deleted_at IS NULL
+        AND expiration_date IS NULL
+        AND created_at >= '%s'
+        AND created_at <= '%s'
+    GROUP BY stats_date
+) n ON ms.stats_date = n.stats_date
+SET ms.new = n.new
+WHERE ms.interval_type = '%s'
+EOT;
 
-        // update active_state field with chunked query
+        $statement = sprintf(
+            $sql,
+            implode(', ', $lifetimeProductsIds),
+            $smallDate->toDateTimeString(),
+            $bigDate->toDateTimeString(),
+            MembershipStats::TYPE_LIFETIME
+        );
+
+        $this->databaseManager->statement($statement);
+
+        $chunkSize = 1000;
+
+        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+            ->table('ecommerce_user_products')
+            ->whereIn('product_id', $lifetimeProductsIds)
+            ->where('created_at', '<=', $bigDate)
+            ->orderBy('id', 'desc')
+            ->chunk(
+                $chunkSize,
+                function (Collection $rows) use ($smallDate, $bigDate) {
+
+                    foreach ($rows as $item) {
+
+                        $itemData = get_object_vars($item);
+
+                        $start = $itemData['created_at'] < $smallDate ? $smallDate : $itemData['created_at'];
+
+                        $end = $bigDate;
+
+                        if ($itemData['deleted_at'] && $itemData['deleted_at'] < $end) {
+                            $end = $itemData['deleted_at'];
+                        }
+
+                        if ($itemData['expiration_date'] && $itemData['expiration_date'] < $end) {
+                            $end = $itemData['expiration_date'];
+                        }
+
+                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            ->table('ecommerce_membership_stats')
+                            ->where('stats_date', '>=', $start)
+                            ->where('stats_date', '<=', $end)
+                            ->where('interval_type', MembershipStats::TYPE_LIFETIME)
+                            ->increment('active_state');
+                    }
+                }
+            );
+
+        $finish = microtime(true) - $start;
+
+        $format = "Finished processing TYPE_LIFETIME membership stats in total %s seconds\n";
+
+        $this->info(sprintf($format, $finish));
     }
 }
