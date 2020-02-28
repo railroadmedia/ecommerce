@@ -21,6 +21,8 @@ use Gedmo\SoftDeleteable\Filter\SoftDeleteableFilter;
 use Gedmo\SoftDeleteable\SoftDeleteableListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Railroad\Doctrine\TimestampableListener;
+use Railroad\Ecommerce\Commands\AddDailyMembershipStats;
+use Railroad\Ecommerce\Commands\AddPastMembershipStats;
 use Railroad\Ecommerce\Commands\ConvertDiscountCriteriaProducsAssociation;
 use Railroad\Ecommerce\Commands\FillPaymentGatewayColumnFromPaymentMethod;
 use Railroad\Ecommerce\Commands\FindDuplicateSubscriptionsAndLifetimesWithSubscriptions;
@@ -95,6 +97,7 @@ class EcommerceServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__ . '/../../routes/customer.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/discount.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/discount_criteria.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/membership_stats.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/order.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/order_form.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/payment.php');
@@ -116,6 +119,8 @@ class EcommerceServiceProvider extends ServiceProvider
         // commands
         $this->commands(
             [
+                AddDailyMembershipStats::class,
+                AddPastMembershipStats::class,
                 ConvertDiscountCriteriaProducsAssociation::class,
                 RenewalDueSubscriptions::class,
                 SplitPaymentMethodIdsToColumns::class,
