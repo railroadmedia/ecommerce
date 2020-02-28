@@ -27,12 +27,32 @@ class MobileOrderUserProductListener
      */
     public function handle(MobileOrderEvent $event)
     {
-        $this->userProductService->assignUserProduct(
-            $event->getSubscription()->getUser(),
-            $event->getSubscription()->getProduct(),
-            $event->getSubscription()->getPaidUntil()
-                ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)),
-            1
-        );
+        if ($event->getSubscription()) {
+            $subscription = $event->getSubscription();
+            $user = $subscription->getUser();
+            $product = $subscription->getProduct();
+
+            $this->userProductService->assignUserProduct(
+                $user,
+                $product,
+                $subscription->getPaidUntil()
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)),
+                1
+            );
+        }
+
+        if ($event->getOrder()) {
+            $order = $event->getOrder();
+            $user = $order->getUser();
+
+            foreach ($order->getOrderItems() as $item) {
+                $this->userProductService->assignUserProduct(
+                    $user,
+                    $item->getProduct(),
+                    null,
+                    $item->getQuantity()
+                );
+            }
+        }
     }
 }
