@@ -24,6 +24,7 @@ use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use ReceiptValidator\GooglePlay\PurchaseResponse;
 use ReceiptValidator\GooglePlay\SubscriptionResponse;
 use Throwable;
 
@@ -122,11 +123,24 @@ class GooglePlayStoreService
 
         // save it to the database
         try {
-            $googleResponse = $this->googlePlayStoreGateway->getResponse(
-                $receipt->getPackageName(),
-                $receipt->getProductId(),
-                $receipt->getPurchaseToken()
-            );
+
+            if ($receipt->getPurchaseType() == GoogleReceipt::GOOGLE_PRODUCT_PURCHASE){
+
+                $googleResponse = $this->googlePlayStoreGateway->validatePurchase(
+                    $receipt->getPackageName(),
+                    $receipt->getProductId(),
+                    $receipt->getPurchaseToken()
+                );
+
+            } else {
+
+                $googleResponse = $this->googlePlayStoreGateway->getResponse(
+                    $receipt->getPackageName(),
+                    $receipt->getProductId(),
+                    $receipt->getPurchaseToken()
+                );
+
+            }
 
             $receipt->setValid(true);
 
@@ -233,7 +247,7 @@ class GooglePlayStoreService
 
     /**
      * @param GoogleReceipt $googleReceipt
-     * @param SubscriptionResponse $googleSubscriptionResponse
+     * @param SubscriptionResponse|PurchaseResponse $googleSubscriptionResponse
      * @param User $user
      * @return Subscription
      *
@@ -243,15 +257,16 @@ class GooglePlayStoreService
      */
     public function syncSubscription(
         GoogleReceipt $googleReceipt,
-        SubscriptionResponse $googleSubscriptionResponse,
+        $googleSubscriptionResponse,
         User $user
-    )
-    {
+    ) {
         $purchasedProducts = $this->getPurchasedItem($googleReceipt);
 
         if (empty($purchasedProducts)) {
             throw new ReceiptValidationException('Purchased google in app product not found in config.');
         }
+
+        $membershipIncludeFreePack = count($purchasedProducts) > 1;
 
         foreach ($purchasedProducts as $purchasedProduct) {
             if ($purchasedProduct->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
@@ -465,8 +480,8 @@ class GooglePlayStoreService
                     //pack puchase
                     $order = new Order();
                     $order->setUser($user);
-                    $order->setTotalPaid($purchasedProduct->getPrice());
-                    $order->setTotalDue($purchasedProduct->getPrice());
+                    $order->setTotalPaid($membershipIncludeFreePack ? 0 : $purchasedProduct->getPrice());
+                    $order->setTotalDue($membershipIncludeFreePack ? 0 : $purchasedProduct->getPrice());
                     $order->setTaxesDue(0);
                     $order->setShippingDue(0);
                     $order->setBrand(config('ecommerce.brand'));
@@ -486,23 +501,36 @@ class GooglePlayStoreService
                     $order->addOrderItem($orderItem);
                     $this->entityManager->persist($order);
 
-                    $payment = new Payment();
-                    $payment->setCreatedAt(Carbon::now());
+                    if (!$membershipIncludeFreePack) {
+                        $payment = new Payment();
+                        $payment->setCreatedAt(Carbon::now());
 
-                    $payment->setTotalDue($purchasedProduct->getPrice());
-                    $payment->setTotalPaid($purchasedProduct->getPrice());
+                        $payment->setTotalDue($purchasedProduct->getPrice());
+                        $payment->setTotalPaid($purchasedProduct->getPrice());
 
-                    $payment->setConversionRate(1);
+                        $payment->setConversionRate(1);
 
-                    $payment->setType(Payment::TYPE_INITIAL_ORDER);
-                    $payment->setExternalId($googleSubscriptionResponse->getRawResponse()->getOrderId());
-                    $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_APPLE);
+                        $payment->setType(Payment::TYPE_INITIAL_ORDER);
+                        $payment->setExternalId(
+                            $googleSubscriptionResponse->getRawResponse()
+                                ->getOrderId()
+                        );
+                        $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_GOOGLE);
 
-                    $payment->setGatewayName(config('ecommerce.brand'));
-                    $payment->setStatus(Payment::STATUS_PAID);
-                    $payment->setCurrency('USD');
+                        $payment->setGatewayName(config('ecommerce.brand'));
+                        $payment->setStatus(Payment::STATUS_PAID);
+                        $payment->setCurrency('USD');
 
-                    $this->entityManager->persist($payment);
+                        $this->entityManager->persist($payment);
+
+                        $orderPayment = new OrderPayment();
+
+                        $orderPayment->setOrder($order);
+                        $orderPayment->setPayment($payment);
+                        $orderPayment->setCreatedAt(Carbon::now());
+
+                        $this->entityManager->persist($orderPayment);
+                    }
 
                     $this->entityManager->flush();
 
