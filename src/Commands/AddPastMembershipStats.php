@@ -192,7 +192,7 @@ UPDATE ecommerce_membership_stats ms
 INNER JOIN (
     SELECT
         COUNT(id) AS new,
-        DATE(created_at) AS stats_date,
+        DATE(start_date) AS stats_date,
         COALESCE(
             IF (interval_type = '%s' AND interval_count = 1, '%s', NULL),
             IF (interval_type = '%s' AND interval_count = 6, '%s', NULL),
