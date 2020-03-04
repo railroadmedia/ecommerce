@@ -339,7 +339,7 @@ EOT;
 
         $this->databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_subscriptions')
-            ->where('created_at', '<=', $bigDate)
+            ->where('start_date', '<=', $bigDate)
             ->where(function ($query) {
                 $query->where(function ($query) {
                         $query->where('interval_type', config('ecommerce.interval_type_monthly'))
@@ -362,9 +362,9 @@ EOT;
 
                         $itemData = get_object_vars($item);
 
-                        $createdAt = Carbon::parse($itemData['created_at']);
+                        $startDate = Carbon::parse($itemData['start_date']);
 
-                        $start = $createdAt < $smallDate ? $smallDate : $createdAt;
+                        $start = $startDate < $smallDate ? $smallDate : $startDate;
 
                         $end = $bigDate->copy()->addDays(1); // the update query uses end interval exclusive
 

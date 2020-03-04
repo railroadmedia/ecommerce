@@ -165,7 +165,7 @@ class AddDailyMembershipStats extends Command
             )
             ->andWhere(
                 $qb->expr()
-                    ->between('s.createdAt', ':yesterdayStart', ':yesterdayEnd')
+                    ->between('s.startDate', ':yesterdayStart', ':yesterdayEnd')
             )
             ->andWhere(
                 $qb->expr()
