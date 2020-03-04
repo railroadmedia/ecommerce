@@ -23,6 +23,9 @@ class AppleReceipt
     CONST APPLE_RENEWAL_NOTIFICATION_TYPE = 'renewal';
     CONST APPLE_CANCEL_NOTIFICATION_TYPE = 'cancel';
 
+    CONST APPLE_PRODUCT_PURCHASE = 'product';
+    CONST APPLE_SUBSCRIPTION_PURCHASE = 'subscription';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
@@ -119,6 +122,15 @@ class AppleReceipt
      * @var string
      */
     protected $rawReceiptResponse;
+
+    /**
+     * Product or Subscription purchase
+     *
+     * @ORM\Column(type="string", name="purchase_type")
+     *
+     * @var string
+     */
+    protected $purchaseType;
 
     /**
      * @return int|null
@@ -318,5 +330,21 @@ class AppleReceipt
     public function setRawReceiptResponse($rawReceiptResponse): void
     {
         $this->rawReceiptResponse = $rawReceiptResponse;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getPurchaseType(): ?string
+    {
+        return $this->purchaseType;
+    }
+
+    /**
+     * @param string $purchaseType
+     */
+    public function setPurchaseType(string $purchaseType)
+    {
+        $this->purchaseType = $purchaseType;
     }
 }

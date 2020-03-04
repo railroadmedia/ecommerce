@@ -80,6 +80,7 @@ class AppleStoreKitController extends Controller
         $this->jsonApiHydrator->hydrate($receipt, $request->onlyAllowed());
 
         $receipt->setPassword($request->input('data.attributes.password'));
+        $receipt->setPurchaseType($request->input('data.attribute.purchase_type', AppleReceipt::APPLE_SUBSCRIPTION_PURCHASE));
 
         $user = $this->appleStoreKitService->processReceipt($receipt); // exception may be thrown
 

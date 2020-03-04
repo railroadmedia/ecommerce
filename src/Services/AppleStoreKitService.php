@@ -136,12 +136,17 @@ class AppleStoreKitService
         try {
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt->getReceipt());
 
-            $currentPurchasedItem = $this->getLatestPurchasedItem($appleResponse);
+            if($receipt->getPurchaseType() == AppleReceipt::APPLE_SUBSCRIPTION_PURCHASE) {
+                $currentPurchasedItem = $this->getLatestPurchasedItem($appleResponse);
+                $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
+            } else {
+                $currentPurchasedItem = $appleResponse->getPurchases()[0];
+                $receipt->setValid(true);
+            }
 
             $transactionId = $currentPurchasedItem->getTransactionId();
 
             $receipt->setTransactionId($transactionId);
-            $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
             $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
 
         } catch (ReceiptValidationException $exception) {
@@ -318,6 +323,10 @@ class AppleStoreKitService
             return null;
         }
 
+        if ($receipt->getPurchaseType() == AppleReceipt::APPLE_PRODUCT_PURCHASE) {
+            $firstPurchasedItem = $appleResponse->getPurchases()[0];
+        }
+
         $products = $this->getProductsByAppleStoreId($firstPurchasedItem->getProductId());
 
         if (empty($products)) {
@@ -330,10 +339,9 @@ class AppleStoreKitService
             if ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
                 // if a subscription with this external id already exists, just update it
                 // the subscription external ID should always be set to the first purchase item web order line item ID
-                $subscription =
-                    $this->subscriptionRepository->getByExternalAppStoreId(
-                        $firstPurchasedItem->getWebOrderLineItemId()
-                    );
+                $subscription = $this->subscriptionRepository->getByExternalAppStoreId(
+                    $firstPurchasedItem->getWebOrderLineItemId()
+                );
 
                 if (empty($subscription)) {
                     $subscription = new Subscription();
@@ -499,7 +507,7 @@ class AppleStoreKitService
                     $order->addOrderItem($orderItem);
                     $this->entityManager->persist($order);
 
-                    if(!$membershipIncludeFreePack) {
+                    if (!$membershipIncludeFreePack) {
                         $payment = new Payment();
                         $payment->setCreatedAt(Carbon::now());
 
