@@ -7,6 +7,7 @@ use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
@@ -23,6 +24,7 @@ use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use ReceiptValidator\GooglePlay\PurchaseResponse;
 use ReceiptValidator\GooglePlay\SubscriptionResponse;
 use Throwable;
 
@@ -96,8 +98,7 @@ class GooglePlayStoreService
         UserProviderInterface $userProvider,
         PaymentRepository $paymentRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository
-    )
-    {
+    ) {
         $this->googlePlayStoreGateway = $googlePlayStoreGateway;
         $this->entityManager = $entityManager;
         $this->productRepository = $productRepository;
@@ -116,17 +117,30 @@ class GooglePlayStoreService
      * @throws ReceiptValidationException
      * @throws Throwable
      */
-    public function processReceipt(GoogleReceipt $receipt): User
-    {
+    public function processReceipt(GoogleReceipt $receipt)
+    : User {
         $this->entityManager->persist($receipt);
 
         // save it to the database
         try {
-            $googleResponse = $this->googlePlayStoreGateway->getResponse(
-                $receipt->getPackageName(),
-                $receipt->getProductId(),
-                $receipt->getPurchaseToken()
-            );
+
+            if ($receipt->getPurchaseType() == GoogleReceipt::GOOGLE_PRODUCT_PURCHASE){
+
+                $googleResponse = $this->googlePlayStoreGateway->validatePurchase(
+                    $receipt->getPackageName(),
+                    $receipt->getProductId(),
+                    $receipt->getPurchaseToken()
+                );
+
+            } else {
+
+                $googleResponse = $this->googlePlayStoreGateway->getResponse(
+                    $receipt->getPackageName(),
+                    $receipt->getProductId(),
+                    $receipt->getPurchaseToken()
+                );
+
+            }
 
             $receipt->setValid(true);
 
@@ -162,9 +176,7 @@ class GooglePlayStoreService
         auth()->loginUsingId($user->getId());
 
         // sync the subscription
-        $subscription = $this->syncSubscription($receipt, $googleResponse, $user);
-
-        event(new MobileOrderEvent(null, null, $subscription));
+        $this->syncSubscription($receipt, $googleResponse, $user);
 
         return $user;
     }
@@ -179,8 +191,7 @@ class GooglePlayStoreService
     public function processNotification(
         GoogleReceipt $receipt,
         Subscription $subscription
-    )
-    {
+    ) {
         $this->entityManager->persist($receipt);
 
         try {
@@ -236,7 +247,7 @@ class GooglePlayStoreService
 
     /**
      * @param GoogleReceipt $googleReceipt
-     * @param SubscriptionResponse $googleSubscriptionResponse
+     * @param SubscriptionResponse|PurchaseResponse $googleSubscriptionResponse
      * @param User $user
      * @return Subscription
      *
@@ -246,226 +257,301 @@ class GooglePlayStoreService
      */
     public function syncSubscription(
         GoogleReceipt $googleReceipt,
-        SubscriptionResponse $googleSubscriptionResponse,
+        $googleSubscriptionResponse,
         User $user
-    ): Subscription
-    {
-        $purchasedProduct = $this->getPurchasedItem($googleReceipt);
+    ) {
+        $purchasedProducts = $this->getPurchasedItem($googleReceipt);
 
-        if (!$purchasedProduct) {
+        if (empty($purchasedProducts)) {
             throw new ReceiptValidationException('Purchased google in app product not found in config.');
         }
 
-        // if a subscription with this external id already exists, just update it
-        $subscription = $this->subscriptionRepository->getByExternalAppStoreId($googleReceipt->getPurchaseToken());
+        $membershipIncludeFreePack = count($purchasedProducts) > 1;
 
-        if (empty($subscription)) {
-            $subscription = new Subscription();
-            $subscription->setCreatedAt(Carbon::now());
-            $subscription->setTotalCyclesPaid(1);
-        }
+        foreach ($purchasedProducts as $purchasedProduct) {
+            if ($purchasedProduct->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
+                // if a subscription with this external id already exists, just update it
+                $subscription =
+                    $this->subscriptionRepository->getByExternalAppStoreId($googleReceipt->getPurchaseToken());
 
-        $subscription->setBrand(config('ecommerce.brand'));
-        $subscription->setType(Subscription::TYPE_GOOGLE_SUBSCRIPTION);
-        $subscription->setUser($user);
-        $subscription->setProduct($purchasedProduct);
+                if (empty($subscription)) {
+                    $subscription = new Subscription();
+                    $subscription->setCreatedAt(Carbon::now());
+                    $subscription->setTotalCyclesPaid(1);
+                }
 
-        $subscription->setIsActive($googleSubscriptionResponse->getAutoRenewing());
-        $subscription->setStartDate(Carbon::createFromTimestampMs($googleSubscriptionResponse->getStartTimeMillis()));
-        $subscription->setPaidUntil(Carbon::createFromTimestampMs($googleSubscriptionResponse->getExpiryTimeMillis()));
+                $subscription->setBrand(config('ecommerce.brand'));
+                $subscription->setType(Subscription::TYPE_GOOGLE_SUBSCRIPTION);
+                $subscription->setUser($user);
+                $subscription->setProduct($purchasedProduct);
 
-        $subscription->setCanceledOn(null);
-        $subscription->setCancellationReason(null);
+                $subscription->setIsActive($googleSubscriptionResponse->getAutoRenewing());
+                $subscription->setStartDate(
+                    Carbon::createFromTimestampMs($googleSubscriptionResponse->getStartTimeMillis())
+                );
+                $subscription->setPaidUntil(
+                    Carbon::createFromTimestampMs($googleSubscriptionResponse->getExpiryTimeMillis())
+                );
 
-        if (!empty($googleSubscriptionResponse->getUserCancellationTimeMillis()) ||
-            !empty($googleSubscriptionResponse->getCancelReason())) {
+                $subscription->setCanceledOn(null);
+                $subscription->setCancellationReason(null);
 
-            $subscription->setCanceledOn(
-                !empty($googleSubscriptionResponse->getUserCancellationTimeMillis()) ?
-                    Carbon::createFromTimestampMs($googleSubscriptionResponse->getUserCancellationTimeMillis()) :
-                    null
-            );
-            $subscription->setCancellationReason(
-                self::$cancellationReasonMap[$googleSubscriptionResponse->getCancelReason()]
-                ??
-                $googleSubscriptionResponse->getCancelReason()
-            );
-        }
+                if (!empty($googleSubscriptionResponse->getUserCancellationTimeMillis()) ||
+                    !empty($googleSubscriptionResponse->getCancelReason())) {
 
-        $subscription->setTotalPrice($purchasedProduct->getPrice());
-        $subscription->setTax(0);
-        $subscription->setCurrency(config('ecommerce.default_currency'));
+                    $subscription->setCanceledOn(
+                        !empty($googleSubscriptionResponse->getUserCancellationTimeMillis()) ?
+                            Carbon::createFromTimestampMs(
+                                $googleSubscriptionResponse->getUserCancellationTimeMillis()
+                            ) : null
+                    );
+                    $subscription->setCancellationReason(
+                        self::$cancellationReasonMap[$googleSubscriptionResponse->getCancelReason()]
+                        ??
+                        $googleSubscriptionResponse->getCancelReason()
+                    );
+                }
 
-        $subscription->setIntervalType($purchasedProduct->getSubscriptionIntervalType());
-        $subscription->setIntervalCount($purchasedProduct->getSubscriptionIntervalCount());
-        $subscription->setTotalCyclesDue(null);
+                $subscription->setTotalPrice($purchasedProduct->getPrice());
+                $subscription->setTax(0);
+                $subscription->setCurrency(config('ecommerce.default_currency'));
 
-        $subscription->setExternalAppStoreId($googleReceipt->getPurchaseToken());
-        $subscription->setUpdatedAt(Carbon::now());
+                $subscription->setIntervalType($purchasedProduct->getSubscriptionIntervalType());
+                $subscription->setIntervalCount($purchasedProduct->getSubscriptionIntervalCount());
+                $subscription->setTotalCyclesDue(null);
 
-        $this->entityManager->persist($subscription);
-        $this->entityManager->flush();
+                $subscription->setExternalAppStoreId($googleReceipt->getPurchaseToken());
+                $subscription->setUpdatedAt(Carbon::now());
 
-        // do the payments
-        $responseOrderId = $googleSubscriptionResponse->getRawResponse()->getOrderId();
+                $this->entityManager->persist($subscription);
+                $this->entityManager->flush();
 
-        $numberOfPaidOrders = 0;
-        $responseOrderIdWithoutIncrement = $responseOrderId;
+                // do the payments
+                $responseOrderId = $googleSubscriptionResponse->getRawResponse()->getOrderId();
 
-        if (strpos($responseOrderId, '..') !== false) {
-            $numberOfPaidOrders = substr($responseOrderId, strpos($responseOrderId, '..') + 2) + 1;
-            $responseOrderIdWithoutIncrement = substr($responseOrderId, 0, strpos($responseOrderId, '..'));
-        }
+                $numberOfPaidOrders = 0;
+                $responseOrderIdWithoutIncrement = $responseOrderId;
 
-        $expirationDate = Carbon::createFromTimestampMs($googleSubscriptionResponse->getExpiryTimeMillis());
-        $startDate = Carbon::createFromTimestampMs($googleSubscriptionResponse->getStartTimeMillis());
-        $incrementDate = $expirationDate->copy();
+                if (strpos($responseOrderId, '..') !== false) {
+                    $numberOfPaidOrders = substr($responseOrderId, strpos($responseOrderId, '..') + 2) + 1;
+                    $responseOrderIdWithoutIncrement = substr($responseOrderId, 0, strpos($responseOrderId, '..'));
+                }
 
-        for ($i = $numberOfPaidOrders; $i > 0; $i--) {
+                $expirationDate = Carbon::createFromTimestampMs($googleSubscriptionResponse->getExpiryTimeMillis());
+                $startDate = Carbon::createFromTimestampMs($googleSubscriptionResponse->getStartTimeMillis());
+                $incrementDate = $expirationDate->copy();
 
-            // make payments working back from the expiration date
-            if ($incrementDate > $startDate) {
+                for ($i = $numberOfPaidOrders; $i > 0; $i--) {
 
-                // make payment
-                $existingPayment =
-                    $this->paymentRepository->getByExternalIdAndProvider(
-                        $responseOrderIdWithoutIncrement . '..' . ($i - 1),
+                    // make payments working back from the expiration date
+                    if ($incrementDate > $startDate) {
+
+                        // make payment
+                        $existingPayment = $this->paymentRepository->getByExternalIdAndProvider(
+                            $responseOrderIdWithoutIncrement . '..' . ($i - 1),
+                            Payment::EXTERNAL_PROVIDER_GOOGLE
+                        );
+
+                        if (empty($existingPayment)) {
+                            $existingPayment = new Payment();
+                        } else {
+                            $existingPayment->setUpdatedAt(Carbon::now());
+                        }
+
+                        $existingPayment->setTotalDue($subscription->getTotalPrice());
+                        $existingPayment->setTotalPaid($subscription->getTotalPrice());
+                        $existingPayment->setTotalRefunded(0);
+                        $existingPayment->setConversionRate(1);
+                        $existingPayment->setType(Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL);
+
+                        $existingPayment->setExternalId($responseOrderIdWithoutIncrement . '..' . ($i - 1));
+                        $existingPayment->setExternalProvider(Payment::EXTERNAL_PROVIDER_GOOGLE);
+
+                        $existingPayment->setGatewayName(config('ecommerce.brand'));
+                        $existingPayment->setStatus(Payment::STATUS_PAID);
+                        $existingPayment->setCurrency(config('ecommerce.default_currency'));
+
+                        // increment
+                        if ($purchasedProduct->getSubscriptionIntervalType() ==
+                            config('ecommerce.interval_type_daily')) {
+
+                            $incrementDate->subDays($purchasedProduct->getSubscriptionIntervalCount());
+
+                        } elseif ($purchasedProduct->getSubscriptionIntervalType() ==
+                            config('ecommerce.interval_type_monthly')) {
+
+                            $incrementDate->subMonths($purchasedProduct->getSubscriptionIntervalCount());
+
+                        } elseif ($purchasedProduct->getSubscriptionIntervalType() ==
+                            config('ecommerce.interval_type_yearly')) {
+
+                            $incrementDate->subYears($purchasedProduct->getSubscriptionIntervalCount());
+
+                        } else {
+                            break;
+                        }
+
+                        $existingPayment->setCreatedAt($incrementDate->copy());
+
+                        $this->entityManager->persist($existingPayment);
+                        $this->entityManager->flush();
+
+                        // dont duplicate link rows
+                        $subscriptionPayment =
+                            $this->subscriptionPaymentRepository->getByPayment($existingPayment)[0] ?? null;
+
+                        if (empty($subscriptionPayment)) {
+                            $subscriptionPayment = new SubscriptionPayment();
+                        }
+
+                        $subscriptionPayment->setSubscription($subscription);
+                        $subscriptionPayment->setPayment($existingPayment);
+
+                        $this->entityManager->persist($subscriptionPayment);
+
+                        $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
+
+                        if (empty($subscription->getLatestPayment())) {
+                            $subscription->setLatestPayment($existingPayment);
+                        }
+                    }
+                }
+
+                // If this is the first order and the payment status is paid (not trial), then create a payment for the up
+                // front order as well. If the user already used their trial week in the past google charges them
+                // the full amount up front.
+                if ($numberOfPaidOrders == 0 && $googleSubscriptionResponse->getPaymentState() == 1) {
+                    // make payment
+                    $existingPayment = $this->paymentRepository->getByExternalIdAndProvider(
+                        $responseOrderIdWithoutIncrement,
                         Payment::EXTERNAL_PROVIDER_GOOGLE
                     );
 
-                if (empty($existingPayment)) {
-                    $existingPayment = new Payment();
-                } else {
-                    $existingPayment->setUpdatedAt(Carbon::now());
+                    if (empty($existingPayment)) {
+                        $existingPayment = new Payment();
+                    } else {
+                        $existingPayment->setUpdatedAt(Carbon::now());
+                    }
+
+                    $existingPayment->setTotalDue($subscription->getTotalPrice());
+                    $existingPayment->setTotalPaid($subscription->getTotalPrice());
+                    $existingPayment->setTotalRefunded(0);
+                    $existingPayment->setConversionRate(1);
+                    $existingPayment->setType(Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL);
+
+                    $existingPayment->setExternalId($responseOrderIdWithoutIncrement);
+                    $existingPayment->setExternalProvider(Payment::EXTERNAL_PROVIDER_GOOGLE);
+
+                    $existingPayment->setGatewayName(config('ecommerce.brand'));
+                    $existingPayment->setStatus(Payment::STATUS_PAID);
+                    $existingPayment->setCurrency(config('ecommerce.default_currency'));
+                    $existingPayment->setCreatedAt($startDate);
+
+                    $this->entityManager->persist($existingPayment);
+                    $this->entityManager->flush();
+
+                    // dont duplicate link rows
+                    $subscriptionPayment =
+                        $this->subscriptionPaymentRepository->getByPayment($existingPayment)[0] ?? null;
+
+                    if (empty($subscriptionPayment)) {
+                        $subscriptionPayment = new SubscriptionPayment();
+                    }
+
+                    $subscriptionPayment->setSubscription($subscription);
+                    $subscriptionPayment->setPayment($existingPayment);
+
+                    $this->entityManager->persist($subscriptionPayment);
+
+                    $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
+
+                    if (empty($subscription->getLatestPayment())) {
+                        $subscription->setLatestPayment($existingPayment);
+                    }
                 }
 
-                $existingPayment->setTotalDue($subscription->getTotalPrice());
-                $existingPayment->setTotalPaid($subscription->getTotalPrice());
-                $existingPayment->setTotalRefunded(0);
-                $existingPayment->setConversionRate(1);
-                $existingPayment->setType(Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL);
-
-                $existingPayment->setExternalId($responseOrderIdWithoutIncrement . '..' . ($i - 1));
-                $existingPayment->setExternalProvider(Payment::EXTERNAL_PROVIDER_GOOGLE);
-
-                $existingPayment->setGatewayName(config('ecommerce.brand'));
-                $existingPayment->setStatus(Payment::STATUS_PAID);
-                $existingPayment->setCurrency(config('ecommerce.default_currency'));
-
-                // increment
-                if ($purchasedProduct->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
-
-                    $incrementDate->subDays($purchasedProduct->getSubscriptionIntervalCount());
-
-                } elseif ($purchasedProduct->getSubscriptionIntervalType() ==
-                    config('ecommerce.interval_type_monthly')) {
-
-                    $incrementDate->subMonths($purchasedProduct->getSubscriptionIntervalCount());
-
-                } elseif ($purchasedProduct->getSubscriptionIntervalType() ==
-                    config('ecommerce.interval_type_yearly')) {
-
-                    $incrementDate->subYears($purchasedProduct->getSubscriptionIntervalCount());
-
-                } else {
-                    break;
-                }
-
-                $existingPayment->setCreatedAt($incrementDate->copy());
-
-                $this->entityManager->persist($existingPayment);
+                $this->entityManager->persist($subscription);
                 $this->entityManager->flush();
 
-                // dont duplicate link rows
-                $subscriptionPayment = $this->subscriptionPaymentRepository->getByPayment($existingPayment)[0] ?? null;
-
-                if (empty($subscriptionPayment)) {
-                    $subscriptionPayment = new SubscriptionPayment();
-                }
-
-                $subscriptionPayment->setSubscription($subscription);
-                $subscriptionPayment->setPayment($existingPayment);
-
-                $this->entityManager->persist($subscriptionPayment);
-
-                $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
-
-                if (empty($subscription->getLatestPayment())) {
-                    $subscription->setLatestPayment($existingPayment);
-                }
-            }
-        }
-
-        // If this is the first order and the payment status is paid (not trial), then create a payment for the up
-        // front order as well. If the user already used their trial week in the past google charges them
-        // the full amount up front.
-        if ($numberOfPaidOrders == 0 && $googleSubscriptionResponse->getPaymentState() == 1) {
-            // make payment
-            $existingPayment =
-                $this->paymentRepository->getByExternalIdAndProvider(
-                    $responseOrderIdWithoutIncrement,
-                    Payment::EXTERNAL_PROVIDER_GOOGLE
-                );
-
-            if (empty($existingPayment)) {
-                $existingPayment = new Payment();
+                event(new MobileOrderEvent(null, null, $subscription));
             } else {
-                $existingPayment->setUpdatedAt(Carbon::now());
-            }
+                if ($purchasedProduct->getType() == Product::TYPE_DIGITAL_ONE_TIME) {
 
-            $existingPayment->setTotalDue($subscription->getTotalPrice());
-            $existingPayment->setTotalPaid($subscription->getTotalPrice());
-            $existingPayment->setTotalRefunded(0);
-            $existingPayment->setConversionRate(1);
-            $existingPayment->setType(Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL);
+                    //pack puchase
+                    $order = new Order();
+                    $order->setUser($user);
+                    $order->setTotalPaid($membershipIncludeFreePack ? 0 : $purchasedProduct->getPrice());
+                    $order->setTotalDue($membershipIncludeFreePack ? 0 : $purchasedProduct->getPrice());
+                    $order->setTaxesDue(0);
+                    $order->setShippingDue(0);
+                    $order->setBrand(config('ecommerce.brand'));
 
-            $existingPayment->setExternalId($responseOrderIdWithoutIncrement);
-            $existingPayment->setExternalProvider(Payment::EXTERNAL_PROVIDER_GOOGLE);
+                    $this->entityManager->persist($order);
 
-            $existingPayment->setGatewayName(config('ecommerce.brand'));
-            $existingPayment->setStatus(Payment::STATUS_PAID);
-            $existingPayment->setCurrency(config('ecommerce.default_currency'));
-            $existingPayment->setCreatedAt($startDate);
+                    $orderItem = new OrderItem();
+                    $orderItem->setOrder($order);
+                    $orderItem->setProduct($purchasedProduct);
+                    $orderItem->setQuantity(1);
+                    $orderItem->setInitialPrice($purchasedProduct->getPrice());
+                    $orderItem->setTotalDiscounted(0);
+                    $orderItem->setFinalPrice($purchasedProduct->getPrice());
 
-            $this->entityManager->persist($existingPayment);
-            $this->entityManager->flush();
+                    $this->entityManager->persist($orderItem);
 
-            // dont duplicate link rows
-            $subscriptionPayment = $this->subscriptionPaymentRepository->getByPayment($existingPayment)[0] ?? null;
+                    $order->addOrderItem($orderItem);
+                    $this->entityManager->persist($order);
 
-            if (empty($subscriptionPayment)) {
-                $subscriptionPayment = new SubscriptionPayment();
-            }
+                    if (!$membershipIncludeFreePack) {
+                        $payment = new Payment();
+                        $payment->setCreatedAt(Carbon::now());
 
-            $subscriptionPayment->setSubscription($subscription);
-            $subscriptionPayment->setPayment($existingPayment);
+                        $payment->setTotalDue($purchasedProduct->getPrice());
+                        $payment->setTotalPaid($purchasedProduct->getPrice());
 
-            $this->entityManager->persist($subscriptionPayment);
+                        $payment->setConversionRate(1);
 
-            $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
+                        $payment->setType(Payment::TYPE_INITIAL_ORDER);
+                        $payment->setExternalId(
+                            $googleSubscriptionResponse->getRawResponse()
+                                ->getOrderId()
+                        );
+                        $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_GOOGLE);
 
-            if (empty($subscription->getLatestPayment())) {
-                $subscription->setLatestPayment($existingPayment);
+                        $payment->setGatewayName(config('ecommerce.brand'));
+                        $payment->setStatus(Payment::STATUS_PAID);
+                        $payment->setCurrency('USD');
+
+                        $this->entityManager->persist($payment);
+
+                        $orderPayment = new OrderPayment();
+
+                        $orderPayment->setOrder($order);
+                        $orderPayment->setPayment($payment);
+                        $orderPayment->setCreatedAt(Carbon::now());
+
+                        $this->entityManager->persist($orderPayment);
+                    }
+
+                    $this->entityManager->flush();
+
+                    event(new MobileOrderEvent($order, null, null));
+                }
             }
         }
-
-        $this->entityManager->persist($subscription);
-        $this->entityManager->flush();
-
-        return $subscription;
     }
 
     /**
      * @param GoogleReceipt $receipt
-     *
      * @return Product|null
-     *
-     * @throws Throwable
+     * @throws ORMException
      */
-    public function getPurchasedItem(GoogleReceipt $receipt): ?Product
-    {
+    public function getPurchasedItem(GoogleReceipt $receipt)
+    : array {
         $productsMap = config('ecommerce.google_store_products_map');
+        if (isset($productsMap[$receipt->getProductId()])) {
+            return $this->productRepository->bySkus((array)$productsMap[$receipt->getProductId()]);
+        }
 
-        return $this->productRepository->bySku($productsMap[$receipt->getProductId()]);
+        return [];
     }
 }

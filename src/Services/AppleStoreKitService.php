@@ -108,8 +108,7 @@ class AppleStoreKitService
         SubscriptionRepository $subscriptionRepository,
         PaymentRepository $paymentRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository
-    )
-    {
+    ) {
         $this->appleReceiptRepository = $appleReceiptRepository;
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->entityManager = $entityManager;
@@ -130,19 +129,24 @@ class AppleStoreKitService
      * @throws GuzzleException
      * @throws Throwable
      */
-    public function processReceipt(AppleReceipt $receipt): User
-    {
+    public function processReceipt(AppleReceipt $receipt)
+    : User {
         $this->entityManager->persist($receipt);
 
         try {
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt->getReceipt());
 
-            $currentPurchasedItem = $this->getLatestPurchasedItem($appleResponse);
+            if($receipt->getPurchaseType() == AppleReceipt::APPLE_SUBSCRIPTION_PURCHASE) {
+                $currentPurchasedItem = $this->getLatestPurchasedItem($appleResponse);
+                $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
+            } else {
+                $currentPurchasedItem = $appleResponse->getPurchases()[0];
+                $receipt->setValid(true);
+            }
 
             $transactionId = $currentPurchasedItem->getTransactionId();
 
             $receipt->setTransactionId($transactionId);
-            $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
             $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
 
         } catch (ReceiptValidationException $exception) {
@@ -168,11 +172,9 @@ class AppleStoreKitService
             auth()->loginUsingId($user->getId());
         }
 
-        $subscription = $this->syncSubscription($appleResponse, $receipt, $user);
+        $this->syncSubscription($appleResponse, $receipt, $user);
 
         $this->entityManager->flush();
-
-        event(new MobileOrderEvent(null, null, $subscription));
 
         return $user;
     }
@@ -221,9 +223,7 @@ class AppleStoreKitService
 
             event(
                 new MobileSubscriptionRenewed(
-                    $subscription,
-                    $subscription->getLatestPayment(),
-                    MobileSubscriptionRenewed::ACTOR_SYSTEM
+                    $subscription, $subscription->getLatestPayment(), MobileSubscriptionRenewed::ACTOR_SYSTEM
                 )
             );
 
@@ -279,8 +279,8 @@ class AppleStoreKitService
      *
      * @return PurchaseItem|null
      */
-    public function getFirstPurchasedItem(ResponseInterface $validationResponse): ?PurchaseItem
-    {
+    public function getFirstPurchasedItem(ResponseInterface $validationResponse)
+    : ?PurchaseItem {
         if (is_array($validationResponse->getLatestReceiptInfo()) &&
             !empty($validationResponse->getLatestReceiptInfo())) {
 
@@ -292,14 +292,13 @@ class AppleStoreKitService
         return null;
     }
 
-
     /**
      * @param ResponseInterface $validationResponse
      *
      * @return PurchaseItem|null
      */
-    public function getLatestPurchasedItem(ResponseInterface $validationResponse): ?PurchaseItem
-    {
+    public function getLatestPurchasedItem(ResponseInterface $validationResponse)
+    : ?PurchaseItem {
         if (is_array($validationResponse->getLatestReceiptInfo()) &&
             !empty($validationResponse->getLatestReceiptInfo())) {
             return $validationResponse->getLatestReceiptInfo()[0] ?? null;
@@ -324,157 +323,239 @@ class AppleStoreKitService
             return null;
         }
 
-        $product = $this->getProductByAppleStoreId($firstPurchasedItem->getProductId());
+        if ($receipt->getPurchaseType() == AppleReceipt::APPLE_PRODUCT_PURCHASE) {
+            $firstPurchasedItem = $appleResponse->getPurchases()[0];
+        }
 
-        if (!$product) {
+        $products = $this->getProductsByAppleStoreId($firstPurchasedItem->getProductId());
+
+        if (empty($products)) {
             return null;
         }
 
-        // if a subscription with this external id already exists, just update it
-        // the subscription external ID should always be set to the first purchase item web order line item ID
-        $subscription =
-            $this->subscriptionRepository->getByExternalAppStoreId($firstPurchasedItem->getWebOrderLineItemId());
+        $membershipIncludeFreePack = count($products) > 1;
 
-        if (empty($subscription)) {
-            $subscription = new Subscription();
-            $subscription->setCreatedAt(Carbon::now());
-            $subscription->setTotalCyclesPaid(1);
-            $subscription->setUser($user);
-        }
-
-        $subscription->setBrand(config('ecommerce.brand'));
-        $subscription->setType(Subscription::TYPE_APPLE_SUBSCRIPTION);
-        $subscription->setProduct($product);
-
-        if (!empty($appleResponse->getPendingRenewalInfo()[0])) {
-            $subscription->setIsActive($appleResponse->getPendingRenewalInfo()[0]->getAutoRenewStatus());
-            $subscription->setCanceledOn(
-                !empty($latestPurchaseItem->getCancellationDate()) ?
-                    $latestPurchaseItem->getCancellationDate()->copy() : null
-            );
-
-            if (!empty($subscription->getCanceledOn())) {
-                $subscription->setCancellationReason($latestPurchaseItem->getRawResponse()['cancellation_reason']);
-            } else {
-                $subscription->setCancellationReason(
-                    self::RENEWAL_EXPIRATION_REASON[$appleResponse->getPendingRenewalInfo()[0]->getExpirationIntent()] ?? ''
-                );
-            }
-        } else {
-            $subscription->setCanceledOn(null);
-            $subscription->setIsActive($latestPurchaseItem->getExpiresDate() > Carbon::now());
-        }
-
-        $subscription->setStartDate($firstPurchasedItem->getPurchaseDate());
-        $subscription->setPaidUntil($latestPurchaseItem->getExpiresDate()->copy());
-        $subscription->setAppleExpirationDate($latestPurchaseItem->getExpiresDate()->copy());
-
-        $subscription->setTotalPrice($product->getPrice());
-        $subscription->setTax(0);
-        $subscription->setCurrency('USD');
-
-        $subscription->setIntervalType($product->getSubscriptionIntervalType());
-        $subscription->setIntervalCount($product->getSubscriptionIntervalCount());
-
-        $subscription->setTotalCyclesPaid(0);
-        $subscription->setTotalCyclesDue(null);
-
-        // external app store id should always be the first purchase item web order item id
-        $subscription->setExternalAppStoreId($firstPurchasedItem->getWebOrderLineItemId());
-        $subscription->setAppleReceipt($receipt);
-
-        $subscription->setCreatedAt(Carbon::now());
-
-        $receipt->setSubscription($subscription);
-
-        // sync payments
-        // 1 payment for every purchase item
-        foreach (array_reverse($appleResponse->getLatestReceiptInfo()) as $purchaseItem) {
-
-            // we dont want to add zero dollar trial payments
-            if ($purchaseItem->isTrialPeriod()) {
-                continue;
-            }
-
-            $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
-
-            $existingPayment =
-                $this->paymentRepository->getByExternalIdAndProvider(
-                    $purchaseItem->getTransactionId(),
-                    Payment::EXTERNAL_PROVIDER_APPLE
+        foreach ($products as $product) {
+            if ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
+                // if a subscription with this external id already exists, just update it
+                // the subscription external ID should always be set to the first purchase item web order line item ID
+                $subscription = $this->subscriptionRepository->getByExternalAppStoreId(
+                    $firstPurchasedItem->getWebOrderLineItemId()
                 );
 
-            if (empty($existingPayment)) {
-                $existingPayment = new Payment();
-                $existingPayment->setCreatedAt(Carbon::now());
+                if (empty($subscription)) {
+                    $subscription = new Subscription();
+                    $subscription->setCreatedAt(Carbon::now());
+                    $subscription->setTotalCyclesPaid(1);
+                    $subscription->setUser($user);
+                }
+
+                $subscription->setBrand(config('ecommerce.brand'));
+                $subscription->setType(Subscription::TYPE_APPLE_SUBSCRIPTION);
+                $subscription->setProduct($product);
+
+                if (!empty($appleResponse->getPendingRenewalInfo()[0])) {
+                    $subscription->setIsActive($appleResponse->getPendingRenewalInfo()[0]->getAutoRenewStatus());
+                    $subscription->setCanceledOn(
+                        !empty($latestPurchaseItem->getCancellationDate()) ?
+                            $latestPurchaseItem->getCancellationDate()
+                                ->copy() : null
+                    );
+
+                    if (!empty($subscription->getCanceledOn())) {
+                        $subscription->setCancellationReason(
+                            $latestPurchaseItem->getRawResponse()['cancellation_reason']
+                        );
+                    } else {
+                        $subscription->setCancellationReason(
+                            self::RENEWAL_EXPIRATION_REASON[$appleResponse->getPendingRenewalInfo(
+                            )[0]->getExpirationIntent()] ?? ''
+                        );
+                    }
+                } else {
+                    $subscription->setCanceledOn(null);
+                    $subscription->setIsActive($latestPurchaseItem->getExpiresDate() > Carbon::now());
+                }
+
+                $subscription->setStartDate($firstPurchasedItem->getPurchaseDate());
+                $subscription->setPaidUntil(
+                    $latestPurchaseItem->getExpiresDate()
+                        ->copy()
+                );
+                $subscription->setAppleExpirationDate(
+                    $latestPurchaseItem->getExpiresDate()
+                        ->copy()
+                );
+
+                $subscription->setTotalPrice($product->getPrice());
+                $subscription->setTax(0);
+                $subscription->setCurrency('USD');
+
+                $subscription->setIntervalType($product->getSubscriptionIntervalType());
+                $subscription->setIntervalCount($product->getSubscriptionIntervalCount());
+
+                $subscription->setTotalCyclesPaid(0);
+                $subscription->setTotalCyclesDue(null);
+
+                // external app store id should always be the first purchase item web order item id
+                $subscription->setExternalAppStoreId($firstPurchasedItem->getWebOrderLineItemId());
+                $subscription->setAppleReceipt($receipt);
+
+                $subscription->setCreatedAt(Carbon::now());
+
+                $receipt->setSubscription($subscription);
+
+                // sync payments
+                // 1 payment for every purchase item
+                foreach (array_reverse($appleResponse->getLatestReceiptInfo()) as $purchaseItem) {
+
+                    // we dont want to add zero dollar trial payments
+                    if ($purchaseItem->isTrialPeriod()) {
+                        continue;
+                    }
+
+                    $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
+
+                    $existingPayment = $this->paymentRepository->getByExternalIdAndProvider(
+                        $purchaseItem->getTransactionId(),
+                        Payment::EXTERNAL_PROVIDER_APPLE
+                    );
+
+                    if (empty($existingPayment)) {
+                        $existingPayment = new Payment();
+                        $existingPayment->setCreatedAt(Carbon::now());
+                    } else {
+                        $existingPayment->setUpdatedAt(Carbon::now());
+                    }
+
+                    $existingPayment->setTotalDue($product->getPrice());
+                    $existingPayment->setTotalPaid($product->getPrice());
+
+                    // if it has a cancellation date it means the transaction was refunded
+                    if (!empty($purchaseItem->getCancellationDate())) {
+                        $existingPayment->setTotalRefunded($product->getPrice());
+                    } else {
+                        $existingPayment->setTotalRefunded(0);
+                    }
+
+                    $existingPayment->setConversionRate(1);
+
+                    $existingPayment->setType(Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL);
+                    $existingPayment->setExternalId($purchaseItem->getTransactionId());
+                    $existingPayment->setExternalProvider(Payment::EXTERNAL_PROVIDER_APPLE);
+
+                    $existingPayment->setGatewayName(config('ecommerce.brand'));
+                    $existingPayment->setStatus(Payment::STATUS_PAID);
+                    $existingPayment->setCurrency('USD');
+                    $existingPayment->setCreatedAt(
+                        !empty($purchaseItem->getPurchaseDate()) ? $purchaseItem->getPurchaseDate() : Carbon::now()
+                    );
+
+                    $this->entityManager->persist($subscription);
+                    $this->entityManager->persist($existingPayment);
+                    $this->entityManager->flush();
+
+                    // save the payment to the subscription
+                    $subscriptionPayment =
+                        $this->subscriptionPaymentRepository->getByPayment($existingPayment)[0] ?? null;
+
+                    if (empty($subscriptionPayment)) {
+                        $subscriptionPayment = new SubscriptionPayment();
+                    }
+
+                    $subscriptionPayment->setSubscription($subscription);
+                    $subscriptionPayment->setPayment($existingPayment);
+
+                    $this->entityManager->persist($subscriptionPayment);
+                    $this->entityManager->flush();
+
+                    $subscription->setLatestPayment($existingPayment);
+                }
+
+                $this->entityManager->persist($receipt);
+                $this->entityManager->persist($subscription);
+
+                $this->entityManager->flush();
+
+                event(new MobileOrderEvent(null, null, $subscription));
+
             } else {
-                $existingPayment->setUpdatedAt(Carbon::now());
+                if ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME) {
+
+                    //pack puchase
+                    $order = new Order();
+                    $order->setUser($user);
+                    $order->setTotalPaid($membershipIncludeFreePack ? 0 : $product->getPrice());
+                    $order->setTotalDue($membershipIncludeFreePack ? 0 : $product->getPrice());
+
+                    $order->setTaxesDue(0);
+                    $order->setShippingDue(0);
+                    $order->setBrand(config('ecommerce.brand'));
+
+                    $this->entityManager->persist($order);
+
+                    $orderItem = new OrderItem();
+                    $orderItem->setOrder($order);
+                    $orderItem->setProduct($product);
+                    $orderItem->setQuantity($firstPurchasedItem->getQuantity());
+                    $orderItem->setInitialPrice($product->getPrice());
+                    $orderItem->setTotalDiscounted(0);
+                    $orderItem->setFinalPrice($product->getPrice());
+
+                    $this->entityManager->persist($orderItem);
+
+                    $order->addOrderItem($orderItem);
+                    $this->entityManager->persist($order);
+
+                    if (!$membershipIncludeFreePack) {
+                        $payment = new Payment();
+                        $payment->setCreatedAt(Carbon::now());
+
+                        $payment->setTotalDue($product->getPrice());
+                        $payment->setTotalPaid($product->getPrice());
+
+                        $payment->setConversionRate(1);
+
+                        $payment->setType(Payment::TYPE_INITIAL_ORDER);
+                        $payment->setExternalId($firstPurchasedItem->getTransactionId());
+                        $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_APPLE);
+
+                        $payment->setGatewayName(config('ecommerce.brand'));
+                        $payment->setStatus(Payment::STATUS_PAID);
+                        $payment->setCurrency('USD');
+
+                        $this->entityManager->persist($payment);
+
+                        $orderPayment = new OrderPayment();
+
+                        $orderPayment->setOrder($order);
+                        $orderPayment->setPayment($payment);
+                        $orderPayment->setCreatedAt(Carbon::now());
+
+                        $this->entityManager->persist($orderPayment);
+                    }
+
+                    $this->entityManager->flush();
+
+                    event(new MobileOrderEvent($order, null, null));
+                }
             }
-
-            $existingPayment->setTotalDue($product->getPrice());
-            $existingPayment->setTotalPaid($product->getPrice());
-
-            // if it has a cancellation date it means the transaction was refunded
-            if (!empty($purchaseItem->getCancellationDate())) {
-                $existingPayment->setTotalRefunded($product->getPrice());
-            } else {
-                $existingPayment->setTotalRefunded(0);
-            }
-
-            $existingPayment->setConversionRate(1);
-
-            $existingPayment->setType(Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL);
-            $existingPayment->setExternalId($purchaseItem->getTransactionId());
-            $existingPayment->setExternalProvider(Payment::EXTERNAL_PROVIDER_APPLE);
-
-            $existingPayment->setGatewayName(config('ecommerce.brand'));
-            $existingPayment->setStatus(Payment::STATUS_PAID);
-            $existingPayment->setCurrency('USD');
-            $existingPayment->setCreatedAt(
-                !empty($purchaseItem->getPurchaseDate()) ? $purchaseItem->getPurchaseDate() : Carbon::now()
-            );
-
-            $this->entityManager->persist($subscription);
-            $this->entityManager->persist($existingPayment);
-            $this->entityManager->flush();
-
-            // save the payment to the subscription
-            $subscriptionPayment = $this->subscriptionPaymentRepository->getByPayment($existingPayment)[0] ?? null;
-
-            if (empty($subscriptionPayment)) {
-                $subscriptionPayment = new SubscriptionPayment();
-            }
-
-            $subscriptionPayment->setSubscription($subscription);
-            $subscriptionPayment->setPayment($existingPayment);
-
-            $this->entityManager->persist($subscriptionPayment);
-            $this->entityManager->flush();
-
-            $subscription->setLatestPayment($existingPayment);
         }
-
-        $this->entityManager->persist($receipt);
-        $this->entityManager->persist($subscription);
-
-        $this->entityManager->flush();
-
-        return $subscription;
     }
 
     /**
      * @param string $appleStoreId
-     *
-     * @return Product|null
+     * @return array|null
+     * @throws \Doctrine\ORM\ORMException
      */
-    public function getProductByAppleStoreId(string $appleStoreId): ?Product
-    {
+    public function getProductsByAppleStoreId(string $appleStoreId)
+    : ?array {
         $productsMap = config('ecommerce.apple_store_products_map');
 
         if (isset($productsMap[$appleStoreId])) {
-            return $this->productRepository->bySku($productsMap[$appleStoreId]);
+            return $this->productRepository->bySkus((array)$productsMap[$appleStoreId]);
         }
 
-        return null;
+        return [];
     }
 }

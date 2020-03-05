@@ -1274,4 +1274,112 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
 
         return new SandboxResponse($rawData);
     }
+
+    public function test_process_receipt_pack_purchase()
+    {
+        $receipt = $this->faker->word;
+        $transactionId = $this->faker->word;
+        $webOrderItemId = $this->faker->word;
+        $subscriptionExpirationDate = Carbon::now()->addDays(7);
+        $email = $this->faker->email;
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $productOne = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+            ]
+        );
+
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => $productOne['sku'],
+            ]
+        );
+
+        $validationResponse =
+            $this->getInitialPurchaseReceiptResponse(
+                $transactionId,
+                $webOrderItemId,
+                $productOne['sku'],
+                $subscriptionExpirationDate,
+                false
+            );
+
+        $this->appleStoreKitGatewayMock->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $response = $this->call(
+            'POST',
+            '/apple/verify-receipt-and-process-payment',
+            [
+                'data' => [
+                    'attributes' => [
+                        'receipt' => $receipt,
+                        'email' => $email,
+                        'password' => $this->faker->word,
+                    ]
+                ]
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert response has meta key with auth code
+        $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::MOBILE_APP_REQUEST_TYPE,
+                'email' => $email,
+                'valid' => true,
+                'validation_error' => null,
+                'transaction_id' => $transactionId,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // we dont want order rows
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $productOne['price'],
+                'total_paid' => $productOne['price'],
+                'type' => Payment::TYPE_INITIAL_ORDER,
+                'status' => Payment::STATUS_PAID,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $productOne['id'],
+                'quantity' => 1,
+                'expiration_date' => null
+            ]
+        );
+    }
+
 }

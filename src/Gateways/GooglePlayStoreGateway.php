@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Gateways;
 
 use Carbon\Carbon;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
+use ReceiptValidator\GooglePlay\PurchaseResponse;
 use ReceiptValidator\GooglePlay\SubscriptionResponse;
 use ReceiptValidator\GooglePlay\Validator;
 use Google_Client;
@@ -26,14 +27,15 @@ class GooglePlayStoreGateway
         string $packageName,
         string $productId,
         string $purchaseToken
-    ): SubscriptionResponse
-    {
+    )
+    : SubscriptionResponse {
         $validator = $this->getValidator();
 
-        $response = $validator->setPackageName($packageName)
-                        ->setProductId($productId)
-                        ->setPurchaseToken($purchaseToken)
-                        ->validateSubscription();
+        $response =
+            $validator->setPackageName($packageName)
+                ->setProductId($productId)
+                ->setPurchaseToken($purchaseToken)
+                ->validateSubscription();
 
         $seconds = intval($response->getExpiryTimeMillis() / 1000);
 
@@ -43,6 +45,7 @@ class GooglePlayStoreGateway
 
         return $response;
     }
+
     /**
      * @param string $packageName
      * @param string $productId
@@ -57,14 +60,37 @@ class GooglePlayStoreGateway
         string $packageName,
         string $productId,
         string $purchaseToken
-    ): SubscriptionResponse
-    {
+    )
+    : SubscriptionResponse {
         $validator = $this->getValidator();
 
         return $validator->setPackageName($packageName)
-                        ->setProductId($productId)
-                        ->setPurchaseToken($purchaseToken)
-                        ->validateSubscription();
+            ->setProductId($productId)
+            ->setPurchaseToken($purchaseToken)
+            ->validateSubscription();
+    }
+
+    /**
+     * @param string $packageName
+     * @param string $productId
+     * @param string $purchaseToken
+     *
+     * @return PurchaseResponse
+     *
+     * @throws ReceiptValidationException
+     */
+    public function validatePurchase(
+        string $packageName,
+        string $productId,
+        string $purchaseToken
+    )
+    : PurchaseResponse {
+        $validator = $this->getValidator();
+
+        return $validator->setPackageName($packageName)
+            ->setProductId($productId)
+            ->setPurchaseToken($purchaseToken)
+            ->validatePurchase();
     }
 
     /**
@@ -72,7 +98,8 @@ class GooglePlayStoreGateway
      *
      * @throws ReceiptValidationException
      */
-    public function getValidator(): Validator
+    public function getValidator()
+    : Validator
     {
         $credentialsJson = config('ecommerce.payment_gateways.google_play_store.credentials');
 

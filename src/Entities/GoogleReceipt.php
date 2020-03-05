@@ -23,6 +23,9 @@ class GoogleReceipt
     CONST GOOGLE_RENEWAL_NOTIFICATION_TYPE = 'renewal';
     CONST GOOGLE_CANCEL_NOTIFICATION_TYPE = 'cancel';
 
+    CONST GOOGLE_PRODUCT_PURCHASE = 'product';
+    CONST GOOGLE_SUBSCRIPTION_PURCHASE = 'subscription';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
@@ -131,6 +134,15 @@ class GoogleReceipt
      * @var string
      */
     protected $rawReceiptResponse;
+
+    /**
+     * Product or Subscription purchase
+     *
+     * @ORM\Column(type="string", name="purchase_type")
+     *
+     * @var string
+     */
+    protected $purchaseType;
 
     /**
      * @return int|null
@@ -346,5 +358,21 @@ class GoogleReceipt
     public function setRawReceiptResponse($rawReceiptResponse): void
     {
         $this->rawReceiptResponse = $rawReceiptResponse;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getPurchaseType(): ?string
+    {
+        return $this->purchaseType;
+    }
+
+    /**
+     * @param string $purchaseType
+     */
+    public function setPurchaseType(string $purchaseType)
+    {
+        $this->purchaseType = $purchaseType;
     }
 }

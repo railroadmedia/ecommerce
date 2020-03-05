@@ -17,6 +17,7 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
 use Railroad\Ecommerce\Services\GooglePlayStoreService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use ReceiptValidator\GooglePlay\PurchaseResponse;
 use ReceiptValidator\GooglePlay\SubscriptionResponse;
 
 class GooglePlayStoreControllerTest extends EcommerceTestCase
@@ -1196,5 +1197,296 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $dependency->setUserCancellationTimeMillis($cancelTimestamp * 1000);
 
         return new SubscriptionResponse($dependency);
+    }
+
+    /**
+     * @param $orderId
+     * @param $productId
+     * @return PurchaseResponse
+     */
+    protected function getTestReceiptProduct($orderId, $productId): PurchaseResponse
+    {
+        $dependency = new \Google_Service_AndroidPublisher_ProductPurchase();
+
+        $dependency->setOrderId($orderId);
+        $dependency->setProductId($productId);
+        $dependency->setQuantity(1);
+
+        return new PurchaseResponse($dependency);
+    }
+
+    public function test_process_receipt_pack_purchase()
+    {
+        $orderId = $this->faker->word;
+        $email = $this->faker->email;
+        $brand = 'drumeo';
+
+        config()->set('ecommerce.brand', $brand);
+
+        $product = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+            ]
+        );
+
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
+            [
+                $googleProductId => $product['sku'],
+            ]
+        );
+
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptProduct($orderId, $product['id']);
+
+        $googleStoreKitGateway->method('validatePurchase')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $response = $this->call(
+            'POST',
+            '/google/verify-receipt-and-process-payment',
+            [
+                'data' => [
+                    'attributes' => [
+                        'package_name' => $packageName,
+                        'product_id' => $googleProductId,
+                        'purchase_token' => $purchaseToken,
+                        'email' => $email,
+                        'password' => $this->faker->word,
+                        'purchase_type' => GoogleReceipt::GOOGLE_PRODUCT_PURCHASE
+                    ]
+                ]
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert response has meta key with auth code
+        $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
+
+        $this->assertDatabaseHas(
+            'ecommerce_google_receipts',
+            [
+                'package_name' => $packageName,
+                'product_id' => $googleProductId,
+                'purchase_token' => $purchaseToken,
+                'purchase_type' => GoogleReceipt::GOOGLE_PRODUCT_PURCHASE,
+                'request_type' => GoogleReceipt::MOBILE_APP_REQUEST_TYPE,
+                'email' => $email,
+                'valid' => true,
+                'validation_error' => null,
+                'order_id' => $orderId,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        // we dont want order rows
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'type' => Payment::TYPE_INITIAL_ORDER,
+                'status' => Payment::STATUS_PAID,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => null
+            ]
+        );
+    }
+
+    public function test_process_receipt_subscription_and_free_pack_purchase()
+    {
+        $orderId = $this->faker->word;
+        $email = $this->faker->email;
+        $startTime = Carbon::now()->subDays(7)->subMonth();
+        $expiryTime = Carbon::now()->addWeek();
+        $brand = 'drumeo';
+
+        config()->set('ecommerce.brand', $brand);
+
+        $product = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $pack = $this->fakeProduct(
+            [
+                'sku' => 'product-two',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+            ]
+        );
+
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
+            [
+                $googleProductId => [$product['sku'], $pack['sku']],
+            ]
+        );
+
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptPaidRenewal($orderId, $expiryTime->timestamp, $startTime->timestamp);
+
+        $googleStoreKitGateway->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $response = $this->call(
+            'POST',
+            '/google/verify-receipt-and-process-payment',
+            [
+                'data' => [
+                    'attributes' => [
+                        'package_name' => $packageName,
+                        'product_id' => $googleProductId,
+                        'purchase_token' => $purchaseToken,
+                        'email' => $email,
+                        'password' => $this->faker->word
+                    ]
+                ]
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert response has meta key with auth code
+        $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
+
+        $this->assertDatabaseHas(
+            'ecommerce_google_receipts',
+            [
+                'package_name' => $packageName,
+                'product_id' => $googleProductId,
+                'purchase_token' => $purchaseToken,
+                'purchase_type' => GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE,
+                'request_type' => GoogleReceipt::MOBILE_APP_REQUEST_TYPE,
+                'email' => $email,
+                'valid' => true,
+                'validation_error' => null,
+                'order_id' => $orderId,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        // we dont want order rows
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_payments',
+            [
+                'id' => 3,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => $expiryTime
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $pack['id'],
+                'quantity' => 1,
+                'expiration_date' => null,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'is_active' => 1,
+                'paid_until' => Carbon::now()->addWeek()->toDateTimeString(),
+            ]
+        );
     }
 }
