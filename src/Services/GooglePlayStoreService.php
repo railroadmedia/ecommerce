@@ -227,22 +227,24 @@ class GooglePlayStoreService
 
         $subscription = $this->syncSubscription($receipt, $googleResponse, $subscription->getUser());
 
-        if ($receipt->getNotificationType() == GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE) {
+        if (!empty($subscription)) {
+            if ($receipt->getNotificationType() == GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE) {
 
-            event(
-                new MobileSubscriptionRenewed(
-                    $subscription,
-                    $subscription->getLatestPayment(),
-                    MobileSubscriptionRenewed::ACTOR_SYSTEM
-                )
-            );
+                event(
+                    new MobileSubscriptionRenewed(
+                        $subscription,
+                        $subscription->getLatestPayment(),
+                        MobileSubscriptionRenewed::ACTOR_SYSTEM
+                    )
+                );
 
-        } else {
+            } else {
 
-            event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));
+                event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));
+            }
+
+            $this->userProductService->updateSubscriptionProductsApp($subscription);
         }
-
-        $this->userProductService->updateSubscriptionProductsApp($subscription);
     }
 
     /**
