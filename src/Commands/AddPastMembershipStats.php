@@ -37,6 +37,13 @@ class AddPastMembershipStats extends Command
         'DLM-Lifetime'
     ];
 
+    const BRANDS = [
+        'drumeo',
+        'pianote',
+        'guitareo',
+        'recordeo'
+    ];
+
     /**
      * AddPastMembershipStats constructor.
      *
@@ -63,6 +70,8 @@ class AddPastMembershipStats extends Command
 
         $endDate = $this->argument('endDate') ?
                         Carbon::parse($this->argument('endDate')) : Carbon::now();
+
+        $endDate = $endDate->endOfDay();
 
 
         $format = "Started computing membership stats for interval [%s -> %s].\n";
@@ -99,59 +108,65 @@ class AddPastMembershipStats extends Command
                             ->addDays($i)
                             ->toDateString();
 
-            $insertData[] = [
-                'new' => 0,
-                'active_state' => 0,
-                'expired' => 0,
-                'suspended_state' => 0,
-                'canceled' => 0,
-                'canceled_state' => 0,
-                'interval_type' => MembershipStats::TYPE_ONE_MONTH,
-                'stats_date' => $statsDate,
-                'created_at' => $now,
-                'updated_at' => null,
-            ];
+            foreach (self::BRANDS as $brand) {
+                $insertData[] = [
+                    'new' => 0,
+                    'active_state' => 0,
+                    'expired' => 0,
+                    'suspended_state' => 0,
+                    'canceled' => 0,
+                    'canceled_state' => 0,
+                    'interval_type' => MembershipStats::TYPE_ONE_MONTH,
+                    'stats_date' => $statsDate,
+                    'brand' => $brand,
+                    'created_at' => $now,
+                    'updated_at' => null,
+                ];
 
-            $insertData[] = [
-                'new' => 0,
-                'active_state' => 0,
-                'expired' => 0,
-                'suspended_state' => 0,
-                'canceled' => 0,
-                'canceled_state' => 0,
-                'interval_type' => MembershipStats::TYPE_SIX_MONTHS,
-                'stats_date' => $statsDate,
-                'created_at' => $now,
-                'updated_at' => null,
-            ];
+                $insertData[] = [
+                    'new' => 0,
+                    'active_state' => 0,
+                    'expired' => 0,
+                    'suspended_state' => 0,
+                    'canceled' => 0,
+                    'canceled_state' => 0,
+                    'interval_type' => MembershipStats::TYPE_SIX_MONTHS,
+                    'stats_date' => $statsDate,
+                    'brand' => $brand,
+                    'created_at' => $now,
+                    'updated_at' => null,
+                ];
 
-            $insertData[] = [
-                'new' => 0,
-                'active_state' => 0,
-                'expired' => 0,
-                'suspended_state' => 0,
-                'canceled' => 0,
-                'canceled_state' => 0,
-                'interval_type' => MembershipStats::TYPE_ONE_YEAR,
-                'stats_date' => $statsDate,
-                'created_at' => $now,
-                'updated_at' => null,
-            ];
+                $insertData[] = [
+                    'new' => 0,
+                    'active_state' => 0,
+                    'expired' => 0,
+                    'suspended_state' => 0,
+                    'canceled' => 0,
+                    'canceled_state' => 0,
+                    'interval_type' => MembershipStats::TYPE_ONE_YEAR,
+                    'stats_date' => $statsDate,
+                    'brand' => $brand,
+                    'created_at' => $now,
+                    'updated_at' => null,
+                ];
 
-            $insertData[] = [
-                'new' => 0,
-                'active_state' => 0,
-                'expired' => 0,
-                'suspended_state' => 0,
-                'canceled' => 0,
-                'canceled_state' => 0,
-                'interval_type' => MembershipStats::TYPE_LIFETIME,
-                'stats_date' => $statsDate,
-                'created_at' => $now,
-                'updated_at' => null,
-            ];
+                $insertData[] = [
+                    'new' => 0,
+                    'active_state' => 0,
+                    'expired' => 0,
+                    'suspended_state' => 0,
+                    'canceled' => 0,
+                    'canceled_state' => 0,
+                    'interval_type' => MembershipStats::TYPE_LIFETIME,
+                    'stats_date' => $statsDate,
+                    'brand' => $brand,
+                    'created_at' => $now,
+                    'updated_at' => null,
+                ];
+            }
 
-            if ($i > 0 && (($i * 4) % $insertChunkSize) == 0) {
+            if ($i > 0 && count($insertData) >= $insertChunkSize) {
                 $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                     ->table('ecommerce_membership_stats')
                     ->insert($insertData);
@@ -197,15 +212,19 @@ INNER JOIN (
             IF (interval_type = '%s' AND interval_count = 1, '%s', NULL),
             IF (interval_type = '%s' AND interval_count = 6, '%s', NULL),
             IF (interval_type = '%s' AND interval_count = 1, '%s', NULL)
-        ) AS interval_type
+        ) AS stats_interval_type,
+        brand
     FROM ecommerce_subscriptions
     WHERE
         ((interval_type = '%s' AND (interval_count = 1 OR interval_count = 6))
             OR (interval_type = '%s' AND interval_count = 1))
-        AND created_at >= '%s'
-        AND created_at <= '%s'
-    GROUP BY stats_date, interval_type
-) n ON ms.stats_date = n.stats_date AND ms.interval_type = n.interval_type
+        AND start_date >= '%s'
+        AND start_date <= '%s'
+    GROUP BY stats_date, stats_interval_type, brand
+) n ON
+    ms.stats_date = n.stats_date
+    AND ms.interval_type = n.stats_interval_type
+    AND ms.brand = n.brand
 SET ms.new = n.new
 EOT;
         $statement = sprintf(
@@ -218,8 +237,8 @@ EOT;
             MembershipStats::TYPE_ONE_YEAR,
             config('ecommerce.interval_type_monthly'),
             config('ecommerce.interval_type_yearly'),
-            $smallDate->toDateTimeString(),
-            $bigDate->toDateTimeString()
+            $smallDate->toDateString(),
+            $bigDate->toDateString()
         );
 
         $this->databaseManager->statement($statement);
@@ -245,7 +264,8 @@ INNER JOIN (
             IF (interval_type = '%s' AND interval_count = 1, '%s', NULL),
             IF (interval_type = '%s' AND interval_count = 6, '%s', NULL),
             IF (interval_type = '%s' AND interval_count = 1, '%s', NULL)
-        ) AS interval_type
+        ) AS stats_interval_type,
+        brand
     FROM ecommerce_subscriptions
     WHERE
         ((interval_type = '%s' AND (interval_count = 1 OR interval_count = 6))
@@ -255,8 +275,11 @@ INNER JOIN (
         AND canceled_on IS NULL
         AND paid_until >= '%s'
         AND paid_until <= '%s'
-    GROUP BY stats_date, interval_type
-) e ON ms.stats_date = e.stats_date AND ms.interval_type = e.interval_type
+    GROUP BY stats_date, stats_interval_type, brand
+) e ON
+    ms.stats_date = e.stats_date
+    AND ms.interval_type = e.stats_interval_type
+    AND ms.brand = e.brand
 SET ms.expired = e.expired
 EOT;
         $statement = sprintf(
@@ -296,7 +319,8 @@ INNER JOIN (
             IF (interval_type = '%s' AND interval_count = 1, '%s', NULL),
             IF (interval_type = '%s' AND interval_count = 6, '%s', NULL),
             IF (interval_type = '%s' AND interval_count = 1, '%s', NULL)
-        ) AS interval_type
+        ) AS stats_interval_type,
+        brand
     FROM ecommerce_subscriptions
     WHERE
         ((interval_type = '%s' AND (interval_count = 1 OR interval_count = 6))
@@ -304,8 +328,11 @@ INNER JOIN (
         AND canceled_on IS NOT NULL
         AND canceled_on >= '%s'
         AND canceled_on <= '%s'
-    GROUP BY stats_date, interval_type
-) c ON ms.stats_date = c.stats_date AND ms.interval_type = c.interval_type
+    GROUP BY stats_date, stats_interval_type, brand
+) c ON
+    ms.stats_date = c.stats_date
+    AND ms.interval_type = c.stats_interval_type
+    AND ms.brand = c.brand
 SET ms.canceled = c.canceled
 EOT;
         $statement = sprintf(
@@ -374,7 +401,7 @@ EOT;
                         }
 
                         if ($itemData['paid_until']) {
-                            $paidUntil = Carbon::parse($itemData['paid_until']);
+                            $paidUntil = Carbon::parse($itemData['paid_until'])->addDays(1);
                             $end = $paidUntil > $end ? $end : $paidUntil;
                         }
 
@@ -397,6 +424,7 @@ EOT;
                             ->where('stats_date', '>=', $start->toDateString())
                             ->where('stats_date', '<', $end->toDateString())
                             ->where('interval_type', $intervalType)
+                            ->where('brand', $itemData['brand'])
                             ->increment('active_state');
                     }
                 }
@@ -419,6 +447,8 @@ EOT;
             ->table('ecommerce_subscriptions')
             ->whereNotNull('paid_until')
             ->where('paid_until', '<=', $bigDate)
+            ->where('is_active', 0)
+            ->whereNull('canceled_on')
             ->where(function ($query) {
                 $query->where(function ($query) {
                         $query->where('interval_type', config('ecommerce.interval_type_monthly'))
@@ -441,7 +471,7 @@ EOT;
 
                         $itemData = get_object_vars($item);
 
-                        $paidUntil = Carbon::parse($itemData['paid_until']);
+                        $paidUntil = Carbon::parse($itemData['paid_until'])->addDays(1);
                         $start = $paidUntil < $smallDate ? $smallDate : $paidUntil;
 
                         $end = $bigDate;
@@ -463,6 +493,7 @@ EOT;
                             ->where('stats_date', '>=', $start->toDateString())
                             ->where('stats_date', '<=', $end->toDateString())
                             ->where('interval_type', $intervalType)
+                            ->where('brand', $itemData['brand'])
                             ->increment('suspended_state');
                     }
                 }
@@ -530,6 +561,7 @@ EOT;
                             ->where('stats_date', '>=', $start->toDateString())
                             ->where('stats_date', '<=', $end->toDateString())
                             ->where('interval_type', $intervalType)
+                            ->where('brand', $itemData['brand'])
                             ->increment('canceled_state');
                     }
                 }
@@ -546,37 +578,47 @@ EOT;
     {
         $start = microtime(true);
 
-        $lifetimeProductsIds = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $lifetimeProducts = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_products')
             ->whereIn('sku', self::LIFETIME_SKUS)
             ->get()
-            ->pluck('id')
+            ->keyBy('id')
             ->toArray();
 
         $sql = <<<'EOT'
 UPDATE ecommerce_membership_stats ms
 INNER JOIN (
     SELECT
-        COUNT(id) AS new,
-        DATE(created_at) AS stats_date
-    FROM ecommerce_user_products
+        COUNT(up.id) AS new,
+        DATE(up.created_at) AS stats_date,
+        lp.brand,
+        'lifetime' AS interval_type
+    FROM ecommerce_user_products up
+    INNER JOIN
+        (
+            SELECT id, brand
+            FROM ecommerce_products
+            WHERE
+                sku IN ('%s')
+        ) lp
+        ON lp.id = up.product_id
     WHERE
-        product_id IN (%s)
-        AND deleted_at IS NULL
-        AND expiration_date IS NULL
-        AND created_at >= '%s'
-        AND created_at <= '%s'
-    GROUP BY stats_date
-) n ON ms.stats_date = n.stats_date
+        (up.deleted_at IS NULL OR DATE(up.deleted_at) > '%s')
+        AND (up.expiration_date IS NULL OR DATE(up.expiration_date) > '%s')
+        AND DATE(up.created_at) >= '%s'
+        AND DATE(up.created_at) <= '%s'
+    GROUP BY stats_date, brand
+) n ON ms.stats_date = n.stats_date AND ms.brand = n.brand AND ms.interval_type = n.interval_type
 SET ms.new = n.new
-WHERE ms.interval_type = '%s'
 EOT;
 
         $statement = sprintf(
             $sql,
-            implode(', ', $lifetimeProductsIds),
-            $smallDate->toDateTimeString(),
-            $bigDate->toDateTimeString(),
+            implode("', '", self::LIFETIME_SKUS),
+            $smallDate->toDateString(),
+            $smallDate->toDateString(),
+            $smallDate->toDateString(),
+            $bigDate->toDateString(),
             MembershipStats::TYPE_LIFETIME
         );
 
@@ -586,34 +628,46 @@ EOT;
 
         $this->databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_user_products')
-            ->whereIn('product_id', $lifetimeProductsIds)
+            ->whereIn(
+                'product_id',
+                array_keys($lifetimeProducts)
+            )
             ->where('created_at', '<=', $bigDate)
             ->orderBy('id', 'desc')
             ->chunk(
                 $chunkSize,
-                function (Collection $rows) use ($smallDate, $bigDate) {
+                function (Collection $rows) use ($smallDate, $bigDate, $lifetimeProducts) {
 
                     foreach ($rows as $item) {
 
                         $itemData = get_object_vars($item);
 
-                        $start = $itemData['created_at'] < $smallDate ? $smallDate : $itemData['created_at'];
+                        $createdAt = Carbon::parse($itemData['created_at']);
+
+                        $start = $createdAt < $smallDate ? $smallDate : $createdAt;
 
                         $end = $bigDate;
 
-                        if ($itemData['deleted_at'] && $itemData['deleted_at'] < $end) {
-                            $end = $itemData['deleted_at'];
+                        $deletedAt = $itemData['deleted_at'] ? Carbon::parse($itemData['deleted_at']) : null;
+
+                        if ($deletedAt && $deletedAt < $end) {
+                            $end = $deletedAt;
                         }
 
-                        if ($itemData['expiration_date'] && $itemData['expiration_date'] < $end) {
-                            $end = $itemData['expiration_date'];
+                        $expirationDate = $itemData['expiration_date'] ? Carbon::parse($itemData['expiration_date']) : null;
+
+                        if ($expirationDate && $expirationDate < $end) {
+                            $end = $expirationDate;
                         }
+
+                        $brand = $lifetimeProducts[$itemData['product_id']]->brand;
 
                         $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_membership_stats')
-                            ->where('stats_date', '>=', $start)
-                            ->where('stats_date', '<=', $end)
+                            ->where('stats_date', '>=', $start->toDateString())
+                            ->where('stats_date', '<=', $end->toDateString())
                             ->where('interval_type', MembershipStats::TYPE_LIFETIME)
+                            ->where('brand', $brand)
                             ->increment('active_state');
                     }
                 }
