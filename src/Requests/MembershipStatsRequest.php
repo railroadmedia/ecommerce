@@ -30,6 +30,7 @@ class MembershipStatsRequest extends FormRequest
                                     . '", "' . MembershipStats::TYPE_SIX_MONTHS
                                     . '", "' . MembershipStats::TYPE_ONE_YEAR
                                     . '", "' . MembershipStats::TYPE_LIFETIME . '"',
+            'brand' => 'string',
         ];
     }
 }

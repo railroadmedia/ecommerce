@@ -32,15 +32,19 @@ class MembershipStatsRepository extends EntityRepository
         );
     }
 
-    public function getStats(Carbon $smallDateTime, Carbon $bigDateTime, ?string $intervalType = null)
-    {
+    public function getStats(
+        Carbon $smallDateTime,
+        Carbon $bigDateTime,
+        ?string $intervalType = null,
+        ?string $brand = null
+    ) {
         $qb = $this->createQueryBuilder('s');
 
         $qb->where(
                 $qb->expr()
                     ->between('s.statsDate', ':smallDate', ':bigDate')
             )
-            ->orderBy('s.statsDate', 'asc')
+            ->orderBy('s.statsDate', 'DESC')
             ->setParameter('smallDate', $smallDateTime->toDateString())
             ->setParameter('bigDate', $bigDateTime->toDateString());
 
@@ -50,6 +54,14 @@ class MembershipStatsRepository extends EntityRepository
                         ->eq('s.intervalType', ':intervalType')
                 )
                 ->setParameter('intervalType', $intervalType);
+        }
+
+        if ($brand) {
+            $qb->andWhere(
+                    $qb->expr()
+                        ->eq('s.brand', ':brand')
+                )
+                ->setParameter('brand', $brand);
         }
 
         return $qb->getQuery()

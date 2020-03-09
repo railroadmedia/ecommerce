@@ -88,6 +88,13 @@ class MembershipStats
     protected $statsDate;
 
     /**
+     * @ORM\Column(type="string")
+     *
+     * @var string
+     */
+    protected $brand;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -221,5 +228,21 @@ class MembershipStats
     public function setStatsDate(?\DateTimeInterface $statsDate)
     {
         $this->statsDate = $statsDate;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getBrand(): ?string
+    {
+        return $this->brand;
+    }
+
+    /**
+     * @param string $brand
+     */
+    public function setBrand(string $brand)
+    {
+        $this->brand = $brand;
     }
 }

@@ -20,6 +20,7 @@ class MembershipStatsTransformer extends TransformerAbstract
             'interval_type' => $membershipStats->getIntervalType(),
             'stats_date' => $membershipStats->getStatsDate()
                                 ->toDateString(),
+            'brand' => $membershipStats->getBrand(),
             'created_at' => $membershipStats->getCreatedAt()
                                 ->toDateTimeString(),
             'updated_at' => $membershipStats->getUpdatedAt() ?
