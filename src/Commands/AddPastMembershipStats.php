@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
 use Railroad\Ecommerce\Entities\MembershipStats;
+use Railroad\Ecommerce\Entities\Subscription;
 use Throwable;
 
 class AddPastMembershipStats extends Command
@@ -380,6 +381,18 @@ EOT;
                             ->where('interval_count', 1);
                     });
             })
+            ->whereIn(
+                'type',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_APPLE_SUBSCRIPTION,
+                    Subscription::TYPE_GOOGLE_SUBSCRIPTION,
+                ]
+            )
+            ->where(function ($query) use ($smallDate) {
+                $query->whereNull('canceled_on')
+                    ->orWhere('canceled_on', '>', $smallDate);
+            })
             ->orderBy('id', 'desc')
             ->chunk(
                 $chunkSize,
@@ -462,6 +475,14 @@ EOT;
                             ->where('interval_count', 1);
                     });
             })
+            ->whereIn(
+                'type',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_APPLE_SUBSCRIPTION,
+                    Subscription::TYPE_GOOGLE_SUBSCRIPTION,
+                ]
+            )
             ->orderBy('id', 'desc')
             ->chunk(
                 $chunkSize,
@@ -529,6 +550,14 @@ EOT;
                             ->where('interval_count', 1);
                     });
             })
+            ->whereIn(
+                'type',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_APPLE_SUBSCRIPTION,
+                    Subscription::TYPE_GOOGLE_SUBSCRIPTION,
+                ]
+            )
             ->orderBy('id', 'desc')
             ->chunk(
                 $chunkSize,
