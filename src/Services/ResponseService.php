@@ -29,6 +29,7 @@ use Railroad\Ecommerce\Transformers\PaymentMethodTransformer;
 use Railroad\Ecommerce\Transformers\PaymentTransformer;
 use Railroad\Ecommerce\Transformers\ProductTransformer;
 use Railroad\Ecommerce\Transformers\RefundTransformer;
+use Railroad\Ecommerce\Transformers\RetentionStatsTransformer;
 use Railroad\Ecommerce\Transformers\ShippingCostsWeightRangeTransformer;
 use Railroad\Ecommerce\Transformers\ShippingOptionTransformer;
 use Railroad\Ecommerce\Transformers\SubscriptionTransformer;
@@ -668,6 +669,22 @@ class ResponseService extends FractalResponseService
             $stats,
             'membershipStats',
             new MembershipStatsTransformer(),
+            new JsonApiSerializer(),
+            null
+        );
+    }
+
+    /**
+     * @param array $stats
+     *
+     * @return Fractal
+     */
+    public static function retentionStats(array $stats)
+    {
+        return self::create(
+            $stats,
+            'retentionStats',
+            new RetentionStatsTransformer(),
             new JsonApiSerializer(),
             null
         );

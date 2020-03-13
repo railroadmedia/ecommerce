@@ -105,6 +105,7 @@ class EcommerceServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__ . '/../../routes/payment_method.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/product.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/refund.php');
+            $this->loadRoutesFrom(__DIR__ . '/../../routes/retention_stats.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/shipping_costs.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/shipping_fulfillment.php');
             $this->loadRoutesFrom(__DIR__ . '/../../routes/shipping_option.php');
