@@ -3,8 +3,9 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Carbon\Carbon;
-use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\Query\ResultSetMapping;
 use Railroad\Ecommerce\Entities\RetentionStats;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 /**
@@ -17,30 +18,38 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
  *
  * @package Railroad\Ecommerce\Repositories
  */
-class RetentionStatsRepository extends EntityRepository
+class RetentionStatsRepository extends RepositoryBase
 {
     /**
      * RetentionStatsRepository constructor.
      *
-     * @param EcommerceEntityManager $em
+     * @param EcommerceEntityManager $entityManager
      */
-    public function __construct(EcommerceEntityManager $em)
+    public function __construct(EcommerceEntityManager $entityManager)
     {
-        parent::__construct(
-            $em,
-            $em->getClassMetadata(RetentionStats::class)
-        );
+        parent::__construct($entityManager, $entityManager->getClassMetadata(RetentionStats::class));
     }
 
+    /**
+     * @param Carbon $smallDateTime
+     * @param Carbon $bigDateTime
+     * @param string|null $intervalType
+     * @param string|null $brand
+     *
+     * @return array
+     */
     public function getStats(
         Carbon $smallDateTime,
         Carbon $bigDateTime,
         ?string $intervalType = null,
         ?string $brand = null
-    ) {
-        $qb = $this->createQueryBuilder('s');
+    ): array
+    {
+        $qb = $this->entityManager->createQueryBuilder();
 
-        $qb->where(
+        $qb->select('s')
+            ->from(RetentionStats::class, 's')
+            ->where(
                 $qb->expr()
                     ->orX(
                         $qb->expr()
@@ -70,6 +79,174 @@ class RetentionStatsRepository extends EntityRepository
                         ->eq('s.brand', ':brand')
                 )
                 ->setParameter('brand', $brand);
+        }
+
+        return $qb->getQuery()
+                    ->getResult();
+    }
+
+    public function getAverageStatsOneMonth(
+        ?Carbon $smallDateTime,
+        ?Carbon $bigDateTime,
+        ?string $brand = null
+    ): array
+    {
+        $end = $bigDateTime ?: Carbon::now()->endOfDay();
+
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select(['s.brand', 's.totalCyclesPaid', 'COUNT(s.id) AS count'])
+            ->from(Subscription::class, 's')
+            ->where(
+                $qb->expr()
+                    ->eq('s.intervalType', ':month')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.intervalCount', ':one')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->lte('s.paidUntil', ':end'),
+                        $qb->expr()
+                            ->isNotNull('s.canceledOn')
+                    )
+            )
+            ->setParameter('month', config('ecommerce.interval_type_monthly'))
+            ->setParameter('one', 1)
+            ->setParameter('end', $end)
+            ->groupBy('s.totalCyclesPaid');
+
+        if ($smallDateTime) {
+            $qb->andWhere(
+                    $qb->expr()
+                        ->gte('s.startSate', ':start')
+                )
+                ->setParameter('start', $smallDateTime);
+        }
+
+        if ($brand) {
+            $qb->andWhere(
+                    $qb->expr()
+                        ->eq('s.brand', ':brand')
+                )
+                ->setParameter('brand', $brand);
+        } else {
+            $qb->addGroupBy('s.brand');
+        }
+
+        return $qb->getQuery()
+                    ->getResult();
+    }
+
+    public function getAverageStatsSixMonths(
+        ?Carbon $smallDateTime,
+        ?Carbon $bigDateTime,
+        ?string $brand = null
+    ): array
+    {
+        $end = $bigDateTime ?: Carbon::now()->endOfDay();
+
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select(['s.brand', 's.totalCyclesPaid', 'COUNT(s.id) AS count'])
+            ->from(Subscription::class, 's')
+            ->where(
+                $qb->expr()
+                    ->eq('s.intervalType', ':month')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.intervalCount', ':six')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->lte('s.paidUntil', ':end'),
+                        $qb->expr()
+                            ->isNotNull('s.canceledOn')
+                    )
+            )
+            ->setParameter('month', config('ecommerce.interval_type_monthly'))
+            ->setParameter('six', 6)
+            ->setParameter('end', $end)
+            ->groupBy('s.totalCyclesPaid');
+
+        if ($smallDateTime) {
+            $qb->andWhere(
+                    $qb->expr()
+                        ->gte('s.startSate', ':start')
+                )
+                ->setParameter('start', $smallDateTime);
+        }
+
+        if ($brand) {
+            $qb->andWhere(
+                    $qb->expr()
+                        ->eq('s.brand', ':brand')
+                )
+                ->setParameter('brand', $brand);
+        } else {
+            $qb->addGroupBy('s.brand');
+        }
+
+        return $qb->getQuery()
+                    ->getResult();
+    }
+
+    public function getAverageStatsOneYear(
+        ?Carbon $smallDateTime,
+        ?Carbon $bigDateTime,
+        ?string $brand = null
+    ): array
+    {
+        $end = $bigDateTime ?: Carbon::now()->endOfDay();
+
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select(['s.brand', 's.totalCyclesPaid', 'COUNT(s.id) AS count'])
+            ->from(Subscription::class, 's')
+            ->where(
+                $qb->expr()
+                    ->eq('s.intervalType', ':year')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.intervalCount', ':one')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->lte('s.paidUntil', ':end'),
+                        $qb->expr()
+                            ->isNotNull('s.canceledOn')
+                    )
+            )
+            ->setParameter('year', config('ecommerce.interval_type_yearly'))
+            ->setParameter('one', 1)
+            ->setParameter('end', $end)
+            ->groupBy('s.totalCyclesPaid');
+
+        if ($smallDateTime) {
+            $qb->andWhere(
+                    $qb->expr()
+                        ->gte('s.startSate', ':start')
+                )
+                ->setParameter('start', $smallDateTime);
+        }
+
+        if ($brand) {
+            $qb->andWhere(
+                    $qb->expr()
+                        ->eq('s.brand', ':brand')
+                )
+                ->setParameter('brand', $brand);
+        } else {
+            $qb->addGroupBy('s.brand');
         }
 
         return $qb->getQuery()

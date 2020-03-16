@@ -46,11 +46,21 @@ class RetentionJsonController extends Controller
      */
     public function stats(RetentionStatsRequest $request)
     {
-        $this->permissionService->canOrThrow(auth()->id(), 'pull.membership-stats');
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.retention-stats');
 
         $stats = $this->retentionStatsService->getStats($request);
 
         return ResponseService::retentionStats($stats)
+            ->respond(200);
+    }
+
+    public function averageMembershipEnd(Request $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.retention-stats');
+
+        $stats = $this->retentionStatsService->getAverageMembershipEnd($request);
+
+        return ResponseService::averageMembershipEnd($stats)
             ->respond(200);
     }
 }

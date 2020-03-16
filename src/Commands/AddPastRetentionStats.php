@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use Railroad\Ecommerce\Entities\RetentionStats;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Services\RetentionStatsService;
 use Throwable;
 
 class AddPastRetentionStats extends Command
@@ -30,6 +31,11 @@ class AddPastRetentionStats extends Command
      */
     private $databaseManager;
 
+    /**
+     * @var RetentionStatsService
+     */
+    private $retentionStatsService;
+
     const LIFETIME_SKUS = [
         'PIANOTE-MEMBERSHIP-LIFETIME' => 'pianote',
         'PIANOTE-MEMBERSHIP-LIFETIME-EXISTING-MEMBERS' => 'pianote',
@@ -40,22 +46,24 @@ class AddPastRetentionStats extends Command
     const BRANDS = [
         'drumeo',
         'pianote',
-        'guitareo',
-        'recordeo'
+        'guitareo'
     ];
 
     /**
      * AddPastRetentionStats constructor.
      *
      * @param DatabaseManager $databaseManager
+     * @param RetentionStatsService $retentionStatsService
      */
     public function __construct(
-        DatabaseManager $databaseManager
+        DatabaseManager $databaseManager,
+        RetentionStatsService $retentionStatsService
     )
     {
         parent::__construct();
 
         $this->databaseManager = $databaseManager;
+        $this->retentionStatsService = $retentionStatsService;
     }
 
     /**
@@ -94,7 +102,7 @@ class AddPastRetentionStats extends Command
      */
     public function computeStats(Carbon $smallDate, Carbon $bigDate)
     {
-        $intervals = $this->getIntervals($smallDate, $bigDate);
+        $intervals = $this->retentionStatsService->getIntervals($smallDate, $bigDate);
 
         /*
         $intervals = [
@@ -245,11 +253,6 @@ class AddPastRetentionStats extends Command
                     }
                 }
 
-                if ($brand == 'recordeo') {
-                    // for recordeo brand there are no lifetime subscriptions yet
-                    continue;
-                }
-
                 $customersStart = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                     ->table('ecommerce_user_products')
                     ->whereIn('product_id', $lifetimeBrandProductIds[$brand])
@@ -326,39 +329,5 @@ class AddPastRetentionStats extends Command
 
             $insertData = [];
         }
-    }
-
-    /**
-     * @param Carbon $smallDate
-     * @param Carbon $bigDate
-     *
-     * @return array
-     */
-    public function getIntervals(Carbon $smallDate, Carbon $bigDate): array
-    {
-        $intervalStart = $smallDate->copy()->subDays($smallDate->dayOfWeek)->startOfDay();
-        $intervalEnd = $intervalStart->copy()->addDays(6)->endOfDay();
-
-        $lastDay = $bigDate->copy()->addDays(6 - $bigDate->dayOfWeek)->endOfDay();
-
-        $result = [
-            [
-                'start' => $intervalStart,
-                'end' => $intervalEnd,
-            ]
-        ];
-
-        while ($intervalEnd < $lastDay) {
-
-            $intervalStart = $intervalStart->copy()->addDays(7);
-            $intervalEnd = $intervalEnd->copy()->addDays(7);
-
-            $result[] = [
-                'start' => $intervalStart,
-                'end' => $intervalEnd,
-            ];
-        }
-
-        return $result;
     }
 }

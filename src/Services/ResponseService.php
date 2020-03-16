@@ -15,6 +15,7 @@ use Railroad\Ecommerce\Transformers\AccessCodeTransformer;
 use Railroad\Ecommerce\Transformers\AccountingProductsTotalsTransformer;
 use Railroad\Ecommerce\Transformers\AddressTransformer;
 use Railroad\Ecommerce\Transformers\AppleReceiptTransformer;
+use Railroad\Ecommerce\Transformers\AverageMembershipEndTransformer;
 use Railroad\Ecommerce\Transformers\CustomerTransformer;
 use Railroad\Ecommerce\Transformers\CartItemTransformer;
 use Railroad\Ecommerce\Transformers\DailyStatisticTransformer;
@@ -685,6 +686,22 @@ class ResponseService extends FractalResponseService
             $stats,
             'retentionStats',
             new RetentionStatsTransformer(),
+            new JsonApiSerializer(),
+            null
+        );
+    }
+
+    /**
+     * @param array $stats
+     *
+     * @return Fractal
+     */
+    public static function averageMembershipEnd(array $stats)
+    {
+        return self::create(
+            $stats,
+            'averageMembershipEnd',
+            new AverageMembershipEndTransformer(),
             new JsonApiSerializer(),
             null
         );

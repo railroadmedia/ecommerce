@@ -19,6 +19,7 @@ use Railroad\DoctrineArrayHydrator\Contracts\UserProviderInterface as DoctrineAr
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\MembershipStats;
+use Railroad\Ecommerce\Entities\RetentionStats;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Faker\Factory;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
@@ -61,6 +62,7 @@ class EcommerceTestCase extends BaseTestCase
         'discountCriteriasProducts' => 'ecommerce_discount_criterias_products',
         'appleReceipts' => 'ecommerce_apple_receipts',
         'membershipStats' => 'ecommerce_membership_stats',
+        'retentionStats' => 'ecommerce_retention_stats'
     ];
 
     /**
@@ -960,7 +962,7 @@ class EcommerceTestCase extends BaseTestCase
     }
 
     /**
-     * Helper method to seed a test apple receipt record
+     * Helper method to seed a test membership stats record
      *
      * @return array
      */
@@ -986,6 +988,38 @@ class EcommerceTestCase extends BaseTestCase
 
         $newRecordId =
             $this->databaseManager->table(self::TABLES['membershipStats'])
+                ->insertGetId($data);
+
+        $data['id'] = $newRecordId;
+
+        return $data;
+    }
+
+    /**
+     * Helper method to seed a test retention stats record
+     *
+     * @return array
+     */
+    public function fakeRetentionStats($dataStub = []): array
+    {
+        $data = $dataStub + [
+                'subscription_type' => $this->faker->randomElement([
+                    RetentionStats::TYPE_ONE_MONTH,
+                    RetentionStats::TYPE_SIX_MONTHS,
+                    RetentionStats::TYPE_ONE_YEAR
+                ]),
+                'interval_start_date' => Carbon::now()->subDays($this->faker->randomNumber(2, true)),
+                'interval_end_date' => Carbon::now()->subDays($this->faker->randomNumber(2, true)),
+                'brand' => config('ecommerce.brand'),
+                'customers_start' => $this->faker->randomNumber(2, true),
+                'customers_end' => $this->faker->randomNumber(2, true),
+                'customers_new' => $this->faker->randomNumber(2, true),
+                'created_at' => Carbon::now(),
+                'updated_at' => null,
+            ];
+
+        $newRecordId =
+            $this->databaseManager->table(self::TABLES['retentionStats'])
                 ->insertGetId($data);
 
         $data['id'] = $newRecordId;
