@@ -6,8 +6,10 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\RetentionStats;
 use Railroad\Ecommerce\Entities\Structures\AverageMembershipEnd;
+use Railroad\Ecommerce\Entities\Structures\MembershipEndStats;
 use Railroad\Ecommerce\Entities\Structures\RetentionStatistic;
 use Railroad\Ecommerce\Repositories\RetentionStatsRepository;
+use Railroad\Ecommerce\Requests\AverageMembershipEndRequest;
 use Railroad\Ecommerce\Requests\RetentionStatsRequest;
 
 class RetentionStatsService
@@ -138,12 +140,11 @@ class RetentionStatsService
     }
 
     /**
-     * @param Carbon $smallDate
-     * @param Carbon $bigDate
+     * @param AverageMembershipEndRequest $request
      *
      * @return array
      */
-    public function getAverageMembershipEnd(Request $request): array
+    public function getAverageMembershipEnd(AverageMembershipEndRequest $request): array
     {
         $smallDate = $request->has('small_date_time') ?
                         Carbon::parse($request->get('small_date_time'))
@@ -160,118 +161,130 @@ class RetentionStatsService
 
         $result = [];
 
-        $rawStatsOneMonth = $this->retentionStatsRepository->getAverageStatsOneMonth(
-            $smallDate,
-            $bigDate,
-            $intervalType,
-            $brand
-        );
+        $intervalTypes = [
+            RetentionStats::TYPE_ONE_MONTH => [
+                'type' => config('ecommerce.interval_type_monthly'),
+                'count' => 1,
+            ],
+            RetentionStats::TYPE_SIX_MONTHS => [
+                'type' => config('ecommerce.interval_type_monthly'),
+                'count' => 6,
+            ],
+            RetentionStats::TYPE_ONE_YEAR => [
+                'type' => config('ecommerce.interval_type_yearly'),
+                'count' => 1,
+            ]
+        ];
 
-        $statsOneMonth = [];
+        foreach ($intervalTypes as $type => $typeDetails) {
 
-        foreach ($rawStatsOneMonth as $rawOneMonth) {
-            $brand = $rawOneMonth['brand'];
-            if (!isset($statsOneMonth[$brand])) {
-                $statsOneMonth[$brand] = [
-                    'weightedSum' => 0,
-                    'sum' => 0,
-                ];
+            if ($intervalType == null || $type == $intervalType) {
+
+                $rawStats = $this->retentionStatsRepository->getAverageMembershipEnd(
+                    $typeDetails['type'],
+                    $typeDetails['count'],
+                    $smallDate,
+                    $bigDate,
+                    $brand
+                );
+
+                $stats = [];
+
+                foreach ($rawStats as $rawStat) {
+                    $statBrand = $rawStat['brand'];
+                    if (!isset($stats[$statBrand])) {
+                        $stats[$statBrand] = [
+                            'weightedSum' => 0,
+                            'sum' => 0,
+                        ];
+                    }
+                    $stats[$statBrand]['weightedSum'] += $rawStat['totalCyclesPaid'] * $rawStat['count'];
+                    $stats[$statBrand]['sum'] += $rawStat['count'];
+                }
+
+                foreach ($stats as $statBrand => $brandStats) {
+
+                    $id = md5($statBrand . $type);
+
+                    $stat = new AverageMembershipEnd($id);
+
+                    $stat->setBrand($statBrand);
+                    $stat->setSubscriptionType($type);
+                    $stat->setAverageMembershipEnd(round($brandStats['weightedSum'] / $brandStats['sum'], 2));
+                    $stat->setIntervalStartDate($smallDate);
+                    $stat->setIntervalEndDate($bigDate);
+
+                    $result[] = $stat;
+                }
             }
-            $statsOneMonth[$brand]['weightedSum'] += $rawOneMonth['totalCyclesPaid'] * $rawOneMonth['count'];
-            $statsOneMonth[$brand]['sum'] += $rawOneMonth['count'];
         }
 
-        $type = RetentionStats::TYPE_ONE_MONTH;
+        return $result;
+    }
 
-        foreach ($statsOneMonth as $brand => $brandStats) {
+    /**
+     * @param AverageMembershipEndRequest $request
+     *
+     * @return array
+     */
+    public function getMembershipEndStats(Request $request): array
+    {
+        $smallDate = $request->has('small_date_time') ?
+                        Carbon::parse($request->get('small_date_time'))
+                            ->startOfDay() :
+                        null;
 
-            $id = md5($brand . $type);
+        $bigDate = $request->has('big_date_time') ?
+                        Carbon::parse($request->get('big_date_time'))
+                            ->endOfDay() :
+                        null;
 
-            $stat = new AverageMembershipEnd($id);
+        $intervalType = $request->get('interval_type');
+        $brand = $request->get('brand');
 
-            $stat->setBrand($brand);
-            $stat->setSubscriptionType($type);
-            $stat->setAverageMembershipEnd(round($brandStats['weightedSum'] / $brandStats['sum'], 2));
-            $stat->setIntervalStartDate($smallDate);
-            $stat->setIntervalEndDate($bigDate);
+        $result = [];
 
-            $result[] = $stat;
-        }
+        $intervalTypes = [
+            RetentionStats::TYPE_ONE_MONTH => [
+                'type' => config('ecommerce.interval_type_monthly'),
+                'count' => 1,
+            ],
+            RetentionStats::TYPE_SIX_MONTHS => [
+                'type' => config('ecommerce.interval_type_monthly'),
+                'count' => 6,
+            ],
+            RetentionStats::TYPE_ONE_YEAR => [
+                'type' => config('ecommerce.interval_type_yearly'),
+                'count' => 1,
+            ]
+        ];
 
-        $rawStatsSixMonths = $this->retentionStatsRepository->getAverageStatsSixMonths(
-            $smallDate,
-            $bigDate,
-            $intervalType,
-            $brand
-        );
+        foreach ($intervalTypes as $type => $typeDetails) {
+            if ($intervalType == null || $type == $intervalType) {
+                $rawStats = $this->retentionStatsRepository->getAverageMembershipEnd(
+                    $typeDetails['type'],
+                    $typeDetails['count'],
+                    $smallDate,
+                    $bigDate,
+                    $brand
+                );
 
-        $statsSixMonths = [];
+                foreach ($rawStats as $rawStat) {
 
-        foreach ($rawStatsSixMonths as $rawSixMonths) {
-            $brand = $rawSixMonths['brand'];
-            if (!isset($statsSixMonths[$brand])) {
-                $statsSixMonths[$brand] = [
-                    'weightedSum' => 0,
-                    'sum' => 0,
-                ];
+                    $id = md5($rawStat['brand'] . $type . $rawStat['totalCyclesPaid']);
+
+                    $stat = new MembershipEndStats($id);
+
+                    $stat->setBrand($rawStat['brand']);
+                    $stat->setSubscriptionType($type);
+                    $stat->setCyclesPaid($rawStat['totalCyclesPaid']);
+                    $stat->setCount($rawStat['count']);
+                    $stat->setIntervalStartDate($smallDate);
+                    $stat->setIntervalEndDate($bigDate);
+
+                    $result[] = $stat;
+                }
             }
-            $statsSixMonths[$brand]['weightedSum'] += $rawSixMonths['totalCyclesPaid'] * $rawSixMonths['count'];
-            $statsSixMonths[$brand]['sum'] += $rawSixMonths['count'];
-        }
-
-        $type = RetentionStats::TYPE_SIX_MONTHS;
-
-        foreach ($statsSixMonths as $brand => $brandStats) {
-
-            $id = md5($brand . $type);
-
-            $stat = new AverageMembershipEnd($id);
-
-            $stat->setBrand($brand);
-            $stat->setSubscriptionType($type);
-            $stat->setAverageMembershipEnd(round($brandStats['weightedSum'] / $brandStats['sum'], 2));
-            $stat->setIntervalStartDate($smallDate);
-            $stat->setIntervalEndDate($bigDate);
-
-            $result[] = $stat;
-        }
-
-        $rawStatsOneYear = $this->retentionStatsRepository->getAverageStatsOneYear(
-            $smallDate,
-            $bigDate,
-            $intervalType,
-            $brand
-        );
-
-        $statsOneYear = [];
-
-        foreach ($rawStatsOneYear as $rawOneYear) {
-            $brand = $rawOneYear['brand'];
-            if (!isset($statsOneYear[$brand])) {
-                $statsOneYear[$brand] = [
-                    'weightedSum' => 0,
-                    'sum' => 0,
-                ];
-            }
-            $statsOneYear[$brand]['weightedSum'] += $rawOneYear['totalCyclesPaid'] * $rawOneYear['count'];
-            $statsOneYear[$brand]['sum'] += $rawOneYear['count'];
-        }
-
-        $type = RetentionStats::TYPE_ONE_YEAR;
-
-        foreach ($statsOneYear as $brand => $brandStats) {
-
-            $id = md5($brand . $type);
-
-            $stat = new AverageMembershipEnd($id);
-
-            $stat->setBrand($brand);
-            $stat->setSubscriptionType($type);
-            $stat->setAverageMembershipEnd(round($brandStats['weightedSum'] / $brandStats['sum'], 2));
-            $stat->setIntervalStartDate($smallDate);
-            $stat->setIntervalEndDate($bigDate);
-
-            $result[] = $stat;
         }
 
         return $result;

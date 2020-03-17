@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Requests\AverageMembershipEndRequest;
 use Railroad\Ecommerce\Requests\RetentionStatsRequest;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\RetentionStatsService;
@@ -54,13 +55,23 @@ class RetentionJsonController extends Controller
             ->respond(200);
     }
 
-    public function averageMembershipEnd(Request $request)
+    public function averageMembershipEnd(AverageMembershipEndRequest $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.retention-stats');
 
         $stats = $this->retentionStatsService->getAverageMembershipEnd($request);
 
         return ResponseService::averageMembershipEnd($stats)
+            ->respond(200);
+    }
+
+    public function membershipEndStats(Request $request)
+    {
+        $this->permissionService->canOrThrow(auth()->id(), 'pull.retention-stats');
+
+        $stats = $this->retentionStatsService->getMembershipEndStats($request);
+
+        return ResponseService::membershipEndStats($stats)
             ->respond(200);
     }
 }
