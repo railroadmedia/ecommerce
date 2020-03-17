@@ -22,7 +22,6 @@ class RetentionJsonControllerTest extends EcommerceTestCase
         $this->retentionStatsService = $this->app->make(RetentionStatsService::class);
     }
 
-    /*
     public function test_pull_retention_stats()
     {
         // random date, between 16 and 30 days ago
@@ -320,7 +319,6 @@ class RetentionJsonControllerTest extends EcommerceTestCase
             $response->decodeResponseJson()
         );
     }
-    */
 
     public function test_pull_membership_end_stats()
     {
