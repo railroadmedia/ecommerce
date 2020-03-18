@@ -133,7 +133,8 @@ class OrderFormJsonController extends Controller
         elseif (isset($result['errors'])) {
             $errors = [];
             foreach ($result['errors'] as $message) {
-                $errors = [
+
+                $errors[] = [
                     'title' => 'Payment failed.',
                     'detail' => $message,
                 ];
