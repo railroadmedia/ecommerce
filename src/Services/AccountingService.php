@@ -65,7 +65,9 @@ class AccountingService
 
         $smallDateTime =
             Carbon::parse($smallDate)
-                ->startOfDay();
+                ->startOfDay()
+                ->timezone(config('ecommerce.accounting_report_timezone', 'UTC'));
+
 
         $bigDate = $request->get(
             'big_date_time',
@@ -77,7 +79,8 @@ class AccountingService
 
         $bigDateTime =
             Carbon::parse($bigDate)
-                ->endOfDay();
+                ->endOfDay()
+                ->timezone(config('ecommerce.accounting_report_timezone', 'UTC'));
 
         // fetch report summary totals, calculated atleast partially in mysql
         $result = new AccountingProductTotals($smallDate, $bigDate);
@@ -589,7 +592,50 @@ class AccountingService
         }
 
         $result->orderAccountingProductsBySku();
-        
+
+        // instead of using the database we'll just add up all the rows to calculate the totals
+        // tax
+        $result->setTaxPaid(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setTaxPaid($result->getTaxPaid() + $accountingProduct->getTaxPaid());
+        }
+        $result->setTaxPaid(round($result->getTaxPaid(), 2));
+
+        // shipping
+        $result->setShippingPaid(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setShippingPaid($result->getShippingPaid() + $accountingProduct->getShippingPaid());
+        }
+        $result->setShippingPaid(round($result->getShippingPaid(), 2));
+
+        // finance
+        $result->setFinancePaid(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setFinancePaid($result->getFinancePaid() + $accountingProduct->getFinancePaid());
+        }
+        $result->setShippingPaid(round($result->getShippingPaid(), 2));
+
+        // refunded
+        $result->setRefunded(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setRefunded($result->getRefunded() + $accountingProduct->getLessRefunded());
+        }
+        $result->setRefunded(round($result->getRefunded(), 2));
+
+        // gross product
+        $result->setNetProduct(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setNetProduct($result->getNetProduct() + $accountingProduct->getNetProduct());
+        }
+        $result->setNetProduct(round($result->getNetProduct(), 2));
+
+        // net paid
+        $result->setNetPaid(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setNetPaid($result->getNetPaid() + $accountingProduct->getNetPaid());
+        }
+        $result->setNetPaid(round($result->getNetPaid(), 2));
+
         return $result;
     }
 }

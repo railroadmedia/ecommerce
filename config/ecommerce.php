@@ -7,6 +7,9 @@ return [
     'brand' => 'brand',
     'available_brands' => ['brand'],
 
+    // accounting report timezone
+    'accounting_report_timezone' => 'America/Los_Angeles',
+
     // database
     'database_connection_name' => 'mysql',
     'database_name' => env('DB_DATABASE'),
