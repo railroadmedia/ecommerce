@@ -584,4 +584,40 @@ class SubscriptionRepository extends RepositoryBase
 
         return $qb->getQuery()->getResult();
     }
+
+    /**
+     * @param int $userId
+     * @param Carbon $date
+     *
+     * @return Subscription[]
+     */
+    public function getUserMembershipSubscriptionBeforeDate(
+        int $userId,
+        Carbon $date
+    ): array
+    {
+        // todo - add subscription types and intervals constraints
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select('s')
+            ->from($this->getClassName(), 's')
+            ->where(
+                $qb->expr()
+                    ->eq('s.user', ':userId')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->lte('s.startDate', ':date')
+            );
+
+        $subscriptions =
+            $qb->setParameter('userId', $userId)
+                ->setParameter('date', $date)
+                ->getQuery()
+                ->getResult();
+
+        return $subscriptions;
+    }
 }
