@@ -14,7 +14,7 @@ class AddBrandToMembershipStatsTable extends Migration
     public function up()
     {
         Schema::table('ecommerce_membership_stats', function (Blueprint $table) {
-            $table->string('brand')->after('stats_date');
+            $table->string('brand')->default('')->after('stats_date');
         });
     }
 

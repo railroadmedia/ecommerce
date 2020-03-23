@@ -271,7 +271,12 @@ class AppleStoreKitService
 
         $subscription = $this->syncSubscription($appleResponse, $receipt);
 
-        $this->userProductService->updateSubscriptionProductsApp($subscription);
+        if (!empty($receipt)) {
+            $this->userProductService->updateSubscriptionProductsApp($subscription);
+        } else {
+            error_log('Error updating access for an Apple IOS subscription. Could not find or sync subscription for receipt (DB Receipt): ' . var_export($receipt, true));
+            error_log('Error updating access for Apple IOS subscription. Could not find or sync subscription for receipt (AppleResponse): ' . var_export($appleResponse, true));
+        }
     }
 
     /**
