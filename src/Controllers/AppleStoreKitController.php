@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,6 @@ use Railroad\Ecommerce\Requests\AppleReceiptRequest;
 use Railroad\Ecommerce\Services\AppleStoreKitService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
-use Exception;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
@@ -102,29 +102,24 @@ class AppleStoreKitController extends Controller
         error_log(
             'AppleStoreKitController processNotification Request Dump --------------------------------------------------'
         );
+        error_log(var_export($request->get('notification_type'), true));
         error_log(var_export($request->input(), true));
 
-        if (strtolower($request->get('notification_type')) == 'renewal' ||
-            strtolower($request->get('notification_type')) == 'cancel') {
+        $notificationType = $request->get('notification_type');
 
-            $notificationType = strtolower($request->get('notification_type')) == 'renewal' ?
-                AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE :
-                AppleReceipt::APPLE_CANCEL_NOTIFICATION_TYPE;
+        $receipt = new AppleReceipt();
 
-            $receipt = new AppleReceipt();
+        $receipt->setReceipt($request->get('latest_receipt'));
+        $receipt->setRequestType(AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE);
+        $receipt->setNotificationType($notificationType);
+        $receipt->setBrand(config('ecommerce.brand'));
 
-            $receipt->setReceipt($request->get('latest_receipt'));
-            $receipt->setRequestType(AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE);
-            $receipt->setNotificationType($notificationType);
-            $receipt->setBrand(config('ecommerce.brand'));
+        try {
+            $this->appleStoreKitService->processNotification($receipt);
+        } catch (Exception $e) {
+            error_log($e);
 
-            try {
-                $this->appleStoreKitService->processNotification($receipt);
-            } catch (Exception $e) {
-                error_log($e);
-
-                return response()->json();
-            }
+            return response()->json();
         }
 
         return response()->json();
