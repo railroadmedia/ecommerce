@@ -596,7 +596,6 @@ class SubscriptionRepository extends RepositoryBase
         Carbon $date
     ): array
     {
-        // todo - add subscription types and intervals constraints
         $qb =
             $this->getEntityManager()
                 ->createQueryBuilder();
@@ -610,11 +609,48 @@ class SubscriptionRepository extends RepositoryBase
             ->andWhere(
                 $qb->expr()
                     ->lte('s.startDate', ':date')
+            )
+            ->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->andX(
+                        $qb->expr()
+                            ->eq('s.intervalType', ':intervalMonthly'),
+                        $qb->expr()->orX(
+                            $qb->expr()
+                                ->eq('s.intervalCount', ':oneMonth'),
+                            $qb->expr()
+                                ->eq('s.intervalCount', ':sixMonths')
+                        )
+                    ),
+                    $qb->expr()->andX(
+                        $qb->expr()
+                            ->eq('s.intervalType', ':intervalYearly'),
+                        $qb->expr()
+                            ->eq('s.intervalCount', ':oneYear')
+                    )
+                )
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->in('s.type', ':membership')
             );
 
         $subscriptions =
             $qb->setParameter('userId', $userId)
                 ->setParameter('date', $date)
+                ->setParameter('intervalMonthly', config('ecommerce.interval_type_monthly'))
+                ->setParameter('oneMonth', 1)
+                ->setParameter('sixMonths', 6)
+                ->setParameter('intervalYearly', config('ecommerce.interval_type_yearly'))
+                ->setParameter('oneYear', 1)
+                ->setParameter(
+                    'membership',
+                    [
+                        Subscription::TYPE_SUBSCRIPTION,
+                        Subscription::TYPE_APPLE_SUBSCRIPTION,
+                        Subscription::TYPE_GOOGLE_SUBSCRIPTION
+                    ]
+                )
                 ->getQuery()
                 ->getResult();
 

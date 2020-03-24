@@ -111,7 +111,7 @@ class AddPastMembershipStats extends Command
 
         $this->seedPeriod($startDate, $endDate);
         $this->processSubscriptions($startDate, $endDate);
-        // $this->processLifetimeSubscriptions($startDate, $endDate);
+        $this->processLifetimeSubscriptions($startDate, $endDate);
 
         $finish = microtime(true) - $start;
 
@@ -219,11 +219,9 @@ class AddPastMembershipStats extends Command
 
     public function processSubscriptions(Carbon $smallDate, Carbon $bigDate)
     {
-        // $this->processNewMembership($smallDate, $bigDate);
-        // $this->processExpiredMembership($smallDate, $bigDate);
-        // $this->processSuspendedMembership($smallDate, $bigDate);
-        // $this->processCanceledMembership($smallDate, $bigDate);
-        // $this->processCanceledStateMembership($smallDate, $bigDate);
+        $this->processNewMembership($smallDate, $bigDate);
+        $this->processExpiredMembership($smallDate, $bigDate);
+        $this->processCanceledMembership($smallDate, $bigDate);
         $this->processUserMembership($smallDate, $bigDate);
     }
 
@@ -403,7 +401,11 @@ EOT;
     {
         $start = microtime(true);
 
+        $this->info("Started processing users membership");
+
         $chunkSize = 1000;
+        $processed = 0;
+        $processingStart = microtime(true);
 
         $this->databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('usora_users')
@@ -441,7 +443,13 @@ EOT;
             ->orderBy('usora_users.id', 'desc')
             ->chunk(
                 $chunkSize,
-                function (Collection $rows) use ($smallDate, $bigDate) {
+                function (Collection $rows) use (
+                    $smallDate,
+                    $bigDate,
+                    $chunkSize,
+                    &$processed,
+                    &$processingStart
+                ) {
 
                     foreach ($rows as $userRow) {
 
@@ -515,8 +523,26 @@ EOT;
                             }
                         }
                     }
+
+                    $processed += $chunkSize;
+
+                    if ($processed && $processed%($chunkSize * 10) == 0) {
+                        $finishBatch = microtime(true) - $processingStart;
+
+                        $format = "Finished processing %s users, batch processed in %s seconds";
+
+                        $this->info(sprintf($format, $processed, $finishBatch));
+
+                        $processingStart = microtime(true);
+                    }
                 }
             );
+
+        $finishBatch = microtime(true) - $processingStart;
+
+        $format = "Finished processing %s users, batch processed in %s seconds";
+
+        $this->info(sprintf($format, $processed, $finishBatch));
 
         $finish = microtime(true) - $start;
 

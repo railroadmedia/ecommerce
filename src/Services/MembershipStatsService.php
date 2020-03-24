@@ -42,10 +42,14 @@ class MembershipStatsService
             $subscription->getPaidUntil() < $statsEnd
             && (
                 !$subscription->getCanceledOn()
-                || $subscription->getCanceledOn() > $subscription->getPaidUntil()
+                || (
+                    $subscription->getCanceledOn() > $subscription->getPaidUntil()
+                    && $subscription->getCanceledOn() > $statsStart
+                )
             )
         ) {
-            $intervalSuspendedStart = $subscription->getPaidUntil();
+            $intervalSuspendedStart = $subscription->getPaidUntil() < $statsStart ?
+                                            $statsStart : $subscription->getPaidUntil();
 
             $intervalSuspendedEnd = $subscription->getCanceledOn() && $subscription->getCanceledOn() < $statsEnd ?
                                         $subscription->getCanceledOn() : $statsEnd;
@@ -58,10 +62,10 @@ class MembershipStatsService
         }
 
         if ($subscription->getCanceledOn() && $subscription->getCanceledOn() < $statsEnd) {
-            $intervalCanceledStart = $subscription->getCanceledOn();
+            $intervalCanceledStart = $subscription->getCanceledOn() < $statsStart ?
+                                            $statsStart : $subscription->getCanceledOn();
 
-            $intervalCanceledEnd = $subscription->getCanceledOn() < $statsEnd ?
-                                        $subscription->getCanceledOn() : $statsEnd;
+            $intervalCanceledEnd = $statsEnd;
 
             $intervals[] = new SubscriptionStateInterval(
                 $intervalCanceledStart,
@@ -101,14 +105,31 @@ class MembershipStatsService
             $matchedAndIgnore = false;
 
             foreach ($existing as $index => $existingSubStateInt) {
+
                 if (
                     (
-                        $newSubStateInt->getEnd() > $existingSubStateInt->getStart()
-                        && $newSubStateInt->getEnd() < $existingSubStateInt->getEnd()
+                        /*
+                        [   ]    -> newSubStateInt
+                          [   ]  -> existingSubStateInt
+                        */
+                        $newSubStateInt->getEnd() >= $existingSubStateInt->getStart()
+                        && $newSubStateInt->getEnd() <= $existingSubStateInt->getEnd()
                     )
                     || (
-                        $newSubStateInt->getStart() < $existingSubStateInt->getEnd()
-                        && $newSubStateInt->getEnd() > $existingSubStateInt->getEnd()
+                        /*
+                          [   ] -> newSubStateInt
+                        [   ]   -> existingSubStateInt
+                        */
+                        $newSubStateInt->getStart() <= $existingSubStateInt->getEnd()
+                        && $newSubStateInt->getStart() >= $existingSubStateInt->getStart()
+                    )
+                    || (
+                        /*
+                        [       ]   -> newSubStateInt
+                          [   ]     -> existingSubStateInt
+                        */
+                        $newSubStateInt->getStart() <= $existingSubStateInt->getStart()
+                        && $newSubStateInt->getEnd() >= $existingSubStateInt->getEnd()
                     )
                 ) {
                     // if new interval overlaps existing
@@ -116,15 +137,15 @@ class MembershipStatsService
                     if ($newSubStateInt->getType() == SubscriptionStateInterval::TYPE_ACTIVE) {
                         if ($existingSubStateInt->getType() == SubscriptionStateInterval::TYPE_ACTIVE) {
                             // if both active, use only the one with bigger end date
-                            if ($newSubStateInt->getEnd() < $existingSubStateInt->getEnd()) {
+                            if ($newSubStateInt->getEnd() <= $existingSubStateInt->getEnd()) {
                                 $matchedAndIgnore = true;
                             } else {
-                                unset($existing[$index]);
+                                $existing[$index] = null;
                             }
                         } else {
                             // shorten the existing suspended/canceled state
                             if (
-                                $newSubStateInt->getStart() < $existingSubStateInt->getStart()
+                                $newSubStateInt->getStart() <= $existingSubStateInt->getStart()
                                 && $newSubStateInt->getEnd() > $existingSubStateInt->getStart()
                                 && $newSubStateInt->getEnd() < $existingSubStateInt->getEnd()
                             ) {
@@ -154,7 +175,7 @@ class MembershipStatsService
                                 [     ] -> newSubStateInt
                                   [ ]   -> existingSubStateInt
                                 */
-                                unset($existing[$index]);
+                                $existing[$index] = null;
                             }
                         }
                     } else if ($newSubStateInt->getType() == SubscriptionStateInterval::TYPE_SUSPENDED) {
@@ -195,10 +216,10 @@ class MembershipStatsService
                             }
                         } else if ($existingSubStateInt->getType() == SubscriptionStateInterval::TYPE_SUSPENDED) {
                             // if both suspended, use only the one with bigger end date
-                            if ($newSubStateInt->getEnd() < $existingSubStateInt->getEnd()) {
+                            if ($newSubStateInt->getEnd() <= $existingSubStateInt->getEnd()) {
                                 $matchedAndIgnore = true;
                             } else {
-                                unset($existing[$index]);
+                                $existing[$index] = null;
                             }
                         } else {
                             // shorten the existing canceled state
@@ -233,7 +254,7 @@ class MembershipStatsService
                                 [     ] -> newSubStateInt
                                   [ ]   -> existingSubStateInt
                                 */
-                                unset($existing[$index]);
+                                $existing[$index] = null;
                             }
                         }
                     } else { // new is canceled state
@@ -280,7 +301,7 @@ class MembershipStatsService
                             if ($newSubStateInt->getEnd() < $existingSubStateInt->getEnd()) {
                                 $matchedAndIgnore = true;
                             } else {
-                                unset($existing[$index]);
+                                $existing[$index] = null;
                             }
                         }
                     }
@@ -288,7 +309,8 @@ class MembershipStatsService
             }
 
             if (!empty($existing)) {
-                $existing = array_values($existing);
+                $existing = array_filter($existing);
+                $existing = !empty($existing) ? array_values($existing) : [];
             }
 
             if (!$matchedAndIgnore) {
