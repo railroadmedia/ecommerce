@@ -68,7 +68,7 @@ class RetentionStatsRepository extends RepositoryBase
         if ($intervalType) {
             $qb->andWhere(
                     $qb->expr()
-                        ->eq('s.intervalType', ':intervalType')
+                        ->eq('s.subscriptionType', ':intervalType')
                 )
                 ->setParameter('intervalType', $intervalType);
         }
@@ -101,6 +101,10 @@ class RetentionStatsRepository extends RepositoryBase
             ->from(Subscription::class, 's')
             ->where(
                 $qb->expr()
+                    ->in('s.type', ':types')
+            )
+            ->andWhere(
+                $qb->expr()
                     ->eq('s.intervalType', ':intervalType')
             )
             ->andWhere(
@@ -114,12 +118,20 @@ class RetentionStatsRepository extends RepositoryBase
                             ->lte('s.paidUntil', ':paidUntilEnd'),
                         $qb->expr()
                             ->andX(
-                            $qb->expr()
-                                ->isNotNull('s.canceledOn'),
-                            $qb->expr()
-                            ->lte('s.canceledOn', ':canceledOnEnd')
+                                $qb->expr()
+                                    ->isNotNull('s.canceledOn'),
+                                $qb->expr()
+                                    ->lte('s.canceledOn', ':canceledOnEnd')
                         )
                     )
+            )
+            ->setParameter(
+                'types',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_APPLE_SUBSCRIPTION,
+                    Subscription::TYPE_GOOGLE_SUBSCRIPTION,
+                ]
             )
             ->setParameter('intervalType', $intervalType)
             ->setParameter('intervalCount', $intervalCount)

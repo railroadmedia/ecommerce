@@ -28,8 +28,7 @@ class RetentionStatsRequest extends FormRequest
             'big_date_time' => 'date',
             'interval_type' => 'in:"' . RetentionStats::TYPE_ONE_MONTH
                                     . '", "' . RetentionStats::TYPE_SIX_MONTHS
-                                    . '", "' . RetentionStats::TYPE_ONE_YEAR
-                                    . '", "' . RetentionStats::TYPE_LIFETIME . '"',
+                                    . '", "' . RetentionStats::TYPE_ONE_YEAR . '"',
             'brand' => 'string',
         ];
     }

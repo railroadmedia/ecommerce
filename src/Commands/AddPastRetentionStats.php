@@ -252,60 +252,6 @@ class AddPastRetentionStats extends Command
                         $insertData = [];
                     }
                 }
-
-                $customersStart = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                    ->table('ecommerce_user_products')
-                    ->whereIn('product_id', $lifetimeBrandProductIds[$brand])
-                    ->where(function ($query) use ($startEndOfDay) {
-                        $query->whereNull('expiration_date')
-                            ->orWhere('expiration_date', '>', $startEndOfDay);
-                    })
-                    ->where(function ($query) use ($startEndOfDay) {
-                        $query->whereNull('deleted_at')
-                            ->orWhere('deleted_at', '>', $startEndOfDay);
-                    })
-                    ->where('created_at', '<', $startEndOfDay)
-                    ->count();
-
-                $customersEnd = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                    ->table('ecommerce_user_products')
-                    ->whereIn('product_id', $lifetimeBrandProductIds[$brand])
-                    ->where(function ($query) use ($endEndOfDay) {
-                        $query->whereNull('expiration_date')
-                            ->orWhere('expiration_date', '>', $endEndOfDay);
-                    })
-                    ->where(function ($query) use ($endEndOfDay) {
-                        $query->whereNull('deleted_at')
-                            ->orWhere('deleted_at', '>', $endEndOfDay);
-                    })
-                    ->where('created_at', '<', $endEndOfDay)
-                    ->count();
-
-                $customersNew = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                    ->table('ecommerce_user_products')
-                    ->whereIn('product_id', $lifetimeBrandProductIds[$brand])
-                    ->where(function ($query) use ($endEndOfDay) {
-                        $query->whereNull('expiration_date')
-                            ->orWhere('expiration_date', '>', $endEndOfDay);
-                    })
-                    ->where(function ($query) use ($endEndOfDay) {
-                        $query->whereNull('deleted_at')
-                            ->orWhere('deleted_at', '>', $endEndOfDay);
-                    })
-                    ->where('created_at', '>', $startEndOfDay)
-                    ->where('created_at', '<', $endEndOfDay)
-                    ->count();
-
-                $insertData[] = [
-                    'brand' => $brand,
-                    'subscription_type' => RetentionStats::TYPE_LIFETIME,
-                    'interval_start_date' => $interval['start'],
-                    'interval_end_date' => $interval['end'],
-                    'customers_start' => $customersStart,
-                    'customers_end' => $customersEnd,
-                    'customers_new' => $customersNew,
-                    'created_at' => $createdAt,
-                ];
             }
 
             $finish = microtime(true) - $start;

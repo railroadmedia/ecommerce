@@ -20,7 +20,6 @@ class RetentionStats
     const TYPE_ONE_MONTH = 'one_month';
     const TYPE_SIX_MONTHS = 'six_months';
     const TYPE_ONE_YEAR = 'one_year';
-    const TYPE_LIFETIME = 'lifetime';
 
     /**
      * @ORM\Id
