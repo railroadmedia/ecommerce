@@ -7,7 +7,11 @@ use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
 use Railroad\Ecommerce\Entities\MembershipStats;
+use Railroad\Ecommerce\Entities\Structures\SubscriptionStateInterval;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Services\MembershipStatsService;
 use Throwable;
 
 class AddPastMembershipStats extends Command
@@ -31,6 +35,21 @@ class AddPastMembershipStats extends Command
      */
     private $databaseManager;
 
+    /**
+     * @var EcommerceEntityManager
+     */
+    private $entityManager;
+
+    /**
+     * @var MembershipStatsService
+     */
+    private $membershipStatsService;
+
+    /**
+     * @var SubscriptionRepository
+     */
+    private $subscriptionRepository;
+
     const LIFETIME_SKUS = [
         'PIANOTE-MEMBERSHIP-LIFETIME',
         'PIANOTE-MEMBERSHIP-LIFETIME-EXISTING-MEMBERS',
@@ -49,14 +68,23 @@ class AddPastMembershipStats extends Command
      * AddPastMembershipStats constructor.
      *
      * @param DatabaseManager $databaseManager
+     * @param EcommerceEntityManager $entityManager
+     * @param MembershipStatsService $membershipStatsService
+     * @param SubscriptionRepository $subscriptionRepository
      */
     public function __construct(
-        DatabaseManager $databaseManager
+        DatabaseManager $databaseManager,
+        EcommerceEntityManager $entityManager,
+        MembershipStatsService $membershipStatsService,
+        SubscriptionRepository $subscriptionRepository
     )
     {
         parent::__construct();
 
         $this->databaseManager = $databaseManager;
+        $this->entityManager = $entityManager;
+        $this->membershipStatsService = $membershipStatsService;
+        $this->subscriptionRepository = $subscriptionRepository;
     }
 
     /**
@@ -84,6 +112,7 @@ class AddPastMembershipStats extends Command
         $this->seedPeriod($startDate, $endDate);
         $this->processSubscriptions($startDate, $endDate);
         $this->processLifetimeSubscriptions($startDate, $endDate);
+        $this->processSum($startDate, $endDate);
 
         $finish = microtime(true) - $start;
 
@@ -165,6 +194,20 @@ class AddPastMembershipStats extends Command
                     'created_at' => $now,
                     'updated_at' => null,
                 ];
+
+                $insertData[] = [
+                    'new' => 0,
+                    'active_state' => 0,
+                    'expired' => 0,
+                    'suspended_state' => 0,
+                    'canceled' => 0,
+                    'canceled_state' => 0,
+                    'interval_type' => MembershipStats::TYPE_ALL,
+                    'stats_date' => $statsDate,
+                    'brand' => $brand,
+                    'created_at' => $now,
+                    'updated_at' => null,
+                ];
             }
 
             if ($i > 0 && count($insertData) >= $insertChunkSize) {
@@ -192,13 +235,14 @@ class AddPastMembershipStats extends Command
     public function processSubscriptions(Carbon $smallDate, Carbon $bigDate)
     {
         $this->processNewMembership($smallDate, $bigDate);
-        $this->processActiveMembership($smallDate, $bigDate);
         $this->processExpiredMembership($smallDate, $bigDate);
-        $this->processSuspendedMembership($smallDate, $bigDate);
         $this->processCanceledMembership($smallDate, $bigDate);
-        $this->processCanceledStateMembership($smallDate, $bigDate);
+        $this->processUserMembership($smallDate, $bigDate);
     }
 
+    /**
+     * Update new membership - ecommerce_membership_stats.new column
+     */
     public function processNewMembership(Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
@@ -251,6 +295,9 @@ EOT;
         $this->info(sprintf($format, $finish));
     }
 
+    /**
+     * Update expired membership - ecommerce_membership_stats.expired column
+     */
     public function processExpiredMembership(Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
@@ -306,6 +353,9 @@ EOT;
         $this->info(sprintf($format, $finish));
     }
 
+    /**
+     * Update canceled membership - ecommerce_membership_stats.canceled column
+     */
     public function processCanceledMembership(Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
@@ -359,246 +409,160 @@ EOT;
         $this->info(sprintf($format, $finish));
     }
 
-    public function processActiveMembership(Carbon $smallDate, Carbon $bigDate)
+    /**
+     * Updates active/suspended/canceled state memberships - Total Users
+     * table: ecommerce_membership_stats, columns: 'active_state', 'suspended_state', 'canceled_state'
+     */
+    public function processUserMembership(Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
 
+        $this->info("Started processing users membership");
+
         $chunkSize = 1000;
+        $processed = 0;
+        $processingStart = microtime(true);
 
         $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-            ->table('ecommerce_subscriptions')
-            ->where('start_date', '<=', $bigDate)
+            ->table('usora_users')
+            ->select(['usora_users.id'])
+            ->leftJoin(
+                'ecommerce_subscriptions',
+                'ecommerce_subscriptions.user_id',
+                '=',
+                'usora_users.id'
+            )
+            ->whereNotNull('ecommerce_subscriptions.id')
+            ->where('ecommerce_subscriptions.start_date', '<=', $bigDate)
             ->where(function ($query) {
                 $query->where(function ($query) {
-                        $query->where('interval_type', config('ecommerce.interval_type_monthly'))
+                        $query->where('ecommerce_subscriptions.interval_type', config('ecommerce.interval_type_monthly'))
                             ->where(function ($query) {
-                                $query->where('interval_count', 1)
-                                    ->orWhere('interval_count', 6);
+                                $query->where('ecommerce_subscriptions.interval_count', 1)
+                                    ->orWhere('ecommerce_subscriptions.interval_count', 6);
                             });
                     })
                     ->orWhere(function ($query) {
-                        $query->where('interval_type', config('ecommerce.interval_type_yearly'))
-                            ->where('interval_count', 1);
+                        $query->where('ecommerce_subscriptions.interval_type', config('ecommerce.interval_type_yearly'))
+                            ->where('ecommerce_subscriptions.interval_count', 1);
                     });
             })
             ->whereIn(
-                'type',
+                'ecommerce_subscriptions.type',
                 [
                     Subscription::TYPE_SUBSCRIPTION,
                     Subscription::TYPE_APPLE_SUBSCRIPTION,
                     Subscription::TYPE_GOOGLE_SUBSCRIPTION,
                 ]
             )
-            ->where(function ($query) use ($smallDate) {
-                $query->whereNull('canceled_on')
-                    ->orWhere('canceled_on', '>', $smallDate);
-            })
-            ->orderBy('id', 'desc')
+            ->groupBy('usora_users.id')
+            ->orderBy('usora_users.id', 'desc')
             ->chunk(
                 $chunkSize,
-                function (Collection $rows) use ($smallDate, $bigDate) {
+                function (Collection $rows) use (
+                    $smallDate,
+                    $bigDate,
+                    $chunkSize,
+                    &$processed,
+                    &$processingStart
+                ) {
 
-                    foreach ($rows as $item) {
+                    foreach ($rows as $userRow) {
 
-                        $itemData = get_object_vars($item);
+                        $userId = $userRow->id;
+                        $membership = [];
 
-                        $startDate = Carbon::parse($itemData['start_date']);
+                        $subscriptions = $this->subscriptionRepository
+                                            ->getUserMembershipSubscriptionBeforeDate($userId, $bigDate);
 
-                        $start = $startDate < $smallDate ? $smallDate : $startDate;
+                        foreach ($subscriptions as $subscription) {
+                            $brand = $subscription->getBrand();
 
-                        $end = $bigDate->copy()->addDays(1); // the update query uses end interval exclusive
+                            $intervalType = null;
 
-                        if ($itemData['canceled_on']) {
-                            $canceledOn = Carbon::parse($itemData['canceled_on']);
-                            $end = $canceledOn > $end ? $end : $canceledOn;
-                        }
-
-                        if ($itemData['paid_until']) {
-                            $paidUntil = Carbon::parse($itemData['paid_until'])->addDays(1);
-                            $end = $paidUntil > $end ? $end : $paidUntil;
-                        }
-
-                        // at this point $end represents the smallest non-null value of ($bigDate, $canceledOn, $paidUntil)
-
-                        $intervalType = null;
-
-                        if ($itemData['interval_type'] == config('ecommerce.interval_type_monthly')) {
-                            if ($itemData['interval_count'] == 1) {
-                                $intervalType = MembershipStats::TYPE_ONE_MONTH;
+                            if ($subscription->getIntervalType() == config('ecommerce.interval_type_monthly')) {
+                                if ($subscription->getIntervalCount() == 1) {
+                                    $intervalType = MembershipStats::TYPE_ONE_MONTH;
+                                } else {
+                                    $intervalType = MembershipStats::TYPE_SIX_MONTHS;
+                                }
                             } else {
-                                $intervalType = MembershipStats::TYPE_SIX_MONTHS;
+                                $intervalType = MembershipStats::TYPE_ONE_YEAR;
                             }
-                        } else {
-                            $intervalType = MembershipStats::TYPE_ONE_YEAR;
+
+                            if (!isset($membership[$brand])) {
+                                $membership[$brand] = [];
+                            }
+
+                            if (!isset($membership[$brand][$intervalType])) {
+                                $membership[$brand][$intervalType] = [];
+                            }
+
+                            $membership[$brand][$intervalType] = $this->membershipStatsService
+                                    ->addSubscriptionStateIntervals(
+                                        $subscription,
+                                        $smallDate,
+                                        $bigDate,
+                                        $membership[$brand][$intervalType]
+                                    );
                         }
 
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                            ->table('ecommerce_membership_stats')
-                            ->where('stats_date', '>=', $start->toDateString())
-                            ->where('stats_date', '<', $end->toDateString())
-                            ->where('interval_type', $intervalType)
-                            ->where('brand', $itemData['brand'])
-                            ->increment('active_state');
+                        $this->entityManager->clear();
+
+                        $typeToColumn = [
+                            SubscriptionStateInterval::TYPE_ACTIVE => 'active_state',
+                            SubscriptionStateInterval::TYPE_SUSPENDED => 'suspended_state',
+                            SubscriptionStateInterval::TYPE_CANCELED => 'canceled_state',
+                        ];
+
+                        foreach ($membership as $brand => $intervalTypes) {
+                            foreach ($intervalTypes as $intervalType => $intervals) {
+                                foreach ($intervals as $subscriptionStateInterval) {
+                                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                                        ->table('ecommerce_membership_stats')
+                                        ->where(
+                                            'stats_date',
+                                            '>=',
+                                            $subscriptionStateInterval->getStart()
+                                                ->toDateString()
+                                        )
+                                        ->where(
+                                            'stats_date',
+                                            '<=',
+                                            $subscriptionStateInterval->getEnd()
+                                                ->toDateString()
+                                        )
+                                        ->where('interval_type', $intervalType)
+                                        ->where('brand', $brand)
+                                        ->increment($typeToColumn[$subscriptionStateInterval->getType()]);
+                                }
+                            }
+                        }
+                    }
+
+                    $processed += $chunkSize;
+
+                    if ($processed && $processed%($chunkSize * 10) == 0) {
+                        $finishBatch = microtime(true) - $processingStart;
+
+                        $format = "Finished processing %s users, batch processed in %s seconds";
+
+                        $this->info(sprintf($format, $processed, $finishBatch));
+
+                        $processingStart = microtime(true);
                     }
                 }
             );
+
+        $finishBatch = microtime(true) - $processingStart;
+
+        $format = "Finished processing %s users, batch processed in %s seconds";
+
+        $this->info(sprintf($format, $processed, $finishBatch));
 
         $finish = microtime(true) - $start;
 
         $format = "Finished processing active state membership stats in total %s seconds\n";
-
-        $this->info(sprintf($format, $finish));
-    }
-
-    public function processSuspendedMembership(Carbon $smallDate, Carbon $bigDate)
-    {
-        $start = microtime(true);
-
-        $chunkSize = 1000;
-
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-            ->table('ecommerce_subscriptions')
-            ->whereNotNull('paid_until')
-            ->where('paid_until', '<=', $bigDate)
-            ->where('is_active', 0)
-            ->whereNull('canceled_on')
-            ->where(function ($query) {
-                $query->where(function ($query) {
-                        $query->where('interval_type', config('ecommerce.interval_type_monthly'))
-                            ->where(function ($query) {
-                                $query->where('interval_count', 1)
-                                    ->orWhere('interval_count', 6);
-                            });
-                    })
-                    ->orWhere(function ($query) {
-                        $query->where('interval_type', config('ecommerce.interval_type_yearly'))
-                            ->where('interval_count', 1);
-                    });
-            })
-            ->whereIn(
-                'type',
-                [
-                    Subscription::TYPE_SUBSCRIPTION,
-                    Subscription::TYPE_APPLE_SUBSCRIPTION,
-                    Subscription::TYPE_GOOGLE_SUBSCRIPTION,
-                ]
-            )
-            ->orderBy('id', 'desc')
-            ->chunk(
-                $chunkSize,
-                function (Collection $rows) use ($smallDate, $bigDate) {
-
-                    foreach ($rows as $item) {
-
-                        $itemData = get_object_vars($item);
-
-                        $paidUntil = Carbon::parse($itemData['paid_until'])->addDays(1);
-                        $start = $paidUntil < $smallDate ? $smallDate : $paidUntil;
-
-                        $end = $bigDate;
-
-                        $intervalType = null;
-
-                        if ($itemData['interval_type'] == config('ecommerce.interval_type_monthly')) {
-                            if ($itemData['interval_count'] == 1) {
-                                $intervalType = MembershipStats::TYPE_ONE_MONTH;
-                            } else {
-                                $intervalType = MembershipStats::TYPE_SIX_MONTHS;
-                            }
-                        } else {
-                            $intervalType = MembershipStats::TYPE_ONE_YEAR;
-                        }
-
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                            ->table('ecommerce_membership_stats')
-                            ->where('stats_date', '>=', $start->toDateString())
-                            ->where('stats_date', '<=', $end->toDateString())
-                            ->where('interval_type', $intervalType)
-                            ->where('brand', $itemData['brand'])
-                            ->increment('suspended_state');
-                    }
-                }
-            );
-
-        $finish = microtime(true) - $start;
-
-        $format = "Finished processing suspended state membership stats in total %s seconds\n";
-
-        $this->info(sprintf($format, $finish));
-    }
-
-    public function processCanceledStateMembership(Carbon $smallDate, Carbon $bigDate)
-    {
-        $start = microtime(true);
-
-        $chunkSize = 1000;
-
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-            ->table('ecommerce_subscriptions')
-            ->whereNotNull('canceled_on')
-            ->where('canceled_on', '<=', $bigDate)
-            ->where(function ($query) {
-                $query->where(function ($query) {
-                        $query->where('interval_type', config('ecommerce.interval_type_monthly'))
-                            ->where(function ($query) {
-                                $query->where('interval_count', 1)
-                                    ->orWhere('interval_count', 6);
-                            });
-                    })
-                    ->orWhere(function ($query) {
-                        $query->where('interval_type', config('ecommerce.interval_type_yearly'))
-                            ->where('interval_count', 1);
-                    });
-            })
-            ->whereIn(
-                'type',
-                [
-                    Subscription::TYPE_SUBSCRIPTION,
-                    Subscription::TYPE_APPLE_SUBSCRIPTION,
-                    Subscription::TYPE_GOOGLE_SUBSCRIPTION,
-                ]
-            )
-            ->orderBy('id', 'desc')
-            ->chunk(
-                $chunkSize,
-                function (Collection $rows) use ($smallDate, $bigDate) {
-
-                    foreach ($rows as $item) {
-
-                        $itemData = get_object_vars($item);
-
-                        $canceledOn = Carbon::parse($itemData['canceled_on']);
-
-                        $start = $canceledOn < $smallDate ? $smallDate : $canceledOn;
-
-                        $end = $bigDate;
-
-                        $intervalType = null;
-
-                        if ($itemData['interval_type'] == config('ecommerce.interval_type_monthly')) {
-                            if ($itemData['interval_count'] == 1) {
-                                $intervalType = MembershipStats::TYPE_ONE_MONTH;
-                            } else {
-                                $intervalType = MembershipStats::TYPE_SIX_MONTHS;
-                            }
-                        } else {
-                            $intervalType = MembershipStats::TYPE_ONE_YEAR;
-                        }
-
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                            ->table('ecommerce_membership_stats')
-                            ->where('stats_date', '>=', $start->toDateString())
-                            ->where('stats_date', '<=', $end->toDateString())
-                            ->where('interval_type', $intervalType)
-                            ->where('brand', $itemData['brand'])
-                            ->increment('canceled_state');
-                    }
-                }
-            );
-
-        $finish = microtime(true) - $start;
-
-        $format = "Finished processing canceled state membership stats in total %s seconds\n";
 
         $this->info(sprintf($format, $finish));
     }
@@ -705,6 +669,64 @@ EOT;
         $finish = microtime(true) - $start;
 
         $format = "Finished processing TYPE_LIFETIME membership stats in total %s seconds\n";
+
+        $this->info(sprintf($format, $finish));
+    }
+
+    public function processSum(Carbon $smallDate, Carbon $bigDate)
+    {
+        $start = microtime(true);
+
+$sql = <<<'EOT'
+UPDATE ecommerce_membership_stats ms
+INNER JOIN (
+    SELECT
+        SUM(new) AS new,
+        SUM(active_state) AS active_state,
+        SUM(expired) AS expired,
+        SUM(suspended_state) AS suspended_state,
+        SUM(canceled) AS canceled,
+        SUM(canceled_state) AS canceled_state,
+        stats_date,
+        brand
+    FROM ecommerce_membership_stats m
+    WHERE
+        m.interval_type IN ('%s')
+        AND m.stats_date >= '%s'
+        AND m.stats_date <= '%s'
+    GROUP BY stats_date, brand
+) n ON ms.stats_date = n.stats_date AND ms.brand = n.brand
+SET
+    ms.new = n.new,
+    ms.active_state = n.active_state,
+    ms.expired = n.expired,
+    ms.suspended_state = n.suspended_state,
+    ms.canceled = n.canceled,
+    ms.canceled_state = n.canceled_state
+WHERE ms.interval_type = '%s'
+EOT;
+
+        $statement = sprintf(
+            $sql,
+            implode(
+                "', '",
+                [
+                    MembershipStats::TYPE_ONE_MONTH,
+                    MembershipStats::TYPE_SIX_MONTHS,
+                    MembershipStats::TYPE_ONE_YEAR,
+                    MembershipStats::TYPE_LIFETIME
+                ]
+            ),
+            $smallDate->toDateString(),
+            $bigDate->toDateString(),
+            MembershipStats::TYPE_ALL
+        );
+
+        $this->databaseManager->statement($statement);
+
+        $finish = microtime(true) - $start;
+
+        $format = "Finished processing membership sum stats in total %s seconds\n";
 
         $this->info(sprintf($format, $finish));
     }

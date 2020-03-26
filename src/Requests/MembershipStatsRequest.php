@@ -29,7 +29,8 @@ class MembershipStatsRequest extends FormRequest
             'interval_type' => 'in:"' . MembershipStats::TYPE_ONE_MONTH
                                     . '", "' . MembershipStats::TYPE_SIX_MONTHS
                                     . '", "' . MembershipStats::TYPE_ONE_YEAR
-                                    . '", "' . MembershipStats::TYPE_LIFETIME . '"',
+                                    . '", "' . MembershipStats::TYPE_LIFETIME
+                                    . '", "' . MembershipStats::TYPE_ALL . '"',
             'brand' => 'string',
         ];
     }
