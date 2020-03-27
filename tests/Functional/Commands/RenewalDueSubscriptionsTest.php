@@ -129,7 +129,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'total_cycles_paid' => 1,
                     'total_cycles_due' => $this->faker->numberBetween(2, 5),
                     'payment_method_id' => $paymentMethod['id'],
-                    'total_price' => $subscriptionPrice,
+                    'total_price' => round($subscriptionPrice + $vat, 2),
                     'tax' => $vat,
                 ]
             );
@@ -138,7 +138,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 $initialSubscriptions[] = $subscription;
 
                 $paymentAmount = $currencyService->convertFromBase(
-                    $subscription['total_price'] + $vat,
+                    $subscription['total_price'],
                     $currency
                 );
 
@@ -203,8 +203,8 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'total_cycles_paid' => 1,
                 'total_cycles_due' => $this->faker->numberBetween(2, 5),
                 'payment_method_id' => $paymentMethod['id'],
-                'total_price' => $subscriptionPrice,
-                'tax' => $vat,
+                'total_price' => $this->faker->numberBetween(50, 100),
+                'tax' => $this->faker->numberBetween(50, 100),
             ]
         );
 
@@ -375,7 +375,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'total_cycles_paid' => 1,
                 'total_cycles_due' => $this->faker->numberBetween(2, 5),
                 'payment_method_id' => $paymentMethod['id'],
-                'total_price' => $subscriptionPrice,
+                'total_price' => round($subscriptionPrice + $vat, 2),
                 'tax' => $vat,
             ]
         );
@@ -392,7 +392,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         );
 
         $paymentAmount = $currencyService->convertFromBase(
-            $subscription['total_price'] + $vat,
+            $subscription['total_price'],
             $currency
         );
 
@@ -535,7 +535,10 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
             $subscriptionPrice = $this->faker->numberBetween(50, 100);
 
-            $vat = 3.99;
+            $vat = $taxService->getTaxesDueForProductCost(
+                $subscriptionPrice,
+                null
+            );
 
             $subscription = $this->fakeSubscription(
                 [
@@ -558,7 +561,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'total_cycles_paid' => 1,
                     'total_cycles_due' => $this->faker->numberBetween(2, 5),
                     'payment_method_id' => $paymentMethod['id'],
-                    'total_price' => $subscriptionPrice,
+                    'total_price' => round($subscriptionPrice + $vat, 2),
                     'tax' => $vat,
                 ]
             );
@@ -632,8 +635,8 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'total_cycles_paid' => 1,
                 'total_cycles_due' => $this->faker->numberBetween(2, 5),
                 'payment_method_id' => $paymentMethod['id'],
-                'total_price' => $subscriptionPrice,
-                'tax' => $vat,
+                'total_price' => $this->faker->numberBetween(50, 100),
+                'tax' => $this->faker->numberBetween(50, 100),
             ]
         );
 
@@ -816,7 +819,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'payment_method_id' => $paymentMethod['id'],
                     'is_active' => true,
                     'canceled_on' => null,
-                    'total_price' => $subscriptionPrice,
+                    'total_price' => round($subscriptionPrice + $vat, 2),
                     'tax' => $vat,
                 ]
             );
@@ -908,7 +911,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'total_cycles_paid' => 1,
                     'total_cycles_due' => $this->faker->numberBetween(2, 5),
                     'payment_method_id' => $paymentMethod['id'],
-                    'total_price' => $subscriptionPrice,
+                    'total_price' => round($subscriptionPrice + $vat, 2),
                     'tax' => $vat,
                 ]
             );
@@ -917,19 +920,8 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
                 $initialSubscriptions[] = $subscription;
 
-                $billingAddressEntity = new Address();
-
-                $billingAddressEntity->setCountry($address['country']);
-                $billingAddressEntity->setRegion($address['region']);
-                $billingAddressEntity->setZip($address['zip']);
-
-                $vat = $taxService->getTaxesDueForProductCost(
-                    $subscription['total_price'],
-                    $billingAddressEntity->toStructure()
-                );
-
                 $paymentAmount = $currencyService->convertFromBase(
-                    $subscription['total_price'] + $vat,
+                    $subscription['total_price'],
                     $currency
                 );
 
