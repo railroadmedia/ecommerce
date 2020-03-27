@@ -349,6 +349,7 @@ class Faker extends Generator
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
                 'deleted_at' => null,
+                'cancellation_reason' => null,
             ],
             $override
         );

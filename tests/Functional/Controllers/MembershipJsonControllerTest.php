@@ -23,16 +23,18 @@ class MembershipJsonControllerTest extends EcommerceTestCase
         $this->fakeMembershipStats(['stats_date' => Carbon::now()->subDays(16)->toDateString()]);
 
         $statsOne = $this->fakeMembershipStats(['stats_date' => Carbon::now()->subDays(15)->toDateString()]);
+        $statsTwo = $this->fakeMembershipStats(['stats_date' => Carbon::now()->subDays(12)->toDateString()]);
+        $statsThree = $this->fakeMembershipStats(['stats_date' => Carbon::now()->subDays(10)->toDateString()]);
+
         $expected['data'][] = [
-            'id' => $statsOne['id'],
+            'id' => $statsThree['id'],
             'type' => 'membershipStats',
             'attributes' => array_diff_key(
-                $statsOne,
+                $statsThree,
                 ['id' => true]
             )
         ];
 
-        $statsTwo = $this->fakeMembershipStats(['stats_date' => Carbon::now()->subDays(12)->toDateString()]);
         $expected['data'][] = [
             'id' => $statsTwo['id'],
             'type' => 'membershipStats',
@@ -42,12 +44,11 @@ class MembershipJsonControllerTest extends EcommerceTestCase
             )
         ];
 
-        $statsThree = $this->fakeMembershipStats(['stats_date' => Carbon::now()->subDays(10)->toDateString()]);
         $expected['data'][] = [
-            'id' => $statsThree['id'],
+            'id' => $statsOne['id'],
             'type' => 'membershipStats',
             'attributes' => array_diff_key(
-                $statsThree,
+                $statsOne,
                 ['id' => true]
             )
         ];

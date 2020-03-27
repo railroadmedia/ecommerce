@@ -116,6 +116,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'order_id' => $order['id'],
             'updated_at' => null,
             'deleted_at' => Carbon::now(),
+            'cancellation_reason' => null
         ]);
 
         $subscriptions = [];
@@ -130,7 +131,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'payment_method_id' => $paymentMethod['id'],
                 'user_id' => $userId,
                 'order_id' => $order['id'],
-                'updated_at' => null
+                'updated_at' => null,
+                'cancellation_reason' => null
             ]);
 
             if ($i < $limit) {
@@ -222,6 +224,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'order_id' => $order['id'],
             'updated_at' => null,
             'deleted_at' => Carbon::now(),
+            'cancellation_reason' => null
         ]);
 
         $subscriptions = [
@@ -278,7 +281,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'payment_method_id' => $paymentMethod['id'],
                 'user_id' => $userId,
                 'order_id' => $order['id'],
-                'updated_at' => null
+                'updated_at' => null,
+                'cancellation_reason' => null
             ]);
 
             if ($i < $limit - 1) {
@@ -376,7 +380,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     $otherUser['id']
                 ]),
                 'order_id' => $order['id'],
-                'updated_at' => null
+                'updated_at' => null,
+                'cancellation_reason' => null
             ]);
 
             if (
@@ -2083,7 +2088,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'payment_method_id' => $paymentMethod['id'],
                     'user_id' => $userId,
                     'order_id' => $order['id'],
-                    'updated_at' => null
+                    'updated_at' => null,
+                    'cancellation_reason' => null
                 ]);
 
                 $subscriptions[] = [
@@ -2206,6 +2212,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'canceled_on' => null,
             'is_active' => true,
             'paid_until' => Carbon::now()->addDays(5),
+            'cancellation_reason' => null
         ]);
 
         $creditCard = $this->fakeCreditCard();
@@ -2225,6 +2232,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'canceled_on' => $pastDate,
             'is_active' => false,
             'paid_until' => $pastDate,
+            'cancellation_reason' => null
         ]);
 
         $subscriptions = [];
@@ -2240,7 +2248,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'user_id' => $userId,
                 'order_id' => $order['id'],
                 'updated_at' => null,
-                'type' => Subscription::TYPE_SUBSCRIPTION
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'cancellation_reason' => null
             ];
 
             if ($this->faker->randomElement([true, false])) {
@@ -2350,6 +2359,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'canceled_on' => null,
             'is_active' => true,
             'paid_until' => Carbon::now()->addDays(5),
+            'cancellation_reason' => null
         ]);
 
         $creditCard = $this->fakeCreditCard();
@@ -2369,6 +2379,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'canceled_on' => $pastDate,
             'is_active' => false,
             'paid_until' => $pastDate,
+            'cancellation_reason' => null
         ]);
 
         $subscriptions = [];
@@ -2384,7 +2395,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'user_id' => $userId,
                 'order_id' => $order['id'],
                 'updated_at' => null,
-                'type' => Subscription::TYPE_PAYMENT_PLAN
+                'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'cancellation_reason' => null
             ];
 
             if ($this->faker->randomElement([true, false])) {
@@ -2564,7 +2576,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'canceled_on' => null,
                 'is_active' => false,
                 'start_date' => Carbon::now()->subDays($paidUntilSubDays + 2),
-                'paid_until' => Carbon::now()->subDays($paidUntilSubDays)
+                'paid_until' => Carbon::now()->subDays($paidUntilSubDays),
+                'cancellation_reason' => null
             ];
 
             $paymentData = [
@@ -2767,7 +2780,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'canceled_on' => null,
                 'is_active' => false,
                 'start_date' => Carbon::now()->subDays($paidUntilSubDays + 2),
-                'paid_until' => Carbon::now()->subDays($paidUntilSubDays)
+                'paid_until' => Carbon::now()->subDays($paidUntilSubDays),
+                'cancellation_reason' => null
             ];
 
             $paymentData = [

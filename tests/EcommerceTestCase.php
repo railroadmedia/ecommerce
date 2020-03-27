@@ -982,6 +982,7 @@ class EcommerceTestCase extends BaseTestCase
                     MembershipStats::TYPE_LIFETIME,
                 ]),
                 'stats_date' => Carbon::now()->subDays($this->faker->randomNumber(2, true)),
+                'brand' => $this->faker->word,
                 'created_at' => Carbon::now(),
                 'updated_at' => null,
             ];
