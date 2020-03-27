@@ -194,6 +194,13 @@ class Subscription
     protected $totalCyclesPaid;
 
     /**
+     * @ORM\Column(type="integer", name="renewal_attempt")
+     *
+     * @var int
+     */
+    protected $renewalAttempt;
+
+    /**
      * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\PaymentMethod")
      * @ORM\JoinColumn(name="payment_method_id", referencedColumnName="id")
      */
@@ -508,6 +515,22 @@ class Subscription
     public function setTotalCyclesPaid(int $totalCyclesPaid)
     {
         $this->totalCyclesPaid = $totalCyclesPaid;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getRenewalAttempt(): ?int
+    {
+        return $this->renewalAttempt;
+    }
+
+    /**
+     * @param int $renewalAttempt
+     */
+    public function setRenewalAttempt(int $renewalAttempt)
+    {
+        $this->renewalAttempt = $renewalAttempt;
     }
 
     /**

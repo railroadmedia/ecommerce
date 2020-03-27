@@ -56,6 +56,214 @@ class SubscriptionRepository extends RepositoryBase
     }
 
     /**
+     * Gets subscriptions due to renew
+     *
+     * @return array
+     */
+    public function getSubscriptionsDueToRenew()
+    {
+        /**
+         * @var $qb QueryBuilder
+         */
+        $qb = $this->createQueryBuilder('s');
+
+        $qb->select(['s'])
+            ->where(
+                $qb->expr()
+                    ->eq('s.brand', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->gte('s.paidUntil', ':cutoff')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.isActive', ':active')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('s.canceledOn')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->in('s.type', ':types')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->isNull('s.totalCyclesDue'),
+                        $qb->expr()
+                            ->eq('s.totalCyclesDue', ':zero'),
+                        $qb->expr()
+                            ->lt('s.totalCyclesPaid', 's.totalCyclesDue')
+                    )
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->eq('s.renewalAttempt', ':firstRenewalAttempt'),
+                                $qb->expr()
+                                    ->lt('s.paidUntil', ':firstRenewalDate')
+                            ),
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->eq('s.renewalAttempt', ':secondRenewalAttempt'),
+                                $qb->expr()
+                                    ->lt('s.paidUntil', ':secondRenewalDate')
+                            ),
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->eq('s.renewalAttempt', ':thirdRenewalAttempt'),
+                                $qb->expr()
+                                    ->lt('s.paidUntil', ':thirdRenewalDate')
+                            ),
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->eq('s.renewalAttempt', ':fourthRenewalAttempt'),
+                                $qb->expr()
+                                    ->lt('s.paidUntil', ':fourthRenewalDate')
+                            ),
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->eq('s.renewalAttempt', ':fifthRenewalAttempt'),
+                                $qb->expr()
+                                    ->lt('s.paidUntil', ':fifthRenewalDate')
+                            ),
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->eq('s.renewalAttempt', ':sixthRenewalAttempt'),
+                                $qb->expr()
+                                    ->lt('s.paidUntil', ':sixthRenewalDate')
+                            )
+                    )
+            )
+            ->setParameter('brand', config('ecommerce.brand'))
+            ->setParameter(
+                'cutoff',
+                Carbon::now()
+                    ->subMonths(
+                        config('ecommerce.paypal.subscription_renewal_date') ?? 1
+                    )
+            )
+            ->setParameter('active', true)
+            ->setParameter('zero', 0)
+            ->setParameter(
+                'types',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_PAYMENT_PLAN,
+                ]
+            )
+            ->setParameter('firstRenewalAttempt', 0)
+            ->setParameter('firstRenewalDate', Carbon::now())
+            ->setParameter('secondRenewalAttempt', 1)
+            ->setParameter(
+                'secondRenewalDate',
+                Carbon::now()
+                    ->subHours(8)
+            )
+            ->setParameter('thirdRenewalAttempt', 2)
+            ->setParameter(
+                'thirdRenewalDate',
+                Carbon::now()
+                    ->subDays(3)
+            )
+            ->setParameter('fourthRenewalAttempt', 3)
+            ->setParameter(
+                'fourthRenewalDate',
+                Carbon::now()
+                    ->subDays(7)
+            )
+            ->setParameter('fifthRenewalAttempt', 4)
+            ->setParameter(
+                'fifthRenewalDate',
+                Carbon::now()
+                    ->subDays(14)
+            )
+            ->setParameter('sixthRenewalAttempt', 5)
+            ->setParameter(
+                'sixthRenewalDate',
+                Carbon::now()
+                    ->subDays(30)
+            );
+
+        return $qb->getQuery()
+                    ->getResult();
+    }
+
+    /**
+     * Gets ancient subscriptions due to deactivate
+     *
+     * @return array
+     */
+    public function getAncientSubscriptionsDueToDeactivate()
+    {
+        $qb = $this->createQueryBuilder('s');
+
+        $qb->select(['s'])
+            ->where(
+                $qb->expr()
+                    ->eq('s.brand', ':brand')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->lt('s.paidUntil', ':cutoff')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.isActive', ':active')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('s.canceledOn')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->orX(
+                        $qb->expr()
+                            ->isNull('s.totalCyclesDue'),
+                        $qb->expr()
+                            ->eq('s.totalCyclesDue', ':zero'),
+                        $qb->expr()
+                            ->lt('s.totalCyclesPaid', 's.totalCyclesDue')
+                    )
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->in('s.type', ':types')
+            )
+            ->setParameter('brand', config('ecommerce.brand'))
+            ->setParameter(
+                'cutoff',
+                Carbon::now()
+                    ->subMonths(
+                        config('ecommerce.paypal.subscription_renewal_date') ?? 1
+                    )
+            )
+            ->setParameter('active', true)
+            ->setParameter('zero', 0)
+            ->setParameter(
+                'types',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_PAYMENT_PLAN,
+                ]
+            );
+
+        return $qb->getQuery()
+                    ->getResult();
+    }
+
+    /**
      * Gets subscriptions that are related to the specified products
      *
      * @return array

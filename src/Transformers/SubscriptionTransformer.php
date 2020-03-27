@@ -66,6 +66,7 @@ class SubscriptionTransformer extends TransformerAbstract
             'interval_count' => $subscription->getIntervalCount(),
             'total_cycles_due' => $subscription->getTotalCyclesDue(),
             'total_cycles_paid' => $subscription->getTotalCyclesPaid(),
+            'renewal_attempt' => $subscription->getRenewalAttempt(),
             'deleted_at' => $subscription->getDeletedAt() ?
                 $subscription->getDeletedAt()
                     ->toDateTimeString() : null,

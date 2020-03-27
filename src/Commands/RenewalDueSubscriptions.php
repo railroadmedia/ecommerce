@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
-use Doctrine\ORM\QueryBuilder;
 use Illuminate\Console\Command;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
@@ -87,69 +86,8 @@ class RenewalDueSubscriptions extends Command
     {
         $this->info('------------------Renewal Due Subscriptions command------------------');
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->subscriptionRepository->createQueryBuilder('s');
+        $dueSubscriptions = $this->subscriptionRepository->getSubscriptionsDueToRenew();
 
-        $qb->select(['s'])
-            ->where(
-                $qb->expr()
-                    ->eq('s.brand', ':brand')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->lt('s.paidUntil', ':now')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->gte('s.paidUntil', ':cutoff')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->eq('s.isActive', ':active')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->isNull('s.canceledOn')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->in('s.type', ':types')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->orX(
-                        $qb->expr()
-                            ->isNull('s.totalCyclesDue'),
-                        $qb->expr()
-                            ->eq('s.totalCyclesDue', ':zero'),
-                        $qb->expr()
-                            ->lt('s.totalCyclesPaid', 's.totalCyclesDue')
-                    )
-            )
-            ->setParameter('brand', config('ecommerce.brand'))
-            ->setParameter('now', Carbon::now())
-            ->setParameter(
-                'cutoff',
-                Carbon::now()
-                    ->subMonths(
-                        config('ecommerce.paypal.subscription_renewal_date') ?? 1
-                    )
-            )
-            ->setParameter('active', true)
-            ->setParameter('zero', 0)
-            ->setParameter(
-                'types',
-                [
-                    Subscription::TYPE_SUBSCRIPTION,
-                    Subscription::TYPE_PAYMENT_PLAN,
-                ]
-            );
-
-        $dueSubscriptions =
-            $qb->getQuery()
-                ->getResult();
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
 
         foreach ($dueSubscriptions as $dueSubscription) {
@@ -188,64 +126,7 @@ class RenewalDueSubscriptions extends Command
 
         // deactivate ancient subscriptions
 
-        /**
-         * @var $qb QueryBuilder
-         */
-        $qb = $this->subscriptionRepository->createQueryBuilder('s');
-
-        $qb->select(['s'])
-            ->where(
-                $qb->expr()
-                    ->eq('s.brand', ':brand')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->lt('s.paidUntil', ':cutoff')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->eq('s.isActive', ':active')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->isNull('s.canceledOn')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->orX(
-                        $qb->expr()
-                            ->isNull('s.totalCyclesDue'),
-                        $qb->expr()
-                            ->eq('s.totalCyclesDue', ':zero'),
-                        $qb->expr()
-                            ->lt('s.totalCyclesPaid', 's.totalCyclesDue')
-                    )
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->in('s.type', ':types')
-            )
-            ->setParameter('brand', config('ecommerce.brand'))
-            ->setParameter(
-                'cutoff',
-                Carbon::now()
-                    ->subMonths(
-                        config('ecommerce.paypal.subscription_renewal_date') ?? 1
-                    )
-            )
-            ->setParameter('active', true)
-            ->setParameter('zero', 0)
-            ->setParameter(
-                'types',
-                [
-                    Subscription::TYPE_SUBSCRIPTION,
-                    Subscription::TYPE_PAYMENT_PLAN,
-                ]
-            );
-
-        $ancientSubscriptions =
-            $qb->getQuery()
-                ->getResult();
+        $ancientSubscriptions = $this->subscriptionRepository->getAncientSubscriptionsDueToDeactivate();
 
         $this->info('De-activate ancient subscriptions. Count: ' . count($ancientSubscriptions));
 

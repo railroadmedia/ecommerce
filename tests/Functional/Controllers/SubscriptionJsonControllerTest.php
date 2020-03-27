@@ -513,6 +513,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
                 [
                     "title" => "Validation failed.",
+                    "source" => "data.attributes.renewal_attempt",
+                    "detail" => "The renewal_attempt field is required.",
+                ],
+                [
+                    "title" => "Validation failed.",
                     "source" => "data.relationships.user.data.id",
                     "detail" => "The user id field is required.",
                 ]

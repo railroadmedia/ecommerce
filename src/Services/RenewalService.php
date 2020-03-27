@@ -393,6 +393,7 @@ class RenewalService
             $subscription->setIsActive(true);
             $subscription->setCanceledOn(null);
             $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
+            $subscription->setRenewalAttempt(0);
             $subscription->setPaidUntil(
                 $nextBillDate ? $nextBillDate->startOfDay() :
                     Carbon::now()
@@ -433,6 +434,10 @@ class RenewalService
         }
         else {
 
+            $subscription->setRenewalAttempt($subscription->getRenewalAttempt() + 1);
+
+            // todo - ask for details about this block logic
+            /*
             $qb = $this->subscriptionPaymentRepository->createQueryBuilder('sp');
 
             $qb->select('count(p)')
@@ -473,6 +478,7 @@ class RenewalService
                 $exceptionToThrow,
                 $payment
             );
+            */
         }
 
         $this->userProductService->updateSubscriptionProducts($subscription);

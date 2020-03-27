@@ -129,6 +129,7 @@ class RenewalServiceTest extends EcommerceTestCase
         $subscription->setIntervalType(config('ecommerce.interval_type_monthly'));
         $subscription->setIntervalCount(1);
         $subscription->setTotalCyclesPaid($this->faker->randomNumber(3));
+        $subscription->setRenewalAttempt(0);
         $subscription->setPaymentMethod($paymentMethod);
         $subscription->setCreatedAt(Carbon::now());
         $subscription->setUpdatedAt(Carbon::now());

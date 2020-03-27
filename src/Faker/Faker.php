@@ -345,6 +345,7 @@ class Faker extends Generator
                 'interval_count' => $this->randomNumber(),
                 'total_cycles_due' => $this->randomNumber(),
                 'total_cycles_paid' => $this->randomNumber(),
+                'renewal_attempt' => 0,
                 'payment_method_id' => $this->randomNumber(),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
