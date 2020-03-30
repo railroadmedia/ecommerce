@@ -107,6 +107,13 @@ class Subscription
     protected $isActive;
 
     /**
+     * @ORM\Column(type="boolean")
+     *
+     * @var bool
+     */
+    protected $stopped;
+
+    /**
      * @ORM\Column(type="datetime", name="start_date")
      *
      * @var \DateTime
@@ -339,6 +346,22 @@ class Subscription
     public function setIsActive(bool $isActive)
     {
         $this->isActive = $isActive;
+    }
+
+    /**
+     * @return bool|null
+     */
+    public function getStopped(): ?bool
+    {
+        return $this->stopped;
+    }
+
+    /**
+     * @param bool $stopped
+     */
+    public function setStopped(bool $stopped)
+    {
+        $this->stopped = $stopped;
     }
 
     /**

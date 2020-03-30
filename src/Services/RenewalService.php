@@ -28,7 +28,7 @@ use Throwable;
 
 class RenewalService
 {
-    const DEACTIVATION_MESSAGE = 'De-activated due to payments failing.';
+    const DEACTIVATION_MESSAGE = 'De-activated due to renewal payment fail.';
 
     /**
      * @var CreditCardRepository
@@ -436,49 +436,22 @@ class RenewalService
 
             $subscription->setRenewalAttempt($subscription->getRenewalAttempt() + 1);
 
-            // todo - ask for details about this block logic
-            /*
-            $qb = $this->subscriptionPaymentRepository->createQueryBuilder('sp');
+            $subscription->setIsActive(false);
+            $subscription->setUpdatedAt(Carbon::now());
+            $subscription->setNote(self::DEACTIVATION_MESSAGE);
 
-            $qb->select('count(p)')
-                ->join('sp.payment', 'p')
-                ->where(
-                    $qb->expr()
-                        ->eq('sp.subscription', ':subscription')
-                )
-                ->andWhere(
-                    $qb->expr()
-                        ->in('p.status', ':statuses')
-                )
-                ->setParameter('subscription', $subscription)
-                ->setParameter('statuses', ['0', 'failed']);
+            $this->entityManager->flush();
 
-            $failedPaymentsCount =
-                $qb->getQuery()
-                    ->getSingleScalarResult();
+            event(new SubscriptionUpdated($oldSubscription, $subscription));
 
-            if ($failedPaymentsCount >= config('ecommerce.paypal.failed_payments_before_de_activation') ?? 1) {
-
-                $subscription->setIsActive(false);
-                $subscription->setUpdatedAt(Carbon::now());
-                $subscription->setNote(self::DEACTIVATION_MESSAGE);
-
-                $this->entityManager->flush();
-
-                event(new SubscriptionUpdated($oldSubscription, $subscription));
-
-                event(
-                    new SubscriptionEvent($subscription->getId(), 'deactivated')
-                );
-            }
-
-            $this->userProductService->updateSubscriptionProducts($subscription);
+            event(
+                new SubscriptionEvent($subscription->getId(), 'deactivated')
+            );
 
             throw PaymentFailedException::createFromException(
                 $exceptionToThrow,
                 $payment
             );
-            */
         }
 
         $this->userProductService->updateSubscriptionProducts($subscription);

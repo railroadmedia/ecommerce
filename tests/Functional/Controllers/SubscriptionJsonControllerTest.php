@@ -477,6 +477,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
                 [
+                    'source' => 'data.attributes.stopped',
+                    'detail' => 'The stopped field is required.',
+                    'title' => 'Validation failed.'
+                ],
+                [
                     'source' => 'data.attributes.start_date',
                     'detail' => 'The start_date field is required.',
                     'title' => 'Validation failed.'
@@ -849,7 +854,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userProduct = $this->fakeUserProduct([
             'user_id' => $userId,
             'product_id' => $product['id'],
-            'expiration_date' => $subscription['paid_until'],
+            'expiration_date' => Carbon::parse($subscription['paid_until'])
+                                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                                    ->toDateTimeString(),
             'quantity' => 1
         ]);
 
@@ -965,10 +972,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
         ]);
 
-        $discount = $this->faker->discount([
-            'product_id' => $product['id']
-        ]);
-
         $paymentMethod = $this->fakePaymentMethod();
 
         $order = $this->fakeOrder();
@@ -986,7 +989,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userProduct = $this->fakeUserProduct([
             'user_id' => $userId,
             'product_id' => $product['id'],
-            'expiration_date' => $subscription['paid_until'],
+            'expiration_date' => Carbon::parse($subscription['paid_until'])
+                                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                                    ->toDateTimeString(),
             'quantity' => 1
         ]);
 
@@ -1088,6 +1093,149 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ]
             )
         );
+    }
+
+    public function test_update_suspended_subscription()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $product = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod();
+
+        $orderOne = $this->fakeOrder();
+        $orderTwo = $this->fakeOrder();
+
+        // 1st subscription is not active
+        $subscriptionOne = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $orderOne['id'],
+            'updated_at' => null,
+            'canceled_on' => null,
+            'is_active' => false,
+            'paid_until' => Carbon::now()
+                                    ->subMonths(5)
+        ]);
+
+        // 2nd subscription is active
+        $subscriptionTwo = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $orderTwo['id'],
+            'updated_at' => null,
+            'canceled_on' => null,
+            'is_active' => true,
+            'paid_until' => Carbon::now()
+                                    ->addDays(5)
+        ]);
+
+        $userProduct = $this->fakeUserProduct([
+            'user_id' => $userId,
+            'product_id' => $product['id'],
+            'expiration_date' => Carbon::parse($subscriptionTwo['paid_until'])
+                                            ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                                            ->toDateTimeString(),
+            'quantity' => 1
+        ]);
+
+        // events not fired
+        $this->doesntExpectEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+
+        $note = $this->faker->word;
+
+        $results = $this->call(
+            'PATCH',
+            '/subscription/' . $subscriptionOne['id'],
+            [
+                'data' => [
+                    'type' => 'subscription',
+                    'attributes' => ['note' => $note]
+                ],
+            ]
+        );
+
+        $this->assertEquals(200, $results->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'subscription',
+                    'id' => $subscriptionOne['id'],
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscriptionOne,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'payment_method_id' => true,
+                                'user_id' => true,
+                                'order_id' => true,
+                                'customer_id' => true,
+                                'updated_at' => true
+                            ]
+                        ),
+                        [
+                            'note' => $note,
+                            'updated_at' => Carbon::now()->toDateTimeString(),
+                        ]
+                    ),
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ],
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $orderOne['id']
+                            ]
+                        ]
+                    ]
+                ],
+                'included' => [
+                    [
+                        'type' => 'product',
+                        'id' => $product['id'],
+                    ]
+                ]
+            ],
+            $results->decodeResponseJson()
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            array_merge(
+                $subscriptionOne,
+                [
+                    'note' => $note,
+                    'updated_at' => Carbon::now()->toDateTimeString(),
+                ]
+            )
+        );
+
+        // assert user product was not updated
+        $this->assertDatabaseHas('ecommerce_user_products', $userProduct);
     }
 
     public function test_update_subscription_validation()
@@ -1823,124 +1971,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_renew_subscription_payment_failed_not_disabled()
-    {
-        $brand = 'drumeo';
-        $userEmail = $this->faker->email;
-        $userId = $this->createAndLogInNewUser($userEmail);
-
-        $this->permissionServiceMock->method('can')->willReturn(true);
-
-        $this->stripeExternalHelperMock->method('retrieveCustomer')
-            ->willReturn(new Customer());
-        $this->stripeExternalHelperMock->method('retrieveCard')
-            ->willReturn(new Card());
-
-        $exceptionMessage = 'Charge failed';
-
-        $this->stripeExternalHelperMock->method('chargeCard')
-            ->willThrowException(
-                new PaymentFailedException($exceptionMessage)
-            );
-
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
-            'price' => 128.95,
-        ]);
-
-        $creditCard = $this->fakeCreditCard(
-            [
-                'payment_gateway_name' => $brand,
-            ]
-        );
-
-        $currency = $this->getCurrency();
-
-        $address = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE,
-            'country' => 'Canada',
-            'region' => 'alberta',
-        ]);
-
-        $paymentMethod = $this->fakePaymentMethod([
-            'credit_card_id' => $creditCard['id'],
-            'billing_address_id' => $address['id'],
-            'currency' => $currency
-        ]);
-
-        $taxRate =
-            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower(
-                $address['region']
-            )];
-
-        $tax = round($taxRate * $product['price'], 2);
-
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'paid_until' => Carbon::now()
-                        ->addDay(1)
-                        ->toDateTimeString(),
-            'is_active' => 1,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_yearly'),
-            'total_price' => round($product['price'] + $tax, 2),
-            'tax' => $tax,
-            'brand' => $brand,
-        ]);
-
-        $userProduct = $this->fakeUserProduct([
-            'user_id' => $userId,
-            'product_id' => $product['id'],
-            'quantity' => 1,
-            'expiration_date' => Carbon::parse($subscription['paid_until'])
-                                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                                    ->toDateTimeString(),
-        ]);
-
-        config()->set('ecommerce.paypal.failed_payments_before_de_activation', 3);
-
-        $this->expectsEvents([SubscriptionRenewFailed::class]);
-        $this->doesntExpectEvents(
-            [
-                SubscriptionDeactivated::class,
-                SubscriptionRenewed::class,
-            ]
-        );
-
-        $results = $this->call(
-            'POST',
-            '/subscription-renew/' . $subscription['id']
-        );
-
-        // assert response status code
-        $this->assertEquals(402, $results->getStatusCode());
-
-        // assert the error message that it's returned in JSON format
-        $this->assertEquals(
-            [
-                'title' => 'Subscription renew failed.',
-                'detail' => 'Payment failed: ' . $exceptionMessage,
-            ],
-            $results->decodeResponseJson('errors')
-        );
-
-        // assert user product data was not updated
-        $this->assertDatabaseHas(
-            'ecommerce_user_products',
-            $userProduct
-        );
-
-        // assert subscription data was not updated
-        $this->assertDatabaseHas(
-            'ecommerce_subscriptions',
-            $subscription
-        );
-    }
-
     public function test_renew_subscription_payment_failed_disabled()
     {
         $brand = 'drumeo';
@@ -2003,6 +2033,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'total_price' => round($product['price'] + $tax, 2),
             'tax' => $tax,
             'brand' => $brand,
+            'renewal_attempt' => 0,
         ]);
 
         $userProduct = $this->fakeUserProduct([
@@ -2055,7 +2086,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 [
                     'is_active' => 0,
                     'note' => RenewalService::DEACTIVATION_MESSAGE,
-                    'updated_at' => Carbon::now()->toDateTimeString()
+                    'updated_at' => Carbon::now()->toDateTimeString(),
+                    'renewal_attempt' => 1,
                 ]
             )
         );

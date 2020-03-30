@@ -28,6 +28,7 @@ class SubscriptionCreateRequest extends FormRequest
             'data.attributes.brand' => 'brand',
             'data.attributes.type' => 'type',
             'data.attributes.is_active' => 'is_active',
+            'data.attributes.stopped' => 'stopped',
             'data.attributes.start_date' => 'start_date',
             'data.attributes.paid_until' => 'paid_until',
             'data.attributes.canceled_on' => 'canceled_on',
@@ -65,6 +66,7 @@ class SubscriptionCreateRequest extends FormRequest
                     ]
                 ),
             'data.attributes.is_active' => 'required|boolean',
+            'data.attributes.stopped' => 'required|boolean',
             'data.attributes.start_date' => 'required|date',
             'data.attributes.paid_until' => 'required|date',
             'data.attributes.canceled_on' => 'nullable|date',
@@ -101,6 +103,7 @@ class SubscriptionCreateRequest extends FormRequest
                 'data.attributes.type',
                 'data.attributes.brand',
                 'data.attributes.is_active',
+                'data.attributes.stopped',
                 'data.attributes.start_date',
                 'data.attributes.paid_until',
                 'data.attributes.canceled_on',

@@ -213,12 +213,38 @@ class SubscriptionJsonController extends Controller
             );
         }
 
-        event(new SubscriptionUpdated($oldSubscription, $subscription));
-        event(new UserSubscriptionUpdated($oldSubscription, $subscription));
+        $isUserMainSubscription = true;
+
+        if (
+            $subscription->getType() != Subscription::TYPE_PAYMENT_PLAN
+            && (!$subscription->getIsActive() || $subscription->getCanceledOn())
+        ) {
+            // if the updated subscription is not active
+
+            $user = $subscription->getUser();
+            $product = $subscription->getProduct();
+            $activeSubscription = $this->subscriptionRepository->getUserSubscriptionForProducts(
+                $user,
+                [$product->getId()],
+                true
+            );
+
+            if ($activeSubscription && $activeSubscription->getId() != $subscription->getId()) {
+                // if the user has an other active subscription, do not update user product based on this subscription
+                $isUserMainSubscription = false;
+            }
+        }
+
+        if ($isUserMainSubscription) {
+            event(new SubscriptionUpdated($oldSubscription, $subscription));
+            event(new UserSubscriptionUpdated($oldSubscription, $subscription));
+        }
 
         $this->entityManager->flush();
 
-        $this->userProductService->updateSubscriptionProducts($subscription);
+        if ($isUserMainSubscription) {
+            $this->userProductService->updateSubscriptionProducts($subscription);
+        }
 
         return ResponseService::subscription($subscription);
     }

@@ -346,7 +346,7 @@ return [
     'fulfillment_status_pending' => 'pending',
     'fulfillment_status_fulfilled' => 'fulfilled',
 
-    'subscription_renewal_date' => 1,
+    'subscription_renewal_date' => 90,
     'failed_payments_before_de_activation' => 1,
 
     'trial_days_number' => 7

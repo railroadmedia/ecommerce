@@ -124,26 +124,6 @@ class RenewalDueSubscriptions extends Command
             }
         }
 
-        // deactivate ancient subscriptions
-
-        $ancientSubscriptions = $this->subscriptionRepository->getAncientSubscriptionsDueToDeactivate();
-
-        $this->info('De-activate ancient subscriptions. Count: ' . count($ancientSubscriptions));
-
-        foreach ($ancientSubscriptions as $ancientSubscription) {
-
-            /** @var $ancientSubscription Subscription */
-
-            $oldSubscriptionState = clone($ancientSubscription);
-
-            $ancientSubscription->setIsActive(false);
-            $ancientSubscription->setNote(self::DEACTIVATION_NOTE);
-            $ancientSubscription->setCanceledOn(Carbon::now());
-            $ancientSubscription->setUpdatedAt(Carbon::now());
-
-            event(new SubscriptionDeactivated($ancientSubscription, $oldSubscriptionState));
-        }
-
         $this->entityManager->flush();
 
         $this->info('-----------------End Renewal Due Subscriptions command-----------------------');

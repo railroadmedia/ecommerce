@@ -48,6 +48,7 @@ class SubscriptionTransformer extends TransformerAbstract
             'brand' => $subscription->getBrand(),
             'type' => $subscription->getType(),
             'is_active' => $subscription->getIsActive(),
+            'stopped' => $subscription->getStopped(),
             'start_date' => $subscription->getStartDate() ?
                 $subscription->getStartDate()
                     ->toDateTimeString() : null,

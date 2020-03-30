@@ -331,6 +331,7 @@ class Faker extends Generator
                 'order_id' => $this->randomNumber(),
                 'product_id' => $this->randomNumber(),
                 'is_active' => 1,
+                'stopped' => 0,
                 'start_date' => Carbon::now()
                     ->toDateTimeString(),
                 'paid_until' => Carbon::now()

@@ -74,15 +74,11 @@ class SubscriptionRepository extends RepositoryBase
             )
             ->andWhere(
                 $qb->expr()
-                    ->gte('s.paidUntil', ':cutoff')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->eq('s.isActive', ':active')
-            )
-            ->andWhere(
-                $qb->expr()
                     ->isNull('s.canceledOn')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.stopped', ':notStopped')
             )
             ->andWhere(
                 $qb->expr()
@@ -105,6 +101,8 @@ class SubscriptionRepository extends RepositoryBase
                         $qb->expr()
                             ->andX(
                                 $qb->expr()
+                                    ->eq('s.isActive', ':active'),
+                                $qb->expr()
                                     ->eq('s.renewalAttempt', ':firstRenewalAttempt'),
                                 $qb->expr()
                                     ->lt('s.paidUntil', ':firstRenewalDate')
@@ -112,49 +110,52 @@ class SubscriptionRepository extends RepositoryBase
                         $qb->expr()
                             ->andX(
                                 $qb->expr()
-                                    ->eq('s.renewalAttempt', ':secondRenewalAttempt'),
+                                    ->eq('s.isActive', ':notActive'),
                                 $qb->expr()
-                                    ->lt('s.paidUntil', ':secondRenewalDate')
-                            ),
-                        $qb->expr()
-                            ->andX(
-                                $qb->expr()
-                                    ->eq('s.renewalAttempt', ':thirdRenewalAttempt'),
-                                $qb->expr()
-                                    ->lt('s.paidUntil', ':thirdRenewalDate')
-                            ),
-                        $qb->expr()
-                            ->andX(
-                                $qb->expr()
-                                    ->eq('s.renewalAttempt', ':fourthRenewalAttempt'),
-                                $qb->expr()
-                                    ->lt('s.paidUntil', ':fourthRenewalDate')
-                            ),
-                        $qb->expr()
-                            ->andX(
-                                $qb->expr()
-                                    ->eq('s.renewalAttempt', ':fifthRenewalAttempt'),
-                                $qb->expr()
-                                    ->lt('s.paidUntil', ':fifthRenewalDate')
-                            ),
-                        $qb->expr()
-                            ->andX(
-                                $qb->expr()
-                                    ->eq('s.renewalAttempt', ':sixthRenewalAttempt'),
-                                $qb->expr()
-                                    ->lt('s.paidUntil', ':sixthRenewalDate')
+                                    ->orX(
+                                        $qb->expr()
+                                            ->andX(
+                                                $qb->expr()
+                                                    ->eq('s.renewalAttempt', ':secondRenewalAttempt'),
+                                                $qb->expr()
+                                                    ->lt('s.paidUntil', ':secondRenewalDate')
+                                            ),
+                                        $qb->expr()
+                                            ->andX(
+                                                $qb->expr()
+                                                    ->eq('s.renewalAttempt', ':thirdRenewalAttempt'),
+                                                $qb->expr()
+                                                    ->lt('s.paidUntil', ':thirdRenewalDate')
+                                            ),
+                                        $qb->expr()
+                                            ->andX(
+                                                $qb->expr()
+                                                    ->eq('s.renewalAttempt', ':fourthRenewalAttempt'),
+                                                $qb->expr()
+                                                    ->lt('s.paidUntil', ':fourthRenewalDate')
+                                            ),
+                                        $qb->expr()
+                                            ->andX(
+                                                $qb->expr()
+                                                    ->eq('s.renewalAttempt', ':fifthRenewalAttempt'),
+                                                $qb->expr()
+                                                    ->lt('s.paidUntil', ':fifthRenewalDate')
+                                            ),
+                                        $qb->expr()
+                                            ->andX(
+                                                $qb->expr()
+                                                    ->eq('s.renewalAttempt', ':sixthRenewalAttempt'),
+                                                $qb->expr()
+                                                    ->lt('s.paidUntil', ':sixthRenewalDate')
+                                            )
+                                    )
                             )
                     )
             )
             ->setParameter('brand', config('ecommerce.brand'))
-            ->setParameter(
-                'cutoff',
-                Carbon::now()
-                    ->subMonths(
-                        config('ecommerce.paypal.subscription_renewal_date') ?? 1
-                    )
-            )
             ->setParameter('active', true)
+            ->setParameter('notStopped', false)
+            ->setParameter('notActive', false)
             ->setParameter('zero', 0)
             ->setParameter(
                 'types',
@@ -207,6 +208,7 @@ class SubscriptionRepository extends RepositoryBase
      */
     public function getAncientSubscriptionsDueToDeactivate()
     {
+        // todo - confirm & remove
         $qb = $this->createQueryBuilder('s');
 
         $qb->select(['s'])
@@ -245,7 +247,7 @@ class SubscriptionRepository extends RepositoryBase
             ->setParameter(
                 'cutoff',
                 Carbon::now()
-                    ->subMonths(
+                    ->subDays(
                         config('ecommerce.paypal.subscription_renewal_date') ?? 1
                     )
             )
