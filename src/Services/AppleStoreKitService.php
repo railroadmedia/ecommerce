@@ -323,6 +323,7 @@ class AppleStoreKitService
     {
         $firstPurchasedItem = $this->getFirstPurchasedItem($appleResponse);
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
+        $subscription = null;
 
         if (empty($firstPurchasedItem) || empty($latestPurchaseItem)) {
             return null;
@@ -546,6 +547,8 @@ class AppleStoreKitService
                 }
             }
         }
+
+        return $subscription;
     }
 
     /**
