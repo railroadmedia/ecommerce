@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use DateTimeInterface;
 use Exception;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Payment;
@@ -11,6 +12,7 @@ use Railroad\Ecommerce\Entities\PaymentTaxes;
 use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
+use Railroad\Ecommerce\Entities\Structures\SubscriptionRenewal;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
@@ -24,6 +26,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Throwable;
 
 class RenewalService
@@ -54,6 +57,11 @@ class RenewalService
      * @var SubscriptionPaymentRepository
      */
     protected $subscriptionPaymentRepository;
+
+    /**
+     * @var SubscriptionRepository
+     */
+    protected $subscriptionRepository;
 
     /**
      * @var StripePaymentGateway
@@ -89,6 +97,7 @@ class RenewalService
      * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
+     * @param SubscriptionRepository $subscriptionRepository
      * @param TaxService $taxService
      * @param UserProductService $userProductService
      * @param PaymentService $paymentService
@@ -101,6 +110,7 @@ class RenewalService
         PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
         PayPalPaymentGateway $payPalPaymentGateway,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
+        SubscriptionRepository $subscriptionRepository,
         TaxService $taxService,
         UserProductService $userProductService,
         PaymentService $paymentService
@@ -114,8 +124,177 @@ class RenewalService
         $this->paypalRepository = $paypalBillingAgreementRepository;
         $this->paypalPaymentGateway = $payPalPaymentGateway;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
+        $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
         $this->paymentService = $paymentService;
+    }
+
+    /**
+     * @param array $usersIds
+     *
+     * @return SubscriptionRenewal[]
+     *
+     * @throws Throwable
+     */
+    public function getSubscriptionsRenewalForUsers(array $usersIds): array
+    {
+        $subscriptions = $this->subscriptionRepository->getSubscriptionsForUsers($usersIds);
+
+        $subs = [];
+
+        foreach ($subscriptions as $subscription) {
+
+            $brand = $subscription->getBrand();
+            $userId = $subscription->getUser()->getId();
+
+            if (!isset($subs[$brand])) {
+                $subs[$brand] = [];
+            }
+
+            if (isset($subs[$brand][$userId])) {
+                $otherUserSubscription = $subs[$brand][$userId];
+                $subs[$brand][$userId] = $this->selectUserSubscription($subscription, $otherUserSubscription);
+            } else {
+                $subs[$brand][$userId] = $subscription;
+            }
+        }
+
+        $subscriptions = null;
+        $subscriptionsRenewals = [];
+
+        foreach ($subs as $brandSubs) {
+            foreach ($brandSubs as $subscription) {
+                $subscriptionsRenewals[] = $this->getSubscriptionRenewal($subscription);
+            }
+        }
+
+        $subs = $brandSubs = null;
+
+        return $subscriptionsRenewals;
+    }
+
+    /**
+     * Selects a subscription to be displayed to an admin/support user
+     *
+     * @param Subscription $subscriptionOne
+     * @param Subscription $subscriptionTwo
+     *
+     * @return Subscription
+     */
+    public function selectUserSubscription(
+        Subscription $subscriptionOne,
+        Subscription $subscriptionTwo
+    ): Subscription {
+        $subscriptionOneState = $subscriptionOne->getState();
+        $subscriptionTwoState = $subscriptionTwo->getState();
+
+        // todo - confirm selection logic
+
+        if ($subscriptionOneState == Subscription::STATE_ACTIVE) {
+            return $subscriptionOne;
+        }
+
+        if ($subscriptionTwoState == Subscription::STATE_ACTIVE) {
+            return $subscriptionTwo;
+        }
+
+        if (
+            $subscriptionOneState == Subscription::STATE_SUSPENDED
+            && (
+                $subscriptionOneState != Subscription::STATE_SUSPENDED
+                || $subscriptionOne->getPaidUntil() > $subscriptionTwo->getPaidUntil()
+            )
+        ) {
+            return $subscriptionOne;
+        }
+
+        if ($subscriptionTwoState == Subscription::STATE_SUSPENDED) {
+            return $subscriptionTwo;
+        }
+
+        return $subscriptionOne->getPaidUntil() > $subscriptionTwo->getPaidUntil()
+                    ? $subscriptionOne : $subscriptionTwo;
+    }
+
+    /**
+     * Creates & populates a SubscriptionRenewal object with data from a subscription
+     *
+     * @param Subscription $subscription
+     *
+     * @return SubscriptionRenewal
+     */
+    public function getSubscriptionRenewal(Subscription $subscription): SubscriptionRenewal
+    {
+        $brand = $subscription->getBrand();
+        $userId = $subscription->getUser()->getId();
+        $idString = $brand . $userId;
+
+        $subscriptionRenewal = new SubscriptionRenewal(md5($idString));
+
+        $subscriptionRenewal->setUserId($userId);
+        $subscriptionRenewal->setBrand($brand);
+        $subscriptionRenewal->setSubscriptionId($subscription->getId());
+        $subscriptionRenewal->setSubscriptionType(
+            $subscription->getIntervalType() . '_' . $subscription->getIntervalCount()
+        );
+        $subscriptionRenewal->setSubscriptionState($subscription->getState());
+        $subscriptionRenewal->setNextRenewalDue($this->getSubscriptionRenewalDueDate($subscription));
+
+        return $subscriptionRenewal;
+    }
+
+    /**
+     * Computes the date/time the subscription is due to renew
+     *
+     * @param Subscription $subscription
+     *
+     * @return DateTimeInterface|null
+     */
+    public function getSubscriptionRenewalDueDate(Subscription $subscription): ?DateTimeInterface
+    {
+        $subscriptionState = $subscription->getState();
+        $renewalAttempt = $subscription->getRenewalAttempt();
+
+        if (
+            $subscriptionState == Subscription::STATE_STOPPED
+            || $subscriptionState == Subscription::STATE_CANCELED
+            || ($subscriptionState == Subscription::STATE_SUSPENDED && $renewalAttempt > 5)
+        ) {
+            return null;
+        }
+
+        switch ($renewalAttempt) {
+            case 0:
+                return $subscription->getPaidUntil()
+                            ->copy();
+
+            case 1:
+                return $subscription->getPaidUntil()
+                            ->copy()
+                            ->addHours(config('ecommerce.subscriptions_renew_cycles.first_hours'));
+
+            case 2:
+                return $subscription->getPaidUntil()
+                            ->copy()
+                            ->addDays(config('ecommerce.subscriptions_renew_cycles.second_days'));
+
+            case 3:
+                return $subscription->getPaidUntil()
+                            ->copy()
+                            ->addDays(config('ecommerce.subscriptions_renew_cycles.third_days'));
+
+            case 4:
+                return $subscription->getPaidUntil()
+                            ->copy()
+                            ->addDays(config('ecommerce.subscriptions_renew_cycles.fourth_days'));
+
+            default:
+                return $subscription->getPaidUntil()
+                            ->copy()
+                            ->addDays(config('ecommerce.subscriptions_renew_cycles.fifth_days'));
+        }
+
+        return null;
     }
 
     /**

@@ -2,18 +2,15 @@
 
 namespace Railroad\Ecommerce\Commands;
 
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewFailed;
-use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeactivated;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\RenewalService;
-use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;
 
 class RenewalDueSubscriptions extends Command
@@ -48,25 +45,16 @@ class RenewalDueSubscriptions extends Command
     private $renewalService;
 
     /**
-     * @var UserProductService
-     */
-    private $userProductService;
-
-    const DEACTIVATION_NOTE = 'Ancient subscription. De-activated.';
-
-    /**
      * RenewalDueSubscriptions constructor.
      *
      * @param EcommerceEntityManager $entityManager
      * @param RenewalService $renewalService
      * @param SubscriptionRepository $subscriptionRepository
-     * @param UserProductService $userProductService
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
         RenewalService $renewalService,
-        SubscriptionRepository $subscriptionRepository,
-        UserProductService $userProductService
+        SubscriptionRepository $subscriptionRepository
     )
     {
         parent::__construct();
@@ -74,7 +62,6 @@ class RenewalDueSubscriptions extends Command
         $this->entityManager = $entityManager;
         $this->renewalService = $renewalService;
         $this->subscriptionRepository = $subscriptionRepository;
-        $this->userProductService = $userProductService;
     }
 
     /**

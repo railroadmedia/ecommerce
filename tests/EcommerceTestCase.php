@@ -296,6 +296,7 @@ class EcommerceTestCase extends BaseTestCase
         );
 
         $app['config']->set('ecommerce.subscription_renewal_date', $defaultConfig['subscription_renewal_date']);
+        $app['config']->set('ecommerce.subscriptions_renew_cycles', $defaultConfig['subscriptions_renew_cycles']);
         $app['config']->set(
             'ecommerce.failed_payments_before_de_activation',
             $defaultConfig['failed_payments_before_de_activation']

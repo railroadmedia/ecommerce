@@ -250,6 +250,14 @@ return [
         ],
     ],
 
+    'subscriptions_renew_cycles' => [
+        'first_hours' => 8,
+        'second_days' => 3,
+        'third_days' => 7,
+        'fourth_days' => 14,
+        'fifth_days' => 30,
+    ],
+
     // permissions
     'role_abilities' => [
         'administrator' => [
@@ -346,7 +354,7 @@ return [
     'fulfillment_status_pending' => 'pending',
     'fulfillment_status_fulfilled' => 'fulfilled',
 
-    'subscription_renewal_date' => 90,
+    'subscription_renewal_date' => 90, // todo - to be removed
     'failed_payments_before_de_activation' => 1,
 
     'trial_days_number' => 7

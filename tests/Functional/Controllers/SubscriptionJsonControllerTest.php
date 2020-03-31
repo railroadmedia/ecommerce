@@ -2594,6 +2594,66 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'payment_id' => $payment['id'],
         ]);
 
+        // failed billing subscription with payment date in request interval, canceled
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => 'failed',
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(20)
+        ]);
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null,
+            'type' => Subscription::TYPE_SUBSCRIPTION,
+            'canceled_on' => Carbon::now()->subDays(19),
+            'is_active' => false,
+            'stopped' => 0,
+            'start_date' => Carbon::now()->subDays(36),
+            'paid_until' => Carbon::now()->subDays(21),
+            'failed_payment_id' => $payment['id'],
+        ]);
+
+        $subscriptionPayment = $this->fakeSubscriptionPayment([
+            'subscription_id' => $subscription['id'],
+            'payment_id' => $payment['id'],
+        ]);
+
+        // failed billing subscription with payment date in request interval, stopped
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => 'failed',
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(20)
+        ]);
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null,
+            'type' => Subscription::TYPE_SUBSCRIPTION,
+            'canceled_on' => null,
+            'is_active' => false,
+            'stopped' => 1,
+            'start_date' => Carbon::now()->subDays(36),
+            'paid_until' => Carbon::now()->subDays(21),
+            'failed_payment_id' => $payment['id'],
+        ]);
+
+        $subscriptionPayment = $this->fakeSubscriptionPayment([
+            'subscription_id' => $subscription['id'],
+            'payment_id' => $payment['id'],
+        ]);
+
         $subscriptions = [];
 
         for ($i = 0; $i < $nrSubscriptions; $i++) {
@@ -2794,6 +2854,66 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         ]);
 
         $subscriptionOnePayment = $this->fakeSubscriptionPayment([
+            'subscription_id' => $subscription['id'],
+            'payment_id' => $payment['id'],
+        ]);
+
+        // failed billing payment plan with payment date in request interval, canceled
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => 'failed',
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(20)
+        ]);
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null,
+            'type' => Subscription::TYPE_PAYMENT_PLAN,
+            'canceled_on' => Carbon::now()->subDays(19),
+            'is_active' => false,
+            'stopped' => 0,
+            'start_date' => Carbon::now()->subDays(36),
+            'paid_until' => Carbon::now()->subDays(21),
+            'failed_payment_id' => $payment['id'],
+        ]);
+
+        $subscriptionPayment = $this->fakeSubscriptionPayment([
+            'subscription_id' => $subscription['id'],
+            'payment_id' => $payment['id'],
+        ]);
+
+        // failed billing payment plan with payment date in request interval, stopped
+        $payment = $this->fakePayment([
+            'payment_method_id' => $paymentMethod['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => 'failed',
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(20)
+        ]);
+
+        $subscription = $this->fakeSubscription([
+            'product_id' => $product['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'user_id' => $userId,
+            'order_id' => $order['id'],
+            'updated_at' => null,
+            'type' => Subscription::TYPE_PAYMENT_PLAN,
+            'canceled_on' => null,
+            'is_active' => false,
+            'stopped' => 1,
+            'start_date' => Carbon::now()->subDays(36),
+            'paid_until' => Carbon::now()->subDays(21),
+            'failed_payment_id' => $payment['id'],
+        ]);
+
+        $subscriptionPayment = $this->fakeSubscriptionPayment([
             'subscription_id' => $subscription['id'],
             'payment_id' => $payment['id'],
         ]);

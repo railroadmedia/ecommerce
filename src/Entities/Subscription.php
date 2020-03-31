@@ -50,6 +50,7 @@ class Subscription
     const STATE_ACTIVE = 'active';
     const STATE_SUSPENDED = 'suspended';
     const STATE_CANCELED = 'canceled';
+    const STATE_STOPPED = 'stopped';
 
     /**
      * @ORM\Id
@@ -708,8 +709,12 @@ class Subscription
      *
      * @return string
      */
-    public function getState()
+    public function getState(): string
     {
+        if ($this->getStopped()) {
+            return self::STATE_STOPPED;
+        }
+
         if ($this->getIsActive()) {
             return self::STATE_ACTIVE;
         }

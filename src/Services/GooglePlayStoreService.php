@@ -280,6 +280,8 @@ class GooglePlayStoreService
                     $subscription = new Subscription();
                     $subscription->setCreatedAt(Carbon::now());
                     $subscription->setTotalCyclesPaid(1);
+                    $subscription->setStopped(false);
+                    $subscription->setRenewalAttempt(0);
                 }
 
                 $subscription->setBrand(config('ecommerce.brand'));

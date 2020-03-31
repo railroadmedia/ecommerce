@@ -415,6 +415,7 @@ class OrderClaimingService
         $subscription->setOrder($order);
         $subscription->setProduct(is_null($orderItem) ? null : $orderItem->getProduct());
         $subscription->setIsActive(true);
+        $subscription->setStopped(false);
         $subscription->setStartDate(Carbon::now());
         $subscription->setPaidUntil($nextBillDate);
         $subscription->setTotalPrice($subscriptionTotalPrice);
@@ -424,6 +425,7 @@ class OrderClaimingService
         $subscription->setIntervalCount($intervalCount);
         $subscription->setTotalCyclesPaid($totalCyclesPaid);
         $subscription->setTotalCyclesDue($totalCyclesDue);
+        $subscription->setRenewalAttempt(0);
         $subscription->setPaymentMethod($paymentMethod);
         $subscription->setCreatedAt(Carbon::now());
 

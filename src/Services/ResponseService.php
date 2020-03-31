@@ -34,6 +34,7 @@ use Railroad\Ecommerce\Transformers\RefundTransformer;
 use Railroad\Ecommerce\Transformers\RetentionStatsTransformer;
 use Railroad\Ecommerce\Transformers\ShippingCostsWeightRangeTransformer;
 use Railroad\Ecommerce\Transformers\ShippingOptionTransformer;
+use Railroad\Ecommerce\Transformers\SubscriptionRenewalTransformer;
 use Railroad\Ecommerce\Transformers\SubscriptionTransformer;
 use Railroad\Ecommerce\Transformers\UserPaymentMethodsTransformer;
 use Railroad\Ecommerce\Transformers\UserProductTransformer;
@@ -719,6 +720,22 @@ class ResponseService extends FractalResponseService
             $stats,
             'membershipEndStats',
             new MembershipEndStatsTransformer(),
+            new JsonApiSerializer(),
+            null
+        );
+    }
+
+    /**
+     * @param array $subscriptionRenewals
+     *
+     * @return Fractal
+     */
+    public static function subscriptionRenewals(array $subscriptionRenewals)
+    {
+        return self::create(
+            $subscriptionRenewals,
+            'subscriptionRenewal',
+            new SubscriptionRenewalTransformer(),
             new JsonApiSerializer(),
             null
         );

@@ -353,6 +353,8 @@ class AppleStoreKitService
                     $subscription->setCreatedAt(Carbon::now());
                     $subscription->setTotalCyclesPaid(1);
                     $subscription->setUser($user);
+                    $subscription->setStopped(false);
+                    $subscription->setRenewalAttempt(0);
                 }
 
                 $subscription->setBrand(config('ecommerce.brand'));
