@@ -689,7 +689,7 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'is_active' => true,
                 'canceled_on' => null,
                 'user_id' => $userId,
-                'paid_until' => Carbon::now()->addMonth()->addYear()->addDay()->subMinute()->toDateTimeString(),
+                'paid_until' => Carbon::now()->addMonth()->addYear()->subMinute()->toDateTimeString(),
             ]
         );
 
@@ -699,7 +699,7 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'user_id' => $userId,
                 'product_id' => $subscriptionProduct2['id'],
                 'quantity' => 1,
-                'expiration_date' => Carbon::now()->addMonth()->addDay()->addYear()->subMinute()
+                'expiration_date' => Carbon::now()->addMonth()->addYear()->subMinute()
                     ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))->toDateTimeString()
             ]
         );
@@ -885,6 +885,4 @@ class OrderFormControllerTest extends EcommerceTestCase
             ]
         );
     }
-
-
 }
