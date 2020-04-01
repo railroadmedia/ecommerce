@@ -188,8 +188,6 @@ class RenewalService
         $subscriptionOneState = $subscriptionOne->getState();
         $subscriptionTwoState = $subscriptionTwo->getState();
 
-        // todo - confirm selection logic
-
         if ($subscriptionOneState == Subscription::STATE_ACTIVE) {
             return $subscriptionOne;
         }

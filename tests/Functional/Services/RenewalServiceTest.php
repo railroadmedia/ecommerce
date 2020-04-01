@@ -6,6 +6,7 @@ use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Structures\SubscriptionRenewal;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CurrencyService;
@@ -23,7 +24,7 @@ class RenewalServiceTest extends EcommerceTestCase
         parent::setUp();
     }
 
-    public function test_service_credit_card()
+    public function test_renew_credit_card()
     {
         $em = $this->app->make(EcommerceEntityManager::class);
 
@@ -196,5 +197,212 @@ class RenewalServiceTest extends EcommerceTestCase
                 'shipping_taxes_paid' => 0,
             ]
         );
+    }
+
+    public function test_get_subscriptions_renewal()
+    {
+        // userOne, brandOne, subscriptionOne canceled, subscriptionTwo active
+        // expected subscriptionTwo
+        $userOne = $this->fakeUser();
+        $brandOne = $this->faker->word;
+
+        $productOne = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'brand' => $brandOne,
+        ]);
+
+        $subscriptionOne = $this->fakeSubscription([
+            'product_id' => $productOne['id'],
+            'user_id' => $userOne['id'],
+            'brand' => $brandOne,
+            'is_active' => 0,
+            'stopped' => 0,
+            'start_date' => Carbon::now()
+                                ->subMonths(5),
+            'canceled_on' => Carbon::now()
+                                ->subMonths(3),
+        ]);
+
+        $productTwo = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'brand' => $brandOne,
+        ]);
+
+        $subscriptionTwo = $this->fakeSubscription([
+            'product_id' => $productTwo['id'],
+            'user_id' => $userOne['id'],
+            'brand' => $brandOne,
+            'is_active' => 1,
+            'stopped' => 0,
+            'start_date' => Carbon::now()
+                                ->subMonths(2),
+            'paid_until' => Carbon::now()
+                                ->addDays(3)
+                                ->startOfDay(),
+            'canceled_on' => null,
+        ]);
+
+        $idString = $brandOne . $userOne['id'];
+        $expectedSubscriptionsRenewal = new SubscriptionRenewal(md5($idString));
+
+        $expectedSubscriptionsRenewal->setUserId($userOne['id']);
+        $expectedSubscriptionsRenewal->setBrand($brandOne);
+        $expectedSubscriptionsRenewal->setSubscriptionId($subscriptionTwo['id']);
+        $expectedSubscriptionsRenewal->setSubscriptionType(
+            $subscriptionTwo['interval_type'] . '_' . $subscriptionTwo['interval_count']
+        );
+        $expectedSubscriptionsRenewal->setSubscriptionState(Subscription::STATE_ACTIVE);
+        $expectedSubscriptionsRenewal->setNextRenewalDue($subscriptionTwo['paid_until']);
+
+        $expectedSubscriptionsRenewals[] = $expectedSubscriptionsRenewal;
+
+        // userTwo
+        //     subscriptionThree of brandTwo suspended - normal renew
+        //     subscriptionFour of brandThree stopped
+        //     subscriptionFive of brandThree active
+        // expected subscriptionThree, subscriptionFive
+        $userTwo = $this->fakeUser();
+        $brandTwo = $this->faker->word;
+
+        $productThree = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'brand' => $brandTwo,
+        ]);
+
+        $subscriptionThree = $this->fakeSubscription([
+            'product_id' => $productThree['id'],
+            'user_id' => $userTwo['id'],
+            'brand' => $brandTwo,
+            'is_active' => 0,
+            'stopped' => 0,
+            'start_date' => Carbon::now()
+                                ->subMonths(5),
+            'paid_until' => Carbon::now()
+                                ->subDays(13)
+                                ->startOfDay(),
+            'canceled_on' => null,
+        ]);
+
+        $idString = $brandTwo . $userTwo['id'];
+        $expectedSubscriptionsRenewal = new SubscriptionRenewal(md5($idString));
+
+        $expectedSubscriptionsRenewal->setUserId($userTwo['id']);
+        $expectedSubscriptionsRenewal->setBrand($brandTwo);
+        $expectedSubscriptionsRenewal->setSubscriptionId($subscriptionThree['id']);
+        $expectedSubscriptionsRenewal->setSubscriptionType(
+            $subscriptionThree['interval_type'] . '_' . $subscriptionThree['interval_count']
+        );
+        $expectedSubscriptionsRenewal->setSubscriptionState(Subscription::STATE_SUSPENDED);
+        $expectedSubscriptionsRenewal->setNextRenewalDue($subscriptionThree['paid_until']);
+
+        $expectedSubscriptionsRenewals[] = $expectedSubscriptionsRenewal;
+
+        $brandThree = $this->faker->word;
+
+        $productFour = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'brand' => $brandThree,
+        ]);
+
+        $subscriptionFour = $this->fakeSubscription([
+            'product_id' => $productFour['id'],
+            'user_id' => $userTwo['id'],
+            'brand' => $brandThree,
+            'is_active' => 1,
+            'stopped' => 1,
+            'start_date' => Carbon::now()
+                                ->subMonths(3),
+            'paid_until' => Carbon::now()
+                                ->subMonths(2)
+                                ->subDays(2),
+            'canceled_on' => null,
+        ]);
+
+        $productFive = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'brand' => $brandThree,
+        ]);
+
+        $subscriptionFive = $this->fakeSubscription([
+            'product_id' => $productFive['id'],
+            'user_id' => $userTwo['id'],
+            'brand' => $brandThree,
+            'is_active' => 1,
+            'stopped' => 0,
+            'start_date' => Carbon::now()
+                                ->subMonths(2),
+            'paid_until' => Carbon::now()
+                                ->addDays(14)
+                                ->startOfDay(),
+            'canceled_on' => null,
+        ]);
+
+        $idString = $brandThree . $userTwo['id'];
+        $expectedSubscriptionsRenewal = new SubscriptionRenewal(md5($idString));
+
+        $expectedSubscriptionsRenewal->setUserId($userTwo['id']);
+        $expectedSubscriptionsRenewal->setBrand($brandThree);
+        $expectedSubscriptionsRenewal->setSubscriptionId($subscriptionFive['id']);
+        $expectedSubscriptionsRenewal->setSubscriptionType(
+            $subscriptionFive['interval_type'] . '_' . $subscriptionFive['interval_count']
+        );
+        $expectedSubscriptionsRenewal->setSubscriptionState(Subscription::STATE_ACTIVE);
+        $expectedSubscriptionsRenewal->setNextRenewalDue($subscriptionFive['paid_until']);
+
+        $expectedSubscriptionsRenewals[] = $expectedSubscriptionsRenewal;
+
+        // userThree, brandFour, subscriptionSix of brandFour suspended, renew cycle 4
+        // expected subscriptionSix
+        $userThree = $this->fakeUser();
+        $brandFour = $this->faker->word;
+
+        $productSix = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+            'brand' => $brandFour,
+        ]);
+
+        $subscriptionSix = $this->fakeSubscription([
+            'product_id' => $productSix['id'],
+            'user_id' => $userThree['id'],
+            'brand' => $brandFour,
+            'is_active' => 0,
+            'stopped' => 0,
+            'renewal_attempt' => 4,
+            'start_date' => Carbon::now()
+                                ->subMonths(5),
+            'paid_until' => Carbon::now()
+                                ->subDays(13)
+                                ->startOfDay(),
+            'canceled_on' => null,
+        ]);
+
+        $idString = $brandFour . $userThree['id'];
+        $expectedSubscriptionsRenewal = new SubscriptionRenewal(md5($idString));
+
+        $expectedSubscriptionsRenewal->setUserId($userThree['id']);
+        $expectedSubscriptionsRenewal->setBrand($brandFour);
+        $expectedSubscriptionsRenewal->setSubscriptionId($subscriptionSix['id']);
+        $expectedSubscriptionsRenewal->setSubscriptionType(
+            $subscriptionSix['interval_type'] . '_' . $subscriptionSix['interval_count']
+        );
+        $expectedSubscriptionsRenewal->setSubscriptionState(Subscription::STATE_SUSPENDED);
+        $expectedSubscriptionsRenewal->setNextRenewalDue(
+            $subscriptionSix['paid_until']->copy()
+                ->addDays(config('ecommerce.subscriptions_renew_cycles.fourth_days'))
+        );
+
+        $expectedSubscriptionsRenewals[] = $expectedSubscriptionsRenewal;
+
+        $srv = $this->app->make(RenewalService::class);
+
+        $subscriptionsRenewals = $srv->getSubscriptionsRenewalForUsers(
+            [
+                $userOne['id'],
+                $userTwo['id'],
+                $userThree['id'],
+            ]
+        );
+
+        $this->assertEquals($expectedSubscriptionsRenewals, $subscriptionsRenewals);
     }
 }
