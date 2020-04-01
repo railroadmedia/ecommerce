@@ -64,8 +64,9 @@ class StatsService
         );
 
         $smallDateTime =
-            Carbon::parse($smallDate)
-                ->startOfDay();
+            Carbon::parse($smallDate, config('ecommerce.accounting_report_timezone', 'UTC'))
+                ->startOfDay()
+                ->timezone('UTC');
 
         $bigDate = $request->get(
             'big_date_time',
@@ -74,9 +75,10 @@ class StatsService
         );
 
         $bigDateTime =
-            Carbon::parse($bigDate)
+            Carbon::parse($bigDate, config('ecommerce.accounting_report_timezone', 'UTC'))
+                ->startOfDay()
                 ->addDay()
-                ->startOfDay();
+                ->timezone('UTC');
 
         if ($smallDateTime > $bigDateTime) {
             $tmp = $bigDate;
@@ -90,7 +92,7 @@ class StatsService
 
         $brand = $request->get('brand');
 
-        while($currentDay <= Carbon::parse($bigDate)) {
+        while($currentDay <= $bigDateTime) {
 
             $add = false;
 

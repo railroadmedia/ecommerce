@@ -64,9 +64,9 @@ class AccountingService
         );
 
         $smallDateTime =
-            Carbon::parse($smallDate)
+            Carbon::parse($smallDate, config('ecommerce.accounting_report_timezone', 'UTC'))
                 ->startOfDay()
-                ->timezone(config('ecommerce.accounting_report_timezone', 'UTC'));
+                ->timezone('UTC');
 
 
         $bigDate = $request->get(
@@ -78,9 +78,9 @@ class AccountingService
         $brand = $request->get('brand');
 
         $bigDateTime =
-            Carbon::parse($bigDate)
+            Carbon::parse($bigDate, config('ecommerce.accounting_report_timezone', 'UTC'))
                 ->endOfDay()
-                ->timezone(config('ecommerce.accounting_report_timezone', 'UTC'));
+                ->timezone('UTC');
 
         // fetch report summary totals, calculated atleast partially in mysql
         $result = new AccountingProductTotals($smallDate, $bigDate);
