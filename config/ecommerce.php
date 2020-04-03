@@ -250,12 +250,13 @@ return [
         ],
     ],
 
+    // attempt_number => hours after initial renewal due date
     'subscriptions_renew_cycles' => [
-        'first_hours' => 8,
-        'second_days' => 3,
-        'third_days' => 7,
-        'fourth_days' => 14,
-        'fifth_days' => 30,
+        1 => 8,
+        2 => 24 * 3,
+        3 => 24 * 7,
+        4 => 24 * 14,
+        5 => 24 * 30,
     ],
 
     // permissions

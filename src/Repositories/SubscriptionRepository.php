@@ -3,9 +3,9 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Carbon\Carbon;
+use Doctrine\DBAL\Query\Expression\CompositeExpression;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\Query;
-use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
@@ -14,7 +14,6 @@ use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
@@ -62,10 +61,37 @@ class SubscriptionRepository extends RepositoryBase
      */
     public function getSubscriptionsDueToRenew()
     {
-        /**
-         * @var $qb QueryBuilder
-         */
+        /** @var $qb QueryBuilder */
         $qb = $this->createQueryBuilder('s');
+
+        $config = config('ecommerce.subscriptions_renew_cycles');
+
+        /** @var $renewalAttempts CompositeExpression[] */
+        $renewalAttempts = [];
+
+        // format is ['paramName' => 'paramValue', ...]
+        $renewalAttemptsParams = [];
+
+        foreach ($config as $renewalAttemptIndex => $renewalAttemptHoursDiff) {
+
+            $renewalAttemptIndexParam = 'renewalAttempt' . $renewalAttemptIndex;
+            $renewalAttemptDateParam = 'renewalAttemptDate' . $renewalAttemptIndex;
+
+            /** @var $renewalAttemptExpression CompositeExpression */
+            $renewalAttemptExpression = $qb->expr()
+                ->andX(
+                    $qb->expr()
+                        ->eq('s.renewalAttempt', ':' . $renewalAttemptIndexParam),
+                    $qb->expr()
+                        ->lt('s.paidUntil', ':' . $renewalAttemptDateParam)
+                );
+
+            $renewalAttempts[] = $renewalAttemptExpression;
+
+            $renewalAttemptsParams[$renewalAttemptIndexParam] = $renewalAttemptIndex;
+            $renewalAttemptsParams[$renewalAttemptDateParam] = Carbon::now()
+                                                                    ->subHours($renewalAttemptHoursDiff);
+        }
 
         $qb->select(['s'])
             ->where(
@@ -112,47 +138,15 @@ class SubscriptionRepository extends RepositoryBase
                                 $qb->expr()
                                     ->eq('s.isActive', ':notActive'),
                                 $qb->expr()
-                                    ->orX(
-                                        $qb->expr()
-                                            ->andX(
-                                                $qb->expr()
-                                                    ->eq('s.renewalAttempt', ':firstRenewalAttempt'),
-                                                $qb->expr()
-                                                    ->lt('s.paidUntil', ':firstRenewalDate')
-                                            ),
-                                        $qb->expr()
-                                            ->andX(
-                                                $qb->expr()
-                                                    ->eq('s.renewalAttempt', ':secondRenewalAttempt'),
-                                                $qb->expr()
-                                                    ->lt('s.paidUntil', ':secondRenewalDate')
-                                            ),
-                                        $qb->expr()
-                                            ->andX(
-                                                $qb->expr()
-                                                    ->eq('s.renewalAttempt', ':thirdRenewalAttempt'),
-                                                $qb->expr()
-                                                    ->lt('s.paidUntil', ':thirdRenewalDate')
-                                            ),
-                                        $qb->expr()
-                                            ->andX(
-                                                $qb->expr()
-                                                    ->eq('s.renewalAttempt', ':fourthRenewalAttempt'),
-                                                $qb->expr()
-                                                    ->lt('s.paidUntil', ':fourthRenewalDate')
-                                            ),
-                                        $qb->expr()
-                                            ->andX(
-                                                $qb->expr()
-                                                    ->eq('s.renewalAttempt', ':fifthRenewalAttempt'),
-                                                $qb->expr()
-                                                    ->lt('s.paidUntil', ':fifthRenewalDate')
-                                            )
-                                    )
+                                    ->orX(...$renewalAttempts)
                             )
                     )
-            )
-            ->setParameter('brand', config('ecommerce.brand'))
+            );
+
+        /** @var $q Query */
+        $q = $qb->getQuery();
+
+        $q->setParameter('brand', config('ecommerce.brand'))
             ->setParameter('active', true)
             ->setParameter('notStopped', false)
             ->setParameter('notActive', false)
@@ -165,40 +159,13 @@ class SubscriptionRepository extends RepositoryBase
                 ]
             )
             ->setParameter('initialRenewalAttempt', 0)
-            ->setParameter('initialRenewalDate', Carbon::now())
-            ->setParameter('firstRenewalAttempt', 1)
-            ->setParameter(
-                'firstRenewalDate',
-                Carbon::now()
-                    ->subHours(config('ecommerce.subscriptions_renew_cycles.first_hours'))
-            )
-            ->setParameter('secondRenewalAttempt', 2)
-            ->setParameter(
-                'secondRenewalDate',
-                Carbon::now()
-                    ->subDays(config('ecommerce.subscriptions_renew_cycles.second_days'))
-            )
-            ->setParameter('thirdRenewalAttempt', 3)
-            ->setParameter(
-                'thirdRenewalDate',
-                Carbon::now()
-                    ->subDays(config('ecommerce.subscriptions_renew_cycles.third_days'))
-            )
-            ->setParameter('fourthRenewalAttempt', 4)
-            ->setParameter(
-                'fourthRenewalDate',
-                Carbon::now()
-                    ->subDays(config('ecommerce.subscriptions_renew_cycles.fourth_days'))
-            )
-            ->setParameter('fifthRenewalAttempt', 5)
-            ->setParameter(
-                'fifthRenewalDate',
-                Carbon::now()
-                    ->subDays(config('ecommerce.subscriptions_renew_cycles.fifth_days'))
-            );
+            ->setParameter('initialRenewalDate', Carbon::now());
 
-        return $qb->getQuery()
-                    ->getResult();
+        foreach ($renewalAttemptsParams as $param => $value) {
+            $q->setParameter($param, $value);
+        }
+
+        return $q->getResult();
     }
 
     /**
@@ -316,6 +283,7 @@ class SubscriptionRepository extends RepositoryBase
         $subscriptionsIds = [];
 
         foreach ($subscriptionsPage as $subscription) {
+            /** @var $subscription Subscription */
             $subscriptionsIds[] = $subscription->getId();
         }
 
@@ -688,13 +656,10 @@ class SubscriptionRepository extends RepositoryBase
                 ->setParameter('productIds', $limitToProductIds);
         }
 
-        $subscriptions =
-            $qb->setParameter('userId', $userId)
-                ->orderBy('s.createdAt', 'desc')
-                ->getQuery()
-                ->getResult();
-
-        return $subscriptions;
+        return $qb->setParameter('userId', $userId)
+                    ->orderBy('s.createdAt', 'desc')
+                    ->getQuery()
+                    ->getResult();
     }
 
     /**
@@ -723,6 +688,7 @@ class SubscriptionRepository extends RepositoryBase
     /**
      * @param $externalAppStoreId
      * @return Subscription|null
+     * @throws NonUniqueResultException
      */
     public function getByExternalAppStoreId($externalAppStoreId)
     {
@@ -744,7 +710,7 @@ class SubscriptionRepository extends RepositoryBase
     }
 
     /**
-     * @param Order $order
+     * @param PaymentMethod $paymentMethod
      *
      * @return Subscription[]
      */
@@ -816,25 +782,22 @@ class SubscriptionRepository extends RepositoryBase
                     ->in('s.type', ':membership')
             );
 
-        $subscriptions =
-            $qb->setParameter('userId', $userId)
-                ->setParameter('date', $date)
-                ->setParameter('intervalMonthly', config('ecommerce.interval_type_monthly'))
-                ->setParameter('oneMonth', 1)
-                ->setParameter('sixMonths', 6)
-                ->setParameter('intervalYearly', config('ecommerce.interval_type_yearly'))
-                ->setParameter('oneYear', 1)
-                ->setParameter(
-                    'membership',
-                    [
-                        Subscription::TYPE_SUBSCRIPTION,
-                        Subscription::TYPE_APPLE_SUBSCRIPTION,
-                        Subscription::TYPE_GOOGLE_SUBSCRIPTION
-                    ]
-                )
-                ->getQuery()
-                ->getResult();
-
-        return $subscriptions;
+        return $qb->setParameter('userId', $userId)
+                    ->setParameter('date', $date)
+                    ->setParameter('intervalMonthly', config('ecommerce.interval_type_monthly'))
+                    ->setParameter('oneMonth', 1)
+                    ->setParameter('sixMonths', 6)
+                    ->setParameter('intervalYearly', config('ecommerce.interval_type_yearly'))
+                    ->setParameter('oneYear', 1)
+                    ->setParameter(
+                        'membership',
+                        [
+                            Subscription::TYPE_SUBSCRIPTION,
+                            Subscription::TYPE_APPLE_SUBSCRIPTION,
+                            Subscription::TYPE_GOOGLE_SUBSCRIPTION
+                        ]
+                    )
+                    ->getQuery()
+                    ->getResult();
     }
 }

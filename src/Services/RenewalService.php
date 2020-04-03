@@ -29,6 +29,7 @@ use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Throwable;
 
+// todo - refactor into 'SubscriptionService'
 class RenewalService
 {
     const DEACTIVATION_MESSAGE = 'De-activated due to renewal payment fail.';
@@ -135,6 +136,8 @@ class RenewalService
      * @return SubscriptionRenewal[]
      *
      * @throws Throwable
+     *
+     * @noinspection PhpUnused - method is called by website service
      */
     public function getSubscriptionsRenewalForUsers(array $usersIds): array
     {
@@ -167,8 +170,6 @@ class RenewalService
                 $subscriptionsRenewals[] = $this->getSubscriptionRenewal($subscription);
             }
         }
-
-        $subs = $brandSubs = null;
 
         return $subscriptionsRenewals;
     }
@@ -261,38 +262,15 @@ class RenewalService
             return null;
         }
 
-        switch ($renewalAttempt) {
-            case 0:
-                return $subscription->getPaidUntil()
+        $config = config('ecommerce.subscriptions_renew_cycles');
+
+        $config[0] = 0; // initial renewal
+
+        /** @var $renewalDueDate Carbon */
+        $renewalDueDate = $subscription->getPaidUntil()
                             ->copy();
 
-            case 1:
-                return $subscription->getPaidUntil()
-                            ->copy()
-                            ->addHours(config('ecommerce.subscriptions_renew_cycles.first_hours'));
-
-            case 2:
-                return $subscription->getPaidUntil()
-                            ->copy()
-                            ->addDays(config('ecommerce.subscriptions_renew_cycles.second_days'));
-
-            case 3:
-                return $subscription->getPaidUntil()
-                            ->copy()
-                            ->addDays(config('ecommerce.subscriptions_renew_cycles.third_days'));
-
-            case 4:
-                return $subscription->getPaidUntil()
-                            ->copy()
-                            ->addDays(config('ecommerce.subscriptions_renew_cycles.fourth_days'));
-
-            default:
-                return $subscription->getPaidUntil()
-                            ->copy()
-                            ->addDays(config('ecommerce.subscriptions_renew_cycles.fifth_days'));
-        }
-
-        return null;
+        return $renewalDueDate->addHours($config[$renewalAttempt]);
     }
 
     /**

@@ -120,6 +120,7 @@ class RenewalServiceTest extends EcommerceTestCase
         $subscription->setBrand($this->faker->word);
         $subscription->setType('subscription');
         $subscription->setIsActive(true);
+        $subscription->setStopped(false);
         $subscription->setProduct($product);
         $subscription->setUser($user);
         $subscription->setStartDate(Carbon::now());
@@ -201,6 +202,8 @@ class RenewalServiceTest extends EcommerceTestCase
 
     public function test_get_subscriptions_renewal()
     {
+        $renewalConfig = config('ecommerce.subscriptions_renew_cycles');
+
         // userOne, brandOne, subscriptionOne canceled, subscriptionTwo active
         // expected subscriptionTwo
         $userOne = $this->fakeUser();
@@ -388,7 +391,7 @@ class RenewalServiceTest extends EcommerceTestCase
         $expectedSubscriptionsRenewal->setSubscriptionState(Subscription::STATE_SUSPENDED);
         $expectedSubscriptionsRenewal->setNextRenewalDue(
             $subscriptionSix['paid_until']->copy()
-                ->addDays(config('ecommerce.subscriptions_renew_cycles.fourth_days'))
+                ->addHours($renewalConfig[4])
         );
 
         $expectedSubscriptionsRenewals[] = $expectedSubscriptionsRenewal;

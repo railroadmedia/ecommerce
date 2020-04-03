@@ -37,7 +37,7 @@ class SubscriptionRenewal
     private $subscriptionState;
 
     /**
-     * @var \DateTime|null
+     * @var DateTimeInterface|null
      */
     private $nextRenewalDue;
 
@@ -135,17 +135,17 @@ class SubscriptionRenewal
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getNextRenewalDue(): ?\DateTimeInterface
+    public function getNextRenewalDue(): ?DateTimeInterface
     {
         return $this->nextRenewalDue;
     }
 
     /**
-     * @param \DateTimeInterface|null $nextRenewalDue
+     * @param DateTimeInterface|null $nextRenewalDue
      */
-    public function setNextRenewalDue(?\DateTimeInterface $nextRenewalDue)
+    public function setNextRenewalDue(?DateTimeInterface $nextRenewalDue)
     {
         $this->nextRenewalDue = $nextRenewalDue;
     }
