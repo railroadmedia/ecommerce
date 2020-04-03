@@ -548,7 +548,6 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         );
     }
 
-
     public function test_process_notification_subscription_renewal_multiple()
     {
         $brand = 'brand';
@@ -1061,7 +1060,6 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         );
     }
 
-
     protected function getInitialPurchaseReceiptResponse(
         $transactionId,
         $webOrderItemId,
@@ -1381,5 +1379,4 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
     }
-
 }
