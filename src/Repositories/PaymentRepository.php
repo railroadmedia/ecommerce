@@ -568,7 +568,7 @@ class PaymentRepository extends RepositoryBase
             )
             ->andWhere($qb->expr()->neq('p.status', ':failed'))
             ->setParameter('smallDateTime', $day)
-            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('bigDateTime', $day->copy()->addDay())
             ->setParameter('failed', Payment::STATUS_FAILED);
 
         if ($brand) {
@@ -627,7 +627,7 @@ class PaymentRepository extends RepositoryBase
             )
             ->andWhere($qb->expr()->neq('p.status', ':failed'))
             ->setParameter('smallDateTime', $day)
-            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('bigDateTime', $day->copy()->addDay())
             ->setParameter('failed', Payment::STATUS_FAILED);
 
         if ($brand) {
@@ -670,7 +670,7 @@ class PaymentRepository extends RepositoryBase
             ->andWhere($qb->expr()->eq('p.type', ':renew'))
             ->andWhere($qb->expr()->neq('p.status', ':failed'))
             ->setParameter('smallDateTime', $day)
-            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('bigDateTime', $day->copy()->addDay())
             ->setParameter('renew', Payment::TYPE_SUBSCRIPTION_RENEWAL)
             ->setParameter('failed', Payment::STATUS_FAILED);
 
@@ -716,7 +716,7 @@ class PaymentRepository extends RepositoryBase
             ->andWhere($qb->expr()->eq('p.type', ':renew'))
             ->andWhere($qb->expr()->neq('p.status', ':failed'))
             ->setParameter('smallDateTime', $day)
-            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('bigDateTime', $day->copy()->addDay())
             ->setParameter('renew', Payment::TYPE_SUBSCRIPTION_RENEWAL)
             ->setParameter('failed', Payment::STATUS_FAILED);
 
@@ -762,7 +762,7 @@ class PaymentRepository extends RepositoryBase
             ->andWhere($qb->expr()->eq('p.type', ':renew'))
             ->andWhere($qb->expr()->eq('p.status', ':failed'))
             ->setParameter('smallDateTime', $day)
-            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('bigDateTime', $day->copy()->addDay())
             ->setParameter('renew', Payment::TYPE_SUBSCRIPTION_RENEWAL)
             ->setParameter('failed', Payment::STATUS_FAILED);
 
@@ -809,7 +809,7 @@ class PaymentRepository extends RepositoryBase
             ->andWhere($qb->expr()->neq('p.status', ':failed'))
             ->groupBy('pr.id')
             ->setParameter('smallDateTime', $day)
-            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('bigDateTime', $day->copy()->addDay())
             ->setParameter('failed', Payment::STATUS_FAILED);
 
         if ($brand) {
@@ -854,7 +854,7 @@ class PaymentRepository extends RepositoryBase
             ->andWhere($qb->expr()->neq('p.status', ':failed'))
             ->groupBy('pr.id')
             ->setParameter('smallDateTime', $day)
-            ->setParameter('bigDateTime', $day->copy()->endOfDay())
+            ->setParameter('bigDateTime', $day->copy()->addDay())
             ->setParameter('subscription', Subscription::TYPE_SUBSCRIPTION)
             ->setParameter('renew', Payment::TYPE_SUBSCRIPTION_RENEWAL)
             ->setParameter('failed', Payment::STATUS_FAILED);
