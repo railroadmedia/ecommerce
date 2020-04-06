@@ -13,25 +13,25 @@ because we will use them to make decisions on how to structure the algorithm and
 than ones who sign up in May?
 - How do new products affect a users retention rate over time?
 
-
+  
 ## How Simple Retention Theory Works 
 
 Say there are a total of 10 monthly subscribers at the start of our example data (Jan 1) and the month progresses like 
 this:
 
-Jan 01: 1 user successfully renews
-Jan 02: 1 user fails to renew
-Jan 03: 3 new users
-Jan 05: 2 users successfully renew
-Jan 10: 1 user fails to renew
-Jan 12: 6 new users
-Jan 15: 1 user successfully renews
-Jan 20: 1 user fails to renew
-Jan 22: 1 user successfully renews
-Jan 13: 2 new users
-Jan 26: 1 user successfully renews
-Jan 30: 1 user successfully renews
-Jan 31: 4 new users
+- Jan 01: 1 user successfully renews
+- Jan 02: 1 user fails to renew
+- Jan 03: 3 new users
+- Jan 05: 2 users successfully renew
+- Jan 10: 1 user fails to renew
+- Jan 12: 6 new users
+- Jan 15: 1 user successfully renews
+- Jan 20: 1 user fails to renew
+- Jan 22: 1 user successfully renews
+- Jan 13: 2 new users
+- Jan 26: 1 user successfully renews
+- Jan 30: 1 user successfully renews
+- Jan 31: 4 new users
 
 At the end of January:
 - 7 out of the original 10 renewed successfully
@@ -46,7 +46,7 @@ We would end up with: (22 - 15) / 10 = 0.70 or **70% retention rate** for Januar
   
 This math works out well and is easily to calculate.
 
-
+  
 ## Problems With Simple Retention Theory
 
 ### The Time Frame Problem
@@ -73,9 +73,9 @@ information for a given users subscription: start date, scheduled renewal date, 
 
 As an example lets say a user has the following subscription for a yearly membership:
 
-Start date: January 1, 2020  
-Scheduled renewal date: Jan 1, 2021  
-Cancellation date: March 1, 2020 (the user cancelled after 2 months)  
+- Start date: January 1, 2020
+- Scheduled renewal date: Jan 1, 2021
+- Cancellation date: March 1, 2020 (the user cancelled after 2 months)
 
 In which time frame should this user be represented in the retention reporting? For example if we pulled the yearly 
 retention number for all of March 2020, should this user be subtracted from the 'customers at end' variable? Lets say  
@@ -103,3 +103,6 @@ that users tend to cancel near their scheduled renewal date. That is what makes 
  
 This number is nearly meaningless without a full understanding of the math behind retention. 
 Reporting the retention numbers in this way would cause confusion and not be useful.
+
+  
+## Solving The Retention Reporting Problems
