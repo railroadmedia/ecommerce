@@ -13,7 +13,7 @@ because we will use them to make decisions on how to structure the algorithm and
 than ones who sign up in May?
 - How do new products affect a users retention rate over time?
 
-  
+
 ## How Simple Retention Theory Works 
 
 Say there are a total of 10 monthly subscribers at the start of our example data (Jan 1) and the month progresses like 
@@ -33,7 +33,7 @@ this:
 - Jan 30: 1 user successfully renews
 - Jan 31: 4 new users
 
-At the end of January:
+**At the end of January:**
 - 7 out of the original 10 renewed successfully
 - 3 out of the original 10 failed to renew
 - 15 new users started subscriptions
@@ -46,7 +46,7 @@ We would end up with: (22 - 15) / 10 = 0.70 or **70% retention rate** for Januar
   
 This math works out well and is easily to calculate.
 
-  
+
 ## Problems With Simple Retention Theory
 
 ### The Time Frame Problem
@@ -82,6 +82,7 @@ retention number for all of March 2020, should this user be subtracted from the 
 we pulled the yearly retention number for all of January 2021, should they be subtracted from 'customers at end' for 
 this report? Should the user affect the report in both of these cases?
 
+
 ### Subscription Renewal Length VS Reporting Length Problem
 
 Say there is the following example data for yearly subscribers for January 2020:
@@ -102,7 +103,50 @@ than the renewal length. Only 10 out of the 100 total yearly users were schedule
 that users tend to cancel near their scheduled renewal date. That is what makes the reported rate oddly high.    
  
 This number is nearly meaningless without a full understanding of the math behind retention. 
-Reporting the retention numbers in this way would cause confusion and not be useful.
+Reporting the retention numbers in this way would cause confusion and not be useful.  
 
+There is also a seasonality problem related to this issue. We know that users tend to cancel or fail to renew either on, 
+or shortly before their renewal date. This means that if we pull a report for a time frame which is less 
+than the subscription renewal length, such as in the above example, the rate will be directly effected by sales 
+and marketing. Here is some example data showing how that works.
+
+- In January 2019: 10000 new users sign up for a yearly membership  
+
+- In February 2019: 250 of the original 10000 who signed up in January cancel before their renewal date
+- In March 2019: 300 of the original 10000 who signed up in January cancel before their renewal date
+- In April 2019: 350 of the original 10000 who signed up in January cancel before their renewal date
+- In May 2019: 400 of the original 10000 who signed up in January cancel before their renewal date  
   
+... (note the upward trend of the cancellations)  
+
+- In December 2019: 5000 of the original 1000 who signed up in January cancel before their renewal date
+
+(note the overwhelming majority of cancellations happen in the last month before the renewal date)
+
+Lets say we were to the report 2019 retention numbers per month for 2019, the rate would decline in an exponential 
+downward curve as you reported further toward the renewal date. Lets say in a real world example you mixed in real 
+numbers per month in the above example. In the other months it's likely that significantly less new customers will sign 
+up for a new yearly membership. Since so many people signed up in January 2019, that group of users is going to have 
+an overwhelming impact on the retention numbers for the time period right before next years January.
+
+I found this a bit tricky to show with a simple number example but the core idea is: **using the original simple 
+algorithm to report on time periods less than the renewal cycle length results in the rates being directly effected 
+by sales and marketing metrics.**  
+
+This happens because users tend to cancel or fail to renew right before their 
+scheduled renewal date. This is a major problem because when team members review the retention numbers, they are 
+going to wonder why retention is so much lower in January as opposed to another month and possibly make 
+assumptions about the product or platform. In reality the change in the rate is due to sales seasonality or 
+random promotions, its not related to changes made to the product, platform, or content. 
+The reporting algorithm must be independent of surges in new member sign ups.
+
+
+### Seasonality Problem
+
+
 ## Solving The Retention Reporting Problems
+
+We need a reporting algorithm which works independently of renewal cycle length and reporting time frame. We also need 
+to make sure that monthly to yearly upgrades do not negatively impact retention reporting for the monthly membership. 
+Lastly we need to make sure that we are treating all users subscriptions dates consistently, whether it be cancel date 
+or renewal date, or a combination of both.
