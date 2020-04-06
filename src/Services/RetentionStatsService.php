@@ -3,11 +3,14 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Illuminate\Database\DatabaseManager;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\RetentionStats;
 use Railroad\Ecommerce\Entities\Structures\AverageMembershipEnd;
 use Railroad\Ecommerce\Entities\Structures\MembershipEndStats;
 use Railroad\Ecommerce\Entities\Structures\RetentionStatistic;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Repositories\RetentionStatsRepository;
 use Railroad\Ecommerce\Requests\AverageMembershipEndRequest;
 use Railroad\Ecommerce\Requests\RetentionStatsRequest;
@@ -18,16 +21,25 @@ class RetentionStatsService
      * @var RetentionStatsRepository
      */
     protected $retentionStatsRepository;
+    /**
+     * @var DatabaseManager
+     */
+    private $databaseManager;
 
     /**
      * ShippingService constructor.
      *
      * @param RetentionStatsRepository $retentionStatsRepository
+     * @param DatabaseManager $databaseManager
      */
     public function __construct(
-        RetentionStatsRepository $retentionStatsRepository
-    ) {
+        RetentionStatsRepository $retentionStatsRepository,
+        DatabaseManager $databaseManager
+
+    )
+    {
         $this->retentionStatsRepository = $retentionStatsRepository;
+        $this->databaseManager = $databaseManager;
     }
 
     /**
@@ -98,7 +110,7 @@ class RetentionStatsService
 
             if (
                 !$statsMap[$brand][$subType]['end']
-                || $statsMap[$brand][$subType]['end'] > $stat->getIntervalEndDate()
+                || $statsMap[$brand][$subType]['end'] < $stat->getIntervalEndDate()
             ) {
                 $statsMap[$brand][$subType]['end'] = $stat->getIntervalEndDate();
                 $statsMap[$brand][$subType]['ce'] = $stat->getCustomersEnd();
@@ -122,13 +134,61 @@ class RetentionStatsService
                     . $stat['start']->toDateString()
                     . $stat['end']->toDateString();
 
+                // we must add people who subscribed and cancelled/expired within the time frame to the start count
+                // otherwise they are not represented correctly in the rate
+                if ($subType == 'one_month') {
+                    $intType = 'month';
+                    $intCount = 1;
+                } elseif ($subType == 'one_year') {
+                    $intType = 'year';
+                    $intCount = 1;
+                }
+
+                if (!empty($intType) && !empty($intCount)) {
+                    $customersStartAddition = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        ->table('ecommerce_subscriptions')
+                        ->whereIn(
+                            'type',
+                            [
+                                Subscription::TYPE_SUBSCRIPTION,
+                            ]
+                        )
+                        ->where('interval_type', $intType)
+                        ->where('interval_count', $intCount)
+                        ->where('brand', $brand)
+                        ->whereBetween('start_date', [$stat['start'], $stat['end']])
+                        ->where(
+                            function (Builder $query) use ($stat) {
+                                $query->whereBetween('canceled_on', [$stat['start'], $stat['end']])
+                                    ->orWhereBetween('paid_until', [$stat['start'], $stat['end']]);
+                            }
+                        )
+                        ->count();
+
+                    $stat['cs'] += $customersStartAddition;
+                }
+
                 $statObj = new RetentionStatistic(md5($statIdString));
 
                 $retRate = round((($stat['ce'] - $stat['cn']) / $stat['cs']) * 100, 2);
 
+                $reportingDays = $stat['start']->diffInDays($stat['end']) + 1;
+
+                if ($subType == 'one_month') {
+
+                    $retRateAdjusted = round(100-((100-$retRate)/$reportingDays*(365/12)), 2);
+
+                } elseif ($subType == 'one_year') {
+
+                    $retRateAdjusted = round(100-((100-$retRate)/$reportingDays*(365)), 2);
+
+                } else {
+                    continue;
+                }
+
                 $statObj->setBrand($brand);
                 $statObj->setSubscriptionType($subType);
-                $statObj->setRetentionRate($retRate);
+                $statObj->setRetentionRate($retRateAdjusted);
                 $statObj->setIntervalStartDate($stat['start']);
                 $statObj->setIntervalEndDate($stat['end']);
 
@@ -147,14 +207,14 @@ class RetentionStatsService
     public function getAverageMembershipEnd(AverageMembershipEndRequest $request): array
     {
         $smallDate = $request->has('small_date_time') ?
-                        Carbon::parse($request->get('small_date_time'))
-                            ->startOfDay() :
-                        null;
+            Carbon::parse($request->get('small_date_time'))
+                ->startOfDay() :
+            null;
 
         $bigDate = $request->has('big_date_time') ?
-                        Carbon::parse($request->get('big_date_time'))
-                            ->endOfDay() :
-                        null;
+            Carbon::parse($request->get('big_date_time'))
+                ->endOfDay() :
+            null;
 
         $intervalType = $request->get('interval_type');
         $brand = $request->get('brand');
@@ -230,14 +290,14 @@ class RetentionStatsService
     public function getMembershipEndStats(Request $request): array
     {
         $smallDate = $request->has('small_date_time') ?
-                        Carbon::parse($request->get('small_date_time'))
-                            ->startOfDay() :
-                        null;
+            Carbon::parse($request->get('small_date_time'))
+                ->startOfDay() :
+            null;
 
         $bigDate = $request->has('big_date_time') ?
-                        Carbon::parse($request->get('big_date_time'))
-                            ->endOfDay() :
-                        null;
+            Carbon::parse($request->get('big_date_time'))
+                ->endOfDay() :
+            null;
 
         $intervalType = $request->get('interval_type');
         $brand = $request->get('brand');
@@ -322,5 +382,16 @@ class RetentionStatsService
         }
 
         return $result;
+    }
+
+    public function getSql(Builder $builder)
+    {
+        $sql = $builder->toSql();
+        foreach($builder->getBindings() as $binding)
+        {
+            $value = is_numeric($binding) ? $binding : "'".$binding."'";
+            $sql = preg_replace('/\?/', $value, $sql, 1);
+        }
+        return $sql;
     }
 }

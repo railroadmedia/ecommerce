@@ -73,8 +73,8 @@ class AddPastRetentionStats extends Command
      */
     public function handle()
     {
-        $startDateString = $this->argument('startDate') ?: '2015-01-01';
-        $startDate = Carbon::parse($startDateString);
+        $startDate = $this->argument('startDate') ?
+                        Carbon::parse($this->argument('startDate')) : Carbon::now()->subWeeks(4);
 
         $endDate = $this->argument('endDate') ?
                         Carbon::parse($this->argument('endDate')) : Carbon::now();
@@ -174,8 +174,6 @@ class AddPastRetentionStats extends Command
                             'type',
                             [
                                 Subscription::TYPE_SUBSCRIPTION,
-                                Subscription::TYPE_APPLE_SUBSCRIPTION,
-                                Subscription::TYPE_GOOGLE_SUBSCRIPTION,
                             ]
                         )
                         ->where('interval_type', $subscriptionTypeData['interval_type'])
@@ -195,8 +193,6 @@ class AddPastRetentionStats extends Command
                             'type',
                             [
                                 Subscription::TYPE_SUBSCRIPTION,
-                                Subscription::TYPE_APPLE_SUBSCRIPTION,
-                                Subscription::TYPE_GOOGLE_SUBSCRIPTION,
                             ]
                         )
                         ->where('interval_type', $subscriptionTypeData['interval_type'])
@@ -216,8 +212,6 @@ class AddPastRetentionStats extends Command
                             'type',
                             [
                                 Subscription::TYPE_SUBSCRIPTION,
-                                Subscription::TYPE_APPLE_SUBSCRIPTION,
-                                Subscription::TYPE_GOOGLE_SUBSCRIPTION,
                             ]
                         )
                         ->where('interval_type', $subscriptionTypeData['interval_type'])
@@ -232,25 +226,24 @@ class AddPastRetentionStats extends Command
                         ->where('paid_until', '>', $endEndOfDay)
                         ->count();
 
-
-                    $insertData[] = [
-                        'brand' => $brand,
-                        'subscription_type' => $subscriptionType,
-                        'interval_start_date' => $interval['start'],
-                        'interval_end_date' => $interval['end'],
-                        'customers_start' => $customersStart,
-                        'customers_end' => $customersEnd,
-                        'customers_new' => $customersNew,
-                        'created_at' => $createdAt,
-                    ];
-
-                    if (count($insertData) >= $insertChunkSize) {
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                            ->table('ecommerce_retention_stats')
-                            ->insert($insertData);
-
-                        $insertData = [];
-                    }
+                    // insert or update so we can re-calculate time spans without making duplicate rows
+                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        ->table('ecommerce_retention_stats')
+                        ->updateOrInsert(
+                            [
+                                'brand' => $brand,
+                                'subscription_type' => $subscriptionType,
+                                'interval_start_date' => $interval['start']->toDateString(),
+                                'interval_end_date' => $interval['end']->toDateString(),
+                            ],
+                            [
+                                'customers_start' => $customersStart,
+                                'customers_end' => $customersEnd,
+                                'customers_new' => $customersNew,
+                                'created_at' => $createdAt,
+                                'updated_at' => $createdAt,
+                            ]
+                        );
                 }
             }
 
@@ -266,14 +259,6 @@ class AddPastRetentionStats extends Command
                     $finish
                 )
             );
-        }
-
-        if (!empty($insertData)) {
-            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                ->table('ecommerce_retention_stats')
-                ->insert($insertData);
-
-            $insertData = [];
         }
     }
 }
