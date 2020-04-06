@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Listeners;
 
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
@@ -62,7 +64,7 @@ class UserDefaultPaymentMethodListener
             );
 
         /**
-         * @var $user \Railroad\Ecommerce\Entities\User
+         * @var $user User
          */
         $user = $this->userProvider->getUserById($event->getUserId());
 
@@ -81,7 +83,7 @@ class UserDefaultPaymentMethodListener
 
         foreach ($subscriptions as $subscription) {
             /**
-             * @var $subscription \Railroad\Ecommerce\Entities\Subscription
+             * @var $subscription Subscription
              */
             $subscription->setPaymentMethod($paymentMethod);
         }

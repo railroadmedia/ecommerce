@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Carbon\Carbon;
+use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -56,14 +58,14 @@ class UserProduct
     /**
      * @ORM\Column(type="datetime", name="expiration_date", nullable=true)
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $expirationDate;
 
     /**
      * @ORM\Column(type="datetime", name="deleted_at", nullable=true)
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $deletedAt;
 
@@ -92,18 +94,18 @@ class UserProduct
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getExpirationDate(): ?\DateTimeInterface
+    public function getExpirationDate(): ?DateTimeInterface
     {
         return $this->expirationDate;
     }
 
     /**
-     * @param \DateTimeInterface $expirationDate
+     * @param DateTimeInterface $expirationDate
      */
     public function setExpirationDate(
-        ?\DateTimeInterface $expirationDate
+        ?DateTimeInterface $expirationDate
     )
     {
         $this->expirationDate = $expirationDate;
@@ -142,17 +144,17 @@ class UserProduct
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getDeletedAt(): ?\DateTimeInterface
+    public function getDeletedAt(): ?DateTimeInterface
     {
         return $this->deletedAt;
     }
 
     /**
-     * @param \DateTimeInterface $deletedAt
+     * @param DateTimeInterface $deletedAt
      */
-    public function setDeletedAt(?\DateTimeInterface $deletedAt)
+    public function setDeletedAt(?DateTimeInterface $deletedAt)
     {
         $this->deletedAt = $deletedAt;
     }

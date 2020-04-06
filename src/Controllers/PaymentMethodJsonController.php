@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
@@ -15,7 +16,6 @@ use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
-use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodCreated;
 use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodDeleted;
 use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodUpdated;
 use Railroad\Ecommerce\Events\PaypalPaymentMethodEvent;
@@ -125,6 +125,7 @@ class PaymentMethodJsonController extends Controller
      * @param AddressRepository $addressRepository
      * @param CreditCardRepository $creditCardRepository
      * @param CurrencyService $currencyService
+     * @param CustomerRepository $customerRepository
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param PaymentMethodService $paymentMethodService
@@ -172,12 +173,13 @@ class PaymentMethodJsonController extends Controller
     /**
      * Get customer payment methods with all the method details: credit card or paypal billing agreement
      *
-     * @param int $userId
      * @param Request $request
+     * @param $customerId
      *
      * @return Fractal
      *
      * @throws Throwable
+     * @throws \Railroad\Permissions\Exceptions\NotAllowedException
      */
     public function getCustomerPaymentMethods(Request $request, $customerId)
     {
@@ -354,7 +356,7 @@ class PaymentMethodJsonController extends Controller
     /**
      * @param PaymentMethodCreatePaypalRequest $request
      *
-     * @return JsonResponse
+     * @return JsonResponse|RedirectResponse
      *
      * @throws Throwable
      */
@@ -474,6 +476,7 @@ class PaymentMethodJsonController extends Controller
      */
     public function update(PaymentMethodUpdateRequest $request, $paymentMethodId)
     {
+        // todo - review & refactor into a service
         $paymentMethod = $this->paymentMethodRepository->byId($paymentMethodId);
 
         $message = 'Update failed, payment method not found with id: ' . $paymentMethodId;

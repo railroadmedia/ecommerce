@@ -7,6 +7,7 @@ use Doctrine\DBAL\Driver\Connection;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMException;
+use InvalidArgumentException;
 
 class EcommerceEntityManager extends EntityManager
 {
@@ -19,7 +20,7 @@ class EcommerceEntityManager extends EntityManager
      *
      * @return EntityManager The created EntityManager.
      *
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @throws ORMException
      */
     public static function create($connection, Configuration $config, EventManager $eventManager = null)

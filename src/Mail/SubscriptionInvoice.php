@@ -31,7 +31,7 @@ class SubscriptionInvoice extends Mailable
     /**
      * Build the message.
      *
-     * @return \Railroad\Ecommerce\Mail\SubscriptionInvoice
+     * @return SubscriptionInvoice
      */
     public function build()
     {

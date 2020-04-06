@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Requests;
 
+use Doctrine\ORM\ORMException;
 use Exception;
 use Illuminate\Contracts\Validation\Validator;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
@@ -15,7 +16,12 @@ use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ShippingService;
 use Railroad\Permissions\Services\PermissionService;
+use Throwable;
 
+/**
+ * Class OrderFormSubmitRequest
+ * @package Railroad\Ecommerce\Requests
+ */
 class OrderFormSubmitRequest extends FormRequest
 {
     /**
@@ -43,6 +49,14 @@ class OrderFormSubmitRequest extends FormRequest
      */
     private $addressRepository;
 
+    /**
+     * OrderFormSubmitRequest constructor.
+     * @param CartService $cartService
+     * @param ShippingService $shippingService
+     * @param PermissionService $permissionService
+     * @param UserProviderInterface $userProvider
+     * @param AddressRepository $addressRepository
+     */
     public function __construct(
         CartService $cartService,
         ShippingService $shippingService,
@@ -93,6 +107,9 @@ class OrderFormSubmitRequest extends FormRequest
      * Get the validation rules that apply to the request.
      *
      * @return array
+     *
+     * @throws ORMException
+     * @throws Throwable
      */
     public function rules()
     {
@@ -189,6 +206,8 @@ class OrderFormSubmitRequest extends FormRequest
 
     /**
      * @return Cart
+     *
+     * @throws ORMException
      */
     public function getCart()
     {
@@ -252,6 +271,8 @@ class OrderFormSubmitRequest extends FormRequest
 
     /**
      * @return Address
+     *
+     * @throws ORMException
      */
     public function getShippingAddress()
     {
@@ -269,6 +290,10 @@ class OrderFormSubmitRequest extends FormRequest
         return $address;
     }
 
+    /**
+     * @param AddressInterface $address
+     * @return AddressInterface
+     */
     protected function populateShippingAddress(AddressInterface $address)
     {
         $address->setFirstName($this->get('shipping_first_name'));
@@ -293,6 +318,8 @@ class OrderFormSubmitRequest extends FormRequest
 
     /**
      * @return Address
+     *
+     * @throws ORMException
      */
     public function getBillingAddress()
     {
@@ -366,6 +393,10 @@ class OrderFormSubmitRequest extends FormRequest
         throw new Exception('Could not create purchaser for order, there was is no user or customer info submitted.');
     }
 
+    /**
+     * @param AddressInterface $address
+     * @return AddressInterface
+     */
     protected function populateBillingAddress(AddressInterface $address)
     {
         $address->setFirstName($this->get('billing_first_name'));

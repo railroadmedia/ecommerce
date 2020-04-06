@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Carbon\Carbon;
-use Doctrine\ORM\Query\ResultSetMapping;
 use Railroad\Ecommerce\Entities\RetentionStats;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -85,6 +84,15 @@ class RetentionStatsRepository extends RepositoryBase
                     ->getResult();
     }
 
+    /**
+     * @param string $intervalType
+     * @param int $intervalCount
+     * @param Carbon|null $smallDateTime
+     * @param Carbon|null $bigDateTime
+     * @param string|null $brand
+     *
+     * @return array
+     */
     public function getAverageMembershipEnd(
         string $intervalType,
         int $intervalCount,

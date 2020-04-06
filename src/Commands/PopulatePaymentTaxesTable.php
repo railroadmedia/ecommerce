@@ -90,9 +90,7 @@ class PopulatePaymentTaxesTable extends Command
 
                             $addressData = get_object_vars($addressCollection->first());
 
-                            $productTax = 0;
                             $shippingTax = 0;
-                            $productTaxRate = 0;
                             $shippingTaxRate = 0;
 
                             if (!($orderData['product_due'] + $orderData['shipping_due'])) {
@@ -108,7 +106,6 @@ class PopulatePaymentTaxesTable extends Command
 
                             if ($orderData['shipping_due']) {
 
-                                // todo - review & update the tax rates logic
                                 $productTaxRate = $shippingTaxRate = round(
                                     $orderData['taxes_due'] / ($orderData['product_due'] + $orderData['shipping_due']),
                                     2

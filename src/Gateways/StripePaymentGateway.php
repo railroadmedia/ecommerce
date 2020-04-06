@@ -9,6 +9,7 @@ use Stripe\Card;
 use Stripe\Charge;
 use Stripe\Customer;
 use Stripe\StripeObject;
+use Stripe\Token;
 
 class StripePaymentGateway
 {
@@ -211,8 +212,8 @@ class StripePaymentGateway
     /**
      * @param $gatewayName
      * @param $customerId
-     * @return \Stripe\Customer
-     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     * @return Customer
+     * @throws PaymentFailedException
      */
     public function getCustomer($gatewayName, $customerId)
     {
@@ -234,11 +235,11 @@ class StripePaymentGateway
     }
 
     /**
-     * @param \Stripe\Customer $customer
+     * @param Customer $customer
      * @param                  $cardId
      * @param                  $gatewayName
-     * @return \Stripe\Card
-     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     * @return Card
+     * @throws PaymentFailedException
      */
     public function getCard(Customer $customer, $cardId, $gatewayName)
     {
@@ -272,8 +273,10 @@ class StripePaymentGateway
      * @param null $addressLineTwo
      * @param null $region
      * @param null $zip
-     * @return \Stripe\Token
-     * @throws \Railroad\Ecommerce\Exceptions\PaymentFailedException
+     *
+     * @return Token
+     *
+     * @throws PaymentFailedException
      */
     public function createCardToken(
         $gatewayName,

@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Commands;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Database\Query\Builder;
 use Railroad\Ecommerce\Entities\RetentionStats;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Services\RetentionStatsService;
@@ -182,7 +183,7 @@ class AddPastRetentionStats extends Command
                         ->where('interval_count', $subscriptionTypeData['interval_count'])
                         ->where('brand', $brand)
                         ->where('start_date', '<', $startEndOfDay)
-                        ->where(function ($query) use ($startEndOfDay) {
+                        ->where(function (Builder $query) use ($startEndOfDay) {
                             $query->whereNull('canceled_on')
                                 ->orWhere('canceled_on', '>', $startEndOfDay);
                         })
@@ -203,7 +204,7 @@ class AddPastRetentionStats extends Command
                         ->where('interval_count', $subscriptionTypeData['interval_count'])
                         ->where('brand', $brand)
                         ->where('start_date', '<', $endEndOfDay)
-                        ->where(function ($query) use ($endEndOfDay) {
+                        ->where(function (Builder $query) use ($endEndOfDay) {
                             $query->whereNull('canceled_on')
                                 ->orWhere('canceled_on', '>', $endEndOfDay);
                         })
@@ -225,7 +226,7 @@ class AddPastRetentionStats extends Command
                         ->where('brand', $brand)
                         ->where('start_date', '>', $startEndOfDay)
                         ->where('start_date', '<', $endEndOfDay)
-                        ->where(function ($query) use ($endEndOfDay) {
+                        ->where(function (Builder $query) use ($endEndOfDay) {
                             $query->whereNull('canceled_on')
                                 ->orWhere('canceled_on', '>', $endEndOfDay);
                         })
@@ -272,8 +273,6 @@ class AddPastRetentionStats extends Command
             $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                 ->table('ecommerce_retention_stats')
                 ->insert($insertData);
-
-            $insertData = [];
         }
     }
 }

@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Repositories;
 
 use Carbon\Carbon;
 use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
@@ -47,6 +48,7 @@ class OrderRepository extends RepositoryBase
      * @return bool
      *
      * @throws NonUniqueResultException
+     * @throws NoResultException
      */
     public function ordersWithAdressExist(Address $address): bool
     {
@@ -123,6 +125,7 @@ class OrderRepository extends RepositoryBase
         $ordersIds = [];
 
         foreach ($ordersPage as $order) {
+            /** @var $order Order */
             $ordersIds[] = $order->getId();
         }
 
@@ -183,8 +186,6 @@ class OrderRepository extends RepositoryBase
      * @param Customer[] $customers
      *
      * @return Order[]
-     *
-     * @throws NonUniqueResultException
      */
     public function getCustomersOrders(array $customers): array
     {

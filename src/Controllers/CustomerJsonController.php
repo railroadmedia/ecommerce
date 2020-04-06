@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\ORMException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -14,6 +16,8 @@ use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
+use Spatie\Fractal\Fractal;
+use Throwable;
 
 class CustomerJsonController extends Controller
 {
@@ -68,8 +72,11 @@ class CustomerJsonController extends Controller
 
     /**
      * @param Request $request
+     *
      * @return JsonResponse
+     *
      * @throws NotAllowedException
+     * @throws NonUniqueResultException
      */
     public function index(Request $request)
     {
@@ -95,8 +102,12 @@ class CustomerJsonController extends Controller
 
     /**
      * @param int $id
-     * @return JsonResponse
+     *
+     * @return Fractal
+     *
      * @throws NotAllowedException
+     * @throws ORMException
+     * @throws Throwable
      */
     public function show($id)
     {

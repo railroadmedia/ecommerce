@@ -2,8 +2,6 @@
 
 namespace Railroad\Ecommerce\Entities\Structures;
 
-use Railroad\Ecommerce\Entities\Product;
-
 class AccountingProduct
 {
     /**

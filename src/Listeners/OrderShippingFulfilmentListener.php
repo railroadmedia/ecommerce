@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Listeners;
 
 use Carbon\Carbon;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -24,6 +26,9 @@ class OrderShippingFulfilmentListener
 
     /**
      * @param OrderEvent $event
+     *
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     public function handle(OrderEvent $event)
     {

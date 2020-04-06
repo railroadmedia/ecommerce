@@ -35,7 +35,7 @@ class PaymentFailedException extends Exception
      * @param Throwable|null $exception
      * @param Payment $payment
      *
-     * @return string|null
+     * @return PaymentFailedException
      */
     public static function createFromException(
         ?Throwable $exception,

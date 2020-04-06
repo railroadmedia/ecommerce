@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Carbon\Carbon;
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -86,7 +87,7 @@ class SubscriptionPayment
     /**
      * Returns createdAt.
      *
-     * @return \DateTime
+     * @return DateTime
      */
     public function getCreatedAt()
     {

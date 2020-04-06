@@ -96,7 +96,8 @@ class Stripe
     }
 
     /**
-     * @param $id
+     * @param $email
+     *
      * @return Collection
      */
     public function getCustomersByEmail($email)
@@ -107,7 +108,7 @@ class Stripe
     /**
      * @param Customer $customer
      * @param Token $token
-     * @return Card
+     * @return array|Card|StripeObject
      */
     public function createCard(Customer $customer, Token $token)
     {
@@ -117,7 +118,7 @@ class Stripe
     /**
      * @param Customer $customer
      * @param string $cardId
-     * @return Card
+     * @return array|Card|StripeObject
      */
     public function retrieveCard(Customer $customer, $cardId)
     {
@@ -125,8 +126,7 @@ class Stripe
     }
 
     /**
-     * @param Customer $customer
-     * @param string $cardId
+     * @param Card $card
      * @param int $expirationMonth
      * @param int $expirationYear
      * @param string $addressCountry
@@ -155,7 +155,8 @@ class Stripe
      * @param $customer
      * @param string $currency
      * @param string $description
-     * @return \Stripe\Charge
+     *
+     * @return Charge
      */
     public function chargeCard(
         $amount,

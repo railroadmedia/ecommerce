@@ -2,9 +2,10 @@
 
 namespace Railroad\Ecommerce\Exceptions;
 
+use Exception;
 use Illuminate\Http\JsonResponse;
 
-class NotFoundException extends \Exception
+class NotFoundException extends Exception
 {
     protected $message;
 

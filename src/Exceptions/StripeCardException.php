@@ -2,16 +2,21 @@
 
 namespace Railroad\Ecommerce\Exceptions;
 
-class StripeCardException extends \Exception
+use Exception;
+
+class StripeCardException extends Exception
 {
     protected $stripeError;
 
     /**
      * StripeCardException constructor.
-     * @param array $stripeError
+     *
+     * @param string $stripeError
      */
-    public function __construct($stripeError)
+    public function __construct(string $stripeError)
     {
+        parent::__construct($stripeError);
+
         $this->stripeError = $stripeError;
     }
 

@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use DateTime;
+use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -122,7 +124,7 @@ class Order
     /**
      * @ORM\Column(type="datetime", name="deleted_at", nullable=true)
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $deletedAt;
 
@@ -267,17 +269,17 @@ class Order
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getDeletedAt(): ?\DateTimeInterface
+    public function getDeletedAt(): ?DateTimeInterface
     {
         return $this->deletedAt;
     }
 
     /**
-     * @param \DateTimeInterface $deletedAt
+     * @param DateTimeInterface $deletedAt
      */
-    public function setDeletedAt(?\DateTimeInterface $deletedAt)
+    public function setDeletedAt(?DateTimeInterface $deletedAt)
     {
         $this->deletedAt = $deletedAt;
     }

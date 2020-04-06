@@ -125,6 +125,7 @@ class PaymentJsonController extends Controller
      * @param CreditCardRepository $creditCardRepository
      * @param CurrencyService $currencyService
      * @param EcommerceEntityManager $entityManager
+     * @param InvoiceService $invoiceService
      * @param OrderRepository $orderRepository
      * @param PaymentRepository $paymentRepository
      * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
@@ -247,7 +248,7 @@ class PaymentJsonController extends Controller
 
         $exception = null;
 
-        // todo: this is broken
+        // todo: this is broken - ask for details
         if (is_null($paymentMethod)) {
 
             $payment->setTotalDue($paymentPrice);
@@ -260,6 +261,7 @@ class PaymentJsonController extends Controller
 
         }
         else {
+            // todo - refactor into a service
             if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
                 try {
 

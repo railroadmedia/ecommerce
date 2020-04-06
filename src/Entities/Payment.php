@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
@@ -145,7 +147,7 @@ class Payment
     /**
      * @ORM\Column(type="datetime", name="deleted_at", nullable=true)
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $deletedAt;
 
@@ -360,17 +362,17 @@ class Payment
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getDeletedAt(): ?\DateTimeInterface
+    public function getDeletedAt(): ?DateTimeInterface
     {
         return $this->deletedAt;
     }
 
     /**
-     * @param \DateTimeInterface $deletedAt
+     * @param DateTimeInterface $deletedAt
      */
-    public function setDeletedAt(?\DateTimeInterface $deletedAt)
+    public function setDeletedAt(?DateTimeInterface $deletedAt)
     {
         $this->deletedAt = $deletedAt;
     }

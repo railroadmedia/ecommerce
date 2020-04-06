@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
-use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Collection;
 use Railroad\Ecommerce\Entities\Subscription;
 

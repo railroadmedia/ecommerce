@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Repositories;
 
 use Carbon\Carbon;
 use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
@@ -12,7 +13,6 @@ use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
-use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -46,7 +46,7 @@ class PaymentRepository extends RepositoryBase
      * @param int $id
      * @return Payment
      * @throws NonUniqueResultException
-     * @throws \Doctrine\ORM\NoResultException
+     * @throws NoResultException
      */
     public function find(int $id)
     {
@@ -1126,6 +1126,8 @@ class PaymentRepository extends RepositoryBase
      * @param string $externalProvider
      *
      * @return Payment|null
+     *
+     * @throws NonUniqueResultException
      */
     public function getByExternalIdAndProvider($externalId, $externalProvider)
     {

@@ -2,13 +2,14 @@
 
 namespace Railroad\Ecommerce\Commands;
 
-use Carbon\Carbon;
 use Exception;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Console\Command;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\AppleStoreKitService;
+use Throwable;
 
-class ProcessAppleExpiredSubscriptions extends \Illuminate\Console\Command
+class ProcessAppleExpiredSubscriptions extends Command
 {
     /**
      * The console command name.
@@ -54,8 +55,8 @@ class ProcessAppleExpiredSubscriptions extends \Illuminate\Console\Command
     /**
      * Execute the console command.
      *
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \Throwable
+     * @throws GuzzleException
+     * @throws Throwable
      */
     public function handle()
     {

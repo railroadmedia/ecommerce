@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Commands;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Railroad\Ecommerce\Entities\MembershipStats;
 use Railroad\Ecommerce\Entities\Structures\SubscriptionStateInterval;
@@ -121,6 +122,12 @@ class AddPastMembershipStats extends Command
         $this->info(sprintf($format, $finish));
     }
 
+    /**
+     * Adds empty rows in ecommerce_membership_stats to be filled with data
+     *
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     */
     public function seedPeriod(Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
@@ -132,6 +139,14 @@ class AddPastMembershipStats extends Command
         $now = Carbon::now()
                 ->toDateTimeString();
 
+        $membershipTypes = [
+            MembershipStats::TYPE_ONE_MONTH,
+            MembershipStats::TYPE_SIX_MONTHS,
+            MembershipStats::TYPE_ONE_YEAR,
+            MembershipStats::TYPE_LIFETIME,
+            MembershipStats::TYPE_ALL,
+        ];
+
         for ($i = 0; $i <= $days; $i++) {
 
             $statsDate = $smallDate->copy()
@@ -139,75 +154,22 @@ class AddPastMembershipStats extends Command
                             ->toDateString();
 
             foreach (self::BRANDS as $brand) {
-                $insertData[] = [
-                    'new' => 0,
-                    'active_state' => 0,
-                    'expired' => 0,
-                    'suspended_state' => 0,
-                    'canceled' => 0,
-                    'canceled_state' => 0,
-                    'interval_type' => MembershipStats::TYPE_ONE_MONTH,
-                    'stats_date' => $statsDate,
-                    'brand' => $brand,
-                    'created_at' => $now,
-                    'updated_at' => null,
-                ];
 
-                $insertData[] = [
-                    'new' => 0,
-                    'active_state' => 0,
-                    'expired' => 0,
-                    'suspended_state' => 0,
-                    'canceled' => 0,
-                    'canceled_state' => 0,
-                    'interval_type' => MembershipStats::TYPE_SIX_MONTHS,
-                    'stats_date' => $statsDate,
-                    'brand' => $brand,
-                    'created_at' => $now,
-                    'updated_at' => null,
-                ];
-
-                $insertData[] = [
-                    'new' => 0,
-                    'active_state' => 0,
-                    'expired' => 0,
-                    'suspended_state' => 0,
-                    'canceled' => 0,
-                    'canceled_state' => 0,
-                    'interval_type' => MembershipStats::TYPE_ONE_YEAR,
-                    'stats_date' => $statsDate,
-                    'brand' => $brand,
-                    'created_at' => $now,
-                    'updated_at' => null,
-                ];
-
-                $insertData[] = [
-                    'new' => 0,
-                    'active_state' => 0,
-                    'expired' => 0,
-                    'suspended_state' => 0,
-                    'canceled' => 0,
-                    'canceled_state' => 0,
-                    'interval_type' => MembershipStats::TYPE_LIFETIME,
-                    'stats_date' => $statsDate,
-                    'brand' => $brand,
-                    'created_at' => $now,
-                    'updated_at' => null,
-                ];
-
-                $insertData[] = [
-                    'new' => 0,
-                    'active_state' => 0,
-                    'expired' => 0,
-                    'suspended_state' => 0,
-                    'canceled' => 0,
-                    'canceled_state' => 0,
-                    'interval_type' => MembershipStats::TYPE_ALL,
-                    'stats_date' => $statsDate,
-                    'brand' => $brand,
-                    'created_at' => $now,
-                    'updated_at' => null,
-                ];
+                foreach ($membershipTypes as $type) {
+                    $insertData[] = [
+                        'new' => 0,
+                        'active_state' => 0,
+                        'expired' => 0,
+                        'suspended_state' => 0,
+                        'canceled' => 0,
+                        'canceled_state' => 0,
+                        'interval_type' => $type,
+                        'stats_date' => $statsDate,
+                        'brand' => $brand,
+                        'created_at' => $now,
+                        'updated_at' => null,
+                    ];
+                }
             }
 
             if ($i > 0 && count($insertData) >= $insertChunkSize) {
@@ -232,6 +194,10 @@ class AddPastMembershipStats extends Command
         $this->info(sprintf($format, $finish));
     }
 
+    /**
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     */
     public function processSubscriptions(Carbon $smallDate, Carbon $bigDate)
     {
         $this->processNewMembership($smallDate, $bigDate);
@@ -242,6 +208,9 @@ class AddPastMembershipStats extends Command
 
     /**
      * Update new membership - ecommerce_membership_stats.new column
+     *
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
      */
     public function processNewMembership(Carbon $smallDate, Carbon $bigDate)
     {
@@ -297,6 +266,9 @@ EOT;
 
     /**
      * Update expired membership - ecommerce_membership_stats.expired column
+     *
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
      */
     public function processExpiredMembership(Carbon $smallDate, Carbon $bigDate)
     {
@@ -355,6 +327,9 @@ EOT;
 
     /**
      * Update canceled membership - ecommerce_membership_stats.canceled column
+     *
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
      */
     public function processCanceledMembership(Carbon $smallDate, Carbon $bigDate)
     {
@@ -412,6 +387,9 @@ EOT;
     /**
      * Updates active/suspended/canceled state memberships - Total Users
      * table: ecommerce_membership_stats, columns: 'active_state', 'suspended_state', 'canceled_state'
+     *
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
      */
     public function processUserMembership(Carbon $smallDate, Carbon $bigDate)
     {
@@ -434,15 +412,15 @@ EOT;
             )
             ->whereNotNull('ecommerce_subscriptions.id')
             ->where('ecommerce_subscriptions.start_date', '<=', $bigDate)
-            ->where(function ($query) {
-                $query->where(function ($query) {
+            ->where(function (Builder $query) {
+                $query->where(function (Builder $query) {
                         $query->where('ecommerce_subscriptions.interval_type', config('ecommerce.interval_type_monthly'))
-                            ->where(function ($query) {
+                            ->where(function (Builder $query) {
                                 $query->where('ecommerce_subscriptions.interval_count', 1)
                                     ->orWhere('ecommerce_subscriptions.interval_count', 6);
                             });
                     })
-                    ->orWhere(function ($query) {
+                    ->orWhere(function (Builder $query) {
                         $query->where('ecommerce_subscriptions.interval_type', config('ecommerce.interval_type_yearly'))
                             ->where('ecommerce_subscriptions.interval_count', 1);
                     });
@@ -567,6 +545,12 @@ EOT;
         $this->info(sprintf($format, $finish));
     }
 
+    /**
+     * Adds lifetime membership stats
+     *
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     */
     public function processLifetimeSubscriptions(Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
@@ -673,6 +657,12 @@ EOT;
         $this->info(sprintf($format, $finish));
     }
 
+    /**
+     * Adds 'all' membership stats
+     *
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     */
     public function processSum(Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);

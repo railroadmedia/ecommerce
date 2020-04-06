@@ -74,7 +74,10 @@ class PayPal
      * @param float $totalAmount
      * @param string $paymentDescription
      * @param string $billingAgreementId
+     * @param string $currency
+     *
      * @return string
+     *
      * @throws CreateReferenceTransactionException
      */
     public function createReferenceTransaction(
@@ -114,7 +117,10 @@ class PayPal
      * @param boolean $isPartialRefund
      * @param string $transactionId
      * @param string $reason
+     * @param string $currency
+     *
      * @return string
+     *
      * @throws CreateRefundException
      */
     public function createTransactionRefund(

@@ -37,6 +37,7 @@ class AppleStoreKitGateway
 
         return $response;
     }
+
     /**
      * @param string $receipt
      *

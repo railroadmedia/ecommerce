@@ -2,9 +2,10 @@
 
 namespace Railroad\Ecommerce\Exceptions;
 
+use Exception;
 use Illuminate\Http\JsonResponse;
 
-class NotAllowedException extends \Exception
+class NotAllowedException extends Exception
 {
     protected $message;
 

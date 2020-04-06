@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Listeners;
 
 use Carbon\Carbon;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
@@ -50,6 +52,9 @@ class DuplicateSubscriptionHandler
         $this->userProductService = $userProductService;
     }
 
+    /**
+     * @param OrderEvent $orderEvent
+     */
     public function handle(OrderEvent $orderEvent)
     {
         try {
@@ -63,6 +68,13 @@ class DuplicateSubscriptionHandler
         }
     }
 
+    /**
+     * @param int $userId
+     *
+     * @throws Throwable
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
     public function cancelAndExtendDuplicateSubscriptions($userId)
     {
         $allUsersSubscriptions = $this->subscriptionRepository->getAllUsersSubscriptions($userId);

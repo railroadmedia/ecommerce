@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Exceptions;
 
 use Exception;
+use Illuminate\Http\JsonResponse;
 
 class PaymentMethodException extends Exception
 {

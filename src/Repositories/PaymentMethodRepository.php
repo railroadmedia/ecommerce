@@ -173,10 +173,8 @@ class PaymentMethodRepository extends RepositoryBase
             ->setParameter('ppbaBrand', $brand);
         }
 
-        $paymentMethods = $qb->getQuery()
-            ->getResult();
-
-        return $paymentMethods;
+        return $qb->getQuery()
+                    ->getResult();
     }
 
     /**
@@ -191,6 +189,7 @@ class PaymentMethodRepository extends RepositoryBase
         Request $request,
         $brand = null
     ) {
+        // todo - review & refactor $request param
         $alias = 'pm';
 
         $qb = $this->createQueryBuilder($alias);
@@ -229,9 +228,7 @@ class PaymentMethodRepository extends RepositoryBase
             ->setParameter('ppbaBrand', $brand);
         }
 
-        $paymentMethods = $qb->getQuery()
-            ->getResult();
-
-        return $paymentMethods;
+        return $qb->getQuery()
+                    ->getResult();
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -63,7 +65,7 @@ class CreditCard
     /**
      * @ORM\Column(type="datetime", name="expiration_date")
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $expirationDate;
 
@@ -166,17 +168,17 @@ class CreditCard
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getExpirationDate(): ?\DateTimeInterface
+    public function getExpirationDate(): ?DateTimeInterface
     {
         return $this->expirationDate;
     }
 
     /**
-     * @param \DateTimeInterface $expirationDate
+     * @param DateTimeInterface $expirationDate
      */
-    public function setExpirationDate(\DateTimeInterface $expirationDate)
+    public function setExpirationDate(DateTimeInterface $expirationDate)
     {
         $this->expirationDate = $expirationDate;
     }

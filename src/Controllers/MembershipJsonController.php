@@ -4,13 +4,14 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Entities\MembershipStats;
 use Railroad\Ecommerce\Repositories\MembershipStatsRepository;
 use Railroad\Ecommerce\Requests\MembershipStatsRequest;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class MembershipJsonController extends Controller
 {
@@ -41,7 +42,7 @@ class MembershipJsonController extends Controller
 
     /**
      * @param MembershipStatsRequest $request
-     * @return JsonResponse
+     * @return BinaryFileResponse|JsonResponse
      * @throws NotAllowedException
      */
     public function stats(MembershipStatsRequest $request)
@@ -78,6 +79,7 @@ class MembershipJsonController extends Controller
             $rows = [];
 
             foreach ($stats as $membershipStats) {
+                /** @var $membershipStats MembershipStats */
                 $rows[] = [
                     $membershipStats->getBrand(),
                     $membershipStats->getStatsDate(),

@@ -3,10 +3,12 @@
 namespace Railroad\Ecommerce\Listeners;
 
 use Carbon\Carbon;
+use Doctrine\ORM\NonUniqueResultException;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Services\UserProductService;
+use Throwable;
 
 class OrderUserProductListener
 {
@@ -22,6 +24,7 @@ class OrderUserProductListener
 
     /**
      * @param SubscriptionRepository $subscriptionRepository
+     * @param UserProductService $userProductService
      */
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
@@ -34,6 +37,9 @@ class OrderUserProductListener
 
     /**
      * @param OrderEvent $event
+     *
+     * @throws NonUniqueResultException
+     * @throws Throwable
      */
     public function handle(OrderEvent $event)
     {

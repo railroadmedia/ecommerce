@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
-use Railroad\Ecommerce\Entities\PaymentMethod;
 use Throwable;
 
 class ConvertDiscountCriteriaProducsAssociation extends Command

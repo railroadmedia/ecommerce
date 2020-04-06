@@ -126,8 +126,6 @@ class GooglePlayStoreGateway
         $client->useApplicationDefaultCredentials();
         $client->setScopes($scope);
 
-        $validator = new Validator(new Google_Service_AndroidPublisher($client));
-
-        return $validator;
+        return new Validator(new Google_Service_AndroidPublisher($client));
     }
 }

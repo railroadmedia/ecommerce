@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
@@ -44,7 +45,7 @@ class Subscription
     // log actions names
     const ACTION_RENEW = 'renew';
     const ACTION_CANCEL = 'cancel';
-    const ACTION_DEACTIVATED = 'deactivated'; // canceled after several failed payments
+    const ACTION_DEACTIVATED = 'deactivated';
 
     // states
     const STATE_ACTIVE = 'active';
@@ -117,28 +118,28 @@ class Subscription
     /**
      * @ORM\Column(type="datetime", name="start_date")
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $startDate;
 
     /**
      * @ORM\Column(type="datetime", name="paid_until")
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $paidUntil;
 
     /**
      * @ORM\Column(type="datetime", name="apple_expiration_date", nullable=true)
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $appleExpirationDate;
 
     /**
      * @ORM\Column(type="datetime", name="canceled_on", nullable=true)
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $canceledOn;
 
@@ -217,7 +218,7 @@ class Subscription
     /**
      * @ORM\Column(type="datetime", name="deleted_at", nullable=true)
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $deletedAt;
 
@@ -366,7 +367,7 @@ class Subscription
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getStartDate(): ?DateTimeInterface
     {
@@ -374,7 +375,7 @@ class Subscription
     }
 
     /**
-     * @param \DateTimeInterface $startDate
+     * @param DateTimeInterface $startDate
      */
     public function setStartDate(DateTimeInterface $startDate)
     {
@@ -382,7 +383,7 @@ class Subscription
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getPaidUntil(): ?DateTimeInterface
     {
@@ -390,7 +391,7 @@ class Subscription
     }
 
     /**
-     * @param \DateTimeInterface $paidUntil
+     * @param DateTimeInterface $paidUntil
      */
     public function setPaidUntil(DateTimeInterface $paidUntil)
     {
@@ -398,7 +399,7 @@ class Subscription
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getAppleExpirationDate(): ?DateTimeInterface
     {
@@ -406,7 +407,7 @@ class Subscription
     }
 
     /**
-     * @param \DateTimeInterface $appleExpirationDate
+     * @param DateTimeInterface $appleExpirationDate
      */
     public function setAppleExpirationDate(?DateTimeInterface $appleExpirationDate)
     {
@@ -414,7 +415,7 @@ class Subscription
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getCanceledOn(): ?DateTimeInterface
     {
@@ -422,7 +423,7 @@ class Subscription
     }
 
     /**
-     * @param \DateTimeInterface $canceledOn
+     * @param DateTimeInterface $canceledOn
      */
     public function setCanceledOn(?DateTimeInterface $canceledOn)
     {
@@ -574,7 +575,7 @@ class Subscription
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getDeletedAt(): ?DateTimeInterface
     {
@@ -582,7 +583,7 @@ class Subscription
     }
 
     /**
-     * @param \DateTimeInterface $deletedAt
+     * @param DateTimeInterface $deletedAt
      */
     public function setDeletedAt(?DateTimeInterface $deletedAt)
     {

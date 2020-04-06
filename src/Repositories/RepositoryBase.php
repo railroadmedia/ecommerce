@@ -91,7 +91,7 @@ class RepositoryBase
      *
      * @param int $id The identifier.
      *
-     * @return Entity
+     * @return bool|Entity|object
      *
      * @throws ORMException
      */

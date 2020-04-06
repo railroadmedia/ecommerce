@@ -32,6 +32,14 @@ class MembershipStatsRepository extends EntityRepository
         );
     }
 
+    /**
+     * @param Carbon $smallDateTime
+     * @param Carbon $bigDateTime
+     * @param string|null $intervalType
+     * @param string|null $brand
+     *
+     * @return MembershipStats[]
+     */
     public function getStats(
         Carbon $smallDateTime,
         Carbon $bigDateTime,

@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Services\AccountingService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
+use Throwable;
 
 class AccountingJsonController extends Controller
 {
@@ -39,8 +40,11 @@ class AccountingJsonController extends Controller
 
     /**
      * @param Request $request
+     *
      * @return JsonResponse
+     *
      * @throws NotAllowedException
+     * @throws Throwable
      */
     public function productTotals(Request $request)
     {

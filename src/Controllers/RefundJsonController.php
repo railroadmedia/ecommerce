@@ -156,6 +156,7 @@ class RefundJsonController extends Controller
      */
     public function store(RefundCreateRequest $request)
     {
+        // todo -refactor into a service
         $this->permissionService->canOrThrow(auth()->id(), 'store.refund');
 
         $paymentId = $request->input('data.relationships.payment.data.id');
@@ -219,6 +220,8 @@ class RefundJsonController extends Controller
             $order = $orderPayment->getOrder();
             $distinctOrders[$order->getId()] = $order;
         }
+
+        // todo - ask for details
 
 //        $orderItemFulfillments = $this->orderItemFulfillmentRepository
 //                                        ->getByOrders(array_values($distinctOrders));

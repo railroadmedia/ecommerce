@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
@@ -68,7 +70,7 @@ class OrderItemFulfillment
     /**
      * @ORM\Column(type="datetime", name="fulfilled_on", nullable=true)
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $fulfilledOn;
 
@@ -161,17 +163,17 @@ class OrderItemFulfillment
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getFulfilledOn(): ?\DateTimeInterface
+    public function getFulfilledOn(): ?DateTimeInterface
     {
         return $this->fulfilledOn;
     }
 
     /**
-     * @param \DateTimeInterface $fulfilledOn
+     * @param DateTimeInterface $fulfilledOn
      */
-    public function setFulfilledOn(?\DateTimeInterface $fulfilledOn)
+    public function setFulfilledOn(?DateTimeInterface $fulfilledOn)
     {
         $this->fulfilledOn = $fulfilledOn;
     }

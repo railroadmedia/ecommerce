@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Exceptions;
 
 use Exception;
+use Illuminate\Http\JsonResponse;
 
 class TransactionFailedException extends Exception
 {
@@ -13,8 +14,10 @@ class TransactionFailedException extends Exception
      *
      * @param string $message
      */
-    public function __construct($message)
+    public function __construct(string $message)
     {
+        parent::__construct($message);
+
         $this->message = $message;
     }
 

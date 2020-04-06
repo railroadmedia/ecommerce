@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -12,9 +14,10 @@ use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
 use Railroad\Ecommerce\Requests\OrderFulfilledRequest;
-use Railroad\Ecommerce\Requests\OrderFulfillmentDeleteRequest;
 use Railroad\Ecommerce\Services\ResponseService;
+use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
 class ShippingFulfillmentJsonController extends Controller
@@ -63,9 +66,9 @@ class ShippingFulfillmentJsonController extends Controller
      *
      * @param  Request  $request
      *
-     * @throws Throwable
-     * @return JsonResponse
+     * @return JsonResponse|BinaryFileResponse
      *
+     * @throws Throwable
      */
     public function index(Request $request)
     {
@@ -73,15 +76,13 @@ class ShippingFulfillmentJsonController extends Controller
 
         $fulfillmentsAndBuilder = $this->orderItemFulfillmentRepository->indexByRequest($request);
 
-        /**
-         * @var $fulfillment OrderItemFulfillment
-         */
         $fulfillments = $fulfillmentsAndBuilder->getResults();
 
         if ($request->has('csv') && $request->get('csv') == true) {
             $rows = [];
 
             foreach ($fulfillments as $fulfillment) {
+                /** @var $fulfillment OrderItemFulfillment */
                 $email = '';
 
                 if ( ! empty(
@@ -286,18 +287,17 @@ class ShippingFulfillmentJsonController extends Controller
     /**
      * Delete order or order item fulfillment.
      *
-     * @param  OrderFulfillmentDeleteRequest  $request
-     *
      * @param $orderId
      * @param  null  $orderItemId
      *
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
-     * @throws \Railroad\Permissions\Exceptions\NotAllowedException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws NotAllowedException
+     *
      * @return JsonResponse
      *
      */
-    public function delete(OrderFulfillmentDeleteRequest $request, $orderId, $orderItemId = null)
+    public function delete($orderId, $orderItemId = null)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'delete.fulfillment');
 

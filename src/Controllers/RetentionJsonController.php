@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -42,7 +41,9 @@ class RetentionJsonController extends Controller
 
     /**
      * @param RetentionStatsRequest $request
+     *
      * @return JsonResponse
+     *
      * @throws NotAllowedException
      */
     public function stats(RetentionStatsRequest $request)
@@ -55,6 +56,13 @@ class RetentionJsonController extends Controller
             ->respond(200);
     }
 
+    /**
+     * @param AverageMembershipEndRequest $request
+     *
+     * @return JsonResponse
+     *
+     * @throws NotAllowedException
+     */
     public function averageMembershipEnd(AverageMembershipEndRequest $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.retention-stats');
@@ -65,6 +73,13 @@ class RetentionJsonController extends Controller
             ->respond(200);
     }
 
+    /**
+     * @param Request $request
+     *
+     * @return JsonResponse
+     *
+     * @throws NotAllowedException
+     */
     public function membershipEndStats(Request $request)
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.retention-stats');

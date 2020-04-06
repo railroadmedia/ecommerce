@@ -159,7 +159,7 @@ class Address implements AddressInterface, Serializable
     }
 
     /**
-     * @param string $streetLineTwo
+     * @param string|null $streetLine2
      */
     public function setStreetLine2(?string $streetLine2)
     {
@@ -175,7 +175,7 @@ class Address implements AddressInterface, Serializable
     }
 
     /**
-     * @param string $zipOrPostalCode
+     * @param string|null $zip
      */
     public function setZip(?string $zip)
     {
@@ -284,7 +284,7 @@ class Address implements AddressInterface, Serializable
     }
 
     /**
-     * @param array $data
+     * @param string $data
      */
     public function unserialize($data)
     {

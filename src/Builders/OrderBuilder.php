@@ -10,6 +10,7 @@ use Railroad\Ecommerce\Services\CartService;
 class OrderBuilder
 {
     // todo: WIP
+    // todo - to be removed
 
     /**
      * @var CartService

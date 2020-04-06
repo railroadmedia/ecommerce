@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Listeners;
 
+use Carbon\Carbon;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;
@@ -32,11 +33,14 @@ class MobileOrderUserProductListener
             $user = $subscription->getUser();
             $product = $subscription->getProduct();
 
+            /** @var $paidUntil Carbon */
+            $paidUntil = $subscription->getPaidUntil()
+                            ->copy();
+
             $this->userProductService->assignUserProduct(
                 $user,
                 $product,
-                $subscription->getPaidUntil()
-                    ->copy()
+                $paidUntil
                     ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1))
             );
         }

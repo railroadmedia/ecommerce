@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
@@ -102,7 +103,7 @@ class OrderFormJsonController extends Controller
      *
      * @param OrderFormSubmitRequest $request
      *
-     * @return Fractal
+     * @return JsonResponse|Fractal
      *
      * @throws Throwable
      */

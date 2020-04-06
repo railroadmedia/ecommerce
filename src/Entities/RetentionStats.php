@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -40,14 +42,14 @@ class RetentionStats
     /**
      * @ORM\Column(type="date", name="interval_start_date")
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $intervalStartDate;
 
     /**
      * @ORM\Column(type="date", name="interval_end_date")
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $intervalEndDate;
 
@@ -104,33 +106,33 @@ class RetentionStats
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getIntervalStartDate(): ?\DateTimeInterface
+    public function getIntervalStartDate(): ?DateTimeInterface
     {
         return $this->intervalStartDate;
     }
 
     /**
-     * @param \DateTimeInterface $intervalStartDate
+     * @param DateTimeInterface $intervalStartDate
      */
-    public function setIntervalStartDate(?\DateTimeInterface $intervalStartDate)
+    public function setIntervalStartDate(?DateTimeInterface $intervalStartDate)
     {
         $this->intervalStartDate = $intervalStartDate;
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getIntervalEndDate(): ?\DateTimeInterface
+    public function getIntervalEndDate(): ?DateTimeInterface
     {
         return $this->intervalEndDate;
     }
 
     /**
-     * @param \DateTimeInterface $intervalEndDate
+     * @param DateTimeInterface $intervalEndDate
      */
-    public function setIntervalEndDate(?\DateTimeInterface $intervalEndDate)
+    public function setIntervalEndDate(?DateTimeInterface $intervalEndDate)
     {
         $this->intervalEndDate = $intervalEndDate;
     }

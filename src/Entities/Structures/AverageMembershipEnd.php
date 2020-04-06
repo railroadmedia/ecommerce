@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Entities\Structures;
 
 use Carbon\Carbon;
+use DateTimeInterface;
 
 class AverageMembershipEnd
 {
@@ -98,33 +99,33 @@ class AverageMembershipEnd
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getIntervalStartDate(): ?\DateTimeInterface
+    public function getIntervalStartDate(): ?DateTimeInterface
     {
         return $this->intervalStartDate;
     }
 
     /**
-     * @param \DateTimeInterface $intervalStartDate
+     * @param DateTimeInterface $intervalStartDate
      */
-    public function setIntervalStartDate(?\DateTimeInterface $intervalStartDate)
+    public function setIntervalStartDate(?DateTimeInterface $intervalStartDate)
     {
         $this->intervalStartDate = $intervalStartDate;
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getIntervalEndDate(): ?\DateTimeInterface
+    public function getIntervalEndDate(): ?DateTimeInterface
     {
         return $this->intervalEndDate;
     }
 
     /**
-     * @param \DateTimeInterface $intervalEndDate
+     * @param DateTimeInterface $intervalEndDate
      */
-    public function setIntervalEndDate(?\DateTimeInterface $intervalEndDate)
+    public function setIntervalEndDate(?DateTimeInterface $intervalEndDate)
     {
         $this->intervalEndDate = $intervalEndDate;
     }

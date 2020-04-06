@@ -13,10 +13,16 @@ class CartFactory extends CartService
     protected $faker;
 
     /**
-     * @param null $contentId
-     * @param null $key
-     * @param null $value
-     * @param null $position
+     * @param string $name
+     * @param string $description
+     * @param int $quantity
+     * @param int $price
+     * @param bool $requiresShippingAddress
+     * @param bool $requiresBillingAddress
+     * @param null $subscriptionIntervalType
+     * @param null $subscriptionIntervalCount
+     * @param array $options
+     *
      * @return array
      */
     public function addCartItem(

@@ -2,11 +2,9 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Doctrine\ORM\Query\Expr\Join;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Customer;
-use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 

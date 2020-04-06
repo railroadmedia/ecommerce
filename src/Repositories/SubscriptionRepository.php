@@ -236,7 +236,7 @@ class SubscriptionRepository extends RepositoryBase
     }
 
     /**
-     * @param $request
+     * @param Request $request
      *
      * @return ResultsQueryBuilderComposite
      */
@@ -321,7 +321,7 @@ class SubscriptionRepository extends RepositoryBase
     }
 
     /**
-     * @param $request
+     * @param FailedSubscriptionsRequest $request
      *
      * @return ResultsQueryBuilderComposite
      */
@@ -395,7 +395,7 @@ class SubscriptionRepository extends RepositoryBase
     }
 
     /**
-     * @param $request
+     * @param FailedBillingSubscriptionsRequest $request
      *
      * @return ResultsQueryBuilderComposite
      */

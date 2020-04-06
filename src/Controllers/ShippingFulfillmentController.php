@@ -3,7 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Carbon\Carbon;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -59,7 +59,7 @@ class ShippingFulfillmentController extends Controller
      *
      * @param MarkFulfilledViaCSVUploadRequest $request
      *
-     * @return RedirectResponse
+     * @return JsonResponse
      *
      * @throws Throwable
      */

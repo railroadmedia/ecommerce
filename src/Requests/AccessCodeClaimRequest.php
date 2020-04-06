@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AccessCodeClaimRequest extends FormRequest

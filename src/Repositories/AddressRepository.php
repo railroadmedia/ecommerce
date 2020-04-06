@@ -6,7 +6,6 @@ use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Address;
-use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 

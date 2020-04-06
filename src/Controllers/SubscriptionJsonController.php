@@ -29,6 +29,7 @@ use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
 class SubscriptionJsonController extends Controller
@@ -271,8 +272,6 @@ class SubscriptionJsonController extends Controller
 
         $oldSubscriptionState = clone($subscription);
 
-        $response = $payment = null;
-
         try {
 
             $payment = $this->renewalService->renew($subscription);
@@ -330,7 +329,7 @@ class SubscriptionJsonController extends Controller
     /**
      * @param FailedBillingSubscriptionsRequest $request
      *
-     * @return JsonResponse
+     * @return JsonResponse|BinaryFileResponse
      *
      * @throws Throwable
      */

@@ -4,9 +4,9 @@ namespace Railroad\Ecommerce\Repositories;
 
 use Carbon\Carbon;
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\QueryBuilder;
-use Illuminate\Http\Request;
-use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Refund;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -33,6 +33,13 @@ class RefundRepository extends EntityRepository
         parent::__construct($em, $em->getClassMetadata(Refund::class));
     }
 
+    /**
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     * @param string $brand
+     *
+     * @return mixed
+     */
     public function getAccountingOrderProductsData(Carbon $smallDate, Carbon $bigDate, $brand)
     {
         $qb =
@@ -82,6 +89,13 @@ class RefundRepository extends EntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     * @param string $brand
+     *
+     * @return mixed
+     */
     public function getAccountingSubscriptionProductsData(Carbon $smallDate, Carbon $bigDate, $brand)
     {
         $qb =
@@ -126,6 +140,13 @@ class RefundRepository extends EntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     * @param string $brand
+     *
+     * @return mixed
+     */
     public function getBrandRefunds(Carbon $smallDate, Carbon $bigDate, $brand)
     {
         $qb =
@@ -155,6 +176,13 @@ class RefundRepository extends EntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @param Carbon $smallDate
+     * @param Carbon $bigDate
+     * @param string $brand
+     *
+     * @return mixed
+     */
     public function getAccountingPaymentPlansProductsData(Carbon $smallDate, Carbon $bigDate, $brand)
     {
         $qb =
@@ -203,6 +231,11 @@ class RefundRepository extends EntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @param array $payments
+     *
+     * @return Refund[]
+     */
     public function getPaymentsRefunds(array $payments): array
     {
         /** @var $qb QueryBuilder */
@@ -228,9 +261,13 @@ class RefundRepository extends EntityRepository
      * @param string $brand
      *
      * @return float
+     *
+     * @throws NoResultException
+     * @throws NonUniqueResultException
      */
     public function getDailyTotalRefunds($day, $brand)
     {
+        // todo - review usage and update $day param type
         /** @var $qb QueryBuilder */
         $qb =
             $this->getEntityManager()
@@ -287,6 +324,9 @@ class RefundRepository extends EntityRepository
      * @param string $brand
      *
      * @return float
+     *
+     * @throws NoResultException
+     * @throws NonUniqueResultException
      */
     public function getRefundPaid(Carbon $smallDate, Carbon $bigDate, $brand)
     {

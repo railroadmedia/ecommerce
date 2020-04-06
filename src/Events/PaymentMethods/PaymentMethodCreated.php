@@ -19,6 +19,7 @@ class PaymentMethodCreated
 
     /**
      * @param PaymentMethod $paymentMethod
+     * @param IdentifiableInterface $user
      */
     public function __construct(PaymentMethod $paymentMethod, IdentifiableInterface $user)
     {

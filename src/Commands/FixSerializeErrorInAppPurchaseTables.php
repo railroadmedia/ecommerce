@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Commands;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
-use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use ReceiptValidator\GooglePlay\SubscriptionResponse;
 use ReceiptValidator\iTunes\ProductionResponse;
 use ReceiptValidator\iTunes\SandboxResponse;

@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -84,7 +86,7 @@ class MembershipStats
     /**
      * @ORM\Column(type="date", name="stats_date")
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $statsDate;
 
@@ -216,17 +218,17 @@ class MembershipStats
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
-    public function getStatsDate(): ?\DateTimeInterface
+    public function getStatsDate(): ?DateTimeInterface
     {
         return $this->statsDate;
     }
 
     /**
-     * @param \DateTimeInterface $statsDate
+     * @param DateTimeInterface $statsDate
      */
-    public function setStatsDate(?\DateTimeInterface $statsDate)
+    public function setStatsDate(?DateTimeInterface $statsDate)
     {
         $this->statsDate = $statsDate;
     }

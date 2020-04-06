@@ -37,7 +37,7 @@ class SubscriptionStateInterval
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getStart(): ?DateTimeInterface
     {
@@ -45,7 +45,7 @@ class SubscriptionStateInterval
     }
 
     /**
-     * @param \DateTimeInterface $start
+     * @param DateTimeInterface $start
      */
     public function setStart(DateTimeInterface $start)
     {
@@ -53,7 +53,7 @@ class SubscriptionStateInterval
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getEnd(): ?DateTimeInterface
     {
@@ -61,7 +61,7 @@ class SubscriptionStateInterval
     }
 
     /**
-     * @param \DateTimeInterface $end
+     * @param DateTimeInterface $end
      */
     public function setEnd(DateTimeInterface $end)
     {

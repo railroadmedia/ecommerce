@@ -53,7 +53,7 @@ class ProductStatistic
     }
 
     /**
-     * @return string $id
+     * @param string $id
      */
     public function setId(string $id)
     {
@@ -69,7 +69,7 @@ class ProductStatistic
     }
 
     /**
-     * @return string $sku
+     * @param string $sku
      */
     public function setSku(string $sku)
     {

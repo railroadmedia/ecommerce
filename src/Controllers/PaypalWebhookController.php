@@ -43,6 +43,9 @@ class PaypalWebhookController extends Controller
      * PaypalWebhookController constructor.
      *
      * @param EcommerceEntityManager $entityManager
+     * @param PaymentRepository $paymentRepository
+     * @param SubscriptionRepository $subscriptionRepository
+     * @param UserProductService $userProductService
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
@@ -67,6 +70,7 @@ class PaypalWebhookController extends Controller
      */
     public function process(Request $request)
     {
+        // todo - refactor into a service
         if (
             $request->get('txn_type') == 'recurring_payment'
             && $request->get('payment_status') == 'Completed'

@@ -35,6 +35,7 @@ class PayPalPaymentGateway
      */
     public function createBillingAgreement($gatewayName, $amount, $currency, $expressCheckoutToken, $description = '')
     {
+        // todo - refactor params
         $config = config('ecommerce.payment_gateways')['paypal'][$gatewayName] ?? null;
 
         if (empty($config)) {
@@ -94,8 +95,11 @@ class PayPalPaymentGateway
     }
 
     /**
+     * @param $gatewayName
      * @param $returnUrl
+     *
      * @return mixed
+     *
      * @throws PaymentFailedException
      */
     public function getBillingAgreementExpressCheckoutUrl($gatewayName, $returnUrl)

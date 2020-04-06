@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -96,7 +97,7 @@ class Discount
     /**
      * @ORM\Column(type="datetime", name="expiration_date", nullable=true)
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $expirationDate;
 
@@ -231,7 +232,7 @@ class Discount
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getExpirationDate(): ?DateTimeInterface
     {
@@ -239,7 +240,7 @@ class Discount
     }
 
     /**
-     * @param \DateTimeInterface $expirationDate
+     * @param DateTimeInterface $expirationDate
      */
     public function setExpirationDate(?DateTimeInterface $expirationDate)
     {
@@ -283,7 +284,7 @@ class Discount
     }
 
     /**
-     * @param DiscountCriteria $shippingCostsWeightRange
+     * @param DiscountCriteria $discountCriteria
      */
     public function removeDiscountCriteria(
         DiscountCriteria $discountCriteria

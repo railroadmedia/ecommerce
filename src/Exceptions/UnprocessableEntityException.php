@@ -2,7 +2,9 @@
 
 namespace Railroad\Ecommerce\Exceptions;
 
-class UnprocessableEntityException extends \Exception
+use Exception;
+
+class UnprocessableEntityException extends Exception
 {
     protected $message;
 
@@ -11,8 +13,10 @@ class UnprocessableEntityException extends \Exception
      *
      * @param string $message
      */
-    public function __construct($message)
+    public function __construct(string $message)
     {
+        parent::__construct($message);
+
         $this->message = $message;
     }
 

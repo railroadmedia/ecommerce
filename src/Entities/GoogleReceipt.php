@@ -6,7 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 /**
- * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\GoogleRepository")
+ * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\GoogleReceiptRepository")
  * @ORM\Table(
  *     name="ecommerce_google_receipts",
  *     indexes={

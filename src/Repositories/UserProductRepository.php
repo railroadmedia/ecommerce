@@ -2,8 +2,8 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
-use Carbon\Carbon;
 use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
@@ -110,11 +110,8 @@ class UserProductRepository extends RepositoryBase
             )
             ->setParameter('userId', $userId);
 
-        $results =
-            $qb->getQuery()
-                ->getResult();
-
-        return $results;
+        return $qb->getQuery()
+                    ->getResult();
     }
 
     /**
@@ -148,6 +145,7 @@ class UserProductRepository extends RepositoryBase
      * @return int
      *
      * @throws NonUniqueResultException
+     * @throws NoResultException
      */
     public function getCountByUserDiscountCriteriaProducts(
         User $user,

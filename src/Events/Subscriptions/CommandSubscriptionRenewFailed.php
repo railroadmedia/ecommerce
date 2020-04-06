@@ -27,7 +27,7 @@ class CommandSubscriptionRenewFailed
      *
      * @param Subscription $subscription
      * @param Subscription $oldSubscription
-     * @param SPayment $payment
+     * @param Payment $payment
      */
     public function __construct(
         Subscription $subscription,
