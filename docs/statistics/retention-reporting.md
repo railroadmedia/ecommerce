@@ -13,7 +13,7 @@ because we will use them to make decisions on how to structure the algorithm and
 than ones who sign up in May?
 - How do new products affect a users retention rate over time?
 
------------------------------------------------------------------------------------------
+
 ## How Simple Retention Theory Works 
 
 Say there are a total of 10 monthly subscribers at the start of our example data (Jan 1) and the month progresses like 
@@ -44,10 +44,9 @@ If we were to calculate retention for January on a monthly basis, we would use t
   
 We would end up with: (22 - 15) / 10 = 0.70 or **70% retention rate** for January  
   
-This math works out well and is easily to calculate because the time frame that we are calculating for is the same as 
-the renewal length (1 month).
+This math works out well and is easily to calculate.
 
------------------------------------------------------------------------------------------
+
 ## Problems With Simple Retention Theory
 
 ### The Time Frame Problem
@@ -74,22 +73,22 @@ information for a given users subscription: start date, scheduled renewal date, 
 
 As an example lets say a user has the following subscription for a yearly membership:
 
-Start date: January 1, 2020
-Scheduled renewal date: Jan 1, 2021
-Cancellation date: March 1, 2020 (the user cancelled after 2 months)
+Start date: January 1, 2020  
+Scheduled renewal date: Jan 1, 2021  
+Cancellation date: March 1, 2020 (the user cancelled after 2 months)  
 
 In which time frame should this user be represented in the retention reporting? For example if we pulled the yearly 
 retention number for all of March 2020, should this user be subtracted from the 'customers at end' variable? Lets say  
 we pulled the yearly retention number for all of January 2021, should they be subtracted from 'customers at end' for 
-this report? Should they affect the report in both of these cases?
+this report? Should the user affect the report in both of these cases?
 
 ### Subscription Renewal Length VS Reporting Length Problem
 
 Say there is the following example data for yearly subscribers for January 2020:
 
-- There were 100 subscribers at the beginning of the month, Jan 01
+- There are 100 subscribers at the beginning of the month, Jan 01
 - During the month, 10 of those users subscriptions were scheduled to renew
-- Of the 10 scheduled to renew in January, 8 of them successfully renewed
+- Of the 10 scheduled to renew in January, 8 of them successfully renewed, 2 failed to renew or cancelled
 - During January, an additional 10 users signed up for a yearly membership
 - At the end of January, there were 108 total active yearly subscribers
 
@@ -103,4 +102,4 @@ than the renewal length. Only 10 out of the 100 total yearly users were schedule
 that users tend to cancel near their scheduled renewal date. That is what makes the reported rate oddly high.    
  
 This number is nearly meaningless without a full understanding of the math behind retention. 
-Reporting the retention numbers in this way would likely cause confusion and not be useful.
+Reporting the retention numbers in this way would cause confusion and not be useful.
