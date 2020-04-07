@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 
@@ -24,10 +25,12 @@ use Railroad\Ecommerce\Entities\Traits\NotableEntity;
  *         @ORM\Index(name="ecommerce_products_category_index", columns={"category"})
  *     }
  * )
+ * @ORM\HasLifecycleCallbacks
+ * @Gedmo\Mapping\Annotation\SoftDeleteable(fieldName="deletedAt", timeAware=false)
  */
 class Product
 {
-    use TimestampableEntity, NotableEntity;
+    use TimestampableEntity, SoftDeleteableEntity, NotableEntity;
 
     const TYPE_DIGITAL_SUBSCRIPTION = 'digital subscription';
     const TYPE_DIGITAL_ONE_TIME = 'digital one time';

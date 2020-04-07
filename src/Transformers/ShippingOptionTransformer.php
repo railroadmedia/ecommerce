@@ -2,11 +2,17 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
+use League\Fractal\Resource\Collection;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\ShippingOption;
 
 class ShippingOptionTransformer extends TransformerAbstract
 {
+    /**
+     * @param ShippingOption $shippingOption
+     *
+     * @return array
+     */
     public function transform(ShippingOption $shippingOption)
     {
         $this->defaultIncludes[] = 'shippingCostsWeightRange';
@@ -25,6 +31,11 @@ class ShippingOptionTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param ShippingOption $shippingOption
+     *
+     * @return Collection
+     */
     public function includeShippingCostsWeightRange(
         ShippingOption $shippingOption
     )

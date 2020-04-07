@@ -19,13 +19,12 @@ use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Throwable;
 
+/**
+ * Class AccessCodeService
+ * @package Railroad\Ecommerce\Services
+ */
 class AccessCodeService
 {
-    /**
-     * @var CurrencyService
-     */
-    private $currencyService;
-
     /**
      * @var EcommerceEntityManager
      */
@@ -54,7 +53,6 @@ class AccessCodeService
     /**
      * AccessCodeService constructor.
      *
-     * @param CurrencyService $currencyService
      * @param EcommerceEntityManager $entityManager
      * @param ProductRepository $productRepository
      * @param SubscriptionRepository $subscriptionRepository
@@ -62,7 +60,6 @@ class AccessCodeService
      * @param AccessCodeRepository $accessCodeRepository
      */
     public function __construct(
-        CurrencyService $currencyService,
         EcommerceEntityManager $entityManager,
         ProductRepository $productRepository,
         SubscriptionRepository $subscriptionRepository,
@@ -70,7 +67,6 @@ class AccessCodeService
         AccessCodeRepository $accessCodeRepository
     )
     {
-        $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;
         $this->productRepository = $productRepository;
         $this->subscriptionRepository = $subscriptionRepository;

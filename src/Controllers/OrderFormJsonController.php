@@ -6,13 +6,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
-use Railroad\Ecommerce\Services\CartAddressService;
 use Railroad\Ecommerce\Services\CartService;
-use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\OrderFormService;
-use Railroad\Ecommerce\Services\PaymentPlanService;
 use Railroad\Ecommerce\Services\ResponseService;
-use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
 use Throwable;
 
@@ -24,55 +20,23 @@ class OrderFormJsonController extends Controller
     private $cartService;
 
     /**
-     * @var CartAddressService
-     */
-    private $cartAddressService;
-
-    /**
-     * @var CurrencyService
-     */
-    private $currencyService;
-
-    /**
-     * @var PaymentPlanService
-     */
-    private $paymentPlanService;
-
-    /**
      * @var OrderFormService
      */
     private $orderFormService;
 
     /**
-     * @var PermissionService
-     */
-    private $permissionService;
-
-    /**
      * OrderFormJsonController constructor.
      *
-     * @param CartAddressService $cartAddressService
      * @param CartService $cartService
-     * @param CurrencyService $currencyService
      * @param OrderFormService $orderFormService
-     * @param PaymentPlanService $paymentPlanService
-     * @param PermissionService $permissionService
      */
     public function __construct(
-        CartAddressService $cartAddressService,
         CartService $cartService,
-        CurrencyService $currencyService,
-        OrderFormService $orderFormService,
-        PaymentPlanService $paymentPlanService,
-        PermissionService $permissionService
+        OrderFormService $orderFormService
     )
     {
-        $this->cartAddressService = $cartAddressService;
         $this->cartService = $cartService;
-        $this->currencyService = $currencyService;
         $this->orderFormService = $orderFormService;
-        $this->paymentPlanService = $paymentPlanService;
-        $this->permissionService = $permissionService;
     }
 
     /**

@@ -223,7 +223,7 @@ class RetentionStatsService
     }
 
     /**
-     * @param AverageMembershipEndRequest $request
+     * @param Request $request
      *
      * @return array
      */

@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
+use League\Fractal\Resource\Collection;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Structures\AccountingProductTotals;
 
@@ -9,6 +10,11 @@ class AccountingProductsTotalsTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = [];
 
+    /**
+     * @param AccountingProductTotals $accountingProductTotals
+     *
+     * @return array
+     */
     public function transform(AccountingProductTotals $accountingProductTotals)
     {
         if (empty($accountingProductTotals->getAccountingProducts())) {
@@ -28,6 +34,11 @@ class AccountingProductsTotalsTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param AccountingProductTotals $accountingProductTotals
+     *
+     * @return Collection
+     */
     public function includeAccountingProduct(AccountingProductTotals $accountingProductTotals)
     {
         return $this->collection(

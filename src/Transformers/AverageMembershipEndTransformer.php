@@ -7,6 +7,11 @@ use Railroad\Ecommerce\Entities\Structures\AverageMembershipEnd;
 
 class AverageMembershipEndTransformer extends TransformerAbstract
 {
+    /**
+     * @param AverageMembershipEnd $averageMembershipEnd
+     *
+     * @return array
+     */
     public function transform(AverageMembershipEnd $averageMembershipEnd)
     {
         return [

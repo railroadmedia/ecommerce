@@ -7,6 +7,11 @@ use Railroad\Ecommerce\Entities\ShippingCostsWeightRange;
 
 class ShippingCostsWeightRangeTransformer extends TransformerAbstract
 {
+    /**
+     * @param ShippingCostsWeightRange $shippingCost
+     *
+     * @return array
+     */
     public function transform(ShippingCostsWeightRange $shippingCost)
     {
         return [

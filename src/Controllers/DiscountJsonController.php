@@ -169,7 +169,10 @@ class DiscountJsonController extends Controller
             new NotFoundException('Delete failed, discount not found with id: ' . $discountId)
         );
 
-        // TODO: delete discount criteria links
+        foreach ($discount->getDiscountCriterias() as $discountCriteria) {
+            $discount->removeDiscountCriteria($discountCriteria);
+        }
+
         $this->entityManager->remove($discount);
         $this->entityManager->flush();
 

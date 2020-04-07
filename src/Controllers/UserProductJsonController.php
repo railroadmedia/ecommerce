@@ -21,7 +21,6 @@ use Railroad\Ecommerce\Requests\UserProductCreateRequest;
 use Railroad\Ecommerce\Requests\UserProductUpdateRequest;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
-use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
 use Railroad\Permissions\Services\PermissionService;
 use ReflectionException;
@@ -34,12 +33,6 @@ class UserProductJsonController extends Controller
      * @var EcommerceEntityManager
      */
     private $entityManager;
-
-    /**
-     * @var UserProductService
-     */
-    private $userProductService;
-
     /**
      * @var UserProductRepository
      */
@@ -64,7 +57,6 @@ class UserProductJsonController extends Controller
      * SubscriptionJsonController constructor.
      *
      * @param EcommerceEntityManager $entityManager
-     * @param UserProductService $userProductService
      * @param UserProductRepository $userProductRepository
      * @param PermissionService $permissionService
      * @param UserProviderInterface $userProvider
@@ -72,7 +64,6 @@ class UserProductJsonController extends Controller
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
-        UserProductService $userProductService,
         UserProductRepository $userProductRepository,
         PermissionService $permissionService,
         UserProviderInterface $userProvider,
@@ -80,7 +71,6 @@ class UserProductJsonController extends Controller
     )
     {
         $this->entityManager = $entityManager;
-        $this->userProductService = $userProductService;
         $this->userProductRepository = $userProductRepository;
         $this->permissionService = $permissionService;
         $this->userProvider = $userProvider;

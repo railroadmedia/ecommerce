@@ -3,11 +3,18 @@
 namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Discount;
 
 class DiscountTransformer extends TransformerAbstract
 {
+    /**
+     * @param Discount $discount
+     *
+     * @return array
+     */
     public function transform(Discount $discount)
     {
         if (!empty($discount->getProduct())) {
@@ -42,6 +49,11 @@ class DiscountTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param Discount $discount
+     *
+     * @return Item|null
+     */
     public function includeProduct(Discount $discount)
     {
         if (!empty($discount->getProduct())) {
@@ -65,6 +77,10 @@ class DiscountTransformer extends TransformerAbstract
         return null;
     }
 
+    /**
+     * @param Discount $discount
+     * @return Collection|null
+     */
     public function includeDiscountCriterias(Discount $discount)
     {
         if (!empty($discount->getDiscountCriterias())) {

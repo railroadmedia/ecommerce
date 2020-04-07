@@ -10,6 +10,11 @@ use League\Fractal\TransformerAbstract;
  */
 class EntityReferenceTransformer extends TransformerAbstract
 {
+    /**
+     * @param $entity
+     *
+     * @return array
+     */
     public function transform($entity)
     {
         return [

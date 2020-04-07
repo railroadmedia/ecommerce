@@ -9,6 +9,11 @@ class CreditCardTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = [];
 
+    /**
+     * @param CreditCard $creditCard
+     *
+     * @return array
+     */
     public function transform(CreditCard $creditCard)
     {
         return [

@@ -3,11 +3,17 @@
 namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Payment;
 
 class PaymentTransformer extends TransformerAbstract
 {
+    /**
+     * @param Payment $payment
+     *
+     * @return array
+     */
     public function transform(Payment $payment)
     {
         if ($payment->getPaymentMethod()) {
@@ -40,6 +46,11 @@ class PaymentTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param Payment $payment
+     *
+     * @return Item|null
+     */
     public function includePaymentMethod(Payment $payment)
     {
         if (empty($payment->getPaymentMethod())) {

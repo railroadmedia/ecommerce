@@ -15,10 +15,8 @@ use Railroad\Ecommerce\Exceptions\Cart\ProductNotActiveException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
 use Railroad\Ecommerce\Exceptions\Cart\UpdateNumberOfPaymentsCartException;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Location\Services\LocationService;
-use Railroad\Permissions\Services\PermissionService;
 use Throwable;
 
 class CartService
@@ -27,16 +25,6 @@ class CartService
      * @var DiscountService
      */
     private $discountService;
-
-    /**
-     * @var EcommerceEntityManager
-     */
-    private $entityManager;
-
-    /**
-     * @var PermissionService
-     */
-    private $permissionService;
 
     /**
      * @var ProductRepository
@@ -73,8 +61,6 @@ class CartService
      * CartService constructor.
      *
      * @param DiscountService $discountService
-     * @param EcommerceEntityManager $entityManager
-     * @param PermissionService $permissionService
      * @param ProductRepository $productRepository
      * @param TaxService $taxService
      * @param ShippingService $shippingService
@@ -82,8 +68,6 @@ class CartService
      */
     public function __construct(
         DiscountService $discountService,
-        EcommerceEntityManager $entityManager,
-        PermissionService $permissionService,
         ProductRepository $productRepository,
         TaxService $taxService,
         ShippingService $shippingService,
@@ -91,8 +75,6 @@ class CartService
     )
     {
         $this->discountService = $discountService;
-        $this->entityManager = $entityManager;
-        $this->permissionService = $permissionService;
         $this->productRepository = $productRepository;
         $this->taxService = $taxService;
         $this->shippingService = $shippingService;
@@ -111,7 +93,6 @@ class CartService
      *
      * @return Product
      * @throws ProductNotActiveException
-     * @throws ProductOutOfStockException
      * @throws Throwable
      *
      * @throws ProductNotFoundException
@@ -155,10 +136,6 @@ class CartService
         if (!$product->getActive()) {
             throw new ProductNotActiveException($product);
         }
-
-//        if ($product->getStock() !== null && $product->getStock() < $quantity) {
-//            throw new ProductOutOfStockException($product);
-//        }
 
         $this->cart->setItem(new CartItem($sku, $quantity));
 

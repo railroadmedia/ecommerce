@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AccessCode;
@@ -11,11 +13,21 @@ class AccessCodeTransformer extends TransformerAbstract
     protected $defaultIncludes = [];
     protected $productsMap;
 
+    /**
+     * AccessCodeTransformer constructor.
+     *
+     * @param array $productsMap
+     */
     public function __construct(array $productsMap = [])
     {
         $this->productsMap = $productsMap;
     }
 
+    /**
+     * @param AccessCode $accessCode
+     *
+     * @return array
+     */
     public function transform(AccessCode $accessCode)
     {
         $this->defaultIncludes = [];
@@ -47,6 +59,11 @@ class AccessCodeTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param AccessCode $accessCode
+     *
+     * @return Item
+     */
     public function includeClaimer(AccessCode $accessCode)
     {
         $userProvider = app()->make(UserProviderInterface::class);
@@ -60,6 +77,11 @@ class AccessCodeTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param AccessCode $accessCode
+     *
+     * @return Collection
+     */
     public function includeProduct(AccessCode $accessCode)
     {
         // extract and include related products

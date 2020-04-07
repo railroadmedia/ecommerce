@@ -7,6 +7,11 @@ use Railroad\Ecommerce\Entities\GoogleReceipt;
 
 class GoogleReceiptTransformer extends TransformerAbstract
 {
+    /**
+     * @param GoogleReceipt $googleReceipt
+     *
+     * @return array
+     */
     public function transform(GoogleReceipt $googleReceipt)
     {
         return [

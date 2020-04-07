@@ -7,6 +7,11 @@ use Railroad\Ecommerce\Entities\Structures\SubscriptionRenewal;
 
 class SubscriptionRenewalTransformer extends TransformerAbstract
 {
+    /**
+     * @param SubscriptionRenewal $subscriptionRenewal
+     *
+     * @return array
+     */
     public function transform(SubscriptionRenewal $subscriptionRenewal)
     {
         return [

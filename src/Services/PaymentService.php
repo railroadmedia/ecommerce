@@ -14,9 +14,7 @@ use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
-use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserStripeCustomerIdRepository;
 use Stripe\Customer;
 use Throwable;
@@ -40,11 +38,6 @@ class PaymentService
     private $paymentMethodRepository;
 
     /**
-     * @var CreditCardRepository
-     */
-    private $creditCardRepository;
-
-    /**
      * @var UserStripeCustomerIdRepository
      */
     private $userStripeCustomerIdRepository;
@@ -53,11 +46,6 @@ class PaymentService
      * @var StripePaymentGateway
      */
     private $stripePaymentGateway;
-
-    /**
-     * @var PaypalBillingAgreementRepository
-     */
-    private $paypalBillingAgreementRepository;
 
     /**
      * @var PayPalPaymentGateway
@@ -78,10 +66,8 @@ class PaymentService
      *
      * @param EcommerceEntityManager $entityManager
      * @param PaymentMethodRepository $paymentMethodRepository
-     * @param CreditCardRepository $creditCardRepository
      * @param UserStripeCustomerIdRepository $userStripeCustomerIdRepository
      * @param StripePaymentGateway $stripePaymentGateway
-     * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param CurrencyService $currencyService
      * @param PaymentMethodService $paymentMethodService
@@ -89,10 +75,8 @@ class PaymentService
     public function __construct(
         EcommerceEntityManager $entityManager,
         PaymentMethodRepository $paymentMethodRepository,
-        CreditCardRepository $creditCardRepository,
         UserStripeCustomerIdRepository $userStripeCustomerIdRepository,
         StripePaymentGateway $stripePaymentGateway,
-        PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
         PayPalPaymentGateway $payPalPaymentGateway,
         CurrencyService $currencyService,
         PaymentMethodService $paymentMethodService
@@ -100,10 +84,8 @@ class PaymentService
     {
         $this->entityManager = $entityManager;
         $this->paymentMethodRepository = $paymentMethodRepository;
-        $this->creditCardRepository = $creditCardRepository;
         $this->userStripeCustomerIdRepository = $userStripeCustomerIdRepository;
         $this->stripePaymentGateway = $stripePaymentGateway;
-        $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->currencyService = $currencyService;
         $this->paymentMethodService = $paymentMethodService;
@@ -121,6 +103,7 @@ class PaymentService
      * @throws ORMException
      * @throws PaymentFailedException
      * @throws OptimisticLockException
+     * @throws Throwable
      */
     public function chargeUsersExistingPaymentMethod(
         int $paymentMethodId,
@@ -334,16 +317,13 @@ class PaymentService
      * @param Address $billingAddress
      * @param string $gateway
      * @param string $currency
-     * @param float $paymentAmountInBaseCurrency
      * @param string $stripeToken
-     * @param string $paymentType
      * @param bool $setAsDefault
      *
      * @return PaymentMethod
      *
      * @throws ORMException
      * @throws PaymentFailedException
-     * @throws OptimisticLockException
      * @throws Throwable
      */
     public function createCreditCartPaymentMethod(
@@ -383,6 +363,14 @@ class PaymentService
         return $paymentMethod;
     }
 
+    /**
+     * @param Purchaser $purchaser
+     * @param Address $billingAddress
+     *
+     * @return Address
+     *
+     * @throws ORMException
+     */
     public function setupBillingAddress(
         Purchaser $purchaser,
         Address $billingAddress

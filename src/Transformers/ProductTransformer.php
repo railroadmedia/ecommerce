@@ -7,6 +7,11 @@ use Railroad\Ecommerce\Entities\Product;
 
 class ProductTransformer extends TransformerAbstract
 {
+    /**
+     * @param Product $product
+     *
+     * @return array
+     */
     public function transform(Product $product)
     {
         return [

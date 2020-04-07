@@ -7,6 +7,11 @@ use Railroad\Ecommerce\Entities\Structures\AccountingProduct;
 
 class AccountingProductTransformer extends TransformerAbstract
 {
+    /**
+     * @param AccountingProduct $accountingProduct
+     *
+     * @return array
+     */
     public function transform(AccountingProduct $accountingProduct)
     {
         return [

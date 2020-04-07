@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
-use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
@@ -25,10 +24,8 @@ use Railroad\Ecommerce\Exceptions\TransactionFailedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
-use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentCreateRequest;
@@ -44,11 +41,6 @@ use Throwable;
 
 class PaymentJsonController extends Controller
 {
-    /**
-     * @var CreditCardRepository
-     */
-    private $creditCardRepository;
-
     /**
      * @var EcommerceEntityManager
      */
@@ -68,11 +60,6 @@ class PaymentJsonController extends Controller
      * @var PaymentRepository
      */
     private $paymentRepository;
-
-    /**
-     * @var PaypalBillingAgreementRepository
-     */
-    private $paypalBillingAgreementRepository;
 
     /**
      * @var PermissionService
@@ -109,11 +96,6 @@ class PaymentJsonController extends Controller
      */
     private $userPaymentMethodsRepository;
 
-    /**
-     * @var UserProviderInterface
-     */
-    private $userProvider;
-
     // subscription interval type
     const INTERVAL_TYPE_DAILY = 'day';
     const INTERVAL_TYPE_MONTHLY = 'month';
@@ -122,52 +104,43 @@ class PaymentJsonController extends Controller
     /**
      * PaymentJsonController constructor.
      *
-     * @param CreditCardRepository $creditCardRepository
      * @param CurrencyService $currencyService
      * @param EcommerceEntityManager $entityManager
      * @param InvoiceService $invoiceService
      * @param OrderRepository $orderRepository
      * @param PaymentRepository $paymentRepository
-     * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
      * @param SubscriptionRepository $subscriptionRepository
      * @param TaxService $taxService
      * @param UserPaymentMethodsRepository $userPaymentMethodsRepository
-     * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
         EcommerceEntityManager $entityManager,
         InvoiceService $invoiceService,
         OrderRepository $orderRepository,
         PaymentRepository $paymentRepository,
-        PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
         PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService,
         StripePaymentGateway $stripePaymentGateway,
         SubscriptionRepository $subscriptionRepository,
         TaxService $taxService,
-        UserPaymentMethodsRepository $userPaymentMethodsRepository,
-        UserProviderInterface $userProvider
+        UserPaymentMethodsRepository $userPaymentMethodsRepository
     )
     {
-        $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;
         $this->invoiceService = $invoiceService;
         $this->orderRepository = $orderRepository;
         $this->paymentRepository = $paymentRepository;
-        $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
         $this->subscriptionRepository = $subscriptionRepository;
         $this->taxService = $taxService;
         $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
-        $this->userProvider = $userProvider;
     }
 
     /**

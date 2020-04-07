@@ -8,7 +8,6 @@ use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Requests\ProductCreateRequest;
 use Railroad\Ecommerce\Requests\ProductUpdateRequest;
@@ -32,11 +31,6 @@ class ProductJsonController extends Controller
     private $jsonApiHydrator;
 
     /**
-     * @var OrderItemRepository
-     */
-    private $orderItemRepository;
-
-    /**
      * @var PermissionService
      */
     private $permissionService;
@@ -56,7 +50,6 @@ class ProductJsonController extends Controller
      *
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
-     * @param OrderItemRepository $orderItemRepository
      * @param PermissionService $permissionService
      * @param ProductRepository $productRepository
      * @param RemoteStorageService $remoteStorageService
@@ -64,7 +57,6 @@ class ProductJsonController extends Controller
     public function __construct(
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
-        OrderItemRepository $orderItemRepository,
         PermissionService $permissionService,
         ProductRepository $productRepository,
         RemoteStorageService $remoteStorageService
@@ -72,7 +64,6 @@ class ProductJsonController extends Controller
     {
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
-        $this->orderItemRepository = $orderItemRepository;
         $this->permissionService = $permissionService;
         $this->productRepository = $productRepository;
         $this->remoteStorageService = $remoteStorageService;
@@ -152,8 +143,6 @@ class ProductJsonController extends Controller
         return ResponseService::product($product)
             ->respond();
     }
-
-    // todo: use soft delete
 
     /**
      * Delete a product that it's not connected to orders or discounts and return a JsonResponse.

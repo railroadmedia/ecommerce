@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\UpdateOrderEvent;
@@ -61,11 +60,6 @@ class OrderJsonController extends Controller
     private $subscriptionRepository;
 
     /**
-     * @var UserProviderInterface
-     */
-    private $userProvider;
-
-    /**
      * OrderJsonController constructor.
      *
      * @param EcommerceEntityManager $entityManager
@@ -75,7 +69,6 @@ class OrderJsonController extends Controller
      * @param PermissionService $permissionService
      * @param RefundRepository $refundRepository
      * @param SubscriptionRepository $subscriptionRepository
-     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
@@ -84,8 +77,7 @@ class OrderJsonController extends Controller
         PaymentRepository $paymentRepository,
         PermissionService $permissionService,
         RefundRepository $refundRepository,
-        SubscriptionRepository $subscriptionRepository,
-        UserProviderInterface $userProvider
+        SubscriptionRepository $subscriptionRepository
     )
     {
         $this->entityManager = $entityManager;
@@ -95,7 +87,6 @@ class OrderJsonController extends Controller
         $this->permissionService = $permissionService;
         $this->refundRepository = $refundRepository;
         $this->subscriptionRepository = $subscriptionRepository;
-        $this->userProvider = $userProvider;
     }
 
     /**

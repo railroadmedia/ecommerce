@@ -9,6 +9,11 @@ class PaypalBillingAgreementTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = [];
 
+    /**
+     * @param PaypalBillingAgreement $paypalBillingAgreement
+     *
+     * @return array
+     */
     public function transform(PaypalBillingAgreement $paypalBillingAgreement)
     {
         return [

@@ -12,6 +12,10 @@ use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\RefundRepository;
 use Throwable;
 
+/**
+ * Class AccountingService
+ * @package Railroad\Ecommerce\Services
+ */
 class AccountingService
 {
     /**
@@ -182,7 +186,7 @@ class AccountingService
                     ];
                 }
 
-                $tax = $finance = 0;
+                $finance = 0;
 
                 $tax = $oderItemRatio * $orderData['taxesDue'];
                 $productsMap[$productId]['taxPaid'] += $tax;
@@ -223,7 +227,7 @@ class AccountingService
             }
         }
 
-        $ordersMap = $ordersProductsData = null;
+        $ordersProductsData = null;
 
         // fetch payment plans data
         $paymentPlansProductsData = $this->paymentRepository->getPaymentPlansProductsData($smallDateTime, $bigDateTime, $brand);
@@ -291,7 +295,7 @@ class AccountingService
             }
         }
 
-        $ordersMap = $paymentPlansProductsData = null;
+        $paymentPlansProductsData = null;
 
         // fetch renewed subscriptions data
         $subscriptionsProductsData = $this->paymentRepository->getSubscriptionsProductsData($smallDateTime, $bigDateTime, $brand);
@@ -421,11 +425,10 @@ class AccountingService
             }
         }
 
-        $refundOrdersMap = $refundOrdersProductsData = null;
+        $refundOrdersProductsData = null;
 
         $refundSubscriptionsProductsData = $this->refundRepository->getAccountingSubscriptionProductsData($smallDateTime, $bigDateTime, $brand);
 
-        $refundSubscriptionsMap = [];
 
         foreach ($refundSubscriptionsProductsData as $refundProductData) {
             if (!isset($productsMap[$refundProductData['productId']])) {
@@ -450,8 +453,6 @@ class AccountingService
             $productsMap[$productId]['refundedQuantity'] += 1;
             $productsMap[$productId]['netPaid'] -= $refundProductData['refundedAmount'];
         }
-
-        $refundSubscriptionsProductsData = $refundSubscriptionsMap = null;
 
         $refundPaymentPlansProductsData = $this->refundRepository->getAccountingPaymentPlansProductsData($smallDateTime, $bigDateTime, $brand);
 
@@ -538,7 +539,7 @@ class AccountingService
             }
         }
 
-        $refundOrdersMap = $refundPaymentPlansProductsData = null;
+        $refundPaymentPlansProductsData = null;
 
         foreach ($productsMap as $productId => $productData) {
 

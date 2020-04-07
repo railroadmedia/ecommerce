@@ -3,6 +3,9 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
@@ -21,7 +24,6 @@ use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\AppleReceiptRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
@@ -30,17 +32,16 @@ use ReceiptValidator\iTunes\PurchaseItem;
 use ReceiptValidator\iTunes\ResponseInterface;
 use Throwable;
 
+/**
+ * Class AppleStoreKitService
+ * @package Railroad\Ecommerce\Services
+ */
 class AppleStoreKitService
 {
     /**
      * @var EcommerceEntityManager
      */
     private $entityManager;
-
-    /**
-     * @var AppleReceiptRepository
-     */
-    private $appleReceiptRepository;
 
     /**
      * @var AppleStoreKitGateway
@@ -88,7 +89,6 @@ class AppleStoreKitService
     /**
      * AppleStoreKitService constructor.
      *
-     * @param AppleReceiptRepository $appleReceiptRepository
      * @param AppleStoreKitGateway $appleStoreKitGateway
      * @param EcommerceEntityManager $entityManager
      * @param ProductRepository $productRepository
@@ -99,7 +99,6 @@ class AppleStoreKitService
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
      */
     public function __construct(
-        AppleReceiptRepository $appleReceiptRepository,
         AppleStoreKitGateway $appleStoreKitGateway,
         EcommerceEntityManager $entityManager,
         ProductRepository $productRepository,
@@ -109,7 +108,6 @@ class AppleStoreKitService
         PaymentRepository $paymentRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository
     ) {
-        $this->appleReceiptRepository = $appleReceiptRepository;
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->entityManager = $entityManager;
         $this->productRepository = $productRepository;
@@ -181,11 +179,12 @@ class AppleStoreKitService
 
     /**
      * @param AppleReceipt $receipt
-     * @param Subscription $subscription
      *
-     * @throws Exception
      * @throws GuzzleException
+     * @throws ReceiptValidationException
      * @throws Throwable
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     public function processNotification(AppleReceipt $receipt)
     {
@@ -318,6 +317,10 @@ class AppleStoreKitService
      * @param User|null $user
      *
      * @return Subscription|null
+     *
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws NonUniqueResultException
      */
     public function syncSubscription(ResponseInterface $appleResponse, AppleReceipt $receipt, ?User $user = null)
     {
@@ -556,7 +559,7 @@ class AppleStoreKitService
     /**
      * @param string $appleStoreId
      * @return array|null
-     * @throws \Doctrine\ORM\ORMException
+     * @throws ORMException
      */
     public function getProductsByAppleStoreId(string $appleStoreId)
     : ?array {

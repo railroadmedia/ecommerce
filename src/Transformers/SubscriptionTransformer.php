@@ -3,12 +3,18 @@
 namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Subscription;
 
 class SubscriptionTransformer extends TransformerAbstract
 {
+    /**
+     * @param Subscription $subscription
+     *
+     * @return array
+     */
     public function transform(Subscription $subscription)
     {
         $this->defaultIncludes = [];
@@ -80,6 +86,11 @@ class SubscriptionTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param Subscription $subscription
+     *
+     * @return Item
+     */
     public function includeProduct(Subscription $subscription)
     {
         return $this->item(
@@ -89,6 +100,11 @@ class SubscriptionTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param Subscription $subscription
+     *
+     * @return Item
+     */
     public function includeUser(Subscription $subscription)
     {
         $userProvider = app()->make(UserProviderInterface::class);
@@ -102,6 +118,11 @@ class SubscriptionTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param Subscription $subscription
+     *
+     * @return Item
+     */
     public function includeCustomer(Subscription $subscription)
     {
         if ($subscription->getCustomer() instanceof Proxy) {
@@ -120,6 +141,11 @@ class SubscriptionTransformer extends TransformerAbstract
         }
     }
 
+    /**
+     * @param Subscription $subscription
+     *
+     * @return Item
+     */
     public function includeOrder(Subscription $subscription)
     {
         return $this->item(
@@ -129,6 +155,11 @@ class SubscriptionTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param Subscription $subscription
+     *
+     * @return Item
+     */
     public function includePaymentMethod(Subscription $subscription)
     {
         return $this->item(
@@ -138,6 +169,11 @@ class SubscriptionTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param Subscription $subscription
+     *
+     * @return Item
+     */
     public function includeFailedPayment(Subscription $subscription)
     {
         if ($subscription->getFailedPayment() instanceof Proxy) {

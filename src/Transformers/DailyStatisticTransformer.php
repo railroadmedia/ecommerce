@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
+use League\Fractal\Resource\Collection;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Structures\DailyStatistic;
 
@@ -9,6 +10,11 @@ class DailyStatisticTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = [];
 
+    /**
+     * @param DailyStatistic $dailyStatistic
+     *
+     * @return array
+     */
     public function transform(DailyStatistic $dailyStatistic)
     {
         if (count($dailyStatistic->getProductStatistics())) {
@@ -30,6 +36,11 @@ class DailyStatisticTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param DailyStatistic $dailyStatistic
+     *
+     * @return Collection
+     */
     public function includeProductStatistic(DailyStatistic $dailyStatistic)
     {
         return $this->collection(

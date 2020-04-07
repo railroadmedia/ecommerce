@@ -7,6 +7,11 @@ use Railroad\Ecommerce\Entities\AppleReceipt;
 
 class AppleReceiptTransformer extends TransformerAbstract
 {
+    /**
+     * @param AppleReceipt $appleReceipt
+     *
+     * @return array
+     */
     public function transform(AppleReceipt $appleReceipt)
     {
         return [

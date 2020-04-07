@@ -63,6 +63,9 @@ class DiscountCriteriaService
         $this->userProvider = $userProvider;
     }
 
+    /**
+     * @param User $purchaser
+     */
     public static function setPurchaser(User $purchaser)
     {
         self::$purchaser = $purchaser;
@@ -306,6 +309,9 @@ class DiscountCriteriaService
         return $cartItemsCount >= $discountCriteria->getMin() && $cartItemsCount <= $discountCriteria->getMax();
     }
 
+    /**
+     * @return User
+     */
     protected function getPurchaser(): User
     {
         return self::$purchaser ?: $this->userProvider->getCurrentUser();

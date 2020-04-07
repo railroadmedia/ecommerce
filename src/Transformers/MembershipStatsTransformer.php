@@ -7,6 +7,11 @@ use Railroad\Ecommerce\Entities\MembershipStats;
 
 class MembershipStatsTransformer extends TransformerAbstract
 {
+    /**
+     * @param MembershipStats $membershipStats
+     *
+     * @return array
+     */
     public function transform(MembershipStats $membershipStats)
     {
         return [

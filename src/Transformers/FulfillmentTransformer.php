@@ -3,11 +3,17 @@
 namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 
 class FulfillmentTransformer extends TransformerAbstract
 {
+    /**
+     * @param OrderItemFulfillment $orderItemFulfillment
+     *
+     * @return array
+     */
     public function transform(OrderItemFulfillment $orderItemFulfillment)
     {
         $this->defaultIncludes = ['order', 'orderItem'];
@@ -30,6 +36,11 @@ class FulfillmentTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param OrderItemFulfillment $orderItemFulfillment
+     *
+     * @return Item
+     */
     public function includeOrder(OrderItemFulfillment $orderItemFulfillment)
     {
         if ($orderItemFulfillment->getOrder() instanceof Proxy) {
@@ -48,6 +59,11 @@ class FulfillmentTransformer extends TransformerAbstract
         }
     }
 
+    /**
+     * @param OrderItemFulfillment $orderItemFulfillment
+     *
+     * @return Item
+     */
     public function includeOrderItem(OrderItemFulfillment $orderItemFulfillment)
     {
         if ($orderItemFulfillment->getOrderItem() instanceof Proxy) {

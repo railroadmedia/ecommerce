@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
@@ -12,6 +13,12 @@ class UserPaymentMethodsTransformer extends TransformerAbstract
     protected $defaultIncludes = ['user'];
     protected $paypalAgreementsMap;
 
+    /**
+     * UserPaymentMethodsTransformer constructor.
+     *
+     * @param array $creditCardsMap
+     * @param array $paypalAgreementsMap
+     */
     public function __construct(
         $creditCardsMap = [],
         $paypalAgreementsMap = []
@@ -22,6 +29,11 @@ class UserPaymentMethodsTransformer extends TransformerAbstract
         $this->paypalAgreementsMap = $paypalAgreementsMap;
     }
 
+    /**
+     * @param UserPaymentMethods $userPaymentMethod
+     *
+     * @return array
+     */
     public function transform(UserPaymentMethods $userPaymentMethod)
     {
         return [
@@ -36,6 +48,11 @@ class UserPaymentMethodsTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param UserPaymentMethods $userPaymentMethod
+     *
+     * @return Item
+     */
     public function includeUser(UserPaymentMethods $userPaymentMethod)
     {
         $userProvider = app()->make(UserProviderInterface::class);

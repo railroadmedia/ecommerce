@@ -7,6 +7,11 @@ use Railroad\Ecommerce\Entities\Structures\CartItem;
 
 class CartItemTransformer extends TransformerAbstract
 {
+    /**
+     * @param CartItem $cartItem
+     *
+     * @return array
+     */
     public function transform(CartItem $cartItem)
     {
         return [

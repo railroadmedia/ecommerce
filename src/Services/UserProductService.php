@@ -162,8 +162,7 @@ class UserProductService
     }
 
     /**
-     * @param int $userId
-     *
+     * @param array $userIds
      * @return UserProduct[]
      *
      * @throws ORMException
@@ -488,12 +487,14 @@ class UserProductService
         if ($subscription->getType() != Subscription::TYPE_PAYMENT_PLAN) {
             foreach ($products as $productData) {
 
+                /** @var $paidUntil Carbon */
+                $paidUntil = $subscription->getPaidUntil()
+                    ->copy();
+
                 $this->assignUserProduct(
                     $subscription->getUser(),
                     $productData['product'],
-                    $subscription->getPaidUntil()
-                        ->copy()
-                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                    $paidUntil->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
                 );
             }
         }
@@ -514,12 +515,14 @@ class UserProductService
         if ($subscription->getType() != Subscription::TYPE_PAYMENT_PLAN) {
             foreach ($products as $productData) {
 
+                /** @var $paidUntil Carbon */
+                $paidUntil = $subscription->getPaidUntil()
+                    ->copy();
+
                 $this->assignUserProduct(
                     $subscription->getUser(),
                     $productData['product'],
-                    $subscription->getPaidUntil()
-                        ->copy()
-                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
+                    $paidUntil->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
                 );
             }
         }

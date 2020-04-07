@@ -9,15 +9,9 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 
 class InvoiceService
 {
-    /**
-     * @var EcommerceEntityManager
-     */
-    protected $entityManager;
-
     /**
      * @var TaxService
      */
@@ -296,6 +290,10 @@ class InvoiceService
         ];
     }
 
+    /**
+     * @param Subscription $subscription
+     * @param Payment $payment
+     */
     public function sendSubscriptionRenewalInvoiceEmail(Subscription $subscription, Payment $payment)
     {
         try {

@@ -623,6 +623,7 @@ class ResponseService extends FractalResponseService
 
     /**
      * @param $entityOrEntities
+     * @param array $customersOrders
      * @param QueryBuilder|null $queryBuilder
      * @param array $includes
      *

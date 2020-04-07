@@ -23,9 +23,6 @@ use Railroad\Ecommerce\Exceptions\SubscriptionRenewException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\CreditCardRepository;
-use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
-use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Throwable;
 
@@ -33,11 +30,6 @@ use Throwable;
 class RenewalService
 {
     const DEACTIVATION_MESSAGE = 'De-activated due to renewal payment fail.';
-
-    /**
-     * @var CreditCardRepository
-     */
-    protected $creditCardRepository;
 
     /**
      * @var CurrencyService
@@ -48,16 +40,6 @@ class RenewalService
      * @var EcommerceEntityManager
      */
     protected $entityManager;
-
-    /**
-     * @var PaypalBillingAgreementRepository
-     */
-    protected $paypalRepository;
-
-    /**
-     * @var SubscriptionPaymentRepository
-     */
-    protected $subscriptionPaymentRepository;
 
     /**
      * @var SubscriptionRepository
@@ -91,40 +73,31 @@ class RenewalService
     /**
      * RenewalService constructor.
      *
-     * @param CreditCardRepository $creditCardRepository
      * @param CurrencyService $currencyService
      * @param EcommerceEntityManager $entityManager
      * @param StripePaymentGateway $stripePaymentGateway
-     * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      * @param PayPalPaymentGateway $payPalPaymentGateway
-     * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
      * @param SubscriptionRepository $subscriptionRepository
      * @param TaxService $taxService
      * @param UserProductService $userProductService
      * @param PaymentService $paymentService
      */
     public function __construct(
-        CreditCardRepository $creditCardRepository,
         CurrencyService $currencyService,
         EcommerceEntityManager $entityManager,
         StripePaymentGateway $stripePaymentGateway,
-        PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
         PayPalPaymentGateway $payPalPaymentGateway,
-        SubscriptionPaymentRepository $subscriptionPaymentRepository,
         SubscriptionRepository $subscriptionRepository,
         TaxService $taxService,
         UserProductService $userProductService,
         PaymentService $paymentService
     )
     {
-        $this->creditCardRepository = $creditCardRepository;
         $this->currencyService = $currencyService;
         $this->taxService = $taxService;
         $this->entityManager = $entityManager;
         $this->stripePaymentGateway = $stripePaymentGateway;
-        $this->paypalRepository = $paypalBillingAgreementRepository;
         $this->paypalPaymentGateway = $payPalPaymentGateway;
-        $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
         $this->paymentService = $paymentService;
@@ -338,15 +311,6 @@ class RenewalService
 
             try {
 
-                // todo: revamp tax system
-//                $totalTaxDue = $this->taxService->getTaxesDueTotal(
-//                    $subscription->getTotalPrice(),
-//                    0,
-//                    !empty($paymentMethod->getBillingAddress()) ?
-//                        $paymentMethod->getBillingAddress()
-//                            ->toStructure() : null
-//                );
-
                 /** @var $method CreditCard */
                 $method = $paymentMethod->getCreditCard();
 
@@ -428,15 +392,6 @@ class RenewalService
         elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
 
             try {
-
-                // todo: revamp tax system
-//                $totalTaxDue = $this->taxService->getTaxesDueTotal(
-//                    $subscription->getTotalPrice(),
-//                    0,
-//                    !empty($paymentMethod->getBillingAddress()) ?
-//                        $paymentMethod->getBillingAddress()
-//                            ->toStructure() : null
-//                );
 
                 /** @var $method PaypalBillingAgreement */
                 $method = $paymentMethod->getMethod();

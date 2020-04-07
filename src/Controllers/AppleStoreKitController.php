@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AppleReceipt;
-use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\AppleReceiptRequest;
 use Railroad\Ecommerce\Services\AppleStoreKitService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
@@ -30,11 +29,6 @@ class AppleStoreKitController extends Controller
     private $jsonApiHydrator;
 
     /**
-     * @var SubscriptionRepository
-     */
-    private $subscriptionRepository;
-
-    /**
      * @var UserProviderInterface
      */
     private $userProvider;
@@ -44,19 +38,16 @@ class AppleStoreKitController extends Controller
      *
      * @param AppleStoreKitService $appleStoreKitService
      * @param JsonApiHydrator $jsonApiHydrator
-     * @param SubscriptionRepository $subscriptionRepository
      * @param UserProviderInterface $userProvider
      */
     public function __construct(
         AppleStoreKitService $appleStoreKitService,
         JsonApiHydrator $jsonApiHydrator,
-        SubscriptionRepository $subscriptionRepository,
         UserProviderInterface $userProvider
     )
     {
         $this->appleStoreKitService = $appleStoreKitService;
         $this->jsonApiHydrator = $jsonApiHydrator;
-        $this->subscriptionRepository = $subscriptionRepository;
         $this->userProvider = $userProvider;
     }
 

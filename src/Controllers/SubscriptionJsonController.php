@@ -7,7 +7,6 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
@@ -65,11 +64,6 @@ class SubscriptionJsonController extends Controller
     private $userProductService;
 
     /**
-     * @var UserProviderInterface
-     */
-    private $userProvider;
-
-    /**
      * SubscriptionJsonController constructor.
      *
      * @param EcommerceEntityManager $entityManager
@@ -78,7 +72,6 @@ class SubscriptionJsonController extends Controller
      * @param RenewalService $renewalService
      * @param SubscriptionRepository $subscriptionRepository
      * @param UserProductService $userProductService
-     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
@@ -86,8 +79,7 @@ class SubscriptionJsonController extends Controller
         PermissionService $permissionService,
         RenewalService $renewalService,
         SubscriptionRepository $subscriptionRepository,
-        UserProductService $userProductService,
-        UserProviderInterface $userProvider
+        UserProductService $userProductService
     )
     {
         $this->entityManager = $entityManager;
@@ -96,7 +88,6 @@ class SubscriptionJsonController extends Controller
         $this->renewalService = $renewalService;
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
-        $this->userProvider = $userProvider;
     }
 
     /**

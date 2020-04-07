@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\UserProduct;
@@ -11,6 +12,11 @@ class UserProductTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = [];
 
+    /**
+     * @param UserProduct $userProduct
+     *
+     * @return array
+     */
     public function transform(UserProduct $userProduct)
     {
         $this->defaultIncludes[] = 'user';
@@ -34,6 +40,11 @@ class UserProductTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param UserProduct $userProduct
+     *
+     * @return Item
+     */
     public function includeUser(UserProduct $userProduct)
     {
         $userProvider = app()->make(UserProviderInterface::class);
@@ -47,6 +58,11 @@ class UserProductTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param UserProduct $userProduct
+     *
+     * @return Item
+     */
     public function includeProduct(UserProduct $userProduct)
     {
         if ($userProduct->getProduct() instanceof Proxy) {

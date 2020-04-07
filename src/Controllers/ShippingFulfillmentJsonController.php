@@ -8,7 +8,6 @@ use Doctrine\ORM\ORMException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\OrderItemFulfillment;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -36,10 +35,6 @@ class ShippingFulfillmentJsonController extends Controller
      * @var PermissionService
      */
     private $permissionService;
-    /**
-     * @var UserProviderInterface
-     */
-    private $userProvider;
 
     /**
      * ShippingFulfillmentJsonController constructor.
@@ -47,18 +42,15 @@ class ShippingFulfillmentJsonController extends Controller
      * @param  EcommerceEntityManager  $entityManager
      * @param  OrderItemFulfillmentRepository  $orderItemFulfillmentRepository
      * @param  PermissionService  $permissionService
-     * @param  UserProviderInterface  $userProvider
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
-        PermissionService $permissionService,
-        UserProviderInterface $userProvider
+        PermissionService $permissionService
     ) {
         $this->entityManager = $entityManager;
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->permissionService = $permissionService;
-        $this->userProvider = $userProvider;
     }
 
     /**

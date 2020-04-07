@@ -7,6 +7,11 @@ use Railroad\Ecommerce\Entities\Structures\RetentionStatistic;
 
 class RetentionStatsTransformer extends TransformerAbstract
 {
+    /**
+     * @param RetentionStatistic $retentionStats
+     *
+     * @return array
+     */
     public function transform(RetentionStatistic $retentionStats)
     {
         return [

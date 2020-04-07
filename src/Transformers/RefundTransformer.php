@@ -2,11 +2,17 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\Refund;
 
 class RefundTransformer extends TransformerAbstract
 {
+    /**
+     * @param Refund $refund
+     *
+     * @return array
+     */
     public function transform(Refund $refund)
     {
         $this->defaultIncludes[] = 'payment';
@@ -27,6 +33,11 @@ class RefundTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param Refund $refund
+     *
+     * @return Item
+     */
     public function includePayment(Refund $refund)
     {
         return $this->item(

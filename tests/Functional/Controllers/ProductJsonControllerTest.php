@@ -425,9 +425,10 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(204, $results->status());
 
         // assert product was removed from db
-        $this->assertDatabaseMissing('ecommerce_products', [
-            'id' => $product['id'],
-        ]);
+        $this->assertSoftDeleted(
+            'ecommerce_products',
+            $product
+        );
     }
 
     public function test_admin_get_all_paginated_products()

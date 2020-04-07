@@ -104,8 +104,6 @@ class DiscountService
     {
         $applicableDiscounts = $this->getNonShippingDiscountsForCart($cart, $totalDueInItems, $totalDueInShipping);
 
-        $totalItemDiscounts = 0;
-
         $cartItemsDiscounts = [];
         $orderDiscounts = 0;
 

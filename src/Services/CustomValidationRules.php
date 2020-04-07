@@ -7,10 +7,21 @@ use Webpatser\Countries\Countries;
 
 class CustomValidationRules extends Validator
 {
+    /**
+     * @var array
+     */
     private $_custom_messages = array(
         "country" => "The :attribute field it's invalid.",
     );
 
+    /**
+     * CustomValidationRules constructor.
+     * @param $translator
+     * @param $data
+     * @param $rules
+     * @param array $messages
+     * @param array $customAttributes
+     */
     public function __construct($translator, $data, $rules, $messages = array(), $customAttributes = array())
     {
         parent::__construct($translator, $data, $rules, $messages, $customAttributes);

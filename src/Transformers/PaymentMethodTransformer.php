@@ -4,11 +4,17 @@ namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
 use Exception;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 
 class PaymentMethodTransformer extends TransformerAbstract
 {
+    /**
+     * @param PaymentMethod $paymentMethod
+     *
+     * @return array
+     */
     public function transform(PaymentMethod $paymentMethod)
     {
         $this->defaultIncludes[] = 'method';
@@ -37,6 +43,11 @@ class PaymentMethodTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param PaymentMethod $paymentMethod
+     *
+     * @return Item
+     */
     public function includeBillingAddress(PaymentMethod $paymentMethod)
     {
         if (!empty($paymentMethod->getBillingAddress())) {
@@ -48,6 +59,11 @@ class PaymentMethodTransformer extends TransformerAbstract
         }
     }
 
+    /**
+     * @param PaymentMethod $paymentMethod
+     *
+     * @return Item
+     */
     public function includeUserPaymentMethod(PaymentMethod $paymentMethod)
     {
         return $this->item(
@@ -57,6 +73,11 @@ class PaymentMethodTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param PaymentMethod $paymentMethod
+     *
+     * @return Item|null
+     */
     public function includeMethod(PaymentMethod $paymentMethod)
     {
         if (!empty($paymentMethod->getCreditCard())) {

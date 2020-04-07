@@ -32,14 +32,12 @@ use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CreditCardRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
-use Railroad\Ecommerce\Repositories\PaypalBillingAgreementRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Railroad\Ecommerce\Requests\PaymentMethodCreatePaypalRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodSetDefaultRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodUpdateRequest;
 use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\PaymentMethodService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
@@ -75,11 +73,6 @@ class PaymentMethodJsonController extends Controller
     private $entityManager;
 
     /**
-     * @var JsonApiHydrator
-     */
-    private $jsonApiHydrator;
-
-    /**
      * @var PaymentMethodService
      */
     private $paymentMethodService;
@@ -88,11 +81,6 @@ class PaymentMethodJsonController extends Controller
      * @var PaymentMethodRepository
      */
     private $paymentMethodRepository;
-
-    /**
-     * @var PaypalBillingAgreementRepository
-     */
-    private $paypalBillingAgreementRepository;
 
     /**
      * @var PayPalPaymentGateway
@@ -127,10 +115,8 @@ class PaymentMethodJsonController extends Controller
      * @param CurrencyService $currencyService
      * @param CustomerRepository $customerRepository
      * @param EcommerceEntityManager $entityManager
-     * @param JsonApiHydrator $jsonApiHydrator
      * @param PaymentMethodService $paymentMethodService
      * @param PaymentMethodRepository $paymentMethodRepository
-     * @param PaypalBillingAgreementRepository $paypalBillingAgreementRepository
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
@@ -143,10 +129,8 @@ class PaymentMethodJsonController extends Controller
         CurrencyService $currencyService,
         CustomerRepository $customerRepository,
         EcommerceEntityManager $entityManager,
-        JsonApiHydrator $jsonApiHydrator,
         PaymentMethodService $paymentMethodService,
         PaymentMethodRepository $paymentMethodRepository,
-        PaypalBillingAgreementRepository $paypalBillingAgreementRepository,
         PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService,
         StripePaymentGateway $stripePaymentGateway,
@@ -159,10 +143,8 @@ class PaymentMethodJsonController extends Controller
         $this->currencyService = $currencyService;
         $this->customerRepository = $customerRepository;
         $this->entityManager = $entityManager;
-        $this->jsonApiHydrator = $jsonApiHydrator;
         $this->paymentMethodService = $paymentMethodService;
         $this->paymentMethodRepository = $paymentMethodRepository;
-        $this->paypalBillingAgreementRepository = $paypalBillingAgreementRepository;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
@@ -188,7 +170,6 @@ class PaymentMethodJsonController extends Controller
          */
         $customer = $this->customerRepository->findOneBy(['id' => $customerId]);
 
-        // todo - ask if a customer should be able to pull his own payment method in an interface and adjust permissions check
         $this->permissionService->canOrThrow(auth()->id(), 'pull.customer.payment.method');
 
         throw_if(

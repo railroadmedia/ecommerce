@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Order;
@@ -11,6 +13,11 @@ class OrderTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = ['orderItem', 'user', 'customer', 'billingAddress', 'shippingAddress'];
 
+    /**
+     * @param Order $order
+     *
+     * @return array
+     */
     public function transform(Order $order)
     {
         return [
@@ -35,6 +42,11 @@ class OrderTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param Order $order
+     *
+     * @return Collection|null
+     */
     public function includeOrderItem(Order $order)
     {
         if (empty($order->getOrderItems()) || $order->getOrderItems()->count() == 0) {
@@ -52,6 +64,11 @@ class OrderTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param Order $order
+     *
+     * @return Item|null
+     */
     public function includeUser(Order $order)
     {
         if (empty($order->getUser())) {
@@ -69,6 +86,11 @@ class OrderTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param Order $order
+     *
+     * @return Item|null
+     */
     public function includeCustomer(Order $order)
     {
         if (empty($order->getCustomer())) {
@@ -91,6 +113,11 @@ class OrderTransformer extends TransformerAbstract
         }
     }
 
+    /**
+     * @param Order $order
+     *
+     * @return Item|null
+     */
     public function includeBillingAddress(Order $order)
     {
         if (empty($order->getBillingAddress())) {
@@ -104,6 +131,11 @@ class OrderTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param Order $order
+     *
+     * @return Item|null
+     */
     public function includeShippingAddress(Order $order)
     {
         if (empty($order->getShippingAddress())) {

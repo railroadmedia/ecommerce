@@ -3,9 +3,10 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Doctrine\Common\Persistence\Mapping\MappingException;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\NoResultException;
 use Illuminate\Http\Request;
-use Railroad\Ecommerce\Entities\Payment;
-use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\Structures\DailyStatistic;
 use Railroad\Ecommerce\Entities\Structures\ProductStatistic;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -50,6 +51,9 @@ class StatsService
      * @param Request $request
      *
      * @return DailyStatistic[]
+     * @throws MappingException
+     * @throws NoResultException
+     * @throws NonUniqueResultException
      */
     public function indexByRequest(Request $request): array
     {
@@ -83,6 +87,7 @@ class StatsService
         if ($smallDateTime > $bigDateTime) {
             $tmp = $bigDate;
 
+            // todo - review & remove var
             $bigDate = $smallDateTime;
 
             $smallDateTime = $tmp;

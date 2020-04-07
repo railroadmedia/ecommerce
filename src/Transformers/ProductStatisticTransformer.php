@@ -9,6 +9,11 @@ class ProductStatisticTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = [];
 
+    /**
+     * @param ProductStatistic $productStatistic
+     *
+     * @return array
+     */
     public function transform(ProductStatistic $productStatistic)
     {
         return [

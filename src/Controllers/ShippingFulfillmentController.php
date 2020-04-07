@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
-use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository;
 use Railroad\Ecommerce\Requests\MarkFulfilledViaCSVUploadRequest;
@@ -28,10 +27,6 @@ class ShippingFulfillmentController extends Controller
      * @var PermissionService
      */
     private $permissionService;
-    /**
-     * @var UserProviderInterface
-     */
-    private $userProvider;
 
     /**
      * ShippingFulfillmentJsonController constructor.
@@ -39,19 +34,16 @@ class ShippingFulfillmentController extends Controller
      * @param EcommerceEntityManager $entityManager
      * @param OrderItemFulfillmentRepository $orderItemFulfillmentRepository
      * @param PermissionService $permissionService
-     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
         OrderItemFulfillmentRepository $orderItemFulfillmentRepository,
-        PermissionService $permissionService,
-        UserProviderInterface $userProvider
+        PermissionService $permissionService
     )
     {
         $this->entityManager = $entityManager;
         $this->orderItemFulfillmentRepository = $orderItemFulfillmentRepository;
         $this->permissionService = $permissionService;
-        $this->userProvider = $userProvider;
     }
 
     /**

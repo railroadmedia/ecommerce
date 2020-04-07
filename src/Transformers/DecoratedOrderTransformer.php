@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Transformers;
 
+use League\Fractal\Resource\Collection;
+
 class DecoratedOrderTransformer extends OrderTransformer
 {
     protected $payments;
@@ -9,6 +11,14 @@ class DecoratedOrderTransformer extends OrderTransformer
     protected $subscriptions;
     protected $paymentPlans;
 
+    /**
+     * DecoratedOrderTransformer constructor.
+     *
+     * @param array $payments
+     * @param array $refunds
+     * @param array $subscriptions
+     * @param array $paymentPlans
+     */
     public function __construct(
         array $payments = [],
         array $refunds = [],
@@ -32,6 +42,9 @@ class DecoratedOrderTransformer extends OrderTransformer
         );
     }
 
+    /**
+     * @return Collection
+     */
     public function includePayments()
     {
         return $this->collection(
@@ -41,6 +54,9 @@ class DecoratedOrderTransformer extends OrderTransformer
         );
     }
 
+    /**
+     * @return Collection
+     */
     public function includeRefunds()
     {
         return $this->collection(
@@ -50,6 +66,9 @@ class DecoratedOrderTransformer extends OrderTransformer
         );
     }
 
+    /**
+     * @return Collection
+     */
     public function includeSubscriptions()
     {
         return $this->collection(
@@ -59,6 +78,9 @@ class DecoratedOrderTransformer extends OrderTransformer
         );
     }
 
+    /**
+     * @return Collection
+     */
     public function includePaymentPlans()
     {
         return $this->collection(

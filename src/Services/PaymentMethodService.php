@@ -16,7 +16,6 @@ use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Events\PaymentMethods\PaymentMethodCreated;
 use Railroad\Ecommerce\Events\UserDefaultPaymentMethodEvent;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
-use Railroad\Ecommerce\Repositories\CustomerPaymentMethodsRepository;
 use Railroad\Ecommerce\Repositories\UserPaymentMethodsRepository;
 use Stripe\Card;
 use Stripe\Customer as StripeCustomer;
@@ -24,11 +23,6 @@ use Throwable;
 
 class PaymentMethodService
 {
-    /**
-     * @var CustomerPaymentMethodsRepository
-     */
-    private $customerPaymentMethodsRepository;
-
     /**
      * @var EcommerceEntityManager
      */
@@ -42,18 +36,14 @@ class PaymentMethodService
     /**
      * PaymentMethodService constructor.
      *
-     * @param CustomerPaymentMethodsRepository $customerPaymentMethodsRepository
      * @param EcommerceEntityManager $entityManager
      * @param UserPaymentMethodsRepository $userPaymentMethodsRepository
      */
     public function __construct(
-        CustomerPaymentMethodsRepository $customerPaymentMethodsRepository,
         EcommerceEntityManager $entityManager,
         UserPaymentMethodsRepository $userPaymentMethodsRepository
     )
     {
-
-        $this->customerPaymentMethodsRepository = $customerPaymentMethodsRepository;
         $this->entityManager = $entityManager;
         $this->userPaymentMethodsRepository = $userPaymentMethodsRepository;
     }

@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Services;
 
 use Exception;
-use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
@@ -49,10 +48,6 @@ class OrderFormService
     private $shippingService;
 
     /**
-     * @var UserProviderInterface
-     */
-    private $userProvider;
-    /**
      * @var PaymentMethodRepository
      */
     private $paymentMethodRepository;
@@ -66,7 +61,6 @@ class OrderFormService
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PurchaserService $purchaserService
      * @param ShippingService $shippingService
-     * @param UserProviderInterface $userProvider
      * @param PaymentMethodRepository $paymentMethodRepository
      */
     public function __construct(
@@ -76,7 +70,6 @@ class OrderFormService
         PayPalPaymentGateway $payPalPaymentGateway,
         PurchaserService $purchaserService,
         ShippingService $shippingService,
-        UserProviderInterface $userProvider,
         PaymentMethodRepository $paymentMethodRepository
     )
     {
@@ -86,7 +79,6 @@ class OrderFormService
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->purchaserService = $purchaserService;
         $this->shippingService = $shippingService;
-        $this->userProvider = $userProvider;
         $this->paymentMethodRepository = $paymentMethodRepository;
     }
 

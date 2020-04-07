@@ -279,10 +279,13 @@ class OrderClaimingService
      * @param Payment $payment
      * @param Order $order
      * @param OrderItem|null $orderItem
+     * @param Cart|null $cart
      * @param int|null $totalCyclesDue
      *
      * @return Subscription
      *
+     * @throws ORMException
+     * @throws OptimisticLockException
      * @throws Throwable
      */
     public function createSubscription(
@@ -298,12 +301,10 @@ class OrderClaimingService
         $type = Subscription::TYPE_SUBSCRIPTION;
 
         $nextBillDate = null;
-        $subscriptionPricePerPayment = 0;
         $product = null;
 
         // for payment plans, the taxable amount is total items costs
         // for normal subscriptions, the taxable amount is subscription product price, with any discounts applied
-        $subscriptionTaxableAmount = 0;
         $totalCyclesPaid = 1;
 
         if (is_null($orderItem)) {

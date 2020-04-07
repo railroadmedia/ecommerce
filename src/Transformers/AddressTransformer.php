@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Transformers;
 
 use Doctrine\Common\Persistence\Proxy;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
@@ -11,6 +12,11 @@ class AddressTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = [];
 
+    /**
+     * @param Address $address
+     *
+     * @return array
+     */
     public function transform(Address $address)
     {
         if ($address->getUser()) {
@@ -46,6 +52,11 @@ class AddressTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param Address $address
+     *
+     * @return Item
+     */
     public function includeUser(Address $address)
     {
         $userProvider = app()->make(UserProviderInterface::class);
@@ -59,6 +70,11 @@ class AddressTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param Address $address
+     *
+     * @return Item
+     */
     public function includeCustomer(Address $address)
     {
         if ($address->getCustomer() instanceof Proxy) {

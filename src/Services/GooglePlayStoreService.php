@@ -3,6 +3,8 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
@@ -70,6 +72,9 @@ class GooglePlayStoreService
      */
     private $subscriptionPaymentRepository;
 
+    /**
+     * @var array
+     */
     public static $cancellationReasonMap = [
         0 => 'User canceled the subscription',
         1 => 'Subscription was canceled by the system, for example because of a billing problem',
@@ -225,6 +230,7 @@ class GooglePlayStoreService
         $this->entityManager->persist($receipt);
         $this->entityManager->flush();
 
+        // todo - syncSubscription not returning anything, do more code analysis
         $subscription = $this->syncSubscription($receipt, $googleResponse, $subscription->getUser());
 
         if (!empty($subscription)) {
@@ -251,11 +257,11 @@ class GooglePlayStoreService
      * @param GoogleReceipt $googleReceipt
      * @param SubscriptionResponse|PurchaseResponse $googleSubscriptionResponse
      * @param User $user
-     * @return Subscription
      *
      * @throws ORMException
      * @throws ReceiptValidationException
-     * @throws Throwable
+     * @throws NonUniqueResultException
+     * @throws OptimisticLockException
      */
     public function syncSubscription(
         GoogleReceipt $googleReceipt,
