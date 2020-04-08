@@ -10,14 +10,14 @@ use Railroad\Ecommerce\Entities\Structures\SubscriptionRenewal;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\RenewalService;
+use Railroad\Ecommerce\Services\SubscriptionService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Stripe\Card;
 use Stripe\Charge;
 use Stripe\Customer;
 
-class RenewalServiceTest extends EcommerceTestCase
+class SubscriptionServiceTest extends EcommerceTestCase
 {
     protected function setUp()
     {
@@ -139,7 +139,7 @@ class RenewalServiceTest extends EcommerceTestCase
         $em->persist($subscription);
         $em->flush();
 
-        $srv = $this->app->make(RenewalService::class);
+        $srv = $this->app->make(SubscriptionService::class);
 
         $srv->renew($subscription);
 
@@ -396,7 +396,7 @@ class RenewalServiceTest extends EcommerceTestCase
 
         $expectedSubscriptionsRenewals[] = $expectedSubscriptionsRenewal;
 
-        $srv = $this->app->make(RenewalService::class);
+        $srv = $this->app->make(SubscriptionService::class);
 
         $subscriptionsRenewals = $srv->getSubscriptionsRenewalForUsers(
             [

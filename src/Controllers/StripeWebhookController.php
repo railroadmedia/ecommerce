@@ -52,7 +52,6 @@ class StripeWebhookController extends Controller
      */
     public function handleCustomerSourceUpdated(Request $request)
     {
-        error_log($request->getContent()); // todo - to be removed
         $data = json_decode($request->getContent(), true);
 
         throw_if(

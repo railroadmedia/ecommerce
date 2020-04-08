@@ -85,10 +85,9 @@ class StatsService
                 ->timezone('UTC');
 
         if ($smallDateTime > $bigDateTime) {
-            $tmp = $bigDate;
+            $tmp = $bigDateTime;
 
-            // todo - review & remove var
-            $bigDate = $smallDateTime;
+            $bigDateTime = $smallDateTime;
 
             $smallDateTime = $tmp;
         }

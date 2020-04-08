@@ -22,7 +22,7 @@ use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\RenewalService;
+use Railroad\Ecommerce\Services\SubscriptionService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Stripe\Card;
 use Stripe\Charge;
@@ -2085,7 +2085,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscription,
                 [
                     'is_active' => 0,
-                    'note' => RenewalService::DEACTIVATION_MESSAGE,
+                    'note' => SubscriptionService::DEACTIVATION_MESSAGE,
                     'updated_at' => Carbon::now()->toDateTimeString(),
                     'renewal_attempt' => 1,
                 ]

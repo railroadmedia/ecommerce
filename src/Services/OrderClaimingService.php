@@ -371,7 +371,6 @@ class OrderClaimingService
                     $discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE
                     && !$productPriceOverride
                 ) {
-                    // todo - confirm for subscriptions only SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE modifies the cost
                     $subscriptionPricePerPayment =
                         round($orderItem->getProduct()
                             ->getPrice() - $discount->getAmount(), 2);

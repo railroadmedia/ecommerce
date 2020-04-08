@@ -548,12 +548,12 @@ class PaymentRepository extends RepositoryBase
     /**
      * Returns the total SUM of payment.totalPaid of non-failed TYPE_INITIAL_ORDER payments of specified day
      *
-     * @param string $day
+     * @param Carbon $day
      * @param string $brand
      *
      * @return float
      */
-    public function getDailyTotalSalesStats($day, $brand)
+    public function getDailyTotalSalesStats(Carbon $day, $brand)
     {
         /** @var $qb QueryBuilder */
         $qb =
@@ -605,12 +605,12 @@ class PaymentRepository extends RepositoryBase
     /**
      * Returns the total number of orders that have non-failed TYPE_INITIAL_ORDER payments of specified day
      *
-     * @param string $day
+     * @param Carbon $day
      * @param string $brand
      *
      * @return int
      */
-    public function getDailyTotalOrdersStats($day, $brand)
+    public function getDailyTotalOrdersStats(Carbon $day, $brand)
     {
         /** @var $qb QueryBuilder */
         $qb =
@@ -644,12 +644,12 @@ class PaymentRepository extends RepositoryBase
     /**
      * Returns the total SUM of payment.totalPaid of non-failed TYPE_SUBSCRIPTION_RENEWAL payments of specified day
      *
-     * @param string $day
+     * @param Carbon $day
      * @param string $brand
      *
      * @return float
      */
-    public function getDailyTotalSalesFromRenewals($day, $brand)
+    public function getDailyTotalSalesFromRenewals(Carbon $day, $brand)
     {
         /** @var $qb QueryBuilder */
         $qb =
@@ -690,12 +690,12 @@ class PaymentRepository extends RepositoryBase
     /**
      * Returns the total number of non-failed TYPE_SUBSCRIPTION_RENEWAL payments of specified day
      *
-     * @param string $day
+     * @param Carbon $day
      * @param string $brand
      *
      * @return int
      */
-    public function getDailyTotalSuccessfulRenewals($day, $brand)
+    public function getDailyTotalSuccessfulRenewals(Carbon $day, $brand)
     {
         /** @var $qb QueryBuilder */
         $qb =
@@ -736,12 +736,12 @@ class PaymentRepository extends RepositoryBase
     /**
      * Returns the total number of failed TYPE_SUBSCRIPTION_RENEWAL payments of specified day
      *
-     * @param string $day
+     * @param Carbon $day
      * @param string $brand
      *
      * @return int
      */
-    public function getDailyTotalFailedRenewals($day, $brand)
+    public function getDailyTotalFailedRenewals(Carbon $day, $brand)
     {
         /** @var $qb QueryBuilder */
         $qb =
@@ -784,12 +784,12 @@ class PaymentRepository extends RepositoryBase
      *   each with SUM(oreder_item.finalPrice) AS sales and COUNT(product.id) AS sold
      *   grouped by product.id
      *
-     * @param string $day
+     * @param Carbon $day
      * @param string $brand
      *
      * @return array
      */
-    public function getDailyOrdersProductStatistic($day, $brand)
+    public function getDailyOrdersProductStatistic(Carbon $day, $brand)
     {
         /** @var $qb QueryBuilder */
         $qb =
@@ -828,12 +828,12 @@ class PaymentRepository extends RepositoryBase
      *   each with SUM(subscription.totalPrice) AS sales and COUNT(product.id) AS sold
      *   grouped by product.id
      *
-     * @param string $day
+     * @param Carbon $day
      * @param string $brand
      *
      * @return array
      */
-    public function getDailySubscriptionsProductStatistic($day, $brand)
+    public function getDailySubscriptionsProductStatistic(Carbon $day, $brand)
     {
         /** @var $qb QueryBuilder */
         $qb =

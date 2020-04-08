@@ -171,7 +171,6 @@ class RepositoryBase
      * @param array $criteria
      *
      * @return int The cardinality of the objects that match the given criteria.
-     * @todo Add this method to `ObjectRepository` interface in the next major release
      *
      */
     public function count(array $criteria)

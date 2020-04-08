@@ -230,7 +230,7 @@ class GooglePlayStoreService
         $this->entityManager->persist($receipt);
         $this->entityManager->flush();
 
-        // todo - syncSubscription not returning anything, do more code analysis
+        // todo - syncSubscription not returning anything, do more code analysis - ask for details
         $subscription = $this->syncSubscription($receipt, $googleResponse, $subscription->getUser());
 
         if (!empty($subscription)) {

@@ -179,17 +179,14 @@ class PaymentMethodRepository extends RepositoryBase
 
     /**
      * @param Customer $customer
-     * @param Request $request
      * @param string $brand
      *
      * @return PaymentMethod[]
      */
     public function getCustomerPaymentMethods(
         Customer $customer,
-        Request $request,
         $brand = null
     ) {
-        // todo - review & refactor $request param
         $alias = 'pm';
 
         $qb = $this->createQueryBuilder($alias);

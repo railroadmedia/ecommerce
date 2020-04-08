@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
+use Exception;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
@@ -97,6 +98,7 @@ class PaymentService
      * @param float $paymentAmountInBaseCurrency
      * @param int $userId
      * @param string $paymentType
+     * @param bool $convertToCurrency
      *
      * @return Payment
      *
@@ -110,12 +112,19 @@ class PaymentService
         string $currency,
         float $paymentAmountInBaseCurrency,
         int $userId,
-        string $paymentType
-    )
+        string $paymentType,
+        $convertToCurrency = true
+    ): Payment
     {
-        // do currency conversion
+        // do currency conversion if needed
         $conversionRate = $this->currencyService->getRate($currency);
-        $convertedPaymentAmount = $this->currencyService->convertFromBase($paymentAmountInBaseCurrency, $currency);
+
+        if ($convertToCurrency) {
+            $convertedPaymentAmount = $this->currencyService->convertFromBase($paymentAmountInBaseCurrency, $currency);
+        } else {
+            // some manual stored payments do not require conversion
+            $convertedPaymentAmount = $paymentAmountInBaseCurrency;
+        }
 
         // get payment method
         $paymentMethod = $this->paymentMethodRepository->getUsersPaymentMethodById($userId, $paymentMethodId);
@@ -127,72 +136,7 @@ class PaymentService
         $externalPaymentId = null;
         $gateway = $paymentMethod->getMethod()->getPaymentGatewayName();
 
-        // credit cart
-        if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
-            $creditCard = $paymentMethod->getMethod();
-
-            if (empty($creditCard)) {
-                throw new PaymentFailedException('Credit card not found.');
-            }
-
-            if (empty($creditCard->getExternalCustomerId()) && !empty($userId)) {
-                $tempPurchaser = new Purchaser();
-                $tempPurchaser->setId($userId);
-                $tempPurchaser->setBrand($gateway);
-                $tempPurchaser->setEmail(
-                    $paymentMethod->getUserPaymentMethod()
-                        ->getUser()
-                        ->getEmail()
-                );
-                $tempPurchaser->setType(Purchaser::USER_TYPE);
-
-                $customer = $this->getStripeCustomer($tempPurchaser, $gateway);
-            }
-            else {
-                $customer = $this->stripePaymentGateway->getCustomer($gateway, $creditCard->getExternalCustomerId());
-            }
-
-            $card = $this->stripePaymentGateway->getCard($customer, $creditCard->getExternalId(), $gateway);
-
-            $charge = $this->stripePaymentGateway->chargeCustomerCard(
-                $gateway,
-                $convertedPaymentAmount,
-                $currency,
-                $card,
-                $customer
-            );
-
-            $externalPaymentId = $charge->id;
-        }
-
-        // paypal
-        elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
-
-            $payPalAgreement = $paymentMethod->getMethod();
-
-            if (empty($payPalAgreement)) {
-                throw new PaymentFailedException('PayPal agreement not found.');
-            }
-
-            $externalPaymentId = $this->payPalPaymentGateway->chargeBillingAgreement(
-                $gateway,
-                $convertedPaymentAmount,
-                $currency,
-                $payPalAgreement->getExternalId()
-            );
-        }
-
-        // failure
-        else {
-            throw new PaymentFailedException('Invalid payment method.');
-        }
-
-        // payment failed
-        if (empty($externalPaymentId)) {
-            throw new PaymentFailedException('Could not recharge existing payment method.');
-        }
-
-        // store payment in database
+        // some service consumers need a failed payment record
         $payment = new Payment();
 
         $payment->setTotalDue($convertedPaymentAmount);
@@ -200,17 +144,102 @@ class PaymentService
         $payment->setTotalRefunded(0);
         $payment->setConversionRate($conversionRate);
         $payment->setType($paymentType);
-        $payment->setExternalId($externalPaymentId);
         $payment->setExternalProvider($paymentMethod->getExternalProvider());
-        $payment->setGatewayName(
-            $paymentMethod->getMethod()
-                ->getPaymentGatewayName()
-        );
-        $payment->setStatus(Payment::STATUS_PAID);
+        $payment->setGatewayName($gateway);
         $payment->setPaymentMethod($paymentMethod);
         $payment->setCurrency($currency);
         $payment->setCreatedAt(Carbon::now());
 
+        $exception = null;
+
+        try {
+
+            // credit card
+            if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
+                $creditCard = $paymentMethod->getMethod();
+
+                if (empty($creditCard)) {
+                    throw new PaymentFailedException('Credit card not found.');
+                }
+
+                if (empty($creditCard->getExternalCustomerId()) && !empty($userId)) {
+                    $tempPurchaser = new Purchaser();
+                    $tempPurchaser->setId($userId);
+                    $tempPurchaser->setBrand($gateway);
+                    $tempPurchaser->setEmail(
+                        $paymentMethod->getUserPaymentMethod()
+                            ->getUser()
+                            ->getEmail()
+                    );
+                    $tempPurchaser->setType(Purchaser::USER_TYPE);
+
+                    $customer = $this->getStripeCustomer($tempPurchaser, $gateway);
+                }
+                else {
+                    $customer = $this->stripePaymentGateway->getCustomer($gateway, $creditCard->getExternalCustomerId());
+                }
+
+                $card = $this->stripePaymentGateway->getCard($customer, $creditCard->getExternalId(), $gateway);
+
+                $charge = $this->stripePaymentGateway->chargeCustomerCard(
+                    $gateway,
+                    $convertedPaymentAmount,
+                    $currency,
+                    $card,
+                    $customer
+                );
+
+                $externalPaymentId = $charge->id;
+            }
+
+            // paypal
+            elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
+
+                $payPalAgreement = $paymentMethod->getMethod();
+
+                if (empty($payPalAgreement)) {
+                    throw new PaymentFailedException('PayPal agreement not found.');
+                }
+
+                $externalPaymentId = $this->payPalPaymentGateway->chargeBillingAgreement(
+                    $gateway,
+                    $convertedPaymentAmount,
+                    $currency,
+                    $payPalAgreement->getExternalId()
+                );
+            }
+
+            // failure
+            else {
+                throw new PaymentFailedException('Invalid payment method.');
+            }
+
+        } catch (Exception $exception) {
+            // exception will be re-thrown with failed payment attached
+        }
+
+        $payment->setExternalId($externalPaymentId);
+
+        // payment failed
+        if (empty($externalPaymentId) || $exception) {
+
+            $message = $exception ? $exception->getMessage() : 'Could not recharge existing payment method.';
+
+            $payment->setStatus(Payment::STATUS_FAILED);
+            $payment->setMessage($message);
+            $payment->setTotalPaid(0);
+
+            throw new PaymentFailedException(
+                $message,
+                0,
+                $exception,
+                $payment
+            );
+        }
+
+        $payment->setStatus(Payment::STATUS_PAID);
+
+        // store payment in database
         $this->entityManager->persist($payment);
         $this->entityManager->flush();
 

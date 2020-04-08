@@ -20,6 +20,7 @@ use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\PaymentEvent;
 use Railroad\Ecommerce\Events\Subscriptions\UserSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\TransactionFailedException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
@@ -32,6 +33,7 @@ use Railroad\Ecommerce\Requests\PaymentCreateRequest;
 use Railroad\Ecommerce\Requests\PaymentIndexRequest;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\InvoiceService;
+use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
@@ -60,6 +62,8 @@ class PaymentJsonController extends Controller
      * @var PaymentRepository
      */
     private $paymentRepository;
+
+    private $paymentService;
 
     /**
      * @var PermissionService
@@ -122,6 +126,7 @@ class PaymentJsonController extends Controller
         InvoiceService $invoiceService,
         OrderRepository $orderRepository,
         PaymentRepository $paymentRepository,
+        PaymentService $paymentService,
         PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService,
         StripePaymentGateway $stripePaymentGateway,
@@ -135,6 +140,7 @@ class PaymentJsonController extends Controller
         $this->invoiceService = $invoiceService;
         $this->orderRepository = $orderRepository;
         $this->paymentRepository = $paymentRepository;
+        $this->paymentService = $paymentService;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
@@ -217,142 +223,43 @@ class PaymentJsonController extends Controller
 
         $paymentPrice = $request->input('data.attributes.due');
 
-        $payment = new Payment();
-
-        $exception = null;
-
         // todo: this is broken - ask for details
-        if (is_null($paymentMethod)) {
+        // if (is_null($paymentMethod)) {
 
-            $payment->setTotalDue($paymentPrice);
-            $payment->setTotalPaid($paymentPrice);
-            $payment->setExternalProvider('manual');
-            $payment->setGatewayName('manual');
-            $payment->setStatus(true);
-            $payment->setCurrency($currency);
-            $payment->setCreatedAt(Carbon::now());
+        //     $payment->setTotalDue($paymentPrice);
+        //     $payment->setTotalPaid($paymentPrice);
+        //     $payment->setExternalProvider('manual');
+        //     $payment->setGatewayName('manual');
+        //     $payment->setStatus(true);
+        //     $payment->setCurrency($currency);
+        //     $payment->setCreatedAt(Carbon::now());
 
-        }
-        else {
-            // todo - refactor into a service
-            if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
-                try {
+        // } else try payment through gateway
 
-                    /**
-                     * @var $method CreditCard
-                     */
-                    $method = $paymentMethod->getMethod();
+        try {
 
-                    $customer = $this->stripePaymentGateway->getCustomer(
-                        $gateway,
-                        $method->getExternalId()
-                    );
+            $payment = $this->paymentService->chargeUsersExistingPaymentMethod(
+                $paymentMethod->getId(),
+                $currency,
+                $paymentPrice,
+                $user->getId(),
+                $paymentType,
+                false
+            );
 
-                    $card = $this->stripePaymentGateway->getCard(
-                        $customer,
-                        $method->getExternalId(),
-                        $gateway
-                    );
+        } catch (Exception $paymentFailedException) {
 
-                    $charge = $this->stripePaymentGateway->chargeCustomerCard(
-                        $gateway,
-                        $paymentPrice,
-                        $currency,
-                        $card,
-                        $customer,
-                        ''
-                    );
+            $exception = new TransactionFailedException(
+                $paymentFailedException->getMessage()
+            );
 
-                    $payment->setTotalPaid($paymentPrice);
-                    $payment->setExternalProvider('stripe');
-                    $payment->setGatewayName(
-                        $paymentMethod->getMethod()
-                            ->getPaymentGatewayName()
-                    );
-                    $payment->setExternalId($charge->id);
-                    $payment->setStatus(($charge->status == 'succeeded') ? '1' : '0');
-                    $payment->setMessage('');
-                    $payment->setCurrency($charge->currency);
-
-                } catch (Exception $paymentFailedException) {
-
-                    $exception = new TransactionFailedException(
-                        $paymentFailedException->getMessage()
-                    );
-
-                    $payment->setTotalPaid(0);
-                    $payment->setExternalProvider('stripe');
-                    $payment->setGatewayName(
-                        $paymentMethod->getMethod()
-                            ->getPaymentGatewayName()
-                    );
-                    $payment->setExternalId($charge->id ?? null);
-                    $payment->setStatus('failed');
-                    $payment->setMessage($paymentFailedException->getMessage());
-                    $payment->setCurrency($currency);
-
+            if ($paymentFailedException instanceof PaymentFailedException) {
+                if ($payment = $paymentFailedException->getPayment()) {
+                    // store failed payment data
+                    $this->entityManager->persist($payment);
+                    $this->entityManager->flush();
                 }
             }
-            else {
-                if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
-                    try {
-
-                        /**
-                         * @var $method PaypalBillingAgreement
-                         */
-                        $method = $paymentMethod->getMethod();
-
-                        $transactionId = $this->payPalPaymentGateway->chargeBillingAgreement(
-                                $gateway,
-                                $paymentPrice,
-                                $currency,
-                                $method->getExternalId(),
-                                ''
-                            );
-
-                        $payment->setTotalPaid($paymentPrice);
-                        $payment->setExternalProvider('paypal');
-                        $payment->setExternalId($transactionId);
-                        $payment->setGatewayName(
-                            $paymentMethod->getMethod()
-                                ->getPaymentGatewayName()
-                        );
-                        $payment->setStatus('1');
-                        $payment->setMessage('');
-                        $payment->setCurrency($currency);
-
-                    } catch (Exception $paymentFailedException) {
-
-                        $exception = new TransactionFailedException(
-                            $paymentFailedException->getMessage()
-                        );
-
-                        $payment->setTotalPaid(0);
-                        $payment->setExternalProvider('paypal');
-                        $payment->setExternalId($transactionId ?? null);
-                        $payment->setGatewayName(
-                            $paymentMethod->getMethod()
-                                ->getPaymentGatewayName()
-                        );
-                        $payment->setStatus('failed');
-                        $payment->setMessage($paymentFailedException->getMessage());
-                        $payment->setCurrency($currency);
-                    }
-                }
-            }
-        }
-
-        $payment->setTotalDue($paymentPrice);
-        $payment->setType($paymentType);
-        $payment->setConversionRate($conversionRate);
-        $payment->setPaymentMethod($paymentMethod);
-        $payment->setCreatedAt(Carbon::now());
-
-        $this->entityManager->persist($payment);
-
-        if ($exception) {
-
-            $this->entityManager->flush();
 
             throw $exception;
         }

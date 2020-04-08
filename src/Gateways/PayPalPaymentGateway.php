@@ -35,7 +35,7 @@ class PayPalPaymentGateway
      */
     public function createBillingAgreement($gatewayName, $amount, $currency, $expressCheckoutToken, $description = '')
     {
-        // todo - refactor params
+        // todo - refactor params - params set to match stripe gateway, confirm change
         $config = config('ecommerce.payment_gateways')['paypal'][$gatewayName] ?? null;
 
         if (empty($config)) {

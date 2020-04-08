@@ -257,7 +257,7 @@ class RefundRepository extends EntityRepository
     /**
      * Returns the total SUM of refund.refundedAmount of specified day
      *
-     * @param string $day
+     * @param Carbon $day
      * @param string $brand
      *
      * @return float
@@ -265,9 +265,8 @@ class RefundRepository extends EntityRepository
      * @throws NoResultException
      * @throws NonUniqueResultException
      */
-    public function getDailyTotalRefunds($day, $brand)
+    public function getDailyTotalRefunds(Carbon $day, $brand)
     {
-        // todo - review usage and update $day param type
         /** @var $qb QueryBuilder */
         $qb =
             $this->getEntityManager()

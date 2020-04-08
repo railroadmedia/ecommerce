@@ -23,8 +23,8 @@ use Railroad\Ecommerce\Requests\FailedSubscriptionsRequest;
 use Railroad\Ecommerce\Requests\SubscriptionCreateRequest;
 use Railroad\Ecommerce\Requests\SubscriptionUpdateRequest;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
-use Railroad\Ecommerce\Services\RenewalService;
 use Railroad\Ecommerce\Services\ResponseService;
+use Railroad\Ecommerce\Services\SubscriptionService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
@@ -54,9 +54,9 @@ class SubscriptionJsonController extends Controller
     private $permissionService;
 
     /**
-     * @var RenewalService
+     * @var SubscriptionService
      */
-    private $renewalService;
+    private $subscriptionService;
 
     /**
      * @var UserProductService
@@ -69,7 +69,7 @@ class SubscriptionJsonController extends Controller
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param PermissionService $permissionService
-     * @param RenewalService $renewalService
+     * @param SubscriptionService $subscriptionService
      * @param SubscriptionRepository $subscriptionRepository
      * @param UserProductService $userProductService
      */
@@ -77,7 +77,7 @@ class SubscriptionJsonController extends Controller
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
         PermissionService $permissionService,
-        RenewalService $renewalService,
+        SubscriptionService $subscriptionService,
         SubscriptionRepository $subscriptionRepository,
         UserProductService $userProductService
     )
@@ -85,7 +85,7 @@ class SubscriptionJsonController extends Controller
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->permissionService = $permissionService;
-        $this->renewalService = $renewalService;
+        $this->subscriptionService = $subscriptionService;
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
     }
@@ -265,7 +265,7 @@ class SubscriptionJsonController extends Controller
 
         try {
 
-            $payment = $this->renewalService->renew($subscription);
+            $payment = $this->subscriptionService->renew($subscription);
 
             $response = ResponseService::subscription($subscription);
 

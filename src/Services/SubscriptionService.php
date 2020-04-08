@@ -26,8 +26,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Throwable;
 
-// todo - refactor into 'SubscriptionService'
-class RenewalService
+class SubscriptionService
 {
     const DEACTIVATION_MESSAGE = 'De-activated due to renewal payment fail.';
 
@@ -71,7 +70,7 @@ class RenewalService
     private $paymentService;
 
     /**
-     * RenewalService constructor.
+     * SubscriptionService constructor.
      *
      * @param CurrencyService $currencyService
      * @param EcommerceEntityManager $entityManager
@@ -243,7 +242,8 @@ class RenewalService
         $renewalDueDate = $subscription->getPaidUntil()
                             ->copy();
 
-        return $renewalDueDate->addHours($config[$renewalAttempt]);
+        return isset($config[$renewalAttempt]) ?
+                    $renewalDueDate->addHours($config[$renewalAttempt]) : null;
     }
 
     /**

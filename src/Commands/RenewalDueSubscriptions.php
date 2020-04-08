@@ -10,7 +10,7 @@ use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewFailed;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
-use Railroad\Ecommerce\Services\RenewalService;
+use Railroad\Ecommerce\Services\SubscriptionService;
 use Throwable;
 
 class RenewalDueSubscriptions extends Command
@@ -40,28 +40,28 @@ class RenewalDueSubscriptions extends Command
     private $subscriptionRepository;
 
     /**
-     * @var RenewalService
+     * @var SubscriptionService
      */
-    private $renewalService;
+    private $subscriptionService;
 
     /**
      * RenewalDueSubscriptions constructor.
      *
      * @param EcommerceEntityManager $entityManager
-     * @param RenewalService $renewalService
      * @param SubscriptionRepository $subscriptionRepository
+     * @param SubscriptionService $subscriptionService
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
-        RenewalService $renewalService,
-        SubscriptionRepository $subscriptionRepository
+        SubscriptionRepository $subscriptionRepository,
+        SubscriptionService $subscriptionService
     )
     {
         parent::__construct();
 
         $this->entityManager = $entityManager;
-        $this->renewalService = $renewalService;
         $this->subscriptionRepository = $subscriptionRepository;
+        $this->subscriptionService = $subscriptionService;
     }
 
     /**
@@ -85,7 +85,7 @@ class RenewalDueSubscriptions extends Command
 
             try {
 
-                $payment = $this->renewalService->renew($dueSubscription);
+                $payment = $this->subscriptionService->renew($dueSubscription);
 
                 if ($payment) {
                     /** @var $payment Payment */
