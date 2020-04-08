@@ -51,7 +51,7 @@ class RetentionStatsRepository extends RepositoryBase
             ->from(RetentionStats::class, 's')
             ->where(
                 $qb->expr()
-                    ->orX(
+                    ->andX(
                         $qb->expr()
                             ->between('s.intervalStartDate', ':smallDateStart', ':bigDateStart'),
                         $qb->expr()
