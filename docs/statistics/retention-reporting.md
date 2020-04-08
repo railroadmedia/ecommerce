@@ -140,9 +140,15 @@ assumptions about the product or platform. In reality the change in the rate is 
 random promotions, its not related to changes made to the product, platform, or content. 
 The reporting algorithm must be independent of surges in new member sign ups.
 
+The easiest way to solve this is to only report on yearly retention for time periods longer than a year. 
+In theory the longer the report time period the less of an issue this is. We have done 
+this successfully in the past but having to wait over a year to get an accurate retention number for actions we may have 
+taken at and point in the last 12 months drastically reduces the usefulness of the reporting. 
 
-### Seasonality Problem
-
+Lastly, we should theoretically do this same type of adjustment for monthly memberships. Its likely that far more 
+users sign up at the beginning and end of the month. This is slightly less important since we typically pull retention 
+for entire months at a minimum, which mostly negates the problem. We will want weekly reporting thought so we will run 
+in to the same problem.
 
 ## Solving The Retention Reporting Problems
 
@@ -150,3 +156,6 @@ We need a reporting algorithm which works independently of renewal cycle length 
 to make sure that monthly to yearly upgrades do not negatively impact retention reporting for the monthly membership. 
 Lastly we need to make sure that we are treating all users subscriptions dates consistently, whether it be cancel date 
 or renewal date, or a combination of both.
+
+We also need a way to adjust for our seasonality curve. Or we need to bake something right in to the algorithm 
+that make the numbers report independently of surges in new member sign ups.

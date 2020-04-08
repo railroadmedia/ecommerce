@@ -122,9 +122,7 @@ class EcommerceServiceProvider extends ServiceProvider
         // commands
         $this->commands(
             [
-                AddDailyMembershipStats::class,
                 AddPastMembershipStats::class,
-                AddPastRetentionStats::class,
                 ConvertDiscountCriteriaProducsAssociation::class,
                 RenewalDueSubscriptions::class,
                 SplitPaymentMethodIdsToColumns::class,
