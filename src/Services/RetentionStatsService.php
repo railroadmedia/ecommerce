@@ -7,7 +7,6 @@ use Exception;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
-use Railroad\Ecommerce\Commands\AddPastRetentionStats;
 use Railroad\Ecommerce\Entities\RetentionStats;
 use Railroad\Ecommerce\Entities\Structures\AverageMembershipEnd;
 use Railroad\Ecommerce\Entities\Structures\MembershipEndStats;
@@ -57,7 +56,7 @@ class RetentionStatsService
         if (!empty($request->get('brand'))) {
             $brands = [$request->get('brand')];
         } else {
-            $brands = AddPastRetentionStats::BRANDS;
+            $brands = config('ecommerce.available_brands', []);
         }
 
         if (!empty($request->get('interval_type'))) {
@@ -242,7 +241,7 @@ class RetentionStatsService
                 $retentionStatistic->setTotalUsersWhoCanceledOrExpired($totalUsersWhoFellOff->count());
 
                 // this is before any users exists, return zeros
-                if ($totalWithPayments->count() + $totalUsersWhoFellOff->count() >= 0) {
+                if ($totalWithPayments->count() + $totalUsersWhoFellOff->count() > 0) {
 
                     // calculate rate
                     $paymentRetentionRate =
