@@ -2,16 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities\Structures;
 
-use Carbon\Carbon;
-use DateTimeInterface;
-
 class RetentionStatistic
 {
-    /**
-     * @var string
-     */
-    private $id;
-
     /**
      * @var string
      */
@@ -23,37 +15,44 @@ class RetentionStatistic
     private $subscriptionType;
 
     /**
+     * @var integer
+     */
+    private $totalUsersInPool;
+
+    /**
+     * @var integer
+     */
+    private $totalUsersWhoUpgradedOrRepurchased;
+
+    /**
+     * @var integer
+     */
+    private $totalUsersWhoRenewed;
+
+    /**
+     * @var integer
+     */
+    private $totalUsersWhoCanceledOrExpired;
+
+    /**
      * @var float
      */
     private $retentionRate;
 
     /**
-     * @var Carbon
+     * @var string
      */
-    private $intervalStartDate;
+    private $intervalStartDateTime;
 
     /**
-     * @var Carbon
+     * @var string
      */
-    private $intervalEndDate;
-
-    public function __construct(string $id)
-    {
-        $this->id = $id;
-    }
+    private $intervalEndDateTime;
 
     /**
-     * @return string|null
+     * @return string
      */
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getBrand(): ?string
+    public function getBrand(): string
     {
         return $this->brand;
     }
@@ -61,15 +60,15 @@ class RetentionStatistic
     /**
      * @param string $brand
      */
-    public function setBrand(string $brand)
+    public function setBrand(string $brand): void
     {
         $this->brand = $brand;
     }
 
     /**
-     * @return string|null
+     * @return string
      */
-    public function getSubscriptionType(): ?string
+    public function getSubscriptionType(): string
     {
         return $this->subscriptionType;
     }
@@ -77,15 +76,79 @@ class RetentionStatistic
     /**
      * @param string $subscriptionType
      */
-    public function setSubscriptionType(string $subscriptionType)
+    public function setSubscriptionType(string $subscriptionType): void
     {
         $this->subscriptionType = $subscriptionType;
     }
 
     /**
-     * @return float|null
+     * @return int
      */
-    public function getRetentionRate(): ?float
+    public function getTotalUsersInPool(): int
+    {
+        return $this->totalUsersInPool;
+    }
+
+    /**
+     * @param int $totalUsersInPool
+     */
+    public function setTotalUsersInPool(int $totalUsersInPool): void
+    {
+        $this->totalUsersInPool = $totalUsersInPool;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTotalUsersWhoUpgradedOrRepurchased(): int
+    {
+        return $this->totalUsersWhoUpgradedOrRepurchased;
+    }
+
+    /**
+     * @param int $totalUsersWhoUpgradedOrRepurchased
+     */
+    public function setTotalUsersWhoUpgradedOrRepurchased(int $totalUsersWhoUpgradedOrRepurchased): void
+    {
+        $this->totalUsersWhoUpgradedOrRepurchased = $totalUsersWhoUpgradedOrRepurchased;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTotalUsersWhoRenewed(): int
+    {
+        return $this->totalUsersWhoRenewed;
+    }
+
+    /**
+     * @param int $totalUsersWhoRenewed
+     */
+    public function setTotalUsersWhoRenewed(int $totalUsersWhoRenewed): void
+    {
+        $this->totalUsersWhoRenewed = $totalUsersWhoRenewed;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTotalUsersWhoCanceledOrExpired(): int
+    {
+        return $this->totalUsersWhoCanceledOrExpired;
+    }
+
+    /**
+     * @param int $totalUsersWhoCanceledOrExpired
+     */
+    public function setTotalUsersWhoCanceledOrExpired(int $totalUsersWhoCanceledOrExpired): void
+    {
+        $this->totalUsersWhoCanceledOrExpired = $totalUsersWhoCanceledOrExpired;
+    }
+
+    /**
+     * @return float
+     */
+    public function getRetentionRate(): float
     {
         return $this->retentionRate;
     }
@@ -93,40 +156,40 @@ class RetentionStatistic
     /**
      * @param float $retentionRate
      */
-    public function setRetentionRate(float $retentionRate)
+    public function setRetentionRate(float $retentionRate): void
     {
         $this->retentionRate = $retentionRate;
     }
 
     /**
-     * @return DateTimeInterface|null
+     * @return string
      */
-    public function getIntervalStartDate(): ?DateTimeInterface
+    public function getIntervalStartDateTime(): string
     {
-        return $this->intervalStartDate;
+        return $this->intervalStartDateTime;
     }
 
     /**
-     * @param DateTimeInterface $intervalStartDate
+     * @param string $intervalStartDateTime
      */
-    public function setIntervalStartDate(?DateTimeInterface $intervalStartDate)
+    public function setIntervalStartDateTime(string $intervalStartDateTime): void
     {
-        $this->intervalStartDate = $intervalStartDate;
+        $this->intervalStartDateTime = $intervalStartDateTime;
     }
 
     /**
-     * @return DateTimeInterface|null
+     * @return string
      */
-    public function getIntervalEndDate(): ?DateTimeInterface
+    public function getIntervalEndDateTime(): string
     {
-        return $this->intervalEndDate;
+        return $this->intervalEndDateTime;
     }
 
     /**
-     * @param DateTimeInterface $intervalEndDate
+     * @param string $intervalEndDateTime
      */
-    public function setIntervalEndDate(?DateTimeInterface $intervalEndDate)
+    public function setIntervalEndDateTime(string $intervalEndDateTime): void
     {
-        $this->intervalEndDate = $intervalEndDate;
+        $this->intervalEndDateTime = $intervalEndDateTime;
     }
 }
