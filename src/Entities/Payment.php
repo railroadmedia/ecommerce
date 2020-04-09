@@ -37,6 +37,7 @@ class Payment
     const EXTERNAL_PROVIDER_PAYPAL = 'paypal';
     const EXTERNAL_PROVIDER_APPLE = 'apple';
     const EXTERNAL_PROVIDER_GOOGLE = 'google';
+    const EXTERNAL_PROVIDER_MANUAL = 'manual';
 
     const TYPE_INITIAL_ORDER = 'initial_order';
     const TYPE_SUBSCRIPTION_RENEWAL = 'subscription_renewal';

@@ -181,87 +181,105 @@ class PaymentJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'create.payment');
 
-        $userPaymentMethod = $this->userPaymentMethodsRepository->getByMethodId(
-            $request->input('data.relationships.paymentMethod.data.id')
-        );
-
-        /**
-         * @var $user User
-         */
-        $user = $userPaymentMethod->getUser();
-
-        // if the logged in user it's not admin => can pay only with own payment method
-        throw_if(
-            ((!$this->permissionService->can(
-                    auth()->id(),
-                    'create.payment.method'
-                )) && (auth()->id() != ($user->getId() ?? 0))),
-            new NotAllowedException('This action is unauthorized.')
-        );
+        $paymentPrice = $request->input('data.attributes.due');
 
         $gateway = $request->input('data.attributes.payment_gateway');
 
-        /**
-         * @var $paymentMethod PaymentMethod
-         */
-        $paymentMethod = $userPaymentMethod->getPaymentMethod();
+        $paymentType =
+                $request->input('data.relationships.subscription.data.id') ? config('ecommerce.renewal_payment_type') :
+                    config('ecommerce.order_payment_type');
 
         // if the currency not exist on the request and the payment it's manual,
         // get the currency with Location package, based on ip address
         $currency =
             $request->input('data.attributes.currency')
             ??
-            $this->currencyService->get()
-            ??
-            $paymentMethod->getCurrency();
+            $this->currencyService->get();
 
-        $conversionRate = $this->currencyService->getRate($currency);
+        if (!$request->input('data.relationships.paymentMethod.data.id')) {
 
-        $paymentType =
-            $request->input('data.relationships.subscription.data.id') ? config('ecommerce.renewal_payment_type') :
-                config('ecommerce.order_payment_type');
-
-        $paymentPrice = $request->input('data.attributes.due');
-
-        // todo: this is broken - ask for details
-        // if (is_null($paymentMethod)) {
-
-        //     $payment->setTotalDue($paymentPrice);
-        //     $payment->setTotalPaid($paymentPrice);
-        //     $payment->setExternalProvider('manual');
-        //     $payment->setGatewayName('manual');
-        //     $payment->setStatus(true);
-        //     $payment->setCurrency($currency);
-        //     $payment->setCreatedAt(Carbon::now());
-
-        // } else try payment through gateway
-
-        try {
-
-            $payment = $this->paymentService->chargeUsersExistingPaymentMethod(
-                $paymentMethod->getId(),
-                $currency,
-                $paymentPrice,
-                $user->getId(),
-                $paymentType,
-                false
+            // if the logged in user it's not admin => can not pay without payment method
+            throw_if(
+                !$this->permissionService->can(
+                    auth()->id(),
+                    'create.manual.payment'
+                ),
+                new NotAllowedException('This action is unauthorized.')
             );
 
-        } catch (Exception $paymentFailedException) {
+            $conversionRate = $this->currencyService->getRate($currency);
 
-            $exception = new TransactionFailedException(
-                $paymentFailedException->getMessage()
+            $user = $paymentMethod = null;
+
+            $payment = new Payment();
+
+            $payment->setTotalDue($paymentPrice);
+            $payment->setTotalPaid($paymentPrice);
+            $payment->setTotalRefunded(0);
+            $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_MANUAL);
+            $payment->setType($paymentType);
+            $payment->setConversionRate($conversionRate);
+            $payment->setGatewayName($gateway);
+            $payment->setStatus(Payment::STATUS_PAID);
+            $payment->setCurrency($currency);
+            $payment->setCreatedAt(Carbon::now());
+
+            $this->entityManager->persist($payment);
+
+        } else {
+
+            $userPaymentMethod = $this->userPaymentMethodsRepository->getByMethodId(
+                $request->input('data.relationships.paymentMethod.data.id')
             );
 
-            if ($paymentFailedException instanceof PaymentFailedException) {
-                if ($payment = $paymentFailedException->getPayment()) {
-                    // store failed payment data
-                    $this->entityManager->persist($payment);
-                    $this->entityManager->flush();
+            /**
+             * @var $user User
+             */
+            $user = $userPaymentMethod->getUser();
+
+            // if the logged in user it's not admin => can pay only with own payment method
+            throw_if(
+                ((!$this->permissionService->can(
+                        auth()->id(),
+                        'create.payment.method'
+                    )) && (auth()->id() != ($user->getId() ?? 0))),
+                new NotAllowedException('This action is unauthorized.')
+            );
+
+            /**
+             * @var $paymentMethod PaymentMethod
+             */
+            $paymentMethod = $userPaymentMethod->getPaymentMethod();
+
+            $currency = $currency ?? $paymentMethod->getCurrency();
+
+            try {
+
+                $payment = $this->paymentService->chargeUsersExistingPaymentMethod(
+                    $paymentMethod->getId(),
+                    $currency,
+                    $paymentPrice,
+                    $user->getId(),
+                    $paymentType,
+                    false
+                );
+
+            } catch (Exception $paymentFailedException) {
+
+                $exception = new TransactionFailedException(
+                    $paymentFailedException->getMessage()
+                );
+
+                if ($paymentFailedException instanceof PaymentFailedException) {
+                    if ($payment = $paymentFailedException->getPayment()) {
+                        // store failed payment data
+                        $this->entityManager->persist($payment);
+                        $this->entityManager->flush();
+                    }
                 }
-            }
 
-            throw $exception;
+                throw $exception;
+            }
         }
 
         $subscription = null;
@@ -392,9 +410,13 @@ class PaymentJsonController extends Controller
 
         $this->entityManager->flush();
 
+        if (!$user && !is_null($order) && !is_null($order->getUser())) {
+            $user = $order->getUser();
+        }
+
         if (!is_null($subscription)) {
             event(new UserSubscriptionRenewed($subscription, $payment));
-        } else {
+        } else if ($user) {
             event(new PaymentEvent($payment, $user));
         }
 

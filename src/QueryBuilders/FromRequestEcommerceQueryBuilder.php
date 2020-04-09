@@ -47,8 +47,9 @@ class FromRequestEcommerceQueryBuilder extends QueryBuilder
         $orderByColumn = $request->get('order_by_column', $defaultOrderByColumn);
         $orderByDirection = $request->get('order_by_direction', $defaultOrderByDirection);
 
-        // todo: review, im not sure if this if statement is needed
         if (strpos($orderByColumn, '_') !== false || strpos($orderByColumn, '-') !== false) {
+            // transform order by column name from snake-case to camel-case
+            // example: 'created_at' sent by UI is transformed into 'createdAt' for doctrine
             $orderByColumn = camel_case($orderByColumn);
         }
 

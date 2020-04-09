@@ -611,12 +611,14 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         );
     }
 
-    public function test_admin_store_payment_without_payment_method()
+    public function test_admin_store_payment_without_payment_method_subscription()
     {
         $due = $this->faker->numberBetween(0, 1000);
-        $admin = $this->createAndLogInNewUser();
+        $adminEmail = $this->faker->email;
+        $adminId = $this->createAndLogInNewUser($adminEmail);
         $currency = $this->getCurrency();
         $conversionRate = $this->currencyService->getRate($currency);
+        $gateway = $this->faker->word;
 
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
         $this->permissionServiceMock->method('can')->willReturn(true);
@@ -634,35 +636,273 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             'interval_type' => PaymentJsonController::INTERVAL_TYPE_MONTHLY,
             'interval_count' => 1,
             'user_id' => $user['id'],
+            'payment_method_id' => null,
+            'brand' => $gateway,
         ]);
 
-        // $response = $this->call(
-        //     'PUT',
-        //     '/payment',
-        //     [
-        //         'data' => [
-        //             'type' => 'payment',
-        //             'attributes' => [
-        //                 'due' => $due,
-        //                 'currency' => $currency,
-        //                 'product_tax' => $productTax,
-        //                 'shipping_tax' => $shippingTax,
-        //             ],
-        //             'relationships' => [
-        //                 'subscription' => [
-        //                     'data' => [
-        //                         'type' => 'subscription',
-        //                         'id' => $subscription['id']
-        //                     ]
-        //                 ]
-        //             ]
-        //         ]
-        //     ]
-        // );
+        $response = $this->call(
+            'PUT',
+            '/payment',
+            [
+                'data' => [
+                    'type' => 'payment',
+                    'attributes' => [
+                        'due' => $due,
+                        'currency' => $currency,
+                        'product_tax' => $productTax,
+                        'shipping_tax' => $shippingTax,
+                        'payment_gateway' => $gateway,
+                    ],
+                    'relationships' => [
+                        'subscription' => [
+                            'data' => [
+                                'type' => 'subscription',
+                                'id' => $subscription['id']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        );
 
-        // todo - update controller & test
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'payment',
+                    'attributes' => [
+                        'total_due' => $due,
+                        'total_paid' => $due,
+                        'total_refunded' => 0,
+                        'type' => config('ecommerce.renewal_payment_type'),
+                        'external_provider' => Payment::EXTERNAL_PROVIDER_MANUAL,
+                        'status' => Payment::STATUS_PAID,
+                        'message' => null,
+                        'currency' => $currency,
+                        'created_at' => Carbon::now()->toDateTimeString(),
+                        'updated_at' => Carbon::now()->toDateTimeString()
+                    ],
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
 
-        $this->assertTrue(true);
+        // assert payment exists in the db
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $due,
+                'total_paid' => $due,
+                'total_refunded' => 0,
+                'type' => config('ecommerce.renewal_payment_type'),
+                'payment_method_id' => null,
+                'external_provider' => Payment::EXTERNAL_PROVIDER_MANUAL,
+                'gateway_name' => $gateway,
+                'currency' => $currency,
+                'conversion_rate' => $conversionRate,
+                'status' => Payment::STATUS_PAID,
+                'message' => null,
+                'created_at' => Carbon::now()->toDateTimeString(),
+                'updated_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'product_taxes_paid' => $productTax,
+                'shipping_taxes_paid' => $shippingTax,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'railactionlog_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => Payment::class,
+                'resource_id' => 1,
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $adminEmail,
+                'actor_id' => $adminId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
+    }
+
+    public function test_admin_store_payment_without_payment_method_order()
+    {
+        $due = $this->faker->numberBetween(0, 1000);
+        $adminEmail = $this->faker->email;
+        $adminId = $this->createAndLogInNewUser($adminEmail);
+        $currency = $this->getCurrency();
+        $conversionRate = $this->currencyService->getRate($currency);
+        $gateway = $this->faker->word;
+
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $productTax = $this->faker->numberBetween(1, 10);
+        $shippingTax = 0;
+
+        $user = $this->fakeUser();
+
+        $alreadyPaid = 100;
+
+        $order = $this->fakeOrder([
+            'total_paid' => $alreadyPaid * $conversionRate,
+            'user_id' => $user['id'],
+        ]);
+
+        $payment = $this->fakePayment([
+            'total_paid' => $alreadyPaid,
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'conversion_rate' => $conversionRate,
+        ]);
+
+        $orderPayment = $this->fakeOrderPayment([
+            'order_id' => $order['id'],
+            'payment_id' => $payment['id'],
+        ]);
+
+        $response = $this->call(
+            'PUT',
+            '/payment',
+            [
+                'data' => [
+                    'type' => 'payment',
+                    'attributes' => [
+                        'due' => $due,
+                        'currency' => $currency,
+                        'product_tax' => $productTax,
+                        'shipping_tax' => $shippingTax,
+                        'payment_gateway' => $gateway,
+                    ],
+                    'relationships' => [
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'payment',
+                    'attributes' => [
+                        'total_due' => $due,
+                        'total_paid' => $due,
+                        'total_refunded' => 0,
+                        'type' => config('ecommerce.order_payment_type'),
+                        'external_provider' => Payment::EXTERNAL_PROVIDER_MANUAL,
+                        'status' => Payment::STATUS_PAID,
+                        'message' => null,
+                        'currency' => $currency,
+                        'created_at' => Carbon::now()->toDateTimeString(),
+                        'updated_at' => Carbon::now()->toDateTimeString()
+                    ],
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+
+        // assert payment exists in the db
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $due,
+                'total_paid' => $due,
+                'total_refunded' => 0,
+                'type' => config('ecommerce.order_payment_type'),
+                'payment_method_id' => null,
+                'external_provider' => Payment::EXTERNAL_PROVIDER_MANUAL,
+                'gateway_name' => $gateway,
+                'currency' => $currency,
+                'conversion_rate' => $conversionRate,
+                'status' => Payment::STATUS_PAID,
+                'message' => null,
+                'created_at' => Carbon::now()->toDateTimeString(),
+                'updated_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'product_taxes_paid' => $productTax,
+                'shipping_taxes_paid' => $shippingTax,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'railactionlog_actions_log',
+            [
+                'brand' => $gateway,
+                'resource_name' => Payment::class,
+                'resource_id' => 2, // user had an initial payment
+                'action_name' => ActionLogService::ACTION_CREATE,
+                'actor' => $adminEmail,
+                'actor_id' => $adminId,
+                'actor_role' => ActionLogService::ROLE_ADMIN,
+            ]
+        );
+    }
+
+    public function test_user_can_not_store_payment_without_payment_method()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $due = $this->faker->numberBetween(0, 1000);
+        $currency = $this->getCurrency();
+        $gateway = $this->faker->word;
+        $productTax = $this->faker->numberBetween(1, 10);
+        $shippingTax = $this->faker->numberBetween(1, 10);
+
+        $order = $this->fakeOrder([
+            'user_id' => $userId,
+        ]);
+
+        $this->permissionServiceMock->method('canOrThrow')
+            ->willReturn(true);
+
+        $response = $this->call(
+            'PUT',
+            '/payment',
+            [
+                'data' => [
+                    'type' => 'payment',
+                    'attributes' => [
+                        'due' => $due,
+                        'currency' => $currency,
+                        'product_tax' => $productTax,
+                        'shipping_tax' => $shippingTax,
+                        'payment_gateway' => $gateway,
+                    ],
+                    'relationships' => [
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $this->assertEquals(403, $response->getStatusCode());
+
+        $this->assertEquals(
+            [
+                'title' => 'Not allowed.',
+                'detail' => 'This action is unauthorized.',
+            ],
+            $response->decodeResponseJson('error')
+        );
     }
 
     public function test_user_can_not_store_other_payment()

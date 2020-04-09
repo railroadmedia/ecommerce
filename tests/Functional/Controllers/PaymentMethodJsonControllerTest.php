@@ -143,13 +143,17 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
-        $this->stripeExternalHelperMock->method('createCard')
-            ->willReturn($fakerCard);
 
-        $this->stripeExternalHelperMock->method('getCustomersByEmail')
-            ->willReturn(['data' => [new Customer()]]);
+        $fakerCustomer = new Customer();
+        $fakerCustomer->email = $this->faker->email;
+        $fakerCustomer->id = $this->faker->word . rand();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn(new Token());
+
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -307,13 +311,17 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
-        $this->stripeExternalHelperMock->method('createCard')
-            ->willReturn($fakerCard);
 
-        $this->stripeExternalHelperMock->method('getCustomersByEmail')
-            ->willReturn(['data' => [new Customer()]]);
+        $fakerCustomer = new Customer();
+        $fakerCustomer->email = $this->faker->email;
+        $fakerCustomer->id = $this->faker->word . rand();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn(new Token());
+
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 

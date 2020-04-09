@@ -39,6 +39,7 @@ use Railroad\Ecommerce\Requests\PaymentMethodSetDefaultRequest;
 use Railroad\Ecommerce\Requests\PaymentMethodUpdateRequest;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\PaymentMethodService;
+use Railroad\Ecommerce\Services\PaymentService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
 use Spatie\Fractal\Fractal;
@@ -83,6 +84,11 @@ class PaymentMethodJsonController extends Controller
     private $paymentMethodRepository;
 
     /**
+     * @var PaymentService
+     */
+    private $paymentService;
+
+    /**
      * @var PayPalPaymentGateway
      */
     private $payPalPaymentGateway;
@@ -117,6 +123,7 @@ class PaymentMethodJsonController extends Controller
      * @param EcommerceEntityManager $entityManager
      * @param PaymentMethodService $paymentMethodService
      * @param PaymentMethodRepository $paymentMethodRepository
+     * @param PaymentService $paymentService
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
@@ -131,6 +138,7 @@ class PaymentMethodJsonController extends Controller
         EcommerceEntityManager $entityManager,
         PaymentMethodService $paymentMethodService,
         PaymentMethodRepository $paymentMethodRepository,
+        PaymentService $paymentService,
         PayPalPaymentGateway $payPalPaymentGateway,
         PermissionService $permissionService,
         StripePaymentGateway $stripePaymentGateway,
@@ -145,6 +153,7 @@ class PaymentMethodJsonController extends Controller
         $this->entityManager = $entityManager;
         $this->paymentMethodService = $paymentMethodService;
         $this->paymentMethodRepository = $paymentMethodRepository;
+        $this->paymentService = $paymentService;
         $this->payPalPaymentGateway = $payPalPaymentGateway;
         $this->permissionService = $permissionService;
         $this->stripePaymentGateway = $stripePaymentGateway;
@@ -221,8 +230,6 @@ class PaymentMethodJsonController extends Controller
         );
     }
 
-    // todo: refactor
-
     /**
      * Call the service method to create a new payment method based on request parameters.
      * Return - NotFoundException if the request method type parameter it's not defined (paypal or credit card)
@@ -247,7 +254,6 @@ class PaymentMethodJsonController extends Controller
          */
         $user = $this->userProvider->getUserById($userId);
 
-        // may be refactored in user provider, then reused in OrderFormSubmitRequest::getPurchaser
         $purchaser = new Purchaser();
 
         $purchaser->setId($user->getId());
@@ -257,11 +263,9 @@ class PaymentMethodJsonController extends Controller
 
         try {
             if ($request->get('method_type') == PaymentMethod::TYPE_CREDIT_CARD) {
-                // todo - review stripe customer and card retrival (& PaymentService chargeNewCreditCartPaymentMethod possible reuse)
-                $customer = $this->stripePaymentGateway->getOrCreateCustomer(
-                    $request->get('gateway'),
-                    $user->getEmail()
-                );
+
+                // stripe customer is looked-up in db & reused or created
+                $customer = $this->paymentService->getStripeCustomer($purchaser, $request->get('gateway'));
 
                 $card = $this->stripePaymentGateway->createCustomerCard(
                     $request->get('gateway'),
@@ -276,6 +280,9 @@ class PaymentMethodJsonController extends Controller
                 if (!empty($address)) {
                     $billingAddress = $address;
                 } else {
+                    // because the billing address is populated with data from the stripe card object
+                    // this block can not be replaced with a call to $this->paymentService->createCreditCartPaymentMethod
+                    // without modifying paymentService
                     $billingCountry = $card->address_country ?? $card->country;
 
                     // save billing address
