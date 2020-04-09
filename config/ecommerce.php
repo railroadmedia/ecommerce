@@ -20,6 +20,27 @@ return [
     'database_in_memory' => false,
     'enable_query_log' => false,
 
+    // brand membership product skus
+    'membership_product_skus' => [
+        'drumeo' => [
+            'DLM-1-month',
+            'DLM-1-year',
+            'DLM-Trial-1-month',
+            'DLM-6-month',
+            'DLM-teachers-1-year',
+            'DLM-teachers-upgrade-1-month',
+            'DLM-teachers-upgrade-1-year',
+            'DLM-3-month',
+            'DFT-PASS-1_old-1-month',
+            'DLM-UPSELL-2-month',
+            'DLM-Trial-Best-Book-1-month',
+            'DLM-Trial-Drummers-Toolbox-1-month',
+            'DLM-Lifetime',
+            'drumeo_edge_30_days_access',
+            'DLM-Trial-30-Day',
+        ],
+    ],
+
     // unique user validation database info
     'database_info_for_unique_user_email_validation' => [
         'database_connection_name' => 'mysql',
