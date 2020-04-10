@@ -152,7 +152,7 @@ class OrderFormService
 
                 if (empty($cart->getPaymentMethodId())) {
                     if ($request->get('payment_method_type') == PaymentMethod::TYPE_CREDIT_CARD) {
-                        $paymentMethod = $this->paymentService->createCreditCartPaymentMethod(
+                        $paymentMethod = $this->paymentService->createCreditCardPaymentMethod(
                             $purchaser,
                             $request->getBillingAddress(),
                             $request->get('gateway', config('ecommerce.default_gateway')),

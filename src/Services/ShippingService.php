@@ -119,8 +119,6 @@ class ShippingService
         return (float)$weight;
     }
 
-    // todo: test
-
     /**
      * @param Cart $cart
      *
@@ -140,8 +138,6 @@ class ShippingService
 
         return false;
     }
-
-    // todo: test
 
     /**
      * @param Cart $cart

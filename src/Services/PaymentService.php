@@ -21,8 +21,6 @@ use Stripe\Customer;
 use Throwable;
 
 /**
- * todo: needs testing
- *
  * Class PaymentService
  * @package Railroad\Ecommerce\Services
  */
@@ -355,7 +353,7 @@ class PaymentService
      * @throws PaymentFailedException
      * @throws Throwable
      */
-    public function createCreditCartPaymentMethod(
+    public function createCreditCardPaymentMethod(
         Purchaser $purchaser,
         Address $billingAddress,
         string $gateway,

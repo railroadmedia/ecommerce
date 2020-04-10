@@ -305,4 +305,117 @@ class ShippingServiceTest extends EcommerceTestCase
         );
     }
 
+    public function test_does_cart_have_any_physical_items_has()
+    {
+        $productOne = $this->fakeProduct(
+            [
+                'active' => 1,
+                'weight' => 15.5,
+                'is_physical' => true,
+            ]
+        );
+
+        $productTwo = $this->fakeProduct(
+            [
+                'active' => 1,
+                'weight' => 0,
+                'is_physical' => false,
+            ]
+        );
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart($productOne['sku'], 1);
+        $cartService->addToCart($productTwo['sku'], 1);
+
+        $this->assertEquals(
+            true,
+            $this->shippingService->doesCartHaveAnyPhysicalItems($cartService->getCart())
+        );
+    }
+
+    public function test_does_cart_have_any_physical_items_has_not()
+    {
+        $productOne = $this->fakeProduct(
+            [
+                'active' => 1,
+                'weight' => 15.5,
+                'is_physical' => true,
+            ]
+        );
+
+        $productTwo = $this->fakeProduct(
+            [
+                'active' => 1,
+                'weight' => 0,
+                'is_physical' => false,
+            ]
+        );
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart($productTwo['sku'], 1);
+
+        $this->assertEquals(
+            false,
+            $this->shippingService->doesCartHaveAnyPhysicalItems($cartService->getCart())
+        );
+    }
+
+    public function test_doesCartHaveAnyDigitalItems_has()
+    {
+        $productOne = $this->fakeProduct(
+            [
+                'active' => 1,
+                'weight' => 15.5,
+                'is_physical' => true,
+            ]
+        );
+
+        $productTwo = $this->fakeProduct(
+            [
+                'active' => 1,
+                'weight' => 0,
+                'is_physical' => false,
+            ]
+        );
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart($productOne['sku'], 1);
+        $cartService->addToCart($productTwo['sku'], 1);
+
+        $this->assertEquals(
+            true,
+            $this->shippingService->doesCartHaveAnyPhysicalItems($cartService->getCart())
+        );
+    }
+
+    public function test_doesCartHaveAnyDigitalItems_has_not()
+    {
+        $productOne = $this->fakeProduct(
+            [
+                'active' => 1,
+                'weight' => 15.5,
+                'is_physical' => true,
+            ]
+        );
+
+        $productTwo = $this->fakeProduct(
+            [
+                'active' => 1,
+                'weight' => 0,
+                'is_physical' => false,
+            ]
+        );
+
+        $cartService = $this->app->make(CartService::class);
+
+        $cartService->addToCart($productOne['sku'], 1);
+
+        $this->assertEquals(
+            true,
+            $this->shippingService->doesCartHaveAnyPhysicalItems($cartService->getCart())
+        );
+    }
 }

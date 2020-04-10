@@ -487,7 +487,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             '/json/order-form/submit',
             [
                 'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
-                'billing_region' => 'alberta',
+                'billing_region' => 'Alberta',
                 'billing_zip_or_postal_code' => $this->faker->postcode,
                 'billing_country' => 'Canada',
                 'account_creation_email' => $this->faker->email,
@@ -607,7 +607,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $currency = $this->getCurrency();
@@ -687,7 +687,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $requestData = [
@@ -702,7 +702,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'shipping_last_name' => $this->faker->lastName,
             'shipping_address_line_1' => $this->faker->address,
             'shipping_city' => $this->faker->city,
-            'shipping_region' => 'alberta',
+            'shipping_region' => 'Alberta',
             'shipping_zip_or_postal_code' => $this->faker->postcode,
             'shipping_country' => 'Canada',
             'currency' => $currency,
@@ -1063,7 +1063,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $productOne = $this->fakeProduct(
@@ -1455,7 +1455,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $product = $this->fakeProduct(
@@ -1719,7 +1719,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $productOne = $this->fakeProduct(
@@ -2087,7 +2087,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $orderRequestData = [
@@ -2101,7 +2101,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'shipping_last_name' => $this->faker->lastName,
             'shipping_address_line_1' => $this->faker->address,
             'shipping_city' => $this->faker->city,
-            'shipping_region' => 'alberta',
+            'shipping_region' => 'Alberta',
             'shipping_zip_or_postal_code' => $this->faker->postcode,
             'shipping_country' => 'Canada',
             'currency' => $currency
@@ -2215,7 +2215,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $orderRequestData = [
@@ -2230,7 +2230,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'shipping_last_name' => $this->faker->lastName,
             'shipping_address_line_1' => $this->faker->address,
             'shipping_city' => $this->faker->city,
-            'shipping_region' => 'alberta',
+            'shipping_region' => 'Alberta',
             'shipping_zip_or_postal_code' => $this->faker->postcode,
             'shipping_country' => 'Canada',
             'currency' => $currency
@@ -2554,7 +2554,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $billingData = [
@@ -2665,7 +2665,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_last_name' => $this->faker->lastName,
                 'shipping_address_line_1' => $this->faker->address,
                 'shipping_city' => $this->faker->city,
-                'shipping_region' => 'alberta',
+                'shipping_region' => 'Alberta',
                 'shipping_zip_or_postal_code' => $this->faker->postcode,
                 'shipping_country' => 'Canada',
                 'currency' => $currency
@@ -3002,7 +3002,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $billingData = [
@@ -3120,7 +3120,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'shipping_last_name' => $this->faker->lastName,
             'shipping_address_line_1' => $this->faker->address,
             'shipping_city' => $this->faker->city,
-            'shipping_region' => 'alberta',
+            'shipping_region' => 'Alberta',
             'shipping_zip_or_postal_code' => $this->faker->postcode,
             'shipping_country' => 'Canada',
             'currency' => $currency
@@ -3463,7 +3463,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $billingData = [
@@ -3574,7 +3574,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $shippingAddress = $this->fakeAddress(
-            ['type' => 'shipping', 'region' => 'alberta', 'country' => 'Canada', 'user_id' => $userId]
+            ['type' => 'shipping', 'region' => 'Alberta', 'country' => 'Canada', 'user_id' => $userId]
         );
 
         $cardToken = $this->faker->word;
@@ -3825,7 +3825,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $billingData = [
@@ -3921,7 +3921,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'shipping_last_name' => $this->faker->lastName,
                 'shipping_address_line_1' => $this->faker->address,
                 'shipping_city' => $this->faker->word,
-                'shipping_region' => 'alberta',
+                'shipping_region' => 'Alberta',
                 'shipping_zip_or_postal_code' => $this->faker->postcode,
                 'shipping_country' => 'Canada',
                 'currency' => $currency
@@ -4236,7 +4236,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $session = $this->app->make(Store::class);
@@ -4252,7 +4252,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'street_line_2' => null,
             'city' => $this->faker->city,
             'zip' => $this->faker->postcode,
-            'region' => 'alberta',
+            'region' => 'Alberta',
             'country' => 'Canada'
         ];
 
@@ -4274,7 +4274,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $requestData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
-            'billing_region' => 'alberta',
+            'billing_region' => 'Alberta',
             'billing_zip_or_postal_code' => $this->faker->postcode,
             'billing_country' => 'Canada',
             'company_name' => $this->faker->creditCardType,
@@ -4719,7 +4719,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $requestData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
             'card_token' => $cardToken,
-            'billing_region' => 'alberta',
+            'billing_region' => 'Alberta',
             'billing_zip_or_postal_code' => $this->faker->postcode,
             'billing_country' => 'Canada',
             'gateway' => $brand,
@@ -4805,7 +4805,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $cardToken = $this->faker->word;
@@ -4822,7 +4822,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'shipping_last_name' => $this->faker->lastName,
             'shipping_address_line_1' => $this->faker->address,
             'shipping_city' => $this->faker->city,
-            'shipping_region' => 'alberta',
+            'shipping_region' => 'Alberta',
             'shipping_zip_or_postal_code' => $this->faker->postcode,
             'shipping_country' => 'Canada',
             'currency' => $currency
@@ -5160,7 +5160,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $cardToken = $this->faker->word;
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $orderRequestData = [
@@ -5175,7 +5175,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'shipping_last_name' => $this->faker->lastName,
             'shipping_address_line_1' => $this->faker->address,
             'shipping_city' => $this->faker->city,
-            'shipping_region' => 'alberta',
+            'shipping_region' => 'Alberta',
             'shipping_zip_or_postal_code' => $this->faker->postcode,
             'shipping_country' => 'Canada',
             'currency' => $currency
@@ -5534,7 +5534,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $requestData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
             'card_token' => $cardToken,
-            'billing_region' => 'alberta',
+            'billing_region' => 'Alberta',
             'billing_zip_or_postal_code' => $this->faker->postcode,
             'billing_country' => 'Canada',
             'gateway' => $brand,
@@ -5689,7 +5689,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $orderData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
             'card_token' => $cardToken,
-            'billing_region' => 'alberta',
+            'billing_region' => 'Alberta',
             'billing_zip_or_postal_code' => $this->faker->postcode,
             'billing_country' => 'Canada',
             'gateway' => 'drumeo',
@@ -5790,7 +5790,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $product = $this->fakeProduct(
@@ -5902,7 +5902,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $requestData = [
@@ -6039,7 +6039,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $cardToken = $this->faker->word;
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
@@ -6189,7 +6189,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $cardToken = $this->faker->word;
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
@@ -6339,7 +6339,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $cardToken = $this->faker->word;
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
@@ -6529,7 +6529,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $cardToken = $this->faker->word;
@@ -6723,7 +6723,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $cardToken = $this->faker->word;
@@ -6940,7 +6940,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $product = $this->fakeProduct(
@@ -7079,7 +7079,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $shippingOption = $this->fakeShippingOption(
@@ -7593,7 +7593,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $currency = $this->getCurrency();
@@ -7874,7 +7874,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $product = $this->fakeProduct(
@@ -7987,7 +7987,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $cardToken = $this->faker->word;
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
@@ -8309,7 +8309,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $currency = $this->getCurrency();
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
@@ -8585,7 +8585,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $country = 'canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $shippingAddress = new Address();
@@ -8802,7 +8802,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
@@ -8949,7 +8949,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
@@ -9084,7 +9084,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
@@ -9241,7 +9241,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $randomUser = $this->fakeUser();
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
@@ -9431,7 +9431,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $randomUser = $this->fakeUser();
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
@@ -9596,7 +9596,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $randomUser = $this->fakeUser();
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
@@ -9765,7 +9765,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $randomUser = $this->fakeUser();
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';
@@ -9991,7 +9991,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ->willReturn($fakerToken);
 
         $country = 'Canada';
-        $region = 'alberta';
+        $region = 'Alberta';
         $zip = $this->faker->postcode;
 
         $brand = 'drumeo';

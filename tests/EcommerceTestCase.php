@@ -307,6 +307,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('location.api', $locationConfig['api']);
         $app['config']->set('location.active_api', $locationConfig['active_api']);
         $app['config']->set('location.countries', $locationConfig['countries']);
+        $app['config']->set('location.country_regions', $locationConfig['country_regions']);
 
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);

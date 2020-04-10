@@ -617,4 +617,101 @@ class PaymentServiceTest extends EcommerceTestCase
             ]
         );
     }
+
+    public function test_create_credit_card_payment_method()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $currency = $this->getCurrency();
+        $brand = 'drumeo';
+        $country = 'Canada';
+
+        $cardExpirationYear = 2019;
+        $cardExpirationMonth = 12;
+        $cardExpirationDate = Carbon::createFromDate(
+            $cardExpirationYear,
+            $cardExpirationMonth
+        );
+
+        $externalId = 'card_' . $this->faker->word;
+        $externalCustomerId = 'cus_' . $this->faker->word;
+
+        $fakerCustomer = new Customer();
+        $fakerCustomer->email = $this->faker->email;
+        $fakerCustomer->id = $externalCustomerId;
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->creditCardType;
+        $fakerCard->last4 = $this->faker->randomNumber(4, true);
+        $fakerCard->exp_year = $cardExpirationYear;
+        $fakerCard->exp_month = $cardExpirationMonth;
+        $fakerCard->id = $externalId;
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $purchaser = new Purchaser();
+
+        $purchaser->setId($userId);
+        $purchaser->setEmail($this->faker->email);
+        $purchaser->setType(Purchaser::USER_TYPE);
+        $purchaser->setBrand($brand);
+
+        $billingAddress = new Address();
+
+        $billingAddress->setZip($this->faker->postcode);
+        $billingAddress->setRegion($this->faker->word);
+        $billingAddress->setCountry($country);
+        $billingAddress->setType(Address::BILLING_ADDRESS_TYPE);
+
+        $stripeToken = $this->faker->word;
+
+        $paymentService = $this->app->make(PaymentService::class);
+
+        $paymentService->createCreditCardPaymentMethod(
+            $purchaser,
+            $billingAddress,
+            $brand,
+            $currency,
+            $stripeToken,
+            false
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_credit_cards',
+            [
+                'fingerprint' => $fakerCard->fingerprint,
+                'last_four_digits' => $fakerCard->last4,
+                'cardholder_name' => null,
+                'company_name' => $fakerCard->brand,
+                'expiration_date' => Carbon::createFromDate(
+                    $fakerCard->exp_year,
+                    $fakerCard->exp_month
+                )
+                    ->toDateTimeString(),
+                'external_id' => $fakerCard->id,
+                'external_customer_id' => $externalCustomerId,
+                'payment_gateway_name' => $brand,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_methods',
+            [
+                'credit_card_id' => 1,
+                'currency' => $currency,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+    }
 }

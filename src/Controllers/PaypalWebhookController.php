@@ -70,7 +70,6 @@ class PaypalWebhookController extends Controller
      */
     public function process(Request $request)
     {
-        // todo - refactor into a service
         if (
             $request->get('txn_type') == 'recurring_payment'
             && $request->get('payment_status') == 'Completed'

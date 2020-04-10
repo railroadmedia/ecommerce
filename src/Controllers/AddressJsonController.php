@@ -224,22 +224,32 @@ class AddressJsonController extends Controller
             )
         );
 
-        // todo: make this more readable
-        throw_if(
-            ((!$this->permissionService->canOrThrow(
-                    auth()->id(),
-                    'delete.address'
-                )) && (($address->getUser() && auth()->id() !== intval(
-                            $address->getUser()
-                                ->getId()
-                        )) ||
-                    ($address->getCustomer() &&
-                        $request->get('customer_id', 0) !==
-                        $address->getCustomer()
-                            ->getId()) ||
-                    (is_null($address->getUser()) && is_null($address->getCustomer())))),
-            new NotAllowedException('This action is unauthorized.')
-        );
+        if (!$this->permissionService->can(auth()->id(), 'update.address')) {
+            if (($address->getUser() && auth()->id() !== intval(
+                    $address->getUser()
+                        ->getId()
+                ))) {
+
+                throw new NotAllowedException(
+                    'This action is unauthorized, only the owning user can update this address.'
+                );
+            }
+
+            if (($address->getCustomer() &&
+                $request->input('customer_id') !==
+                $address->getCustomer()
+                    ->getId())) {
+
+                throw new NotAllowedException('This action is unauthorized. You must pass the correct customer id.');
+            }
+
+            if (is_null($address->getUser()) && is_null($address->getCustomer())) {
+
+                throw new NotAllowedException(
+                    'This action is unauthorized, no user or customer is linked to the address.'
+                );
+            }
+        }
 
         throw_if(
             $this->orderRepository->ordersWithAdressExist($address),

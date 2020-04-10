@@ -281,7 +281,7 @@ class PaymentMethodJsonController extends Controller
                     $billingAddress = $address;
                 } else {
                     // because the billing address is populated with data from the stripe card object
-                    // this block can not be replaced with a call to $this->paymentService->createCreditCartPaymentMethod
+                    // this block can not be replaced with a call to $this->paymentService->createCreditCardPaymentMethod
                     // without modifying paymentService
                     $billingCountry = $card->address_country ?? $card->country;
 
@@ -464,7 +464,6 @@ class PaymentMethodJsonController extends Controller
      */
     public function update(PaymentMethodUpdateRequest $request, $paymentMethodId)
     {
-        // todo - review & refactor into a service
         $paymentMethod = $this->paymentMethodRepository->byId($paymentMethodId);
 
         $message = 'Update failed, payment method not found with id: ' . $paymentMethodId;
@@ -508,6 +507,7 @@ class PaymentMethodJsonController extends Controller
             );
             $oldPaymentMethod = clone($paymentMethod);
 
+            // fetch the existing customer data from db and do not create an other customer record
             $customer = $this->stripePaymentGateway->getCustomer(
                 $request->get('gateway'),
                 $method->getExternalCustomerId()
@@ -533,6 +533,7 @@ class PaymentMethodJsonController extends Controller
                 $request->get('month')
             );
 
+            // update existing card data
             $method->setFingerprint($card->fingerprint);
             $method->setLastFourDigits($card->last4);
             $method->setCardholderName($card->name);

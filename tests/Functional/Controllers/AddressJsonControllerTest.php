@@ -679,7 +679,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(
             [
                 'title' => 'Not allowed.',
-                'detail' => 'This action is unauthorized.'
+                'detail' => 'This action is unauthorized, only the owning user can update this address.'
             ],
             $response->decodeResponseJson('error')
         );
@@ -1033,7 +1033,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
     public function test_admin_delete_user_address()
     {
-        $this->permissionServiceMock->method('canOrThrow')
+        $this->permissionServiceMock->method('can')
             ->willReturn(true);
 
         $userId = rand();
@@ -1282,7 +1282,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(
             [
                 'title' => 'Not allowed.',
-                'detail' => 'This action is unauthorized.',
+                'detail' => 'This action is unauthorized. You must pass the correct customer id.',
             ],
             $response->decodeResponseJson('error')
         );
