@@ -224,7 +224,7 @@ class SubscriptionService
     public function getSubscriptionRenewalDueDate(Subscription $subscription): ?DateTimeInterface
     {
         $subscriptionState = $subscription->getState();
-        $renewalAttempt = $subscription->getRenewalAttempt();
+        $renewalAttempt = $subscription->getRenewalAttempt() ?? 0;
 
         if (
             $subscriptionState == Subscription::STATE_STOPPED
@@ -544,7 +544,7 @@ class SubscriptionService
         }
         else {
 
-            $subscription->setRenewalAttempt($subscription->getRenewalAttempt() + 1);
+            $subscription->setRenewalAttempt(($subscription->getRenewalAttempt() ?? 0) + 1);
 
             $subscription->setIsActive(false);
             $subscription->setUpdatedAt(Carbon::now());
