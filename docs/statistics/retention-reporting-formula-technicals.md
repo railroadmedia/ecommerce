@@ -150,7 +150,7 @@ users sign up at the beginning and end of the month. This is slightly less impor
 for entire months at a minimum, which mostly negates the problem. We will want weekly reporting thought so we will run 
 in to the same problem.
 
-## Solving The Retention Reporting Problems
+## Solving Retention Reporting Problems With Churn
 
 We need a reporting algorithm which works independently of renewal cycle length and reporting time frame. We also need 
 to make sure that monthly to yearly upgrades do not negatively impact retention reporting for the monthly membership. 
@@ -159,3 +159,40 @@ or renewal date, or a combination of both.
 
 We also need a way to adjust for our seasonality curve. Or we need to bake something right in to the algorithm 
 that make the numbers report independently of surges in new member sign ups.
+
+The best way I have found to solve these issues is to use a churn based reporting system. Instead of averaging retention 
+rates over a given period, we can look at how many subscribers were scheduled for renewal vs how many renewed 
+successfully. This will provide a direct indication of how many users lost their membership in a given period. Since 
+this method doesn't use any averaging it works for any time period, even for a single day.
+
+## Formula
+
+For a given time period:  
+(total users with successful renewal payment) / (total users scheduled for renewal) = (retention rate)
+
+For example  lets say we want to find the retention rate for monthly users during Jan 01 -> Jan 15. The formula would 
+look like this:
+
+150 / 200 = 0.75 (75% retention rate for the period)
+
+## Important Notes
+
+This way of reporting retention is different than what is usually explained online. With average 
+or rolling retention (the standard way), the percent we get in the end is a representation of the retention rate **of 
+the entire user base** averaged over a given time period.  
+
+With churn based retention reporting if you select a reporting time period that is less than the renewal length, such 
+as reporting yearly retention for a given month, you are only seeing the retention rate for the given user pool that 
+is scheduled to renew during that period. This means the reporting does have a specific user pool.   
+
+We can still pull the average for the entire user base by extending the reporting period to be longer than the renewal 
+cycle. Lets say we looked up the monthly retention rate for all of Q1, we would get the retention rate for the entire 
+user base since they all should have renewed during that period.
+
+There will be significant volatility in the reporting for small time frames.  
+
+Lastly this type of reporting is only for the users who are scheduled to renew during the reporting 
+period. For example in rolling average retention, if 90% of the user base were to cancel in a single day, that would 
+significantly affect the rolling average rate for all time frames after that for a long time, possibly years. With churn 
+based reporting an event like that will only effect the retention rate if you were to pull it for dates that contain 
+that specific day.
