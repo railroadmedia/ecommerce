@@ -88,7 +88,7 @@ class AddPastMembershipStats extends Command
      */
     public function handle()
     {
-        $startDateString = $this->argument('startDate') ?: '2015-01-01';
+        $startDateString = $this->argument('startDate') ?: Carbon::now()->subDays(3)->toDateString();
         $startDate = Carbon::parse($startDateString);
 
         $endDate = $this->argument('endDate') ?
@@ -492,7 +492,7 @@ EOT;
                         )
                         ->count($this->databaseManager->raw('DISTINCT user_id'));
 
-                    $this->info("Total users with access as of now: " . $totalMembershipCount);
+                    $this->info("Total " . $brand . " users with access as of now: " . $totalMembershipCount);
                 }
 
                 $totalActiveForBrandFromPrimarySources = 0;
