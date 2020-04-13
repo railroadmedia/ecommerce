@@ -247,16 +247,16 @@ class AddPastMembershipStats extends Command
 
     public function processSubscriptions(Carbon $smallDate, Carbon $bigDate)
     {
-        $this->processNewMembership($smallDate, $bigDate);
-        $this->processExpiredMembership($smallDate, $bigDate);
-        $this->processCanceledMembership($smallDate, $bigDate);
+        $this->processNewSubscriptionsMemberships($smallDate, $bigDate);
+        $this->processExpiredSubscriptionMemberships($smallDate, $bigDate);
+        $this->processCanceledSubscriptionMemberships($smallDate, $bigDate);
         $this->processUserMembership($smallDate, $bigDate);
     }
 
     /**
      * Update new membership - ecommerce_membership_stats.new column
      */
-    public function processNewMembership(Carbon $smallDate, Carbon $bigDate)
+    public function processNewSubscriptionsMemberships(Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
 
@@ -314,7 +314,7 @@ EOT;
     /**
      * Update expired membership - ecommerce_membership_stats.expired column
      */
-    public function processExpiredMembership(Carbon $smallDate, Carbon $bigDate)
+    public function processExpiredSubscriptionMemberships(Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
 
@@ -372,7 +372,7 @@ EOT;
     /**
      * Update canceled membership - ecommerce_membership_stats.canceled column
      */
-    public function processCanceledMembership(Carbon $smallDate, Carbon $bigDate)
+    public function processCanceledSubscriptionMemberships(Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
 
@@ -466,6 +466,34 @@ EOT;
             $dateIncrementEndOfDay = $dateIncrement->copy()->endOfDay();
 
             foreach (config('ecommerce.available_brands', []) as $brand) {
+
+                // get total with access (should add up to this...)
+                if (!empty(config('ecommerce.membership_product_skus')[$brand])) {
+
+                    $totalMembershipCount = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        ->table('ecommerce_user_products')
+                        ->join(
+                            'ecommerce_products',
+                            'ecommerce_products.id',
+                            '=',
+                            'ecommerce_user_products.product_id'
+                        )
+                        ->whereIn(
+                            'sku',
+                            config('ecommerce.membership_product_skus')[$brand]
+                        )
+                        ->where('ecommerce_user_products.created_at', '<=', $dateIncrementEndOfDay->toDateTimeString())
+                        ->where('brand', $brand)
+                        ->where(
+                            function (Builder $builder) {
+                                $builder->where('expiration_date', '>', Carbon::now()->toDateTimeString())
+                                    ->orWhereNull('expiration_date');
+                            }
+                        )
+                        ->count($this->databaseManager->raw('DISTINCT user_id'));
+
+                    $this->info("Total users with access as of now: " . $totalMembershipCount);
+                }
 
                 $totalActiveForBrandFromPrimarySources = 0;
 
