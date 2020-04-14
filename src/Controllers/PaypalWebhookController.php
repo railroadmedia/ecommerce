@@ -91,6 +91,7 @@ class PaypalWebhookController extends Controller
                 $payment->setTotalDue($request->get('payment_gross'));
                 $payment->setTotalPaid($request->get('payment_gross'));
                 $payment->setTotalRefunded(0);
+                $payment->setAttemptNumber(0);
                 $payment->setConversionRate(1);
                 $payment->setType(Payment::TYPE_PAYPAL_SUBSCRIPTION_RENEWAL);
                 $payment->setExternalId($request->get('txn_id'));

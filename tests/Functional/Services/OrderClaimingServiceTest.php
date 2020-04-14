@@ -207,6 +207,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $payment->setTotalDue(round($expectedPaymentTotalDue, 2));
         $payment->setType(Payment::TYPE_INITIAL_ORDER);
         $payment->setStatus(Payment::STATUS_PAID);
+        $payment->setAttemptNumber(0);
         $payment->setCurrency($currency);
         $payment->setTotalPaid(round($expectedPaymentTotalDue, 2));
         $payment->setPaymentMethod($paymentMethod);

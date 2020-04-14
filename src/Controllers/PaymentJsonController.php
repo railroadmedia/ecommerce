@@ -216,6 +216,7 @@ class PaymentJsonController extends Controller
             $payment->setTotalDue($paymentPrice);
             $payment->setTotalPaid($paymentPrice);
             $payment->setTotalRefunded(0);
+            $payment->setAttemptNumber(0);
             $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_MANUAL);
             $payment->setType($paymentType);
             $payment->setConversionRate($conversionRate);
@@ -303,6 +304,8 @@ class PaymentJsonController extends Controller
                 )
             );
 
+            $payment->setAttemptNumber($subscription->getRenewalAttempt());
+
             $subscriptionPayment = new SubscriptionPayment();
 
             $subscriptionPayment->setSubscription($subscription);
@@ -357,6 +360,8 @@ class PaymentJsonController extends Controller
             $basedPaid = $payment->getTotalPaid() * $payment->getConversionRate();
 
             $order->setTotalPaid($basedSumPaid + $basedPaid);
+
+            // todo - confirm fetching subscription/payment plan and get payment attempt number from it
         }
 
         if ($payment->getTotalPaid() > 0) {

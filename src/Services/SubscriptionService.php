@@ -281,6 +281,7 @@ class SubscriptionService
         }
 
         $payment = new Payment();
+        $payment->setAttemptNumber($subscription->getRenewalAttempt());
 
         /** @var $address Address */
         if (!empty($paymentMethod->getBillingAddress())) {

@@ -363,6 +363,7 @@ class GooglePlayStoreService
 
                         if (empty($existingPayment)) {
                             $existingPayment = new Payment();
+                            $existingPayment->setAttemptNumber(0);
                         } else {
                             $existingPayment->setUpdatedAt(Carbon::now());
                         }
@@ -438,6 +439,7 @@ class GooglePlayStoreService
 
                     if (empty($existingPayment)) {
                         $existingPayment = new Payment();
+                        $existingPayment->setAttemptNumber(0);
                     } else {
                         $existingPayment->setUpdatedAt(Carbon::now());
                     }
@@ -512,6 +514,7 @@ class GooglePlayStoreService
 
                     if (!$membershipIncludeFreePack) {
                         $payment = new Payment();
+                        $payment->setAttemptNumber(0);
                         $payment->setCreatedAt(Carbon::now());
 
                         $payment->setTotalDue($purchasedProduct->getPrice());

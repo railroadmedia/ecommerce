@@ -184,12 +184,25 @@ class SubscriptionRepository extends RepositoryBase
             ->where(
                 $qb->expr()
                     ->in('s.user', ':usersIds')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->in('s.type', ':types')
             );
 
         /** @var $q Query */
         $q = $qb->getQuery();
 
-        $q->setParameter('usersIds', $usersIds);
+        $q->setParameter('usersIds', $usersIds)
+            ->setParameter(
+                'types',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_APPLE_SUBSCRIPTION,
+                    Subscription::TYPE_GOOGLE_SUBSCRIPTION,
+                    Subscription::TYPE_PAYPAL_SUBSCRIPTION,
+                ]
+            );
 
         return $q->getResult();
     }

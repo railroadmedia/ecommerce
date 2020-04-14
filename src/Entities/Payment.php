@@ -163,6 +163,13 @@ class Payment
     protected $subscriptionPayment;
 
     /**
+     * @ORM\Column(type="integer", name="attempt_number")
+     *
+     * @var int
+     */
+    protected $attemptNumber;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -451,5 +458,21 @@ class Payment
         }
 
         return null;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getAttemptNumber(): ?int
+    {
+        return $this->attemptNumber;
+    }
+
+    /**
+     * @param int $attemptNumber
+     */
+    public function setAttemptNumber(int $attemptNumber)
+    {
+        $this->attemptNumber = $attemptNumber;
     }
 }

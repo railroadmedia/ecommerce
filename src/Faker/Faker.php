@@ -152,6 +152,7 @@ class Faker extends Generator
                 'total_due' => $this->randomNumber(),
                 'total_paid' => $this->randomNumber(),
                 'total_refunded' => $this->randomNumber(),
+                'attempt_number' => 0,
                 'conversion_rate' => $this->randomNumber(2),
                 'type' => $this->randomElement(
                     [config('ecommerce.order_payment_type'), config('ecommerce.renewal_payment_type')]

@@ -140,6 +140,7 @@ class PaymentService
         $payment->setTotalDue($convertedPaymentAmount);
         $payment->setTotalPaid($convertedPaymentAmount);
         $payment->setTotalRefunded(0);
+        $payment->setAttemptNumber(0); // todo - lookup where the method is used and add attempt number there
         $payment->setConversionRate($conversionRate);
         $payment->setType($paymentType);
         $payment->setExternalProvider($paymentMethod->getExternalProvider());
@@ -319,6 +320,7 @@ class PaymentService
 
         $payment->setTotalDue($convertedPaymentAmount);
         $payment->setTotalPaid($convertedPaymentAmount);
+        $payment->setAttemptNumber(0);
         $payment->setTotalRefunded(0);
         $payment->setConversionRate($conversionRate);
         $payment->setType($paymentType);
@@ -551,6 +553,7 @@ class PaymentService
 
         $payment->setTotalDue($convertedPaymentAmount);
         $payment->setTotalPaid($convertedPaymentAmount);
+        $payment->setAttemptNumber(0);
         $payment->setTotalRefunded(0);
         $payment->setConversionRate($conversionRate);
         $payment->setType($paymentType);

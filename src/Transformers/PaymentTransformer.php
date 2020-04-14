@@ -25,6 +25,7 @@ class PaymentTransformer extends TransformerAbstract
             'total_due' => $payment->getTotalDue(),
             'total_paid' => $payment->getTotalPaid(),
             'total_refunded' => $payment->getTotalRefunded(),
+            'attempt_number' => $payment->getAttemptNumber() ?? 0,
             'conversion_rate' => $payment->getConversionRate(),
             'type' => $payment->getType(),
             'external_id' => $payment->getExternalId(),

@@ -435,6 +435,7 @@ class AppleStoreKitService
                     if (empty($existingPayment)) {
                         $existingPayment = new Payment();
                         $existingPayment->setCreatedAt(Carbon::now());
+                        $existingPayment->setAttemptNumber(0);
                     } else {
                         $existingPayment->setUpdatedAt(Carbon::now());
                     }
@@ -524,6 +525,7 @@ class AppleStoreKitService
 
                         $payment->setTotalDue($product->getPrice());
                         $payment->setTotalPaid($product->getPrice());
+                        $payment->setAttemptNumber(0);
 
                         $payment->setConversionRate(1);
 
