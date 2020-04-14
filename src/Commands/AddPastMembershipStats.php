@@ -265,7 +265,7 @@ UPDATE ecommerce_membership_stats ms
 INNER JOIN (
     SELECT
         COUNT(id) AS new,
-        DATE(start_date) AS stats_date,
+        DATE(created_at) AS stats_date,
         COALESCE(
             IF (interval_type = '%s' AND interval_count = 1, '%s', NULL),
             IF (interval_type = '%s' AND interval_count = 6, '%s', NULL),
@@ -276,8 +276,8 @@ INNER JOIN (
     WHERE
         ((interval_type = '%s' AND (interval_count = 1 OR interval_count = 6))
             OR (interval_type = '%s' AND interval_count = 1))
-        AND start_date >= '%s'
-        AND start_date <= '%s'
+        AND created_at >= '%s'
+        AND created_at <= '%s'
         AND product_id IS NOT NULL
     GROUP BY stats_date, stats_interval_type, brand
 ) n ON
@@ -470,27 +470,32 @@ EOT;
                 // get total with access (should add up to this...)
                 if (!empty(config('ecommerce.membership_product_skus')[$brand])) {
 
-                    $totalMembershipCount = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                        ->table('ecommerce_user_products')
-                        ->join(
-                            'ecommerce_products',
-                            'ecommerce_products.id',
-                            '=',
-                            'ecommerce_user_products.product_id'
-                        )
-                        ->whereIn(
-                            'sku',
-                            config('ecommerce.membership_product_skus')[$brand]
-                        )
-                        ->where('ecommerce_user_products.created_at', '<=', $dateIncrementEndOfDay->toDateTimeString())
-                        ->where('brand', $brand)
-                        ->where(
-                            function (Builder $builder) {
-                                $builder->where('expiration_date', '>', Carbon::now()->toDateTimeString())
-                                    ->orWhereNull('expiration_date');
-                            }
-                        )
-                        ->count($this->databaseManager->raw('DISTINCT user_id'));
+                    $totalMembershipCount =
+                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            ->table('ecommerce_user_products')
+                            ->join(
+                                'ecommerce_products',
+                                'ecommerce_products.id',
+                                '=',
+                                'ecommerce_user_products.product_id'
+                            )
+                            ->whereIn(
+                                'sku',
+                                config('ecommerce.membership_product_skus')[$brand]
+                            )
+                            ->where(
+                                'ecommerce_user_products.created_at',
+                                '<=',
+                                $dateIncrementEndOfDay->toDateTimeString()
+                            )
+                            ->where('brand', $brand)
+                            ->where(
+                                function (Builder $builder) {
+                                    $builder->where('expiration_date', '>', Carbon::now()->toDateTimeString())
+                                        ->orWhereNull('expiration_date');
+                                }
+                            )
+                            ->count($this->databaseManager->raw('DISTINCT user_id'));
 
                     $this->info("Total " . $brand . " users with access as of now: " . $totalMembershipCount);
                 }
@@ -547,7 +552,7 @@ EOT;
                             ->whereNotNull('ecommerce_subscriptions.product_id')
                             ->where('brand', $brand)
                             ->where(
-                                'ecommerce_subscriptions.start_date',
+                                'ecommerce_subscriptions.created_at',
                                 '<',
                                 $dateIncrementEndOfDay->toDateTimeString()
                             )
@@ -601,7 +606,7 @@ EOT;
                             ->whereNotIn('user_id', $lifetimeUserIds->toArray())
                             ->whereNotIn('user_id', $otherActiveSubscriptions->pluck('user_id')->toArray())
                             ->where(
-                                'ecommerce_subscriptions.start_date',
+                                'ecommerce_subscriptions.created_at',
                                 '<',
                                 $dateIncrementEndOfDay->toDateTimeString()
                             )
@@ -648,7 +653,7 @@ EOT;
                             ->where('brand', $brand)
                             ->whereNotIn('user_id', $lifetimeUserIds->toArray())
                             ->where(
-                                'ecommerce_subscriptions.start_date',
+                                'ecommerce_subscriptions.created_at',
                                 '<',
                                 $dateIncrementEndOfDay->toDateTimeString()
                             )
@@ -686,7 +691,7 @@ EOT;
                             ->where('brand', $brand)
                             ->whereNotIn('user_id', $lifetimeUserIds->toArray())
                             ->where(
-                                'ecommerce_subscriptions.start_date',
+                                'ecommerce_subscriptions.created_at',
                                 '<',
                                 $dateIncrementEndOfDay->toDateTimeString()
                             )
@@ -770,7 +775,11 @@ EOT;
                                     'sku',
                                     config('ecommerce.membership_product_skus')[$brand]
                                 )
-                                ->where('ecommerce_user_products.created_at', '<=', $dateIncrementEndOfDay->toDateTimeString())
+                                ->where(
+                                    'ecommerce_user_products.created_at',
+                                    '<=',
+                                    $dateIncrementEndOfDay->toDateTimeString()
+                                )
                                 ->where('brand', $brand)
                                 ->where(
                                     function (Builder $builder) {
@@ -800,15 +809,36 @@ EOT;
                                     '>=',
                                     $dateIncrement->copy()->startOfDay()
                                 )
-                                ->where('ecommerce_user_products.created_at', '<=', $dateIncrementEndOfDay->toDateTimeString())
+                                ->where(
+                                    'ecommerce_user_products.created_at',
+                                    '<=',
+                                    $dateIncrementEndOfDay->toDateTimeString()
+                                )
                                 ->where('brand', $brand)
                                 ->where(
                                     function (Builder $builder) use ($dateIncrementEndOfDay) {
-                                        $builder->where('expiration_date', '>', $dateIncrementEndOfDay->toDateTimeString())
+                                        $builder->where(
+                                            'expiration_date',
+                                            '>',
+                                            $dateIncrementEndOfDay->toDateTimeString()
+                                        )
                                             ->orWhereNull('expiration_date');
                                     }
                                 )
                                 ->count($this->databaseManager->raw('DISTINCT user_id'));
+
+                        $otherNewCount -= $this->databaseManager->connection(
+                                config('ecommerce.database_connection_name')
+                            )
+                                ->table('ecommerce_membership_stats')
+                                ->select([$this->databaseManager->raw('SUM(new) as new')])
+                                ->where(
+                                    'stats_date',
+                                    $dateIncrement->toDateString()
+                                )
+                                ->where('interval_type', '!=', 'other')
+                                ->where('brand', $brand)
+                                ->get(['new'])->first()->new ?? 0;
                     }
 
                     $this->databaseManager->connection(config('ecommerce.database_connection_name'))
