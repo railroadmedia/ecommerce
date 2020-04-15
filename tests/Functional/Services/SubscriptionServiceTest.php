@@ -131,7 +131,7 @@ class SubscriptionServiceTest extends EcommerceTestCase
         $subscription->setIntervalType(config('ecommerce.interval_type_monthly'));
         $subscription->setIntervalCount(1);
         $subscription->setTotalCyclesPaid($this->faker->randomNumber(3));
-        $subscription->setRenewalAttempt(0);
+        $subscription->setRenewalAttempt(1);
         $subscription->setPaymentMethod($paymentMethod);
         $subscription->setCreatedAt(Carbon::now());
         $subscription->setUpdatedAt(Carbon::now());
@@ -154,6 +154,7 @@ class SubscriptionServiceTest extends EcommerceTestCase
                 'total_due' => $chargePrice,
                 'total_paid' => $chargePrice,
                 'total_refunded' => 0,
+                'attempt_number' => 1,
                 'type' => config('ecommerce.renewal_payment_type'),
                 'external_id' => $charge->id,
                 'external_provider' => 'stripe',

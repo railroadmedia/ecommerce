@@ -6,13 +6,11 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
-use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\PaymentTaxes;
-use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
@@ -113,6 +111,7 @@ class PaymentJsonController extends Controller
      * @param InvoiceService $invoiceService
      * @param OrderRepository $orderRepository
      * @param PaymentRepository $paymentRepository
+     * @param PaymentService $paymentService
      * @param PayPalPaymentGateway $payPalPaymentGateway
      * @param PermissionService $permissionService
      * @param StripePaymentGateway $stripePaymentGateway
@@ -196,6 +195,8 @@ class PaymentJsonController extends Controller
             ??
             $this->currencyService->get();
 
+        $exception = null;
+
         if (!$request->input('data.relationships.paymentMethod.data.id')) {
 
             // if the logged in user it's not admin => can not pay without payment method
@@ -254,6 +255,8 @@ class PaymentJsonController extends Controller
 
             $currency = $currency ?? $paymentMethod->getCurrency();
 
+            $payment = null;
+
             try {
 
                 $payment = $this->paymentService->chargeUsersExistingPaymentMethod(
@@ -275,11 +278,8 @@ class PaymentJsonController extends Controller
                     if ($payment = $paymentFailedException->getPayment()) {
                         // store failed payment data
                         $this->entityManager->persist($payment);
-                        $this->entityManager->flush();
                     }
                 }
-
-                throw $exception;
             }
         }
 
@@ -291,18 +291,7 @@ class PaymentJsonController extends Controller
                 'data.relationships.subscription.data.id'
             );
 
-            /**
-             * @var $subscription Subscription
-             */
             $subscription = $this->subscriptionRepository->find($subscriptionId);
-
-            $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
-            $subscription->setPaidUntil(
-                $this->calculateNextBillDate(
-                    $subscription->getIntervalType(),
-                    $subscription->getIntervalCount()
-                )
-            );
 
             $payment->setAttemptNumber($subscription->getRenewalAttempt());
 
@@ -312,6 +301,23 @@ class PaymentJsonController extends Controller
             $subscriptionPayment->setPayment($payment);
 
             $this->entityManager->persist($subscriptionPayment);
+
+            if ($payment->getTotalPaid() > 0) {
+
+                $subscription->setIsActive(true);
+                $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
+                $subscription->setPaidUntil(
+                    $this->calculateNextBillDate(
+                        $subscription->getIntervalType(),
+                        $subscription->getIntervalCount()
+                    )
+                );
+
+                $subscription->setRenewalAttempt(0);
+
+            } else {
+                $subscription->setRenewalAttempt($subscription->getRenewalAttempt() + 1);
+            }
         }
 
         $order = null;
@@ -321,33 +327,7 @@ class PaymentJsonController extends Controller
 
             $oderId = $request->input('data.relationships.order.data.id');
 
-            /**
-             * @var $order Order
-             */
             $order = $this->orderRepository->find($oderId);
-
-            /**
-             * @var $orderPayments [] \Railroad\Ecommerce\Entities\OrderPayment
-             */
-            $orderPayments = $this->paymentRepository->getOrderPayments($order);
-
-            $basedSumPaid = 0;
-
-            foreach ($orderPayments as $pastOrderPayment) {
-
-                /**
-                 * @var $pastOrderPayment OrderPayment
-                 */
-
-                /**
-                 * @var $pastPayment Payment
-                 */
-                $pastPayment = $pastOrderPayment->getPayment();
-
-                $paid = ($pastPayment->getTotalPaid() - ($pastPayment->getTotalRefunded() ?? 0));
-
-                $basedSumPaid += $paid * $pastPayment->getConversionRate();
-            }
 
             $orderPayment = new OrderPayment();
 
@@ -357,11 +337,53 @@ class PaymentJsonController extends Controller
 
             $this->entityManager->persist($orderPayment);
 
-            $basedPaid = $payment->getTotalPaid() * $payment->getConversionRate();
+            /**
+             * @var $paymentPlan Subscription
+             */
+            $paymentPlan = $this->subscriptionRepository->findOneBy(['order' => $order]);
 
-            $order->setTotalPaid($basedSumPaid + $basedPaid);
+            if ($paymentPlan) {
+                $payment->setAttemptNumber($paymentPlan->getRenewalAttempt());
+            }
 
-            // todo - confirm fetching subscription/payment plan and get payment attempt number from it
+            if ($payment->getTotalPaid() > 0) {
+
+                /**
+                 * @var $orderPayments [] \Railroad\Ecommerce\Entities\OrderPayment
+                 */
+                $orderPayments = $this->paymentRepository->getOrderPayments($order);
+
+                $basedSumPaid = 0;
+
+                foreach ($orderPayments as $pastOrderPayment) {
+
+                    /**
+                     * @var $pastOrderPayment OrderPayment
+                     */
+
+                    /**
+                     * @var $pastPayment Payment
+                     */
+                    $pastPayment = $pastOrderPayment->getPayment();
+
+                    $paid = ($pastPayment->getTotalPaid() - ($pastPayment->getTotalRefunded() ?? 0));
+
+                    $basedSumPaid += $paid * $pastPayment->getConversionRate();
+                }
+
+                $basedPaid = $payment->getTotalPaid() * $payment->getConversionRate();
+
+                $order->setTotalPaid($basedSumPaid + $basedPaid);
+
+                if ($paymentPlan) {
+                    $paymentPlan->setRenewalAttempt(0);
+                    $paymentPlan->setIsActive(true);
+                    // todo - ask if payment plan paid_until and cycles paid should be updated
+                }
+
+            } else if ($paymentPlan) {
+                $paymentPlan->setRenewalAttempt($paymentPlan->getRenewalAttempt() + 1);
+            }
         }
 
         if ($payment->getTotalPaid() > 0) {
@@ -414,6 +436,10 @@ class PaymentJsonController extends Controller
         }
 
         $this->entityManager->flush();
+
+        if ($exception) {
+            throw $exception;
+        }
 
         if (!$user && !is_null($order) && !is_null($order->getUser())) {
             $user = $order->getUser();

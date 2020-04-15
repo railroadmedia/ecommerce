@@ -1458,6 +1458,528 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_reset_subscription_renewal_attempt_number()
+    {
+        $due = $this->faker->numberBetween(0, 1000);
+        $adminEmail = $this->faker->email;
+        $adminId = $this->createAndLogInNewUser($adminEmail);
+        $currency = $this->getCurrency();
+        $conversionRate = $this->currencyService->getRate($currency);
+        $gateway = $this->faker->word;
+
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $productTax = $this->faker->numberBetween(1, 10);
+        $shippingTax = 0;
+
+        $user = $this->fakeUser();
+
+        $cycles = $this->faker->numberBetween(0, 10);
+
+        // subscription has renewal_attempt = 1
+        $subscription = $this->fakeSubscription([
+            'renewal_attempt' => 1,
+            'is_active' => false,
+            'total_cycles_paid' => $cycles,
+            'paid_until' => Carbon::now()->subDays(5)->toDateTimeString(),
+            'interval_type' => PaymentJsonController::INTERVAL_TYPE_MONTHLY,
+            'interval_count' => 1,
+            'user_id' => $user['id'],
+            'payment_method_id' => null,
+            'brand' => $gateway,
+        ]);
+
+        $response = $this->call(
+            'PUT',
+            '/payment',
+            [
+                'data' => [
+                    'type' => 'payment',
+                    'attributes' => [
+                        'due' => $due,
+                        'currency' => $currency,
+                        'product_tax' => $productTax,
+                        'shipping_tax' => $shippingTax,
+                        'payment_gateway' => $gateway,
+                    ],
+                    'relationships' => [
+                        'subscription' => [
+                            'data' => [
+                                'type' => 'subscription',
+                                'id' => $subscription['id']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        // response payment has subscription renewal_attempt value 1, stored in attempt_number field
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'payment',
+                    'attributes' => [
+                        'total_due' => $due,
+                        'total_paid' => $due,
+                        'total_refunded' => 0,
+                        'attempt_number' => 1,
+                        'type' => config('ecommerce.renewal_payment_type'),
+                        'external_provider' => Payment::EXTERNAL_PROVIDER_MANUAL,
+                        'status' => Payment::STATUS_PAID,
+                        'message' => null,
+                        'currency' => $currency,
+                        'created_at' => Carbon::now()->toDateTimeString(),
+                        'updated_at' => Carbon::now()->toDateTimeString()
+                    ],
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+
+        // assert payment exists in the db and attempt_number has initial subscription renewal_attempt value
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $due,
+                'total_paid' => $due,
+                'total_refunded' => 0,
+                'attempt_number' => 1,
+                'type' => config('ecommerce.renewal_payment_type'),
+                'payment_method_id' => null,
+                'external_provider' => Payment::EXTERNAL_PROVIDER_MANUAL,
+                'gateway_name' => $gateway,
+                'currency' => $currency,
+                'conversion_rate' => $conversionRate,
+                'status' => Payment::STATUS_PAID,
+                'message' => null,
+                'created_at' => Carbon::now()->toDateTimeString(),
+                'updated_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // assert subscription has been activated and renewal_attempt has been reset to 0
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscription['id'],
+                'total_cycles_paid' => $cycles + 1,
+                'paid_until' => Carbon::now()->addMonth(1)->toDateTimeString(),
+                'renewal_attempt' => 0,
+                'is_active' => true
+            ]
+        );
+    }
+
+    public function test_reset_payment_plan_renewal_attempt_number()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+
+        $due = $this->faker->numberBetween(0, 1000);
+        $currency = $this->getCurrency();
+        $conversionRate = $this->currencyService->getRate($currency);
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
+
+        $gateway = $this->faker->randomElement(
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
+        );
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')->willReturn(new Card());
+        $fakerCharge = new Charge();
+        $fakerCharge->id = $this->faker->word;
+        $fakerCharge->currency = $currency;
+        $fakerCharge->amount = $due;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')->willReturn($fakerCharge);
+
+        $order = $this->fakeOrder([
+            'user_id' => $userId,
+        ]);
+
+        $creditCard = $this->fakeCreditCard();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCard['id'],
+            'billing_address_id' => $address['id'],
+            'currency' => $currency
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        $subscription = $this->fakeSubscription([
+            'order_id' => $order['id'],
+            'renewal_attempt' => 1,
+            'is_active' => false,
+            'paid_until' => Carbon::now()->subDays(5)->toDateTimeString(),
+            'interval_type' => PaymentJsonController::INTERVAL_TYPE_MONTHLY,
+            'interval_count' => 1,
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'brand' => $gateway,
+        ]);
+
+        $productTax = $this->faker->numberBetween(1, 10);
+        $shippingTax = $this->faker->numberBetween(1, 10);
+
+        $response = $this->call(
+            'PUT',
+            '/payment',
+            [
+                'data' => [
+                    'type' => 'payment',
+                    'attributes' => [
+                        'due' => $due,
+                        'currency' => $currency,
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $productTax,
+                        'shipping_tax' => $shippingTax,
+                    ],
+                    'relationships' => [
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // response payment has subscription renewal_attempt value 1, stored in attempt_number field
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'payment',
+                    'attributes' => [
+                        'total_due' => $due,
+                        'total_paid' => $due,
+                        'total_refunded' => 0,
+                        'attempt_number' => 1,
+                        'type' => Payment::TYPE_INITIAL_ORDER,
+                        'external_provider' => 'stripe',
+                        'status' => Payment::STATUS_PAID,
+                        'message' => null,
+                        'currency' => $currency,
+                        'created_at' => Carbon::now()->toDateTimeString(),
+                        'updated_at' => Carbon::now()->toDateTimeString()
+                    ],
+                ],
+            ],
+            $decodedResponse
+        );
+
+        // assert payment exists in the db and attempt_number has initial subscription renewal_attempt value
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $due,
+                'total_paid' => $due,
+                'total_refunded' => 0,
+                'attempt_number' => 1,
+                'type' => config('ecommerce.order_payment_type'),
+                'payment_method_id' => $paymentMethod['id'],
+                'external_provider' => 'stripe',
+                'currency' => $currency,
+                'conversion_rate' => $conversionRate,
+                'status' => Payment::STATUS_PAID,
+                'message' => null,
+                'created_at' => Carbon::now()->toDateTimeString(),
+                'updated_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // assert subscription has been activated and renewal_attempt has been reset to 0
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscription['id'],
+                'renewal_attempt' => 0,
+                'is_active' => true
+            ]
+        );
+    }
+
+    public function test_increment_subscription_renewal_attempt_number()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $due = $this->faker->numberBetween(0, 1000);
+        $currency = $this->getCurrency();
+        $methodType = PaymentMethod::TYPE_CREDIT_CARD;
+        $message = 'charge failed';
+
+        $gateway = $this->faker->randomElement(
+            array_keys(config('ecommerce.payment_gateways')['stripe'])
+        );
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')->willReturn(new Card());
+        $this->stripeExternalHelperMock
+            ->method('chargeCard')
+            ->willThrowException(
+                new PaymentFailedException($message)
+            );
+
+        $creditCard = $this->fakeCreditCard();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCard['id'],
+            'billing_address_id' => $address['id']
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $userId,
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        // subscription has renewal_attempt = 1
+        $subscription = $this->fakeSubscription([
+            'renewal_attempt' => 1,
+            'is_active' => false,
+            'paid_until' => Carbon::now()->subDays(5)->toDateTimeString(),
+            'interval_type' => PaymentJsonController::INTERVAL_TYPE_MONTHLY,
+            'interval_count' => 1,
+            'user_id' => $userId,
+            'payment_method_id' => $userPaymentMethod['id'],
+            'brand' => $gateway,
+        ]);
+
+        $response = $this->call(
+            'PUT',
+            '/payment',
+            [
+                'data' => [
+                    'type' => 'payment',
+                    'attributes' => [
+                        'due' => $due,
+                        'currency' => $currency,
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $this->faker->numberBetween(1, 10),
+                        'shipping_tax' => $this->faker->numberBetween(1, 10),
+                    ],
+                    'relationships' => [
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'subscription' => [
+                            'data' => [
+                                'type' => 'subscription',
+                                'id' => $subscription['id']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $this->assertEquals(422, $response->getStatusCode());
+        $this->assertEquals(
+            [
+                [
+                    'title' => 'Payment failed.',
+                    'detail' => 'Payment failed: ' . $message
+                ]
+            ],
+            $response->decodeResponseJson('errors')
+        );
+
+        // assert payment exists in the db and attempt_number has initial subscription renewal_attempt value
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $due,
+                'total_paid' => 0,
+                'total_refunded' => 0,
+                'attempt_number' => 1,
+                'payment_method_id' => $paymentMethod['id'],
+                'external_provider' => 'stripe',
+                'currency' => $currency,
+                'status' => 'failed',
+                'type' => config('ecommerce.renewal_payment_type'),
+                'message' => 'Payment failed: ' . $message,
+                'created_at' => Carbon::now()->toDateTimeString(),
+                'updated_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // assert subscription has not been activated and renewal_attempt has been incremented
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscription['id'],
+                'renewal_attempt' => 2,
+                'is_active' => false
+            ]
+        );
+    }
+
+    public function test_increment_payment_plan_renewal_attempt_number()
+    {
+        $due = $this->faker->numberBetween(0, 1000);
+        $adminEmail = $this->faker->email;
+        $adminId = $this->createAndLogInNewUser($adminEmail);
+        $currency = $this->getCurrency();
+        $conversionRate = $this->currencyService->getRate($currency);
+        $gateway = $this->faker->word;
+
+        $message = 'charge failed';
+
+        $user = $this->fakeUser();
+
+        $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $order = $this->fakeOrder([
+            'user_id' => $user['id'],
+        ]);
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willThrowException(
+                new PaymentFailedException($message)
+            );
+
+        $creditCard = $this->fakeCreditCard();
+
+        $address = $this->fakeAddress([
+            'type' => Address::BILLING_ADDRESS_TYPE,
+            'country' => 'Canada',
+            'region' => 'alberta',
+        ]);
+
+        $paymentMethod = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCard['id'],
+            'billing_address_id' => $address['id'],
+            'currency' => $currency
+        ]);
+
+        $userPaymentMethod = $this->fakeUserPaymentMethod([
+            'user_id' => $user['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'is_primary' => true
+        ]);
+
+        $subscription = $this->fakeSubscription([
+            'order_id' => $order['id'],
+            'renewal_attempt' => 1,
+            'is_active' => false,
+            'paid_until' => Carbon::now()->subDays(5)->toDateTimeString(),
+            'interval_type' => PaymentJsonController::INTERVAL_TYPE_MONTHLY,
+            'interval_count' => 1,
+            'user_id' => $user['id'],
+            'payment_method_id' => $paymentMethod['id'],
+            'brand' => $gateway,
+        ]);
+
+        $productTax = $this->faker->numberBetween(1, 10);
+        $shippingTax = $this->faker->numberBetween(1, 10);
+
+        $response = $this->call(
+            'PUT',
+            '/payment',
+            [
+                'data' => [
+                    'type' => 'payment',
+                    'attributes' => [
+                        'due' => $due,
+                        'currency' => $currency,
+                        'payment_gateway' => $gateway,
+                        'product_tax' => $productTax,
+                        'shipping_tax' => $shippingTax,
+                    ],
+                    'relationships' => [
+                        'paymentMethod' => [
+                            'data' => [
+                                'type' => 'paymentMethod',
+                                'id' => $paymentMethod['id']
+                            ]
+                        ],
+                        'order' => [
+                            'data' => [
+                                'type' => 'order',
+                                'id' => $order['id']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $this->assertEquals(422, $response->getStatusCode());
+        $this->assertEquals(
+            [
+                [
+                    'title' => 'Payment failed.',
+                    'detail' => 'Payment failed: ' . $message
+                ]
+            ],
+            $response->decodeResponseJson('errors')
+        );
+
+        // assert payment exists in the db and attempt_number has initial subscription renewal_attempt value
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $due,
+                'total_paid' => 0,
+                'total_refunded' => 0,
+                'attempt_number' => 1,
+                'type' => config('ecommerce.order_payment_type'),
+                'payment_method_id' => $paymentMethod['id'],
+                'external_provider' => 'stripe',
+                'currency' => $currency,
+                'status' => 'failed',
+                'message' => 'Payment failed: ' . $message,
+                'created_at' => Carbon::now()->toDateTimeString(),
+                'updated_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // assert subscription has not been activated and renewal_attempt has been incremented
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscription['id'],
+                'renewal_attempt' => 2,
+                'is_active' => false
+            ]
+        );
+    }
+
     public function test_index_by_order()
     {
         $userId = $this->createAndLogInNewUser();
