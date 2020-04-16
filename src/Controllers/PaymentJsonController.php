@@ -378,7 +378,13 @@ class PaymentJsonController extends Controller
                 if ($paymentPlan) {
                     $paymentPlan->setRenewalAttempt(0);
                     $paymentPlan->setIsActive(true);
-                    // todo - ask if payment plan paid_until and cycles paid should be updated
+                    $paymentPlan->setTotalCyclesPaid($paymentPlan->getTotalCyclesPaid() + 1);
+                    $paymentPlan->setPaidUntil(
+                        $this->calculateNextBillDate(
+                            $paymentPlan->getIntervalType(),
+                            $paymentPlan->getIntervalCount()
+                        )
+                    );
                 }
 
             } else if ($paymentPlan) {
