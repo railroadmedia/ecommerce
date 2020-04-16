@@ -22,7 +22,7 @@ class MembershipStatsTransformer extends TransformerAbstract
             'suspended_state' => $membershipStats->getSuspendedState(),
             'canceled' => $membershipStats->getCanceled(),
             'canceled_state' => $membershipStats->getCanceledState(),
-            'interval_type' => $membershipStats->getIntervalType(),
+            'interval_type' => str_replace('_', ' ', $membershipStats->getIntervalType()),
             'stats_date' => $membershipStats->getStatsDate()
                                 ->toDateString(),
             'brand' => $membershipStats->getBrand(),

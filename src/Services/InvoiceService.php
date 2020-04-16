@@ -78,8 +78,7 @@ class InvoiceService
             ) {
                 $showQst = true;
             }
-        }
-        elseif (!empty($order->getBillingAddress()) && !empty(
+        } elseif (!empty($order->getBillingAddress()) && !empty(
             $order->getBillingAddress()
                 ->getCountry()
             )) {
@@ -107,8 +106,7 @@ class InvoiceService
             ) {
                 $showQst = true;
             }
-        }
-        else {
+        } else {
             $gstRate = 0;
             $pstRate = 0;
             $qstRate = 0;
@@ -116,22 +114,19 @@ class InvoiceService
 
         if ($gstRate > 0) {
             $gstPaid = round(($order->getProductDue() + $order->getShippingDue()) * $gstRate, 2);
-        }
-        else {
+        } else {
             $gstPaid = 0;
         }
 
         if ($pstRate > 0) {
             $pstPaid = round(($order->getProductDue()) * $pstRate, 2);
-        }
-        else {
+        } else {
             $pstPaid = 0;
         }
 
         if ($qstRate > 0) {
             $qstPaid = round(($order->getProductDue() + $order->getShippingDue()) * $qstRate, 2);
-        }
-        else {
+        } else {
             $qstPaid = 0;
         }
 
@@ -209,8 +204,8 @@ class InvoiceService
 
         if ($subscription->getPaymentMethod() &&
             !empty(
-                $subscription->getPaymentMethod()
-                    ->getBillingAddress()
+            $subscription->getPaymentMethod()
+                ->getBillingAddress()
             ) && !empty(
             $subscription->getPaymentMethod()
                 ->getBillingAddress()
@@ -236,7 +231,7 @@ class InvoiceService
             );
 
             $address = $subscription->getPaymentMethod()
-                            ->getBillingAddress();
+                ->getBillingAddress();
 
             if (
                 strtolower($address->getCountry()) == 'canada'
@@ -244,8 +239,7 @@ class InvoiceService
             ) {
                 $showQst = true;
             }
-        }
-        else {
+        } else {
             $gstRate = 0;
             $pstRate = 0;
             $qstRate = 0;
@@ -253,22 +247,19 @@ class InvoiceService
 
         if ($gstRate > 0) {
             $gstPaid = round($priceBeforeTaxes * $gstRate, 2);
-        }
-        else {
+        } else {
             $gstPaid = 0;
         }
 
         if ($pstRate > 0) {
             $pstPaid = round($priceBeforeTaxes * $pstRate, 2);
-        }
-        else {
+        } else {
             $pstPaid = 0;
         }
 
         if ($qstRate > 0) {
             $qstPaid = round($priceBeforeTaxes * $qstRate, 2);
-        }
-        else {
+        } else {
             $qstPaid = 0;
         }
 
@@ -297,6 +288,14 @@ class InvoiceService
     public function sendSubscriptionRenewalInvoiceEmail(Subscription $subscription, Payment $payment)
     {
         try {
+            // only try and send the email if its configured
+            if (empty(
+            config(
+                'ecommerce.invoice_email_details.' . $payment->getGatewayName() . '.subscription_renewal_invoice.invoice_sender'
+            ))) {
+                return;
+            }
+
             $subscriptionRenewalInvoiceEmail = new SubscriptionInvoice(
                 $this->getViewDataForSubscriptionRenewalInvoice($subscription, $payment), $payment->getGatewayName()
             );

@@ -50,14 +50,6 @@ class TaxService
                     $address->getRegion()
                 )];
             }
-            else {
-                error_log(
-                    'Could not find product tax rate for address. Country: ' .
-                    $address->getCountry() .
-                    ' Region: ' .
-                    $address->getRegion()
-                );
-            }
         }
 
         if (
@@ -98,14 +90,6 @@ class TaxService
                     $address->getRegion()
                 )];
             }
-            else {
-                error_log(
-                    'Could not find shipping tax rate for address. Country: ' .
-                    $address->getCountry() .
-                    ' Region: ' .
-                    $address->getRegion()
-                );
-            }
         }
 
         if (
@@ -144,14 +128,6 @@ class TaxService
                     $address->getRegion()
                 )];
             }
-            else {
-                error_log(
-                    'Could not find GST tax rate for address. Country: ' .
-                    $address->getCountry() .
-                    ' Region: ' .
-                    $address->getRegion()
-                );
-            }
         }
 
         return 0;
@@ -181,14 +157,6 @@ class TaxService
                     $address->getRegion()
                 )];
             }
-            else {
-                error_log(
-                    'Could not find PST tax rate for address. Country: ' .
-                    $address->getCountry() .
-                    ' Region: ' .
-                    $address->getRegion()
-                );
-            }
         }
 
         return 0;
@@ -216,14 +184,6 @@ class TaxService
                 return config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())][strtolower(
                     $address->getRegion()
                 )];
-            }
-            else {
-                error_log(
-                    'Could not find QST tax rate for address. Country: ' .
-                    $address->getCountry() .
-                    ' Region: ' .
-                    $address->getRegion()
-                );
             }
         }
 
