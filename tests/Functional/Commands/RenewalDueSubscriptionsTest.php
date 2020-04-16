@@ -287,6 +287,135 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         );
     }
 
+    public function test_renewal_attempt_system_date_cutoff()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $due = $this->faker->numberBetween(0, 1000);
+
+        $currency = $this->getCurrency();
+
+        $currencyService = $this->app->make(CurrencyService::class);
+        $taxService = $this->app->make(TaxService::class);
+
+        $expectedConversionRate = $currencyService->getRate($currency);
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $fakerCharge = new Charge();
+        $fakerCharge->currency = $currency;
+        $fakerCharge->amount = $due;
+        $fakerCharge->status = 'succeeded';
+        $fakerCharge->id = rand();
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $expectedPaymentTotalDues = [];
+        $initialSubscriptions = [];
+
+
+        $creditCard = $this->fakeCreditCard();
+
+        $address = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE,
+                'country' => 'Canada',
+                'region' => $this->faker->word,
+                'zip' => $this->faker->postcode
+            ]
+        );
+
+        $paymentMethod = $this->fakePaymentMethod(
+            [
+                'credit_card_id' => $creditCard['id'],
+                'currency' => $currency,
+                'billing_address_id' => $address['id']
+            ]
+        );
+
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'currency' => $currency,
+                'total_due' => $this->faker->numberBetween(1, 100),
+            ]
+        );
+
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'subscription_interval_type' => 'month',
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $order = $this->fakeOrder();
+
+        $orderItem = $this->fakeOrderItem(
+            [
+                'order_id' => $order['id'],
+                'product_id' => $product['id'],
+                'quantity' => 1
+            ]
+        );
+
+        $subscriptionPrice = $this->faker->numberBetween(50, 100);
+        $billingAddressEntity = new Address();
+
+        $billingAddressEntity->setCountry($address['country']);
+        $billingAddressEntity->setRegion($address['region']);
+        $billingAddressEntity->setZip($address['zip']);
+
+        $vat = $taxService->getTaxesDueForProductCost(
+            $subscriptionPrice,
+            $billingAddressEntity->toStructure()
+        );
+
+        config()->set('ecommerce.subscription_renewal_attempt_system_start_date', Carbon::now()->toDateTimeString());
+
+        $subscription = $this->fakeSubscription(
+            [
+                'user_id' => $userId,
+                'type' => $this->faker->randomElement(
+                    [Subscription::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
+                ),
+                'start_date' => Carbon::now()
+                    ->subYear(2),
+                'paid_until' => Carbon::now()
+                    ->subDay(1),
+                'is_active' => true,
+                'canceled_on' => null,
+                'product_id' => $product['id'],
+                'currency' => $currency,
+                'order_id' => $order['id'],
+                'brand' => config('ecommerce.brand'),
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'interval_count' => 1,
+                'total_cycles_paid' => 1,
+                'total_cycles_due' => $this->faker->numberBetween(2, 5),
+                'payment_method_id' => $paymentMethod['id'],
+                'total_price' => round($subscriptionPrice + $vat, 2),
+                'tax' => $vat,
+            ]
+        );
+
+        $this->artisan('renewalDueSubscriptions');
+
+        // assert subscription was not renewed
+        for ($i = 0; $i < count($initialSubscriptions); $i++) {
+            $this->assertDatabaseHas(
+                'ecommerce_subscriptions',
+                [
+                    'id' => $initialSubscriptions[$i]['id'],
+                    'paid_until' => Carbon::now()
+                        ->subDay(1),
+                    'is_active' => 1,
+                ]
+            );
+        }
+    }
+
     public function test_command_payment_fails()
     {
         $userId = $this->createAndLogInNewUser();
@@ -752,7 +881,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 1,
                 'renewal_attempt' => 0,
                 'paid_until' => Carbon::now()
-                                    ->subHours(2)
+                    ->subHours(2)
             ]
         );
 
@@ -767,7 +896,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 1,
                 'renewal_attempt' => 0,
                 'paid_until' => Carbon::now()
-                                    ->addDays(5)
+                    ->addDays(5)
             ]
         );
 
@@ -782,7 +911,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 1,
                 'paid_until' => Carbon::now()
-                                    ->subHours(9),
+                    ->subHours(9),
             ]
         );
 
@@ -797,7 +926,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 1,
                 'paid_until' => Carbon::now()
-                                    ->subHours(5),
+                    ->subHours(5),
             ]
         );
 
@@ -812,7 +941,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 2,
                 'paid_until' => Carbon::now()
-                                    ->subDays(4),
+                    ->subDays(4),
             ]
         );
 
@@ -827,7 +956,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 2,
                 'paid_until' => Carbon::now()
-                                    ->subDays(2),
+                    ->subDays(2),
             ]
         );
 
@@ -842,7 +971,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 3,
                 'paid_until' => Carbon::now()
-                                    ->subDays(8),
+                    ->subDays(8),
             ]
         );
 
@@ -857,7 +986,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 3,
                 'paid_until' => Carbon::now()
-                                    ->subDays(6),
+                    ->subDays(6),
             ]
         );
 
@@ -872,7 +1001,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 4,
                 'paid_until' => Carbon::now()
-                                    ->subDays(15),
+                    ->subDays(15),
             ]
         );
 
@@ -887,7 +1016,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 4,
                 'paid_until' => Carbon::now()
-                                    ->subDays(13),
+                    ->subDays(13),
             ]
         );
 
@@ -902,7 +1031,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 5,
                 'paid_until' => Carbon::now()
-                                    ->subDays(31),
+                    ->subDays(31),
             ]
         );
 
@@ -917,7 +1046,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 5,
                 'paid_until' => Carbon::now()
-                                    ->subDays(29),
+                    ->subDays(29),
             ]
         );
 
@@ -932,7 +1061,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 6,
                 'paid_until' => Carbon::now()
-                                    ->subDays(31),
+                    ->subDays(31),
             ]
         );
 
@@ -1098,7 +1227,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 1,
                 'renewal_attempt' => 0,
                 'paid_until' => Carbon::now()
-                                    ->subHours(2)
+                    ->subHours(2)
             ]
         );
 
@@ -1113,7 +1242,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 1,
                 'renewal_attempt' => 0,
                 'paid_until' => Carbon::now()
-                                    ->addDays(5)
+                    ->addDays(5)
             ]
         );
 
@@ -1128,7 +1257,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 1,
                 'paid_until' => Carbon::now()
-                                    ->subHours(9),
+                    ->subHours(9),
             ]
         );
 
@@ -1143,7 +1272,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 1,
                 'paid_until' => Carbon::now()
-                                    ->subHours(5),
+                    ->subHours(5),
             ]
         );
 
@@ -1158,7 +1287,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 2,
                 'paid_until' => Carbon::now()
-                                    ->subDays(4),
+                    ->subDays(4),
             ]
         );
 
@@ -1173,7 +1302,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 2,
                 'paid_until' => Carbon::now()
-                                    ->subDays(2),
+                    ->subDays(2),
             ]
         );
 
@@ -1188,7 +1317,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 3,
                 'paid_until' => Carbon::now()
-                                    ->subDays(8),
+                    ->subDays(8),
             ]
         );
 
@@ -1203,7 +1332,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 3,
                 'paid_until' => Carbon::now()
-                                    ->subDays(6),
+                    ->subDays(6),
             ]
         );
 
@@ -1218,7 +1347,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 4,
                 'paid_until' => Carbon::now()
-                                    ->subDays(15),
+                    ->subDays(15),
             ]
         );
 
@@ -1233,7 +1362,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 4,
                 'paid_until' => Carbon::now()
-                                    ->subDays(13),
+                    ->subDays(13),
             ]
         );
 
@@ -1248,7 +1377,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 5,
                 'paid_until' => Carbon::now()
-                                    ->subDays(31),
+                    ->subDays(31),
             ]
         );
 
@@ -1263,7 +1392,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 5,
                 'paid_until' => Carbon::now()
-                                    ->subDays(29),
+                    ->subDays(29),
             ]
         );
 
@@ -1278,7 +1407,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 0,
                 'renewal_attempt' => 6,
                 'paid_until' => Carbon::now()
-                                    ->subDays(31),
+                    ->subDays(31),
             ]
         );
 
@@ -1553,7 +1682,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'canceled_on' => null,
                 'renewal_attempt' => 0,
                 'paid_until' => Carbon::now()
-                                    ->subHours(2)
+                    ->subHours(2)
             ]
         );
 
@@ -1570,7 +1699,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'canceled_on' => null,
                 'renewal_attempt' => 0,
                 'paid_until' => Carbon::now()
-                                    ->subHours(2)
+                    ->subHours(2)
             ]
         );
 
@@ -1585,10 +1714,10 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 1,
                 'stopped' => 0,
                 'canceled_on' => Carbon::now()
-                                    ->subDays(2),
+                    ->subDays(2),
                 'renewal_attempt' => 0,
                 'paid_until' => Carbon::now()
-                                    ->subHours(2)
+                    ->subHours(2)
             ]
         );
 

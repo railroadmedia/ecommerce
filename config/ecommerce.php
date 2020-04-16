@@ -280,6 +280,10 @@ return [
         5 => 24 * 30,
     ],
 
+    // the system will not try and renew subscriptions which expired before this date
+    // this is for when launching the 2.4 update, since we don't want to re-bill a bunch of old subscriptions on launch
+    'subscription_renewal_attempt_system_start_date' => '2020-04-16 00:00:00',
+
     // permissions
     'role_abilities' => [
         'administrator' => [

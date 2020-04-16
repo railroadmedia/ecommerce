@@ -48,7 +48,8 @@ class SubscriptionRepository extends RepositoryBase
     public function __construct(
         EcommerceEntityManager $em,
         UserProviderInterface $userProvider
-    ) {
+    )
+    {
         parent::__construct($em, $em->getClassMetadata(Subscription::class));
 
         $this->userProvider = $userProvider;
@@ -90,7 +91,7 @@ class SubscriptionRepository extends RepositoryBase
 
             $renewalAttemptsParams[$renewalAttemptIndexParam] = $renewalAttemptIndex;
             $renewalAttemptsParams[$renewalAttemptDateParam] = Carbon::now()
-                                                                    ->subHours($renewalAttemptHoursDiff);
+                ->subHours($renewalAttemptHoursDiff);
         }
 
         $qb->select(['s'])
@@ -143,6 +144,13 @@ class SubscriptionRepository extends RepositoryBase
                     )
             );
 
+        if (!empty(config('ecommerce.subscription_renewal_attempt_system_start_date'))) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->gt('s.paidUntil', ':historicalRenewalDateCutoff')
+            );
+        }
+
         /** @var $q Query */
         $q = $qb->getQuery();
 
@@ -160,6 +168,13 @@ class SubscriptionRepository extends RepositoryBase
             )
             ->setParameter('initialRenewalAttempt', 0)
             ->setParameter('initialRenewalDate', Carbon::now());
+
+        if (!empty(config('ecommerce.subscription_renewal_attempt_system_start_date'))) {
+            $q->setParameter(
+                ':historicalRenewalDateCutoff',
+                config('ecommerce.subscription_renewal_attempt_system_start_date')
+            );
+        }
 
         foreach ($renewalAttemptsParams as $param => $value) {
             $q->setParameter($param, $value);
@@ -290,8 +305,8 @@ class SubscriptionRepository extends RepositoryBase
         }
 
         $subscriptionsPage = $qb
-                ->getQuery()
-                ->getResult();
+            ->getQuery()
+            ->getResult();
 
         $subscriptionsIds = [];
 
@@ -640,7 +655,7 @@ class SubscriptionRepository extends RepositoryBase
             );
 
         return $qb->getQuery()
-                    ->getResult();
+            ->getResult();
     }
 
     /**
@@ -670,9 +685,9 @@ class SubscriptionRepository extends RepositoryBase
         }
 
         return $qb->setParameter('userId', $userId)
-                    ->orderBy('s.createdAt', 'desc')
-                    ->getQuery()
-                    ->getResult();
+            ->orderBy('s.createdAt', 'desc')
+            ->getQuery()
+            ->getResult();
     }
 
     /**
@@ -796,21 +811,21 @@ class SubscriptionRepository extends RepositoryBase
             );
 
         return $qb->setParameter('userId', $userId)
-                    ->setParameter('date', $date)
-                    ->setParameter('intervalMonthly', config('ecommerce.interval_type_monthly'))
-                    ->setParameter('oneMonth', 1)
-                    ->setParameter('sixMonths', 6)
-                    ->setParameter('intervalYearly', config('ecommerce.interval_type_yearly'))
-                    ->setParameter('oneYear', 1)
-                    ->setParameter(
-                        'membership',
-                        [
-                            Subscription::TYPE_SUBSCRIPTION,
-                            Subscription::TYPE_APPLE_SUBSCRIPTION,
-                            Subscription::TYPE_GOOGLE_SUBSCRIPTION
-                        ]
-                    )
-                    ->getQuery()
-                    ->getResult();
+            ->setParameter('date', $date)
+            ->setParameter('intervalMonthly', config('ecommerce.interval_type_monthly'))
+            ->setParameter('oneMonth', 1)
+            ->setParameter('sixMonths', 6)
+            ->setParameter('intervalYearly', config('ecommerce.interval_type_yearly'))
+            ->setParameter('oneYear', 1)
+            ->setParameter(
+                'membership',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_APPLE_SUBSCRIPTION,
+                    Subscription::TYPE_GOOGLE_SUBSCRIPTION
+                ]
+            )
+            ->getQuery()
+            ->getResult();
     }
 }

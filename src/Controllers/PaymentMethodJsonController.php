@@ -315,7 +315,7 @@ class PaymentMethodJsonController extends Controller
 
             // validate UI known error format
             if (isset($exceptionData['error']) && isset($exceptionData['error']['code'])) {
-                throw new StripeCardException($exceptionData['error']);
+                throw new StripeCardException(var_export($exceptionData['error'], true));
             }
 
             // throw generic
