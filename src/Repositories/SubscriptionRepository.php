@@ -57,7 +57,7 @@ class SubscriptionRepository extends RepositoryBase
     /**
      * Gets subscriptions due to renew
      *
-     * @return array
+     * @return Subscription[]
      */
     public function getSubscriptionsDueToRenew()
     {

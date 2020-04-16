@@ -94,8 +94,6 @@ class RenewalDueSubscriptions extends Command
 
             } catch (Throwable $throwable) {
 
-                error_log($throwable);
-
                 $payment = null;
 
                 if ($throwable instanceof PaymentFailedException) {

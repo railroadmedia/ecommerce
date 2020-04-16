@@ -29,6 +29,7 @@ use Throwable;
 class SubscriptionService
 {
     const DEACTIVATION_MESSAGE = 'De-activated due to renewal payment fail.';
+    const CANCELLED_DUE_TO_NO_PAYMENT_METHOD_MESSAGE = 'Canceled due to not having a payment method, or the payment method was deleted.';
 
     /**
      * @var CurrencyService
@@ -157,7 +158,8 @@ class SubscriptionService
     public function selectUserSubscription(
         Subscription $subscriptionOne,
         Subscription $subscriptionTwo
-    ): Subscription {
+    ): Subscription
+    {
         $subscriptionOneState = $subscriptionOne->getState();
         $subscriptionTwoState = $subscriptionTwo->getState();
 
@@ -184,7 +186,7 @@ class SubscriptionService
         }
 
         return $subscriptionOne->getPaidUntil() > $subscriptionTwo->getPaidUntil()
-                    ? $subscriptionOne : $subscriptionTwo;
+            ? $subscriptionOne : $subscriptionTwo;
     }
 
     /**
@@ -240,10 +242,10 @@ class SubscriptionService
 
         /** @var $renewalDueDate Carbon */
         $renewalDueDate = $subscription->getPaidUntil()
-                            ->copy();
+            ->copy();
 
         return isset($config[$renewalAttempt]) ?
-                    $renewalDueDate->addHours($config[$renewalAttempt]) : null;
+            $renewalDueDate->addHours($config[$renewalAttempt]) : null;
     }
 
     /**
@@ -274,7 +276,23 @@ class SubscriptionService
         /** @var $paymentMethod PaymentMethod */
         $paymentMethod = $subscription->getPaymentMethod();
 
+        // if there is no payment method cancel the subscription
         if (empty($paymentMethod)) {
+            $subscription->setRenewalAttempt(($subscription->getRenewalAttempt() ?? 0) + 1);
+
+            $subscription->setIsActive(false);
+            $subscription->setCanceledOn(Carbon::now());
+            $subscription->setUpdatedAt(Carbon::now());
+            $subscription->setNote(self::CANCELLED_DUE_TO_NO_PAYMENT_METHOD_MESSAGE);
+
+            $this->entityManager->flush();
+
+            event(new SubscriptionUpdated($oldSubscription, $subscription));
+
+            event(
+                new SubscriptionEvent($subscription->getId(), 'cancelled')
+            );
+
             throw new Exception(
                 "Subscription with ID: " . $subscription->getId() . " does not have an attached payment method."
             );
@@ -389,8 +407,7 @@ class SubscriptionService
 
                 $exceptionToThrow = $exception;
             }
-        }
-        elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
+        } elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
 
             try {
 
@@ -435,8 +452,7 @@ class SubscriptionService
 
                 $exceptionToThrow = $exception;
             }
-        }
-        else {
+        } else {
             $payment->setTotalPaid(0);
             $payment->setExternalProvider('unknown');
             $payment->setExternalId($transactionId ?? null);
@@ -542,8 +558,7 @@ class SubscriptionService
 
             event(new SubscriptionEvent($subscription->getId(), 'renewed'));
 
-        }
-        else {
+        } else {
 
             $subscription->setRenewalAttempt(($subscription->getRenewalAttempt() ?? 0) + 1);
 

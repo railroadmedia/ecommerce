@@ -201,6 +201,176 @@ class SubscriptionServiceTest extends EcommerceTestCase
         );
     }
 
+    public function test_renew_deleted_payment_method()
+    {
+        $em = $this->app->make(EcommerceEntityManager::class);
+
+        $em->getMetadataFactory()
+            ->getCacheDriver()
+            ->deleteAll();
+
+        $stripeCustomer = new Customer();
+        $stripeCustomer->id = rand();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($stripeCustomer);
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+
+        $charge = new Charge();
+        $charge->id = $this->faker->word;
+
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($charge);
+
+        $userProvider = $this->app->make(UserProviderInterface::class);
+
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
+        );
+
+        $user = $userProvider->createUser($email, $password);
+
+        $creditCard = new CreditCard();
+
+        $creditCard->setFingerprint($this->faker->word);
+        $creditCard->setLastFourDigits($this->faker->randomNumber(4, true));
+        $creditCard->setCompanyName($this->faker->word);
+        $creditCard->setExpirationDate(Carbon::now());
+        $creditCard->setPaymentGatewayName($this->getPaymentGateway('stripe'));
+        $creditCard->setExternalId($this->faker->word);
+        $creditCard->setCreatedAt(Carbon::now());
+
+        $em->persist($creditCard);
+        $em->flush();
+
+        $country = 'Canada';
+        $region = 'alberta';
+
+        $address = new Address();
+        $address->setCountry($country);
+        $address->setRegion($region);
+        $address->setType(Address::BILLING_ADDRESS_TYPE);
+
+        $em->persist($address);
+        $em->flush();
+
+        $paymentMethod = new PaymentMethod();
+
+        $paymentMethod->setCreditCard($creditCard);
+        $paymentMethod->setBillingAddress($address);
+        $paymentMethod->setCurrency($this->getCurrency());
+        $paymentMethod->setCreatedAt(Carbon::now());
+        $paymentMethod->setDeletedAt(Carbon::now());
+
+        $em->persist($paymentMethod);
+        $em->flush();
+
+        $product = new Product();
+
+        $product->setBrand($this->faker->word);
+        $product->setName($this->faker->word);
+        $product->setSku($this->faker->word);
+        $product->setPrice($this->faker->randomNumber(4));
+        $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $product->setActive(true);
+        $product->setIsPhysical(false);
+        $product->setPrice(123.58);
+        $product->setAutoDecrementStock(false);
+
+        $em->persist($product);
+        $em->flush();
+
+        $taxService = $this->app->make(TaxService::class);
+        $currencyService = $this->app->make(CurrencyService::class);
+
+        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+
+        $subscriptionTaxes = $taxService->getTaxesDueForProductCost(
+            $product->getPrice(),
+            $paymentMethod->getBillingAddress()->toStructure()
+        );
+
+        $subscription = new Subscription();
+
+        $subscription->setBrand($this->faker->word);
+        $subscription->setType('subscription');
+        $subscription->setIsActive(true);
+        $subscription->setStopped(false);
+        $subscription->setProduct($product);
+        $subscription->setUser($user);
+        $subscription->setStartDate(Carbon::now());
+        $subscription->setPaidUntil(Carbon::now()->subDay(1));
+        $subscription->setTotalPrice(round($product->getPrice() + $subscriptionTaxes, 2));
+        $subscription->setTax(round($subscriptionTaxes, 2));
+        $subscription->setCurrency($paymentMethod->getCurrency());
+        $subscription->setIntervalType(config('ecommerce.interval_type_monthly'));
+        $subscription->setIntervalCount(1);
+        $subscription->setTotalCyclesPaid($this->faker->randomNumber(3));
+        $subscription->setRenewalAttempt(1);
+//        $subscription->setPaymentMethod($paymentMethod);
+        $subscription->setCreatedAt(Carbon::now());
+        $subscription->setUpdatedAt(Carbon::now());
+
+        $em->persist($subscription);
+        $em->flush();
+
+        $srv = $this->app->make(SubscriptionService::class);
+
+        try {
+            $srv->renew($subscription);
+        } catch (Throwable $throwable) {
+            $this->assertEquals(
+                "Subscription with ID: " . $subscription->getId() . " does not have an attached payment method.",
+                $throwable->getMessage()
+            );
+        }
+
+        $chargePrice = $currencyService->convertFromBase(
+            $subscription->getTotalPrice(),
+            $subscription->getCurrency()
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_payments',
+            [
+                'id' => 1,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => $subscription->getId(),
+            ]
+        );
+
+        // assert user products assignation
+        $this->assertDatabaseMissing(
+            'ecommerce_user_products',
+            [
+                'user_id' => $user->getId(),
+                'product_id' => $product->getId(),
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'ecommerce_payment_taxes',
+            [
+                'id' => 1,
+            ]
+        );
+
+        // assert subscription was cancelled
+        $this->assertDatabaseHas('ecommerce_subscriptions', [
+            'canceled_on' => Carbon::now()->toDateTimeString(),
+            'is_active' => false,
+            'note' => SubscriptionService::CANCELLED_DUE_TO_NO_PAYMENT_METHOD_MESSAGE,
+        ]);
+    }
+
     public function test_get_subscriptions_renewal()
     {
         $renewalConfig = config('ecommerce.subscriptions_renew_cycles');
@@ -222,9 +392,9 @@ class SubscriptionServiceTest extends EcommerceTestCase
             'is_active' => 0,
             'stopped' => 0,
             'start_date' => Carbon::now()
-                                ->subMonths(5),
+                ->subMonths(5),
             'canceled_on' => Carbon::now()
-                                ->subMonths(3),
+                ->subMonths(3),
         ]);
 
         $productTwo = $this->fakeProduct([
@@ -239,10 +409,10 @@ class SubscriptionServiceTest extends EcommerceTestCase
             'is_active' => 1,
             'stopped' => 0,
             'start_date' => Carbon::now()
-                                ->subMonths(2),
+                ->subMonths(2),
             'paid_until' => Carbon::now()
-                                ->addDays(3)
-                                ->startOfDay(),
+                ->addDays(3)
+                ->startOfDay(),
             'canceled_on' => null,
         ]);
 
@@ -280,10 +450,10 @@ class SubscriptionServiceTest extends EcommerceTestCase
             'is_active' => 0,
             'stopped' => 0,
             'start_date' => Carbon::now()
-                                ->subMonths(5),
+                ->subMonths(5),
             'paid_until' => Carbon::now()
-                                ->subDays(13)
-                                ->startOfDay(),
+                ->subDays(13)
+                ->startOfDay(),
             'canceled_on' => null,
         ]);
 
@@ -315,10 +485,10 @@ class SubscriptionServiceTest extends EcommerceTestCase
             'is_active' => 1,
             'stopped' => 1,
             'start_date' => Carbon::now()
-                                ->subMonths(3),
+                ->subMonths(3),
             'paid_until' => Carbon::now()
-                                ->subMonths(2)
-                                ->subDays(2),
+                ->subMonths(2)
+                ->subDays(2),
             'canceled_on' => null,
         ]);
 
@@ -334,10 +504,10 @@ class SubscriptionServiceTest extends EcommerceTestCase
             'is_active' => 1,
             'stopped' => 0,
             'start_date' => Carbon::now()
-                                ->subMonths(2),
+                ->subMonths(2),
             'paid_until' => Carbon::now()
-                                ->addDays(14)
-                                ->startOfDay(),
+                ->addDays(14)
+                ->startOfDay(),
             'canceled_on' => null,
         ]);
 
@@ -373,10 +543,10 @@ class SubscriptionServiceTest extends EcommerceTestCase
             'stopped' => 0,
             'renewal_attempt' => 4,
             'start_date' => Carbon::now()
-                                ->subMonths(5),
+                ->subMonths(5),
             'paid_until' => Carbon::now()
-                                ->subDays(13)
-                                ->startOfDay(),
+                ->subDays(13)
+                ->startOfDay(),
             'canceled_on' => null,
         ]);
 

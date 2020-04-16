@@ -44,6 +44,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         $fakerCharge->currency = $currency;
         $fakerCharge->amount = $due;
         $fakerCharge->status = 'succeeded';
+        $fakerCharge->id = rand();
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn($fakerCharge);
 
@@ -486,6 +487,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         $fakerCharge->currency = $currency;
         $fakerCharge->amount = $due;
         $fakerCharge->status = 'succeeded';
+        $fakerCharge->id = rand();
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn($fakerCharge);
 
@@ -727,6 +729,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ->willReturn(new Card());
         $fakerCharge = new Charge();
         $fakerCharge->status = 'succeeded';
+        $fakerCharge->id = rand();
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn($fakerCharge);
 
@@ -1525,6 +1528,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ->willReturn(new Card());
         $fakerCharge = new Charge();
         $fakerCharge->status = 'succeeded';
+        $fakerCharge->id = rand();
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn($fakerCharge);
 
