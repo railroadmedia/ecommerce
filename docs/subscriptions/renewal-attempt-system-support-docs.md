@@ -19,17 +19,20 @@ daylight savings changes. Example:
 - 11:00 PM  
 
 <br>
+
 When the first renewal payment for an active subscription fails, the system will try to renew the subscription 
 4 more times following the initial failed payment date. Here is that schedule, relative to the subscriptions 
-paid until date:
+paid until date:  
 
 - 8 Hours after
 - 3 days after
 - 7 days after
 - 14 days after
 
+<br>
+
 Once all 5 payments have failed, the renewal attempt number will be at 5 (increasing once per failure), 
-and the system will no longer try to put the payment through.  
+and the system will no longer try to renew the subscription.
 
 If any of the payments succeed, the subscription will be reactivated normally, 
 and the renewal attempts number will be set back to 0.
@@ -52,7 +55,7 @@ setting the above values within those rules and setting the paid until date to w
 
 There are 4 states a subscription can be in:
 
-**active**
+**active**  
 The subscription is scheduled to renew in the future. The subscription is only considered active if the 
 following criteria are met:
 
@@ -61,18 +64,23 @@ following criteria are met:
 - Is active is TRUE
 - Stopped is FALSE
 
-**suspended**
+<br>
+
+**suspended**  
 The subscriptions initial renewal payment failed. This subscription is either going to start going through 
-the renewal reattempt schedule, or if the system already tried to renew the subscription 5 times, 
-it will be ignored. The subscription is only considered active if the following criteria are met:
+the renewal reattempt schedule, or if the system already tried to renew the subscription 5 times and 
+it will be ignored. The subscription is only considered suspended if the following criteria are met:
 
 - Paid until date is in the past
 - Cancelled on is empty/null
 - Is active is FALSE
 - Stopped is FALSE
 
-**cancelled**
-The subscription has been cancelled by the user or by support. It will no longer be renewed in any scenario. 
+<br>
+
+**cancelled**  
+The subscription has been cancelled by the user or by support. It will no longer be automatically 
+renewed in any scenario. 
 The subscription is only considered cancelled if the following criteria are met:
 
 - Cancelled on is set to any date
@@ -80,9 +88,11 @@ The subscription is only considered cancelled if the following criteria are met:
 This overrides all other values. The subscription will be considered cancelled regardless of what any of 
 the other values are set to.
 
-**stopped**
-The subscription was suspended but the system will ignore it and no longer attempt to renew it under 
-any scenario.
+<br>
+
+**stopped**  
+The subscription was suspended but support set stopped to true. 
+The system will ignore it and no longer attempt to renew it under any scenario.
 
 - Stopped is TRUE
 
