@@ -328,7 +328,7 @@ class SubscriptionJsonController extends Controller
     {
         $this->permissionService->canOrThrow(auth()->id(), 'pull.failed-billing');
 
-        $subscriptionsAndBuilder = $this->subscriptionRepository->indexFailedBillingByRequest($request);
+        $subscriptionsAndBuilder = $this->subscriptionService->getFailedBilling($request);
 
         if ($request->has('csv') && $request->get('csv') == true) {
             $rows = [];

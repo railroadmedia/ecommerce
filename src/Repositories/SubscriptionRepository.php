@@ -493,6 +493,63 @@ class SubscriptionRepository extends RepositoryBase
     }
 
     /**
+     * @param array $userIds
+     * @param FailedBillingSubscriptionsRequest $request
+     *
+     * @return Subscription[]|null
+     */
+    public function getActiveUserSubscriptions(array $userIds, FailedBillingSubscriptionsRequest $request): array
+    {
+        $qb = $this->createQueryBuilder('s');
+
+        $qb->restrictBrandsByRequest($request, 's')
+            ->andWhere(
+                $qb->expr()
+                    ->in('s.type', ':types')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.stopped', ':not')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.isActive', ':true')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->gt('s.paidUntil', ':now')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('s.canceledOn')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->in('s.user', ':userIds')
+            )
+            ->setParameter(
+                'now',
+                Carbon::now()
+                    ->toDateTimeString()
+            )
+            ->setParameter('not', false)
+            ->setParameter(
+                'types',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_APPLE_SUBSCRIPTION,
+                    Subscription::TYPE_GOOGLE_SUBSCRIPTION,
+                    Subscription::TYPE_PAYPAL_SUBSCRIPTION,
+                ]
+            )
+            ->setParameter('userIds', $userIds)
+            ->setParameter('true', true);
+
+        return $qb->getQuery()
+                    ->getResult();
+    }
+
+    /**
      * Gets subscriptions that are related to the specified products
      *
      * @param array $products - array of product entities
@@ -595,11 +652,16 @@ class SubscriptionRepository extends RepositoryBase
                     $qb->expr()
                         ->isNull('s.canceledOn')
                 )
+                ->andWhere(
+                    $qb->expr()
+                        ->eq('s.stopped', ':not')
+                )
                 ->setParameter(
                     'now',
                     Carbon::now()
                         ->toDateTimeString()
-                );
+                )
+                ->setParameter('not', false);
         }
 
         $subscriptions =
@@ -647,12 +709,17 @@ class SubscriptionRepository extends RepositoryBase
                 $qb->expr()
                     ->isNull('s.canceledOn')
             )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.stopped', ':not')
+            )
             ->setParameter('user', $user)
             ->setParameter(
                 'now',
                 Carbon::now()
                     ->toDateTimeString()
-            );
+            )
+            ->setParameter('not', false);
 
         return $qb->getQuery()
             ->getResult();

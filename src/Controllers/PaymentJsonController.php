@@ -314,9 +314,11 @@ class PaymentJsonController extends Controller
                 );
 
                 $subscription->setRenewalAttempt(0);
+                $subscription->setFailedPayment(null);
 
             } else {
                 $subscription->setRenewalAttempt($subscription->getRenewalAttempt() + 1);
+                $subscription->setFailedPayment($payment);
             }
         }
 

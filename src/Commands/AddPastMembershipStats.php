@@ -118,6 +118,11 @@ class AddPastMembershipStats extends Command
     {
         $start = microtime(true);
 
+        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+            ->table('ecommerce_membership_stats')
+            ->whereBetween('stats_date', [$smallDate, $bigDate])
+            ->delete();
+
         $days = $smallDate->diffInDays($bigDate);
 
         $insertChunkSize = 1000;

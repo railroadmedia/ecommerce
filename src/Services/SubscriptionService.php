@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use DateTimeInterface;
 use Exception;
+use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
@@ -24,6 +25,7 @@ use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Gateways\StripePaymentGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Requests\FailedBillingSubscriptionsRequest;
 use Throwable;
 
 class SubscriptionService
@@ -101,6 +103,77 @@ class SubscriptionService
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
         $this->paymentService = $paymentService;
+    }
+
+    /**
+     * @param FailedBillingSubscriptionsRequest $request
+     *
+     * @return ResultsQueryBuilderComposite
+     */
+    public function getFailedBilling(FailedBillingSubscriptionsRequest $request): ResultsQueryBuilderComposite
+    {
+        $subscriptionsAndBuilder = $this->subscriptionRepository->indexFailedBillingByRequest($request);
+
+        if ($request->get('type') == Subscription::TYPE_SUBSCRIPTION) {
+            $userIds = [];
+            // gather subscriptions user ids
+            foreach ($subscriptionsAndBuilder->getResults() as $subscription) {
+                $userIds[] = $subscription->getUser()->getId();
+            }
+
+            // fetch active subscriptions of the user ids, filtered by request brands
+            $activeSubscriptions = $this->subscriptionRepository->getActiveUserSubscriptions($userIds, $request);
+
+            if (!empty($activeSubscriptions)) {
+                /*
+                // structure is:
+                [
+                    'user_id' => [
+                        'brandOne' => $subscriptionOne,
+                        'brandTwo' => $subscriptionTwo,
+                    ]
+                ]
+                */
+                $activeSubscriptionsMap = [];
+
+                foreach ($activeSubscriptions as $subscription) {
+
+                    $userId = $subscription->getUser()->getId();
+                    $brand = $subscription->getBrand();
+
+                    if (!isset($activeSubscriptionsMap[$userId])) {
+                        $activeSubscriptionsMap[$userId] = [];
+                    }
+
+                    $activeSubscriptionsMap[$userId][$brand] = $subscription;
+                }
+
+                $filteredFailedSubscriptions = [];
+                $filtered = false;
+
+                foreach ($subscriptionsAndBuilder->getResults() as $subscription) {
+                    $userId = $subscription->getUser()->getId();
+                    $brand = $subscription->getBrand();
+
+                    if (isset($activeSubscriptionsMap[$userId][$brand])) {
+                        // if the user has an other active subscription, do not return this failed subscription
+                        $filtered = true;
+                    } else {
+                        $filteredFailedSubscriptions[] = $subscription;
+                    }
+                }
+
+                if ($filtered) {
+                    // if any subscription was filtered out, return new ResultsQueryBuilderComposite
+                    return new ResultsQueryBuilderComposite(
+                        $filteredFailedSubscriptions,
+                        $subscriptionsAndBuilder->getQueryBuilder()
+                    );
+                } // else return default result
+            }
+        }
+
+        return $subscriptionsAndBuilder;
     }
 
     /**
