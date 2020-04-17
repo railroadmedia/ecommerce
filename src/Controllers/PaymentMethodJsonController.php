@@ -615,15 +615,6 @@ class PaymentMethodJsonController extends Controller
             );
         }
 
-        if (!empty($userPaymentMethod)) {
-            throw_if(
-                $userPaymentMethod->getIsPrimary(),
-                new NotAllowedException(
-                    'Delete failed, can not delete the default payment method'
-                )
-            );
-        }
-
         throw_if(
             !empty($paymentMethod->getDeletedAt()),
             new NotAllowedException(
