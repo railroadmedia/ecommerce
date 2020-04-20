@@ -18,6 +18,7 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewFailed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\SubscriptionRenewException;
@@ -356,7 +357,6 @@ class SubscriptionService
             $subscription->setIsActive(false);
             $subscription->setCanceledOn(Carbon::now());
             $subscription->setUpdatedAt(Carbon::now());
-            $subscription->setNote(self::CANCELLED_DUE_TO_NO_PAYMENT_METHOD_MESSAGE);
 
             $this->entityManager->flush();
 
@@ -637,7 +637,6 @@ class SubscriptionService
 
             $subscription->setIsActive(false);
             $subscription->setUpdatedAt(Carbon::now());
-            $subscription->setNote(self::DEACTIVATION_MESSAGE);
 
             $this->entityManager->flush();
 
@@ -646,6 +645,8 @@ class SubscriptionService
             event(
                 new SubscriptionEvent($subscription->getId(), 'deactivated')
             );
+
+            event(new SubscriptionRenewFailed($subscription, $oldSubscription, $payment));
 
             throw PaymentFailedException::createFromException(
                 $exceptionToThrow,

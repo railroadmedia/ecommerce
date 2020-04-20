@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewFailed;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewFailed;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Services\CurrencyService;
 use Railroad\Ecommerce\Services\TaxService;
@@ -523,6 +524,8 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             $currency
         );
 
+        $this->expectsEvents([SubscriptionRenewFailed::class]);
+
         $this->artisan('renewalDueSubscriptions');
 
         $this->assertDatabaseHas(
@@ -533,6 +536,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     ->subDay(1),
                 'is_active' => 0,
                 'total_cycles_paid' => $subscription['total_cycles_paid'],
+                'renewal_attempt' => 1,
                 'updated_at' => Carbon::now()
                     ->toDateTimeString(),
             ]

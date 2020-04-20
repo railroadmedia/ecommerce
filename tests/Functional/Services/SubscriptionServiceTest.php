@@ -6,7 +6,6 @@ use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Entities\Structures\SubscriptionRenewal;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CurrencyService;
