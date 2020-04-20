@@ -456,7 +456,6 @@ class RenewalService
 
                 $subscription->setIsActive(false);
                 $subscription->setUpdatedAt(Carbon::now());
-                $subscription->setNote(self::DEACTIVATION_MESSAGE);
 
                 $this->entityManager->flush();
 

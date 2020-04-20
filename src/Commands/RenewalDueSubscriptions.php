@@ -256,7 +256,6 @@ class RenewalDueSubscriptions extends Command
             $oldSubscriptionState = clone($ancientSubscription);
 
             $ancientSubscription->setIsActive(false);
-            $ancientSubscription->setNote(self::DEACTIVATION_NOTE);
             $ancientSubscription->setCanceledOn(Carbon::now());
             $ancientSubscription->setUpdatedAt(Carbon::now());
 
