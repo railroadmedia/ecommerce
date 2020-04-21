@@ -139,16 +139,19 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscriptions[] = [
                     'type' => 'subscription',
                     'id' => $subscription['id'],
-                    'attributes' => array_diff_key(
-                        $subscription,
-                        [
-                            'id' => true,
-                            'product_id' => true,
-                            'user_id' => true,
-                            'customer_id' => true,
-                            'payment_method_id' => true,
-                            'order_id' => true
-                        ]
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'user_id' => true,
+                                'customer_id' => true,
+                                'payment_method_id' => true,
+                                'order_id' => true
+                            ]
+                        ),
+                        ['state' => Subscription::STATE_ACTIVE]
                     ),
                     'relationships' => [
                         'product' => [
@@ -231,16 +234,19 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             [
                 'type' => 'subscription',
                 'id' => $subscription['id'],
-                'attributes' => array_diff_key(
-                    $subscription,
-                    [
-                        'id' => true,
-                        'product_id' => true,
-                        'user_id' => true,
-                        'customer_id' => true,
-                        'payment_method_id' => true,
-                        'order_id' => true
-                    ]
+                'attributes' => array_merge(
+                    array_diff_key(
+                        $subscription,
+                        [
+                            'id' => true,
+                            'product_id' => true,
+                            'user_id' => true,
+                            'customer_id' => true,
+                            'payment_method_id' => true,
+                            'order_id' => true
+                        ]
+                    ),
+                    ['state' => Subscription::STATE_ACTIVE]
                 ),
                 'relationships' => [
                     'product' => [
@@ -289,16 +295,19 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscriptions[] = [
                     'type' => 'subscription',
                     'id' => $subscription['id'],
-                    'attributes' => array_diff_key(
-                        $subscription,
-                        [
-                            'id' => true,
-                            'product_id' => true,
-                            'user_id' => true,
-                            'customer_id' => true,
-                            'payment_method_id' => true,
-                            'order_id' => true
-                        ]
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'user_id' => true,
+                                'customer_id' => true,
+                                'payment_method_id' => true,
+                                'order_id' => true
+                            ]
+                        ),
+                        ['state' => Subscription::STATE_ACTIVE]
                     ),
                     'relationships' => [
                         'product' => [
@@ -392,16 +401,19 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscriptions[] = [
                     'type' => 'subscription',
                     'id' => $subscription['id'],
-                    'attributes' => array_diff_key(
-                        $subscription,
-                        [
-                            'id' => true,
-                            'product_id' => true,
-                            'user_id' => true,
-                            'customer_id' => true,
-                            'payment_method_id' => true,
-                            'order_id' => true
-                        ]
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'user_id' => true,
+                                'customer_id' => true,
+                                'payment_method_id' => true,
+                                'order_id' => true
+                            ]
+                        ),
+                        ['state' => Subscription::STATE_ACTIVE]
                     ),
                     'relationships' => [
                         'product' => [
@@ -2034,6 +2046,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'tax' => $tax,
             'brand' => $brand,
             'renewal_attempt' => 0,
+            'note' => null,
         ]);
 
         $userProduct = $this->fakeUserProduct([
@@ -2085,7 +2098,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscription,
                 [
                     'is_active' => 0,
-                    'note' => SubscriptionService::DEACTIVATION_MESSAGE,
                     'updated_at' => Carbon::now()->toDateTimeString(),
                     'renewal_attempt' => 1,
                 ]
@@ -2095,7 +2107,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
     public function test_pull_subscription_from_specific_brand()
     {
-
         $this->permissionServiceMock->method('can')->willReturn(true);
 
         $userId = $this->createAndLogInNewUser();
@@ -2132,16 +2143,19 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscriptions[] = [
                     'type' => 'subscription',
                     'id' => $subscription['id'],
-                    'attributes' => array_diff_key(
-                        $subscription,
-                        [
-                            'id' => true,
-                            'product_id' => true,
-                            'user_id' => true,
-                            'customer_id' => true,
-                            'payment_method_id' => true,
-                            'order_id' => true
-                        ]
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'user_id' => true,
+                                'customer_id' => true,
+                                'payment_method_id' => true,
+                                'order_id' => true
+                            ]
+                        ),
+                        ['state' => Subscription::STATE_ACTIVE]
                     ),
                     'relationships' => [
                         'product' => [
@@ -2292,12 +2306,14 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             if ($this->faker->randomElement([true, false])) {
                 $subscription['canceled_on'] = Carbon::now()->subDays(rand(1, 29));
                 $subscription['is_active'] = false;
+                $state = Subscription::STATE_CANCELED;
             } else {
                 $paidUntilSubDays = rand(1, 29);
                 $subscription['canceled_on'] = null;
                 $subscription['is_active'] = false;
                 $subscription['start_date'] = Carbon::now()->subDays($paidUntilSubDays + 2);
                 $subscription['paid_until'] = Carbon::now()->subDays($paidUntilSubDays);
+                $state = Subscription::STATE_SUSPENDED;
             }
 
             $subscription = $this->fakeSubscription($subscription);
@@ -2306,16 +2322,19 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscriptions[] = [
                     'type' => 'subscription',
                     'id' => $subscription['id'],
-                    'attributes' => array_diff_key(
-                        $subscription,
-                        [
-                            'id' => true,
-                            'product_id' => true,
-                            'user_id' => true,
-                            'customer_id' => true,
-                            'payment_method_id' => true,
-                            'order_id' => true
-                        ]
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'user_id' => true,
+                                'customer_id' => true,
+                                'payment_method_id' => true,
+                                'order_id' => true
+                            ]
+                        ),
+                        ['state' => $state]
                     ),
                     'relationships' => [
                         'product' => [
@@ -2439,12 +2458,14 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             if ($this->faker->randomElement([true, false])) {
                 $subscription['canceled_on'] = Carbon::now()->subDays(rand(1, 29));
                 $subscription['is_active'] = false;
+                $state = Subscription::STATE_CANCELED;
             } else {
                 $paidUntilSubDays = rand(1, 29);
                 $subscription['canceled_on'] = null;
                 $subscription['is_active'] = false;
                 $subscription['start_date'] = Carbon::now()->subDays($paidUntilSubDays + 2);
                 $subscription['paid_until'] = Carbon::now()->subDays($paidUntilSubDays);
+                $state = Subscription::STATE_SUSPENDED;
             }
 
             $subscription = $this->fakeSubscription($subscription);
@@ -2453,16 +2474,19 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscriptions[] = [
                     'type' => 'subscription',
                     'id' => $subscription['id'],
-                    'attributes' => array_diff_key(
-                        $subscription,
-                        [
-                            'id' => true,
-                            'product_id' => true,
-                            'user_id' => true,
-                            'customer_id' => true,
-                            'payment_method_id' => true,
-                            'order_id' => true
-                        ]
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'user_id' => true,
+                                'customer_id' => true,
+                                'payment_method_id' => true,
+                                'order_id' => true
+                            ]
+                        ),
+                        ['state' => $state]
                     ),
                     'relationships' => [
                         'product' => [
@@ -2705,17 +2729,20 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscriptions[] = [
                     'type' => 'subscription',
                     'id' => $subscription['id'],
-                    'attributes' => array_diff_key(
-                        $subscription,
-                        [
-                            'id' => true,
-                            'product_id' => true,
-                            'user_id' => true,
-                            'customer_id' => true,
-                            'payment_method_id' => true,
-                            'order_id' => true,
-                            'failed_payment_id' => true,
-                        ]
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'user_id' => true,
+                                'customer_id' => true,
+                                'payment_method_id' => true,
+                                'order_id' => true,
+                                'failed_payment_id' => true,
+                            ]
+                        ),
+                        ['state' => Subscription::STATE_SUSPENDED]
                     ),
                     'relationships' => [
                         'product' => [
@@ -2969,17 +2996,20 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $subscriptions[] = [
                     'type' => 'subscription',
                     'id' => $subscription['id'],
-                    'attributes' => array_diff_key(
-                        $subscription,
-                        [
-                            'id' => true,
-                            'product_id' => true,
-                            'user_id' => true,
-                            'customer_id' => true,
-                            'payment_method_id' => true,
-                            'order_id' => true,
-                            'failed_payment_id' => true,
-                        ]
+                    'attributes' => array_merge(
+                        array_diff_key(
+                            $subscription,
+                            [
+                                'id' => true,
+                                'product_id' => true,
+                                'user_id' => true,
+                                'customer_id' => true,
+                                'payment_method_id' => true,
+                                'order_id' => true,
+                                'failed_payment_id' => true,
+                            ]
+                        ),
+                        ['state' => Subscription::STATE_SUSPENDED]
                     ),
                     'relationships' => [
                         'product' => [
@@ -3040,6 +3070,159 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             $subscriptions,
             $response->decodeResponseJson('data')
         );
+    }
+
+    public function test_pull_failed_billing_remove_active_membership()
+    {
+        // test asserts a failed billing subscription is not in result set if user has an other active
+
+        // use one has one failed billing subscription
+        $userOne  = $this->fakeUser();
+
+        $productOne = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+        ]);
+
+        $creditCardOne = $this->fakeCreditCard();
+        $paymentMethodOne = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCardOne['id'],
+        ]);
+
+        $orderOne = $this->fakeOrder([
+            'user_id' => $userOne['id']
+        ]);
+
+        $paymentOne = $this->fakePayment([
+            'payment_method_id' => $paymentMethodOne['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => Payment::STATUS_FAILED,
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(15)
+        ]);
+
+        $subscriptionOne = $this->fakeSubscription([
+            'product_id' => $productOne['id'],
+            'payment_method_id' => $paymentMethodOne['id'],
+            'user_id' => $userOne['id'],
+            'order_id' => $orderOne['id'],
+            'updated_at' => null,
+            'type' => Subscription::TYPE_SUBSCRIPTION,
+            'canceled_on' => null,
+            'is_active' => false,
+            'start_date' => Carbon::now()->subDays(35),
+            'paid_until' => Carbon::now()->subDays(15),
+            'failed_payment_id' => $paymentOne['id'],
+        ]);
+
+        $subscriptionOnePayment = $this->fakeSubscriptionPayment([
+            'subscription_id' => $subscriptionOne['id'],
+            'payment_id' => $paymentOne['id'],
+        ]);
+
+        // use two has one failed billing subscription and one active subscription for same brand
+        $userTwo  = $this->fakeUser();
+
+        $productTwo = $this->fakeProduct([
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+        ]);
+
+        $creditCardTwo = $this->fakeCreditCard();
+        $paymentMethodTwo = $this->fakePaymentMethod([
+            'credit_card_id' => $creditCardTwo['id'],
+        ]);
+
+        $orderTwo = $this->fakeOrder([
+            'user_id' => $userTwo['id']
+        ]);
+
+        $paymentTwo = $this->fakePayment([
+            'payment_method_id' => $paymentMethodTwo['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => Payment::STATUS_FAILED,
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(14)
+        ]);
+
+        $subscriptionTwo = $this->fakeSubscription([
+            'product_id' => $productTwo['id'],
+            'payment_method_id' => $paymentMethodTwo['id'],
+            'user_id' => $userTwo['id'],
+            'order_id' => $orderTwo['id'],
+            'updated_at' => null,
+            'type' => Subscription::TYPE_SUBSCRIPTION,
+            'canceled_on' => null,
+            'is_active' => false,
+            'start_date' => Carbon::now()->subDays(35),
+            'paid_until' => Carbon::now()->subDays(14),
+            'failed_payment_id' => $paymentTwo['id'],
+        ]);
+
+        $subscriptionTwoPayment = $this->fakeSubscriptionPayment([
+            'subscription_id' => $subscriptionTwo['id'],
+            'payment_id' => $paymentTwo['id'],
+        ]);
+
+        $orderThree = $this->fakeOrder([
+            'user_id' => $userTwo['id']
+        ]);
+
+        $paymentThree = $this->fakePayment([
+            'payment_method_id' => $paymentMethodTwo['id'],
+            'total_refunded' => null,
+            'deleted_at' => null,
+            'status' => Payment::STATUS_PAID,
+            'total_paid' => 0,
+            'created_at' => Carbon::now()->subDays(10)
+        ]);
+
+        $subscriptionThree = $this->fakeSubscription([
+            'product_id' => $productTwo['id'],
+            'payment_method_id' => $paymentMethodTwo['id'],
+            'user_id' => $userTwo['id'],
+            'order_id' => $orderThree['id'],
+            'updated_at' => null,
+            'type' => Subscription::TYPE_SUBSCRIPTION,
+            'canceled_on' => null,
+            'is_active' => true,
+            'stopped' => false,
+            'start_date' => Carbon::now()->subDays(10),
+            'paid_until' => Carbon::now()->addDays(20),
+            'failed_payment_id' => null,
+        ]);
+
+        $subscriptionTwoPayment = $this->fakeSubscriptionPayment([
+            'subscription_id' => $subscriptionThree['id'],
+            'payment_id' => $paymentThree['id'],
+        ]);
+
+        $response = $this->call(
+            'GET',
+            '/failed-billing',
+            [
+                'page' => 1,
+                'limit' => 10,
+                'order_by_column' => 'id',
+                'order_by_direction' => 'asc',
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'big_date_time' => Carbon::now()->toDateTimeString(),
+                'small_date_time' => Carbon::now()->subDays(30)->toDateTimeString(),
+            ]
+        );
+
+        $failedSubscriptions = $response->decodeResponseJson()['data'];
+
+        // assert subscription one is returned
+        $this->assertArraySubset(
+            [
+                ['id' => $subscriptionOne['id']]
+            ],
+            $failedSubscriptions
+        );
+
+        // assert failed subscription two is not returned
+        $this->assertCount(1, $failedSubscriptions);
     }
 
     public function test_pull_failed_billing_subscriptions_csv()

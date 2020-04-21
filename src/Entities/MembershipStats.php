@@ -19,9 +19,9 @@ class MembershipStats
 {
     use TimestampableEntity;
 
-    const TYPE_ONE_MONTH = 'one_month';
-    const TYPE_SIX_MONTHS = 'six_months';
-    const TYPE_ONE_YEAR = 'one_year';
+    const TYPE_ONE_MONTH = 'one month';
+    const TYPE_SIX_MONTHS = 'six months';
+    const TYPE_ONE_YEAR = 'one year';
     const TYPE_LIFETIME = 'lifetime';
     const TYPE_OTHER = 'other';
     const TYPE_ALL = 'all';

@@ -1945,6 +1945,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    // todo - update/remove after confirmation
+    /*
     public function test_delete_default_payment_method_not_allowed()
     {
         $userId = $this->createAndLogInNewUser();
@@ -2004,6 +2006,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
+    */
 
     public function test_get_user_payment_methods()
     {
