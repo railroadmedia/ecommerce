@@ -225,7 +225,7 @@ class RetentionStatsService
                     // which they try for 30 days after a failed renewal
                     ->whereBetween(
                         'ecommerce_payments.created_at',
-                        [$smallDateTime->toDateTimeString(), $bigDateTime->copy()->addDays(30)->toDateTimeString()]
+                        [$smallDateTime->toDateTimeString(), $bigDateTime->copy()->addDays(1)->toDateTimeString()]
                     )
                     ->groupBy('user_id')
                     ->get();
