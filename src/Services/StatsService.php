@@ -81,7 +81,6 @@ class StatsService
         $bigDateTime =
             Carbon::parse($bigDate, config('ecommerce.accounting_report_timezone', 'UTC'))
                 ->startOfDay()
-                ->addDay()
                 ->timezone('UTC');
 
         if ($smallDateTime > $bigDateTime) {
