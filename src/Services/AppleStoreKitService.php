@@ -129,10 +129,15 @@ class AppleStoreKitService
      */
     public function processReceipt(AppleReceipt $receipt)
     : User {
-        $this->entityManager->persist($receipt);
-
+        $appleResponse = null;
+        
         try {
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt->getReceipt());
+
+            $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
+
+            $this->entityManager->persist($receipt);
+            $this->entityManager->flush();
 
             if($receipt->getPurchaseType() == AppleReceipt::APPLE_SUBSCRIPTION_PURCHASE) {
                 $currentPurchasedItem = $this->getLatestPurchasedItem($appleResponse);
@@ -147,11 +152,11 @@ class AppleStoreKitService
             $receipt->setTransactionId($transactionId);
             $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
 
-        } catch (ReceiptValidationException $exception) {
+        } catch (Throwable $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
-            $receipt->setRawReceiptResponse(base64_encode(serialize($exception->getAppleResponse())));
+            $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();
@@ -188,10 +193,15 @@ class AppleStoreKitService
      */
     public function processNotification(AppleReceipt $receipt)
     {
-        $this->entityManager->persist($receipt);
+        $appleResponse = null;
 
         try {
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt->getReceipt());
+
+            $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
+
+            $this->entityManager->persist($receipt);
+            $this->entityManager->flush();
 
             $currentPurchasedItem = $this->getLatestPurchasedItem($appleResponse);
 
@@ -199,13 +209,12 @@ class AppleStoreKitService
 
             $receipt->setTransactionId($transactionId);
             $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
-            $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
 
-        } catch (ReceiptValidationException $exception) {
+        } catch (Throwable $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
-            $receipt->setRawReceiptResponse(base64_encode(serialize($exception->getAppleResponse())));
+            $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();
@@ -246,8 +255,18 @@ class AppleStoreKitService
     {
         $receipt = $subscription->getAppleReceipt();
 
+        $this->entityManager->persist($receipt);
+        $this->entityManager->flush();
+
+        $appleResponse = null;
+
         try {
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt->getReceipt());
+
+            $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
+
+            $this->entityManager->persist($receipt);
+            $this->entityManager->flush();
 
             $purchasedItem = $this->getLatestPurchasedItem($appleResponse);
 
@@ -255,11 +274,11 @@ class AppleStoreKitService
             $receipt->setValidationError(null);
             $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
 
-        } catch (ReceiptValidationException $exception) {
+        } catch (Throwable $exception) {
 
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
-            $receipt->setRawReceiptResponse(base64_encode(serialize($exception->getAppleResponse())));
+            $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();

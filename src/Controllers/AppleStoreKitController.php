@@ -100,7 +100,7 @@ class AppleStoreKitController extends Controller
 
         $receipt = new AppleReceipt();
 
-        $receipt->setReceipt($request->get('latest_receipt'));
+        $receipt->setReceipt($request->get('latest_receipt', ''));
         $receipt->setRequestType(AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE);
         $receipt->setNotificationType($notificationType);
         $receipt->setBrand(config('ecommerce.brand'));

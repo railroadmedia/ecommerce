@@ -95,7 +95,7 @@ class AppleReceipt
      *
      * @var bool
      */
-    protected $valid;
+    protected $valid = false;
 
     /**
      * @ORM\Column(type="string", name="validation_error", nullable=true)
