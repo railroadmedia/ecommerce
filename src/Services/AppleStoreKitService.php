@@ -130,7 +130,7 @@ class AppleStoreKitService
     public function processReceipt(AppleReceipt $receipt)
     : User {
         $appleResponse = null;
-        
+
         try {
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt->getReceipt());
 
@@ -157,6 +157,10 @@ class AppleStoreKitService
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
             $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
+
+            if ($exception instanceof ReceiptValidationException) {
+                $receipt->setRawReceiptResponse(base64_encode(serialize($exception->getAppleResponse())));
+            }
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();
@@ -215,6 +219,10 @@ class AppleStoreKitService
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
             $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
+
+            if ($exception instanceof ReceiptValidationException) {
+                $receipt->setRawReceiptResponse(base64_encode(serialize($exception->getAppleResponse())));
+            }
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();
@@ -279,6 +287,10 @@ class AppleStoreKitService
             $receipt->setValid(false);
             $receipt->setValidationError($exception->getMessage());
             $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
+
+            if ($exception instanceof ReceiptValidationException) {
+                $receipt->setRawReceiptResponse(base64_encode(serialize($exception->getAppleResponse())));
+            }
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();
