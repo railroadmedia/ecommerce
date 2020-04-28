@@ -799,6 +799,7 @@ EOT;
                         $otherNewCount =
                             $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_user_products')
+                                ->select(['ecommerce_user_products.*'])
                                 ->join(
                                     'ecommerce_products',
                                     'ecommerce_products.id',
@@ -808,25 +809,60 @@ EOT;
                                 ->leftJoin(
                                     'ecommerce_subscriptions AS es',
                                     function (Builder $builder) use ($dateIncrementEndOfDay, $dateIncrement) {
-                                        return $builder->on('ecommerce_user_products.user_id', '=', 'es.user_id')
-                                            ->on(
-                                                'es.created_at',
-                                                '>',
-                                                $this->databaseManager->raw(
-                                                    '"' .
-                                                    $dateIncrement->copy()->startOfDay() .
-                                                    '"'
-                                                )
-                                            )
-                                            ->on(
-                                                'es.created_at',
-                                                '<',
-                                                $this->databaseManager->raw(
-                                                    '"' .
-                                                    $dateIncrementEndOfDay->toDateTimeString() .
-                                                    '"'
-                                                )
-                                            );
+
+                                        return $builder->on(
+                                            function (Builder $builder) use (
+                                                $dateIncrementEndOfDay,
+                                                $dateIncrement
+                                            ) {
+                                                $builder->on('ecommerce_user_products.user_id', '=', 'es.user_id')
+                                                    ->on(
+                                                        'es.created_at',
+                                                        '>',
+                                                        $this->databaseManager->raw(
+                                                            '"' .
+                                                            $dateIncrement->copy()->startOfDay() .
+                                                            '"'
+                                                        )
+                                                    )
+                                                    ->on(
+                                                        'es.created_at',
+                                                        '<',
+                                                        $this->databaseManager->raw(
+                                                            '"' .
+                                                            $dateIncrementEndOfDay->toDateTimeString() .
+                                                            '"'
+                                                        )
+                                                    );
+
+                                            }
+                                        )->orOn(
+                                            function (Builder $builder) use (
+                                                $dateIncrementEndOfDay,
+                                                $dateIncrement
+                                            ) {
+                                                $builder->on('ecommerce_user_products.user_id', '=', 'es.user_id')
+                                                    ->on(
+                                                        'es.created_at',
+                                                        '<',
+                                                        $this->databaseManager->raw(
+                                                            '"' .
+                                                            $dateIncrementEndOfDay->toDateTimeString() .
+                                                            '"'
+                                                        )
+                                                    )
+                                                    ->on(
+                                                        'es.paid_until',
+                                                        '>',
+                                                        $this->databaseManager->raw(
+                                                            '"' .
+                                                            $dateIncrementEndOfDay->toDateTimeString() .
+                                                            '"'
+                                                        )
+                                                    );
+
+                                            }
+                                        );
                                     }
                                 )
                                 ->whereNull('es.id')
@@ -852,7 +888,10 @@ EOT;
                                             ->orWhereNull('expiration_date');
                                     }
                                 )
-                                ->count();
+                                ->groupBy('user_id')
+                                ->get();
+
+                        $otherNewCount = $otherNewCount->count();
                     }
 
                     $this->databaseManager->connection(config('ecommerce.database_connection_name'))
