@@ -22,6 +22,7 @@ use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\GoogleReceiptRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
@@ -73,6 +74,11 @@ class GooglePlayStoreService
     private $subscriptionPaymentRepository;
 
     /**
+     * @var GoogleReceiptRepository
+     */
+    private $googleReceiptRepository;
+
+    /**
      * @var array
      */
     public static $cancellationReasonMap = [
@@ -102,7 +108,8 @@ class GooglePlayStoreService
         UserProductService $userProductService,
         UserProviderInterface $userProvider,
         PaymentRepository $paymentRepository,
-        SubscriptionPaymentRepository $subscriptionPaymentRepository
+        SubscriptionPaymentRepository $subscriptionPaymentRepository,
+        GoogleReceiptRepository $googleReceiptRepository
     ) {
         $this->googlePlayStoreGateway = $googlePlayStoreGateway;
         $this->entityManager = $entityManager;
@@ -112,6 +119,7 @@ class GooglePlayStoreService
         $this->userProvider = $userProvider;
         $this->paymentRepository = $paymentRepository;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
+        $this->googleReceiptRepository = $googleReceiptRepository;
     }
 
     /**
@@ -129,7 +137,7 @@ class GooglePlayStoreService
         // save it to the database
         try {
 
-            if ($receipt->getPurchaseType() == GoogleReceipt::GOOGLE_PRODUCT_PURCHASE){
+            if ($receipt->getPurchaseType() == GoogleReceipt::GOOGLE_PRODUCT_PURCHASE) {
 
                 $googleResponse = $this->googlePlayStoreGateway->validatePurchase(
                     $receipt->getPackageName(),
@@ -237,9 +245,7 @@ class GooglePlayStoreService
 
                 event(
                     new MobileSubscriptionRenewed(
-                        $subscription,
-                        $subscription->getLatestPayment(),
-                        MobileSubscriptionRenewed::ACTOR_SYSTEM
+                        $subscription, $subscription->getLatestPayment(), MobileSubscriptionRenewed::ACTOR_SYSTEM
                     )
                 );
 
@@ -336,7 +342,9 @@ class GooglePlayStoreService
                 $this->entityManager->flush();
 
                 // do the payments
-                $responseOrderId = $googleSubscriptionResponse->getRawResponse()->getOrderId();
+                $responseOrderId =
+                    $googleSubscriptionResponse->getRawResponse()
+                        ->getOrderId();
 
                 $numberOfPaidOrders = 0;
                 $responseOrderIdWithoutIncrement = $responseOrderId;
@@ -565,5 +573,81 @@ class GooglePlayStoreService
         }
 
         return [];
+    }
+
+    /**
+     * @param array $purchasedItems
+     * @return array
+     * @throws ReceiptValidationException
+     * @throws Throwable
+     */
+    public function restoreAndSyncPurchasedItems(array $purchasedItems)
+    {
+        $shouldCreateAccount = false;
+        $shouldLogin = false;
+        $purchasedToken = null;
+        $receiptUser = null;
+
+        foreach ($purchasedItems as $purchase) {
+            //From mobile app we receive purchases for products that do not belong to our app
+            if (!array_key_exists($purchase['product_id'], config('ecommerce.google_store_products_map'))) {
+                continue;
+            }
+
+            $googleReceipt = $this->googleReceiptRepository->findOneBy(
+                [
+                    'purchaseToken' => $purchase['purchase_token'],
+                ]
+            );
+
+            if (!$googleReceipt) {
+                //check if purchases product is membership
+                if (array_key_exists(
+                    $purchase['product_id'],
+                    config('iap.drumeo-app-google-play-store.productsMapping')
+                )) {
+                    $shouldCreateAccount = true;
+                    $purchasedToken = $purchase;
+                } elseif (auth()->id()) {
+                    //pack purchase that should be restored
+                    $receipt = new GoogleReceipt();
+
+                    $receipt->setPackageName($purchase['package_name']);
+                    $receipt->setProductId($purchase['product_id']);
+                    $receipt->setPurchaseToken($purchase['purchase_token']);
+                    $receipt->setBrand(config('ecommerce.brand'));
+                    $receipt->setRequestType(GoogleReceipt::MOBILE_APP_REQUEST_TYPE);
+                    $receipt->setPurchaseType(
+                        GoogleReceipt::GOOGLE_PRODUCT_PURCHASE
+                    );
+
+                    $receiptUser = $this->processReceipt($receipt);
+                }
+
+                continue;
+            }
+
+            $receiptUser = $this->userProvider->getUserByEmail($googleReceipt->getEmail());
+
+            if (!auth()->id() || auth()->id() != $receiptUser->getId()) {
+
+                $shouldLogin = true;
+
+            } else {
+
+                //sync
+                $receiptResponse = unserialize(base64_decode($googleReceipt->getRawReceiptResponse()));
+
+                $this->syncSubscription($receipt, $receiptResponse, $receiptUser);
+            }
+        }
+
+        return [
+            'shouldCreateAccount' => $shouldCreateAccount,
+            'shouldLogin' => $shouldLogin,
+            'purchasedToken' => $purchasedToken,
+            'receiptUser' => $receiptUser,
+        ];
+
     }
 }
