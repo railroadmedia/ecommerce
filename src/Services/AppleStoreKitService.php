@@ -374,7 +374,7 @@ class AppleStoreKitService
         ?User $user = null,
         $syncAll = false
     ) {
-
+        $firstPurchaseItem = $this->getFirstPurchasedItem($appleResponse);
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
         $subscription = null;
 
@@ -407,7 +407,7 @@ class AppleStoreKitService
                     // if a subscription with this external id already exists, just update it
                     // the subscription external ID should always be set to the first purchase item web order line item ID
                     $subscription = $this->subscriptionRepository->getByExternalAppStoreId(
-                        $latestPurchaseItem->getWebOrderLineItemId()
+                        $firstPurchaseItem->getWebOrderLineItemId()
                     );
 
                     if (empty($subscription)) {
@@ -468,7 +468,7 @@ class AppleStoreKitService
                     $subscription->setTotalCyclesDue(null);
 
                     // external app store id should always be the first purchase item web order item id
-                    $subscription->setExternalAppStoreId($latestPurchaseItem->getWebOrderLineItemId());
+                    $subscription->setExternalAppStoreId($firstPurchaseItem->getWebOrderLineItemId());
                     $subscription->setAppleReceipt($receipt);
 
                     $subscription->setCreatedAt(Carbon::now());
