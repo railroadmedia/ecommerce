@@ -653,8 +653,10 @@ class AppleStoreKitService
 
         $appleResponse = $this->appleStoreKitGateway->getResponse($receipt);
 
+        $originalTransactionId = $this->getLatestPurchasedItem($appleResponse)->getOriginalTransactionId();
+
         ///check if receipt exist in db
-        $appleReceipt = $this->appleReceiptRepository->findOneBy(['receipt' => $receipt]);
+        $appleReceipt = $this->appleReceiptRepository->findOneBy(['transactionId' => $originalTransactionId]);
 
         if (!$appleReceipt) {
             foreach ($appleResponse->getLatestReceiptInfo() as $purchaseItem) {
