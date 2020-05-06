@@ -377,6 +377,7 @@ class AppleStoreKitService
         $firstPurchaseItem = $this->getFirstPurchasedItem($appleResponse);
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
         $subscription = null;
+        $allActivePurchasedItems = [];
 
         if (empty($latestPurchaseItem)) {
             return null;
