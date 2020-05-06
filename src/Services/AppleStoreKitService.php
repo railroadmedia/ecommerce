@@ -157,7 +157,7 @@ class AppleStoreKitService
                 $receipt->setValid(true);
             }
 
-            $transactionId = $currentPurchasedItem->getTransactionId();
+            $transactionId = $currentPurchasedItem->getOriginalTransactionId();
 
             $receipt->setTransactionId($transactionId);
             $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
