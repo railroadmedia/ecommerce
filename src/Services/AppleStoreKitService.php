@@ -185,9 +185,9 @@ class AppleStoreKitService
 
         if (!$user) {
             $user = $this->userProvider->createUser($receipt->getEmail(), $receipt->getPassword());
-
-            auth()->loginUsingId($user->getId());
         }
+
+        auth()->loginUsingId($user->getId());
 
         $this->syncSubscription($appleResponse, $receipt, $user);
 
