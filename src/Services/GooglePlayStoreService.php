@@ -663,7 +663,7 @@ class GooglePlayStoreService
                 //sync
                 $receiptResponse = unserialize(base64_decode($googleReceipt->getRawReceiptResponse()));
 
-                $this->syncSubscription($receipt, $receiptResponse, $receiptUser);
+                $this->syncSubscription($googleReceipt, $receiptResponse, $receiptUser);
             }
         }
 
