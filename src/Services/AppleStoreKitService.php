@@ -25,6 +25,7 @@ use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\AppleReceiptRepository;
+use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
@@ -85,6 +86,11 @@ class AppleStoreKitService
      */
     private $appleReceiptRepository;
 
+    /**
+     * @var OrderPaymentRepository
+     */
+    private $orderPaymentRepository;
+
     const RENEWAL_EXPIRATION_REASON = [
         1 => 'Apple in-app: Customer canceled their subscription.',
         2 => 'Apple in-app: Billing error.',
@@ -105,6 +111,7 @@ class AppleStoreKitService
      * @param PaymentRepository $paymentRepository
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
      * @param AppleReceiptRepository $appleReceiptRepository
+     * @param OrderPaymentRepository $orderPaymentRepository
      */
     public function __construct(
         AppleStoreKitGateway $appleStoreKitGateway,
@@ -115,7 +122,8 @@ class AppleStoreKitService
         SubscriptionRepository $subscriptionRepository,
         PaymentRepository $paymentRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
-        AppleReceiptRepository $appleReceiptRepository
+        AppleReceiptRepository $appleReceiptRepository,
+        OrderPaymentRepository $orderPaymentRepository
     ) {
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->entityManager = $entityManager;
@@ -126,6 +134,7 @@ class AppleStoreKitService
         $this->paymentRepository = $paymentRepository;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->appleReceiptRepository = $appleReceiptRepository;
+        $this->orderPaymentRepository = $orderPaymentRepository;
     }
 
     /**
@@ -479,7 +488,7 @@ class AppleStoreKitService
                     // sync payments
                     // 1 payment for every purchase item
                     foreach (array_reverse($appleResponse->getLatestReceiptInfo()) as $purchaseItem) {
-                       // only purchase items with the same original transaction is should be take into consideration;
+                        // only purchase items with the same original transaction is should be take into consideration;
                         // same original transaction id means that are renewal for the same subscription
                         if ($purchaseItem->getOriginalTransactionId() ==
                             $latestPurchaseItem->getOriginalTransactionId()) {
@@ -561,66 +570,80 @@ class AppleStoreKitService
                 } else {
                     if ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME) {
 
-                        //pack puchase
-                        $order = new Order();
-                        $order->setUser($user);
-                        $order->setTotalPaid($membershipIncludeFreePack ? 0 : $product->getPrice());
-                        $order->setTotalDue($membershipIncludeFreePack ? 0 : $product->getPrice());
-
-                        $order->setTaxesDue(0);
-                        $order->setShippingDue(0);
-                        $order->setBrand(config('ecommerce.brand'));
-
-                        $this->entityManager->persist($order);
-
-                        $orderItem = new OrderItem();
-                        $orderItem->setOrder($order);
-                        $orderItem->setProduct($product);
-                        $orderItem->setQuantity($latestPurchaseItem->getQuantity());
-                        $orderItem->setInitialPrice($product->getPrice());
-                        $orderItem->setTotalDiscounted(0);
-                        $orderItem->setFinalPrice($product->getPrice());
-
-                        $this->entityManager->persist($orderItem);
-
-                        $order->addOrderItem($orderItem);
-                        $this->entityManager->persist($order);
+                        //pack purchase
+                        $payment = $this->paymentRepository->getByExternalIdAndProvider(
+                            $latestPurchaseItem->getTransactionId(),
+                            Payment::EXTERNAL_PROVIDER_APPLE
+                        );
 
                         if (!$membershipIncludeFreePack) {
-                            $payment = new Payment();
-                            $payment->setCreatedAt(Carbon::now());
+                            if (!$payment) {
+                                $payment = new Payment();
+                                $payment->setCreatedAt(Carbon::now());
 
-                            $payment->setTotalDue($product->getPrice());
-                            $payment->setTotalPaid($product->getPrice());
-                            $payment->setAttemptNumber(0);
+                                $payment->setTotalDue($product->getPrice());
+                                $payment->setTotalPaid($product->getPrice());
+                                $payment->setAttemptNumber(0);
 
-                            $payment->setConversionRate(1);
+                                $payment->setConversionRate(1);
 
-                            $payment->setType(Payment::TYPE_INITIAL_ORDER);
-                            $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_APPLE);
+                                $payment->setType(Payment::TYPE_INITIAL_ORDER);
+                                $payment->setExternalId($latestPurchaseItem->getTransactionId());
+                                $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_APPLE);
 
-                            $payment->setGatewayName(config('ecommerce.brand'));
-                            $payment->setStatus(Payment::STATUS_PAID);
-                            $payment->setCurrency('USD');
+                                $payment->setGatewayName(config('ecommerce.brand'));
+                                $payment->setStatus(Payment::STATUS_PAID);
+                                $payment->setCurrency('USD');
 
-                            $this->entityManager->persist($payment);
+                                $this->entityManager->persist($payment);
+                                $this->entityManager->flush();
+                            }
 
-                            $orderPayment = new OrderPayment();
+                            $orderPayment = $this->orderPaymentRepository->getByPayment($payment);
 
-                            $orderPayment->setOrder($order);
-                            $orderPayment->setPayment($payment);
-                            $orderPayment->setCreatedAt(Carbon::now());
+                            if (!$orderPayment) {
+                                $order = new Order();
+                                $order->setUser($user);
+                                $order->setTotalPaid($membershipIncludeFreePack ? 0 : $product->getPrice());
+                                $order->setTotalDue($membershipIncludeFreePack ? 0 : $product->getPrice());
 
-                            $this->entityManager->persist($orderPayment);
+                                $order->setTaxesDue(0);
+                                $order->setShippingDue(0);
+                                $order->setBrand(config('ecommerce.brand'));
+
+                                $this->entityManager->persist($order);
+
+                                $orderItem = new OrderItem();
+                                $orderItem->setOrder($order);
+                                $orderItem->setProduct($product);
+                                $orderItem->setQuantity($latestPurchaseItem->getQuantity());
+                                $orderItem->setInitialPrice($product->getPrice());
+                                $orderItem->setTotalDiscounted(0);
+                                $orderItem->setFinalPrice($product->getPrice());
+
+                                $this->entityManager->persist($orderItem);
+
+                                $order->addOrderItem($orderItem);
+                                $this->entityManager->persist($order);
+
+                                $orderPayment = new OrderPayment();
+
+                                $orderPayment->setOrder($order);
+                                $orderPayment->setPayment($payment);
+                                $orderPayment->setCreatedAt(Carbon::now());
+
+                                $this->entityManager->persist($orderPayment);
+
+                                $this->entityManager->flush();
+                            } else {
+                                $order = $orderPayment[0]->getOrder();
+                            }
+
+                            event(new MobileOrderEvent($order, null, null));
                         }
-
-                        $this->entityManager->flush();
-
-                        event(new MobileOrderEvent($order, null, null));
                     }
                 }
             }
-
         }
         return $subscription;
     }

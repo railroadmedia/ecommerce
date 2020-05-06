@@ -23,6 +23,7 @@ use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\GoogleReceiptRepository;
+use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionPaymentRepository;
@@ -79,6 +80,11 @@ class GooglePlayStoreService
     private $googleReceiptRepository;
 
     /**
+     * @var OrderPaymentRepository
+     */
+    private $orderPaymentRepository;
+
+    /**
      * @var array
      */
     public static $cancellationReasonMap = [
@@ -99,6 +105,8 @@ class GooglePlayStoreService
      * @param UserProviderInterface $userProvider
      * @param PaymentRepository $paymentRepository
      * @param SubscriptionPaymentRepository $subscriptionPaymentRepository
+     * @param GoogleReceiptRepository $googleReceiptRepository
+     * @param OrderPaymentRepository $orderPaymentRepository
      */
     public function __construct(
         GooglePlayStoreGateway $googlePlayStoreGateway,
@@ -109,7 +117,8 @@ class GooglePlayStoreService
         UserProviderInterface $userProvider,
         PaymentRepository $paymentRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
-        GoogleReceiptRepository $googleReceiptRepository
+        GoogleReceiptRepository $googleReceiptRepository,
+        OrderPaymentRepository $orderPaymentRepository
     ) {
         $this->googlePlayStoreGateway = $googlePlayStoreGateway;
         $this->entityManager = $entityManager;
@@ -120,6 +129,7 @@ class GooglePlayStoreService
         $this->paymentRepository = $paymentRepository;
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->googleReceiptRepository = $googleReceiptRepository;
+        $this->orderPaymentRepository = $orderPaymentRepository;
     }
 
     /**
@@ -496,65 +506,80 @@ class GooglePlayStoreService
             } else {
                 if ($purchasedProduct->getType() == Product::TYPE_DIGITAL_ONE_TIME) {
 
-                    //pack puchase
-                    $order = new Order();
-                    $order->setUser($user);
-                    $order->setTotalPaid($membershipIncludeFreePack ? 0 : $purchasedProduct->getPrice());
-                    $order->setTotalDue($membershipIncludeFreePack ? 0 : $purchasedProduct->getPrice());
-                    $order->setTaxesDue(0);
-                    $order->setShippingDue(0);
-                    $order->setBrand(config('ecommerce.brand'));
-
-                    $this->entityManager->persist($order);
-
-                    $orderItem = new OrderItem();
-                    $orderItem->setOrder($order);
-                    $orderItem->setProduct($purchasedProduct);
-                    $orderItem->setQuantity(1);
-                    $orderItem->setInitialPrice($purchasedProduct->getPrice());
-                    $orderItem->setTotalDiscounted(0);
-                    $orderItem->setFinalPrice($purchasedProduct->getPrice());
-
-                    $this->entityManager->persist($orderItem);
-
-                    $order->addOrderItem($orderItem);
-                    $this->entityManager->persist($order);
+                    //pack purchase
+                    $payment = $this->paymentRepository->getByExternalIdAndProvider(
+                        $googleSubscriptionResponse->getRawResponse()
+                            ->getOrderId(),
+                        Payment::EXTERNAL_PROVIDER_GOOGLE
+                    );
 
                     if (!$membershipIncludeFreePack) {
-                        $payment = new Payment();
-                        $payment->setAttemptNumber(0);
-                        $payment->setCreatedAt(Carbon::now());
+                        if (!$payment) {
+                            $payment = new Payment();
+                            $payment->setAttemptNumber(0);
+                            $payment->setCreatedAt(Carbon::now());
 
-                        $payment->setTotalDue($purchasedProduct->getPrice());
-                        $payment->setTotalPaid($purchasedProduct->getPrice());
+                            $payment->setTotalDue($purchasedProduct->getPrice());
+                            $payment->setTotalPaid($purchasedProduct->getPrice());
 
-                        $payment->setConversionRate(1);
+                            $payment->setConversionRate(1);
 
-                        $payment->setType(Payment::TYPE_INITIAL_ORDER);
-                        $payment->setExternalId(
-                            $googleSubscriptionResponse->getRawResponse()
-                                ->getOrderId()
-                        );
-                        $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_GOOGLE);
+                            $payment->setType(Payment::TYPE_INITIAL_ORDER);
+                            $payment->setExternalId(
+                                $googleSubscriptionResponse->getRawResponse()
+                                    ->getOrderId()
+                            );
+                            $payment->setExternalProvider(Payment::EXTERNAL_PROVIDER_GOOGLE);
 
-                        $payment->setGatewayName(config('ecommerce.brand'));
-                        $payment->setStatus(Payment::STATUS_PAID);
-                        $payment->setCurrency('USD');
+                            $payment->setGatewayName(config('ecommerce.brand'));
+                            $payment->setStatus(Payment::STATUS_PAID);
+                            $payment->setCurrency('USD');
 
-                        $this->entityManager->persist($payment);
+                            $this->entityManager->persist($payment);
+                            $this->entityManager->flush();
+                        }
 
-                        $orderPayment = new OrderPayment();
+                        $orderPayment = $this->orderPaymentRepository->getByPayment($payment);
 
-                        $orderPayment->setOrder($order);
-                        $orderPayment->setPayment($payment);
-                        $orderPayment->setCreatedAt(Carbon::now());
+                        if (!$orderPayment) {
+                            $order = new Order();
+                            $order->setUser($user);
+                            $order->setTotalPaid($membershipIncludeFreePack ? 0 : $purchasedProduct->getPrice());
+                            $order->setTotalDue($membershipIncludeFreePack ? 0 : $purchasedProduct->getPrice());
+                            $order->setTaxesDue(0);
+                            $order->setShippingDue(0);
+                            $order->setBrand(config('ecommerce.brand'));
 
-                        $this->entityManager->persist($orderPayment);
+                            $this->entityManager->persist($order);
+
+                            $orderItem = new OrderItem();
+                            $orderItem->setOrder($order);
+                            $orderItem->setProduct($purchasedProduct);
+                            $orderItem->setQuantity(1);
+                            $orderItem->setInitialPrice($purchasedProduct->getPrice());
+                            $orderItem->setTotalDiscounted(0);
+                            $orderItem->setFinalPrice($purchasedProduct->getPrice());
+
+                            $this->entityManager->persist($orderItem);
+
+                            $order->addOrderItem($orderItem);
+                            $this->entityManager->persist($order);
+
+                            $orderPayment = new OrderPayment();
+
+                            $orderPayment->setOrder($order);
+                            $orderPayment->setPayment($payment);
+                            $orderPayment->setCreatedAt(Carbon::now());
+
+                            $this->entityManager->persist($orderPayment);
+
+                            $this->entityManager->flush();
+                        } else {
+                            $order = $orderPayment[0]->getOrder();
+                        }
+
+                        event(new MobileOrderEvent($order, null, null));
                     }
-
-                    $this->entityManager->flush();
-
-                    event(new MobileOrderEvent($order, null, null));
                 }
             }
         }

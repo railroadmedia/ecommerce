@@ -1076,9 +1076,10 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'product_id' => $appleProductsMap[$productSku],
             'expires_date_ms' => $expirationDate->timestamp * 1000,
             'transaction_id' => $transactionId,
+            'original_transaction_id' => $transactionId,
             'web_order_line_item_id' => $webOrderItemId,
             'purchase_date_ms' => Carbon::now()->timestamp * 1000,
-            'original_purchase_date' => Carbon::now()->timestamp * 1000,
+            'original_purchase_date_ms' => Carbon::now()->timestamp * 1000,
             'is_trial_period' => $isTrial,
         ];
 
@@ -1166,7 +1167,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'transaction_id' => $originalTransactionId,
             'web_order_line_item_id' => $subscriptionWebOrderItemId,
             'purchase_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
-            'original_purchase_date' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'original_purchase_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
             'is_trial_period' => false,
         ];
 
