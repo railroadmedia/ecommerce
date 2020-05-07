@@ -198,7 +198,7 @@ class AppleStoreKitService
 
         auth()->loginUsingId($user->getId());
 
-        $this->syncSubscription($appleResponse, $receipt, $user);
+        $this->syncPurchasedItems($appleResponse, $receipt, $user);
 
         $this->entityManager->flush();
 
@@ -252,7 +252,7 @@ class AppleStoreKitService
         $this->entityManager->persist($receipt);
         $this->entityManager->flush();
 
-        $subscription = $this->syncSubscription($appleResponse, $receipt);
+        $subscription = $this->syncPurchasedItems($appleResponse, $receipt);
 
         if ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE) {
 
@@ -318,7 +318,7 @@ class AppleStoreKitService
         $this->entityManager->persist($receipt);
         $this->entityManager->flush();
 
-        $subscription = $this->syncSubscription($appleResponse, $receipt);
+        $subscription = $this->syncPurchasedItems($appleResponse, $receipt);
 
         if (!empty($receipt)) {
             $this->userProductService->updateSubscriptionProductsApp($subscription);
@@ -377,12 +377,13 @@ class AppleStoreKitService
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    public function syncSubscription(
+    public function syncPurchasedItems(
         ResponseInterface $appleResponse,
         AppleReceipt $receipt,
         ?User $user = null,
         $syncAll = false
     ) {
+
         $firstPurchaseItem = $this->getFirstPurchasedItem($appleResponse);
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
         $subscription = null;
@@ -491,7 +492,8 @@ class AppleStoreKitService
                         // only purchase items with the same original transaction is should be take into consideration;
                         // same original transaction id means that are renewal for the same subscription
                         if ($purchaseItem->getOriginalTransactionId() ==
-                            $latestPurchaseItem->getOriginalTransactionId()) {
+                            $latestPurchaseItem->getOriginalTransactionId() &&
+                            ($purchaseItem->getProductId() == $latestPurchaseItem->getProductId())) {
 
                             // we dont want to add zero dollar trial payments
                             if ($purchaseItem->isTrialPeriod()) {
@@ -724,7 +726,7 @@ class AppleStoreKitService
             } else {
 
                 //sync
-                $this->syncSubscription($appleResponse, $appleReceipt, $receiptUser, true);
+                $this->syncPurchasedItems($appleResponse, $appleReceipt, $receiptUser, true);
             }
         }
 

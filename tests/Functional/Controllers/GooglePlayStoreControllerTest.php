@@ -1432,14 +1432,6 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             ]
         );
 
-        // we dont want order rows
-        $this->assertDatabaseHas(
-            'ecommerce_orders',
-            [
-                'id' => 1,
-            ]
-        );
-
         $this->assertDatabaseHas(
             'ecommerce_payments',
             [

@@ -106,7 +106,7 @@ class MobileAppGoogleAppleHelper extends Command
                 return;
             }
 
-            $this->appleStoreKitService->syncSubscription($response, $receiptEntity);
+            $this->appleStoreKitService->syncPurchasedItems($response, $receiptEntity);
             $this->info('Synced successfully.');
 
         }

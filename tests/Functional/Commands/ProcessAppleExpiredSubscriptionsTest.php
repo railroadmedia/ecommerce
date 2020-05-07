@@ -128,9 +128,10 @@ class ProcessAppleExpiredSubscriptionsTest extends EcommerceTestCase
             'product_id' => $appleProductsMap[$product['sku']],
             'expires_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
             'transaction_id' => $originalTransactionId1,
+            'original_transaction_id' => $originalTransactionId1,
             'web_order_line_item_id' => $webOrderLineItemId1,
             'purchase_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
-            'original_purchase_date' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'original_purchase_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
             'is_trial_period' => true,
         ];
 
@@ -139,9 +140,10 @@ class ProcessAppleExpiredSubscriptionsTest extends EcommerceTestCase
             'product_id' => $appleProductsMap[$product['sku']],
             'expires_date_ms' => $expirationDate1->timestamp * 1000,
             'transaction_id' => $renewalTransactionId1,
+            'original_transaction_id' => $originalTransactionId1,
             'web_order_line_item_id' => $this->faker->word,
             'purchase_date_ms' => Carbon::now()->timestamp * 1000,
-            'original_purchase_date' => Carbon::now()->timestamp * 1000,
+            'original_purchase_date_ms' => Carbon::now()->timestamp * 1000,
             'is_trial_period' => false,
         ];
 
@@ -171,9 +173,10 @@ class ProcessAppleExpiredSubscriptionsTest extends EcommerceTestCase
             'product_id' => $appleProductsMap[$product['sku']],
             'expires_date_ms' => $expirationDate2->timestamp * 1000,
             'transaction_id' => $originalTransactionId2,
+            'original_transaction_id' => $originalTransactionId2,
             'web_order_line_item_id' => $webOrderLineItemId2,
             'purchase_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
-            'original_purchase_date' => Carbon::now()->subDays(7)->timestamp * 1000,
+            'original_purchase_date_ms' => Carbon::now()->subDays(7)->timestamp * 1000,
             'is_trial_period' => true,
         ];
 

@@ -198,8 +198,8 @@ class GooglePlayStoreService
 
         auth()->loginUsingId($user->getId());
 
-        // sync the subscription
-        $this->syncSubscription($receipt, $googleResponse, $user);
+        // sync the subscription or product
+        $this->syncPurchasedItems($receipt, $googleResponse, $user);
 
         return $user;
     }
@@ -248,7 +248,7 @@ class GooglePlayStoreService
         $this->entityManager->persist($receipt);
         $this->entityManager->flush();
 
-        $subscription = $this->syncSubscription($receipt, $googleResponse, $subscription->getUser());
+        $subscription = $this->syncPurchasedItems($receipt, $googleResponse, $subscription->getUser());
 
         if (!empty($subscription)) {
             if ($receipt->getNotificationType() == GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE) {
@@ -278,11 +278,12 @@ class GooglePlayStoreService
      * @throws NonUniqueResultException
      * @throws OptimisticLockException
      */
-    public function syncSubscription(
+    public function syncPurchasedItems(
         GoogleReceipt $googleReceipt,
         $googleSubscriptionResponse,
         User $user
     ) {
+        $subscription = null;
         $purchasedProducts = $this->getPurchasedItem($googleReceipt);
 
         if (empty($purchasedProducts)) {
@@ -583,6 +584,8 @@ class GooglePlayStoreService
                 }
             }
         }
+
+        return $subscription;
     }
 
     /**
@@ -659,11 +662,8 @@ class GooglePlayStoreService
                 $shouldLogin = true;
 
             } else {
-
                 //sync
-                $receiptResponse = unserialize(base64_decode($googleReceipt->getRawReceiptResponse()));
-
-                $this->syncSubscription($googleReceipt, $receiptResponse, $receiptUser);
+                $this->processReceipt($googleReceipt);
             }
         }
 
