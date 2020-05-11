@@ -357,6 +357,28 @@ class AppleStoreKitService
      *
      * @return PurchaseItem|null
      */
+    public function getFirstPurchasedItemForProductId(ResponseInterface $validationResponse, $productId)
+    : ?PurchaseItem {
+        if (is_array($validationResponse->getLatestReceiptInfo()) &&
+            !empty($validationResponse->getLatestReceiptInfo())) {
+
+            $purchasedItems = array_reverse($validationResponse->getLatestReceiptInfo());
+
+            foreach ($purchasedItems as $purchasedItem){
+                if($purchasedItem->getProductId() == $productId){
+                    return $purchasedItem;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param ResponseInterface $validationResponse
+     *
+     * @return PurchaseItem|null
+     */
     public function getLatestPurchasedItem(ResponseInterface $validationResponse)
     : ?PurchaseItem {
         if (is_array($validationResponse->getLatestReceiptInfo()) &&
@@ -383,8 +405,6 @@ class AppleStoreKitService
         ?User $user = null,
         $syncAll = false
     ) {
-
-        $firstPurchaseItem = $this->getFirstPurchasedItem($appleResponse);
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
         $subscription = null;
         $allActivePurchasedItems = [];
@@ -405,6 +425,7 @@ class AppleStoreKitService
         }
 
         foreach ($allActivePurchasedItems as $latestPurchaseItem) {
+            $firstPurchaseItem = $this->getFirstPurchasedItemForProductId($appleResponse, $latestPurchaseItem->getProductId());
             $products = $this->getProductsByAppleStoreId($latestPurchaseItem->getProductId());
 
             if (empty($products)) {
