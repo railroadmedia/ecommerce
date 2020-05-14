@@ -494,8 +494,8 @@ class AppleStoreKitService
         error_log(var_export($appleResponse->getLatestReceiptInfo(), true));
 
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
-
-        foreach ($appleResponse->getLatestReceiptInfo() as $purchaseItem) {
+        $allPurchasedItems = array_reverse($appleResponse->getLatestReceiptInfo());
+        foreach ($allPurchasedItems as $purchaseItem) {
             if (array_key_exists(
                 $purchaseItem->getProductId(),
                 config('iap.drumeo-app-apple-store.productsMapping')
