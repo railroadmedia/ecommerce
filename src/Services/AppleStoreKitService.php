@@ -491,6 +491,8 @@ class AppleStoreKitService
 
         $appleResponse = $this->appleStoreKitGateway->getResponse($receipt);
 
+        error_log(var_export($receipt, true));
+
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
 
         if (empty($latestPurchaseItem)) {
@@ -499,7 +501,7 @@ class AppleStoreKitService
 
         $originalTransactionId = $latestPurchaseItem->getOriginalTransactionId();
 
-        error_log('Restore Apple receipt with original transaction id: '.$originalTransactionId);
+        error_log('Restore Apple receipt with original transaction id: ' . $originalTransactionId);
 
         ///check if receipt exist in db
         $appleReceipt =
@@ -537,7 +539,7 @@ class AppleStoreKitService
             if (!$existsPurchases) {
                 return null;
             }
-            
+
         } else {
 
             $receiptUser = $this->userProvider->getUserByEmail($appleReceipt->getEmail());
