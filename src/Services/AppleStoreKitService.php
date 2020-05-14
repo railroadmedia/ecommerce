@@ -491,10 +491,8 @@ class AppleStoreKitService
 
         $appleResponse = $this->appleStoreKitGateway->getResponse($receipt);
 
-        error_log(var_export($appleResponse->getLatestReceiptInfo(), true));
-
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
-        $allPurchasedItems = array_reverse($appleResponse->getLatestReceiptInfo());
+        $allPurchasedItems = $appleResponse->getLatestReceiptInfo();
         foreach ($allPurchasedItems as $purchaseItem) {
             if (array_key_exists(
                 $purchaseItem->getProductId(),
@@ -504,6 +502,8 @@ class AppleStoreKitService
                 break;
             }
         }
+
+        error_log(var_export($latestPurchaseItem, true));
 
         if (empty($latestPurchaseItem)) {
             return null;
