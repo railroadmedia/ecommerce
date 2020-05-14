@@ -491,9 +491,19 @@ class AppleStoreKitService
 
         $appleResponse = $this->appleStoreKitGateway->getResponse($receipt);
 
-        error_log(var_export($receipt, true));
+        error_log(var_export($appleResponse->getLatestReceiptInfo(), true));
 
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
+
+        foreach ($appleResponse->getLatestReceiptInfo() as $purchaseItem) {
+            if (array_key_exists(
+                $purchaseItem->getProductId(),
+                config('iap.drumeo-app-apple-store.productsMapping')
+            )) {
+                $latestPurchaseItem = $purchaseItem;
+                break;
+            }
+        }
 
         if (empty($latestPurchaseItem)) {
             return null;
@@ -521,13 +531,11 @@ class AppleStoreKitService
                     )) {
                         $shouldCreateAccount = true;
                     } elseif (auth()->id()) {
+                        $user = $this->userProvider->getUserById(auth()->id());
+
                         $appleReceipt = new AppleReceipt();
                         $appleReceipt->setReceipt($receipt);
-                        $appleReceipt->setEmail(
-                            auth()
-                                ->user()
-                                ->getEmail()
-                        );
+                        $appleReceipt->setEmail($user->getEmail());
                         $appleReceipt->setBrand(config('ecommerce.brand'));
                         $appleReceipt->setRequestType(AppleReceipt::MOBILE_APP_REQUEST_TYPE);
 
@@ -541,6 +549,8 @@ class AppleStoreKitService
             }
 
         } else {
+
+            error_log('Exists apple receipts with ID:' . $appleReceipt->getId());
 
             $receiptUser = $this->userProvider->getUserByEmail($appleReceipt->getEmail());
 
