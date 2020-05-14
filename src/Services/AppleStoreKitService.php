@@ -487,6 +487,7 @@ class AppleStoreKitService
         $shouldCreateAccount = false;
         $shouldLogin = false;
         $receiptUser = null;
+        $existsPurchases = false;
 
         $appleResponse = $this->appleStoreKitGateway->getResponse($receipt);
 
@@ -498,6 +499,8 @@ class AppleStoreKitService
 
         $originalTransactionId = $latestPurchaseItem->getOriginalTransactionId();
 
+        error_log('Restore Apple receipt with original transaction id: '.$originalTransactionId);
+
         ///check if receipt exist in db
         $appleReceipt =
             $this->appleReceiptRepository->findOneBy(['transactionId' => $originalTransactionId], ['id' => 'desc']);
@@ -506,6 +509,9 @@ class AppleStoreKitService
 
             foreach ($appleResponse->getLatestReceiptInfo() as $purchaseItem) {
                 if ($purchaseItem->getExpiresDate() > Carbon::now() || is_null($purchaseItem->getExpiresDate())) {
+
+                    $existsPurchases = true;
+
                     //check if purchases product is membership
                     if (array_key_exists(
                         $purchaseItem->getProductId(),
@@ -527,6 +533,11 @@ class AppleStoreKitService
                     }
                 }
             }
+
+            if (!$existsPurchases) {
+                return null;
+            }
+            
         } else {
 
             $receiptUser = $this->userProvider->getUserByEmail($appleReceipt->getEmail());
