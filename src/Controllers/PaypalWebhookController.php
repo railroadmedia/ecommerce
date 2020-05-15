@@ -80,8 +80,6 @@ class PaypalWebhookController extends Controller
     {
         $response = $this->payPal->respondToIpnRequest();
 
-        dd($response);
-
         if (
             $response === true &&
             $request->get('txn_type') == 'recurring_payment'

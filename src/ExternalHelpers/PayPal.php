@@ -268,7 +268,7 @@ class PayPal
                 ) . PHP_EOL
             );
             curl_close($ch);
-            exit;
+            return false;
         }
         else {
             // Log the entire HTTP response if debug is switched on.
