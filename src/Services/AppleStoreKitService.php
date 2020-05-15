@@ -554,14 +554,13 @@ class AppleStoreKitService
 
             $receiptUser = $this->userProvider->getUserByEmail($appleReceipt->getEmail());
 
+            //sync
+            $this->syncPurchasedItems($appleResponse, $appleReceipt, $receiptUser, true);
+
             if (!auth()->id() || auth()->id() != $receiptUser->getId()) {
 
                 $shouldLogin = true;
-
-            } else {
-
-                //sync
-                $this->syncPurchasedItems($appleResponse, $appleReceipt, $receiptUser, true);
+                
             }
         }
 
