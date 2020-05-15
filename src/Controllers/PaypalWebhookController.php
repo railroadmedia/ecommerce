@@ -99,7 +99,7 @@ class PaypalWebhookController extends Controller
                 $payment->setGatewayName(config('ecommerce.brand'));
                 $payment->setStatus(Payment::STATUS_PAID);
                 $payment->setCurrency($request->get('mc_currency', ''));
-                $payment->setCreatedAt(Carbon::now());
+                $payment->setCreatedAt(Carbon::createFromFormat('H:i:s M d, Y e', $request->get('payment_date')));
 
                 $this->entityManager->persist($payment);
 
@@ -115,19 +115,22 @@ class PaypalWebhookController extends Controller
                 switch ($subscription->getIntervalType()) {
                     case config('ecommerce.interval_type_monthly'):
                         $nextBillDate =
-                            Carbon::now()
+                            $payment->getCreatedAt()
+                                ->copy()
                                 ->addMonths($subscription->getIntervalCount());
                         break;
 
                     case config('ecommerce.interval_type_yearly'):
                         $nextBillDate =
-                            Carbon::now()
+                            $payment->getCreatedAt()
+                                ->copy()
                                 ->addYears($subscription->getIntervalCount());
                         break;
 
                     case config('ecommerce.interval_type_daily'):
                         $nextBillDate =
-                            Carbon::now()
+                            $payment->getCreatedAt()
+                                ->copy()
                                 ->addDays($subscription->getIntervalCount());
                         break;
 
