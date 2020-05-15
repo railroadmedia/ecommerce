@@ -10,6 +10,7 @@ use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
+use Railroad\Ecommerce\ExternalHelpers\PayPal;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
@@ -38,6 +39,10 @@ class PaypalWebhookController extends Controller
      * @var UserProductService
      */
     private $userProductService;
+    /**
+     * @var PayPal
+     */
+    private $payPal;
 
     /**
      * PaypalWebhookController constructor.
@@ -46,18 +51,21 @@ class PaypalWebhookController extends Controller
      * @param PaymentRepository $paymentRepository
      * @param SubscriptionRepository $subscriptionRepository
      * @param UserProductService $userProductService
+     * @param PayPal $payPal
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
         PaymentRepository $paymentRepository,
         SubscriptionRepository $subscriptionRepository,
-        UserProductService $userProductService
+        UserProductService $userProductService,
+        PayPal $payPal
     )
     {
         $this->entityManager = $entityManager;
         $this->paymentRepository = $paymentRepository;
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
+        $this->payPal = $payPal;
     }
 
     /**
@@ -70,7 +78,12 @@ class PaypalWebhookController extends Controller
      */
     public function process(Request $request)
     {
+        $response = $this->payPal->respondToIpnRequest();
+
+        dd($response);
+
         if (
+            $response === true &&
             $request->get('txn_type') == 'recurring_payment'
             && $request->get('payment_status') == 'Completed'
             && !empty($request->get('recurring_payment_id'))

@@ -260,7 +260,7 @@ class PayPal
 
         $res = curl_exec($ch);
 
-        if (curl_errno($ch) != 0) // cURL error
+        if (curl_errno($ch) != 0 || $res != 'VERIFIED') // cURL error
         {
             error_log(
                 date('[Y-m-d H:i e] ') . "Can't connect to PayPal to validate IPN message: " . curl_error(
