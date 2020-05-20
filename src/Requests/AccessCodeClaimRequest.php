@@ -62,7 +62,7 @@ class AccessCodeClaimRequest extends FormRequest
                 ',' .
                 config('ecommerce.database_info_for_unique_user_email_validation.email_column'),
             'user_password' => 'required_if:credentials_type,existing',
-            'email' => 'required_if:credentials_type,new|max:255|unique:' .
+            'email' => 'required_if:credentials_type,new|email|max:255|unique:' .
                 config('ecommerce.database_info_for_unique_user_email_validation.database_connection_name') .
                 '.' .
                 config('ecommerce.database_info_for_unique_user_email_validation.table') .
