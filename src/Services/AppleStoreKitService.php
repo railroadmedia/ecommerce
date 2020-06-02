@@ -99,6 +99,10 @@ class AppleStoreKitService
         5 => 'Apple in-app: Unknown error.',
     ];
 
+    const SHOULD_SIGNUP = -1;
+    const SHOULD_RENEW = 0;
+    const SHOULD_LOGIN = 1;
+
     /**
      * AppleStoreKitService constructor.
      *
@@ -560,7 +564,7 @@ class AppleStoreKitService
             if (!auth()->id() || auth()->id() != $receiptUser->getId()) {
 
                 $shouldLogin = true;
-                
+
             }
         }
 
@@ -827,6 +831,51 @@ class AppleStoreKitService
             }
 
             event(new MobileOrderEvent($order, null, null));
+        }
+    }
+
+    /**
+     * @param $receipt
+     * @return int
+     * @throws Throwable
+     */
+    public function checkSignup($receipt)
+    {
+        if (!$receipt) {
+            return self::SHOULD_SIGNUP;
+        }
+
+        try {
+
+            $appleResponse = $this->appleStoreKitGateway->getResponse($receipt);
+
+            $allPurchasedItems = $appleResponse->getLatestReceiptInfo();
+            $latestPurchaseItem = null;
+
+            foreach ($allPurchasedItems as $purchaseItem) {
+                if (array_key_exists(
+                    $purchaseItem->getProductId(),
+                    config('iap.drumeo-app-apple-store.productsMapping')
+                )) {
+                    $latestPurchaseItem = $purchaseItem;
+                    break;
+                }
+            }
+
+            if (is_null($latestPurchaseItem)) {
+                return self::SHOULD_SIGNUP;
+            }
+
+            if (($latestPurchaseItem->getExpiresDate() > Carbon::now()) &&
+                (is_null($latestPurchaseItem->getCancellationDate()))) {
+                return self::SHOULD_LOGIN;
+            } else {
+                return self::SHOULD_RENEW;
+            }
+
+        } catch (Throwable $exception) {
+
+            throw $exception;
         }
     }
 
