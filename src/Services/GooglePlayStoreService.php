@@ -94,6 +94,10 @@ class GooglePlayStoreService
         3 => 'Subscription was canceled by the developer',
     ];
 
+    const SHOULD_SIGNUP = -1;
+    const SHOULD_RENEW = 0;
+    const SHOULD_LOGIN = 1;
+
     /**
      * GooglePlayStoreService constructor.
      *
@@ -674,5 +678,46 @@ class GooglePlayStoreService
             'receiptUser' => $receiptUser,
         ];
 
+    }
+
+    /**
+     * @param $receipt
+     * @return int
+     * @throws Throwable
+     */
+    public function checkSignup(array $purchasedItems)
+    {
+        if (empty($purchasedItems)) {
+            return self::SHOULD_SIGNUP;
+        }
+
+        $existsSubscription = false;
+        $existsExpiredSubscriptions = false;
+
+        foreach ($purchasedItems as $purchaseItem) {
+            if (array_key_exists($purchaseItem['product_id'], config('ecommerce.google_store_products_map'))) {
+                $existsSubscription = true;
+                $googleResponse = $this->googlePlayStoreGateway->getResponse(
+                    $purchaseItem['package_name'],
+                    $purchaseItem['product_id'],
+                    $purchaseItem['purchase_token']
+                );
+
+                if (Carbon::createFromTimestampMs($googleResponse->getExpiryTimeMillis() > Carbon::now()) &&
+                    ($googleResponse->getAutoRenewing() == 1)) {
+                    return self::SHOULD_LOGIN;
+                } else {
+                    $existsExpiredSubscriptions = true;
+                }
+            }
+        }
+
+        if ($existsExpiredSubscriptions) {
+            return self::SHOULD_RENEW;
+        }
+
+        if (!($existsSubscription)) {
+            return self::SHOULD_SIGNUP;
+        }
     }
 }
