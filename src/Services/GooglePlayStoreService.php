@@ -638,8 +638,20 @@ class GooglePlayStoreService
                     $purchase['product_id'],
                     config('iap.drumeo-app-google-play-store.productsMapping')
                 )) {
-                    $shouldCreateAccount = true;
-                    $purchasedToken = $purchase;
+                    try {
+                        $this->googlePlayStoreGateway->getResponse(
+                            $purchase['package_name'],
+                            $purchase['product_id'],
+                            $purchase['purchase_token']
+                        );
+
+                        $shouldCreateAccount = true;
+                        $purchasedToken = $purchase;
+
+                    } catch (\Exception $exception) {
+                        continue;
+                    }
+
                 } elseif (auth()->id()) {
                     //pack purchase that should be restored
                     $receipt = new GoogleReceipt();
@@ -681,8 +693,9 @@ class GooglePlayStoreService
     }
 
     /**
-     * @param $receipt
+     * @param array $purchasedItems
      * @return int
+     * @throws ReceiptValidationException
      * @throws Throwable
      */
     public function checkSignup(array $purchasedItems)
@@ -696,19 +709,27 @@ class GooglePlayStoreService
 
         foreach ($purchasedItems as $purchaseItem) {
             if (array_key_exists($purchaseItem['product_id'], config('ecommerce.google_store_products_map'))) {
-                $existsSubscription = true;
-                $googleResponse = $this->googlePlayStoreGateway->getResponse(
-                    $purchaseItem['package_name'],
-                    $purchaseItem['product_id'],
-                    $purchaseItem['purchase_token']
-                );
 
-                if (Carbon::createFromTimestampMs($googleResponse->getExpiryTimeMillis() > Carbon::now()) &&
-                    ($googleResponse->getAutoRenewing() == 1)) {
-                    return self::SHOULD_LOGIN;
-                } else {
-                    $existsExpiredSubscriptions = true;
+                try {
+                    $existsSubscription = true;
+
+                    $googleResponse = $this->googlePlayStoreGateway->getResponse(
+                        $purchaseItem['package_name'],
+                        $purchaseItem['product_id'],
+                        $purchaseItem['purchase_token']
+                    );
+
+                    if (Carbon::createFromTimestampMs($googleResponse->getExpiryTimeMillis() > Carbon::now()) &&
+                        ($googleResponse->getAutoRenewing() == 1)) {
+                        return self::SHOULD_LOGIN;
+                    } else {
+                        $existsExpiredSubscriptions = true;
+                    }
+
+                } catch (\Exception $exception) {
+                    continue;
                 }
+
             }
         }
 
