@@ -524,7 +524,6 @@ class AppleStoreKitService
         if (!$appleReceipt) {
 
             foreach ($appleResponse->getLatestReceiptInfo() as $purchaseItem) {
-                if ($purchaseItem->getExpiresDate() > Carbon::now() || is_null($purchaseItem->getExpiresDate())) {
 
                     $existsPurchases = true;
 
@@ -545,7 +544,6 @@ class AppleStoreKitService
 
                         $receiptUser = $this->processReceipt($appleReceipt);
                     }
-                }
             }
 
             if (!$existsPurchases) {
