@@ -626,11 +626,11 @@ class GooglePlayStoreService
                 continue;
             }
 
-            $googleReceipt = $this->googleReceiptRepository->findOneBy(
-                [
-                    'purchaseToken' => $purchase['purchase_token'],
-                ]
-            );
+            $googleReceipt = $this->googleReceiptRepository->createQueryBuilder('gr')->where('gr.purchaseToken = :token')
+                ->andWhere('gr.email is not null')
+                ->setParameter('token', $purchase['purchase_token'])
+                ->orderBy('gr.id', 'desc')
+                ->getQuery()->getFirstResult();
 
             if (!$googleReceipt) {
                 //check if purchases product is membership
@@ -658,6 +658,7 @@ class GooglePlayStoreService
 
                     $receipt->setPackageName($purchase['package_name']);
                     $receipt->setProductId($purchase['product_id']);
+                    $receipt->setEmail(auth()->user()->getEmail());
                     $receipt->setPurchaseToken($purchase['purchase_token']);
                     $receipt->setBrand(config('ecommerce.brand'));
                     $receipt->setRequestType(GoogleReceipt::MOBILE_APP_REQUEST_TYPE);
