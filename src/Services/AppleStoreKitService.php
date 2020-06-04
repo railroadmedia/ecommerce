@@ -864,7 +864,7 @@ class AppleStoreKitService
                 return self::SHOULD_SIGNUP;
             }
 
-            if (($latestPurchaseItem->getExpiresDate() > Carbon::now()) &&
+            if (($latestPurchaseItem->getExpiresDate() > Carbon::now()->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1))) &&
                 (is_null($latestPurchaseItem->getCancellationDate()))) {
                 return self::SHOULD_LOGIN;
             } else {
