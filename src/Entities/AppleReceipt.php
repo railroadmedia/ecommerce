@@ -98,6 +98,15 @@ class AppleReceipt
     protected $valid = false;
 
     /**
+     * For apple notification only
+     *
+     * @ORM\Column(type="string", name="notification_request_data", nullable=true)
+     *
+     * @var string
+     */
+    protected $notificationRequestData;
+
+    /**
      * @ORM\Column(type="string", name="validation_error", nullable=true)
      *
      * @var string
@@ -266,6 +275,22 @@ class AppleReceipt
     public function setValid(bool $valid)
     {
         $this->valid = $valid;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getNotificationRequestData(): ?string
+    {
+        return $this->notificationRequestData;
+    }
+
+    /**
+     * @param string|null $notificationRequestData
+     */
+    public function setNotificationRequestData(?string $notificationRequestData)
+    {
+        $this->notificationRequestData = $notificationRequestData;
     }
 
     /**

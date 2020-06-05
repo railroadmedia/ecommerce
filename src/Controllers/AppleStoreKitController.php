@@ -94,15 +94,24 @@ class AppleStoreKitController extends Controller
             'AppleStoreKitController processNotification Request Dump --------------------------------------------------'
         );
         error_log(var_export($request->get('notification_type'), true));
-        error_log(var_export($request->input(), true));
+
+        if(!$request->has('unified_receipt') && !$request->has('latest_receipt')){
+            error_log(
+                'AppleStoreKitController processNotification -------- Missing unified_receipt and latest_receipt in Apple request'
+            );
+            return response()->json();
+        }
+
+        error_log(var_export($request->get('unified_receipt')['latest_receipt_info'], true));
 
         $notificationType = $request->get('notification_type');
 
         $receipt = new AppleReceipt();
 
-        $receipt->setReceipt($request->get('latest_receipt', ''));
+        $receipt->setReceipt($request->get('unified_receipt')['latest_receipt']??$request->get('latest_receipt',''));
         $receipt->setRequestType(AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE);
         $receipt->setNotificationType($notificationType);
+        $receipt->setNotificationRequestData(base64_encode(serialize($request->all())));
         $receipt->setBrand(config('ecommerce.brand'));
 
         try {

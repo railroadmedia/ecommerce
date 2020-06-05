@@ -227,10 +227,15 @@ class AppleStoreKitService
 
             $currentPurchasedItem = $this->getLatestPurchasedItem($appleResponse);
 
-            $transactionId = $currentPurchasedItem->getTransactionId();
+            if ($currentPurchasedItem) {
+                $transactionId = $currentPurchasedItem->getTransactionId();
 
-            $receipt->setTransactionId($transactionId);
-            $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
+                $receipt->setTransactionId($transactionId);
+                $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
+            } else {
+                $receipt->setValid(false);
+                $receipt->setValidationError('Missing purchased item; latest_receipt_info empty array');
+            }
 
         } catch (Throwable $exception) {
 
@@ -253,21 +258,28 @@ class AppleStoreKitService
 
         $subscription = $this->syncPurchasedItems($appleResponse, $receipt);
 
-        if ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE) {
-
-            event(
-                new MobileSubscriptionRenewed(
-                    $subscription, $subscription->getLatestPayment(), MobileSubscriptionRenewed::ACTOR_SYSTEM
-                )
+        if (!is_null($subscription)) {
+            $receipt->setEmail(
+                $subscription->getUser()
+                    ->getEmail()
             );
+            $this->entityManager->persist($receipt);
 
-        } elseif (!empty($subscription->getCanceledOn())) {
+            if ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE) {
 
-            event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));
+                event(
+                    new MobileSubscriptionRenewed(
+                        $subscription, $subscription->getLatestPayment(), MobileSubscriptionRenewed::ACTOR_SYSTEM
+                    )
+                );
+
+            } elseif (!empty($subscription->getCanceledOn())) {
+
+                event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));
+            }
+
+            $this->userProductService->updateSubscriptionProductsApp($subscription);
         }
-
-        $this->userProductService->updateSubscriptionProductsApp($subscription);
-
         $this->entityManager->flush();
     }
 
@@ -525,25 +537,25 @@ class AppleStoreKitService
 
             foreach ($appleResponse->getLatestReceiptInfo() as $purchaseItem) {
 
-                    $existsPurchases = true;
+                $existsPurchases = true;
 
-                    //check if purchases product is membership
-                    if (array_key_exists(
-                        $purchaseItem->getProductId(),
-                        config('iap.drumeo-app-apple-store.productsMapping')
-                    )) {
-                        $shouldCreateAccount = true;
-                    } elseif (auth()->id()) {
-                        $user = $this->userProvider->getUserById(auth()->id());
+                //check if purchases product is membership
+                if (array_key_exists(
+                    $purchaseItem->getProductId(),
+                    config('iap.drumeo-app-apple-store.productsMapping')
+                )) {
+                    $shouldCreateAccount = true;
+                } elseif (auth()->id()) {
+                    $user = $this->userProvider->getUserById(auth()->id());
 
-                        $appleReceipt = new AppleReceipt();
-                        $appleReceipt->setReceipt($receipt);
-                        $appleReceipt->setEmail($user->getEmail());
-                        $appleReceipt->setBrand(config('ecommerce.brand'));
-                        $appleReceipt->setRequestType(AppleReceipt::MOBILE_APP_REQUEST_TYPE);
+                    $appleReceipt = new AppleReceipt();
+                    $appleReceipt->setReceipt($receipt);
+                    $appleReceipt->setEmail($user->getEmail());
+                    $appleReceipt->setBrand(config('ecommerce.brand'));
+                    $appleReceipt->setRequestType(AppleReceipt::MOBILE_APP_REQUEST_TYPE);
 
-                        $receiptUser = $this->processReceipt($appleReceipt);
-                    }
+                    $receiptUser = $this->processReceipt($appleReceipt);
+                }
             }
 
             if (!$existsPurchases) {
@@ -864,8 +876,11 @@ class AppleStoreKitService
                 return self::SHOULD_SIGNUP;
             }
 
-            if (($latestPurchaseItem->getExpiresDate() > Carbon::now()->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1))) &&
-                (is_null($latestPurchaseItem->getCancellationDate()))) {
+            if (($latestPurchaseItem->getExpiresDate() >
+                    Carbon::now()
+                        ->addDays(
+                            config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)
+                        )) && (is_null($latestPurchaseItem->getCancellationDate()))) {
                 return self::SHOULD_LOGIN;
             } else {
                 return self::SHOULD_RENEW;
