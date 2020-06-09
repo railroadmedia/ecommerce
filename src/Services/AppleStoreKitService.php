@@ -565,16 +565,19 @@ class AppleStoreKitService
         } else {
 
             error_log('Exists apple receipts with ID:' . $appleReceipt->getId());
+            if (!$appleReceipt->getEmail()) {
+                $shouldCreateAccount = true;
+            } else {
+                $receiptUser = $this->userProvider->getUserByEmail($appleReceipt->getEmail());
 
-            $receiptUser = $this->userProvider->getUserByEmail($appleReceipt->getEmail());
+                //sync
+                $this->syncPurchasedItems($appleResponse, $appleReceipt, $receiptUser, true);
 
-            //sync
-            $this->syncPurchasedItems($appleResponse, $appleReceipt, $receiptUser, true);
+                if (!auth()->id() || auth()->id() != $receiptUser->getId()) {
 
-            if (!auth()->id() || auth()->id() != $receiptUser->getId()) {
+                    $shouldLogin = true;
 
-                $shouldLogin = true;
-
+                }
             }
         }
 
@@ -616,7 +619,6 @@ class AppleStoreKitService
             $subscription = new Subscription();
             $subscription->setCreatedAt(Carbon::now());
             $subscription->setTotalCyclesPaid(1);
-            $subscription->setUser($user);
             $subscription->setStopped(false);
             $subscription->setRenewalAttempt(0);
         }
@@ -624,6 +626,7 @@ class AppleStoreKitService
         $subscription->setBrand(config('ecommerce.brand'));
         $subscription->setType(Subscription::TYPE_APPLE_SUBSCRIPTION);
         $subscription->setProduct($product);
+        $subscription->setUser($user);
 
         if (!empty($appleResponse->getPendingRenewalInfo()[0])) {
             $subscription->setIsActive($appleResponse->getPendingRenewalInfo()[0]->getAutoRenewStatus());
@@ -851,6 +854,7 @@ class AppleStoreKitService
      */
     public function checkSignup($receipt)
     {
+
         if (!$receipt) {
             return self::SHOULD_SIGNUP;
         }
@@ -858,7 +862,7 @@ class AppleStoreKitService
         try {
 
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt);
-
+            dd($appleResponse);
             $allPurchasedItems = $appleResponse->getLatestReceiptInfo();
             $latestPurchaseItem = null;
 
