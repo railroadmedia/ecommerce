@@ -33,6 +33,7 @@ use Railroad\Ecommerce\Commands\PopulatePaymentTaxesTable;
 use Railroad\Ecommerce\Commands\ProcessAppleExpiredSubscriptions;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Commands\SplitPaymentMethodIdsToColumns;
+use Railroad\Ecommerce\Commands\VerifyAppleNotifications;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Events\OrderEvent;
@@ -131,6 +132,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 FixSerializeErrorInAppPurchaseTables::class,
                 MobileAppGoogleAppleHelper::class,
                 listDueSubscriptions::class,
+                VerifyAppleNotifications::class
             ]
         );
 
