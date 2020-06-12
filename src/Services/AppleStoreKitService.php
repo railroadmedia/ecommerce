@@ -232,6 +232,19 @@ class AppleStoreKitService
 
                 $receipt->setTransactionId($transactionId);
                 $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
+
+                $oldReceipts =
+                    $this->appleReceiptRepository->createQueryBuilder('ap')
+                        ->where('ap.transactionId  = :transactionId')
+                        ->andWhere('ap.email is not null')
+                        ->setParameter('transactionId', $transactionId)
+                        ->getQuery()
+                        ->getResult();
+
+                if (!empty($oldReceipts)) {
+                    $receipt->setEmail($oldReceipts[0]->getEmail());
+                }
+
             } else {
                 $receipt->setValid(false);
                 $receipt->setValidationError('Missing purchased item; latest_receipt_info empty array');
@@ -256,14 +269,11 @@ class AppleStoreKitService
         $this->entityManager->persist($receipt);
         $this->entityManager->flush();
 
-        $subscription = $this->syncPurchasedItems($appleResponse, $receipt);
+        $user = $this->userProvider->getUserByEmail($receipt->getEmail());
+
+        $subscription = $this->syncPurchasedItems($appleResponse, $receipt, $user);
 
         if (!is_null($subscription)) {
-            $receipt->setEmail(
-                $subscription->getUser()
-                    ->getEmail()
-            );
-            $this->entityManager->persist($receipt);
 
             if ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE) {
 
@@ -292,6 +302,10 @@ class AppleStoreKitService
     public function processSubscriptionRenewal(Subscription $subscription)
     {
         $receipt = $subscription->getAppleReceipt();
+
+        if (!$receipt) {
+            return;
+        }
 
         $this->entityManager->persist($receipt);
         $this->entityManager->flush();
@@ -329,19 +343,21 @@ class AppleStoreKitService
         $this->entityManager->persist($receipt);
         $this->entityManager->flush();
 
-        $subscription = $this->syncPurchasedItems($appleResponse, $receipt);
+        if($appleResponse) {
+            $subscription = $this->syncPurchasedItems($appleResponse, $receipt);
 
-        if (!empty($receipt)) {
-            $this->userProductService->updateSubscriptionProductsApp($subscription);
-        } else {
-            error_log(
-                'Error updating access for an Apple IOS subscription. Could not find or sync subscription for receipt (DB Receipt): ' .
-                var_export($receipt, true)
-            );
-            error_log(
-                'Error updating access for Apple IOS subscription. Could not find or sync subscription for receipt (AppleResponse): ' .
-                var_export($appleResponse, true)
-            );
+            if (!empty($subscription)) {
+                $this->userProductService->updateSubscriptionProductsApp($subscription);
+            } else {
+                error_log(
+                    'Error updating access for an Apple IOS subscription. Could not find or sync subscription for receipt (DB Receipt): ' .
+                    print_r($receipt->getId(), true)
+                );
+                error_log(
+                    'Error updating access for Apple IOS subscription. Could not find or sync subscription for receipt (AppleResponse): ' .
+                    print_r($appleResponse, true)
+                );
+            }
         }
     }
 
@@ -626,7 +642,10 @@ class AppleStoreKitService
         $subscription->setBrand(config('ecommerce.brand'));
         $subscription->setType(Subscription::TYPE_APPLE_SUBSCRIPTION);
         $subscription->setProduct($product);
-        $subscription->setUser($user);
+
+        if ($user) {
+            $subscription->setUser($user);
+        }
 
         if (!empty($appleResponse->getPendingRenewalInfo()[0])) {
             $subscription->setIsActive($appleResponse->getPendingRenewalInfo()[0]->getAutoRenewStatus());

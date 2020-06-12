@@ -236,7 +236,17 @@ class SubscriptionRepository extends RepositoryBase
 
         $qb->select(['s', 'r'])
             ->from($this->getClassName(), 's')
-            ->leftJoin('s.appleReceipt', 'r')
+            ->leftJoin(
+                's.appleReceipt',
+                'r',
+                'WITH',
+                $qb->expr()
+                    ->andX(
+                        'r.subscription = s.id',
+                        'r.requestType = :requestType'
+                    )
+
+            )
             ->where(
                 $qb->expr()
                     ->lte('s.appleExpirationDate', 'CURRENT_TIMESTAMP()')
@@ -258,6 +268,7 @@ class SubscriptionRepository extends RepositoryBase
         $q = $qb->getQuery();
 
         $q->setParameter('appleSubscription', Subscription::TYPE_APPLE_SUBSCRIPTION);
+        $q->setParameter('requestType', 'mobile');
         $q->setParameter('active', true);
 
         return $q->getResult();
