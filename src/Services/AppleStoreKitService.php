@@ -159,10 +159,15 @@ class AppleStoreKitService
 
             $currentPurchasedItem = $this->getLatestPurchasedItem($appleResponse);
 
+            if (!$currentPurchasedItem && !empty($appleResponse->getPurchases())) {
+                $currentPurchasedItem = $appleResponse->getPurchases()[0];
+            }
+
             if ($receipt->getPurchaseType() == AppleReceipt::APPLE_SUBSCRIPTION_PURCHASE) {
                 $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
             } else {
                 $receipt->setValid(true);
+                $receipt->setValidationError('');
             }
 
             $transactionId = $currentPurchasedItem->getOriginalTransactionId();
@@ -343,7 +348,7 @@ class AppleStoreKitService
         $this->entityManager->persist($receipt);
         $this->entityManager->flush();
 
-        if($appleResponse) {
+        if ($appleResponse) {
             $subscription = $this->syncPurchasedItems($appleResponse, $receipt);
 
             if (!empty($subscription)) {
@@ -434,15 +439,20 @@ class AppleStoreKitService
     ) {
 
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
-        $subscription = null;
+        $allPurchasedItems = $appleResponse->getLatestReceiptInfo();
         $allActivePurchasedItems = [];
+        $subscription = null;
+
+        if (!$latestPurchaseItem && !empty($appleResponse->getPurchases())) {
+            $latestPurchaseItem = $appleResponse->getPurchases()[0];
+            $allPurchasedItems = $appleResponse->getPurchases();
+        }
 
         if (empty($latestPurchaseItem)) {
             return null;
         }
 
         if ($syncAll) {
-            $allPurchasedItems = $appleResponse->getLatestReceiptInfo();
             foreach ($allPurchasedItems as $item) {
                 if ($item->getExpiresDate() > Carbon::now() || is_null($item->getExpiresDate())) {
                     $allActivePurchasedItems[] = $item;
@@ -525,6 +535,12 @@ class AppleStoreKitService
 
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
         $allPurchasedItems = $appleResponse->getLatestReceiptInfo();
+
+        if (!$latestPurchaseItem && !empty($appleResponse->getPurchases())) {
+            $latestPurchaseItem = $appleResponse->getPurchases()[0];
+            $allPurchasedItems = $appleResponse->getPurchases();
+        }
+
         foreach ($allPurchasedItems as $purchaseItem) {
             if (array_key_exists(
                 $purchaseItem->getProductId(),
@@ -545,13 +561,29 @@ class AppleStoreKitService
 
         error_log('Restore Apple receipt with original transaction id: ' . $originalTransactionId);
 
+        $appleReceipt = null;
+
         ///check if receipt exist in db
-        $appleReceipt =
-            $this->appleReceiptRepository->findOneBy(['transactionId' => $originalTransactionId], ['id' => 'desc']);
+        $appleReceipts =
+            $this->appleReceiptRepository->createQueryBuilder('ap')
+                ->where('ap.transactionId = :transactionId')
+                ->orWhere('ap.receipt = :receipt')
+                ->setParameters(
+                    [
+                        'transactionId' => $originalTransactionId,
+                        'receipt' => $receipt,
+                    ]
+                )
+                ->orderBy('ap.id', 'desc')
+                ->getQuery()
+                ->getResult();
+        if (!empty($appleReceipts)) {
+            $appleReceipt = array_first($appleReceipts);
+        }
 
         if (!$appleReceipt) {
 
-            foreach ($appleResponse->getLatestReceiptInfo() as $purchaseItem) {
+            foreach ($allPurchasedItems as $purchaseItem) {
 
                 $existsPurchases = true;
 
@@ -579,8 +611,17 @@ class AppleStoreKitService
             }
 
         } else {
-
-            error_log('Exists apple receipts with ID:' . $appleReceipt->getId());
+            if (!$appleReceipt->getTransactionId()) {
+                $appleReceipt->setTransactionId($originalTransactionId);
+                $this->entityManager->persist($appleReceipt);
+            }
+            error_log(
+                'Exists apple receipts with ID:' .
+                $appleReceipt->getId() .
+                '    transaction id:' .
+                $appleReceipt->getTransactionId()
+            );
+            
             if (!$appleReceipt->getEmail()) {
                 $shouldCreateAccount = true;
             } else {
@@ -881,7 +922,7 @@ class AppleStoreKitService
         try {
 
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt);
-            dd($appleResponse);
+
             $allPurchasedItems = $appleResponse->getLatestReceiptInfo();
             $latestPurchaseItem = null;
 
