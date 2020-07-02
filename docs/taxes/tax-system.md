@@ -6,15 +6,14 @@ The tax system in this package is designed for use in Canada.
 
 ## How Taxes Are Calculated
 
-Either the shipping or billing address is used to determine if taxes should be charged and what percent should be
-charged.
+Either the shipping or billing address is used to determine if taxes should be charged and at what rate.
 
-- If the shipping address is present for an order (physical order items), then always use the shipping address.
+- If the shipping address is present for an order (it has physical order items), then always use the shipping address.
 - If there is no shipping address for the order (and for subscriptions), then use the billing address.
 
-The system uses the country, and the region (state/province) to determine the tax rate.
+The system uses the country and the region (state/province) to determine the tax rate.
 
-Product costs and shipping costs are taxed differently in Canada depending on the province. For example in BC, 
+Product costs and shipping costs are taxed differently in Canada depending on the province. In BC for example, 
 shipping costs are only taxed 5% but product costs are taxes 12%. These can be configured separately 
 in the main config file. Finance charges are not taxed.
 
@@ -31,14 +30,14 @@ Total taxes due: $1.55
 
 ## Recurring Subscription Taxes
 
-Taxes for recurring payments are always calculated on the fly at the time of renewal. Tax rates can change and all 
-active subscriptions must bill at the new rates. All recurring payment taxes are billed based on the 
+Taxes for recurring payments are always calculated on the fly at the time of renewal. Tax rates can change so all 
+active subscriptions must bill at the new rates automatically. All recurring payment taxes are billed based on the 
 attached payment method billing address.
 
 ## Payment Plans
 
 For payment plans the product costs, the product taxes, and the finance charge are split up among the payments. The 
-shipping cost and the taxes on the shipping costs are always charged on the first initial payment.
+shipping costs and the taxes on the shipping costs are always charged on the first initial payment.
 
 **Formula & example for a BC Canada order with a 5 payment plan:**
 
@@ -57,8 +56,8 @@ Next 4 recurring payments amount: ((100.00 + 12.00 + 1.00) / 5) = 22.60
 
 ## Displaying Tax Info On Invoices
 
-For charging users, the system only cares about the total tax rate per amount to be taxed. It does not care 
-about different types of taxes such as PST, GST, QST, etc. On customer invoices however, we must display these 
+When charging users, the system only cares about the overall tax rate per amount to be taxed. It does not care 
+about the different types of taxes such as PST, GST, QST, etc. On customer invoices however, we must display these 
 different tax values properly depending on current laws.
 
 In general there are 2 types of tax, GST (federal) which must be charged for all Canadian customers (5%), and
