@@ -37,8 +37,23 @@ attached payment method billing address.
 
 ## Payment Plans
 
-For payment plans, the total taxes due is split up among the payments just like the product cost. By contrast the 
-shipping costs are always paid in the first payment.
+For payment plans the product costs, the product taxes, and the finance charge are split up among the payments. The 
+shipping cost and the taxes on the shipping costs are always charged on the first initial payment.
+
+**Formula & example for a BC Canada order with a 5 payment plan:**
+
+- Product costs: 100.00
+- Shipping costs: 10.00
+- Taxes on product costs: 100.00 * 0.12 = 12.00
+- Taxes on shipping costs: 10.00 * 0.05 = 0.50
+- Finance charge: 1.00
+
+**Grand total due for order: 100.00 + 10.00 + 12.00 + 0.50 + 1.00 = 123.50**  
+
+Initial payment amount: ((100.00 + 12.00 + 1.00) / 5) + 10.00 + 0.50 = 33.10  
+Next 4 recurring payments amount: ((100.00 + 12.00 + 1.00) / 5) = 22.60  
+
+**Final math after renewals: 33.10 + (22.60 * 4) = 123.50**  
 
 ## Displaying Tax Info On Invoices
 
