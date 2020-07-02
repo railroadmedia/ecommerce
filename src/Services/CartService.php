@@ -441,6 +441,25 @@ class CartService
     }
 
     /**
+     * @param integer $numberOfPayments
+     * @return float
+     *
+     * @throws ORMException
+     * @throws Throwable
+     */
+    public function getPaymentPlanRecurringPrice($numberOfPayments)
+    {
+        $totalItemCostDue = $this->getTotalItemCosts();
+
+        $financeCosts = $this->getTotalFinanceCosts();
+
+        return round(
+            ($totalItemCostDue + $financeCosts) / $numberOfPayments,
+            2
+        );
+    }
+
+    /**
      * Returns the initial payment amount that is so be paid immediately on order submit.
      *
      * @return float
@@ -471,9 +490,9 @@ class CartService
 
         $financeDue = $this->getTotalFinanceCosts();
 
-        // Customers can only finance the order item price, taxes, and finance.
-        // All shipping must be paid on the first payment.
-        $totalToFinance = $totalItemCostDue + $totalTaxDue + $financeDue;
+        // Customers can only finance the order item price, product taxes, and finance.
+        // All shipping costs and shipping taxes must be paid on the first payment.
+        $totalToFinance = $totalItemCostDue + $productTaxDue + $financeDue;
 
         $initialTotalDueBeforeShipping = $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments();
 
@@ -484,7 +503,7 @@ class CartService
             );
         }
 
-        return max(0, round($initialTotalDueBeforeShipping + $shippingDue, 2));
+        return max(0, round($initialTotalDueBeforeShipping + $shippingDue + $shippingTaxDue, 2));
     }
 
     /**
@@ -516,11 +535,9 @@ class CartService
             $taxableAddress
         );
 
-        $totalTaxDue = $productTaxDue + $shippingTaxDue;
-
         $financeDue = $this->getTotalFinanceCosts();
 
-        $totalToFinance = $totalItemCostDue + $totalTaxDue + $financeDue;
+        $totalToFinance = $totalItemCostDue + $productTaxDue + $financeDue;
 
         return max(
             0,

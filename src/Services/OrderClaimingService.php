@@ -311,11 +311,7 @@ class OrderClaimingService
 
             $type = config('ecommerce.type_payment_plan');
 
-            $subscriptionPricePerPayment = round(
-                ($this->cartService->getDueForOrder() - $this->cartService->getDueForInitialPayment()) /
-                    ($totalCyclesDue - 1),
-                2
-            );
+            $subscriptionPricePerPayment = $this->cartService->getPaymentPlanRecurringPrice($totalCyclesDue);
 
             $subscriptionTaxableAmount = $this->cartService->getTotalItemCosts();
         }
