@@ -331,7 +331,7 @@
 
                                                     @if($order->getTaxesDue() > 0)
                                                         <br>GST/HST # -
-                                                        {{ config('ecommerce.gst_hst_number')[$order->getBrand()] ?? '' }}
+                                                        {{ config('ecommerce.canada_gst_hst_number')[$order->getBrand()] ?? '' }}
                                                     @endif
                                                     <br><br>
                                                 </td>
@@ -348,29 +348,13 @@
                                                             </tr>
                                                         @endforeach
 
-                                                        @if($order->getTaxesDue() > 0)
-                                                            @if($gstPaid > 0)
+                                                        @foreach($taxesPerType as $type => $amount)
                                                                 <tr>
-                                                                    <td>GST/HST</td>
+                                                                    <td>{{ strtoupper($type) }}</td>
                                                                     <td class="alignright">
-                                                                        {{ $currencySymbol}} {{ number_format($gstPaid, 2) }}</td>
+                                                                        {{ $currencySymbol}} {{ number_format($amount, 2) }}</td>
                                                                 </tr>
-                                                            @endif
-                                                            @if($pstPaid > 0)
-                                                                <tr>
-                                                                    <td>PST</td>
-                                                                    <td class="alignright">
-                                                                        {{ $currencySymbol}} {{ number_format($pstPaid, 2) }}</td>
-                                                                </tr>
-                                                            @endif
-                                                            @if($showQst)
-                                                                <tr>
-                                                                    <td>QST</td>
-                                                                    <td class="alignright">
-                                                                        {{ $currencySymbol}} {{ number_format($qstPaid, 2) }}</td>
-                                                                </tr>
-                                                            @endif
-                                                        @endif
+                                                        @endforeach
 
                                                         <tr class="total">
                                                             @if($order->getTotalPaid() == $order->getTotalDue())

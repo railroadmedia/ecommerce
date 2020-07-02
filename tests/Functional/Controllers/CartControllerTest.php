@@ -101,9 +101,7 @@ class CartControllerTest extends EcommerceTestCase
                     'due' => $totalDue,
                     'shipping_before_override' => 0,
                     'product_taxes' => 0,
-                    'product_taxes_before_override' => 0,
                     'shipping_taxes' => 0,
-                    'shipping_taxes_before_override' => 0,
                 ],
                 'payment_plan_options' => [
                     [
@@ -213,9 +211,7 @@ class CartControllerTest extends EcommerceTestCase
                     'due' => $product['price'] * $quantity,
                     'shipping_before_override' => 0,
                     'product_taxes' => 0,
-                    'product_taxes_before_override' => 0,
                     'shipping_taxes' => 0,
-                    'shipping_taxes_before_override' => 0,
                 ],
                 'payment_plan_options' => [
                     [
@@ -291,9 +287,7 @@ class CartControllerTest extends EcommerceTestCase
                     'due' => 0,
                     'shipping_before_override' => 0,
                     'product_taxes' => 0,
-                    'product_taxes_before_override' => 0,
                     'shipping_taxes' => 0,
-                    'shipping_taxes_before_override' => 0,
                 ],
                 'errors' => [
                     'No product with SKU ' . $randomSku . ' was found.',],
@@ -416,9 +410,7 @@ class CartControllerTest extends EcommerceTestCase
                     'due' => $totalDue,
                     'shipping_before_override' => 0,
                     'product_taxes' => 0,
-                    'product_taxes_before_override' => 0,
                     'shipping_taxes' => 0,
-                    'shipping_taxes_before_override' => 0,
                 ],
                 'payment_plan_options' => [
                     [
@@ -535,9 +527,7 @@ class CartControllerTest extends EcommerceTestCase
                     'due' => $product['price'] * $quantity,
                     'shipping_before_override' => 0,
                     'product_taxes' => 0,
-                    'product_taxes_before_override' => 0,
                     'shipping_taxes' => 0,
-                    'shipping_taxes_before_override' => 0,
                 ],
                 'payment_plan_options' => [
                     [
@@ -679,9 +669,7 @@ class CartControllerTest extends EcommerceTestCase
                     'due' => $totalDue,
                     'shipping_before_override' => 0,
                     'product_taxes' => 0,
-                    'product_taxes_before_override' => 0,
                     'shipping_taxes' => 0,
-                    'shipping_taxes_before_override' => 0,
                 ],
                 'errors' => [
                     'No product with SKU ' . $randomSku1 . ' was found.',

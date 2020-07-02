@@ -284,38 +284,6 @@ class Cart implements Serializable
     /**
      * @return float|null
      */
-    public function getProductTaxOverride(): ?float
-    {
-        return $this->productTaxOverride;
-    }
-
-    /**
-     * @param float|null $productTaxOverride
-     */
-    public function setProductTaxOverride(?float $productTaxOverride): void
-    {
-        $this->productTaxOverride = $productTaxOverride;
-    }
-
-    /**
-     * @return float|null
-     */
-    public function getShippingTaxOverride(): ?float
-    {
-        return $this->shippingTaxOverride;
-    }
-
-    /**
-     * @param float|null $shippingTaxOverride
-     */
-    public function setShippingTaxOverride(?float $shippingTaxOverride): void
-    {
-        $this->shippingTaxOverride = $shippingTaxOverride;
-    }
-
-    /**
-     * @return float|null
-     */
     public function getShippingOverride(): ?float
     {
         return $this->shippingOverride;
@@ -345,8 +313,6 @@ class Cart implements Serializable
                 'shipping-address-id' => $this->getShippingAddressId(),
                 'billing-address-id' => $this->getBillingAddressId(),
                 'payment-method-id' => $this->getPaymentMethodId(),
-                'product-tax-override' => $this->getProductTaxOverride(),
-                'shipping-tax-override' => $this->getShippingTaxOverride(),
                 'shipping-override' => $this->getShippingOverride(),
             ]
         );
@@ -371,8 +337,6 @@ class Cart implements Serializable
 
         $this->setPaymentMethodId($data['payment-method-id']);
 
-        $this->setProductTaxOverride($data['product-tax-override']);
-        $this->setShippingTaxOverride($data['shipping-tax-override']);
         $this->setShippingOverride($data['shipping-override']);
 
         $this->setCurrency($data['currency']);

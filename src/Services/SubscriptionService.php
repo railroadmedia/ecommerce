@@ -383,8 +383,8 @@ class SubscriptionService
 
         $currency = $paymentMethod->getCurrency();
 
-        // support for legacy tax
-        $subscriptionPricePerPayment = round($subscription->getTotalPrice() - $subscription->getTax(), 2);
+        // all taxes for recurring payments are now calculated on the fly
+        $subscriptionPricePerPayment = round($subscription->getTotalPrice(), 2);
 
         $taxes = $this->taxService->getTaxesDueTotal(
             $subscriptionPricePerPayment,

@@ -42,7 +42,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
     public function test_claim_order()
     {
-        $brand = $this->faker->word;
+        $brand = 'drumeo';
         $country = 'canada';
         $region = 'alberta';
         $currency = 'USD';
@@ -173,7 +173,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $creditCard->setExternalId($this->faker->shuffleString());
         $creditCard->setFingerprint($this->faker->shuffleString());
         $creditCard->setLastFourDigits(rand(1000, 9999));
-        $creditCard->setPaymentGatewayName($this->faker->word);
+        $creditCard->setPaymentGatewayName($brand);
 
         $paymentMethod = new PaymentMethod();
 

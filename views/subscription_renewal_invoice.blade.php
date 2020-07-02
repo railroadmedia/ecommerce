@@ -339,7 +339,7 @@
 
                                                     @if($subscription->getTax() > 0)
                                                         <br>GST/HST # -
-                                                        {{ config('ecommerce.gst_hst_number')[$payment->getGatewayName()] ?? '' }}
+                                                        {{ config('ecommerce.canada_gst_hst_number')[$payment->getGatewayName()] ?? '' }}
                                                     @endif
                                                     <br><br>
                                                 </td>
@@ -369,34 +369,14 @@
 
                                                         @endif
 
-                                                        @if($subscription->getTax() > 0)
-                                                            @if($gstPaid > 0)
-                                                                <tr>
-                                                                    <td>GST/HST</td>
-                                                                    <td class="alignright">
-                                                                        {{ $currencySymbol}} {{ number_format($gstPaid, 2) }}</td>
-                                                                </tr>
-                                                            @endif
-                                                            @if($pstPaid > 0)
-                                                                <tr>
-                                                                    <td>PST</td>
-                                                                    <td class="alignright">
-                                                                        {{ $currencySymbol}} {{ number_format($pstPaid, 2) }}</td>
-                                                                </tr>
-                                                            @endif
-                                                            @if($showQst)
-                                                                <tr>
-                                                                    <td>QST</td>
-                                                                    <td class="alignright">
-                                                                        {{ $currencySymbol}} {{ number_format($qstPaid, 2) }}</td>
-                                                                </tr>
-                                                            @endif
+                                                        @foreach($taxesPerType as $type => $amount)
                                                             <tr>
-                                                                <td>Total Tax</td>
+                                                                <td>{{ strtoupper($type) }}</td>
                                                                 <td class="alignright">
-                                                                    {{ $currencySymbol}} {{ number_format($subscription->getTax(), 2) }}</td>
+                                                                    {{ $currencySymbol}} {{ number_format($amount, 2) }}</td>
                                                             </tr>
-                                                        @endif
+                                                        @endforeach
+
                                                         <tr class="total">
                                                             <td class="alignright" width="80%">Total</td>
                                                             <td class="alignright">

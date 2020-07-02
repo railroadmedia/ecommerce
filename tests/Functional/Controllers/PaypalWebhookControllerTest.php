@@ -48,13 +48,14 @@ class PaypalWebhookControllerTest extends EcommerceTestCase
 
         $results = $this->call(
             'POST',
-            '/paypal/webhook',
+            '/paypal/webhook/1',
             [
                 'txn_type' => 'recurring_payment',
                 'payment_status' => 'Completed',
                 'recurring_payment_id' => $recurringPaymentId,
                 'txn_id' => $txnId,
                 'payment_gross' => $price,
+                'payment_date' => Carbon::now()->format('H:i:s M d, Y e'),
             ]
         );
 

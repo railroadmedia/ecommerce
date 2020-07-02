@@ -14,10 +14,16 @@ use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
+use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class CartServiceTest extends EcommerceTestCase
 {
+    /**
+     * @var TaxService
+     */
+    public $taxService;
+
     protected function setUp()
     {
         parent::setUp();
@@ -25,6 +31,8 @@ class CartServiceTest extends EcommerceTestCase
         $cartService = $this->app->make(CartService::class);
 
         $cartService->clearCart();
+
+        $this->taxService = $this->app->make(TaxService::class);
     }
 
     public function test_add_to_cart()
@@ -432,7 +440,7 @@ class CartServiceTest extends EcommerceTestCase
         $shippingAddress->setRegion($shippingRegion);
 
         $billingCountry = 'canada';
-        $billingRegion = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
+        $billingRegion = $this->faker->randomElement(array_keys(config('ecommerce.tax_rates_and_options')[$billingCountry]));
 
         $billingAddress = new Address();
         $billingAddress->setCountry($billingCountry);
@@ -441,13 +449,8 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
-
-        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
-            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-        }
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate($shippingAddress);
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate($shippingAddress);
 
         $expectedTaxDue = round($expectedTaxRateProduct * $expectedItemsCost + $expectedTaxRateShipping * $expectedShippingCost, 2);
 
@@ -514,13 +517,8 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
-
-        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
-            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-        }
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate($shippingAddress);
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate($shippingAddress);
 
         $expectedTaxDue =
             round($expectedTaxRateProduct * $expectedItemsCost, 2) +
@@ -581,7 +579,7 @@ class CartServiceTest extends EcommerceTestCase
         $shippingAddress->setRegion($shippingRegion);
 
         $billingCountry = 'canada';
-        $billingRegion = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
+        $billingRegion = $this->faker->randomElement(array_keys(config('ecommerce.tax_rates_and_options')[$billingCountry]));
 
         $billingAddress = new Address();
         $billingAddress->setCountry($billingCountry);
@@ -590,13 +588,8 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
-
-        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
-            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-        }
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate($shippingAddress);
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate($shippingAddress);
 
         $expectedTaxDue = $expectedTaxRateProduct * $expectedItemsCost + $expectedTaxRateShipping * $expectedShippingCost;
 
@@ -651,7 +644,7 @@ class CartServiceTest extends EcommerceTestCase
         $shippingAddress->setCountry($shippingCountry);
         $shippingAddress->setRegion($shippingRegion);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate($shippingAddress);
 
         $expectedTaxDue = $expectedTaxRateProduct * $expectedItemsCost;
 
@@ -721,7 +714,7 @@ class CartServiceTest extends EcommerceTestCase
         $shippingAddress->setRegion($shippingRegion);
 
         $billingCountry = 'canada';
-        $billingRegion = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
+        $billingRegion = $this->faker->randomElement(array_keys(config('ecommerce.tax_rates_and_options')[$billingCountry]));
 
         $billingAddress = new Address();
         $billingAddress->setCountry($billingCountry);
@@ -732,13 +725,8 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
-
-        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
-            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-        }
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate($shippingAddress);
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate($shippingAddress);
 
         $expectedTaxDue =
             (round($expectedTaxRateProduct * $expectedItemsCost, 2) +

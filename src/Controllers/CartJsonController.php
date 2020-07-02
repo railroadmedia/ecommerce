@@ -311,8 +311,6 @@ class CartJsonController extends Controller
 
         if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
 
-            $cart->setProductTaxOverride($request->get('product_taxes_due_override'));
-            $cart->setShippingTaxOverride($request->get('shipping_taxes_due_override'));
             $cart->setShippingOverride($request->get('shipping_due_override'));
 
             $overrides = $request->get('order_items_due_overrides', []);

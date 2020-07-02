@@ -122,19 +122,15 @@ class OrderClaimingService
 
         $taxableAddress = $this->taxService->getAddressForTaxation($cart);
 
-        $productTaxDue =
-            !is_null($cart->getProductTaxOverride()) ? $cart->getProductTaxOverride() :
-                $this->taxService->getTaxesDueForProductCost(
-                    $totalItemsCosts,
-                    $taxableAddress
-                );
+        $productTaxDue = $this->taxService->getTaxesDueForProductCost(
+            $totalItemsCosts,
+            $taxableAddress
+        );
 
-        $shippingTaxDue =
-            !is_null($cart->getShippingTaxOverride()) ? $cart->getShippingTaxOverride() :
-                $this->taxService->getTaxesDueForShippingCost(
-                    $shippingCosts,
-                    $taxableAddress
-                );
+        $shippingTaxDue = $this->taxService->getTaxesDueForShippingCost(
+            $shippingCosts,
+            $taxableAddress
+        );
 
         $taxesDue = round($productTaxDue + $shippingTaxDue, 2);
 
@@ -388,20 +384,14 @@ class OrderClaimingService
 
         $taxableAddress = $this->taxService->getAddressForTaxation($this->cartService->getCart());
 
-        $totalTaxDue =
-            !is_null($this->cartService->getCart()->getProductTaxOverride()) ? $this->cartService->getCart()->getProductTaxOverride() :
-                $this->taxService->getTaxesDueForProductCost(
-                    $subscriptionTaxableAmount,
-                    $taxableAddress
-                );
+        $totalTaxDue = $this->taxService->getTaxesDueForProductCost(
+            $subscriptionTaxableAmount,
+            $taxableAddress
+        );
 
-        if (is_null($orderItem)) {
-            $subscriptionTotalPrice = $subscriptionPricePerPayment;
-            $totalTaxDue = $totalTaxDue / $totalCyclesDue;
-        }
-        else {
-            $subscriptionTotalPrice = round($subscriptionPricePerPayment + $totalTaxDue, 2);
-        }
+        // subscription taxes are now all calculated on the fly
+        $subscriptionTotalPrice = round($subscriptionPricePerPayment, 2);
+        $totalTaxDue = 0;
 
         $subscription->setBrand($purchaser->getBrand());
         $subscription->setType($type);
@@ -419,7 +409,9 @@ class OrderClaimingService
         $subscription->setStartDate(Carbon::now());
         $subscription->setPaidUntil($nextBillDate);
         $subscription->setTotalPrice($subscriptionTotalPrice);
-        $subscription->setTax(round($totalTaxDue, 2));
+
+        // tax are now all handled on the fly
+        $subscription->setTax(0);
         $subscription->setCurrency($paymentMethod->getCurrency());
         $subscription->setIntervalType($intervalType);
         $subscription->setIntervalCount($intervalCount);
@@ -504,19 +496,15 @@ class OrderClaimingService
             $this->taxService->getShippingTaxRate($address)
         );
 
-        $productTaxDue =
-            !is_null($cart->getProductTaxOverride()) ? $cart->getProductTaxOverride() :
-                $this->taxService->getTaxesDueForProductCost(
-                    $totalItemCostDue,
-                    $address
-                );
+        $productTaxDue = $this->taxService->getTaxesDueForProductCost(
+            $totalItemCostDue,
+            $address
+        );
 
-        $shippingTaxDue =
-            !is_null($cart->getShippingTaxOverride()) ? $cart->getShippingTaxOverride() :
-                $this->taxService->getTaxesDueForShippingCost(
-                    $shippingDue,
-                    $address
-                );
+        $shippingTaxDue = $this->taxService->getTaxesDueForShippingCost(
+            $shippingDue,
+            $address
+        );
 
         $paymentTaxes->setProductTaxesPaid(round($productTaxDue, 2));
         $paymentTaxes->setShippingTaxesPaid(round($shippingTaxDue, 2));

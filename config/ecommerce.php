@@ -4,8 +4,8 @@ return [
     'development_mode' => env('APP_DEBUG', true),
 
     // brands
-    'brand' => 'brand',
-    'available_brands' => ['brand'],
+    'brand' => 'drumeo',
+    'available_brands' => ['drumeo'],
 
     // accounting report timezone
     'accounting_report_timezone' => 'America/Los_Angeles',
@@ -69,78 +69,198 @@ return [
     'route_middleware_public_groups' => ['ecommerce_public'],
     'route_middleware_logged_in_groups' => ['ecommerce_logged_in'],
 
-    //the countries and the region names should be lowercase
-    'product_tax_rate' => [
+    // tax config
+    'tax_rates_and_options' => [
         'canada' => [
-            'alberta' => 0.05,
-            'british columbia' => 0.12,
-            'manitoba' => 0.05,
-            'new brunswick' => 0.15,
-            'newfoundland and labrador' => 0.15,
-            'northwest territories' => 0.05,
-            'nova scotia' => 0.15,
-            'nunavut' => 0.05,
-            'ontario' => 0.13,
-            'prince edward island' => 0.15,
-            'quebec' => 0.05,
-            'saskatchewan' => 0.05,
-            'yukon' => 0.05,
+            'alberta' => [
+                [
+                    'type' => 'GST',
+                    'rate' => 0.05,
+                    'applies_to_shipping_costs' => true,
+                ],
+            ],
+            'british columbia' => [
+                [
+                    'type' => 'GST',
+                    'rate' => 0.05,
+                    'applies_to_shipping_costs' => true,
+                ],
+                [
+                    'type' => 'PST',
+                    'rate' => 0.07,
+                    'applies_to_shipping_costs' => false,
+                ],
+            ],
+            'manitoba' => [
+                [
+                    'type' => 'GST',
+                    'rate' => 0.05,
+                    'applies_to_shipping_costs' => true,
+                ],
+                // PST does not apply until a sales threshold is hit
+                [
+                    'type' => 'PST',
+                    'rate' => 0.07,
+                    'applies_to_shipping_costs' => false,
+                ],
+            ],
+            'new brunswick' => [
+                [
+                    'type' => 'HST',
+                    'rate' => 0.15,
+                    'applies_to_shipping_costs' => true,
+                ],
+            ],
+            'newfoundland and labrador' => [
+                [
+                    'type' => 'HST',
+                    'rate' => 0.15,
+                    'applies_to_shipping_costs' => true,
+                ],
+            ],
+            'northwest territories' => [
+                [
+                    'type' => 'GST',
+                    'rate' => 0.05,
+                    'applies_to_shipping_costs' => true,
+                ],
+            ],
+            'nova scotia' => [
+                [
+                    'type' => 'HST',
+                    'rate' => 0.15,
+                    'applies_to_shipping_costs' => true,
+                ],
+            ],
+            'nunavut' => [
+                [
+                    'type' => 'GST',
+                    'rate' => 0.05,
+                    'applies_to_shipping_costs' => true,
+                ],
+            ],
+            'ontario' => [
+                [
+                    'type' => 'HST',
+                    'rate' => 0.13,
+                    'applies_to_shipping_costs' => true,
+                ],
+            ],
+            'prince edward island' => [
+                [
+                    'type' => 'HST',
+                    'rate' => 0.15,
+                    'applies_to_shipping_costs' => true,
+                ],
+            ],
+            'quebec' => [
+                [
+                    'type' => 'GST',
+                    'rate' => 0.05,
+                    'applies_to_shipping_costs' => true,
+                ],
+                // QST does not apply until a sales threshold is hit
+                [
+                    'type' => 'QST',
+                    'rate' => 0.09975,
+                    'applies_to_shipping_costs' => false,
+                ],
+            ],
+            'saskatchewan' => [
+                [
+                    'type' => 'GST',
+                    'rate' => 0.05,
+                    'applies_to_shipping_costs' => true,
+                ],
+                // PST does not apply until a sales threshold is hit
+                [
+                    'type' => 'PST',
+                    'rate' => 0.07,
+                    'applies_to_shipping_costs' => false,
+                ],
+            ],
+            'yukon' => [
+                [
+                    'type' => 'GST',
+                    'rate' => 0.05,
+                    'applies_to_shipping_costs' => true,
+                ],
+            ],
         ],
     ],
-
-    // tax rate used on the shipping costs, its sometimes different than tax for product cost
-    'shipping_tax_rate' => [
-        'canada' => [
-            'alberta' => 0.05,
-            'british columbia' => 0.05,
-            'manitoba' => 0.05,
-            'new brunswick' => 0.15,
-            'newfoundland and labrador' => 0.15,
-            'northwest territories' => 0.05,
-            'nova scotia' => 0.15,
-            'nunavut' => 0.05,
-            'ontario' => 0.13,
-            'prince edward island' => 0.15,
-            'quebec' => 0.05,
-            'saskatchewan' => 0.05,
-            'yukon' => 0.05,
-        ],
-    ],
-
-    // this is used to show how much of the taxes the user paid went to gst in invoices
-    'gst_hst_tax_rate_display_only' => [
-        'canada' => [
-            'alberta' => 0.05,
-            'british columbia' => 0.05,
-            'manitoba' => 0.05,
-            'new brunswick' => 0.15,
-            'newfoundland and labrador' => 0.15,
-            'northwest territories' => 0.05,
-            'nova scotia' => 0.15,
-            'nunavut' => 0.05,
-            'ontario' => 0.13,
-            'prince edward island' => 0.15,
-            'quebec' => 0.05,
-            'saskatchewan' => 0.05,
-            'yukon' => 0.05,
-        ],
-    ],
-
-    // this is used to show how much of the taxes the user paid went to gst in invoices
-    'pst_tax_rate_display_only' => [
-        'canada' => [
-            'british columbia' => 0.05,
-        ],
-    ],
-
-    'qst_tax_rate' => [
-        'canada' => [
-            'quebec' => 0.09975,
-        ]
-    ],
+//
+//    //the countries and the region names should be lowercase
+//    'product_tax_rate' => [
+//        'canada' => [
+//            'alberta' => 0.05,
+//            'british columbia' => 0.12,
+//            'manitoba' => 0.05,
+//            'new brunswick' => 0.15,
+//            'newfoundland and labrador' => 0.15,
+//            'northwest territories' => 0.05,
+//            'nova scotia' => 0.15,
+//            'nunavut' => 0.05,
+//            'ontario' => 0.13,
+//            'prince edward island' => 0.15,
+//            'quebec' => 0.05,
+//            'saskatchewan' => 0.05,
+//            'yukon' => 0.05,
+//        ],
+//    ],
+//
+//    // tax rate used on the shipping costs, its sometimes different than tax for product cost
+//    'shipping_tax_rate' => [
+//        'canada' => [
+//            'alberta' => 0.05,
+//            'british columbia' => 0.05,
+//            'manitoba' => 0.05,
+//            'new brunswick' => 0.15,
+//            'newfoundland and labrador' => 0.15,
+//            'northwest territories' => 0.05,
+//            'nova scotia' => 0.15,
+//            'nunavut' => 0.05,
+//            'ontario' => 0.13,
+//            'prince edward island' => 0.15,
+//            'quebec' => 0.05,
+//            'saskatchewan' => 0.05,
+//            'yukon' => 0.05,
+//        ],
+//    ],
+//
+//    // this is used to show how much of the taxes the user paid went to gst in invoices
+//    'gst_hst_tax_rate_display_only' => [
+//        'canada' => [
+//            'alberta' => 0.05,
+//            'british columbia' => 0.05,
+//            'manitoba' => 0.05,
+//            'new brunswick' => 0.15,
+//            'newfoundland and labrador' => 0.15,
+//            'northwest territories' => 0.05,
+//            'nova scotia' => 0.15,
+//            'nunavut' => 0.05,
+//            'ontario' => 0.13,
+//            'prince edward island' => 0.15,
+//            'quebec' => 0.05,
+//            'saskatchewan' => 0.05,
+//            'yukon' => 0.05,
+//        ],
+//    ],
+//
+//    // this is used to show how much of the taxes the user paid went to pst in invoices
+//    'pst_tax_rate_display_only' => [
+//        'canada' => [
+//            'british columbia' => 0.05,
+//        ],
+//    ],
+//
+//    'qst_tax_rate' => [
+//        'canada' => [
+//            'quebec' => 0.09975,
+//        ]
+//    ],
 
     // this is displayed on all invoices to canadian customers
-    'gst_hst_number' => [
+    'canada_gst_hst_number' => [
         'brand' => '12345 1512312',
     ],
 
@@ -341,7 +461,7 @@ return [
 
     // invoices
     'invoice_email_details' => [
-        'brand' => [
+        'drumeo' => [
             'subscription_renewal_invoice' => [
                 'invoice_sender' => 'support@pianote.com',
                 'invoice_sender_name' => 'Pianote',
