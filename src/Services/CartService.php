@@ -109,8 +109,7 @@ class CartService
         // cart locking
         if ($lock) {
             $this->cart->setLocked(true);
-        }
-        elseif ($this->cart->getLocked()) {
+        } elseif ($this->cart->getLocked()) {
 
             // if the cart is locked and a new item is added, we should wipe it first
             $this->cart = new Cart();
@@ -494,13 +493,12 @@ class CartService
         // All shipping costs and shipping taxes must be paid on the first payment.
         $totalToFinance = $totalItemCostDue + $productTaxDue + $financeDue;
 
-        $initialTotalDueBeforeShipping = $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments();
+        $initialTotalDueBeforeShipping = round($totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(), 2);
 
         // account for any rounded off cents by adding the difference after all payments to the first payment
         if ($initialTotalDueBeforeShipping * $this->cart->getPaymentPlanNumberOfPayments() != $totalToFinance) {
-            $initialTotalDueBeforeShipping += abs(
-                $initialTotalDueBeforeShipping * $this->cart->getPaymentPlanNumberOfPayments() - $totalToFinance
-            );
+            $initialTotalDueBeforeShipping += $totalToFinance - ($initialTotalDueBeforeShipping *
+                    $this->cart->getPaymentPlanNumberOfPayments());
         }
 
         return max(0, round($initialTotalDueBeforeShipping + $shippingDue + $shippingTaxDue, 2));
@@ -717,7 +715,8 @@ class CartService
                 'price_before_discounts' => $product->getPrice() * $cartItem->getQuantity(),
                 'price_after_discounts' => max(
                     round(
-                        ($product->getPrice() * $cartItem->getQuantity()) - $this->discountService->getItemDiscountedAmount(
+                        ($product->getPrice() * $cartItem->getQuantity()) -
+                        $this->discountService->getItemDiscountedAmount(
                             $this->cart,
                             $product,
                             $totalItemCostDue,
@@ -728,7 +727,8 @@ class CartService
                     0
                 ),
                 'requires_shipping' => $product->getIsPhysical(),
-                'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION || $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
+                'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                    $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
             ];
         }
 
@@ -750,8 +750,7 @@ class CartService
 
                 if ($paymentPlanOption == 1) {
                     $label = '1 payment of $' . $orderDueForPlan;
-                }
-                else {
+                } else {
                     $format = '%s payments of $%s ($%s finance charge)';
                     $label = sprintf(
                         $format,
