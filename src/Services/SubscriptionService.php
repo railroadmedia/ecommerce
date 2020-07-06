@@ -457,7 +457,7 @@ class SubscriptionService
                     $paymentMethod->getMethod()
                         ->getPaymentGatewayName()
                 );
-                $payment->setStatus('succeeded');
+                $payment->setStatus(Payment::STATUS_PAID);
                 $payment->setMessage('');
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
@@ -471,7 +471,7 @@ class SubscriptionService
                     $paymentMethod->getMethod()
                         ->getPaymentGatewayName()
                 );
-                $payment->setStatus('failed');
+                $payment->setStatus(Payment::STATUS_FAILED);
                 $payment->setMessage($exception->getMessage());
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
@@ -502,7 +502,7 @@ class SubscriptionService
                     $paymentMethod->getMethod()
                         ->getPaymentGatewayName()
                 );
-                $payment->setStatus('succeeded');
+                $payment->setStatus(Payment::STATUS_PAID);
                 $payment->setMessage('');
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
@@ -516,7 +516,7 @@ class SubscriptionService
                     $paymentMethod->getMethod()
                         ->getPaymentGatewayName()
                 );
-                $payment->setStatus('failed');
+                $payment->setStatus(Payment::STATUS_FAILED);
                 $payment->setMessage($exception->getMessage());
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
@@ -533,7 +533,7 @@ class SubscriptionService
                 $paymentMethod->getMethod()
                     ->getPaymentGatewayName()
             );
-            $payment->setStatus('failed');
+            $payment->setStatus(Payment::STATUS_FAILED);
             $payment->setMessage('Invalid payment method.');
             $payment->setCurrency($currency);
             $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);

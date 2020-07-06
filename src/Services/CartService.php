@@ -480,28 +480,36 @@ class CartService
             $taxableAddress
         );
 
+        $productTaxRate = $this->taxService->getProductTaxRate($taxableAddress);
+
         $shippingTaxDue = $this->taxService->getTaxesDueForShippingCost(
             $shippingDue,
             $taxableAddress
         );
 
-        $totalTaxDue = $productTaxDue + $shippingTaxDue;
-
         $financeDue = $this->getTotalFinanceCosts();
+
+        $costPerPaymentBeforeTaxes =
+            round(($totalItemCostDue + $financeDue) / $this->cart->getPaymentPlanNumberOfPayments(), 2);
+        $costPerPaymentAfterTaxes =
+            round(
+                $costPerPaymentBeforeTaxes * ($productTaxRate + 1),
+                2
+            );
 
         // Customers can only finance the order item price, product taxes, and finance.
         // All shipping costs and shipping taxes must be paid on the first payment.
-        $totalToFinance = $totalItemCostDue + $productTaxDue + $financeDue;
+        $initialPaymentAmount = $costPerPaymentAfterTaxes + $shippingDue + $shippingTaxDue;
 
-        $initialTotalDueBeforeShipping = round($totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(), 2);
+        $totalAfterPlanIsComplete = $initialPaymentAmount + ($costPerPaymentAfterTaxes *
+                ($this->cart->getPaymentPlanNumberOfPayments() - 1));
 
         // account for any rounded off cents by adding the difference after all payments to the first payment
-        if ($initialTotalDueBeforeShipping * $this->cart->getPaymentPlanNumberOfPayments() != $totalToFinance) {
-            $initialTotalDueBeforeShipping += $totalToFinance - ($initialTotalDueBeforeShipping *
-                    $this->cart->getPaymentPlanNumberOfPayments());
+        if ($this->getDueForOrder() != $totalAfterPlanIsComplete) {
+            $initialPaymentAmount += $this->getDueForOrder() - $totalAfterPlanIsComplete;
         }
 
-        return max(0, round($initialTotalDueBeforeShipping + $shippingDue + $shippingTaxDue, 2));
+        return max(0, round($initialPaymentAmount, 2));
     }
 
     /**
@@ -516,26 +524,9 @@ class CartService
     {
         $totalItemCostDue = $this->getTotalItemCosts();
 
-        $shippingDue =
-            !is_null($this->cart->getShippingOverride()) ? $this->cart->getShippingOverride() :
-                $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
-
-        $taxableAddress = $this->taxService->getAddressForTaxation($this->getCart());
-
-        $productTaxDue = $this->taxService->getTaxesDueForProductCost(
-            $totalItemCostDue,
-            $taxableAddress
-        );
-
-
-        $shippingTaxDue = $this->taxService->getTaxesDueForShippingCost(
-            $shippingDue,
-            $taxableAddress
-        );
-
         $financeDue = $this->getTotalFinanceCosts();
 
-        $totalToFinance = $totalItemCostDue + $productTaxDue + $financeDue;
+        $totalToFinance = $totalItemCostDue + $financeDue;
 
         return max(
             0,
