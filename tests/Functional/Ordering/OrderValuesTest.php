@@ -772,6 +772,23 @@ class OrderValuesTest extends EcommerceTestCase
                 "shipping_taxes_paid" => 0,
             ]
         );
+
+        // make sure the payment is linked properly
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                "subscription_id" => 1,
+                "payment_id" => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                "order_id" => 1,
+                "payment_id" => 1,
+            ]
+        );
     }
 
     public function test_basic_order_with_taxes_with_shipping_alberta()
@@ -1164,6 +1181,101 @@ class OrderValuesTest extends EcommerceTestCase
         }
 
         $this->assertEquals($grandTotalDue, round($totalPaid, 2));
+
+        // make sure the payment is linked properly
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                "subscription_id" => 1,
+                "payment_id" => 1,
+            ]
+        );
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                "subscription_id" => 1,
+                "payment_id" => 2,
+            ]
+        );
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                "subscription_id" => 1,
+                "payment_id" => 3,
+            ]
+        );
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                "subscription_id" => 1,
+                "payment_id" => 4,
+            ]
+        );
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                "subscription_id" => 1,
+                "payment_id" => 5,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                "order_id" => 1,
+                "payment_id" => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                "order_id" => 1,
+                "payment_id" => 2,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                "order_id" => 1,
+                "payment_id" => 3,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                "order_id" => 1,
+                "payment_id" => 4,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                "order_id" => 1,
+                "payment_id" => 5,
+            ]
+        );
+
+        // make sure order total paid is updated
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'total_due' => $grandTotalDue,
+                'total_paid' => $grandTotalDue,
+                'product_due' => $productCost,
+                'taxes_due' => $productTaxesDue + $shippingTaxesDue,
+                'shipping_due' => $shippingCost,
+                'finance_due' => $financeCosts,
+                'user_id' => $userId,
+                'customer_id' => null,
+                'brand' => $this->brand,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
     }
 
     public function test_basic_order_with_taxes_with_shipping_with_payment_plan_bc()
@@ -1540,6 +1652,101 @@ class OrderValuesTest extends EcommerceTestCase
         }
 
         $this->assertEquals($grandTotalDue, round($totalPaid, 2));
+
+        // make sure the payment is linked properly
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                "subscription_id" => 1,
+                "payment_id" => 1,
+            ]
+        );
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                "subscription_id" => 1,
+                "payment_id" => 2,
+            ]
+        );
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                "subscription_id" => 1,
+                "payment_id" => 3,
+            ]
+        );
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                "subscription_id" => 1,
+                "payment_id" => 4,
+            ]
+        );
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                "subscription_id" => 1,
+                "payment_id" => 5,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                "order_id" => 1,
+                "payment_id" => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                "order_id" => 1,
+                "payment_id" => 2,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                "order_id" => 1,
+                "payment_id" => 3,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                "order_id" => 1,
+                "payment_id" => 4,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                "order_id" => 1,
+                "payment_id" => 5,
+            ]
+        );
+
+        // make sure order total paid is updated
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'total_due' => $grandTotalDue,
+                'total_paid' => $grandTotalDue,
+                'product_due' => $productCost,
+                'taxes_due' => $productTaxesDue + $shippingTaxesDue,
+                'shipping_due' => $shippingCost,
+                'finance_due' => $financeCosts,
+                'user_id' => $userId,
+                'customer_id' => null,
+                'brand' => $this->brand,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
     }
 
 }

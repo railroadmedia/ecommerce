@@ -7,6 +7,7 @@ use DateTimeInterface;
 use Exception;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\CreditCard;
+use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\PaymentTaxes;
@@ -558,6 +559,26 @@ class SubscriptionService
         $subscriptionPayment->setPayment($payment);
 
         $this->entityManager->persist($subscriptionPayment);
+
+        // save to the order as well if its a payment plan
+        if ($subscription->getType() == Subscription::TYPE_PAYMENT_PLAN &&
+            empty($subscription->getProduct()) &&
+            !empty($subscription->getOrder())) {
+
+            // link the payment to the order
+            $orderPayment = new OrderPayment();
+            $orderPayment->setOrder($subscription->getOrder());
+            $orderPayment->setPayment($payment);
+
+            $this->entityManager->persist($orderPayment);
+
+            // update the order total paid
+            $subscription->getOrder()->setTotalPaid(
+                $subscription->getOrder()->getTotalPaid() + $payment->getTotalPaid()
+            );
+
+            $this->entityManager->persist($subscription->getOrder());
+        }
 
         $this->entityManager->flush();
 
