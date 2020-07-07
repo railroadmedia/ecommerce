@@ -164,11 +164,11 @@ class PaymentTaxes
     }
 
     /**
-     * @return float|null
+     * @return float
      */
     public function getProductTaxesPaid(): ?float
     {
-        return $this->productTaxesPaid;
+        return $this->productTaxesPaid ?? 0;
     }
 
     /**
@@ -180,11 +180,11 @@ class PaymentTaxes
     }
 
     /**
-     * @return float|null
+     * @return float
      */
     public function getShippingTaxesPaid(): ?float
     {
-        return $this->shippingTaxesPaid;
+        return $this->shippingTaxesPaid ?? 0;
     }
 
     /**
@@ -193,5 +193,13 @@ class PaymentTaxes
     public function setShippingTaxesPaid(float $shippingTaxesPaid)
     {
         $this->shippingTaxesPaid = $shippingTaxesPaid;
+    }
+
+    /**
+     * @return float
+     */
+    public function getSumTaxesPaid()
+    {
+        return $this->getProductTaxesPaid() + $this->getShippingTaxesPaid();
     }
 }

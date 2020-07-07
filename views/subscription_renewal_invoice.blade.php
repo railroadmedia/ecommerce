@@ -337,7 +337,8 @@
                                                     {{ $payment->getCreatedAt()->format('F j, Y') }}<br><br>
                                                     {{ config('ecommerce.company_name_on_invoice') }}
 
-                                                    @if($subscription->getTax() > 0)
+                                                    @if(!empty($payment->getPaymentTaxes()) &&
+                                                        $payment->getPaymentTaxes()->getSumTaxesPaid() > 0)
                                                         <br>GST/HST # -
                                                         {{ config('ecommerce.canada_gst_hst_number')[$payment->getGatewayName()] ?? '' }}
                                                     @endif

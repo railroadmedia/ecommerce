@@ -516,11 +516,12 @@ class CartService
      * Returns the price of the payment plan subscription that will be billed each month for the duration
      * of the payment plan.
      *
+     * @param null $numberOfPaymentsOverride
      * @return float
      *
      * @throws Throwable
      */
-    public function getDueForPaymentPlanPayments()
+    public function getDueForPaymentPlanPayments($numberOfPaymentsOverride = null)
     {
         $totalItemCostDue = $this->getTotalItemCosts();
 
@@ -531,7 +532,7 @@ class CartService
         return max(
             0,
             round(
-                $totalToFinance / $this->cart->getPaymentPlanNumberOfPayments(),
+                $totalToFinance / ($numberOfPaymentsOverride ?? $this->cart->getPaymentPlanNumberOfPayments()),
                 2
             )
         );
@@ -662,6 +663,8 @@ class CartService
             $taxableAddress
         );
 
+        $productTaxRate = $this->taxService->getProductTaxRate($taxableAddress);
+
         $shippingTaxDue = $this->taxService->getTaxesDueForShippingCost(
             $shippingDue,
             $taxableAddress
@@ -746,7 +749,7 @@ class CartService
                     $label = sprintf(
                         $format,
                         $paymentPlanOption,
-                        round(($orderDueForPlan - $shippingDue) / $paymentPlanOption, 2),
+                        round($this->getDueForPaymentPlanPayments($paymentPlanOption) * (1 + $productTaxRate), 2),
                         number_format($financeCost, 2)
                     );
                 }
