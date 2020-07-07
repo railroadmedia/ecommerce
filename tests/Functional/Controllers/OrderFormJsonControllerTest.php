@@ -8129,7 +8129,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ''
         );
 
-        $paymentPlanOption = $this->getPaymentPlanOption();
+        $paymentPlanOption = 5;
 
         $financeCharge = 1;
 
