@@ -469,6 +469,8 @@ return [
                 'invoice_email_subject' => 'Pianote Invoice - Thank You!',
                 'invoice_view' => 'ecommerce::subscription_renewal_invoice',
             ],
+
+            // the order invoice is also used for payment plan renewals
             'order_invoice' => [
                 'invoice_sender' => 'support@pianote.com',
                 'invoice_sender_name' => 'Pianote',

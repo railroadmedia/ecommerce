@@ -102,6 +102,10 @@ class TaxService
         $countryOptions = $options[strtolower($address->getCountry())] ?? [];
         $regionOptions = $countryOptions[strtolower($address->getRegion())] ?? [];
 
+        if (empty($options) || empty($countryOptions) || empty($regionOptions)) {
+            return [];
+        }
+
         foreach ($regionOptions as $regionOption) {
             $typeCosts[$regionOption['type']] = 0;
 

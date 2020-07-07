@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 
 class InvoiceService
 {
@@ -18,12 +19,19 @@ class InvoiceService
     private $taxService;
 
     /**
+     * @var SubscriptionRepository
+     */
+    private $subscriptionRepository;
+
+    /**
      * InvoiceService constructor.
      * @param TaxService $taxService
+     * @param SubscriptionRepository $subscriptionRepository
      */
-    public function __construct(TaxService $taxService)
+    public function __construct(TaxService $taxService, SubscriptionRepository $subscriptionRepository)
     {
         $this->taxService = $taxService;
+        $this->subscriptionRepository = $subscriptionRepository;
     }
 
     /**
@@ -57,8 +65,12 @@ class InvoiceService
             !empty($addressToUseForTax) ? $addressToUseForTax->toStructure() : null
         );
 
+        $paymentPlan = $this->subscriptionRepository->findOneBy(['order' => $order]);
+
         return [
             'order' => $order,
+            'subscription' => $paymentPlan,
+            'paymentPlan' => $paymentPlan,
             'orderItems' => $order->getOrderItems(),
             'payment' => $payment,
             'currencySymbol' => $currencySymbol,
@@ -131,8 +143,14 @@ class InvoiceService
                 ->toStructure() : null
         );
 
+        if ($subscription->getType() == Subscription::TYPE_PAYMENT_PLAN) {
+            return $this->getViewDataForOrderInvoice($subscription->getOrder(), $payment);
+        }
+
         return [
             'subscription' => $subscription,
+            'order' => $subscription->getOrder(),
+            'orderItems' => $subscription->getOrder()->getOrderItems(),
             'product' => $subscription->getProduct(),
             'payment' => $payment,
             'currencySymbol' => $currencySymbol,
