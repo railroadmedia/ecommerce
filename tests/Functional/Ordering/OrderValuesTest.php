@@ -1022,14 +1022,15 @@ class OrderValuesTest extends EcommerceTestCase
         // check = ((20.2 * 1.05) * 4) + 31.7 = 116.54 // its 4 too many from rounding
 
         $paymentPlanCostPerPayment = round(($productCost + $financeCosts) / $numberOfPayments, 2); // 20.2
+        $paymentPlanCostPerPaymentAfterTax = round($paymentPlanCostPerPayment * (1+$productTaxRate), 2); // 20.2
         $initialPaymentAmount =
             round(
-                (($productCost + $productTaxesDue + $financeCosts) / $numberOfPayments) +
+                $paymentPlanCostPerPaymentAfterTax +
                 $shippingCost +
                 $shippingTaxesDue,
                 2
-            ); // 31.7
-        $grandTotalDue = $productCost + $financeCosts + $shippingCost + $productTaxesDue + $shippingTaxesDue; // 116.5
+            ); // 33.1
+        $grandTotalDue = $productCost + $financeCosts + $shippingCost + $productTaxesDue + $shippingTaxesDue; // 123.5
 
         $difference =
             round(

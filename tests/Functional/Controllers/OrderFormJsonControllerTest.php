@@ -729,6 +729,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -1020,7 +1021,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'fingerprint' => $fingerPrint,
                 'last_four_digits' => $fakerCard->last4,
-                'cardholder_name' => null,
+                'cardholder_name' => $fakerCard->name,
                 'company_name' => $fakerCard->brand,
                 'expiration_date' => Carbon::createFromDate(
                     $fakerCard->exp_year,
@@ -1151,6 +1152,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -1527,6 +1529,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -1823,6 +1826,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -4330,6 +4334,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -4635,7 +4640,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'fingerprint' => $fingerPrint,
                 'last_four_digits' => $fakerCard->last4,
-                'cardholder_name' => null,
+                'cardholder_name' => $fakerCard->name,
                 'company_name' => $fakerCard->brand,
                 'expiration_date' => Carbon::createFromDate(
                     $fakerCard->exp_year,
@@ -8058,6 +8063,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -8144,8 +8150,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
-            $expectedTaxRateProduct * $expectedTotalFromItems
-            + $expectedTaxRateShipping * $shippingCostAmount,
+            $expectedProductTaxes
+            + $expectedShippingTaxes,
             2
         );
 
@@ -8157,6 +8163,32 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             2
         );
 
+        $paymentPlanCostPerPayment = round(($expectedTotalFromItems + $financeCharge) / $paymentPlanOption, 2); // 20.2
+        $paymentPlanCostPerPaymentAfterTax =
+            round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct), 2); // 20.2
+        $initialPaymentAmount =
+            round(
+                $paymentPlanCostPerPaymentAfterTax +
+                $shippingCostAmount +
+                $expectedShippingTaxes,
+                2
+            ); // 33.1
+        $grandTotalDue =
+            $expectedTotalFromItems +
+            $financeCharge +
+            $shippingCostAmount +
+            $expectedProductTaxes +
+            $expectedShippingTaxes; // 123.5
+        $difference =
+            round(
+                $grandTotalDue -
+                ($initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)),
+                2
+            ); // 116.5 - 116.54 = -0.04
+
+        $initialPaymentAmount += $difference; // 31.66
+
+        $totalToFinanceWithoutTaxes = $expectedTotalFromItems + $financeCharge;
         $totalToFinanceWithTaxes = $expectedTotalFromItems + $expectedTaxes + $financeCharge;
 
         $initialTotalDueBeforeShipping = $totalToFinanceWithTaxes / $paymentPlanOption;
@@ -8167,9 +8199,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             );
         }
 
-        $expectedTotalPaid = $initialTotalDueBeforeShipping + $shippingCostAmount;
+        $expectedTotalPaid = $initialPaymentAmount;
 
         $currencyService = $this->app->make(CurrencyService::class);
+
+        $this->assertEquals(
+            $grandTotalDue,
+            $initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)
+        );
 
         $expectedPaymentTotalDue = $currencyService->convertFromBase($expectedOrderTotalDue, $currency);
 
@@ -8388,6 +8425,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -8452,10 +8490,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
 
-        var_dump('$expectedTotalFromItems=' . $expectedTotalFromItems);
-        var_dump('$expectedProductTaxes=' . $expectedProductTaxes);
-        var_dump('$financeCharge=' . $financeCharge);
-
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
             + $expectedProductTaxes
@@ -8464,20 +8498,36 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         // 106 / 5 = 21.2
-        var_dump('$expectedOrderTotalDue=' . $expectedOrderTotalDue);
+        $paymentPlanCostPerPayment = round(($expectedTotalFromItems + $financeCharge) / $paymentPlanOption, 2); // 20.2
+        $paymentPlanCostPerPaymentAfterTax =
+            round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct), 2); // 20.2
+        $initialPaymentAmount =
+            round(
+                $paymentPlanCostPerPaymentAfterTax +
+                2
+            ); // 33.1
+        $grandTotalDue = $expectedTotalFromItems + $financeCharge + $expectedProductTaxes; // 123.5
+        $difference =
+            round(
+                $grandTotalDue -
+                ($initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)),
+                2
+            ); // 116.5 - 116.54 = -0.04
 
-        $totalToFinanceWithProductTaxes = $expectedTotalFromItems + $expectedProductTaxes + $financeCharge;
-        $totalToFinanceWithoutProductTaxes = $expectedTotalFromItems + $financeCharge;
+        $initialPaymentAmount += $difference; // 31.66
 
-        $initialTotalDue = $totalToFinanceWithProductTaxes / $paymentPlanOption;
-
-        $expectedTotalPaid = $initialTotalDue;
+        $expectedTotalPaid = $initialPaymentAmount;
 
         $currencyService = $this->app->make(CurrencyService::class);
 
-        $expectedPaymentTotalPaid = 21.2;
+        $expectedPaymentTotalPaid = $expectedTotalPaid;
 
         $expectedConversionRate = $currencyService->getRate($currency);
+
+        $this->assertEquals(
+            $grandTotalDue,
+            $initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)
+        );
 
         $requestData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
@@ -8613,7 +8663,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'paid_until' => Carbon::now()
                     ->addMonth(1)
                     ->toDateTimeString(),
-                'total_price' => round($totalToFinanceWithoutProductTaxes / $paymentPlanOption, 2),
+                'total_price' => $paymentPlanCostPerPayment,
                 'total_cycles_due' => $paymentPlanOption,
                 'total_cycles_paid' => 1,
                 'created_at' => Carbon::now()
@@ -8691,6 +8741,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -8806,27 +8857,39 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             2
         );
 
-        $totalToFinanceWithoutTaxes = $expectedTotalFromItems + $financeCharge;
-        $totalToFinanceWithProductTaxes = $expectedTotalFromItems + $expectedProductTaxes + $financeCharge;
+        // 106 / 5 = 21.2
+        $paymentPlanCostPerPayment = round(($expectedTotalFromItems + $financeCharge) / $paymentPlanOption, 2); // 20.2
+        $paymentPlanCostPerPaymentAfterTax =
+            round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct), 2); // 20.2
+        $initialPaymentAmount =
+            round(
+                $paymentPlanCostPerPaymentAfterTax + $shippingCostAmount + $expectedShippingTaxes,
+                2
+            ); // 33.1
+        $grandTotalDue = $expectedTotalFromItems + $financeCharge + $expectedProductTaxes + $shippingCostAmount + $expectedShippingTaxes; // 123.5
+        $difference =
+            round(
+                $grandTotalDue -
+                ($initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)),
+                2
+            ); // 116.5 - 116.54 = -0.04
 
-        $initialTotalDueBeforeShipping = $totalToFinanceWithProductTaxes / $paymentPlanOption;
+        $initialPaymentAmount += $difference; // 31.66
 
-        if ($initialTotalDueBeforeShipping * $paymentPlanOption != $totalToFinanceWithProductTaxes) {
-            $initialTotalDueBeforeShipping += abs(
-                $initialTotalDueBeforeShipping * $paymentPlanOption - $totalToFinanceWithProductTaxes
-            );
-        }
-
-        $expectedTotalPaid = $initialTotalDueBeforeShipping + $shippingCostAmount + $expectedShippingTaxes;
+        $expectedTotalPaid = $initialPaymentAmount;
 
         $currencyService = $this->app->make(CurrencyService::class);
 
         $expectedPaymentTotalDue = $currencyService->convertFromBase($expectedOrderTotalDue, $currency);
 
         $expectedPaymentTotalPaid = $currencyService->convertFromBase($expectedTotalPaid, $currency);
-        $expectedPaymentTotalPaid = 26.45;
 
         $expectedConversionRate = $currencyService->getRate($currency);
+
+        $this->assertEquals(
+            $grandTotalDue,
+            $initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)
+        );
 
         $requestData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
@@ -8962,7 +9025,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'paid_until' => Carbon::now()
                     ->addMonth(1)
                     ->toDateTimeString(),
-                'total_price' => round($totalToFinanceWithoutTaxes / $paymentPlanOption, 2),
+                'total_price' => $paymentPlanCostPerPayment,
                 'total_cycles_due' => $paymentPlanOption,
                 'total_cycles_paid' => 1,
                 'created_at' => Carbon::now()

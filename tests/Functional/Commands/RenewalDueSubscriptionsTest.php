@@ -254,7 +254,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'type' => config('ecommerce.renewal_payment_type'),
                     'external_id' => $fakerCharge->id,
                     'external_provider' => 'stripe',
-                    'status' => 'succeeded',
+                    'status' => Payment::STATUS_PAID,
                     'message' => '',
                     'currency' => $currency,
                     'created_at' => Carbon::now()
@@ -789,7 +789,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'type' => config('ecommerce.renewal_payment_type'),
                     'external_id' => $fakerCharge->id,
                     'external_provider' => 'stripe',
-                    'status' => 'succeeded',
+                    'status' => Payment::STATUS_PAID,
                     'message' => '',
                     'currency' => $currency,
                     'created_at' => Carbon::now()

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
@@ -170,7 +171,7 @@ class SubscriptionServiceTest extends EcommerceTestCase
                 'type' => config('ecommerce.renewal_payment_type'),
                 'external_id' => $charge->id,
                 'external_provider' => 'stripe',
-                'status' => 'succeeded',
+                'status' => Payment::STATUS_PAID,
                 'payment_method_id' => $paymentMethod->getId(),
                 'currency' => $subscription->getCurrency(),
                 'created_at' => Carbon::now()->toDateTimeString(),
@@ -330,6 +331,8 @@ class SubscriptionServiceTest extends EcommerceTestCase
         $em->flush();
 
         $srv = $this->app->make(SubscriptionService::class);
+
+        $this->expectExceptionMessage("Subscription with ID: " . $subscription->getId() . " does not have an attached payment method.");
 
         try {
             $srv->renew($subscription);
